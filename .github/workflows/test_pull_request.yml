@@ -51,7 +51,7 @@ env:
   CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
 
 jobs:
-  # Kept in every mode: publish_test_results.yml reads `Event File/event.json` on every completed run
+  # Uploaded in chain mode too: publish_test_results.yml reads `Event File/event.json` on every completed run
   # (chain runs included), so skipping it would break that workflow. A few KB, and the consumer runs
   # minutes after this workflow completes, so 1-day retention loses nothing.
   save-event-file:

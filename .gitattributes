@@ -1,6 +1,6 @@
 # T2 chain fixtures are compared BYTE-for-byte (MCP-Plugin-dotnet docs/chain-fixtures.md §F1), and the
-# vendored chain_fixture.py is checked by sha256 against its canonical copy. A CRLF working copy
-# (core.autocrlf=true on Windows) would break both, so pin them to LF.
+# vendored chain_fixture.py and chain_feed.py are checked by sha256 against their canonical copies. A
+# CRLF working copy (core.autocrlf=true on Windows) would break all of them, so pin them to LF.
 /tests/chain-fixtures/** text eol=lf
 /.github/scripts/chain_fixture.py text eol=lf
 /.github/scripts/chain_feed.py text eol=lf

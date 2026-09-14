@@ -150,11 +150,10 @@ jobs:
           customParameters: -CI true -GITHUB_ACTIONS true${{ (matrix.platform == 'base' && inputs.testMode == 'editmode') && ' -CHAIN_RECORD_OUT chain-record/raw.json -CHAIN_BATTERY ../../tests/chain-fixtures/battery.json' || '' }}
 
       # --------------------------------------------------------------------- #
-      # Test results (~0.03-0.5 MB per leg, ~3 MB per run). Read ONLY by publish_test_results.yml, which
-      # runs minutes after this workflow completes, so a 1-day retention loses nothing. Skipped in chain
-      # mode (a lock, or a `train/` PR label): the chain verdict reads the JSON leg records below, never
-      # these, and the account's artifact storage is capped (owner rule 2026-09-14: upload only what is
-      # needed).
+      # Test results. Read ONLY by publish_test_results.yml, which runs minutes after this workflow
+      # completes, so a 1-day retention loses nothing. Skipped in chain mode (a lock, or a `train/` PR
+      # label): the chain verdict reads the JSON leg records below, never these, and the account's
+      # artifact storage is capped, so only what a consumer reads is uploaded.
       - uses: actions/upload-artifact@v6
         if: always() && env.CHAIN_LOCK == '' && !contains(join(github.event.pull_request.labels.*.name, ' '), 'train/')
         with:
