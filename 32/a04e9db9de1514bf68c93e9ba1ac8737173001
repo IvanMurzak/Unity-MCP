@@ -1,0 +1,38 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs
+  s_53ce73f91e4281::t_43f844d8330778 55
+  s_53ce73f91e4281::t_c8c6b4d92d50fa 162-163
+  s_53ce73f91e4281::t_634003e62e635d 180-197,199
+  s_53ce73f91e4281::t_2b599e47e84717 324,337,346-381,390,399
+  s_53ce73f91e4281::t_7d9b6083632051 227-229
+  s_53ce73f91e4281::t_7f6fbd5497067f 131-132
+  s_53ce73f91e4281::t_7a0c0775dbf757 94-106
+  s_53ce73f91e4281::t_067e94f99d3eb9 479
+  s_53ce73f91e4281::t_637bd0c8357353 445-467
+  s_53ce73f91e4281::t_c262ae5b1252e0 600-603,609,614,619
+  s_53ce73f91e4281::t_7646c84717a412 287
+  s_53ce73f91e4281::t_5f128ba0c8312f 921
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Project/ServerVersionDecouplingTests.cs
+  s_53ce73f91e4281::t_59d2aa8ec93a85 1-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/UI/JsonAiAgentConfigCommandArrayTests.cs
+  s_53ce73f91e4281::t_a2ad66f76c8f23 102
+cli/src/utils/agents.ts
+  s_53ce73f91e4281::t_d44d76f8642221 557
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/UI/JsonAiAgentConfigTests.cs
+  s_53ce73f91e4281::t_a04c5c649eceeb 131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "32a04e9db9de1514bf68c93e9ba1ac8737173001",
+  "prompts": {},
+  "sessions": {
+    "s_53ce73f91e4281": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e24c1167-2410-4c32-885c-4fd71d157405",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

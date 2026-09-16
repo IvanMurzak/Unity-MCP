@@ -1,0 +1,25 @@
+.github/actions/install-nuget-packages/action.yml
+  8d4d689498114267 1-120
+.github/workflows/test_unity_plugin.yml
+  8d4d689498114267 71-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "e1ee212f0b1dfef9577b57eaf6db7f882c69776c",
+  "prompts": {
+    "8d4d689498114267": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36761876-bbce-477d-9fbd-04b51c7ad534",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 384,
+      "total_deletions": 256,
+      "accepted_lines": 252,
+      "overriden_lines": 0
+    }
+  }
+}

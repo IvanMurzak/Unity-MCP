@@ -1,0 +1,31 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.Extensions.cs
+  cd12eb966858aa53 12-14,18,24,26-39,41-50,52-64,74-75,77-83,85,87-88,90,92-96,98-103,105-106
+Unity-MCP-Plugin/Assets/root/Editor/UI/uxml/ExtensionItem.uxml.meta
+  cd12eb966858aa53 2
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Components/ExtensionPanel.cs
+  cd12eb966858aa53 1-374
+Unity-MCP-Plugin/Assets/root/Editor/UI/uxml/ExtensionItem.uxml
+  cd12eb966858aa53 2-7
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Controls/SegmentedControl.cs
+  cd12eb966858aa53 24-27,29,34-59,84
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "58ef65eb81436e0e503d322288773b198236ceec",
+  "prompts": {
+    "cd12eb966858aa53": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b7c6a822-ef01-45bc-b7ec-ef1e52198fe7",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 1622,
+      "total_deletions": 1174,
+      "accepted_lines": 1394,
+      "overriden_lines": 0
+    }
+  }
+}

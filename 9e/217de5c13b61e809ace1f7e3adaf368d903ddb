@@ -1,0 +1,28 @@
+.github/workflows/release.yml
+  s_53ce73f91e4281::t_98c35031bb9e7c 300,309,318,329,338,347,358,367,376
+commands/bump-version.ps1
+  s_53ce73f91e4281::t_e323a96b96f665 39-41
+.github/copilot-instructions.md
+  s_53ce73f91e4281::t_a96aaee885ac9c 46
+  s_53ce73f91e4281::t_5e02654b7e8d2d 37
+.github/workflows/test_pull_request.yml
+  s_53ce73f91e4281::t_d856d8c2fc9a40 31-33
+.github/workflows/deploy.yml
+  s_53ce73f91e4281::t_66bcb62be6e7fb 15,23-27
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "9e217de5c13b61e809ace1f7e3adaf368d903ddb",
+  "prompts": {},
+  "sessions": {
+    "s_53ce73f91e4281": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e24c1167-2410-4c32-885c-4fd71d157405",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

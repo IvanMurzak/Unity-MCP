@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Script/ScriptExecuteTests.cs
+  45bb694fbdff541e 117-387
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "ddb5a15a70073cb41868d5eb20b7394a25f3d1ad",
+  "prompts": {
+    "45bb694fbdff541e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cd57ca50-fb73-4c3d-ae7f-56c31a589354",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 119189,
+      "total_deletions": 14,
+      "accepted_lines": 119297,
+      "overriden_lines": 0
+    }
+  }
+}

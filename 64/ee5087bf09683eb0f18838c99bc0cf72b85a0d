@@ -1,0 +1,29 @@
+Unity-Tests/6000.3.1f1/.gitignore
+  8d4d689498114267 1-68
+Unity-Tests/2023.2.22f1/.gitignore
+  8d4d689498114267 1-68
+Unity-Tests/6000.5.0b1/.gitignore
+  8d4d689498114267 1-68
+Unity-Tests/2022.3.62f3/.gitignore
+  8d4d689498114267 1-68
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "64ee5087bf09683eb0f18838c99bc0cf72b85a0d",
+  "prompts": {
+    "8d4d689498114267": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36761876-bbce-477d-9fbd-04b51c7ad534",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 50996,
+      "total_deletions": 329,
+      "accepted_lines": 50992,
+      "overriden_lines": 0
+    }
+  }
+}

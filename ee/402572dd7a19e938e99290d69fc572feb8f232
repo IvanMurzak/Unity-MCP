@@ -1,0 +1,92 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs
+  s_7058b72229a5ce::t_fba34b95ad0ac3 23
+  s_20d846df15efaa::t_45ef254658ce30 136,854-856,861,912-914,934-936,940,1408-1410,1413-1442
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/UI/AiAgentConfiguratorViewLogicTests.cs
+  s_7058b72229a5ce::t_f508e0f51e7049 15-16
+  s_364be739bc892c::t_192b0d1b4f4f16 109-146
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Config/AuthOptionMigrationTests.cs
+  s_7058b72229a5ce::t_0c3e468be0146b 1-60
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/UI/MainWindowEditor.StatusLogicTests.cs
+  s_7058b72229a5ce::t_42be448528df71 16,23-36,43,51
+  s_e76879ce38f93b::t_b7077aa82b82f5 37-42,44-50,52-57
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7058b72229a5ce::t_f14ceaf6df901b 4,10
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_dd5b0581f27552::t_c195290a663680 66-69
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.Connection.cs
+  s_dd5b0581f27552::t_be60f7b1b9d61e 245-248
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UnityMcpPluginEditor.Config.cs
+  s_dd5b0581f27552::t_fcf769c7f191a9 110-122
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Config.meta
+  s_7058b72229a5ce::t_a977509e63163b 1-8
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Config/AuthOptionMigrationTests.cs.meta
+  s_7058b72229a5ce::t_a12c4201eb7502 1-11
+Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7058b72229a5ce::t_69a3144c279e33 4,10
+Unity-Tests/2023.2.22f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7058b72229a5ce::t_23f34817e079d5 4,10
+Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7058b72229a5ce::t_ff5803314f5215 4,10
+Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7058b72229a5ce::t_5246e88e04761e 4,10
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7058b72229a5ce::t_ff0291a193f534 4,10
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/AiAgentConfiguratorView.cs
+  s_20d846df15efaa::t_6d08466f543672 547-561,566-568
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.CreateGUI.cs
+  s_20d846df15efaa::t_38ac0a38590104 128-131,133-143
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.McpServer.cs
+  s_20d846df15efaa::t_f615e97d3a1239 89-90,107,109-111,115-116,118-121,150-167
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.Config.cs
+  s_20d846df15efaa::t_2a73d99697af9a 213-232
+cli/src/utils/server-version.ts
+  s_20d846df15efaa::t_cbce037b457d03 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "ee402572dd7a19e938e99290d69fc572feb8f232",
+  "prompts": {},
+  "sessions": {
+    "s_20d846df15efaa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aabbf9c14a556bed5",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_364be739bc892c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b8f91f54-742b-4579-9e3a-eeb38012be81",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_7058b72229a5ce": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "27f72a19-24c8-455b-8094-547169868d62",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_dd5b0581f27552": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c3530c51-4b24-438d-a375-143bc893dff8",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_e76879ce38f93b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "90bb756d-c158-4063-aaec-3f5e702c2d20",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

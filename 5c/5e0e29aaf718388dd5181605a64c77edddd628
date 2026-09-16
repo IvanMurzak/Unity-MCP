@@ -1,0 +1,39 @@
+.github/workflows/claude.yml
+  a49954e7825d1468 95,127,136,150
+  1cdbbf4a68a10a63 82-91,98-99,101,103-110,113-126,128-135
+.github/workflows/copilot-setup-steps.yml
+  1cdbbf4a68a10a63 71-80,84,87-88,90,92-99,102-125,139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "5c5e0e29aaf718388dd5181605a64c77edddd628",
+  "prompts": {
+    "1cdbbf4a68a10a63": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "48093ce8-af22-4a37-be8d-fd6f7b319cb1",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 213,
+      "total_deletions": 138,
+      "accepted_lines": 134,
+      "overriden_lines": 0
+    },
+    "a49954e7825d1468": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "eb787b3d-9781-4bc6-9591-0f7cdc4a7dfb",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 170,
+      "total_deletions": 189,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    }
+  }
+}

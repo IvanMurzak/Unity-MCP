@@ -1,0 +1,74 @@
+docs/mcp-server.md
+  s_bfde2238b1cf67::t_4866b1a2d2b009 59-75
+docs/_sidebar.md
+  s_bfde2238b1cf67::t_b6f544020f90ab 7,9
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/README.md
+  s_bfde2238b1cf67::t_d14f6ebccc6f4f 97,117,151,159,172-190,475-476,483,486,515,518,592-597,601-602,611-612,614-617,620
+README.md
+  s_bfde2238b1cf67::t_730adf01336841 172-190
+  s_bfde2238b1cf67::t_b6f5ceaeb9dd55 483,486
+  s_bfde2238b1cf67::t_5e087311772a8a 592-597,601
+  s_bfde2238b1cf67::t_1832fec5785cca 515,518
+  s_bfde2238b1cf67::t_bf8d6a56ccaeb5 117
+  s_bfde2238b1cf67::t_39995cf082d9af 97,602
+  s_bfde2238b1cf67::t_d045b309fdc4b5 475-476
+  s_bfde2238b1cf67::t_7ddcb686685453 557,560,567
+  s_bfde2238b1cf67::t_2a668fa6973945 151
+  s_bfde2238b1cf67::t_541f6c61ee9830 159
+  s_bfde2238b1cf67::t_4224b3f1174c0e 611-612,614-617,620
+docs/version-management.md
+  s_bfde2238b1cf67::t_0c9538b0a0d61b 35-40
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/README.md"
+  s_bfde2238b1cf67::t_d14f6ebccc6f4f 1-2,4-5,7-9,11,16-33,35,37,39-97,100-122,126-152,154,156-172,174,176-192,194-263,267-282,286-287,289,291,294-313,316-330,332,337-339,341,343,347-349,352,354,356-364,366,368,370,375,378,381,385,388,391,395,397-399,402,405-408,411,413,415,417,419,421-423,425-427,429-431,433,435,437,439,441,443,445-454,456-463,465,467,469,471,473,475-478,480,483,486,510,512,514-556,558-559,561-566,568-850,854-862,864
+docs/README.es.md
+  s_bfde2238b1cf67::t_fc0d6e4bed6cff 97,173-175,602
+  s_bfde2238b1cf67::t_deaab435f5b4c4 176-190
+  s_bfde2238b1cf67::t_cd53b82ad86112 567
+  s_bfde2238b1cf67::t_eef147c8212b22 611-612,614-617,620
+  s_bfde2238b1cf67::t_124cb26df8f371 151
+  s_bfde2238b1cf67::t_670faaded2d375 557,560
+  s_bfde2238b1cf67::t_3c6bd826607d86 595-597,601
+  s_bfde2238b1cf67::t_16da6d52426c23 475-476
+  s_bfde2238b1cf67::t_2041be0c272d91 159
+  s_bfde2238b1cf67::t_221018f7d680fa 483,486
+  s_bfde2238b1cf67::t_955cc08562a999 117
+docs/README.ja.md
+  s_bfde2238b1cf67::t_7e5ed02bc1e628 97,173-175,602
+  s_bfde2238b1cf67::t_e54a823a6f6e5f 515,518
+  s_bfde2238b1cf67::t_9ae26f1199268d 557,560
+  s_bfde2238b1cf67::t_8f2afa76f8e870 611-612,614-618,620
+  s_bfde2238b1cf67::t_58a87deac0173c 567
+  s_bfde2238b1cf67::t_6f90a8ba3fd0f7 595-597,601
+  s_bfde2238b1cf67::t_b1bb2fb56ac7e5 151,159
+docs/README.zh-CN.md
+  s_bfde2238b1cf67::t_833115f20b1a9d 176-190
+  s_bfde2238b1cf67::t_3ad7e2759db0df 483,486
+  s_bfde2238b1cf67::t_4c5994a9fd3ff4 567
+  s_bfde2238b1cf67::t_ed029bfbe1026d 611-612,614-617,620
+  s_bfde2238b1cf67::t_1185fecdc462b1 515,518
+  s_bfde2238b1cf67::t_bf72fac4ebc204 475-476
+  s_bfde2238b1cf67::t_a856cdd5b7231b 97,173-175,602
+  s_bfde2238b1cf67::t_66f4b787c5cc74 557,560
+  s_bfde2238b1cf67::t_f304cbe741a0ed 595-597,601
+  s_bfde2238b1cf67::t_6955b56efe54f8 151
+docs/default-mcp-tools.md
+  s_bfde2238b1cf67::t_090cf80cf8a058 38
+  s_bfde2238b1cf67::t_878cc0b0bb8c87 109
+  s_bfde2238b1cf67::t_845c0abac277b3 127-143
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "1c3142e36b165c681b732ee2f7448fb78ee60f63",
+  "prompts": {},
+  "sessions": {
+    "s_bfde2238b1cf67": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bc91a3aa-6f71-40d8-a701-7ba0636d1bba",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

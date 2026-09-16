@@ -1,0 +1,27 @@
+cli/src/utils/connection.ts
+  4aa1cc2b08e6c364 15-20,33-47,50
+cli/src/commands/run-tool.ts
+  4aa1cc2b08e6c364 7,75
+cli/src/commands/run-system-tool.ts
+  4aa1cc2b08e6c364 7,75
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "d22a1ed5d0724c1ad80789ca65a578d2b7f4048c",
+  "prompts": {
+    "4aa1cc2b08e6c364": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0323f95e-54e5-40b8-adf4-7ea4f44bad52",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 219,
+      "total_deletions": 191,
+      "accepted_lines": 51,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,38 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Object.Modify.cs
+  s_5fd6444b4d41de::t_0d7ccd67f0bd2f 17
+  s_5fd6444b4d41de::t_1ead33eb94c833 74
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/UnityEngine_GameObject_ReflectionConverter.cs
+  s_5fd6444b4d41de::t_ea12de4b640506 43-50
+  s_5fd6444b4d41de::t_dd17641ff2c9b4 36-42
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Modify.cs
+  s_5fd6444b4d41de::t_9673486e541a39 59
+  s_5fd6444b4d41de::t_f5eee60994902c 19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Modify.cs
+  s_5fd6444b4d41de::t_86a0ef1132db1b 72
+  s_5fd6444b4d41de::t_5f7e245623b489 16
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Modify.pre-Unity.6.5.cs
+  s_5fd6444b4d41de::t_4adad2581fd091 18
+  s_5fd6444b4d41de::t_a5fcbc23e87439 58
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Component.Modify.cs
+  s_5fd6444b4d41de::t_787b90226c43aa 17
+  s_5fd6444b4d41de::t_e3a24a34d768ea 73
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/UnityEngine_Object_ReflectionConverter.cs
+  s_5fd6444b4d41de::t_f579e2b8cc8e1b 27-32
+  s_5fd6444b4d41de::t_84788c85938c95 12
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "2905ca125561c7c4c3dbd2c0eb7bb2c36ff107b9",
+  "prompts": {},
+  "sessions": {
+    "s_5fd6444b4d41de": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7c3c29c8-20ae-4e58-b199-acfc3956bb78",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPluginConfigurator.cs
+  s_a8c51bc9176e23::t_3fc7d1aecbe187 12
+  s_a8c51bc9176e23::t_9593ac12668296 170-203
+  s_a8c51bc9176e23::t_16f7394c272fdc 169
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetLegacyMigration.cs
+  s_a8c51bc9176e23::t_0a6b1d33100fff 215
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs
+  s_a8c51bc9176e23::t_b605e2c1807106 403-418
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "32fa336eec516e2c6cbcd79548129b6a1d76002b",
+  "prompts": {},
+  "sessions": {
+    "s_a8c51bc9176e23": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43026932-e56b-4e7d-bd51-c3c0c7aff3c2",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

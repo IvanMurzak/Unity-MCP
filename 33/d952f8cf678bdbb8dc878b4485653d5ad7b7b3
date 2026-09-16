@@ -1,0 +1,57 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPluginConfigurator.cs
+  s_96a889b2a9ec0f::t_da87389515928f 87-90
+  s_96a889b2a9ec0f::t_1722ee5b84a77b 30-34,41,49,57,59-69,81,92,161,165-166,169,173
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetLegacyMigration.cs
+  s_96a889b2a9ec0f::t_f5f755900e078c 1-180
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetLegacyMigrationTests.cs
+  s_96a889b2a9ec0f::t_76a5b168c7ee04 1-12,14,16-66,69-73,75-114,116-123,125-138,145-171
+  s_96a889b2a9ec0f::t_f313ba6453fc07 115,124
+  s_96a889b2a9ec0f::t_5b813f6f18ff48 139-144
+  s_96a889b2a9ec0f::t_3cc460ee6c08bb 67-68,74
+  s_96a889b2a9ec0f::t_6448bffaf6c7e4 13,15
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetLongPathPreflight.cs
+  s_96a889b2a9ec0f::t_493275eae8861c 1-132
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetExtractor.cs
+  s_96a889b2a9ec0f::t_80fa738740c4dc 97-98,102
+  s_96a889b2a9ec0f::t_edd31058b16c80 28-35,49,64,66,74,81,88,106
+  s_96a889b2a9ec0f::t_31eb8de4d67fa5 378-382,386-392,403,405
+  s_96a889b2a9ec0f::t_8353cea00ca67e 395-396,398,406
+  s_96a889b2a9ec0f::t_fc15e91292ac78 62-63,65,67
+  s_96a889b2a9ec0f::t_b7d7a69991161b 26-27,40-47,51,53,55-60,68,70-71,73,75-80,82-83,85-86,89-90,92,94-96,99-101,103,105,109,206-236,374-377,383-385,393-394,397,399-402,404,407
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageRestorer.cs
+  s_96a889b2a9ec0f::t_88381d33af47ad 22-30,52-65,72,84,105,108,115-118,120-121,125-132,134-136,140,142-160,163-168,172-176,189-191,202,211,220-221
+  s_96a889b2a9ec0f::t_1054af2b51ce5c 66-71
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetInstallManifest.cs
+  s_96a889b2a9ec0f::t_0ab5df4ae1e644 24,33,38-40,47-55,71-72
+  s_96a889b2a9ec0f::t_a9e6113adc6450 1-23,25-32,34-37,41-46,56-70,73-417
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetPackageInstallerStaleVersionCleanupTests.cs
+  s_96a889b2a9ec0f::t_7db1e52b1d8bdc 19-20,26,55-57,67-70,74,77,92,102-105,119-120,127,151,161-163,169,176-177,188-196
+  s_96a889b2a9ec0f::t_c9ff135aa6da2e 21-25,53,58,64-66,79,85-86,93-96,112-113,128,134,153-155,170,181-184,186
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetInstallManifestTests.cs
+  s_96a889b2a9ec0f::t_15bdb328939767 20-23,61-62,67-68,83,113,115-119,121-124,128,130-136,138-139,141-144,146
+  s_96a889b2a9ec0f::t_54d0c10cc7a59d 1-19,24-60,63-66,69-82,84-112,114,120,125-127,129,137,140,145,147-149
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetLongPathPreflightTests.cs
+  s_96a889b2a9ec0f::t_66c1a861b42321 1-89
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs
+  s_96a889b2a9ec0f::t_1491b3a8046c9d 24-30,48-54,57-67,70,96-103,111-117,120-125,129-130,134,137-138,143-145,147-149,151-161,166-167,175-181,185-189,199-203,205-207,211,215-223,226,229-230,232,237-239,244,247,250-252,261-270,275-277,281-283,288-294,296,299-307,311-312,314-316,318-322,324-330,334,336-337,340,344,346,348-350,352-354,356-357,360-369,379-382
+  s_96a889b2a9ec0f::t_130db852bcddee 139-142,146,150,162
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetExtractorFlatLayoutTests.cs
+  s_96a889b2a9ec0f::t_030774be47f653 1-19,25-51,53,56-57,59,64-66,68,71-75,77-80,84-88,90,105,111-149
+  s_96a889b2a9ec0f::t_edcb83714d8870 20-24,52,54-55,58,60-63,67,69-70,76,81-83,89,91-104,106-110
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "33d952f8cf678bdbb8dc878b4485653d5ad7b7b3",
+  "prompts": {},
+  "sessions": {
+    "s_96a889b2a9ec0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f69faed4-0135-4243-87c8-981a7cb298cc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

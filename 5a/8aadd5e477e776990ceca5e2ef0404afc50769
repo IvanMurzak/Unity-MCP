@@ -1,0 +1,27 @@
+.github/workflows/claude.yml
+  35f7ba084ed3df48 55
+.github/workflows/copilot-setup-steps.yml
+  35f7ba084ed3df48 44
+.github/workflows/test_pull_request_manual.yml
+  35f7ba084ed3df48 9
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "5a8aadd5e477e776990ceca5e2ef0404afc50769",
+  "prompts": {
+    "35f7ba084ed3df48": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4a83c81b-d38f-4711-9ba7-9b3a8f0f6bd7",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 98,
+      "total_deletions": 98,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    }
+  }
+}

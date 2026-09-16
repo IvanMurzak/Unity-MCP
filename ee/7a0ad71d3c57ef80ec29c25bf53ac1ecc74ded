@@ -1,0 +1,81 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/GameObjectUtils.Runtime.pre-Unity.6.5.cs
+  ff3d4f386ef9b9ca 1-46
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Assets/AssetsMaterialModifyTests.cs
+  fe97ea1c23ca11fa 1-81
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/GameObjectUtils.Runtime.cs
+  ff3d4f386ef9b9ca 12,36,38
+Unity-MCP-Plugin/.claude/skills/unity-version-split/SKILL.md
+  ff3d4f386ef9b9ca 1-119
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "ee7a0ad71d3c57ef80ec29c25bf53ac1ecc74ded",
+  "prompts": {
+    "1073c3a6ffc5c7e2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6aff0a4a-34b8-4cc9-9b83-e8aa863e1b7f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 111,
+      "total_deletions": 9,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 7161,
+      "overriden_lines": 0
+    },
+    "f8cb79c2a2fc6578": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ed6c34c8-7e7f-4c21-b2c2-2840db8c5b07",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 132,
+      "total_deletions": 9,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "fe97ea1c23ca11fa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "056343e6-7ca6-470d-be16-e4c8dc0fdeea",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 90,
+      "total_deletions": 9,
+      "accepted_lines": 81,
+      "overriden_lines": 0
+    },
+    "ff3d4f386ef9b9ca": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e3ff148b-2862-49b0-9192-02c6fab35d77",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 280,
+      "total_deletions": 104,
+      "accepted_lines": 211,
+      "overriden_lines": 0
+    }
+  }
+}

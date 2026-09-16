@@ -1,0 +1,31 @@
+Unity-MCP-Plugin/Assets/root/Tests/Editor/BaseTest.cs
+  ca51fe2b5dd4d554 60,63-64,66-67,69-78,80-85,147,189,193,198-201,207,224,229
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Screenshot.Camera.cs
+  ca51fe2b5dd4d554 25,28
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Screenshot.GameView.cs
+  ca51fe2b5dd4d554 25,28
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Screenshot.SceneView.cs
+  ca51fe2b5dd4d554 23,26
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/ToolThreadSafetyTests.cs
+  ca51fe2b5dd4d554 48-49,284,310,369,382,416,431,465,549,553,557,570,572-576,578,580
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.5",
+  "base_commit_sha": "d5431c09b8cb30973571ee6965aac31a94bda434",
+  "prompts": {
+    "ca51fe2b5dd4d554": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ad79546-e9c6-4b15-b049-4c051380598d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 656,
+      "total_deletions": 707,
+      "accepted_lines": 90,
+      "overriden_lines": 1
+    }
+  }
+}

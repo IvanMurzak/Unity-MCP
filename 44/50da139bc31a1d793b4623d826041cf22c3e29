@@ -1,0 +1,36 @@
+cli/tests/setup-mcp.test.ts
+  s_1b2537c6f3f708::t_cf39a1b7828e8e 1-154
+cli/src/utils/agents.ts
+  s_1b2537c6f3f708::t_d5d022b9369c54 23,26
+  s_1b2537c6f3f708::t_e3ec68a997c7ee 17-22
+  s_1b2537c6f3f708::t_de0e0af55e5a66 24-25,27,39
+  s_475f195387009b::t_3f51fef81f9239 84-91,94,96,122,125-126,156,159-160,181,184-185,206,209-210,231,234-235,257,261-262,283,287-288,309,312-313,335,385,388-389,413,417-418,445,470,474-475,496,499-500,527,530-531
+cli/src/lib/setup-mcp.ts
+  s_1b2537c6f3f708::t_f3458506c63055 38-41
+  s_1b2537c6f3f708::t_679cb5c85b2cf3 42-44
+  s_475f195387009b::t_76c4df4175f841 45-51,129-133,135-146,163,179-187
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "4450da139bc31a1d793b4623d826041cf22c3e29",
+  "prompts": {},
+  "sessions": {
+    "s_1b2537c6f3f708": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ecd1a324-77bd-4f84-ad83-96a22d615c21",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_475f195387009b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-aaf981c371e974fd2",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

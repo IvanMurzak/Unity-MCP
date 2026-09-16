@@ -1,0 +1,29 @@
+Unity-Tests/2022.3.62f3/Packages/manifest.json
+  8d4d689498114267 46
+Unity-Tests/2023.2.22f1/Packages/manifest.json
+  8d4d689498114267 49
+Unity-MCP-Plugin/ProjectSettings/ProjectSettings.asset
+  8d4d689498114267 20
+Unity-Tests/6000.3.1f1/Packages/manifest.json
+  8d4d689498114267 50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "66670098578af5933d512307de5cc43b7266a8ee",
+  "prompts": {
+    "8d4d689498114267": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36761876-bbce-477d-9fbd-04b51c7ad534",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 309,
+      "total_deletions": 312,
+      "accepted_lines": 155,
+      "overriden_lines": 0
+    }
+  }
+}

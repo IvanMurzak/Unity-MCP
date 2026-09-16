@@ -1,0 +1,269 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Reflection.MethodCall.cs
+  s_f12f848d465dd7::t_4a2fd96a07226a 33-52
+Unity-MCP-Plugin/.claude/skills/scene-save/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/.claude/skills/gameobject-create/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/.claude/skills/tool-list/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-19
+Unity-MCP-Plugin/.claude/skills/ping/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Editor.Selection.Set.cs
+  s_f12f848d465dd7::t_60c5524aedae64 33-34
+Unity-MCP-Plugin/.claude/skills/scene-list-opened/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Package.Add.cs
+  s_f12f848d465dd7::t_4e470ec4461136 32-49
+Unity-MCP-Plugin/.claude/skills/editor-selection-set/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Editor.Selection.Set.pre-Unity.6.5.cs
+  s_f12f848d465dd7::t_c0f297f6d29480 33-34
+Unity-MCP-Plugin/.claude/skills/script-update-or-create/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Copy.cs
+  s_f12f848d465dd7::t_86902364c722c7 31-42
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Scene.ListOpened.cs
+  s_f12f848d465dd7::t_83700117c3a3ed 30-36
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/SystemTool/Skills.Generate.cs
+  s_f12f848d465dd7::t_a4a3f5c3e3cd16 32-43
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Console.ClearLogs.cs
+  s_f12f848d465dd7::t_cf81306bdbdbce 31-37
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Prefab.Instantiate.cs
+  s_f12f848d465dd7::t_7ab727b3d20773 32-42
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Editor.Selection.cs
+  s_f12f848d465dd7::t_978440613b09ee 30-71
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.FindBuiltIn.cs
+  s_f12f848d465dd7::t_abef9c3af71831 35-48
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Reflection.MethodFind.cs
+  s_f12f848d465dd7::t_bdd5a3d7a8ce30 33-47
+Unity-MCP-Plugin/.claude/skills/editor-application-get-state/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-13
+Unity-MCP-Plugin/.claude/skills/screenshot-camera/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Editor.Application.SetState.cs
+  s_f12f848d465dd7::t_c43af2de1a64e0 32-44
+Unity-MCP-Plugin/.claude/skills/package-add/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-21
+Unity-MCP-Plugin/.claude/skills/tests-run/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-27
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.GetData.cs
+  s_f12f848d465dd7::t_3e69e18ec3e25a 36-48
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Type.GetJsonSchema.cs
+  s_f12f848d465dd7::t_b4939b311d2d3a 34-50
+Unity-MCP-Plugin/.claude/skills/reflection-method-call/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-20
+Unity-MCP-Plugin/.claude/skills/assets-prefab-open/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Delete.cs
+  s_f12f848d465dd7::t_22d12be9129f7a 34-46
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Editor.Selection.Get.cs
+  s_f12f848d465dd7::t_018cd1d8f45f3a 33-34
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Prefab.Close.cs
+  s_f12f848d465dd7::t_489542c9849351 31-41
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Object.Modify.cs
+  s_f12f848d465dd7::t_4409e5de18fda9 35-51
+Unity-MCP-Plugin/.claude/skills/gameobject-component-destroy/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Scene.Unload.cs
+  s_f12f848d465dd7::t_1a68583d8c25e6 34-44
+Unity-MCP-Plugin/.claude/skills/editor-selection-get/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-20
+Unity-MCP-Plugin/.claude/skills/object-get-data/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Component.Add.cs
+  s_f12f848d465dd7::t_1822605d773bd0 31-46
+Unity-MCP-Plugin/.claude/skills/gameobject-set-parent/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-19
+Unity-MCP-Plugin/.claude/skills/script-delete/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/.claude/skills/assets-prefab-instantiate/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-16
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Scene.SetActive.cs
+  s_f12f848d465dd7::t_3259173d24d50b 31-41
+Unity-MCP-Plugin/.claude/skills/scene-get-data/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-24
+Unity-MCP-Plugin/.claude/skills/gameobject-destroy/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Object.GetData.cs
+  s_f12f848d465dd7::t_880926adae400d 35-47
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Create.cs
+  s_f12f848d465dd7::t_24feac80460420 33-45
+Unity-MCP-Plugin/.claude/skills/assets-shader-list-all/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-13
+Unity-MCP-Plugin/.claude/skills/assets-shader-get-data/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Scene.GetData.cs
+  s_f12f848d465dd7::t_5a0efeae5ea9a6 34-50
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Read.cs
+  s_f12f848d465dd7::t_970cf00b54931c 31-42
+Unity-MCP-Plugin/.claude/skills/assets-prefab-create/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-20
+Unity-MCP-Plugin/.claude/skills/unity-skill-generate/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.Camera.cs
+  s_f12f848d465dd7::t_4d56db6a498ec4 34-47
+Unity-MCP-Plugin/.claude/skills/screenshot-scene-view/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Editor.Selection.Get.pre-Unity.6.5.cs
+  s_f12f848d465dd7::t_a26b65b113a887 33-34
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Prefab.Open.cs
+  s_f12f848d465dd7::t_ff2a5ef29c55f4 31-45
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Shader.GetData.cs
+  s_f12f848d465dd7::t_9108b4602875b9 40-59
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Prefab.Save.cs
+  s_f12f848d465dd7::t_8b80e93a2abc5a 32-40
+Unity-MCP-Plugin/.claude/skills/screenshot-isolated/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-27
+Unity-MCP-Plugin/.claude/skills/assets-material-create/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tool.SetEnabledState.cs
+  s_f12f848d465dd7::t_cb72b69d8de3e9 33-44
+Unity-MCP-Plugin/.claude/skills/assets-create-folder/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-19
+Unity-MCP-Plugin/.claude/skills/assets-find-built-in/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Package.Search.cs
+  s_f12f848d465dd7::t_e9d0fb720c3bae 37-52
+Unity-MCP-Plugin/.claude/skills/gameobject-component-add/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/.claude/skills/assets-prefab-close/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/.claude/skills/scene-unload/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Prefab.Create.cs
+  s_f12f848d465dd7::t_cb99a4374e0404 31-48
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.UpdateOrCreate.cs
+  s_f12f848d465dd7::t_c2a0fbfa9f8c6d 34-48
+Unity-MCP-Plugin/.claude/skills/scene-set-active/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/.claude/skills/screenshot-game-view/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.cs
+  s_f12f848d465dd7::t_4dcd793deef4e3 67-113
+Unity-MCP-Plugin/.claude/skills/package-list/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-15
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/SystemTool/Ping.cs
+  s_f12f848d465dd7::t_0193198c6516ee 29-36
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Delete.cs
+  s_f12f848d465dd7::t_f15f34beb7fa9e 34-45
+Unity-MCP-Plugin/.claude/skills/assets-refresh/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Editor.Application.GetState.cs
+  s_f12f848d465dd7::t_787150841a4afe 30-36
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Editor.Selection.pre-Unity.6.5.cs
+  s_f12f848d465dd7::t_a024766d3f35cf 30-70
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Move.cs
+  s_f12f848d465dd7::t_d22c5b39b3bab9 32-45
+Unity-MCP-Plugin/.claude/skills/assets-copy/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/.claude/skills/assets-get-data/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/.claude/skills/gameobject-component-get/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-25
+Unity-MCP-Plugin/.claude/skills/object-modify/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-23
+Unity-MCP-Plugin/.claude/skills/scene-create/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Component.Destroy.cs
+  s_f12f848d465dd7::t_48fdeee920f536 31-44
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Find.cs
+  s_f12f848d465dd7::t_c1c3b58114029c 35-56
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests.Run.cs
+  s_f12f848d465dd7::t_77cb283135cd9b 38-62
+Unity-MCP-Plugin/.claude/skills/assets-move/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Shader.ListAll.cs
+  s_f12f848d465dd7::t_9e280efa547406 31-37
+Unity-MCP-Plugin/.claude/skills/editor-application-set-state/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/.claude/skills/scene-open/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-16
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Package.Remove.cs
+  s_f12f848d465dd7::t_0360c0f8a7c302 33-48
+Unity-MCP-Plugin/.claude/skills/type-get-json-schema/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/.claude/skills/gameobject-duplicate/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.Isolated.cs
+  s_f12f848d465dd7::t_a3be541623c011 100-128
+Unity-MCP-Plugin/.claude/skills/package-search/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Component.ListAll.cs
+  s_f12f848d465dd7::t_6c0231227e5b53 37-50
+Unity-MCP-Plugin/.claude/skills/gameobject-find/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-25
+Unity-MCP-Plugin/.claude/skills/tool-set-enabled-state/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Package.List.cs
+  s_f12f848d465dd7::t_e0bdda8b261c50 60-73
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Refresh.cs
+  s_f12f848d465dd7::t_aed27ef3b0ec7c 31-45
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Scene.Create.cs
+  s_f12f848d465dd7::t_3c3c0757612263 28-38
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Destroy.pre-Unity.6.5.cs
+  s_f12f848d465dd7::t_3776f461ee0ca9 35-36
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Duplicate.cs
+  s_f12f848d465dd7::t_8f1a93a6420731 33-45
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.SetParent.cs
+  s_f12f848d465dd7::t_a0b6933a1b4418 32-45
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.SceneView.cs
+  s_f12f848d465dd7::t_1762b3faf9ade2 32-42
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Component.Get.cs
+  s_f12f848d465dd7::t_ee05f4d4e327fd 38-39
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.pre-Unity.6.5.cs
+  s_f12f848d465dd7::t_74bafe49e96cc3 67-113
+Unity-MCP-Plugin/.claude/skills/assets-delete/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/.claude/skills/assets-find/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-20
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Scene.Save.cs
+  s_f12f848d465dd7::t_da41a228a97de4 31-42
+Unity-MCP-Plugin/.claude/skills/console-clear-logs/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-13
+Unity-MCP-Plugin/.claude/skills/package-remove/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-17
+Unity-MCP-Plugin/.claude/skills/script-read/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-19
+Unity-MCP-Plugin/.claude/skills/console-get-logs/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-16
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Material.Create.cs
+  s_f12f848d465dd7::t_cfc276ea34ebed 31-43
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tool.List.cs
+  s_f12f848d465dd7::t_2e2851f0bc2af0 51-63
+Unity-MCP-Plugin/.claude/skills/assets-prefab-save/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-13
+Unity-MCP-Plugin/.claude/skills/reflection-method-find/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-18
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Find.cs
+  s_f12f848d465dd7::t_6c209b8e4371a5 31-48
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Destroy.cs
+  s_f12f848d465dd7::t_bf67e953465592 35-36
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Console.GetLogs.cs
+  s_f12f848d465dd7::t_ef6079a79ba62e 29-37
+Unity-MCP-Plugin/.claude/skills/gameobject-component-list-all/SKILL.md
+  s_f12f848d465dd7::t_aafa983091c193 3,8-19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.GameView.cs
+  s_f12f848d465dd7::t_9ed1d87eff0b46 34-45
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.CreateFolders.cs
+  s_f12f848d465dd7::t_50cb34d1450ced 43-58
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Scene.Open.cs
+  s_f12f848d465dd7::t_95af0e9e20a659 30-40
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Component.Get.pre-Unity.6.5.cs
+  s_f12f848d465dd7::t_71445550edec63 38-39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "d2dc98ef41036a8e2a4335c6ccd48396f4262a24",
+  "prompts": {},
+  "sessions": {
+    "s_f12f848d465dd7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "054f71d7-8860-418f-9b1a-a0dc6f00a162",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

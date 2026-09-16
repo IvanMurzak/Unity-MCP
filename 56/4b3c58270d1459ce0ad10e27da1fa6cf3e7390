@@ -1,0 +1,42 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/SystemTool/Skills.Create.cs
+  71cfa1ed1f3c6b70 13-14,16-17,36-120,122,125-187,189-190,193,196,198-199,201-202,204-207,209-218,221
+cli/src/utils/agents.ts
+  4aa1cc2b08e6c364 1,14,95,119,153,178,203,228,255,281,306,329,382,411,441,468,501-544
+cli/src/commands/setup-mcp.ts
+  4aa1cc2b08e6c364 11,26
+cli/src/commands/setup-skills.ts
+  4aa1cc2b08e6c364 8,17,87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "564b3c58270d1459ce0ad10e27da1fa6cf3e7390",
+  "prompts": {
+    "4aa1cc2b08e6c364": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0323f95e-54e5-40b8-adf4-7ea4f44bad52",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 179,
+      "total_deletions": 133,
+      "accepted_lines": 74,
+      "overriden_lines": 0
+    },
+    "71cfa1ed1f3c6b70": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36ba3fa6-0b87-4490-9e80-d422bcbf074c",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 181,
+      "total_deletions": 56,
+      "accepted_lines": 176,
+      "overriden_lines": 1
+    }
+  }
+}

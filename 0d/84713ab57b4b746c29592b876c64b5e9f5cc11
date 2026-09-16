@@ -1,0 +1,46 @@
+Unity-MCP-Plugin/Assets/root/package.json
+  8d4d689498114267 18,27-28,30-34,36
+Unity-MCP-Plugin/Packages/manifest.json
+  8d4d689498114267 6-7,9-12,14
+Unity-MCP-Plugin/Assets/root/Editor/DependencyResolver/com.IvanMurzak.Unity.MCP.DependencyResolver.asmdef
+  8d4d689498114267 1-16
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/com.IvanMurzak.Unity.MCP.Editor.asmdef
+  8d4d689498114267 30-32
+Unity-MCP-Plugin/Assets/root/Tests/Editor/com.IvanMurzak.Unity.MCP.Editor.Tests.asmdef
+  8d4d689498114267 28-30
+Unity-MCP-Plugin/Assets/root/Editor/DependencyResolver/NuGetDependencyResolver.cs
+  8d4d689498114267 1-229
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "0d84713ab57b4b746c29592b876c64b5e9f5cc11",
+  "prompts": {
+    "39ce660a0113894c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb1982f3-0a6e-41e6-a1f1-76418b796147",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 65,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    },
+    "8d4d689498114267": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36761876-bbce-477d-9fbd-04b51c7ad534",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 2288,
+      "total_deletions": 11585,
+      "accepted_lines": 2088,
+      "overriden_lines": 0
+    }
+  }
+}

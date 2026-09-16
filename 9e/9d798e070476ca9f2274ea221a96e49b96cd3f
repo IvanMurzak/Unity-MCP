@@ -1,0 +1,21 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "9e9d798e070476ca9f2274ea221a96e49b96cd3f",
+  "prompts": {
+    "f732419e1a81b9fc": {
+      "agent_id": {
+        "tool": "github-copilot",
+        "id": "bbe3e8e0-1c59-46fd-8d9f-9ce4232d32f8",
+        "model": "copilot/claude-sonnet-4.6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 3,
+      "total_deletions": 2,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    }
+  }
+}

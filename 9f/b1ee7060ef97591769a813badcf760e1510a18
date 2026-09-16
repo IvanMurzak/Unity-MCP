@@ -1,0 +1,41 @@
+.github/workflows/copilot-setup-steps.yml
+  9f022c51d0af7506 1-8
+.github/workflows/release.yml
+  9f022c51d0af7506 1-8
+.github/workflows/test_pull_request_manual.yml
+  9f022c51d0af7506 1-8
+.github/workflows/deploy.yml
+  9f022c51d0af7506 1-8
+.github/workflows/test_unity_plugin.yml
+  9f022c51d0af7506 1-8
+.github/workflows/deploy_server_executables.yml
+  9f022c51d0af7506 1-8
+.github/workflows/claude.yml
+  9f022c51d0af7506 1-8
+.github/workflows/test_pull_request.yml
+  9f022c51d0af7506 1-8
+.github/actions/setup-unity-mcp/action.yml
+  9f022c51d0af7506 1-8,100-103,106-116
+.github/workflows/bump_version.yml
+  9f022c51d0af7506 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "9fb1ee7060ef97591769a813badcf760e1510a18",
+  "prompts": {
+    "9f022c51d0af7506": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cecac5b3-2d6e-4e3c-9d5c-cbc729fa7cd3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 1161,
+      "total_deletions": 1068,
+      "accepted_lines": 304,
+      "overriden_lines": 0
+    }
+  }
+}

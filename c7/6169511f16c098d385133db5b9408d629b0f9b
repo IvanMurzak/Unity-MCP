@@ -1,0 +1,24 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/ScriptAssembliesCache.cs
+  s_a8c51bc9176e23::t_77348a838f8827 1-69
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/UpdatePopupWindow.cs
+  s_a8c51bc9176e23::t_c588067b39159a 14
+  s_a8c51bc9176e23::t_50a9f6cc5632e0 179
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetResolverMenu.cs
+  s_a8c51bc9176e23::t_f9327f8289292e 35-42
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "c76169511f16c098d385133db5b9408d629b0f9b",
+  "prompts": {},
+  "sessions": {
+    "s_a8c51bc9176e23": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43026932-e56b-4e7d-bd51-c3c0c7aff3c2",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
