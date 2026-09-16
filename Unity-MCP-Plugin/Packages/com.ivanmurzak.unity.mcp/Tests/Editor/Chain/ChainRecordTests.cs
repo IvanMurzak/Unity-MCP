@@ -57,6 +57,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Chain
         const int FixtureSchema = 1;
         const float TimeoutSeconds = 300f;
 
+        // ── Fixture field names and envelope values (format: MCP-Plugin-dotnet docs/chain-fixtures.md §F1) ──
+        // LOCAL de-duplication only; these are NOT a new contract. None of these names has a public
+        // constant in any assembly Unity receives: the fixture format's own field tables live in
+        // McpPlugin.NullEngine's FixtureLoader, whose project is IsPackable=false (no DLL in Unity's
+        // NuGet drop) and whose field arrays are internal — and the reference recorder RawDump.cs
+        // writes them inline for the same reason. Hoisted only where a name repeats, so that a typo
+        // cannot desync a write site from its matching read site (schema/name/args) or the success
+        // envelope from the error envelope (status/content/errorKind).
+        // Every value here is byte-identical to the literal it replaced; the committed fixtures under
+        // tests/chain-fixtures/ are what enforces that.
+        const string FieldSchema = "schema";
+        const string FieldKind = "kind";
+        const string FieldName = "name";
+        const string FieldArgs = "args";
+        const string FieldStatus = "status";
+        const string FieldContent = "content";
+        const string FieldErrorKind = "errorKind";
+        const string FieldType = "type";
+        const string FieldText = "text";
+        const string FieldMimeType = "mimeType";
+        const string StatusError = "error";
+
         [UnityTest]
         public IEnumerator RecordEditorToolContract()
         {
@@ -117,8 +139,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Chain
 
             var meta = new JsonObject
             {
-                ["schema"] = FixtureSchema,
-                ["kind"] = "meta",
+                [FieldSchema] = FixtureSchema,
+                [FieldKind] = "meta",
                 ["engine"] = "unity",
                 ["engine_version"] = engineVersion,
                 ["surface"] = "editor",
@@ -144,9 +166,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Chain
 
                 var line = new JsonObject
                 {
-                    ["kind"] = "call",
-                    ["name"] = name,
-                    ["args"] = callArgs,
+                    [FieldKind] = "call",
+                    [FieldName] = name,
+                    [FieldArgs] = callArgs,
                     ["response"] = ProjectResponse(outer)
                 };
                 lines.Add(line.ToJsonString());
@@ -171,7 +193,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Chain
             var document = JsonNode.Parse(File.ReadAllText(path, Encoding.UTF8)) as JsonObject
                 ?? throw new InvalidOperationException($"battery {path} must be a JSON object");
 
-            var schema = document["schema"]?.ToJsonString();
+            var schema = document[FieldSchema]?.ToJsonString();
             if (schema != FixtureSchema.ToString(CultureInfo.InvariantCulture))
                 throw new InvalidOperationException($"battery {path}: schema mismatch - expected {FixtureSchema}, got {schema ?? "<missing>"}");
 
@@ -181,12 +203,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Chain
             var result = new List<(string, JsonObject)>();
             foreach (var item in calls)
             {
-                var name = (item as JsonObject)?["name"]?.GetValue<string>();
+                var name = (item as JsonObject)?[FieldName]?.GetValue<string>();
                 if (string.IsNullOrEmpty(name))
                     throw new InvalidOperationException($"battery {path}: every call needs a 'name'");
 
                 // Detached copy: a node can have only one parent, and the battery document owns this one.
-                var args = item!["args"] is JsonObject source
+                var args = item![FieldArgs] is JsonObject source
                     ? (JsonObject)JsonNode.Parse(source.ToJsonString())!
                     : new JsonObject();
                 result.Add((name!, args));
@@ -215,8 +237,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Chain
         {
             var line = new JsonObject
             {
-                ["kind"] = "tool",
-                ["name"] = tool.Name
+                [FieldKind] = "tool",
+                [FieldName] = tool.Name
             };
             if (!string.IsNullOrEmpty(tool.Title))
                 line["title"] = tool.Title;
@@ -259,24 +281,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Chain
 
             var response = new JsonObject
             {
-                ["status"] = value.Status == ResponseStatus.Error ? "error" : "success",
-                ["content"] = content
+                [FieldStatus] = value.Status == ResponseStatus.Error ? StatusError : "success",
+                [FieldContent] = content
             };
             if (value.StructuredContent != null)
                 response["structuredContent"] = JsonNode.Parse(value.StructuredContent.ToJsonString());
-            response["errorKind"] = outer.ErrorKind.ToString();
+            response[FieldErrorKind] = outer.ErrorKind.ToString();
             return response;
         }
 
         static JsonObject ErrorEnvelope(string message, ResponseErrorKind errorKind) => new JsonObject
         {
-            ["status"] = "error",
-            ["content"] = new JsonArray(new JsonObject
+            [FieldStatus] = StatusError,
+            [FieldContent] = new JsonArray(new JsonObject
             {
-                ["type"] = ContentType.Text,
-                ["text"] = message
+                [FieldType] = ContentType.Text,
+                [FieldText] = message
             }),
-            ["errorKind"] = errorKind.ToString()
+            [FieldErrorKind] = errorKind.ToString()
         };
 
         /// <summary>Mirror of ExtensionsContentBlock.ToContent, block kind by block kind.</summary>
@@ -288,23 +310,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Chain
                 case ContentType.Audio:
                     return new JsonObject
                     {
-                        ["type"] = block.Type,
+                        [FieldType] = block.Type,
                         ["data"] = block.Data ?? string.Empty,
-                        ["mimeType"] = block.MimeType ?? string.Empty
+                        [FieldMimeType] = block.MimeType ?? string.Empty
                     };
 
                 case ContentType.Resource:
                     var resource = new JsonObject { ["uri"] = block.Resource?.Uri ?? string.Empty };
                     if (block.Resource?.MimeType != null)
-                        resource["mimeType"] = block.Resource.MimeType;
+                        resource[FieldMimeType] = block.Resource.MimeType;
                     // Text is preferred over Blob, as on the wire.
                     if (block.Resource?.Text != null)
-                        resource["text"] = block.Resource.Text;
+                        resource[FieldText] = block.Resource.Text;
                     else if (block.Resource?.Blob != null)
                         resource["blob"] = block.Resource.Blob;
                     return new JsonObject
                     {
-                        ["type"] = ContentType.Resource,
+                        [FieldType] = ContentType.Resource,
                         ["resource"] = resource
                     };
 
@@ -312,8 +334,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Chain
                     // A text block LOSES its MimeType on the wire.
                     return new JsonObject
                     {
-                        ["type"] = ContentType.Text,
-                        ["text"] = block.Text ?? string.Empty
+                        [FieldType] = ContentType.Text,
+                        [FieldText] = block.Text ?? string.Empty
                     };
             }
         }
