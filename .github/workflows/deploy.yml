@@ -8,14 +8,11 @@
 
 name: deploy
 
+# Reusable child of release.yml ONLY: the sole path to an npm publish is a manual dispatch of
+# release.yml (which runs the full test set first). No workflow_dispatch here: a direct dispatch
+# would publish without those gates. (It publishes via npm OIDC Trusted Publishing - no NPM_TOKEN -
+# and the OIDC workflow_ref of a workflow_call is the CALLER, release.yml.)
 on:
-  workflow_dispatch:
-    inputs:
-      version:
-        description: "Deploy CLI to npm version (e.g., 1.0.0)."
-        required: true
-        type: string
-
   workflow_call:
     inputs:
       version: { required: true, type: string }
@@ -68,7 +65,24 @@ jobs:
           cd cli
           npm test
 
+      # Idempotent: a re-dispatch of release.yml after a later job failed must not fail here on
+      # "cannot publish over the previously published version".
+      - name: Check whether this version is already on npm
+        id: npm_exists
+        run: |
+          cd cli
+          name="$(jq -r '.name' package.json)"
+          version="${{ steps.version.outputs.version }}"
+          code="$(curl -sS -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/${name}/${version}")"
+          echo "npm ${name}@${version}: HTTP ${code}"
+          case "$code" in
+            200) echo "exists=true" >> "$GITHUB_OUTPUT"; echo "::notice::${name}@${version} is already on npm - skipping publish." ;;
+            404) echo "exists=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Unexpected HTTP ${code} from the npm registry for ${name}@${version}."; exit 1 ;;
+          esac
+
       - name: Publish to npm with provenance
+        if: steps.npm_exists.outputs.exists != 'true'
         run: |
           cd cli
           npm publish --access public --provenance
