@@ -50,7 +50,6 @@ This document explains the internal structure, design, code style, and main prin
     - [🚀 release.yml](#-releaseyml)
     - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
     - [🔧 test\_unity\_plugin.yml](#-test_unity_pluginyml)
-    - [📦 deploy.yml](#-deployyml)
   - [Technology Stack](#technology-stack)
   - [Security Considerations](#security-considerations)
   - [Deployment Targets](#deployment-targets)
@@ -585,7 +584,7 @@ gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                  
    - 3 test modes: `editmode`, `playmode`, `standalone`
    - 2 operating systems: `windows-latest`, `ubuntu-latest`
    - Total: **18 test matrix combinations**
-4. **Deploy** - Publishes the npm CLI via `deploy.yml` (skipped when that exact version is already on npm)
+4. **Deploy** - Builds, tests and publishes the `unity-mcp-cli` npm package with provenance (OIDC Trusted Publishing, directly in `release.yml`; skipped when that exact version is already on npm)
 5. **Release Creation** - Creates the tag + GitHub Release with the Unity installer package and signed UPM package attached (OpenUPM picks it up from there)
 6. **Discord Notification** - Sends formatted release notes to Discord channel
 7. **Verify** - Fails the run unless the GitHub Release, npm and OpenUPM all serve the new version
@@ -619,20 +618,6 @@ Steps 4-8 are skipped on a dry run.
 - Aborts if workflow files are modified in PRs
 - Caches Unity Library for faster subsequent runs
 - Uploads test artifacts for debugging
-
-### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
-
-**Trigger:** Called by the release workflow only (`workflow_call`)
-**Purpose:** Publishes the `unity-mcp-cli` npm package
-
-**Jobs:**
-
-**Deploy CLI to npm:**
-
-- Builds and tests the CLI
-- Publishes to [npm](https://www.npmjs.com/package/unity-mcp-cli) with provenance
-
-> The MCP server NuGet package and Docker image deploys moved to the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repo (Docker: [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server)).
 
 ## Technology Stack
 

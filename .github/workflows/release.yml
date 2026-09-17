@@ -10,8 +10,8 @@ name: release
 
 # A release is cut ONLY by a manual dispatch of this workflow (software release-dispatch contract,
 # `.taskflow/2026-09-03-chain-testing/05-release-dispatch-contract.md`). Merging a version bump to
-# `main` publishes nothing. One run: full tests -> builds -> npm publish (unity-mcp-cli, via
-# deploy.yml) -> tag + GitHub Release (the signed UPM tarball OpenUPM picks up) -> Discord ->
+# `main` publishes nothing. One run: full tests -> builds -> npm publish (unity-mcp-cli, job
+# deploy-cli-to-npm) -> tag + GitHub Release (the signed UPM tarball OpenUPM picks up) -> Discord ->
 # post-publish registry verification.
 #
 #   gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main -f dry_run=true   # tests + builds, publishes nothing
@@ -450,11 +450,16 @@ jobs:
 
   # -------------------
 
-  # npm publish of unity-mcp-cli (deploy.yml) — the FIRST side effect, gated on the complete test
-  # set and every build. It runs BEFORE the tag + GitHub Release so a failed publish leaves no tag
-  # behind and the same version can simply be re-dispatched; deploy.yml skips the publish when the
-  # exact version is already on npm, so a re-dispatch after a later failure is idempotent.
-  deploy:
+  # npm publish of unity-mcp-cli — the FIRST side effect, gated on the complete test set and every
+  # build. It runs BEFORE the tag + GitHub Release so a failed publish leaves no tag behind and the
+  # same version can simply be re-dispatched; the publish is skipped when the exact version is
+  # already on npm, so a re-dispatch after a later failure is idempotent.
+  #
+  # The publish lives DIRECTLY in release.yml (it was a reusable deploy.yml): npm Trusted Publishing
+  # (OIDC, no NPM_TOKEN) from a reusable workflow under workflow_dispatch is a documented limitation
+  # (see AI-Game-Dev-CLI-Core's release.yml header), and a dry run cannot prove otherwise.
+  deploy-cli-to-npm:
+    runs-on: ubuntu-latest
     needs: [
         check-version-tag,
         test-cli,
@@ -475,12 +480,58 @@ jobs:
       ]
     if: inputs.dry_run != true
     permissions:
-      id-token: write
       contents: read
-    uses: ./.github/workflows/deploy.yml
-    with:
-      version: ${{ needs.check-version-tag.outputs.version }}
-    secrets: inherit
+      id-token: write
+    env:
+      VERSION: ${{ needs.check-version-tag.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Set package version
+        run: |
+          cd cli
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Install dependencies
+        run: |
+          cd cli
+          npm ci
+
+      - name: Build
+        run: |
+          cd cli
+          npm run build
+
+      - name: Test
+        run: |
+          cd cli
+          npm test
+
+      - name: Check whether this version is already on npm
+        id: npm_exists
+        run: |
+          cd cli
+          name="$(jq -r '.name' package.json)"
+          code="$(curl -sS -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/${name}/${VERSION}")"
+          echo "npm ${name}@${VERSION}: HTTP ${code}"
+          case "$code" in
+            200) echo "exists=true" >> "$GITHUB_OUTPUT"; echo "::notice::${name}@${VERSION} is already on npm - skipping publish." ;;
+            404) echo "exists=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Unexpected HTTP ${code} from the npm registry for ${name}@${VERSION}."; exit 1 ;;
+          esac
+
+      - name: Publish to npm with provenance
+        if: steps.npm_exists.outputs.exists != 'true'
+        run: |
+          cd cli
+          npm publish --access public --provenance
 
   # Atomic publish point — gated on EVERY prerequisite (tests, builds, signed
   # UPM package, release notes, npm publish). Downloads all asset artifacts and creates the
@@ -507,7 +558,7 @@ jobs:
         test-unity-6000-3-1f1-editmode,
         # test-unity-6000-3-1f1-playmode,
         test-unity-6000-3-1f1-standalone,
-        deploy,
+        deploy-cli-to-npm,
       ]
     if: inputs.dry_run != true
     outputs:
@@ -585,7 +636,7 @@ jobs:
     needs:
       [
         release-unity-plugin,
-        deploy,
+        deploy-cli-to-npm,
       ]
     if: |
       always() &&
@@ -716,7 +767,7 @@ jobs:
   # com.ivanmurzak.unity.mcp@<version> from the Release (observed lag 2-6 min; capped at 45).
   verify-published:
     runs-on: ubuntu-latest
-    needs: [check-version-tag, deploy, release-unity-plugin]
+    needs: [check-version-tag, deploy-cli-to-npm, release-unity-plugin]
     if: inputs.dry_run != true
     timeout-minutes: 60
     env:
@@ -775,13 +826,13 @@ jobs:
             sleep 60
           done
 
-  # Cleanup job to remove build artifacts after the atomic publish + deploy.
+  # Cleanup job to remove build artifacts after the atomic publish + npm publish.
   # Re-pointed at release-unity-plugin (was: publish-mcp-server, publish-unity-installer)
   # since those post-release publish jobs collapsed into release-unity-plugin.
   # Skipped on a dry run so the built installer + signed UPM tarball stay inspectable.
   cleanup-artifacts:
     runs-on: ubuntu-latest
-    needs: [release-unity-plugin, deploy]
+    needs: [release-unity-plugin, deploy-cli-to-npm]
     if: always() && inputs.dry_run != true
     steps:
       - name: Delete Unity Package artifacts
