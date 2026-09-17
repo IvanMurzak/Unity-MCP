@@ -35,7 +35,7 @@ with none of that risk. If a future change *does* move the C# side onto the JSON
 ## The parity tests (both build-failing)
 
 Both live in the CLI's vitest suite — they need no Unity licence and run on every PR via
-`test_cli.yml`, and again inside the publish job (`deploy.yml`), which is what makes them a release
+`test_cli.yml`, and again inside the publish job (`deploy-cli-to-npm` in `release.yml`), which is what makes them a release
 gate rather than a nicety.
 
 - **`cli/tests/extensions-catalog-parity.test.ts`** — `json ↔ TypeScript mirror`. Deep-equals the

@@ -50,7 +50,6 @@
     - [🚀 release.yml](#-releaseyml)
     - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
     - [🔧 test\_unity\_plugin.yml](#-test_unity_pluginyml)
-    - [📦 deploy.yml](#-deployyml)
   - [技术栈](#技术栈)
   - [安全注意事项](#安全注意事项)
   - [部署目标](#部署目标)
@@ -552,7 +551,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - **不要修改** `.github/workflows/` 中的工作流文件——如果 CI 检测到不受信任的贡献者修改了这些文件，将会中止检查。
 - **所有 18 种测试矩阵组合必须全部通过**，PR 才能被合并。如果您的更改只破坏了某一种组合（如 `2022-editmode`），该任务将显示红色 ✗，而其他任务则为绿色。
 - **重新运行失败的任务：** 前往 PR → **Checks** 标签 → 点击失败的任务 → **Re-run failed jobs**。这在 Unity 编辑器偶发崩溃时非常有用。
-- **工作流运行顺序：** `test_pull_request.yml` 在您的 PR 上运行。`release.yml` 仅在合并到 `main` 后运行。您无需手动触发发布。
+- **工作流运行顺序：** `test_pull_request.yml` 在您的 PR 上运行。合并到 `main` 不会发布任何内容：维护者通过手动触发 `release.yml` 来发布。
 
 ## 工作流概览
 
@@ -560,23 +559,30 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 ### 🚀 [release.yml](../../.github/workflows/release.yml)
 
-**触发条件：** 推送到 `main` 分支
+**触发条件：** 仅手动 `workflow_dispatch`（输入 `dry_run`，默认 `false`）。合并到 `main` 不会发布任何内容。
 **用途：** 协调整个发布流程的主发布工作流
+
+```bash
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main -f dry_run=true   # 运行全部测试和构建，不发布任何内容
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                   # 正式发布
+```
 
 **流程：**
 
-1. **版本检查** - 从 [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) 提取版本并检查发布标签是否已存在
+1. **版本检查** - 从 [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) 提取版本。正式运行若不在 `main` 上或发布标签已存在则失败；dry run 仅警告并继续
 2. **构建 Unity Installer** - 测试并导出 Unity 包安装程序（`AI-Game-Dev-Installer.unitypackage`）
 4. **Unity 插件测试** - 跨以下组合运行全面测试：
    - 3 个 Unity 版本：`2022.3.62f3`、`2023.2.22f1`、`6000.3.1f1`
    - 3 种测试模式：`editmode`、`playmode`、`standalone`
    - 2 种操作系统：`windows-latest`、`ubuntu-latest`
    - 合计：**18 种测试矩阵组合**
-5. **创建发布版本** - 从提交记录生成发布说明并创建带标签的 GitHub 发布
-6. **发布** - 将 Unity 安装程序包和已签名的 UPM 包上传到发布版本
+5. **部署** - 构建、测试并以 provenance 方式发布 `unity-mcp-cli` npm 包（OIDC Trusted Publishing，直接在 `release.yml` 中执行；若该版本已在 npm 上则跳过）
+6. **创建发布版本** - 创建标签和 GitHub 发布，并附上 Unity 安装程序包和已签名的 UPM 包（OpenUPM 从这里获取）
 7. **Discord 通知** - 将格式化的发布说明发送到 Discord 频道
-8. **部署** - 触发 npm CLI 的部署工作流
+8. **验证** - 除非 GitHub 发布、npm 和 OpenUPM 都提供新版本，否则运行失败
 9. **清理** - 成功发布后删除构建构件
+
+dry run 时跳过步骤 5-9。
 
 ### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
 
@@ -602,18 +608,6 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - 如果 PR 中修改了工作流文件则中止
 - 缓存 Unity Library 以加快后续运行速度
 - 上传测试构件供调试使用
-
-### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
-
-**触发条件：** 由发布工作流调用或手动触发
-**用途：** 发布 `unity-mcp-cli` npm 包
-
-**任务：**
-
-**将 CLI 部署到 npm：**
-
-- 构建并测试 CLI
-- 以 provenance 方式发布到 [npm](https://www.npmjs.com/package/unity-mcp-cli)
 
 > MCP Server 的 NuGet 包和 Docker 镜像部署已迁移到共享仓库 [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)（Docker：[`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server)）。
 

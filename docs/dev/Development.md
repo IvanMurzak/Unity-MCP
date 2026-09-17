@@ -50,7 +50,6 @@ This document explains the internal structure, design, code style, and main prin
     - [🚀 release.yml](#-releaseyml)
     - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
     - [🔧 test\_unity\_plugin.yml](#-test_unity_pluginyml)
-    - [📦 deploy.yml](#-deployyml)
   - [Technology Stack](#technology-stack)
   - [Security Considerations](#security-considerations)
   - [Deployment Targets](#deployment-targets)
@@ -560,7 +559,7 @@ Here is what you need to know when working with CI as a contributor:
 - **Do not modify workflow files** in `.github/workflows/` in your PR — the CI check will abort if it detects changes to these files from an untrusted contributor.
 - **All 18 test matrix combinations must pass** before a PR can be merged. If your change breaks only one combination (e.g., `2022-editmode`), that job will show a red ✗ while others are green.
 - **Re-running failed jobs:** Go to the PR → **Checks** tab → click a failed job → **Re-run failed jobs**. This is useful for transient Unity Editor crashes.
-- **Workflow run order:** `test_pull_request.yml` runs on your PR. `release.yml` runs only after merging to `main`. You don't need to trigger releases manually.
+- **Workflow run order:** `test_pull_request.yml` runs on your PR. Merging to `main` publishes nothing: a maintainer cuts a release by manually dispatching `release.yml`.
 
 ## Workflows Overview
 
@@ -568,23 +567,30 @@ Here is what you need to know when working with CI as a contributor:
 
 ### 🚀 [release.yml](../../.github/workflows/release.yml)
 
-**Trigger:** Push to `main` branch
+**Trigger:** Manual `workflow_dispatch` only (input `dry_run`, default `false`). Merging to `main` publishes nothing.
 **Purpose:** Main release workflow that orchestrates the entire release process
+
+```bash
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main -f dry_run=true   # every test + build, publishes nothing
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                   # real release
+```
 
 **Process:**
 
-1. **Version Check** - Extracts version from [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) and checks if release tag already exists
+1. **Version Check** - Extracts version from [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json). A real run fails if it is not on `main` or if the release tag already exists; a dry run warns and continues
 2. **Build Unity Installer** - Tests and exports Unity package installer (`AI-Game-Dev-Installer.unitypackage`)
 3. **Unity Plugin Testing** - Runs comprehensive tests across:
    - 3 Unity versions: `2022.3.62f3`, `2023.2.22f1`, `6000.3.1f1`
    - 3 test modes: `editmode`, `playmode`, `standalone`
    - 2 operating systems: `windows-latest`, `ubuntu-latest`
    - Total: **18 test matrix combinations**
-4. **Release Creation** - Generates release notes from commits and creates GitHub release with tag
-5. **Publishing** - Uploads Unity installer package and signed UPM package to the release
+4. **Deploy** - Builds, tests and publishes the `unity-mcp-cli` npm package with provenance (OIDC Trusted Publishing, directly in `release.yml`; skipped when that exact version is already on npm)
+5. **Release Creation** - Creates the tag + GitHub Release with the Unity installer package and signed UPM package attached (OpenUPM picks it up from there)
 6. **Discord Notification** - Sends formatted release notes to Discord channel
-7. **Deploy** - Triggers deployment workflow for the npm CLI
+7. **Verify** - Fails the run unless the GitHub Release, npm and OpenUPM all serve the new version
 8. **Cleanup** - Removes build artifacts after successful publishing
+
+Steps 4-8 are skipped on a dry run.
 
 > The MCP server binaries are NOT built or released here — they are released from the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repo.
 
@@ -612,20 +618,6 @@ Here is what you need to know when working with CI as a contributor:
 - Aborts if workflow files are modified in PRs
 - Caches Unity Library for faster subsequent runs
 - Uploads test artifacts for debugging
-
-### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
-
-**Trigger:** Called by release workflow OR manual dispatch
-**Purpose:** Publishes the `unity-mcp-cli` npm package
-
-**Jobs:**
-
-**Deploy CLI to npm:**
-
-- Builds and tests the CLI
-- Publishes to [npm](https://www.npmjs.com/package/unity-mcp-cli) with provenance
-
-> The MCP server NuGet package and Docker image deploys moved to the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repo (Docker: [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server)).
 
 ## Technology Stack
 
