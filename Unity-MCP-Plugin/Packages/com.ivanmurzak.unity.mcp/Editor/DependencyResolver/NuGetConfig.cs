@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "3";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "4";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -114,14 +114,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // SignInRequiredReason surface ("server configuration error" class for invalid_target),
             // and the ConnectionCredentialCoordinator stop-on-dead-credential / resume-on-SignedIn-edge
             // behavior the AssistedReauthService (02 §C4, D4 ladder) renders and relies on.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "8.3.0", includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "8.4.0", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised
             // by the EditMode tests under Tests/Editor/AtomicApi/, which
             // compile-fail against 5.0.0. 5.1.1 adds defensive try/catch around
             // reflection so the documented no-throw contract on Try* methods holds.
-            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.4.0",  includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.4.1",  includeInBuild: true),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
