@@ -110,6 +110,57 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         }
 
         /// <summary>
+        /// The value Unity gives an Asset Import Worker via its <c>-name</c> command-line argument,
+        /// e.g. <c>-name AssetImportWorker0</c>. Workers are numbered, so this is a prefix.
+        /// </summary>
+        public const string AssetImportWorkerNamePrefix = "AssetImportWorker";
+
+        /// <summary>
+        /// Checks whether the CURRENT PROCESS is a Unity Asset Import Worker, by reading the
+        /// <c>-name</c> argument Unity itself launches the worker with. The project's location on
+        /// disk plays no part: no path is inspected, compared, or hardcoded anywhere here, so this
+        /// behaves identically on every machine and for every project folder.
+        ///
+        /// A worker is a headless Editor process Unity launches with the SAME <c>-projectPath</c>
+        /// as the main Editor, so every project-relative path it computes — including the MCP log
+        /// file — collides with the main Editor's. Workers serve no MCP client, so anything scoped
+        /// to a client session should be skipped in them.
+        /// </summary>
+        public static bool IsAssetImportWorker()
+            => IsAssetImportWorker(Environment.GetCommandLineArgs());
+
+        /// <summary>
+        /// Test-friendly overload taking the command line explicitly.
+        ///
+        /// Matches a <c>-name</c> / <c>--name</c> flag whose VALUE starts with
+        /// <see cref="AssetImportWorkerNamePrefix"/>. Reading the flag's value, rather than scanning
+        /// the whole command line for the word, is what keeps the project's location out of it: the
+        /// command line also carries <c>-projectPath</c>, so a substring scan would report "worker"
+        /// for any project whose folder happened to contain that word and switch off log collection
+        /// in its main Editor.
+        /// </summary>
+        public static bool IsAssetImportWorker(IReadOnlyList<string>? commandLineArgs)
+        {
+            if (commandLineArgs == null)
+                return false;
+
+            // Stop at Count - 1: a trailing "-name" has no value to inspect.
+            for (var i = 0; i < commandLineArgs.Count - 1; i++)
+            {
+                var flag = commandLineArgs[i];
+                if (!string.Equals(flag, "-name", StringComparison.OrdinalIgnoreCase) &&
+                    !string.Equals(flag, "--name", StringComparison.OrdinalIgnoreCase))
+                    continue;
+
+                var value = commandLineArgs[i + 1];
+                if (value != null && value.StartsWith(AssetImportWorkerNamePrefix, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            }
+
+            return false;
+        }
+
+        /// <summary>
         /// Applies environment-variable and command-line-argument overrides to the given config.
         /// Args (highest priority) override env vars, env vars override the disk-baseline values
         /// already present on <paramref name="config"/>. Returns an <see cref="OverrideRecord"/>
