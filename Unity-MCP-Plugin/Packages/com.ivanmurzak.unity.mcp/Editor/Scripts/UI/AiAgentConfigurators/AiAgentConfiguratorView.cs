@@ -306,7 +306,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // (the Custom configurator's GetStatus is always NotConfigured and it has no
             // writable config file, so it gets no status row, matching the old behaviour).
             if (HasDetectableConfig)
-                container.Add(BuildConfigureStatusRow(transport));
+                container.Add(BuildConfigureStatusRow(transport, settings));
 
             foreach (var section in description.Sections)
                 container.Add(BuildSection(section, transport));
@@ -488,14 +488,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <summary>The outcome of the last project-key action, shown in the key row until the next action.</summary>
         private string? _keyMessage;
 
-        private VisualElement BuildConfigureStatusRow(TransportMethod transport)
+        /// <param name="settings">The container's snapshot (<see cref="CurrentSettings"/>), passed down so one refresh
+        /// reads the project-key cache once per container instead of once per element.</param>
+        private VisualElement BuildConfigureStatusRow(TransportMethod transport, AgentConfig.AgentConfiguratorSettings settings)
         {
             var root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
             var statusText = root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
             var btnConfigure = root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
             var btnRemove = root.Q<Button>("btnRemoveConfig") ?? throw new NullReferenceException("Button 'btnRemoveConfig' not found in UI.");
 
-            var settings = CurrentSettings();
             var config = GetConfig(settings, transport);
 
             var pathLabel = root.Q<Label>("labelConfigPath");
@@ -505,7 +506,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 pathLabel.tooltip = config.ConfigPath;
             }
 
-            UpdateStatusRow(statusText, btnConfigure, btnRemove, transport);
+            UpdateStatusRow(statusText, btnConfigure, btnRemove, transport, settings);
 
             btnConfigure.tooltip = $"Write the MCP entry into {AgentName}'s config file";
             btnRemove.tooltip = $"Remove the MCP entry from {AgentName}'s config file";
@@ -570,9 +571,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private void ConfigureTransport(TransportMethod transport)
         {
             var settings = AgentConfiguratorSettingsFactory.Create();
-            if (transport == TransportMethod.stdio || !IsCloud(settings))
+            // No project key outside Cloud http, and none can be minted while signed out — write synchronously,
+            // without the busy round-trip: the local config, or (signed out) the still-valid cached key / URL-only.
+            if (transport == TransportMethod.stdio || !IsCloud(settings) || !AccountCredentialService.IsSignedIn)
             {
-                GetConfig(settings, transport).Configure(); // no project key outside Cloud http
+                GetConfig(WithKnownProjectKey(settings), transport).Configure();
                 RefreshConfigurationUI();
                 return;
             }
@@ -602,8 +605,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     if (key == null)
                         return "Could not regenerate the project key (sign-in or server unavailable) — nothing was changed.";
-                    var rewritten = RewriteHttpConfigs(previous, previous.WithProjectKey(key));
-                    return $"Project key regenerated — {rewritten} agent config(s) rewritten.";
+                    var (rewritten, failed) = RewriteHttpConfigs(previous, previous.WithProjectKey(key));
+                    // The provider has already revoked the previous key, so a config that could not be rewritten
+                    // still carries a dead credential — say so instead of reporting only the successes.
+                    return failed == 0
+                        ? $"Project key regenerated — {rewritten} agent config(s) rewritten."
+                        : $"Project key regenerated — {rewritten} agent config(s) rewritten, {failed} could not be rewritten and still carry the revoked key; press Configure on those agents (see the Console).";
                 });
         }
 
@@ -612,9 +619,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// the replaced key, or is the URL-only config) so it carries <paramref name="next"/>'s key. Agents configured
         /// for stdio, or not configured at all, are left untouched.
         /// </summary>
-        private static int RewriteHttpConfigs(AgentConfig.AgentConfiguratorSettings previous, AgentConfig.AgentConfiguratorSettings next)
+        private static (int Rewritten, int Failed) RewriteHttpConfigs(AgentConfig.AgentConfiguratorSettings previous, AgentConfig.AgentConfiguratorSettings next)
         {
             var rewritten = 0;
+            var failed = 0;
             foreach (var configurator in AgentConfig.AiAgentConfiguratorRegistry.All)
             {
                 if (!IsDetectable(configurator))
@@ -625,13 +633,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         continue;
                     if (configurator.GetHttpConfig(next, credentialMode: next.ResolveHttpCredentialMode()).Configure())
                         rewritten++;
+                    else
+                    {
+                        failed++;
+                        Debug.LogWarning($"[AI Game Developer] Could not rewrite {configurator.AgentName}'s MCP config with the regenerated project key.");
+                    }
                 }
                 catch (Exception ex)
                 {
+                    failed++;
                     Debug.LogWarning($"[AI Game Developer] Could not rewrite {configurator.AgentName}'s MCP config with the regenerated project key: {ex.Message}");
                 }
             }
-            return rewritten;
+            return (rewritten, failed);
         }
 
         /// <summary>
@@ -665,9 +679,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             });
         }
 
-        private void UpdateStatusRow(Label statusText, Button btnConfigure, Button btnRemove, TransportMethod transport)
+        private void UpdateStatusRow(Label statusText, Button btnConfigure, Button btnRemove, TransportMethod transport, AgentConfig.AgentConfiguratorSettings settings)
         {
-            var settings = CurrentSettings();
             // Detect against the SAME config the Configure button writes (token/key-aware) so a Bearer config
             // reads back as Configured, not spuriously reconfigure-needed.
             var isConfigured = GetConfig(settings, transport).IsConfigured();

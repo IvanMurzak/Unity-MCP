@@ -75,18 +75,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
 
         /// <summary>
         /// The cached project key the agent configs for <paramref name="pin"/> are expected to carry, or <c>null</c>
-        /// for the URL-only config. Never touches the network; signed out, or a key cached for another account,
-        /// ⇒ <c>null</c> (contract §6).
+        /// for the URL-only config. Never touches the network. A key does not depend on the login (it never expires),
+        /// so signing out does not turn configs that carry it into "reconfigure needed"; a key cached for a
+        /// different signed-in account is ignored (contract §6).
         /// </summary>
         public static string? KnownKey(string pin)
         {
-            if (!AccountCredentialService.IsSignedIn)
-                return null;
             try
             {
                 var entry = Provider.Store.Get(Issuer, pin);
                 var subject = AccountCredentialService.Provider.Subject;
-                return entry != null && (entry.Sub == null || subject == null || entry.Sub == subject)
+                // An entry with no recorded account is never reused by GetOrMintAsync (it requires an exact sub
+                // match), so Configure would mint a replacement — expecting it here would report a config as
+                // "Configured" that the next Configure silently rewrites with a different key.
+                return entry != null && entry.Sub != null && (subject == null || entry.Sub == subject)
                     ? entry.Key
                     : null;
             }
