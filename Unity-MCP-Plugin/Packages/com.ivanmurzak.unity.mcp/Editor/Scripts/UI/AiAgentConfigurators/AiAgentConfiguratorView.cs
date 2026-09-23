@@ -520,8 +520,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // Cloud HTTP only: which credential the config carries + "Regenerate key" (project-keys contract §7).
             // stdio and the local server are unchanged, so they get no key row.
+            // It goes INTO the same column as the Configure row (not onto the template root): that column is the
+            // `.row` child that `.row > * { margin-right }` insets, so both buttons share one right edge.
             if (transport == TransportMethod.streamableHttp && IsCloud(settings))
-                root.Add(BuildProjectKeyRow(settings));
+            {
+                var statusColumn = root.Q<VisualElement>("templateConfigurationStatus") ?? throw new NullReferenceException("VisualElement 'templateConfigurationStatus' not found in UI.");
+                statusColumn.Add(BuildProjectKeyRow(settings));
+            }
 
             return root;
         }
