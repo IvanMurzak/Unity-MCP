@@ -275,16 +275,18 @@ export async function openProject(
       version,
     });
 
-    // Cloud-mode auto-detect: if the project's config is in Cloud
-    // mode AND has a cloudToken, ensure keepConnected so the plugin
-    // connects on startup; also enable claude-code skill auto-gen.
+    // Cloud-mode auto-detect: if the project's config is in Cloud mode,
+    // ensure keepConnected so the plugin connects on startup; also enable
+    // claude-code skill auto-gen. Gated on the mode ALONE — the Cloud
+    // credential lives in the machine store (~/.ai-game-dev), and the plugin
+    // no longer reads (nor the App writes) a per-project `cloudToken`.
     let effectiveOptions = options;
     {
       const config = readConfig(projectPath);
-      if (config && isCloudMode(config) && config.cloudToken) {
+      if (config && isCloudMode(config)) {
         if (!effectiveOptions.keepConnected) {
           effectiveOptions = { ...effectiveOptions, keepConnected: true };
-          warnings.push('Cloud mode with token detected — auto-enabling keep-connected.');
+          warnings.push('Cloud mode detected — auto-enabling keep-connected.');
           // keepConnected flipped — rebuild the env map so the editor
           // receives UNITY_MCP_KEEP_CONNECTED=true.
           env = buildOpenEnv(effectiveOptions);
