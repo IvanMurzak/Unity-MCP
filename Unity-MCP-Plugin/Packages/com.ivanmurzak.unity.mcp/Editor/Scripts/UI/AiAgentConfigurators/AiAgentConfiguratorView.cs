@@ -11,6 +11,8 @@
 #nullable enable
 using System;
 using System.IO;
+using System.Threading.Tasks;
+using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEngine;
@@ -62,9 +64,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public string? SkillsPath => _configurator.SkillsPath;
 
         /// <summary>
-        /// Whether this agent can complete native MCP OAuth (design 06 Flow A). When false, the
-        /// configure view exposes the "Advanced: use access token" escape hatch instead of the
-        /// credential-free default path (see <see cref="ShouldOfferAccessTokenAffordance"/>).
+        /// Whether this agent can complete native MCP OAuth (design 06 Flow A). Informational only: in
+        /// Cloud mode every agent gets the project key (project-keys contract §7), whether or not it can
+        /// sign in itself.
         /// </summary>
         public bool SupportsOAuth => _configurator.SupportsOAuth;
 
@@ -79,7 +81,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         #region Settings snapshot
 
-        private AgentConfig.AgentConfiguratorSettings CurrentSettings() => AgentConfiguratorSettingsFactory.Create();
+        /// <summary>
+        /// The settings every status check and write uses: the editor connection snapshot plus, in Cloud mode,
+        /// the project key the configs are expected to carry (<see cref="ProjectKeyService.KnownKey"/> — never
+        /// the network). Status and Configure MUST share this snapshot, or a written key reads back as
+        /// "reconfigure needed".
+        /// </summary>
+        private static AgentConfig.AgentConfiguratorSettings CurrentSettings()
+            => WithKnownProjectKey(AgentConfiguratorSettingsFactory.Create());
+
+        private static AgentConfig.AgentConfiguratorSettings WithKnownProjectKey(AgentConfig.AgentConfiguratorSettings settings)
+            => IsCloud(settings)
+                ? settings.WithProjectKey(ProjectKeyService.KnownKey(settings.ProjectPin))
+                : settings;
+
+        private static bool IsCloud(AgentConfig.AgentConfiguratorSettings settings)
+            => settings.ConnectionMode == AgentConfig.ConnectionMode.Cloud;
 
         private TransportMethod ActiveTransport => UnityMcpPluginEditor.TransportMethod;
 
@@ -289,19 +306,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // (the Custom configurator's GetStatus is always NotConfigured and it has no
             // writable config file, so it gets no status row, matching the old behaviour).
             if (HasDetectableConfig)
-                container.Add(BuildConfigureStatusRow(transport));
+                container.Add(BuildConfigureStatusRow(transport, settings));
 
             foreach (var section in description.Sections)
                 container.Add(BuildSection(section, transport));
-
-            // Advanced: use access token (design 06 Flow C). The default OAuth path writes a
-            // credential-free config and shows NO token field; only a client that cannot do MCP
-            // OAuth surfaces this collapsed escape hatch, and only on the HTTP transport (stdio
-            // spawns in `none` mode).
-            if (transport == TransportMethod.streamableHttp
-                && HasDetectableConfig
-                && ShouldOfferAccessTokenAffordance(_configurator.SupportsOAuth))
-                container.Add(BuildAccessTokenAdvancedSection());
         }
 
         /// <summary>
@@ -309,7 +317,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// throws from its config builders (no detectable file), so it is excluded from the
         /// Configure/Remove status row and reconfigure detection.
         /// </summary>
-        private bool HasDetectableConfig => _configurator is not AgentConfig.Impl.CustomConfigurator;
+        private bool HasDetectableConfig => IsDetectable(_configurator);
+
+        private static bool IsDetectable(AgentConfig.AiAgentConfigurator configurator)
+            => configurator is not AgentConfig.Impl.CustomConfigurator;
 
         private VisualElement BuildSection(AgentConfig.ConfigurationSection section, TransportMethod transport)
         {
@@ -415,7 +426,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         #endregion
 
-        #region Sign-in chip + advanced access-token (mcp-authorize design 06)
+        #region Sign-in chip (mcp-authorize design 06)
 
         internal const string USS_ChipSignedIn = "signin-chip--in";
         internal const string USS_ChipSignedOut = "signin-chip--out";
@@ -423,8 +434,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <summary>
         /// Pure mapping of the machine-credential sign-in state (PR2's
         /// <see cref="AccountCredentialService.IsSignedIn"/>) to the header chip's label + USS
-        /// modifier. Signed in → the OAuth golden path completes with a single in-browser click;
-        /// signed out → the user signs in (device flow) or uses the advanced access-token path.
+        /// modifier. Signed in → Cloud configs carry this project's key; signed out → the configs are
+        /// URL-only until the user signs in (device flow).
         /// </summary>
         internal static (string Text, string UssClass) ComputeSignInChip(bool isSignedIn)
             => isSignedIn
@@ -432,13 +443,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 : ("Not signed in", USS_ChipSignedOut);
 
         /// <summary>
-        /// Whether the configure view offers the "Advanced: use access token" (PAT) affordance. The
-        /// default OAuth-capable path is credential-free and shows NO token field; only a
-        /// configurator that cannot do MCP OAuth
-        /// (<see cref="AgentConfig.AiAgentConfigurator.SupportsOAuth"/> == <c>false</c>) surfaces the
-        /// legacy token field that writes the Bearer-header shape (design 06 Flow C).
+        /// The status-row line saying which credential a Cloud HTTP config carries. Never renders key material.
         /// </summary>
-        internal static bool ShouldOfferAccessTokenAffordance(bool supportsOAuth) => !supportsOAuth;
+        internal static string DescribeKeyState(bool isSignedIn, bool hasKey)
+        {
+            if (hasKey)
+                return "Project key in use — agent configs carry this project's key.";
+            return isSignedIn
+                ? "No project key — configs are URL-only (the agent signs in itself)."
+                : "No project key — configs are URL-only. Sign in to write a project key.";
+        }
 
         /// <summary>
         /// Populates the header sign-in chip from the shared machine-credential store. The chip is
@@ -464,56 +478,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             chip.style.display = DisplayStyle.Flex;
         }
 
-        /// <summary>
-        /// The collapsed "Advanced: use access token" escape hatch (design 06 Flow C), appended to
-        /// the HTTP transport container only for configurators that cannot do MCP OAuth. Reveals a
-        /// legacy access-token (PAT) field and writes the <c>Authorization: Bearer</c> config via
-        /// <see cref="AgentConfig.HttpCredentialMode.AccessToken"/>. Collapsed by default so the
-        /// golden path stays token-free.
-        /// </summary>
-        private VisualElement BuildAccessTokenAdvancedSection()
-        {
-            var foldout = TemplateFoldout("Advanced: use access token");
-            foldout.value = false;
-
-            foldout.Add(TemplateLabelDescription(
-                "This client cannot use OAuth sign-in. Paste an access token to write the legacy " +
-                "Authorization: Bearer config. Prefer a user-scope or environment-variable placement — " +
-                "a token written into a project file may be committed to version control."));
-
-            var tokenField = new TextField { isPasswordField = true };
-            tokenField.AddToClassList("token-input");
-            tokenField.style.flexGrow = 1;
-            tokenField.style.flexShrink = 1;
-            tokenField.style.minWidth = 0;
-            foldout.Add(tokenField);
-
-            var btnWrite = new Button { text = "Configure with access token" };
-            btnWrite.RegisterCallback<ClickEvent>(_ =>
-            {
-                var config = _configurator.GetHttpConfig(
-                    AgentConfiguratorSettingsFactory.CreateWithAccessToken(tokenField.value),
-                    credentialMode: AgentConfig.HttpCredentialMode.AccessToken);
-                config.Configure();
-                RefreshConfigurationUI();
-            });
-            foldout.Add(btnWrite);
-
-            return foldout;
-        }
-
         #endregion
 
         #region Configure / Remove status row
 
-        private VisualElement BuildConfigureStatusRow(TransportMethod transport)
+        /// <summary>Non-null while a project-key get-or-mint / regenerate runs off the main thread (the status text shown).</summary>
+        private string? _busyText;
+
+        /// <summary>The outcome of the last project-key action, shown in the key row until the next action.</summary>
+        private string? _keyMessage;
+
+        /// <param name="settings">The container's snapshot (<see cref="CurrentSettings"/>), passed down so one refresh
+        /// reads the project-key cache once per container instead of once per element.</param>
+        private VisualElement BuildConfigureStatusRow(TransportMethod transport, AgentConfig.AgentConfiguratorSettings settings)
         {
             var root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
             var statusText = root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
             var btnConfigure = root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
             var btnRemove = root.Q<Button>("btnRemoveConfig") ?? throw new NullReferenceException("Button 'btnRemoveConfig' not found in UI.");
 
-            var settings = CurrentSettings();
             var config = GetConfig(settings, transport);
 
             var pathLabel = root.Q<Label>("labelConfigPath");
@@ -523,14 +506,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 pathLabel.tooltip = config.ConfigPath;
             }
 
-            UpdateStatusRow(statusText, btnConfigure, btnRemove, transport);
+            UpdateStatusRow(statusText, btnConfigure, btnRemove, transport, settings);
 
-            btnConfigure.RegisterCallback<ClickEvent>(_ =>
-            {
-                var freshConfig = GetConfig(CurrentSettings(), transport);
-                freshConfig.Configure();
-                RefreshConfigurationUI();
-            });
+            btnConfigure.tooltip = $"Write the MCP entry into {AgentName}'s config file";
+            btnRemove.tooltip = $"Remove the MCP entry from {AgentName}'s config file";
+            btnConfigure.RegisterCallback<ClickEvent>(_ => ConfigureTransport(transport));
             btnRemove.RegisterCallback<ClickEvent>(_ =>
             {
                 var freshConfig = GetConfig(CurrentSettings(), transport);
@@ -538,33 +518,171 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 RefreshConfigurationUI();
             });
 
+            // Cloud HTTP only: which credential the config carries + "Regenerate key" (project-keys contract §7).
+            // stdio and the local server are unchanged, so they get no key row.
+            if (transport == TransportMethod.streamableHttp && IsCloud(settings))
+                root.Add(BuildProjectKeyRow(settings));
+
             return root;
+        }
+
+        private VisualElement BuildProjectKeyRow(AgentConfig.AgentConfiguratorSettings settings)
+        {
+            var row = new VisualElement();
+            row.style.flexDirection = FlexDirection.Row;
+            row.style.alignItems = Align.Center;
+            row.style.justifyContent = Justify.SpaceBetween;
+            row.style.marginTop = 2;
+
+            var isSignedIn = AccountCredentialService.IsSignedIn;
+            var label = TemplateLabelDescription(_keyMessage ?? DescribeKeyState(isSignedIn, settings.HasProjectKey));
+            label.style.flexShrink = 1;
+            label.style.whiteSpace = WhiteSpace.Normal;
+            row.Add(label);
+
+            // Regenerating needs a login (it mints with the account's token); signed out there is nothing to press.
+            if (isSignedIn)
+            {
+                var btnRegenerate = new Button(RegenerateProjectKey)
+                {
+                    text = "Regenerate key",
+                    tooltip = "Regenerate this project's key, rewrite every agent config that uses it, and revoke the old key",
+                };
+                btnRegenerate.AddToClassList("btn-compact");
+                btnRegenerate.SetEnabled(_busyText == null);
+                row.Add(btnRegenerate);
+            }
+            return row;
         }
 
         private AgentConfig.AiAgentConfig GetConfig(AgentConfig.AgentConfiguratorSettings settings, TransportMethod transport)
             => transport == TransportMethod.stdio
                 ? _configurator.GetStdioConfig(settings)
-                : _configurator.GetHttpConfig(settings, credentialMode: ResolveHttpCredentialMode(settings));
+                // The shared resolver: local `token` mode and Cloud-with-project-key write the Bearer header, every
+                // other case the credential-free URL-only config. Status checks pass the SAME settings, so what is
+                // written always reads back as Configured.
+                : _configurator.GetHttpConfig(settings, credentialMode: settings.ResolveHttpCredentialMode());
 
         /// <summary>
-        /// The HTTP credential mode the Configure button writes for the current server settings
-        /// (mcp-authorize g5/g6). A LOCAL server in the offline <c>token</c> mode is Bearer-gated, so
-        /// its client config MUST carry the <c>Authorization: Bearer &lt;local-secret&gt;</c> header
-        /// (<see cref="AgentConfig.HttpCredentialMode.AccessToken"/>). Every other case — <c>none</c>,
-        /// <c>oauth</c>, and Cloud — keeps the default credential-free OAuth path (URL-only; the client
-        /// authorizes natively against the server URL). Pure, so it is unit-testable without a live Editor.
+        /// Writes this agent's config for <paramref name="transport"/>. Cloud HTTP first obtains the project key
+        /// OFF the main thread (the cache write can wait ~75 s on the cross-process lock), then writes on the main
+        /// thread; a failed mint (signed out, feature off, network) writes the URL-only config — never an error.
         /// </summary>
-        internal static AgentConfig.HttpCredentialMode ResolveHttpCredentialMode(AgentConfig.AgentConfiguratorSettings settings)
-            => settings.ConnectionMode == AgentConfig.ConnectionMode.Local
-               && settings.AuthOption == AuthOption.token
-                ? AgentConfig.HttpCredentialMode.AccessToken
-                : AgentConfig.HttpCredentialMode.Oauth;
-
-        private void UpdateStatusRow(Label statusText, Button btnConfigure, Button btnRemove, TransportMethod transport)
+        private void ConfigureTransport(TransportMethod transport)
         {
-            var settings = CurrentSettings();
-            // Detect against the SAME config the Configure button writes (token-aware) so a local
-            // token-mode config (URL + Bearer) reads back as Configured, not spuriously reconfigure-needed.
+            var settings = AgentConfiguratorSettingsFactory.Create();
+            // No project key outside Cloud http, and none can be minted while signed out — write synchronously,
+            // without the busy round-trip: the local config, or (signed out) the still-valid cached key / URL-only.
+            if (transport == TransportMethod.stdio || !IsCloud(settings) || !AccountCredentialService.IsSignedIn)
+            {
+                GetConfig(WithKnownProjectKey(settings), transport).Configure();
+                RefreshConfigurationUI();
+                return;
+            }
+
+            RunProjectKeyAction(
+                "Obtaining the project key...",
+                () => ProjectKeyService.GetOrMintAsync(settings.ProjectPin, settings.ProjectRootPath),
+                key =>
+                {
+                    GetConfig(settings.WithProjectKey(key), transport).Configure();
+                    return null;
+                });
+        }
+
+        /// <summary>
+        /// "Regenerate key" (project-keys contract §7): mint a fresh key (the provider overwrites the cache entry and
+        /// revokes the replaced key), then rewrite every agent's HTTP config that carried the previous credential.
+        /// A failed regenerate changes nothing.
+        /// </summary>
+        private void RegenerateProjectKey()
+        {
+            var previous = CurrentSettings();
+            RunProjectKeyAction(
+                "Regenerating the project key...",
+                () => ProjectKeyService.RegenerateAsync(previous.ProjectPin, previous.ProjectRootPath),
+                key =>
+                {
+                    if (key == null)
+                        return "Could not regenerate the project key (sign-in or server unavailable) — nothing was changed.";
+                    var (rewritten, failed) = RewriteHttpConfigs(previous, previous.WithProjectKey(key));
+                    // The provider has already revoked the previous key, so a config that could not be rewritten
+                    // still carries a dead credential — say so instead of reporting only the successes.
+                    return failed == 0
+                        ? $"Project key regenerated — {rewritten} agent config(s) rewritten."
+                        : $"Project key regenerated — {rewritten} agent config(s) rewritten, {failed} could not be rewritten and still carry the revoked key; press Configure on those agents (see the Console).";
+                });
+        }
+
+        /// <summary>
+        /// Rewrites, for every agent, the HTTP config that currently matches <paramref name="previous"/> (it carries
+        /// the replaced key, or is the URL-only config) so it carries <paramref name="next"/>'s key. Agents configured
+        /// for stdio, or not configured at all, are left untouched.
+        /// </summary>
+        private static (int Rewritten, int Failed) RewriteHttpConfigs(AgentConfig.AgentConfiguratorSettings previous, AgentConfig.AgentConfiguratorSettings next)
+        {
+            var rewritten = 0;
+            var failed = 0;
+            foreach (var configurator in AgentConfig.AiAgentConfiguratorRegistry.All)
+            {
+                if (!IsDetectable(configurator))
+                    continue;
+                try
+                {
+                    if (!configurator.GetHttpConfig(previous, credentialMode: previous.ResolveHttpCredentialMode()).IsConfigured())
+                        continue;
+                    if (configurator.GetHttpConfig(next, credentialMode: next.ResolveHttpCredentialMode()).Configure())
+                        rewritten++;
+                    else
+                    {
+                        failed++;
+                        Debug.LogWarning($"[AI Game Developer] Could not rewrite {configurator.AgentName}'s MCP config with the regenerated project key.");
+                    }
+                }
+                catch (Exception ex)
+                {
+                    failed++;
+                    Debug.LogWarning($"[AI Game Developer] Could not rewrite {configurator.AgentName}'s MCP config with the regenerated project key: {ex.Message}");
+                }
+            }
+            return (rewritten, failed);
+        }
+
+        /// <summary>
+        /// Shows <paramref name="busyText"/> while <paramref name="resolve"/> (which runs on the thread pool)
+        /// completes, then marshals back to the main thread via <c>MainThread.Instance.RunAsync</c>
+        /// (<c>EditorApplication.update</c>-based, so it also lands while the editor is unfocused) to run
+        /// <paramref name="apply"/>, whose return value (if any) becomes the key row's message.
+        /// </summary>
+        private async void RunProjectKeyAction(string busyText, Func<Task<string?>> resolve, Func<string?, string?> apply)
+        {
+            if (_busyText != null)
+                return; // one project-key action at a time (the alert-panel buttons are not disabled while busy)
+            _busyText = busyText;
+            _keyMessage = null;
+            RefreshConfigurationUI();
+
+            var key = await resolve().ConfigureAwait(false); // ProjectKeyService never throws.
+            await MainThread.Instance.RunAsync(() =>
+            {
+                _busyText = null;
+                try
+                {
+                    _keyMessage = apply(key);
+                }
+                catch (Exception ex)
+                {
+                    Debug.LogException(ex);
+                    _keyMessage = $"Failed to write the MCP config: {ex.Message}";
+                }
+                RefreshConfigurationUI();
+            });
+        }
+
+        private void UpdateStatusRow(Label statusText, Button btnConfigure, Button btnRemove, TransportMethod transport, AgentConfig.AgentConfiguratorSettings settings)
+        {
+            // Detect against the SAME config the Configure button writes (token/key-aware) so a Bearer config
+            // reads back as Configured, not spuriously reconfigure-needed.
             var isConfigured = GetConfig(settings, transport).IsConfigured();
             var anyConfigured = _configurator.IsDetected(settings);
             var transportText = transport switch
@@ -574,9 +692,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 _ => "unknown"
             };
 
-            statusText.text = isConfigured ? $"Configured ({transportText})" : "Not configured";
+            statusText.text = _busyText ?? (isConfigured ? $"Configured ({transportText})" : "Not configured");
             btnConfigure.text = isConfigured ? "Reconfigure" : "Configure";
             btnConfigure.EnableInClassList("btn-primary", !isConfigured);
+            btnConfigure.SetEnabled(_busyText == null);
+            btnRemove.SetEnabled(_busyText == null);
             btnRemove.style.display = anyConfigured ? DisplayStyle.Flex : DisplayStyle.None;
         }
 
@@ -663,20 +783,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     : DisplayStyle.None;
         }
 
-        private void ConfigureActiveTransport()
-        {
-            var config = GetConfig(CurrentSettings(), ActiveTransport);
-            config.Configure();
-            RefreshConfigurationUI();
-        }
+        private void ConfigureActiveTransport() => ConfigureTransport(ActiveTransport);
 
         private void ReconfigureActiveTransport()
         {
-            var settings = CurrentSettings();
-            var config = GetConfig(settings, ActiveTransport);
-            if (config.IsDetected())
-                config.Configure();
-            RefreshConfigurationUI();
+            if (GetConfig(CurrentSettings(), ActiveTransport).IsDetected())
+                ConfigureTransport(ActiveTransport);
+            else
+                RefreshConfigurationUI();
         }
 
         /// <summary>

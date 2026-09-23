@@ -63,6 +63,43 @@ describe('CLI integration', () => {
     });
   });
 
+  // --- setup-mcp command (project keys §7 flags) ---
+  // Only paths that can never resolve a project key run here: the CLI process reads the REAL
+  // ~/.ai-game-dev login, so a default Cloud run could mint a real key against production.
+
+  describe('setup-mcp', () => {
+    let tmpDir: string;
+
+    beforeEach(() => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-cli-setup-mcp-'));
+    });
+
+    afterEach(() => {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    it('documents --oauth and --regenerate-key in --help', () => {
+      const { stdout, exitCode } = runCli(['setup-mcp', '--help']);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain('--oauth');
+      expect(stdout).toContain('--regenerate-key');
+    });
+
+    it('--oauth writes a URL-only config and reports no credential', () => {
+      const { stdout, exitCode } = runCli(['setup-mcp', 'claude-code', tmpDir, '--oauth']);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain('none (URL-only');
+      const raw = fs.readFileSync(path.join(tmpDir, '.mcp.json'), 'utf-8');
+      expect(raw).not.toContain('Authorization');
+    });
+
+    it('--regenerate-key is refused together with --oauth (the flag reaches cli-core)', () => {
+      const { stdout, exitCode } = runCli(['setup-mcp', 'claude-code', tmpDir, '--oauth', '--regenerate-key']);
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain('--regenerate-key');
+    });
+  });
+
   // --- install-plugin command ---
 
   describe('install-plugin', () => {
