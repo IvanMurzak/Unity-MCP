@@ -98,8 +98,8 @@ export const setupMcpCommand = new Command('setup-mcp')
         transport,
         url: options.url,
         token: options.token,
-        oauth: options.oauth === true,
-        regenerateKey: options.regenerateKey === true,
+        oauth: options.oauth,
+        regenerateKey: options.regenerateKey,
         // commander sets `options.pin === false` when `--no-pin` was passed.
         noPin: options.pin === false,
       });

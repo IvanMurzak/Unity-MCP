@@ -317,7 +317,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// throws from its config builders (no detectable file), so it is excluded from the
         /// Configure/Remove status row and reconfigure detection.
         /// </summary>
-        private bool HasDetectableConfig => _configurator is not AgentConfig.Impl.CustomConfigurator;
+        private bool HasDetectableConfig => IsDetectable(_configurator);
+
+        private static bool IsDetectable(AgentConfig.AiAgentConfigurator configurator)
+            => configurator is not AgentConfig.Impl.CustomConfigurator;
 
         private VisualElement BuildSection(AgentConfig.ConfigurationSection section, TransportMethod transport)
         {
@@ -440,6 +443,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 : ("Not signed in", USS_ChipSignedOut);
 
         /// <summary>
+        /// The status-row line saying which credential a Cloud HTTP config carries. Never renders key material.
+        /// </summary>
+        internal static string DescribeKeyState(bool isSignedIn, bool hasKey)
+        {
+            if (hasKey)
+                return "Project key in use — agent configs carry this project's key.";
+            return isSignedIn
+                ? "No project key — configs are URL-only (the agent signs in itself)."
+                : "No project key — configs are URL-only. Sign in to write a project key.";
+        }
+
+        /// <summary>
         /// Populates the header sign-in chip from the shared machine-credential store. The chip is
         /// meaningful only for agents that write a real (OAuth-capable) config, so the Custom agent
         /// (no writable config) shows none — mirroring the <see cref="HasDetectableConfig"/> gate.
@@ -519,9 +534,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             row.style.marginTop = 2;
 
             var isSignedIn = AccountCredentialService.IsSignedIn;
-            var label = new Label(_keyMessage ?? ProjectKeyService.DescribeKeyState(isSignedIn, settings.HasProjectKey));
-            label.AddToClassList("section-desc");
-            label.style.marginBottom = 0;
+            var label = TemplateLabelDescription(_keyMessage ?? DescribeKeyState(isSignedIn, settings.HasProjectKey));
             label.style.flexShrink = 1;
             label.style.whiteSpace = WhiteSpace.Normal;
             row.Add(label);
@@ -559,7 +572,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var settings = AgentConfiguratorSettingsFactory.Create();
             if (transport == TransportMethod.stdio || !IsCloud(settings))
             {
-                GetConfig(CurrentSettings(), transport).Configure();
+                GetConfig(settings, transport).Configure(); // no project key outside Cloud http
                 RefreshConfigurationUI();
                 return;
             }
@@ -569,7 +582,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 () => ProjectKeyService.GetOrMintAsync(settings.ProjectPin, settings.ProjectRootPath),
                 key =>
                 {
-                    GetConfig(AgentConfiguratorSettingsFactory.Create().WithProjectKey(key), transport).Configure();
+                    GetConfig(settings.WithProjectKey(key), transport).Configure();
                     return null;
                 });
         }
@@ -589,7 +602,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     if (key == null)
                         return "Could not regenerate the project key (sign-in or server unavailable) — nothing was changed.";
-                    var rewritten = RewriteHttpConfigs(previous, AgentConfiguratorSettingsFactory.Create().WithProjectKey(key));
+                    var rewritten = RewriteHttpConfigs(previous, previous.WithProjectKey(key));
                     return $"Project key regenerated — {rewritten} agent config(s) rewritten.";
                 });
         }
@@ -604,7 +617,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var rewritten = 0;
             foreach (var configurator in AgentConfig.AiAgentConfiguratorRegistry.All)
             {
-                if (configurator is AgentConfig.Impl.CustomConfigurator)
+                if (!IsDetectable(configurator))
                     continue;
                 try
                 {

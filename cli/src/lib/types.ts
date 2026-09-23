@@ -9,7 +9,11 @@
 // and cannot introduce a side effect. `ExtensionDescriptor` is the catalogue entry
 // shape, needed by `InstallExtensionOptions.catalog`.
 import type { ExtensionDescriptor } from '../utils/extensions-catalog.js';
-import type { ProjectKeyResolver, SetupMcpCredential } from '@baizor/gamedev-cli-core';
+import type {
+  ProjectKeyResolver,
+  SetupMcpCredential,
+  SetupMcpResult as CoreSetupMcpResult,
+} from '@baizor/gamedev-cli-core';
 
 // ---------------------------------------------------------------------------
 // Progress events
@@ -371,7 +375,7 @@ export interface SetupMcpSuccess {
   /** Server-side id of the project key written (`credential === 'project-key'` only). */
   projectKeyId?: string;
   /** Whether the project key was reused from the local cache or freshly minted. */
-  projectKeySource?: 'reused' | 'minted';
+  projectKeySource?: Extract<CoreSetupMcpResult, { kind: 'success' }>['projectKeySource'];
   warnings: string[];
   nextSteps: string[];
 }

@@ -12,6 +12,8 @@
 using com.IvanMurzak.McpPlugin.AgentConfig;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using NUnit.Framework;
+using CustomConfigurator = com.IvanMurzak.McpPlugin.AgentConfig.Impl.CustomConfigurator;
+using TransportMethod = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod;
 using AgentConnectionMode = com.IvanMurzak.McpPlugin.AgentConfig.ConnectionMode;
 using AuthOption = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.AuthOption;
 
@@ -140,7 +142,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             foreach (var configurator in AiAgentConfiguratorRegistry.All)
             {
-                if (configurator is com.IvanMurzak.McpPlugin.AgentConfig.Impl.CustomConfigurator)
+                if (configurator is CustomConfigurator)
                     continue;
                 var http = configurator.GetHttpConfig(settings, credentialMode: settings.ResolveHttpCredentialMode());
                 StringAssert.Contains(ProjectKey, http.ExpectedFileContent, $"{configurator.AgentId} must carry the project key");
@@ -179,7 +181,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var settings = CloudWithKey(ProjectKey);
             foreach (var configurator in AiAgentConfiguratorRegistry.All)
             {
-                var description = configurator.Describe(settings, com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod.streamableHttp);
+                var description = configurator.Describe(settings, TransportMethod.streamableHttp);
                 foreach (var section in description.Sections)
                     foreach (var item in section.Items)
                         StringAssert.DoesNotContain(ProjectKey, item.Text ?? string.Empty, $"{configurator.AgentId}: {section.Heading}");
@@ -191,7 +193,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [TestCase(false, false)]
         public void DescribeKeyState_SaysWhetherAKeyIsInUse(bool isSignedIn, bool hasKey)
         {
-            var text = com.IvanMurzak.Unity.MCP.Editor.Services.ProjectKeyService.DescribeKeyState(isSignedIn, hasKey);
+            var text = AiAgentConfiguratorView.DescribeKeyState(isSignedIn, hasKey);
             if (hasKey)
                 StringAssert.StartsWith("Project key in use", text);
             else
