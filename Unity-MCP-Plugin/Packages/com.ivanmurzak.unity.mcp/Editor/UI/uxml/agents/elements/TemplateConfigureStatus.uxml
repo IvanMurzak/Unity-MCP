@@ -12,6 +12,11 @@
                     <ui:Button name="btnConfigure" text="Configure" class="btn-compact" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <!-- Cloud HTTP only (shown from C#). Same column + same row layout as the Configure row above, so both buttons share one right edge. -->
+            <ui:VisualElement name="projectKeyRow" style="display: none; flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px;">
+                <ui:Label name="projectKeyStatusText" class="section-desc" style="margin-bottom: 0; flex-shrink: 1;" />
+                <ui:Button name="btnRegenerateKey" text="Regenerate key" class="btn-compact" tooltip="Regenerate this project's key, rewrite every agent config that uses it, and revoke the old key" style="display: none;" />
+            </ui:VisualElement>
         </ui:VisualElement>
     </ui:VisualElement>
 </ui:UXML>

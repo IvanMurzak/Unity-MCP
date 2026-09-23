@@ -496,6 +496,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var statusText = root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
             var btnConfigure = root.Q<Button>("btnConfigure") ?? throw new NullReferenceException("Button 'btnConfigure' not found in UI.");
             var btnRemove = root.Q<Button>("btnRemoveConfig") ?? throw new NullReferenceException("Button 'btnRemoveConfig' not found in UI.");
+            var keyRow = root.Q<VisualElement>("projectKeyRow") ?? throw new NullReferenceException("VisualElement 'projectKeyRow' not found in UI.");
+            var keyStatusText = root.Q<Label>("projectKeyStatusText") ?? throw new NullReferenceException("Label 'projectKeyStatusText' not found in UI.");
+            var btnRegenerate = root.Q<Button>("btnRegenerateKey") ?? throw new NullReferenceException("Button 'btnRegenerateKey' not found in UI.");
 
             var config = GetConfig(settings, transport);
 
@@ -519,45 +522,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             });
 
             // Cloud HTTP only: which credential the config carries + "Regenerate key" (project-keys contract §7).
-            // stdio and the local server are unchanged, so they get no key row.
-            // It goes INTO the same column as the Configure row (not onto the template root): that column is the
-            // `.row` child that `.row > * { margin-right }` insets, so both buttons share one right edge.
+            // stdio and the local server are unchanged, so they keep the row hidden.
             if (transport == TransportMethod.streamableHttp && IsCloud(settings))
-            {
-                var statusColumn = root.Q<VisualElement>("templateConfigurationStatus") ?? throw new NullReferenceException("VisualElement 'templateConfigurationStatus' not found in UI.");
-                statusColumn.Add(BuildProjectKeyRow(settings));
-            }
+                ShowProjectKeyRow(keyRow, keyStatusText, btnRegenerate, settings);
 
             return root;
         }
 
-        private VisualElement BuildProjectKeyRow(AgentConfig.AgentConfiguratorSettings settings)
+        /// <summary>
+        /// Fills the project-key row declared in <c>TemplateConfigureStatus.uxml</c>. The row lives in the same column
+        /// as the Configure row, with the same layout, so the Regenerate button's right edge matches Configure's.
+        /// </summary>
+        private void ShowProjectKeyRow(VisualElement keyRow, Label keyStatusText, Button btnRegenerate, AgentConfig.AgentConfiguratorSettings settings)
         {
-            var row = new VisualElement();
-            row.style.flexDirection = FlexDirection.Row;
-            row.style.alignItems = Align.Center;
-            row.style.justifyContent = Justify.SpaceBetween;
-            row.style.marginTop = 2;
-
             var isSignedIn = AccountCredentialService.IsSignedIn;
-            var label = TemplateLabelDescription(_keyMessage ?? DescribeKeyState(isSignedIn, settings.HasProjectKey));
-            label.style.flexShrink = 1;
-            label.style.whiteSpace = WhiteSpace.Normal;
-            row.Add(label);
+            keyStatusText.text = _keyMessage ?? DescribeKeyState(isSignedIn, settings.HasProjectKey);
 
             // Regenerating needs a login (it mints with the account's token); signed out there is nothing to press.
             if (isSignedIn)
             {
-                var btnRegenerate = new Button(RegenerateProjectKey)
-                {
-                    text = "Regenerate key",
-                    tooltip = "Regenerate this project's key, rewrite every agent config that uses it, and revoke the old key",
-                };
-                btnRegenerate.AddToClassList("btn-compact");
+                btnRegenerate.clicked += RegenerateProjectKey;
                 btnRegenerate.SetEnabled(_busyText == null);
-                row.Add(btnRegenerate);
+                btnRegenerate.style.display = DisplayStyle.Flex;
             }
-            return row;
+            keyRow.style.display = DisplayStyle.Flex;
         }
 
         private AgentConfig.AiAgentConfig GetConfig(AgentConfig.AgentConfiguratorSettings settings, TransportMethod transport)
