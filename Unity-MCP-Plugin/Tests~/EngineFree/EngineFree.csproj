@@ -37,7 +37,7 @@
          if they drift from NuGetConfig.Packages, so a missed bump cannot silently leave this suite
          testing yesterday's DLLs. McpPlugin is what makes this project a NuGet-mode consumer of the
          framework, which is also what lets a workspace-source override chain reach it. -->
-    <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.4.0" />
+    <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.5.0" />
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="5.4.1" />
   </ItemGroup>
 
