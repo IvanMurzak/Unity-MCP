@@ -8,15 +8,34 @@ import {
   MCP_SERVER_NAME,
 } from '../utils/agents.js';
 import { setupMcp } from '../lib/setup-mcp.js';
-import type { McpTransport } from '../lib/types.js';
+import type { McpTransport, SetupMcpSuccess } from '../lib/types.js';
 
 interface SetupMcpCliOptions {
   transport?: string;
   url?: string;
   token?: string;
+  oauth?: boolean;
+  regenerateKey?: boolean;
   list?: boolean;
   /** commander sets this to `false` when `--no-pin` is passed (defaults to `true`). */
   pin?: boolean;
+}
+
+/** Which credential the written config carries — never the key itself, only its server-side id. */
+function describeCredential(
+  result: Pick<SetupMcpSuccess, 'credential' | 'projectKeyId' | 'projectKeySource'>,
+): string {
+  switch (result.credential) {
+    case 'project-key': {
+      const id = result.projectKeyId ? ` ${result.projectKeyId}` : '';
+      const source = result.projectKeySource ? ` (${result.projectKeySource})` : '';
+      return `project key${id}${source}`;
+    }
+    case 'token':
+      return 'access token (--token)';
+    default:
+      return 'none (URL-only — the agent signs in itself)';
+  }
 }
 
 function listAgents(): void {
@@ -33,7 +52,9 @@ export const setupMcpCommand = new Command('setup-mcp')
     'http',
   )
   .option('--url <url>', 'Server URL override (for http transport)')
-  .option('--token <token>', 'Explicit PAT opt-in — writes a static credential into the config (default: credential-free, native OAuth)')
+  .option('--token <token>', 'Explicit PAT — written as the Authorization header instead of the project key')
+  .option('--oauth', 'Write a URL-only Cloud config (the agent signs in with its own OAuth) instead of the project key')
+  .option('--regenerate-key', 'Mint a fresh project key, rewrite the config, and revoke the previous key (Cloud http only)')
   .option('--no-pin', 'Write an unpinned URL / omit the project= arg (default: pin to this project via /mcp/p/<pin>)')
   .option('--list', 'List all available agent IDs')
   .action(
@@ -77,6 +98,8 @@ export const setupMcpCommand = new Command('setup-mcp')
         transport,
         url: options.url,
         token: options.token,
+        oauth: options.oauth === true,
+        regenerateKey: options.regenerateKey === true,
         // commander sets `options.pin === false` when `--no-pin` was passed.
         noPin: options.pin === false,
       });
@@ -100,6 +123,7 @@ export const setupMcpCommand = new Command('setup-mcp')
       ui.label('Config file', result.configPath);
       ui.label('Transport', result.transport);
       ui.label('Server name', MCP_SERVER_NAME);
+      ui.label('Credential', describeCredential(result));
 
       for (const warning of result.warnings) {
         console.log('');

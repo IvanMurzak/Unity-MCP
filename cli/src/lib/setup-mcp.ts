@@ -23,9 +23,11 @@ function isValidTransport(t: string | undefined): t is McpTransport {
  *   - the http URL is **pinned by default** to `<base>/mcp/p/<pin-v2>` and the stdio config carries a
  *     `project=<pin>` arg, so the config routes strictly to this project's engine instance even when
  *     the account has several (`--no-pin` is the escape hatch);
- *   - the config is **credential-free by default** — a static `Authorization: Bearer` header (http)
- *     or `token=` arg (stdio) is written ONLY on an explicit `--token` PAT opt-in, so an OAuth-capable
- *     client authorizes natively (RFC 9728) instead of being suppressed by a static header;
+ *   - a Cloud http config carries this project's **project key** (`Authorization: Bearer agd_pk_…`,
+ *     project-keys contract §7) for EVERY client: reused from `~/.ai-game-dev/project-keys.json` or
+ *     minted with the machine login. No login / a failed mint ⇒ URL-only (a warning says so, never an
+ *     error); `oauth` forces URL-only; `regenerateKey` mints a fresh key and revokes the previous one;
+ *     an explicit `token` (PAT) always wins. stdio and local-server configs never carry a project key;
  *   - the config bytes are written by cli-core's golden-vector-gated JSON/TOML writers, so `setup-mcp`
  *     output matches the Unity Editor's Configure output byte-for-byte.
  *
@@ -59,13 +61,17 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       };
     }
 
-    const result = coreSetupMcp({
+    const result = await coreSetupMcp({
       adapter: unityAdapter,
       agentId: opts.agentId,
       transport,
       projectPath,
       url: opts.url,
       token: opts.token,
+      oauth: opts.oauth === true,
+      regenerateKey: opts.regenerateKey === true,
+      machineName: opts.machineName,
+      projectKeyResolver: opts.projectKeyResolver,
       noPin: opts.noPin === true,
     });
 
@@ -97,6 +103,9 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       agentId: result.agentId,
       configPath: result.configPath,
       transport: result.transport,
+      credential: result.credential,
+      projectKeyId: result.projectKeyId,
+      projectKeySource: result.projectKeySource,
       warnings: result.warnings,
       nextSteps: [],
     };

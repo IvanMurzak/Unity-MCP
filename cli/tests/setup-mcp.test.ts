@@ -7,8 +7,41 @@ import * as path from 'path';
 import * as os from 'os';
 import { setupMcp } from '../src/lib/setup-mcp.js';
 import { getAgentById, MCP_SERVER_NAME } from '../src/utils/agents.js';
-import { derivePinV2 } from '@baizor/gamedev-cli-core';
+import { derivePinV2, type ProjectKeyRequest, type ProjectKeyResolver } from '@baizor/gamedev-cli-core';
 import type { UnityConnectionConfig } from '../src/utils/config.js';
+
+/**
+ * A resolver standing in for "this machine is not signed in". Every test injects one: the default
+ * resolver reads the REAL `~/.ai-game-dev` credential store and would mint real project keys against
+ * production on a signed-in developer machine.
+ */
+const noLogin: ProjectKeyResolver = async () => ({ kind: 'no-login', reason: 'not signed in' });
+
+const PROJECT_KEY = 'agd_pk_unit_test_key_0123456789';
+
+/** A signed-in resolver that records every request and hands back `PROJECT_KEY`. */
+function signedIn(): { resolver: ProjectKeyResolver; calls: ProjectKeyRequest[]; revoked: string[] } {
+  const calls: ProjectKeyRequest[] = [];
+  const revoked: string[] = [];
+  const resolver: ProjectKeyResolver = async (request) => {
+    calls.push(request);
+    return {
+      kind: 'ok',
+      key: PROJECT_KEY,
+      keyId: 'pk_1',
+      pin: request.pin,
+      source: request.regenerate ? 'minted' : 'reused',
+      warnings: [],
+      revokePrevious: request.regenerate
+        ? async () => {
+            revoked.push('pk_0');
+            return undefined;
+          }
+        : undefined,
+    };
+  };
+  return { resolver, calls, revoked };
+}
 
 /** The v2 routing pin cli-core's setup-mcp appends to the hosted URL by default (T4). */
 function pinnedHostedUrl(projectDir: string): string {
@@ -45,7 +78,7 @@ function seedHostedConfig(projectDir: string): void {
   });
 }
 
-describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', () => {
+describe('setup-mcp — signed out: URL-only Cloud config (mcp-authorize g2 / D11)', () => {
   let tmpDir: string;
 
   beforeEach(() => {
@@ -56,10 +89,10 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
     fs.rmSync(tmpDir, { recursive: true, force: true });
   });
 
-  // DoD 1: URL-only (no Authorization header) for every OAuth-capable client,
-  // even against the hosted endpoint with a config token + required auth.
+  // DoD 1: without a machine login no project key can be minted, so every client gets a URL-only
+  // config (no Authorization header) — even with a config token + required auth.
   it.each(['claude-code', 'cursor', 'vscode-copilot', 'codex'])(
-    'writes a URL-only config (no Authorization header) for %s',
+    'writes a URL-only config (no Authorization header) for %s when signed out',
     async (agentId) => {
       seedHostedConfig(tmpDir);
 
@@ -67,6 +100,7 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
         agentId,
         unityProjectPath: tmpDir,
         transport: 'http',
+        projectKeyResolver: noLogin,
       });
 
       expect(result.kind).toBe('success');
@@ -78,8 +112,10 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
       // …but NO credential and NO Authorization header leaked into the file.
       expect(raw).not.toContain('Authorization');
       expect(raw).not.toContain(CONFIG_TOKEN);
-      // No project-file-PAT warning on the credential-free default path.
-      expect(result.warnings).toHaveLength(0);
+      expect(result.credential).toBe('none');
+      // The only warning is the sign-in hint (never a project-file-PAT or git warning).
+      expect(result.warnings).toHaveLength(1);
+      expect(result.warnings[0]).toContain('Sign in');
     },
   );
 
@@ -90,6 +126,7 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
       agentId: 'claude-code',
       unityProjectPath: tmpDir,
       transport: 'http',
+      projectKeyResolver: noLogin,
     });
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') return;
@@ -112,6 +149,7 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
       unityProjectPath: tmpDir,
       transport: 'http',
       noPin: true,
+      projectKeyResolver: noLogin,
     });
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') return;
@@ -133,6 +171,7 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
       unityProjectPath: tmpDir,
       transport: 'http',
       token: pat,
+      projectKeyResolver: noLogin,
     });
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') return;
@@ -144,8 +183,9 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
     expect(entry.url).toBe(pinnedHostedUrl(tmpDir));
     expect(entry.headers).toEqual({ Authorization: `Bearer ${pat}` });
 
-    // Flow C credential-placement rule: warn on a project-scoped PAT.
-    expect(result.warnings.some((w) => w.includes('project-scoped'))).toBe(true);
+    expect(result.credential).toBe('token');
+    // Owner ruling (project keys, 2026-09-23): no git / version-control warnings — just write the file.
+    expect(result.warnings).toHaveLength(0);
   });
 
   it('does NOT write a header when a token merely sits in the project config (no --token opt-in)', async () => {
@@ -162,6 +202,7 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
       agentId: 'claude-code',
       unityProjectPath: tmpDir,
       transport: 'http',
+      projectKeyResolver: noLogin,
     });
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') return;
@@ -169,12 +210,135 @@ describe('setup-mcp — credential-free OAuth config (mcp-authorize g2 / D11)', 
     const raw = fs.readFileSync(result.configPath, 'utf-8');
     expect(raw).not.toContain('Authorization');
     expect(raw).not.toContain(CONFIG_TOKEN);
-    expect(result.warnings).toHaveLength(0);
   });
 
   it('OAuth-capable clients default to supportsOAuth !== false in the registry', () => {
     for (const id of ['claude-code', 'cursor', 'vscode-copilot', 'codex']) {
       expect(getAgentById(id)?.supportsOAuth).not.toBe(false);
     }
+  });
+});
+
+// ---------------------------------------------------------------------------
+// project-keys contract §7 — a Cloud http config carries the project key for EVERY client;
+// `--oauth` opts out, `--regenerate-key` mints + revokes, `--token` wins, stdio/local stay unchanged.
+// ---------------------------------------------------------------------------
+
+describe('setup-mcp — Cloud project key (project-keys §7)', () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-setup-mcp-pk-'));
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  it.each(['claude-code', 'cursor', 'vscode-copilot', 'codex'])(
+    'writes Authorization: Bearer <project key> for %s',
+    async (agentId) => {
+      const { resolver, calls } = signedIn();
+      const result = await setupMcp({ agentId, unityProjectPath: tmpDir, transport: 'http', projectKeyResolver: resolver });
+
+      expect(result.kind).toBe('success');
+      if (result.kind !== 'success') return;
+      const raw = fs.readFileSync(result.configPath, 'utf-8');
+      expect(raw).toContain(`Bearer ${PROJECT_KEY}`);
+      expect(raw).toContain(`/mcp/p/${derivePinV2(path.resolve(tmpDir))}`);
+      expect(raw).not.toContain('GAME_DEV_AUTH_TOKEN'); // Codex: static http_headers, no env-var indirection
+      expect(result.credential).toBe('project-key');
+      expect(result.projectKeyId).toBe('pk_1');
+      expect(result.warnings.join('\n').toLowerCase()).not.toContain('git');
+
+      // The key is bound to this project's pin and requested for the Unity engine.
+      expect(calls).toHaveLength(1);
+      expect(calls[0].pin).toBe(derivePinV2(path.resolve(tmpDir)));
+      expect(calls[0].engine).toBe('unity');
+      expect(calls[0].regenerate).toBe(false);
+    },
+  );
+
+  it('--oauth writes the URL-only config and never resolves a key', async () => {
+    const { resolver, calls } = signedIn();
+    const result = await setupMcp({
+      agentId: 'claude-code', unityProjectPath: tmpDir, transport: 'http', oauth: true, projectKeyResolver: resolver,
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    expect(fs.readFileSync(result.configPath, 'utf-8')).not.toContain('Authorization');
+    expect(result.credential).toBe('none');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('--oauth removes a previously written project-key header', async () => {
+    const { resolver } = signedIn();
+    await setupMcp({ agentId: 'claude-code', unityProjectPath: tmpDir, transport: 'http', projectKeyResolver: resolver });
+    const result = await setupMcp({
+      agentId: 'claude-code', unityProjectPath: tmpDir, transport: 'http', oauth: true, projectKeyResolver: resolver,
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    const raw = fs.readFileSync(result.configPath, 'utf-8');
+    expect(raw).not.toContain(PROJECT_KEY);
+    expect(raw).not.toContain('Authorization');
+  });
+
+  it('--regenerate-key asks for a fresh key and revokes the previous one after the write', async () => {
+    const { resolver, calls, revoked } = signedIn();
+    const result = await setupMcp({
+      agentId: 'claude-code', unityProjectPath: tmpDir, transport: 'http', regenerateKey: true, projectKeyResolver: resolver,
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    expect(calls[0].regenerate).toBe(true);
+    expect(result.projectKeySource).toBe('minted');
+    expect(fs.readFileSync(result.configPath, 'utf-8')).toContain(`Bearer ${PROJECT_KEY}`);
+    expect(revoked).toEqual(['pk_0']);
+  });
+
+  it('--regenerate-key fails when no key can be minted (nothing is written)', async () => {
+    const result = await setupMcp({
+      agentId: 'claude-code', unityProjectPath: tmpDir, transport: 'http', regenerateKey: true, projectKeyResolver: noLogin,
+    });
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') return;
+    expect(result.error.message).toContain('regenerate');
+  });
+
+  it('an explicit --token wins over the project key', async () => {
+    const { resolver, calls } = signedIn();
+    const result = await setupMcp({
+      agentId: 'claude-code', unityProjectPath: tmpDir, transport: 'http', token: 'agd_pat_explicit', projectKeyResolver: resolver,
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    const raw = fs.readFileSync(result.configPath, 'utf-8');
+    expect(raw).toContain('Bearer agd_pat_explicit');
+    expect(raw).not.toContain(PROJECT_KEY);
+    expect(result.credential).toBe('token');
+    expect(calls).toHaveLength(0);
+  });
+
+  it('a local-server URL and the stdio transport never carry a project key', async () => {
+    const { resolver, calls } = signedIn();
+    const local = await setupMcp({
+      agentId: 'claude-code', unityProjectPath: tmpDir, transport: 'http', url: 'http://localhost:23456', projectKeyResolver: resolver,
+    });
+    const stdio = await setupMcp({
+      agentId: 'cursor', unityProjectPath: tmpDir, transport: 'stdio', projectKeyResolver: resolver,
+    });
+
+    for (const result of [local, stdio]) {
+      expect(result.kind).toBe('success');
+      if (result.kind !== 'success') return;
+      expect(fs.readFileSync(result.configPath, 'utf-8')).not.toContain(PROJECT_KEY);
+      expect(result.credential).toBe('none');
+    }
+    expect(calls).toHaveLength(0);
   });
 });

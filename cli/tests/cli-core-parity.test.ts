@@ -61,7 +61,13 @@ describe('setup-mcp routes on the v2 pin byte-for-byte (T4)', () => {
   it('writes <base>/mcp/p/<pin-v2> for the resolved project root', async () => {
     const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-parity-'));
     try {
-      const result = await setupMcp({ agentId: 'claude-code', unityProjectPath: tmpDir, transport: 'http' });
+      // Signed-out resolver: the default one would read the real machine login and mint a real key.
+      const result = await setupMcp({
+        agentId: 'claude-code',
+        unityProjectPath: tmpDir,
+        transport: 'http',
+        projectKeyResolver: async () => ({ kind: 'no-login', reason: 'not signed in' }),
+      });
       expect(result.kind).toBe('success');
       if (result.kind !== 'success') return;
 

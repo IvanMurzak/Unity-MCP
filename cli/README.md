@@ -528,7 +528,7 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 Write MCP config files for AI agents, enabling headless/CI setup without the Unity Editor UI. Supports all 14 agents (Claude Code, Cursor, Gemini, Codex, etc.).
 
-By default the written config is **credential-free** (the client authenticates with your native OAuth sign-in from [`login`](#login)) and **pinned** to this project via a per-project URL (`https://ai-game.dev/mcp/p/<pin>` for http transport, or a `project=<pin>` argument for stdio). Pass `--no-pin` for the shared, unpinned endpoint, or `--token` to opt into writing a static credential (PAT) into the config. This output matches the Unity Editor's **Configure MCP** button byte-for-byte.
+The config is **pinned** to this project via a per-project URL (`https://ai-game.dev/mcp/p/<pin>` for http transport, or a `project=<pin>` argument for stdio). For the Cloud http transport it also carries this project's **project key** (`Authorization: Bearer agd_pk_…`) for every agent: a non-expiring, revocable credential bound to this project only, reused from `~/.ai-game-dev/project-keys.json` or minted with the account you signed in with via [`login`](#login). Without a sign-in (or if the key cannot be obtained) the config is URL-only and the agent signs in with its own OAuth. Pass `--oauth` to always write the URL-only config, `--regenerate-key` to replace the key (the previous one is revoked), `--token` to write an explicit PAT instead, or `--no-pin` for the shared, unpinned endpoint. stdio and local-server configs never carry a project key. This output matches the Unity Editor's **Configure** button.
 
 ```bash
 unity-mcp-cli setup-mcp claude-code ./MyGame
@@ -540,7 +540,9 @@ unity-mcp-cli setup-mcp claude-code ./MyGame
 | `[path]` | No | Unity project path (defaults to cwd) |
 | `--transport <transport>` | No | Transport method: `stdio` or `http` (default: `http`) |
 | `--url <url>` | No | Server URL override (for http transport) |
-| `--token <token>` | No | Explicit PAT opt-in — writes a static credential into the config (default: credential-free, native OAuth) |
+| `--token <token>` | No | Explicit PAT — written as the `Authorization` header instead of the project key |
+| `--oauth` | No | Write a URL-only Cloud config (the agent signs in with its own OAuth) instead of the project key |
+| `--regenerate-key` | No | Mint a fresh project key, rewrite the config, and revoke the previous key (Cloud http only) |
 | `--no-pin` | No | Write an unpinned URL / omit the `project=` argument (default: pin to this project via `/mcp/p/<pin>`) |
 | `--list` | No | List all available agent IDs |
 
@@ -554,6 +556,12 @@ unity-mcp-cli setup-mcp --list
 
 ```bash
 unity-mcp-cli setup-mcp cursor ./MyGame --transport stdio
+```
+
+**Example — replace this project's key (the old key stops working):**
+
+```bash
+unity-mcp-cli setup-mcp claude-code ./MyGame --regenerate-key
 ```
 
 **Example — write an unpinned config (shared `/mcp` endpoint):**

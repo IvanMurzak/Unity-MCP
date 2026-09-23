@@ -429,6 +429,8 @@ describe('setupMcp', () => {
       agentId,
       unityProjectPath: tmpDir,
       transport: 'http',
+      // Signed-out resolver: the default one would read the real machine login and mint a real key.
+      projectKeyResolver: async () => ({ kind: 'no-login', reason: 'not signed in' }),
     });
 
     expect(result.kind).toBe('success');
