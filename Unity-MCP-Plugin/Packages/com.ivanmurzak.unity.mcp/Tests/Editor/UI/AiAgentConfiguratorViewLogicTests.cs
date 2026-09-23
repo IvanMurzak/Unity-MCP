@@ -12,6 +12,7 @@
 using com.IvanMurzak.McpPlugin.AgentConfig;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using NUnit.Framework;
+using UnityEngine.UIElements;
 using CustomConfigurator = com.IvanMurzak.McpPlugin.AgentConfig.Impl.CustomConfigurator;
 using TransportMethod = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod;
 using AgentConnectionMode = com.IvanMurzak.McpPlugin.AgentConfig.ConnectionMode;
@@ -22,9 +23,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// <summary>
     /// Pure-logic tests for the configurator view's decision points: the sign-in state chip, the
     /// credential mode each connection mode writes, and the Cloud project key (project-keys contract
-    /// §7) being written as <c>Authorization: Bearer</c> for every agent. No UIToolkit / Editor state is
-    /// exercised — the view's decision points are unit-tested through internal static helpers
-    /// (same pattern as <c>MainWindowEditorStatusLogicTests</c>).
+    /// §7) being written as <c>Authorization: Bearer</c> for every agent. No Editor state is exercised — the
+    /// view's decision points are unit-tested through internal static helpers (same pattern as
+    /// <c>MainWindowEditorStatusLogicTests</c>); the one UIToolkit test only clones a UXML template to pin its layout.
     /// </summary>
     public class AiAgentConfiguratorViewLogicTests
     {
@@ -201,6 +202,53 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             if (!isSignedIn)
                 StringAssert.Contains("Sign in", text);
             StringAssert.DoesNotContain("git", text.ToLowerInvariant());
+        }
+
+        #endregion
+
+        #region Regenerate key shares the Configure button's right edge
+
+        /// <summary>
+        /// The "Regenerate key" row must sit in the SAME column as the Configure row with the SAME row layout: that
+        /// column is the `.row` child that `.row > * { margin-right }` insets, so sharing it is what puts both buttons'
+        /// right edges on one line. A row added to the template root instead escapes that inset (the 0.92.0 bug).
+        /// </summary>
+        [Test]
+        public void ConfigureStatusTemplate_KeyRowSharesTheConfigureColumnAndLayout()
+        {
+            var root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
+            var btnConfigure = root.Q<Button>("btnConfigure");
+            var btnRegenerate = root.Q<Button>("btnRegenerateKey");
+            var configureStatusText = root.Q<Label>("configureStatusText");
+            var keyStatusText = root.Q<Label>("projectKeyStatusText");
+            Assert.IsNotNull(btnConfigure);
+            Assert.IsNotNull(btnRegenerate);
+            Assert.IsNotNull(configureStatusText);
+            Assert.IsNotNull(keyStatusText);
+
+            var configureRow = configureStatusText!.parent;
+            var keyRow = btnRegenerate!.parent;
+            Assert.AreEqual("projectKeyRow", keyRow.name);
+            Assert.AreSame(keyStatusText!.parent, keyRow);
+
+            // Same column, and that column is the `.row` child the right-edge inset applies to.
+            Assert.AreSame(configureRow.parent, keyRow.parent);
+            Assert.AreEqual("templateConfigurationStatus", keyRow.parent.name);
+            Assert.IsTrue(keyRow.parent.parent.ClassListContains("row"));
+
+            // Each button (group) is its row's last child under the same row layout.
+            Assert.AreSame(btnConfigure!.parent, configureRow[configureRow.childCount - 1]);
+            Assert.AreSame(btnRegenerate, keyRow[keyRow.childCount - 1]);
+            Assert.AreEqual(configureRow.style.flexDirection.value, keyRow.style.flexDirection.value);
+            Assert.AreEqual(configureRow.style.alignItems.value, keyRow.style.alignItems.value);
+            Assert.AreEqual(configureRow.style.justifyContent.value, keyRow.style.justifyContent.value);
+            Assert.AreEqual(configureRow.style.marginTop.value, keyRow.style.marginTop.value);
+
+            // Same button + label styling, and the tooltip is kept.
+            CollectionAssert.AreEquivalent(btnConfigure.GetClasses(), btnRegenerate.GetClasses());
+            CollectionAssert.AreEquivalent(configureStatusText.GetClasses(), keyStatusText.GetClasses());
+            Assert.AreEqual(configureStatusText.style.marginBottom.value, keyStatusText.style.marginBottom.value);
+            Assert.IsFalse(string.IsNullOrEmpty(btnRegenerate.tooltip));
         }
 
         #endregion
