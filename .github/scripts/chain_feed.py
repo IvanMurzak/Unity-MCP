@@ -24,10 +24,11 @@ ARTIFACT it was read from (`project.assets.json`, a DLL sha256, `chain-identity.
 an exit code.
 """
 
-CHAIN_FEED_VERSION = "1"
+CHAIN_FEED_VERSION = "4"
 
 import argparse
 import hashlib
+import http.client
 import io
 import json
 import os
@@ -40,6 +41,9 @@ import subprocess
 import sys
 import tempfile
 import time
+import urllib.error
+import urllib.parse
+import urllib.request
 import zipfile
 from pathlib import Path
 
@@ -402,6 +406,10 @@ RECIPES = {
         "artifacts": {},
         "consumes": [
             {
+                "ref": "null-engine/host", "node": "null-engine", "artifact": "host",
+                "mode": "project", "pins": [],
+            },
+            {
                 "ref": "cli-core/tgz", "node": "cli-core", "artifact": "tgz",
                 "mode": "pnpm", "pins": ["packages/core/package.json"],
             },
@@ -431,6 +439,10 @@ RECIPES = {
         "pack": [],
         "artifacts": {},
         "consumes": [
+            {
+                "ref": "null-engine/host", "node": "null-engine", "artifact": "host",
+                "mode": "project", "pins": [],
+            },
             {
                 "ref": "mcp-plugin-dotnet/server", "node": "mcp-plugin-dotnet", "artifact": "server",
                 "mode": "nuget", "pins": ["mcp-server/McpServer.csproj"],
@@ -476,12 +488,15 @@ NEEDS_NEW_CONCURRENCY = ("unity-mcp",)
 UPLOAD_ARTIFACT_MAJOR = "v7"
 
 #: The interpreter probe both fragment resolvers RUN. It imports C-extension modules (a
-#: half-installed interpreter reports a version but cannot import `select`/`zlib`) and prints its
-#: own `sys.executable` with forward slashes, which is what the resolver exports — never the
+#: half-installed interpreter reports a version but cannot import them) and prints its own
+#: `sys.executable` with forward slashes, which is what the resolver exports — never the
 #: candidate's NAME. It contains no quote character of either kind, so it survives a bash AND a
-#: pwsh single-quoted argument unchanged.
+#: pwsh single-quoted argument unchanged. The module list is the set a leg actually loads: `select`
+#: and `socket` (subprocess and `urllib`), `ssl` (every HTTPS fetch, incl. `fetch-fixtures`),
+#: `zlib` (every nupkg / tarball read) and `ctypes` — the one macOS framework-Python build that
+#: omits `_ctypes` fails here, at the resolver, instead of mid-leg (`p2-replay-leg`).
 CHAIN_PY_PROBE = (
-    "import sys, select, zlib, hashlib; sys.version_info >= (3, 9) or sys.exit(1); "
+    "import sys, select, socket, ssl, zlib, ctypes, hashlib; sys.version_info >= (3, 9) or sys.exit(1); "
     "print(sys.executable.replace(chr(92), chr(47)))"
 )
 
@@ -867,12 +882,15 @@ def _default_runner_temp():
     return Path(tempfile.gettempdir())
 
 
-def build_context(args, enforce_limits=True):
-    """Resolve the lock (§C1/§C7) and assert §C6, or return `None` for an ordinary run."""
-    lock_text, hash8, source = load_lock_text(args)
-    if lock_text is None:
-        log("chain: no lock (ordinary run)")
-        return None
+def parse_lock_payload(lock_text, source, enforce_limits=True):
+    """The ONE lock-parse gate every lock-consuming command shares: size cap (B7), JSON, a
+    `nodes` object, then `validate_lock`.
+
+    `build_context` (every leg command) and `cmd_fetch_fixtures` both load a lock, and two
+    hand-rolled copies of this gate already drifted once — the fetch-fixtures copy had reduced
+    the B7 message to a bare marker, so the same oversized lock refused with two different
+    sentences. The gate lives here so the message has exactly one home.
+    """
     if enforce_limits and len(lock_text) > MAX_LOCK_CHARS:
         raise Refusal(
             "lock input is %d characters, over the %d-character limit (B7: the "
@@ -885,6 +903,16 @@ def build_context(args, enforce_limits=True):
     if not isinstance(lock, dict) or not isinstance(lock.get("nodes"), dict):
         raise Refusal("lock (%s) has no `nodes` object" % source)
     validate_lock(lock)
+    return lock
+
+
+def build_context(args, enforce_limits=True):
+    """Resolve the lock (§C1/§C7) and assert §C6, or return `None` for an ordinary run."""
+    lock_text, hash8, source = load_lock_text(args)
+    if lock_text is None:
+        log("chain: no lock (ordinary run)")
+        return None
+    lock = parse_lock_payload(lock_text, source, enforce_limits=enforce_limits)
 
     if not hash8:
         hash8 = str(lock.get("lock_hash") or "").split(":")[-1][:8]
@@ -1238,6 +1266,7 @@ def build_plan(ctx, edges):
             "dir": as_posix_abs(clone_dir),
             "clone": clone_argv(node_id, ctx.sha(node_id) or "", clone_dir, recipe["slug"]),
             "override": nuget_rows_for_node(ctx, node_id),
+            "npm": npm_lock_edges(ctx, node_id),
             # these strings run with `shell=True`: every pasted value goes through `shell_value`
             "build": substitute(recipe["build"], values, quote=shell_value) if recipe["build"] else None,
             "pack": [substitute(raw, values, quote=shell_value) for raw in recipe["pack"]],
@@ -1956,6 +1985,77 @@ def _assert_only_patch_entry_changed(before_raw, after_raw, old_key, new_key, ne
         )
 
 
+# ----------------------------------------------------------------------
+# override: npm, BEFORE the consumer's own `npm ci`
+
+#: The dependency maps an npm pin can live in (a CLI declares cli-core under `dependencies`).
+NPM_DEP_SECTIONS = ("dependencies", "devDependencies", "optionalDependencies")
+#: Regenerates ONLY the lockfile — nothing is installed, no lifecycle script runs.
+NPM_RELOCK_ARGV = ["npm", "install", "--package-lock-only", "--ignore-scripts", "--no-audit",
+                   "--no-fund"]
+
+
+def npm_lock_edges(ctx, node_id):
+    """`node_id`'s npm edges whose producer is AT A WS VERSION in this lock (so it is packed)."""
+    return [e for e in RECIPES[node_id]["consumes"]
+            if e["mode"] == "npm" and ctx.ws_version(e["node"])]
+
+
+def npm_preinstall_plans(ctx, root, edges):
+    """One rewrite per npm edge: `<root>/<path>/package.json` pins the ws tarball by `file:`."""
+    plans = []
+    for edge in edges:
+        body = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]
+        tarball = feed_artifact_path(ctx, edge["node"], body)
+        plans.append({"dir": Path(root) / (edge.get("path") or "."), "package_id": body["id"],
+                      "tarball": tarball, "spec": "file:%s" % as_posix_abs(tarball)})
+    return plans
+
+
+def describe_npm_preinstall(plan):
+    return "%s: %s -> %s, then %s" % (as_posix_abs(plan["dir"] / "package.json"), plan["package_id"],
+                                      plan["spec"], " ".join(NPM_RELOCK_ARGV))
+
+
+def npm_preinstall(ctx, root, edges):
+    """Redirect each npm pin to `file:<ws tgz>` and relock BEFORE anything runs `npm ci` there.
+
+    A train's future range (`^0.5.0`) is on no registry yet, so `npm ci` itself would die ETARGET
+    before a post-install swap could run. Rewritten in the leg checkout / a feed clone only; never
+    committed. Returns the rewritten paths.
+    """
+    plans = npm_preinstall_plans(ctx, root, edges)
+    if plans:
+        require_tool("npm", "the npm pin is relocked onto the ws tarball before `npm ci`")
+    written = []
+    for plan in plans:
+        if not plan["tarball"].is_file():
+            raise Refusal("tarball missing for %s -> %s (never falling back to the registry)"
+                          % (plan["package_id"], as_posix_abs(plan["tarball"])))
+        path = plan["dir"] / "package.json"
+        if not path.is_file():
+            raise Refusal("npm pin %s does not exist" % as_posix_abs(path))
+        try:
+            data = json.loads(read_text(path).lstrip("﻿"))
+        except ValueError as exc:
+            raise Refusal("npm pin %s is not valid JSON: %s" % (as_posix_abs(path), exc))
+        if not isinstance(data, dict):
+            raise Refusal("npm pin %s is not a JSON object" % as_posix_abs(path))
+        sections = [name for name in NPM_DEP_SECTIONS
+                    if isinstance(data.get(name), dict) and plan["package_id"] in data[name]]
+        if not sections:
+            raise Refusal("%s declares no %s dependency to redirect to the ws tarball"
+                          % (as_posix_abs(path), plan["package_id"]))
+        for name in sections:
+            data[name][plan["package_id"]] = plan["spec"]
+        write_text(path, json.dumps(data, indent=2, ensure_ascii=False) + "\n")
+        if run(NPM_RELOCK_ARGV, cwd=plan["dir"], env=ctx.command_env()) != 0:
+            raise Refusal("`%s` failed in %s" % (" ".join(NPM_RELOCK_ARGV), as_posix_abs(plan["dir"])))
+        written.extend([as_posix_abs(path), as_posix_abs(plan["dir"] / "package-lock.json")])
+        log("chain: npm " + describe_npm_preinstall(plan))
+    return written
+
+
 def pnpm_plans(ctx, edges):
     plans = []
     for edge in edges:
@@ -2366,6 +2466,7 @@ def cmd_apply(args):
             if run(argv, env=git_env) != 0:
                 raise Refusal("clone of %s at %s failed" % (node_id, entry["sha"]))
         write_nuget_override(ctx, clone_dir, entry["override"])
+        npm_preinstall(ctx, clone_dir, entry["npm"])
         env = ctx.command_env()
         for phase in ("build", "pack"):
             commands = [entry["build"]] if phase == "build" else entry["pack"]
@@ -2438,11 +2539,10 @@ def cmd_apply(args):
     if server_edges:
         exported.update(server_env(ctx, server_edges))
     npm_edges = [e for e in edges if e["mode"] == "npm"]
+    written.extend(npm_preinstall(ctx, ctx.checkout, npm_edges))
     for edge in npm_edges:
-        notes.append(
-            "npm: run `chain_feed.py apply-npm --dir %s` AFTER that directory's `npm ci` "
-            "(a later `npm ci` undoes a --no-save install)" % (edge.get("path") or ".")
-        )
+        notes.append("npm: %s pins the ws tarball; the workflow's `npm ci` installs it"
+                     % (edge.get("path") or "."))
 
     # 3. the environment every later step in this job inherits (§C4).
     exported[NUGET_PROPERTY] = "true"
@@ -2516,6 +2616,16 @@ def _stamp_server_marker(ctx, node_id, entry):
     )
 
 
+def _installed_npm_version(target, package_id):
+    """`node_modules/<id>/package.json` `version` under `target`, or None if absent/unreadable."""
+    manifest = target.joinpath("node_modules", *package_id.split("/")) / "package.json"
+    try:
+        data = json.loads(read_text(manifest).lstrip("﻿"))
+    except (OSError, ValueError):
+        return None
+    return data.get("version") if isinstance(data, dict) else None
+
+
 @command("apply-npm", "install the ws cli-core tarball into one CLI directory (AFTER its npm ci)")
 def cmd_apply_npm(args):
     ctx = build_context(args)
@@ -2528,15 +2638,21 @@ def cmd_apply_npm(args):
         log("chain: %s has no npm edge inside this lock" % ctx.node)
         return EXIT_OK
     require_tool("npm", "the engine CLI leg installs the ws cli-core tarball")
-    for edge in edges:
-        package_id = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]["id"]
+    installed_any = False
+    for edge, plan in zip(edges, npm_preinstall_plans(ctx, ctx.checkout, edges)):
+        package_id, tarball = plan["package_id"], plan["tarball"]
         ws_version = ctx.ws_version(edge["node"])
-        tarball = ctx.feed_npm / tarball_filename(package_id, ws_version)
         if not tarball.is_file():
             raise Refusal(
                 "tarball missing for %s -> %s (never falling back to the registry)"
                 % (edge["ref"], as_posix_abs(tarball))
             )
+        if _installed_npm_version(target, package_id) == ws_version:
+            # v4: `apply` already pinned the tarball, so the workflow's `npm ci` installed it
+            log("chain: npm %s already holds %s@%s (pinned by apply)"
+                % (as_posix_abs(target), package_id, ws_version))
+            continue
+        installed_any = True
         # an argv list, not a `shell=True` string: the tarball path carries the lock's ws version
         # (validated at load). On Windows `npm.cmd` still runs through cmd.exe, so the validation is
         # what keeps that value inert there, not the argv form.
@@ -2546,7 +2662,8 @@ def cmd_apply_npm(args):
             raise Refusal("`%s` failed in %s" % (cmd, as_posix_abs(target)))
         log("chain: npm --no-save %s -> %s" % (as_posix_abs(target), as_posix_abs(tarball)))
     state = _load_state(ctx)
-    state.setdefault("overrides", []).append("npm --no-save @ %s" % as_posix_abs(target))
+    state.setdefault("overrides", []).append(
+        ("npm --no-save @ %s" if installed_any else "npm pinned by apply @ %s") % as_posix_abs(target))
     state.setdefault("npm_dirs", []).append(target_rel)
     _save_state(ctx, state)
     return EXIT_OK
@@ -2604,6 +2721,8 @@ def cmd_dry_run(args):
             log("chain:   clone   %s" % " ".join(str(a) for a in argv))
         for row in entry["override"]:
             log("chain:   nuget   %s -> [%s]" % (row["package_id"], row["ws_version"]))
+        for plan in npm_preinstall_plans(ctx, Path(entry["dir"]), entry["npm"]):
+            log("chain:   npm     " + describe_npm_preinstall(plan))
         if entry["build"]:
             log("chain:   build   %s" % entry["build"])
         for cmd in entry["pack"]:
@@ -2636,11 +2755,8 @@ def cmd_dry_run(args):
             log("chain:   write   %s" % as_posix_abs(ctx.checkout / "pnpm-workspace.yaml"))
             log("chain:   run     %s" % PNPM_INSTALL_CMD)
         elif mode == "npm":
-            for edge in mode_edges:
-                package_id = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]["id"]
-                tarball = ctx.feed_npm / tarball_filename(package_id, ctx.ws_version(edge["node"]))
-                log("chain:   npm     (in %s) npm install %s --no-save"
-                    % (edge.get("path") or ".", as_posix_abs(tarball)))
+            for plan in npm_preinstall_plans(ctx, ctx.checkout, mode_edges):
+                log("chain:   npm     " + describe_npm_preinstall(plan))
         elif mode == "server-binary":
             ws_version = ctx.ws_version("gamedev-mcp-server")
             artifact_id = RECIPES["gamedev-mcp-server"]["artifacts"]["binary"]["id"]
@@ -3226,15 +3342,18 @@ def render_fragment(node, existing_group=None, existing_cancel=None, new_concurr
         "#     re-resolved on every call, and on the shared Windows runners `python`/`py` can resolve",
         "#     into ANOTHER runner's (possibly deleted) workspace, so `py` is never a candidate. The",
         "#     run-it-and-export-sys.executable idea follows ai-game-dev-software's",
-        "#     .github/scripts/resolve-python.ps1 — but NOT that script's `py` last resort.",
+        "#     .github/scripts/resolve-python.ps1.",
         "#     A runner with no usable Python on PATH (the Unreal self-hosted legs run UE's bundled",
         "#     python.exe) sets job-level `env: CHAIN_PY:` to an ABSOLUTE, SPACE-FREE interpreter path",
         "#     instead — the value is substituted unquoted — and both resolver steps below then skip.",
         "#     Every step id below is chain-prefixed and used ONCE per job: never reuse a job's own step id",
         "#     (e.g. a second `server` step to swap a downloaded binary for the chain one) — branch inside",
         "#     ONE step on env.CHAIN_ACTIVE instead.",
+        "#     Both resolvers run under `always()`: the leg record below is `if: always()`, and a",
+        "#     resolver skipped after an earlier failure would leave CHAIN_PY empty, so the RED record",
+        "#     that failure deserves could never be written or uploaded.",
         "      - name: chain python (posix)",
-        "        if: runner.os != 'Windows' && env.CHAIN_PY == ''",
+        "        if: always() && runner.os != 'Windows' && env.CHAIN_PY == ''",
         "        shell: bash",
         "        run: |",
         "          for c in python3 python; do",
@@ -3246,7 +3365,7 @@ def render_fragment(node, existing_group=None, existing_cancel=None, new_concurr
         "          done",
         "          echo 'chain: no Python 3.9+ on PATH that runs and reports an absolute, space-free sys.executable (tried python3, python)' >&2; exit 2",
         "      - name: chain python (windows)",
-        "        if: runner.os == 'Windows' && env.CHAIN_PY == ''",
+        "        if: always() && runner.os == 'Windows' && env.CHAIN_PY == ''",
         "        shell: pwsh",
         "        run: |",
         "          foreach ($c in 'python', 'python3') {",
@@ -3307,7 +3426,7 @@ def render_fragment(node, existing_group=None, existing_cancel=None, new_concurr
         )
         lines += [
             "",
-            "# --- AFTER that directory's own `npm ci` (which would undo a --no-save install):",
+            "# --- AFTER that directory's own `npm ci` (apply pinned the ws tarball before it; this re-checks):",
             "      - name: chain feed (npm)",
             "        if: env.CHAIN_ACTIVE == '1'",
             "        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply-npm --node %s --dir %s" % (node, npm_dir),
@@ -3347,6 +3466,388 @@ def cmd_print_fragment(args):
         new_concurrency=getattr(args, "new_concurrency", None) or None,
     ), end="")
     return EXIT_OK
+
+
+# ----------------------------------------------------------------------
+# fetch-fixtures — the T2 replay inputs (`p2-replay-leg`)
+# ----------------------------------------------------------------------
+#
+# A T2 consumer (the App, the cloud host) replays each engine's COMMITTED fixture through the
+# null-engine host (`--replay <fixture>`, MCP-Plugin-dotnet `docs/chain-fixtures.md` F6). The
+# fixtures live in each ENGINE repo under `tests/chain-fixtures/<engine-version>/tools.jsonl`, so
+# this fetches them AT THE LOCK'S SHA of each engine node — never a branch, never `main` — and lays
+# them out as `<out>/<engine>/<engine_version>/<surface>/tools.jsonl`, keyed on each file's OWN
+# `meta` line, plus `<out>/fixtures.json` (what a consumer iterates). MCP-Plugin-dotnet's reference
+# sample is fetched too, as the self-check fixture.
+#
+# `.scripts/chain/replay.py` (the dev box) calls THESE functions with a `gh`-backed transport, so
+# the operator's fetch and a leg's fetch are one piece of code, not two that can drift.
+
+#: `(node id, meta.engine)` for every engine node whose committed fixtures a T2 consumer replays.
+FIXTURE_ENGINES = (("unity-mcp", "unity"), ("godot-mcp", "godot"), ("unreal-mcp", "unreal"))
+FIXTURE_REFERENCE_NODE = "mcp-plugin-dotnet"
+FIXTURE_REFERENCE_ENGINE = "null-engine"
+FIXTURE_ROOT = "tests/chain-fixtures"
+FIXTURE_FILE = "tools.jsonl"
+FIXTURE_SCHEMA = 1
+FIXTURES_MANIFEST = "fixtures.json"
+#: The one environment name a T2 consumer reads: the fetched directory holding `fixtures.json`.
+REPLAY_ENV = "CHAIN_REPLAY_FIXTURES"
+#: The literal skip name of a T2 test whose `CHAIN_REPLAY_FIXTURES` is absent.
+REPLAY_SKIP_NAME = "chain-replay-fixtures-absent"
+GITHUB_API_URL = "https://api.github.com"
+#: A listed directory name, `meta.engine_version` and `meta.surface` each become a PATH segment of
+#: the layout, and all three come from a remote repository: one shape, no separators, no `..`.
+_FIXTURE_SEGMENT_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._-]{0,63}\Z")
+#: A UTF-8 BOM. A fixture may start with one on the wire (F1: `fixture_meta` tolerates it); it is
+#: spelled as a named bytes constant — never an invisible character inside a string literal, which
+#: is exactly the edit a well-meant "cleanup" silently breaks.
+_UTF8_BOM = b"\xef\xbb\xbf"
+
+
+def fixture_segment(value):
+    """`value` when it is safe as ONE path segment of the fixture layout, else `None`."""
+    if not isinstance(value, str) or ".." in value or not _FIXTURE_SEGMENT_RE.match(value):
+        return None
+    return value
+
+
+class _NoCrossHostAuthRedirect(urllib.request.HTTPRedirectHandler):
+    """Strip `Authorization` when a redirect crosses to a different host.
+
+    urllib's stock redirect handler copies every request header except the content-* ones, so a
+    redirect from `api.github.com` to any other host would replay the Bearer token there.
+    Contents listings only redirect same-host today, so this is hardening against that changing,
+    not a live leak: a same-host redirect keeps the header, a cross-host one loses it.
+    """
+
+    def redirect_request(self, req, fp, code, msg, headers, newurl):
+        new_request = super().redirect_request(req, fp, code, msg, headers, newurl)
+        if new_request is not None and urllib.parse.urlsplit(new_request.full_url).netloc != urllib.parse.urlsplit(req.full_url).netloc:
+            for name in [key for key in new_request.headers if key.lower() == "authorization"]:
+                del new_request.headers[name]
+        return new_request
+
+
+#: The transport's default opener. `build_opener` prefers a passed handler that SUBCLASSES a stock
+#: one, so this replaces urllib's own `HTTPRedirectHandler` instead of stacking beside it.
+_OPENER = urllib.request.build_opener(_NoCrossHostAuthRedirect())
+
+
+def _http_error_body(exc):
+    """The error response's body, or `b""` when this `HTTPError` carries none (`fp=None`)."""
+    if getattr(exc, "fp", None) is None:
+        return b""
+    try:
+        return exc.read() or b""
+    except (OSError, http.client.HTTPException):
+        return b""
+
+
+def _http_error_detail(body, headers):
+    """` (message; Retry-After: N)` — the detail a non-200 carries beyond its status code.
+
+    GitHub answers refusals with a JSON body (`{"message": …}`); the retry headers a client would
+    honour are headers, not body. Both used to be discarded, so a rate-limited fetch refused as a
+    bare `answered HTTP 403` with nothing to retry against.
+    """
+    parts = []
+    text = body.decode("utf-8", "replace").strip() if body else ""
+    if text:
+        try:
+            payload = json.loads(text)
+        except ValueError:
+            payload = None
+        if isinstance(payload, dict) and isinstance(payload.get("message"), str):
+            text = payload["message"]
+        text = " ".join(text.split())[:300]
+        parts.append(text)
+    if headers is not None:
+        for name in ("Retry-After", "X-RateLimit-Reset", "X-RateLimit-Remaining"):
+            value = headers.get(name)
+            if value:
+                parts.append("%s: %s" % (name, value))
+    return (" (%s)" % "; ".join(parts)) if parts else ""
+
+
+def _http_status_refusal(url, status, body, headers):
+    """The `Refusal` for a non-200 GET, shared by `listing` and `download`.
+
+    Both callers of `_get` refuse a non-200 with the same message; assembling it in ONE place
+    keeps the wording from drifting between them, the same consolidation `parse_lock_payload`
+    gives the lock gate.
+    """
+    return Refusal(
+        "fetch-fixtures: GET %s answered HTTP %s%s" % (url, status, _http_error_detail(body, headers))
+    )
+
+
+class GithubFixtureTransport(object):
+    """The leg's transport: the GitHub contents API over `urllib`, each file from its `download_url`.
+
+    The token (`GITHUB_TOKEN` / `GH_TOKEN`) goes to the API only, and only when set: the engine
+    repos are public, so it lifts the anonymous rate limit and nothing else. Every listing names the
+    ref it reads at in its own URL. Redirects never carry the Bearer token to a different host
+    (`_NoCrossHostAuthRedirect`).
+    """
+
+    def __init__(self, token=None, urlopen=None, timeout=60):
+        self.token = token
+        self.timeout = timeout
+        self._urlopen = urlopen or _OPENER.open
+
+    def _get(self, url, api):
+        headers = {"User-Agent": "chain-feed-fetch-fixtures"}
+        if api:
+            headers["Accept"] = "application/vnd.github+json"
+            if self.token:
+                headers["Authorization"] = "Bearer %s" % self.token
+        request = urllib.request.Request(url, headers=headers)
+        try:
+            with self._urlopen(request, timeout=self.timeout) as response:
+                return 200, response.read(), getattr(response, "headers", None)
+        except urllib.error.HTTPError as exc:
+            return exc.code, _http_error_body(exc), exc.headers
+        except (urllib.error.URLError, OSError, http.client.HTTPException) as exc:
+            raise Refusal("fetch-fixtures: GET %s failed: %s" % (url, exc))
+
+    def listing(self, slug, path, sha):
+        """The directory listing of `path` at `sha`, or `None` when there is no such directory."""
+        url = "%s/repos/%s/contents/%s?ref=%s" % (GITHUB_API_URL, slug, path, sha)
+        status, body, headers = self._get(url, api=True)
+        if status == 404:
+            return None
+        if status != 200:
+            raise _http_status_refusal(url, status, body, headers)
+        try:
+            data = json.loads(body.decode("utf-8"))
+        except ValueError as exc:
+            raise Refusal("fetch-fixtures: GET %s did not answer JSON: %s" % (url, exc))
+        # A FILE where a directory was expected is not a fixture directory.
+        return data if isinstance(data, list) else None
+
+    def download(self, candidate):
+        url = candidate.get("download_url") or ""
+        if not str(url).startswith("https://"):
+            raise Refusal("fetch-fixtures: %s has no https download_url (%r)" % (candidate["source"], url))
+        status, body, headers = self._get(url, api=False)
+        if status != 200:
+            raise _http_status_refusal(url, status, body, headers)
+        return body
+
+
+def _listed(listing, kind, name=None):
+    return [
+        item for item in (listing or ())
+        if isinstance(item, dict) and item.get("type") == kind and (name is None or item.get("name") == name)
+    ]
+
+
+def fixture_candidates(lock, transport):
+    """`(candidates, missing)` — directory listings only, every one AT the lock's sha for its node.
+
+    An engine node the lock does not carry contributes nothing. One the lock carries without a sha
+    (`released`), or whose `tests/chain-fixtures/` holds no `<dir>/tools.jsonl` at that sha, is a
+    named `missing` row — never an exception, never silently absent.
+    """
+    nodes = lock.get("nodes") or {}
+    candidates = []
+    missing = []
+
+    def candidate(engine, node_id, slug, sha, path, item, reference):
+        size = item.get("size")
+        return {
+            "engine": engine, "node": node_id, "slug": slug, "sha": sha, "path": path,
+            "source": "%s@%s:%s" % (slug, sha[:8], path),
+            "size": size if isinstance(size, int) and not isinstance(size, bool) else None,
+            "download_url": item.get("download_url"),
+            "reference": reference,
+        }
+
+    def absent(engine, node_id, sha, reason):
+        missing.append({"engine": engine, "node": node_id, "sha": sha, "reason": reason})
+
+    for node_id, engine in FIXTURE_ENGINES:
+        if node_id not in nodes:
+            continue
+        entry = nodes.get(node_id) or {}
+        sha = entry.get("sha")
+        slug = RECIPES[node_id]["slug"]
+        if not sha:
+            absent(engine, node_id, None, "no fixture for %s: the lock gives %s no sha (state %r)"
+                   % (engine, node_id, entry.get("state")))
+            continue
+        found = []
+        directories = _listed(transport.listing(slug, FIXTURE_ROOT, sha), "dir")
+        for directory in sorted(directories, key=lambda item: str(item.get("name"))):
+            name = fixture_segment(directory.get("name"))
+            if name is None:
+                continue
+            path = "%s/%s" % (FIXTURE_ROOT, name)
+            for item in _listed(transport.listing(slug, path, sha), "file", FIXTURE_FILE):
+                found.append(candidate(engine, node_id, slug, sha, "%s/%s" % (path, FIXTURE_FILE), item, False))
+        if not found:
+            absent(engine, node_id, sha, "no fixture for %s at %s" % (engine, sha[:8]))
+        candidates.extend(found)
+
+    if FIXTURE_REFERENCE_NODE in nodes:
+        entry = nodes.get(FIXTURE_REFERENCE_NODE) or {}
+        sha = entry.get("sha")
+        slug = RECIPES[FIXTURE_REFERENCE_NODE]["slug"]
+        engine = FIXTURE_REFERENCE_ENGINE
+        if not sha:
+            absent(engine, FIXTURE_REFERENCE_NODE, None,
+                   "no reference fixture: the lock gives %s no sha (state %r)" % (FIXTURE_REFERENCE_NODE, entry.get("state")))
+        else:
+            path = "%s/%s" % (FIXTURE_ROOT, engine)
+            items = _listed(transport.listing(slug, path, sha), "file", FIXTURE_FILE)
+            if items:
+                candidates.append(candidate(engine, FIXTURE_REFERENCE_NODE, slug, sha,
+                                            "%s/%s" % (path, FIXTURE_FILE), items[0], True))
+            else:
+                absent(engine, FIXTURE_REFERENCE_NODE, sha, "no reference fixture for %s at %s" % (engine, sha[:8]))
+    return candidates, missing
+
+
+def fixture_meta(data):
+    """The `meta` object on line 1 of a fixture. Tolerates a leading UTF-8 BOM (`_UTF8_BOM`) and a
+    trailing CR (F1); raises `ValueError` on anything that is not a meta line."""
+    if data.startswith(_UTF8_BOM):
+        data = data[len(_UTF8_BOM):]
+    meta = json.loads(data.decode("utf-8").split("\n", 1)[0].rstrip("\r"))
+    if not isinstance(meta, dict) or meta.get("kind") != "meta":
+        raise ValueError("line 1 is not a `kind: meta` object")
+    return meta
+
+
+def fetch_fixture_set(lock, out_dir, transport):
+    """Fetch every candidate into `out_dir` and write `fixtures.json`; returns that manifest.
+
+    A download whose length disagrees with the listing's `size` REFUSES the whole fetch (a
+    truncated fixture must never be replayed). A file whose meta is unreadable, whose `schema` is not
+    1, whose `engine` is not the node's, whose version/surface is not a safe path segment, or whose
+    (engine, engine_version, surface) differs from an already-written fixture only by CASE is
+    REFUSED BY NAME and never written — the other fixtures still land, and the caller exits 2.
+    A leading UTF-8 BOM is stripped from the bytes written (F1 tolerates it on the wire; a consumer
+    must never have to).
+    """
+    out_dir = Path(out_dir)
+    candidates, missing = fixture_candidates(lock, transport)
+    fixtures = []
+    refused = []
+    seen = {}
+    case_seen = {}
+    for item in candidates:
+        data = transport.download(item)
+        if item["size"] is not None and len(data) != item["size"]:
+            raise Refusal(
+                "fetch-fixtures: %s is %d bytes but its listing says %d — a truncated or altered "
+                "fixture is never replayed" % (item["source"], len(data), item["size"])
+            )
+        if data.startswith(_UTF8_BOM):
+            # A BOM is legal ON THE WIRE (F1: `fixture_meta` tolerates one) but must never reach
+            # the layout: a consumer json-parses line 1, and the BOM fails that parse with a
+            # message that never names the BOM. Strip it here, visibly, before meta and write.
+            data = data[len(_UTF8_BOM):]
+
+        def refuse(reason, item=item):
+            refused.append({"engine": item["engine"], "node": item["node"], "sha": item["sha"],
+                            "source": item["source"], "reason": reason})
+
+        try:
+            meta = fixture_meta(data)
+        except ValueError as exc:
+            refuse("%s: line 1 is not a readable meta line (%s)" % (item["source"], exc))
+            continue
+        if meta.get("schema") != FIXTURE_SCHEMA or isinstance(meta.get("schema"), bool):
+            refuse("%s: meta.schema is %r, not %d — a fixture of another schema is never replayed"
+                   % (item["source"], meta.get("schema"), FIXTURE_SCHEMA))
+            continue
+        if meta.get("engine") != item["engine"]:
+            refuse("%s: meta.engine is %r, not %r" % (item["source"], meta.get("engine"), item["engine"]))
+            continue
+        version = fixture_segment(meta.get("engine_version"))
+        surface = fixture_segment(meta.get("surface"))
+        if version is None or surface is None:
+            refuse("%s: meta.engine_version %r / meta.surface %r is not a safe path segment"
+                   % (item["source"], meta.get("engine_version"), meta.get("surface")))
+            continue
+        key = (item["engine"], version, surface)
+        if key in seen:
+            refuse("%s: the same (engine, engine_version, surface) %r as %s" % (item["source"], key, seen[key]))
+            continue
+        fold_key = (key[0].lower(), key[1].lower(), key[2].lower())
+        other = case_seen.get(fold_key)
+        if other is not None:
+            refuse(
+                "%s: its layout path %s/%s/%s differs only by case from %s — on Windows both fold "
+                "onto ONE file, so this one is never written and the manifest never disagrees "
+                "with disk" % (item["source"], item["engine"], version, surface, other)
+            )
+            continue
+        seen[key] = item["source"]
+        case_seen[fold_key] = item["source"]
+        target = out_dir / item["engine"] / version / surface / FIXTURE_FILE
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_bytes(data)
+        fixtures.append({
+            "engine": item["engine"], "engine_version": version, "surface": surface,
+            "path": as_posix_abs(target), "sha256": sha256_bytes(data), "bytes": len(data),
+            "node": item["node"], "sha": item["sha"], "source": item["source"],
+            "reference": item["reference"],
+        })
+    manifest = {
+        "schema": 1,
+        "lock_hash": str(lock.get("lock_hash") or ""),
+        "env": REPLAY_ENV,
+        "skip_name": REPLAY_SKIP_NAME,
+        "fixtures": fixtures,
+        "missing": missing,
+        "refused": refused,
+    }
+    out_dir.mkdir(parents=True, exist_ok=True)
+    (out_dir / FIXTURES_MANIFEST).write_text(json.dumps(manifest, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    return manifest
+
+
+def fixture_summary(manifest):
+    """`replay: fetched N fixture(s) (unity 3 @<sha8>, …) + null-engine reference @<sha8>`, then one
+    line per missing / refused row."""
+    counts = []
+    for node_id, engine in FIXTURE_ENGINES:
+        rows = [f for f in manifest["fixtures"] if f["engine"] == engine and not f["reference"]]
+        if rows:
+            counts.append("%s %d @%s" % (engine, len(rows), rows[0]["sha"][:8]))
+    total = sum(1 for f in manifest["fixtures"] if not f["reference"])
+    line = "replay: fetched %d fixture(s) (%s)" % (total, ", ".join(counts) or "none")
+    for reference in [f for f in manifest["fixtures"] if f["reference"]]:
+        line += " + %s reference @%s" % (reference["engine"], reference["sha"][:8])
+    lines = [line]
+    lines.extend("replay: missing: %s" % row["reason"] for row in manifest["missing"])
+    lines.extend("replay: REFUSED: %s" % row["reason"] for row in manifest["refused"])
+    return "\n".join(lines)
+
+
+@command("fetch-fixtures", "fetch the T2 replay fixtures at the lock's engine shas (p2-replay-leg)")
+def cmd_fetch_fixtures(args):
+    lock_text, _hash8, source = load_lock_text(args)
+    if lock_text is None:
+        log("chain: no lock (ordinary run)")
+        return EXIT_OK
+    lock = parse_lock_payload(lock_text, source)
+    out = Path(getattr(args, "out", None) or (_default_runner_temp() / "chain-t2"))
+    token = os.environ.get("GITHUB_TOKEN") or os.environ.get("GH_TOKEN") or None
+    manifest = fetch_fixture_set(lock, out, GithubFixtureTransport(token=token))
+    for line in fixture_summary(manifest).splitlines():
+        log(line)
+    log("chain: fixture manifest -> %s" % as_posix_abs(out / FIXTURES_MANIFEST))
+    _write_github_env([(REPLAY_ENV, as_posix_abs(out))])
+    _write_github_output([
+        ("fixtures", str(len(manifest["fixtures"]))),
+        ("missing", str(len(manifest["missing"]))),
+        ("refused", str(len(manifest["refused"]))),
+    ])
+    return EXIT_REFUSED if manifest["refused"] else EXIT_OK
 
 
 # ----------------------------------------------------------------------
@@ -3390,6 +3891,12 @@ def build_parser():
             child.add_argument(
                 "--warn", action="append", default=[], metavar="TEXT",
                 help="add TEXT to the record's warnings[] (repeatable); never changes the result",
+            )
+        if name == "fetch-fixtures":
+            child.add_argument(
+                "--out", default=None,
+                help="directory for <engine>/<engine_version>/<surface>/tools.jsonl + fixtures.json "
+                     "(default: $RUNNER_TEMP/chain-t2); exported as CHAIN_REPLAY_FIXTURES",
             )
         if name == "print-fragment":
             child.add_argument("--existing-group", dest="existing_group", default=None)
