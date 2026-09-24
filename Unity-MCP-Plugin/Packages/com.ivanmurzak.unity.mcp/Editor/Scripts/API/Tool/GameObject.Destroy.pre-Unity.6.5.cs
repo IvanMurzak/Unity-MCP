@@ -59,7 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 logger.LogInformation("Destroying GameObject '{Name}' (InstanceID: {InstanceId}) at path '{Path}'",
                     destroyedName, destroyedInstanceId, destroyedPath);
 
-                UnityEngine.Object.DestroyImmediate(go);
+                UnityEditor.Undo.DestroyObjectImmediate(go);
 
                 logger.LogInformation("Successfully destroyed GameObject '{Name}' (InstanceID: {InstanceId})",
                     destroyedName, destroyedInstanceId);

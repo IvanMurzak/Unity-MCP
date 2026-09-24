@@ -85,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (destroyComponentRefs.Any(cr => cr.Matches(component)))
                     {
                         var destroyedComponentRef = new ComponentRef(component);
-                        UnityEngine.Object.DestroyImmediate(component);
+                        UnityEditor.Undo.DestroyObjectImmediate(component);
                         destroyCounter++;
                         response.DestroyedComponents ??= new ComponentRefList();
                         response.DestroyedComponents.Add(destroyedComponentRef);
