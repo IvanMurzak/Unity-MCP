@@ -102,6 +102,8 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       success: true,
       agentId: result.agentId,
       configPath: result.configPath,
+      configPaths: result.configPaths,
+      rewrittenConfigPaths: result.rewrittenConfigPaths,
       transport: result.transport,
       credential: result.credential,
       projectKeyId: result.projectKeyId,
