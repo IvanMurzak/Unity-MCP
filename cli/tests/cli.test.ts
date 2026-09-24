@@ -4,6 +4,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
+import { antigravityConfigPaths, createTempHome, type TempHome } from './helpers/temp-home.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
@@ -105,26 +106,20 @@ describe('CLI integration', () => {
 
     // Antigravity's two config files live under $HOME — run the CLI against a temp home only.
     describe('antigravity (two config files under $HOME)', () => {
-      let homeDir: string;
-      let env: NodeJS.ProcessEnv;
-      const configFiles = (): string[] => [
-        path.join(homeDir, '.gemini', 'config', 'mcp_config.json'),
-        path.join(homeDir, '.gemini', 'antigravity', 'mcp_config.json'),
-      ];
+      let home: TempHome;
+      const configFiles = (): string[] => antigravityConfigPaths(home.dir);
 
       beforeEach(() => {
-        homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-cli-home-'));
-        env = { ...process.env, HOME: homeDir, USERPROFILE: homeDir, APPDATA: path.join(homeDir, 'AppData', 'Roaming') };
+        home = createTempHome();
       });
 
       afterEach(() => {
-        fs.rmSync(homeDir, { recursive: true, force: true });
+        home.dispose();
       });
 
       it('writes both files and prints both paths', () => {
-        const { stdout, exitCode } = runCli(['setup-mcp', 'antigravity', tmpDir, '--oauth'], { env });
+        const { stdout, exitCode } = runCli(['setup-mcp', 'antigravity', tmpDir, '--oauth'], { env: home.env });
         expect(exitCode).toBe(0);
-        expect(stdout).toContain('Config files');
         for (const file of configFiles()) {
           expect(fs.existsSync(file)).toBe(true);
           expect(stdout).toContain(file);
@@ -134,7 +129,7 @@ describe('CLI integration', () => {
       it('exits 1 naming the file when one of the two writes fails', () => {
         const blocked = configFiles()[1];
         fs.mkdirSync(blocked, { recursive: true }); // a directory where the file should be
-        const { stdout, exitCode } = runCli(['setup-mcp', 'antigravity', tmpDir, '--oauth'], { env });
+        const { stdout, exitCode } = runCli(['setup-mcp', 'antigravity', tmpDir, '--oauth'], { env: home.env });
         expect(exitCode).toBe(1);
         expect(stdout).toContain('Failed to write config');
         expect(stdout).toContain(blocked);

@@ -9,6 +9,7 @@ import { setupMcp } from '../src/lib/setup-mcp.js';
 import { getAgentById, MCP_SERVER_NAME } from '../src/utils/agents.js';
 import { derivePinV2, type ProjectKeyRequest, type ProjectKeyResolver } from '@baizor/gamedev-cli-core';
 import type { UnityConnectionConfig } from '../src/utils/config.js';
+import { antigravityConfigPaths, createTempHome, type TempHome } from './helpers/temp-home.js';
 
 /**
  * A resolver standing in for "this machine is not signed in". Every test injects one: the default
@@ -350,34 +351,22 @@ describe('setup-mcp — Cloud project key (project-keys §7)', () => {
 // ---------------------------------------------------------------------------
 
 describe('setup-mcp — multi-file agents (Antigravity) and configPaths', () => {
-  const HOME_VARS = ['HOME', 'USERPROFILE', 'APPDATA'] as const;
   let tmpDir: string;
-  let homeDir: string;
-  let savedEnv: Record<string, string | undefined>;
+  let home: TempHome;
 
   beforeEach(() => {
     tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-setup-mcp-multi-'));
-    homeDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-setup-mcp-home-'));
-    savedEnv = Object.fromEntries(HOME_VARS.map((k) => [k, process.env[k]]));
-    process.env.HOME = homeDir;
-    process.env.USERPROFILE = homeDir;
-    process.env.APPDATA = path.join(homeDir, 'AppData', 'Roaming');
-    expect(os.homedir()).toBe(homeDir);
+    home = createTempHome();
+    home.redirect();
+    expect(os.homedir()).toBe(home.dir);
   });
 
   afterEach(() => {
-    for (const k of HOME_VARS) {
-      if (savedEnv[k] === undefined) delete process.env[k];
-      else process.env[k] = savedEnv[k];
-    }
+    home.dispose();
     fs.rmSync(tmpDir, { recursive: true, force: true });
-    fs.rmSync(homeDir, { recursive: true, force: true });
   });
 
-  const antigravityPaths = (): string[] => [
-    path.join(homeDir, '.gemini', 'config', 'mcp_config.json'),
-    path.join(homeDir, '.gemini', 'antigravity', 'mcp_config.json'),
-  ];
+  const antigravityPaths = (): string[] => antigravityConfigPaths(home.dir);
 
   it('antigravity writes BOTH config files and reports both in configPaths', async () => {
     const { resolver } = signedIn();
@@ -427,30 +416,27 @@ describe('setup-mcp — multi-file agents (Antigravity) and configPaths', () => 
 
   it('--regenerate-key reports the other configs moved to the new key (rewrittenConfigPaths)', async () => {
     const OLD_KEY = 'agd_pk_unit_test_previous_key_0000';
-    const resolveWith = (key: string, regenerate: boolean): ProjectKeyResolver => async (request) => ({
-      kind: 'ok',
-      key,
-      keyId: regenerate ? 'pk_1' : 'pk_0',
-      pin: request.pin,
-      source: regenerate ? 'minted' : 'reused',
-      warnings: [],
-      ...(regenerate ? { revokePrevious: async () => undefined, previousKey: OLD_KEY } : {}),
+    const reuseOld: ProjectKeyResolver = async (request) => ({
+      kind: 'ok', key: OLD_KEY, keyId: 'pk_0', pin: request.pin, source: 'reused', warnings: [],
+    });
+    const mintNew: ProjectKeyResolver = async (request) => ({
+      kind: 'ok', key: PROJECT_KEY, keyId: 'pk_1', pin: request.pin, source: 'minted', warnings: [],
+      previousKey: OLD_KEY, revokePrevious: async () => undefined,
     });
 
     // Antigravity (both files) holds the OLD key; regenerating for Cursor must move both of them.
     const first = await setupMcp({
-      agentId: 'antigravity', unityProjectPath: tmpDir, transport: 'http', projectKeyResolver: resolveWith(OLD_KEY, false),
+      agentId: 'antigravity', unityProjectPath: tmpDir, transport: 'http', projectKeyResolver: reuseOld,
     });
     expect(first.kind).toBe('success');
 
     const result = await setupMcp({
-      agentId: 'cursor', unityProjectPath: tmpDir, transport: 'http', regenerateKey: true,
-      projectKeyResolver: resolveWith(PROJECT_KEY, true),
+      agentId: 'cursor', unityProjectPath: tmpDir, transport: 'http', regenerateKey: true, projectKeyResolver: mintNew,
     });
 
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') return;
-    expect([...(result.rewrittenConfigPaths ?? [])].sort()).toEqual([...antigravityPaths()].sort());
+    expect((result.rewrittenConfigPaths ?? []).sort()).toEqual(antigravityPaths().sort());
     for (const p of antigravityPaths()) {
       const raw = fs.readFileSync(p, 'utf-8');
       expect(raw).toContain(`Bearer ${PROJECT_KEY}`);
