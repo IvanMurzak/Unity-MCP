@@ -366,8 +366,19 @@ export interface SetupMcpSuccess {
   success: true;
   /** The agent whose config file was written. */
   agentId: string;
-  /** Absolute path to the agent config file that was written. */
+  /** Absolute path to the agent's primary config file (the first of {@link configPaths}). */
   configPath: string;
+  /**
+   * Every agent config file that was written. One entry for most agents; Antigravity writes BOTH of
+   * its candidate locations (`~/.gemini/config/mcp_config.json` and
+   * `~/.gemini/antigravity/mcp_config.json`).
+   */
+  configPaths: string[];
+  /**
+   * `regenerateKey` only: the OTHER agent configs of this project that carried the previous project
+   * key and were moved to the new one before it was revoked.
+   */
+  rewrittenConfigPaths?: string[];
   /** Transport actually written. */
   transport: McpTransport;
   /** Which credential the written config carries: an explicit PAT, the project key, or none (URL-only). */

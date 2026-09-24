@@ -107,20 +107,30 @@ export const setupMcpCommand = new Command('setup-mcp')
       if (result.kind === 'failure') {
         spinner.error('Failed to write config');
         ui.error(result.error.message);
+        // A failed write can leave the previous project key active or other configs already moved to
+        // the new key — cli-core reports both as warnings on the failure, so surface them here too.
+        for (const warning of result.warnings) {
+          ui.warn(warning);
+        }
         process.exit(1);
       }
 
-      // Narrowed: result.kind === 'success' below — `configPath` and
-      // `transport` are non-optional.
+      // Narrowed: result.kind === 'success' below — `configPaths` and
+      // `transport` are non-optional. Some agents (Antigravity) write more than one config file.
+      const configFiles = result.configPaths.join(', ');
+      const configLabel = result.configPaths.length > 1 ? 'Config files' : 'Config file';
       if (positionalPath) {
         verbose(`Project path: ${positionalPath}`);
       }
-      verbose(`Config file: ${result.configPath}`);
+      verbose(`${configLabel}: ${configFiles}`);
 
       spinner.success(`${agent.name} configured successfully`);
 
       console.log('');
-      ui.label('Config file', result.configPath);
+      ui.label(configLabel, configFiles);
+      if (result.rewrittenConfigPaths?.length) {
+        ui.label('Moved to new key', result.rewrittenConfigPaths.join(', '));
+      }
       ui.label('Transport', result.transport);
       ui.label('Server name', MCP_SERVER_NAME);
       ui.label('Credential', describeCredential(result));
