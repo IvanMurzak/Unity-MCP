@@ -1,0 +1,26 @@
+{
+    "name": "RuntimeTests",
+    "rootNamespace": "",
+    "references": [
+        "UnityEngine.TestRunner",
+        "com.IvanMurzak.Unity.MCP.Runtime",
+        "com.IvanMurzak.Unity.MCP.Tests",
+        "com.IvanMurzak.Unity.MCP.TestFiles",
+        "TestFiles"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS",
+        "UNITY_MCP_READY",
+        "UNITY_MCP_DEPS_6"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
