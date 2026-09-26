@@ -1,0 +1,17 @@
+{
+    "name": "TestFiles",
+    "rootNamespace": "",
+    "references": [],
+    "includePlatforms": [],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY",
+        "UNITY_MCP_DEPS_6"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
