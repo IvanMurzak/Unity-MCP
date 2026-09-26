@@ -23,15 +23,15 @@ function captureNotification(): string[] {
 describe('update notification', () => {
   afterEach(() => vi.restoreAllMocks());
 
-  it('installs exactly one package when the hint line is copied after its colon', () => {
+  it('prints the update command alone on its line, ending with the package name', () => {
     // Regression: "Run npm i -g unity-mcp-cli to update" was copy-pasted whole,
     // so npm also installed the unrelated `to` and `update` packages (the
-    // latter pulls in ~600 deprecated deps: set-value, glob@5, rimraf@2, ...).
-    const hint = captureNotification().find((l) => l.includes('npm i -g'));
-    expect(hint).toBeDefined();
-    const command = hint!.slice(hint!.indexOf('npm i -g')).trim();
-    expect(command).toBe(UPDATE_COMMAND);
-    const packages = command.split(/\s+/).slice(3);
-    expect(packages).toEqual(['unity-mcp-cli@latest']);
+    // latter pulls in ~630 deprecated deps: set-value, glob@5, rimraf@2, ...).
+    const lines = captureNotification().filter((l) => l.includes('npm i -g'));
+    expect(lines).toHaveLength(1);
+    const line = lines[0]!.trim();
+    expect(line).toBe(UPDATE_COMMAND);
+    expect(line.endsWith('unity-mcp-cli')).toBe(true);
+    expect(line.split(/\s+/).slice(3)).toEqual(['unity-mcp-cli']);
   });
 });
