@@ -94,11 +94,24 @@ export function formatUpdateAvailable(current: string, latest: string): string {
   return `Update available: ${chalk.dim(current)} → ${chalk.green(latest)}`;
 }
 
+/**
+ * The exact command a user should run to update. It is always the LAST thing on
+ * its line: the old wording "Run npm i -g unity-mcp-cli to update" was copied
+ * whole from the terminal, so npm installed the unrelated `to` and `update`
+ * packages alongside the CLI (and `update` drags in 600+ deprecated deps).
+ */
+export const UPDATE_COMMAND = `npm i -g ${PACKAGE_NAME}@latest`;
+
+/** Format the "how to update" hint; the command ends the line with nothing after it. */
+export function formatUpdateHint(): string {
+  return `To update, run: ${chalk.cyan(UPDATE_COMMAND)}`;
+}
+
 /** Print a styled update notification to stderr (does not interfere with stdout piping). */
 export function printUpdateNotification(current: string, latest: string): void {
   console.error();
   console.error(chalk.yellow(`  ${formatUpdateAvailable(current, latest)}`));
-  console.error(chalk.dim(`  Run ${chalk.cyan(`npm i -g ${PACKAGE_NAME}`)} to update`));
+  console.error(chalk.dim(`  ${formatUpdateHint()}`));
   console.error();
 }
 
