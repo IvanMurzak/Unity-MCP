@@ -186,7 +186,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
                     jsonProvider: () => $@"{{
                         ""gameObjectRef"": {{
-                            ""instanceID"": {gameObjectEx.GameObject!.GetEntityId()}
+                            ""instanceID"": {UnityEngine.EntityId.ToULong(gameObjectEx.GameObject!.GetEntityId())}
                         }}
                     }}"))
                 .AddChild(new ValidateToolResultExecutor())
@@ -208,7 +208,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     toolMethod: typeof(Tool_GameObject).GetMethod(nameof(Tool_GameObject.Find)),
                     jsonProvider: () => $@"{{
                         ""gameObjectRef"": {{
-                            ""instanceID"": {gameObjectEx.GameObject!.GetEntityId()}
+                            ""instanceID"": {UnityEngine.EntityId.ToULong(gameObjectEx.GameObject!.GetEntityId())}
                         }}
                     }}"))
                 .AddChild(new ValidateToolResultExecutor())
@@ -387,7 +387,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = $@"
             {{
               ""gameObjectRef"": {{
-                ""instanceID"": {go.GetEntityId()}
+                ""instanceID"": {UnityEngine.EntityId.ToULong(go.GetEntityId())}
               }},
               ""hierarchyDepth"": 0,
               ""deepSerialization"": false
@@ -402,7 +402,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = $@"
             {{
               ""gameObjectRef"": {{
-                ""instanceID"": {go.GetEntityId()}
+                ""instanceID"": {UnityEngine.EntityId.ToULong(go.GetEntityId())}
               }},
               ""hierarchyDepth"": 0,
               ""deepSerialization"": true
@@ -417,7 +417,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = $@"
             {{
               ""gameObjectRef"": {{
-                ""instanceID"": {go.GetEntityId()}
+                ""instanceID"": {UnityEngine.EntityId.ToULong(go.GetEntityId())}
               }},
               ""hierarchyDepth"": 0
             }}";

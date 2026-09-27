@@ -153,7 +153,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var go = new GameObject("bg_find");
             var id = go.GetEntityId();
             yield return RunToolBothThreads(Tool_GameObject.GameObjectFindToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{id}}}}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}}}");
         }
 
         [UnityTest]
@@ -161,11 +161,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var a = new GameObject("bg_destroy_a").GetEntityId();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectDestroyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{a}}}}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(a)}}}}}");
 
             var b = new GameObject("bg_destroy_b").GetEntityId();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectDestroyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{b}}}}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(b)}}}}}");
         }
 
         [UnityTest]
@@ -173,11 +173,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var a = new GameObject("bg_dup_a").GetEntityId();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectDuplicateToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{a}}}]}}");
+                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(a)}}}]}}");
 
             var b = new GameObject("bg_dup_b").GetEntityId();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectDuplicateToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{b}}}]}}");
+                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(b)}}}]}}");
         }
 
         [UnityTest]
@@ -186,11 +186,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var parent = new GameObject("bg_parent").GetEntityId();
             var child1 = new GameObject("bg_child_a").GetEntityId();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectSetParentToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{child1}}}],""parentGameObjectRef"":{{""instanceID"":{parent}}}}}");
+                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(child1)}}}],""parentGameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(parent)}}}}}");
 
             var child2 = new GameObject("bg_child_b").GetEntityId();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectSetParentToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{child2}}}],""parentGameObjectRef"":{{""instanceID"":{parent}}}}}");
+                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(child2)}}}],""parentGameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(parent)}}}}}");
         }
 
         [UnityTest]
@@ -198,11 +198,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var a = new GameObject("bg_addc_a").GetEntityId();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectComponentAddToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{a}}},""componentNames"":[""UnityEngine.BoxCollider""]}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(a)}}},""componentNames"":[""UnityEngine.BoxCollider""]}}");
 
             var b = new GameObject("bg_addc_b").GetEntityId();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectComponentAddToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{b}}},""componentNames"":[""UnityEngine.SphereCollider""]}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(b)}}},""componentNames"":[""UnityEngine.SphereCollider""]}}");
         }
 
         [UnityTest]
@@ -212,7 +212,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var id = go.GetEntityId();
             // Transform lives at component index 0 on every GameObject.
             yield return RunToolBothThreads(Tool_GameObject.GameObjectComponentGetToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{id}}},""componentRef"":{{""index"":0}}}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""componentRef"":{{""index"":0}}}}");
         }
 
         [UnityTest]
@@ -222,13 +222,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             a.AddComponent<BoxCollider>();
             var idA = a.GetEntityId();
             yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectComponentDestroyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{idA}}},""destroyComponentRefs"":[{{""typeName"":""UnityEngine.BoxCollider""}}]}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(idA)}}},""destroyComponentRefs"":[{{""typeName"":""UnityEngine.BoxCollider""}}]}}");
 
             var b = new GameObject("bg_destc_b");
             b.AddComponent<SphereCollider>();
             var idB = b.GetEntityId();
             yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectComponentDestroyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{idB}}},""destroyComponentRefs"":[{{""typeName"":""UnityEngine.SphereCollider""}}]}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(idB)}}},""destroyComponentRefs"":[{{""typeName"":""UnityEngine.SphereCollider""}}]}}");
         }
 
         [UnityTest]
@@ -238,7 +238,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // only (business errors from an empty diff are tolerated).
             var id = new GameObject("bg_modify").GetEntityId();
             yield return RunToolExpectNoThreadViolation(Tool_GameObject.GameObjectModifyToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{id}}}],""gameObjectDiffs"":[{{""name"":""root""}}]}}");
+                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}],""gameObjectDiffs"":[{{""name"":""root""}}]}}");
         }
 
         [UnityTest]
@@ -248,7 +248,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             go.AddComponent<BoxCollider>();
             var id = go.GetEntityId();
             yield return RunToolExpectNoThreadViolation(Tool_GameObject.GameObjectComponentModifyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{id}}},""componentRef"":{{""typeName"":""UnityEngine.BoxCollider""}},""componentDiff"":{{""name"":""root""}}}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""componentRef"":{{""typeName"":""UnityEngine.BoxCollider""}},""componentDiff"":{{""name"":""root""}}}}");
         }
 
         // ================================================================
@@ -260,7 +260,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var id = new GameObject("bg_obj").GetEntityId();
             yield return RunToolBothThreads(Tool_Object.ObjectGetDataToolId,
-                $@"{{""objectRef"":{{""instanceID"":{id}}}}}");
+                $@"{{""objectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}}}");
         }
 
         [UnityTest]
@@ -268,7 +268,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var id = new GameObject("bg_objmod").GetEntityId();
             yield return RunToolExpectNoThreadViolation(Tool_Object.ObjectModifyToolId,
-                $@"{{""objectRef"":{{""instanceID"":{id}}},""objectDiff"":{{""name"":""root""}}}}");
+                $@"{{""objectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""objectDiff"":{{""name"":""root""}}}}");
         }
 
         // ================================================================
@@ -280,7 +280,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var id = new GameObject("bg_select").GetEntityId();
             yield return RunToolBothThreads(Tool_Editor_Selection.EditorSelectionSetToolId,
-                $@"{{""select"":[{{""instanceID"":{id}}}]}}");
+                $@"{{""select"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}]}}");
         }
 
         [UnityTest]
@@ -386,11 +386,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnsureTmpFolder();
             var idA = new GameObject("bg_prefab_a").GetEntityId();
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{TmpFolder}/prefab_a.prefab"",""gameObjectRef"":{{""instanceID"":{idA}}}}}");
+                $@"{{""prefabAssetPath"":""{TmpFolder}/prefab_a.prefab"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(idA)}}}}}");
 
             var idB = new GameObject("bg_prefab_b").GetEntityId();
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{TmpFolder}/prefab_b.prefab"",""gameObjectRef"":{{""instanceID"":{idB}}}}}");
+                $@"{{""prefabAssetPath"":""{TmpFolder}/prefab_b.prefab"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(idB)}}}}}");
         }
 
         [UnityTest]
@@ -400,7 +400,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var seedId = new GameObject("bg_seed_prefab").GetEntityId();
             var prefabPath = $"{TmpFolder}/seed.prefab";
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{seedId}}}}}");
+                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(seedId)}}}}}");
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabInstantiateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectPath"":""bg_inst_main""}}");
@@ -417,7 +417,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var seedA = new GameObject("bg_prefab_osc_a").GetEntityId();
             var prefabPathA = $"{TmpFolder}/osc_a.prefab";
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPathA}"",""gameObjectRef"":{{""instanceID"":{seedA}}}}}");
+                $@"{{""prefabAssetPath"":""{prefabPathA}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(seedA)}}}}}");
 
             // Instantiate it so we get a prefab instance to open.
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabInstantiateToolId,
@@ -427,7 +427,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Open → Save → Close (main thread).
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabOpenToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{instanceA!.GetEntityId()}}}}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(instanceA!.GetEntityId())}}}}}");
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabSaveToolId, "{}");
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCloseToolId, @"{""save"":false}");
 
@@ -435,14 +435,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var seedB = new GameObject("bg_prefab_osc_b").GetEntityId();
             var prefabPathB = $"{TmpFolder}/osc_b.prefab";
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPathB}"",""gameObjectRef"":{{""instanceID"":{seedB}}}}}");
+                $@"{{""prefabAssetPath"":""{prefabPathB}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(seedB)}}}}}");
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabInstantiateToolId,
                 $@"{{""prefabAssetPath"":""{prefabPathB}"",""gameObjectPath"":""bg_osc_inst_b""}}");
             var instanceB = GameObject.Find("bg_osc_inst_b");
             Assert.IsNotNull(instanceB, "Prefab instance not found after instantiate.");
 
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabOpenToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{instanceB!.GetEntityId()}}}}}");
+                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(instanceB!.GetEntityId())}}}}}");
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabSaveToolId, "{}");
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCloseToolId, @"{""save"":false}");
         }

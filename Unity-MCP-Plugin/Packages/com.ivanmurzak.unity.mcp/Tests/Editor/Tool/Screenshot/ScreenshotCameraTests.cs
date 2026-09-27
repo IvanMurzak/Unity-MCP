@@ -126,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act — exercises the full MCP framework path
             RunTool("screenshot-camera", $@"{{
                 ""cameraRef"": {{
-                    ""instanceID"": {go.GetEntityId()}
+                    ""instanceID"": {UnityEngine.EntityId.ToULong(go.GetEntityId())}
                 }},
                 ""width"": 320,
                 ""height"": 240
@@ -143,7 +143,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Act — small render texture to keep the test fast
             RunTool("screenshot-camera", $@"{{
                 ""cameraRef"": {{
-                    ""instanceID"": {go.GetEntityId()}
+                    ""instanceID"": {UnityEngine.EntityId.ToULong(go.GetEntityId())}
                 }},
                 ""width"": 16,
                 ""height"": 16

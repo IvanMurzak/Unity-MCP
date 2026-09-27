@@ -141,7 +141,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                       ""typeName"": ""UnityEngine.GameObject"",
                       ""name"": ""sun"",
                       ""value"": {{
-                        ""instanceID"": {sunGo.GetEntityId()}
+                        ""instanceID"": {UnityEngine.EntityId.ToULong(sunGo.GetEntityId())}
                       }}
                     }}
                   ]
@@ -177,7 +177,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                       ""typeName"": ""UnityEngine.GameObject"",
                       ""name"": ""sun"",
                       ""value"": {{
-                        ""instanceID"": {sunGo.GetEntityId()}
+                        ""instanceID"": {UnityEngine.EntityId.ToULong(sunGo.GetEntityId())}
                       }}
                     }}
                   ]
@@ -229,7 +229,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                                   ""name"": ""planet"",
                                   ""typeName"": ""UnityEngine.GameObject"",
                                   ""value"": {{
-                                    ""instanceID"": {planets[0].GetEntityId()}
+                                    ""instanceID"": {UnityEngine.EntityId.ToULong(planets[0].GetEntityId())}
                                   }}
                                 }},
                                 {{
@@ -265,7 +265,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                                   ""name"": ""planet"",
                                   ""typeName"": ""UnityEngine.GameObject"",
                                   ""value"": {{
-                                    ""instanceID"": {planets[1].GetEntityId()}
+                                    ""instanceID"": {UnityEngine.EntityId.ToULong(planets[1].GetEntityId())}
                                   }}
                                 }},
                                 {{
@@ -301,7 +301,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                                   ""name"": ""planet"",
                                   ""typeName"": ""UnityEngine.GameObject"",
                                   ""value"": {{
-                                    ""instanceID"": {planets[2].GetEntityId()}
+                                    ""instanceID"": {UnityEngine.EntityId.ToULong(planets[2].GetEntityId())}
                                   }}
                                 }},
                                 {{
@@ -337,7 +337,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                                   ""name"": ""planet"",
                                   ""typeName"": ""UnityEngine.GameObject"",
                                   ""value"": {{
-                                    ""instanceID"": {planets[3].GetEntityId()}
+                                    ""instanceID"": {UnityEngine.EntityId.ToULong(planets[3].GetEntityId())}
                                   }}
                                 }},
                                 {{
@@ -446,7 +446,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         var json = $@"
 {{
   ""gameObjectRef"": {{
-                  ""instanceID"": {go.GetEntityId()}
+                  ""instanceID"": {UnityEngine.EntityId.ToULong(go.GetEntityId())}
               }},
               ""componentRef"": {{
                   ""typeName"": ""UnityEngine.MeshRenderer""
@@ -459,7 +459,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ""typeName"": ""UnityEngine.Material"",
             ""value"":
               {{
-                  ""instanceID"": {material.GetEntityId()}
+                  ""instanceID"": {UnityEngine.EntityId.ToULong(material.GetEntityId())}
               }}
             }}
           ]
