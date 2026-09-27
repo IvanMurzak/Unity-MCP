@@ -158,6 +158,36 @@ jobs:
           key: ${{ steps.cache_key.outputs.project_path_sanitized }}-${{ inputs.testMode }}-${{ matrix.platform }}
 
       # --------------------------------------------------------------------- #
+      # Unity 6000.6+ refuses to start its licensing client unless the container has >= 1 GiB of
+      # /dev/shm ("Insufficient shared memory available - if using Docker, please run the container
+      # with --shm-size=1025M"), and aborts batchmode with exit 134 on every activation retry.
+      # Docker's default is 64 MiB and game-ci/unity-test-runner exposes no --shm-size input, so
+      # raise the daemon-wide default on the host before the test-runner starts its container.
+      # Older editors do not need it, so their legs are left exactly as they were.
+      # --------------------------------------------------------------------- #
+      - name: Raise Docker default shm-size (Unity 6000.6+)
+        shell: bash
+        env:
+          UNITY_VERSION: ${{ inputs.unityVersion }}
+          PLATFORM: ${{ matrix.platform }}
+        run: |
+          IFS=. read -r major minor _ <<< "$UNITY_VERSION"
+          if [ "$major" -lt 6000 ] || { [ "$major" -eq 6000 ] && [ "$minor" -lt 6 ]; }; then
+            echo "Unity $UNITY_VERSION: default shm-size is sufficient, nothing to do"
+            exit 0
+          fi
+          cfg=/etc/docker/daemon.json
+          current='{}'
+          [ -s "$cfg" ] && current="$(sudo cat "$cfg")"
+          echo "$current" | jq '. + {"default-shm-size": "2G"}' | sudo tee "$cfg" > /dev/null
+          sudo systemctl restart docker
+          # Measure with the editor image the test-runner is about to pull anyway, so this adds no extra pull.
+          image="unityci/editor:ubuntu-${UNITY_VERSION}-${PLATFORM}-3"
+          shm="$(docker run --rm --entrypoint df "$image" -m /dev/shm | awk 'NR==2 {print $2}')"
+          echo "container /dev/shm = ${shm} MiB"
+          [ "$shm" -ge 1025 ] || { echo "::error::default-shm-size did not take effect (/dev/shm = ${shm} MiB)"; exit 1; }
+
+      # --------------------------------------------------------------------- #
       - name: Generate custom image name
         id: custom_image
         run: echo "image=unityci/editor:ubuntu-${{ inputs.unityVersion }}-${{ matrix.platform }}-3" >> $GITHUB_OUTPUT
@@ -250,7 +280,7 @@ jobs:
           retention-days: 1
 
       # --------------------------------------------------------------------- #
-      # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (12 distinct names)
+      # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (16 distinct names)
       # --------------------------------------------------------------------- #
       - name: chain leg record
         id: chain_record

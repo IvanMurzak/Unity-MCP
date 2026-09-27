@@ -207,6 +207,16 @@ jobs:
       lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
+  test-unity-6000-6-3f1-editmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
+      testMode: "editmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
+
   # --- PLAY MODE ---
 
   # test-unity-2022-3-62f3-playmode:
@@ -230,6 +240,14 @@ jobs:
   #   with:
   #     projectPath: './Unity-Tests/6000.3.1f1'
   #     unityVersion: '6000.3.1f1'
+  #     testMode: 'playmode'
+  #   secrets: inherit
+
+  # test-unity-6000-6-3f1-playmode:
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: './Unity-Tests/6000.6.3f1'
+  #     unityVersion: '6000.6.3f1'
   #     testMode: 'playmode'
   #   secrets: inherit
 
@@ -260,6 +278,16 @@ jobs:
     with:
       projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
+      testMode: "standalone"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
+
+  test-unity-6000-6-3f1-standalone:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
       testMode: "standalone"
       lock: ${{ inputs.lock }}
       lock_hash8: ${{ inputs.lock_hash8 }}

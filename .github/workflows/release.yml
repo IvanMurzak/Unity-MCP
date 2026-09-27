@@ -390,6 +390,15 @@ jobs:
       testMode: "editmode"
     secrets: inherit
 
+  test-unity-6000-6-3f1-editmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
+      testMode: "editmode"
+    secrets: inherit
+
   # --- PLAY MODE ---
 
   # test-unity-2022-3-62f3-playmode:
@@ -416,6 +425,15 @@ jobs:
   #   with:
   #     projectPath: './Unity-Tests/6000.3.1f1'
   #     unityVersion: '6000.3.1f1'
+  #     testMode: 'playmode'
+  #   secrets: inherit
+
+  # test-unity-6000-6-3f1-playmode:
+  #   needs: [build-unity-installer]
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: './Unity-Tests/6000.6.3f1'
+  #     unityVersion: '6000.6.3f1'
   #     testMode: 'playmode'
   #   secrets: inherit
 
@@ -448,6 +466,15 @@ jobs:
       testMode: "standalone"
     secrets: inherit
 
+  test-unity-6000-6-3f1-standalone:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
+      testMode: "standalone"
+    secrets: inherit
+
   # -------------------
 
   # npm publish of unity-mcp-cli — the FIRST side effect, gated on the complete test set and every
@@ -477,6 +504,9 @@ jobs:
         test-unity-6000-3-1f1-editmode,
         # test-unity-6000-3-1f1-playmode,
         test-unity-6000-3-1f1-standalone,
+        test-unity-6000-6-3f1-editmode,
+        # test-unity-6000-6-3f1-playmode,
+        test-unity-6000-6-3f1-standalone,
       ]
     if: inputs.dry_run != true
     permissions:
@@ -558,6 +588,9 @@ jobs:
         test-unity-6000-3-1f1-editmode,
         # test-unity-6000-3-1f1-playmode,
         test-unity-6000-3-1f1-standalone,
+        test-unity-6000-6-3f1-editmode,
+        # test-unity-6000-6-3f1-playmode,
+        test-unity-6000-6-3f1-standalone,
         deploy-cli-to-npm,
       ]
     if: inputs.dry_run != true

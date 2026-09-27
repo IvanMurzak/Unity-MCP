@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var json = $@"
             {{
-              ""gameObjectRef"": ""{{ \""instanceID\"": {child!.GetEntityId()} }}"",
+              ""gameObjectRef"": ""{{ \""instanceID\"": {UnityEngine.EntityId.ToULong(child!.GetEntityId())} }}"",
               ""briefData"": false,
               ""requestId"": ""test-req-id""
             }}";
