@@ -250,7 +250,7 @@ jobs:
           retention-days: 1
 
       # --------------------------------------------------------------------- #
-      # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (12 distinct names)
+      # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (16 distinct names)
       # --------------------------------------------------------------------- #
       - name: chain leg record
         id: chain_record
