@@ -24,7 +24,7 @@ ARTIFACT it was read from (`project.assets.json`, a DLL sha256, `chain-identity.
 an exit code.
 """
 
-CHAIN_FEED_VERSION = "4"
+CHAIN_FEED_VERSION = "5"
 
 import argparse
 import hashlib
@@ -263,6 +263,7 @@ RECIPES = {
                     "Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet",
                 ],
             },
             {
@@ -276,6 +277,7 @@ RECIPES = {
                     "Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet",
                 ],
             },
             {
@@ -292,6 +294,7 @@ RECIPES = {
                     "Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet",
                 ],
             },
             {
@@ -1703,7 +1706,7 @@ def extract_lib_dll(nupkg, dll_name):
 
 
 def apply_unity_dll(ctx, edges):
-    """Six flat DLL drops. `.nuget-installed.json` and every `.dll.meta` stay untouched.
+    """Every declared flat DLL drop (the plugin project + each `Unity-Tests/<ver>`). `.nuget-installed.json` and every `.dll.meta` stay untouched.
 
     Rewriting the manifest to the ws version makes the in-editor resolver treat the package as
     "not installed", re-download the RELEASED nupkg and DELETE the DLLs this just dropped
