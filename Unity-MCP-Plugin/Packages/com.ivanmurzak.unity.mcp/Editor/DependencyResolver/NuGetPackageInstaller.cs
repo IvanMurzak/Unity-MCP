@@ -531,7 +531,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         static bool IsSkipped(string packageId)
         {
-            foreach (var skip in NuGetConfig.SkipPackages)
+            foreach (var skip in NuGetProjectSettings.EffectiveSkipPackages)
             {
                 if (string.Equals(packageId, skip, StringComparison.OrdinalIgnoreCase))
                     return true;
