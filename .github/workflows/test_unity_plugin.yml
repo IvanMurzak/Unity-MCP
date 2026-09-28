@@ -150,31 +150,20 @@ jobs:
           echo "project_path_sanitized=$sanitized_path" >> $GITHUB_OUTPUT
         shell: bash
 
-      # Unity 6000.6+ legs skip the Library cache entirely (no restore, no save). A Library restored
-      # from an earlier successful 6000.6 run gets the editor SIGKILLed (exit 137, "Killed") about 2s
-      # after "Registering precompiled unity dll's", before any test runs, on both platforms; the same
-      # legs pass from a cold Library. Older editors keep the cache exactly as before.
-      - name: Library cache gate
-        id: library_cache
-        shell: bash
-        env:
-          UNITY_VERSION: ${{ inputs.unityVersion }}
-        run: |
-          IFS=. read -r major minor _ <<< "$UNITY_VERSION"
-          if [ "$major" -lt 6000 ] || { [ "$major" -eq 6000 ] && [ "$minor" -lt 6 ]; }; then
-            echo "use=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "use=false" >> "$GITHUB_OUTPUT"
-            echo "Unity $UNITY_VERSION: Library cache skipped (no restore, no save) - a warm 6000.6+ Library is SIGKILLed at startup"
-          fi
-
       - uses: actions/cache@v5
-        if: steps.library_cache.outputs.use == 'true'
         with:
           path: |
             ${{ inputs.projectPath }}/Library
             ~/.cache/unity3d
           key: ${{ steps.cache_key.outputs.project_path_sanitized }}-${{ inputs.testMode }}-${{ matrix.platform }}
+
+      # A restored Library carries the PID files of the run that saved it. Unity 6000.6 reads
+      # Library/burst.pid at startup and SIGKILLs that PID to reap a "stale" Burst compiler, but PIDs in a
+      # fresh container are reused - often by one of the new editor's own threads - so the editor kills
+      # itself (exit 137). Those files are never valid in a new container: drop them after the restore.
+      - name: Drop stale PID files from the restored Library
+        shell: bash
+        run: rm -fv "${{ inputs.projectPath }}"/Library/burst.pid "${{ inputs.projectPath }}"/Library/ilpp.pid
 
       # --------------------------------------------------------------------- #
       # Unity 6000.6+ refuses to start its licensing client unless the container has >= 1 GiB of
