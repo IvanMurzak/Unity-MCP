@@ -177,6 +177,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // tooling). The installer intentionally leaves an empty-Dlls manifest entry for those.
             foreach (var package in NuGetConfig.Packages)
             {
+                // A skipped top-level package is expected to be absent from the manifest — the
+                // project supplies it. Without this, a skipped pin fails the check on every domain
+                // reload, forcing a full Restore() each time: restore → refresh → reload → restore.
+                if (skipSet.Contains(package.Id))
+                    continue;
+
                 if (IsCachedDevelopmentDependency(package))
                 {
                     // Dev-deps are still tracked in the manifest with an empty DLL list — that
