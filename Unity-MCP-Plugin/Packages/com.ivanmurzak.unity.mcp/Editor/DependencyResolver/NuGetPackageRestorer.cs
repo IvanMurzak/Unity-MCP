@@ -89,6 +89,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     NuGetPackageInstaller.InstalledThisSession);
                 anyChanged |= anyRemoved;
 
+                WarnAboutUnprovidedSkippedPackages();
+
                 if (anyChanged)
                     Debug.Log($"{Tag} Package restore complete. Changes applied (installed and/or removed packages).");
                 else
@@ -100,6 +102,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
 
             return anyChanged;
+        }
+
+        /// <summary>
+        /// A skipped package is one the project promised to supply itself. If no assembly with the
+        /// package's name is referenced by any player assembly outside the install path, the plugin
+        /// assemblies will most likely fail to compile — say so, naming the package, instead of
+        /// leaving the user with a bare CS0246. Warning, not error: a package whose assembly name
+        /// differs from its ID (e.g. Microsoft.Bcl.Memory) is a false positive here.
+        /// </summary>
+        static void WarnAboutUnprovidedSkippedPackages()
+        {
+            var unprovided = NuGetSkipList.FindUnprovided(
+                NuGetProjectSettings.EffectiveSkipPackages,
+                UnityAssemblyResolver.IsAlreadyImported);
+
+            foreach (var packageId in unprovided)
+            {
+                Debug.LogWarning(
+                    $"{Tag} '{packageId}' is in the NuGet skip list (Project Settings > AI Game Developer > NuGet), " +
+                    $"but no assembly named '{packageId}' is provided by the project. The resolver will not install it; " +
+                    "add it to the project yourself (e.g. via NuGetForUnity) or remove it from the skip list.");
+            }
         }
 
         /// <summary>
@@ -139,7 +163,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
             var manifest = NuGetInstallManifest.Load(NuGetConfig.InstallPath);
 
-            var skipSet = new HashSet<string>(NuGetConfig.SkipPackages, StringComparer.OrdinalIgnoreCase);
+            var skipSet = new HashSet<string>(NuGetProjectSettings.EffectiveSkipPackages, StringComparer.OrdinalIgnoreCase);
 
             // No skip-listed package may sit in the manifest.
             foreach (var packageId in manifest.Packages.Keys)
@@ -153,6 +177,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // tooling). The installer intentionally leaves an empty-Dlls manifest entry for those.
             foreach (var package in NuGetConfig.Packages)
             {
+                // A skipped top-level package is expected to be absent from the manifest — the
+                // project supplies it. Without this, a skipped pin fails the check on every domain
+                // reload, forcing a full Restore() each time: restore → refresh → reload → restore.
+                if (skipSet.Contains(package.Id))
+                    continue;
+
                 if (IsCachedDevelopmentDependency(package))
                 {
                     // Dev-deps are still tracked in the manifest with an empty DLL list — that

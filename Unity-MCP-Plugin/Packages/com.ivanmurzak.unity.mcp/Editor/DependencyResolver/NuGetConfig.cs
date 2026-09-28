@@ -162,6 +162,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// is unused by your project's source AND whose own dependency chain conflicts
         /// with your pinned versions (e.g., a netstandard2.0 package targeting a newer
         /// BCL than Unity's runtime provides).
+        ///
+        /// This is the list shipped with the plugin. A project adds its own entries through
+        /// Project Settings (NuGetProjectSettings); the resolver applies the union of both,
+        /// NuGetProjectSettings.EffectiveSkipPackages. Kept as a plain array here because this
+        /// file is compiled engine-free (Tests~/EngineFree) and must not touch Unity API.
         /// </summary>
         public static readonly string[] SkipPackages = { };
 
