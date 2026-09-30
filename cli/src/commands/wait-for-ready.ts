@@ -21,11 +21,11 @@ interface WaitForReadyOptions {
  * Otherwise, probe both the config-resolved URL and the deterministic local port
  * (if they differ), succeeding on whichever responds first.
  */
-function resolveProbeUrls(
+async function resolveProbeUrls(
   projectPath: string,
   options: WaitForReadyOptions,
-): string[] {
-  const { url: configUrl } = resolveConnection(projectPath, options);
+): Promise<string[]> {
+  const { url: configUrl } = await resolveConnection(projectPath, options);
   const urls = [configUrl];
 
   if (!options.url) {
@@ -50,8 +50,8 @@ export const waitForReadyCommand = new Command('wait-for-ready')
   .option('--interval <ms>', 'Polling interval in milliseconds (default: 3000)', '3000')
   .action(async (positionalPath: string | undefined, options: WaitForReadyOptions) => {
     const projectPath = resolveAndValidateProjectPath(positionalPath, options);
-    const { token } = resolveConnection(projectPath, options);
-    const probeUrls = resolveProbeUrls(projectPath, options);
+    const { token } = await resolveConnection(projectPath, options);
+    const probeUrls = await resolveProbeUrls(projectPath, options);
 
     const timeoutMs = parseInt(options.timeout ?? '120000', 10);
     const intervalMs = parseInt(options.interval ?? '3000', 10);

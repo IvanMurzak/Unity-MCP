@@ -26,6 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         Button? _btnConnect;
         Button? _btnAuthorize;
         Action? _startAuthorizeAction;
+        Action? _assistedReauthChangedHandler;
         VisualElement? _timelinePointUnity;
         AlertPanel? _connectionAuthAlert;
         AlertPanel? _connectionConnectAlert;
@@ -73,6 +74,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             _disposables.Clear();
             _authRejectedSubscription.Dispose();
+            if (_assistedReauthChangedHandler != null)
+            {
+                AssistedReauthService.Changed -= _assistedReauthChangedHandler;
+                _assistedReauthChangedHandler = null;
+            }
         }
 
         internal static (bool needsAuth, bool hasToken, bool isCloud) ComputeCloudAuthState(ConnectionMode mode, bool hasCredential)

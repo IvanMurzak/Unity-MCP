@@ -73,24 +73,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         }
 
         /// <summary>
-        /// Adds <see cref="NuGetConfig.ReadyDefine"/> to every supported
-        /// build target group. Applying it only to the active group would
-        /// let target switching reintroduce compile failures in assemblies
-        /// gated by <c>defineConstraints</c>.
+        /// Adds every <see cref="NuGetConfig.GateDefines"/> entry to every supported build target
+        /// group, and strips stale dependency-generation defines left by an older package version.
+        /// Applying it only to the active group would let target switching reintroduce compile
+        /// failures in assemblies gated by <c>defineConstraints</c>.
         /// </summary>
         public static void EnsureReadyDefine()
         {
-            var changed = ForEachTarget(TryAddReadyDefine);
+            var changed = ForEachTarget(TrySyncGateDefines);
             if (changed.Count > 0)
-                Debug.Log($"{Tag} Added '{NuGetConfig.ReadyDefine}' for: {string.Join(", ", changed)}.");
+                Debug.Log($"{Tag} Synced gate defines ({string.Join(", ", NuGetConfig.GateDefines)}) for: {string.Join(", ", changed)}.");
         }
 
-        /// <summary>Strips <see cref="NuGetConfig.ReadyDefine"/> from every supported build target group.</summary>
+        /// <summary>Strips every gate define from every supported build target group.</summary>
         public static void RemoveReadyDefine()
         {
-            var changed = ForEachTarget(TryRemoveReadyDefine);
+            var changed = ForEachTarget(TryRemoveGateDefines);
             if (changed.Count > 0)
-                Debug.Log($"{Tag} Removed '{NuGetConfig.ReadyDefine}' from: {string.Join(", ", changed)}; resolver will re-add it once the DLL set is healthy.");
+                Debug.Log($"{Tag} Removed gate defines from: {string.Join(", ", changed)}; resolver will re-add them once the DLL set is healthy.");
         }
 
         /// <summary>
@@ -122,19 +122,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             return changed;
         }
 
-        static bool TryAddReadyDefine(NamedBuildTarget target)
+        /// <summary>
+        /// Brings <paramref name="target"/>'s define list to exactly "all current gate defines
+        /// present, no stale dependency-generation define present". Dropping the stale generation
+        /// matters on a DOWNGRADE: without it a project that once satisfied a newer generation would
+        /// keep that define forever and the older package's gate would never re-close.
+        /// </summary>
+        static bool TrySyncGateDefines(NamedBuildTarget target)
         {
             try
             {
                 PlayerSettings.GetScriptingDefineSymbols(target, out var defines);
-                if (Array.IndexOf(defines, NuGetConfig.ReadyDefine) >= 0)
+
+                var next = new List<string>(defines.Length + NuGetConfig.GateDefines.Length);
+                foreach (var define in defines)
+                {
+                    // Drop superseded generations; keep the current one (re-added below in order).
+                    if (define.StartsWith(NuGetConfig.DependencyGenerationDefinePrefix, StringComparison.Ordinal))
+                        continue;
+                    if (Array.IndexOf(NuGetConfig.GateDefines, define) >= 0)
+                        continue;
+                    next.Add(define);
+                }
+                next.AddRange(NuGetConfig.GateDefines);
+
+                if (SameDefines(defines, next))
                     return false;
 
-                var newDefines = new string[defines.Length + 1];
-                Array.Copy(defines, newDefines, defines.Length);
-                newDefines[defines.Length] = NuGetConfig.ReadyDefine;
-
-                PlayerSettings.SetScriptingDefineSymbols(target, newDefines);
+                PlayerSettings.SetScriptingDefineSymbols(target, next.ToArray());
                 return true;
             }
             catch
@@ -143,26 +158,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
         }
 
-        static bool TryRemoveReadyDefine(NamedBuildTarget target)
+        static bool TryRemoveGateDefines(NamedBuildTarget target)
         {
             try
             {
                 PlayerSettings.GetScriptingDefineSymbols(target, out var defines);
-                var index = Array.IndexOf(defines, NuGetConfig.ReadyDefine);
-                if (index < 0)
+
+                var next = new List<string>(defines.Length);
+                foreach (var define in defines)
+                {
+                    if (define.StartsWith(NuGetConfig.DependencyGenerationDefinePrefix, StringComparison.Ordinal))
+                        continue;
+                    if (Array.IndexOf(NuGetConfig.GateDefines, define) >= 0)
+                        continue;
+                    next.Add(define);
+                }
+
+                if (SameDefines(defines, next))
                     return false;
 
-                var newDefines = new string[defines.Length - 1];
-                Array.Copy(defines, 0, newDefines, 0, index);
-                Array.Copy(defines, index + 1, newDefines, index, defines.Length - index - 1);
-
-                PlayerSettings.SetScriptingDefineSymbols(target, newDefines);
+                PlayerSettings.SetScriptingDefineSymbols(target, next.ToArray());
                 return true;
             }
             catch
             {
                 return false;
             }
+        }
+
+        /// <summary>Order-sensitive equality — used to avoid a no-op write that would dirty ProjectSettings.</summary>
+        static bool SameDefines(string[] current, List<string> next)
+        {
+            if (current.Length != next.Count)
+                return false;
+            for (var i = 0; i < current.Length; i++)
+            {
+                if (!string.Equals(current[i], next[i], StringComparison.Ordinal))
+                    return false;
+            }
+            return true;
         }
     }
 }

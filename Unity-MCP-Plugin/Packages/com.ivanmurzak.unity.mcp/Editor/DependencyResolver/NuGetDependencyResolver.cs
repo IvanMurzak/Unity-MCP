@@ -24,8 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     ///
     /// This assembly has ZERO external dependencies — it always compiles, even when the main plugin
     /// fails due to missing or conflicting DLLs. It downloads NuGet packages directly from nuget.org,
-    /// extracts DLLs, skips assemblies Unity already provides, and sets the UNITY_MCP_READY define
-    /// so the main plugin assemblies can compile.
+    /// extracts DLLs, skips assemblies Unity already provides, and sets the gate defines
+    /// (<see cref="NuGetConfig.GateDefines"/>) so the main plugin assemblies can compile.
     ///
     /// Why both triggers are needed:
     ///   [InitializeOnLoad] fires after a *successful* project-wide recompile. When a user upgrades
@@ -41,7 +41,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     ///   2. Deferred via EditorApplication.update (runs without editor focus, unlike delayCall)
     ///   3. NuGetPackageRestorer checks if all packages are installed
     ///   4. Downloads and installs any missing packages, removes stale-version siblings
-    ///   5. Sets UNITY_MCP_READY scripting define
+    ///   5. Sets the gate scripting defines (ready + current dependency generation)
     ///   6. If packages were installed: triggers AssetDatabase.Refresh() → domain reload
     ///   7. On next reload: everything is in place, main plugin compiles
     ///

@@ -170,21 +170,41 @@ export function isCloudMode(config: UnityConnectionConfig): boolean {
 export const CLOUD_SERVER_BASE_URL = 'https://ai-game.dev';
 export const CLOUD_SERVER_URL = 'https://ai-game.dev/mcp';
 
+/** Options for {@link resolveConnectionFromConfig}. */
+export interface ResolveConnectionFromConfigOptions {
+  /**
+   * Supplies the Cloud-mode Bearer credential. REQUIRED (no built-in default): the production
+   * value is `readCloudAccessToken` from `cloud-credentials.ts` — cli-core's
+   * `MachineCredentialProvider`, which proactively refreshes an expiring token under the
+   * cross-process lock (unified-machine-auth 04 §3). A raw on-disk `accessToken` read must never
+   * reappear here: it returns a token nobody refreshes (the pre-d2 defect). Tests inject a
+   * deterministic value; sync or async both work.
+   */
+  readCloudToken: () => Promise<string | undefined> | string | undefined;
+}
+
 /**
  * Resolve the server URL and auth token from a project config based on connectionMode.
- * - Custom mode (string "Custom" or integer 0): uses `host` and `token`
- * - Cloud mode (string "Cloud" or integer 1): uses hardcoded cloud URL and `cloudToken`
+ * - Custom mode (string "Custom" or integer 0): uses `host` and `token` (self-host / derived-port).
+ * - Cloud mode (string "Cloud" or integer 1): uses the hardcoded cloud URL and the Bearer credential
+ *   supplied by `options.readCloudToken` (production: the shared machine credential store via
+ *   cli-core's refreshing `MachineCredentialProvider`) — NOT the on-disk `cloudToken`, which the
+ *   plugin stopped writing post-T9 (defect E / D11).
  * In Custom mode, `url` and `token` may be undefined if the corresponding config fields are not set.
- * In Cloud mode, `url` is always the hardcoded cloud URL, while `token` comes from `cloudToken` and may be undefined.
+ * In Cloud mode, `url` is always the hardcoded cloud URL, while `token` is the provided credential and
+ * is `undefined` when the user is not logged in — the caller surfaces an actionable "not logged in"
+ * error rather than issuing a silent unauthenticated request.
  */
-export function resolveConnectionFromConfig(config: UnityConnectionConfig): {
+export async function resolveConnectionFromConfig(
+  config: UnityConnectionConfig,
+  options: ResolveConnectionFromConfigOptions,
+): Promise<{
   url: string | undefined;
   token: string | undefined;
-} {
-  const cloud = isCloudMode(config);
+}> {
+  if (isCloudMode(config)) {
+    return { url: CLOUD_SERVER_URL, token: await options.readCloudToken() };
+  }
 
-  return {
-    url: cloud ? CLOUD_SERVER_URL : config.host,
-    token: cloud ? config.cloudToken : config.token,
-  };
+  return { url: config.host, token: config.token };
 }

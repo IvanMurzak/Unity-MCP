@@ -29,6 +29,10 @@
 ExportedObj/
 .consulo/
 *.csproj
+# ...except the hand-written engine-free xUnit project. It lives in a `Tests~/` folder precisely so
+# Unity never imports or regenerates it, so the rule above (which exists for Unity's GENERATED
+# project files at this folder's root) would otherwise silently drop a tracked source file.
+!Tests~/EngineFree/*.csproj
 *.unityproj
 *.sln
 *.slnx

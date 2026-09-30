@@ -19,8 +19,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// <summary>
     /// RFC 8628 request-building + response-parsing coverage for <see cref="DeviceAuthService"/> against a
     /// mocked authorization server (canned JSON), with no live network. Exercises the exact
-    /// <c>client_id</c> + <c>scope=mcp:plugin</c> form the ai-game.dev AS requires and the token/refresh
-    /// response shapes.
+    /// <c>client_id</c> + <c>scope=mcp:agent</c> LOGIN form the ai-game.dev AS requires
+    /// (unified-machine-auth 03 F1.2 — the plugin family is derived by token exchange, never minted
+    /// directly by the device flow) and the token/refresh response shapes.
     /// </summary>
     public class DeviceAuthServiceTests
     {
@@ -28,11 +29,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             => form.First(kv => kv.Key == key).Value;
 
         [Test]
-        public void DeviceAuthorizeForm_Carries_ClientId_And_PluginScope()
+        public void DeviceAuthorizeForm_Carries_ClientId_And_AgentScope()
         {
-            var form = DeviceAuthService.BuildDeviceAuthorizeForm(DeviceAuthService.DefaultClientId, DeviceAuthService.PluginScope);
+            var form = DeviceAuthService.BuildDeviceAuthorizeForm(DeviceAuthService.DefaultClientId, DeviceAuthService.AgentScope);
             Assert.AreEqual(DeviceAuthService.DefaultClientId, Value(form, "client_id"));
-            Assert.AreEqual("mcp:plugin", Value(form, "scope"));
+            Assert.AreEqual("mcp:agent", Value(form, "scope"));
+        }
+
+        [Test]
+        public void DefaultConstruction_Requests_AgentScope_With_UnityClientId()
+        {
+            // The wiring pin for 03 F1.2: the in-editor Authorize path constructs the service with
+            // defaults, so THIS is what goes on the wire — scope=mcp:agent (the LOGIN scope; the
+            // plugin family comes from RFC 8693 exchange afterwards) under client_id=unity-mcp-plugin.
+            var service = new DeviceAuthService("https://ai-game.dev");
+            Assert.AreEqual("mcp:agent", service.Scope);
+            Assert.AreEqual("unity-mcp-plugin", service.ClientId);
         }
 
         [Test]
@@ -104,11 +116,51 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void Defaults_Apply_When_ClientId_Or_Scope_Omitted()
         {
-            // A blank client id / scope should fall back to the plugin defaults rather than sending empty values.
+            // A blank client id / scope should fall back to the login defaults rather than sending empty values.
             var service = new DeviceAuthService("https://ai-game.dev", clientId: " ", scope: "");
-            Assert.IsNotNull(service);
-            Assert.AreEqual("unity-mcp-plugin", DeviceAuthService.DefaultClientId);
+            Assert.AreEqual("unity-mcp-plugin", service.ClientId);
+            Assert.AreEqual("mcp:agent", service.Scope);
             Assert.AreEqual("mcp:plugin", DeviceAuthService.PluginScope);
+        }
+
+        // ── JWT subject decoding (04 §1: `subject` from the JWT `sub` where available; D6/F7 guard input) ──
+
+        static string Jwt(string payloadJson)
+        {
+            static string B64Url(string s) => System.Convert.ToBase64String(System.Text.Encoding.UTF8.GetBytes(s))
+                .TrimEnd('=').Replace('+', '-').Replace('/', '_');
+            return $"{B64Url(@"{""alg"":""ES256"",""typ"":""JWT""}")}.{B64Url(payloadJson)}.sig";
+        }
+
+        [Test]
+        public void DecodeJwtSubject_Reads_Sub_Claim_Unverified()
+        {
+            Assert.AreEqual("usr_42", DeviceAuthService.DecodeJwtSubject(Jwt(@"{""sub"":""usr_42"",""aud"":""urn:agd:hub""}")));
+            // Payload lengths that exercise every base64url padding branch (0/1/2 '=' chars).
+            Assert.AreEqual("u", DeviceAuthService.DecodeJwtSubject(Jwt(@"{""sub"":""u""}")));
+            Assert.AreEqual("usr", DeviceAuthService.DecodeJwtSubject(Jwt(@"{""sub"":""usr""}")));
+        }
+
+        [TestCase(null)]
+        [TestCase("")]
+        [TestCase("not-a-jwt")]
+        public void DecodeJwtSubject_Malformed_IsNull(string? token)
+        {
+            Assert.IsNull(DeviceAuthService.DecodeJwtSubject(token));
+        }
+
+        [Test]
+        public void DecodeJwtSubject_BadBase64Payload_IsNull()
+        {
+            Assert.IsNull(DeviceAuthService.DecodeJwtSubject("a.!!!not-base64!!!.c"));
+        }
+
+        [Test]
+        public void DecodeJwtSubject_NoSubClaim_IsNull()
+        {
+            Assert.IsNull(DeviceAuthService.DecodeJwtSubject(Jwt(@"{""aud"":""urn:agd:hub""}")));
+            Assert.IsNull(DeviceAuthService.DecodeJwtSubject(Jwt(@"{""sub"":42}")));
+            Assert.IsNull(DeviceAuthService.DecodeJwtSubject(Jwt(@"{""sub"":""""}")));
         }
     }
 }

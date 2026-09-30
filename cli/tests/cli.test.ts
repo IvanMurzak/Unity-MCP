@@ -4,16 +4,21 @@ import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
+import { antigravityConfigPaths, createTempHome, type TempHome } from './helpers/temp-home.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
 
-function runCli(args: string[], options?: { cwd?: string }): { stdout: string; exitCode: number } {
+function runCli(
+  args: string[],
+  options?: { cwd?: string; env?: NodeJS.ProcessEnv },
+): { stdout: string; exitCode: number } {
   try {
     const stdout = execFileSync('node', [CLI_PATH, ...args], {
       encoding: 'utf-8',
       timeout: 10000,
       cwd: options?.cwd,
+      env: options?.env,
     });
     return { stdout, exitCode: 0 };
   } catch (err: unknown) {
@@ -60,6 +65,75 @@ describe('CLI integration', () => {
       const { stdout, exitCode } = runCli(['--version']);
       expect(exitCode).toBe(0);
       expect(stdout.trim()).toMatch(/^\d+\.\d+\.\d+$/);
+    });
+  });
+
+  // --- setup-mcp command (project keys §7 flags) ---
+  // Only paths that can never resolve a project key run here: the CLI process reads the REAL
+  // ~/.ai-game-dev login, so a default Cloud run could mint a real key against production.
+
+  describe('setup-mcp', () => {
+    let tmpDir: string;
+
+    beforeEach(() => {
+      tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-cli-setup-mcp-'));
+    });
+
+    afterEach(() => {
+      fs.rmSync(tmpDir, { recursive: true, force: true });
+    });
+
+    it('documents --oauth and --regenerate-key in --help', () => {
+      const { stdout, exitCode } = runCli(['setup-mcp', '--help']);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain('--oauth');
+      expect(stdout).toContain('--regenerate-key');
+    });
+
+    it('--oauth writes a URL-only config and reports no credential', () => {
+      const { stdout, exitCode } = runCli(['setup-mcp', 'claude-code', tmpDir, '--oauth']);
+      expect(exitCode).toBe(0);
+      expect(stdout).toContain('none (URL-only');
+      const raw = fs.readFileSync(path.join(tmpDir, '.mcp.json'), 'utf-8');
+      expect(raw).not.toContain('Authorization');
+    });
+
+    it('--regenerate-key is refused together with --oauth (the flag reaches cli-core)', () => {
+      const { stdout, exitCode } = runCli(['setup-mcp', 'claude-code', tmpDir, '--oauth', '--regenerate-key']);
+      expect(exitCode).toBe(1);
+      expect(stdout).toContain('--regenerate-key');
+    });
+
+    // Antigravity's two config files live under $HOME — run the CLI against a temp home only.
+    describe('antigravity (two config files under $HOME)', () => {
+      let home: TempHome;
+      const configFiles = (): string[] => antigravityConfigPaths(home.dir);
+
+      beforeEach(() => {
+        home = createTempHome();
+      });
+
+      afterEach(() => {
+        home.dispose();
+      });
+
+      it('writes both files and prints both paths', () => {
+        const { stdout, exitCode } = runCli(['setup-mcp', 'antigravity', tmpDir, '--oauth'], { env: home.env });
+        expect(exitCode).toBe(0);
+        for (const file of configFiles()) {
+          expect(fs.existsSync(file)).toBe(true);
+          expect(stdout).toContain(file);
+        }
+      });
+
+      it('exits 1 naming the file when one of the two writes fails', () => {
+        const blocked = configFiles()[1];
+        fs.mkdirSync(blocked, { recursive: true }); // a directory where the file should be
+        const { stdout, exitCode } = runCli(['setup-mcp', 'antigravity', tmpDir, '--oauth'], { env: home.env });
+        expect(exitCode).toBe(1);
+        expect(stdout).toContain('Failed to write config');
+        expect(stdout).toContain(blocked);
+      });
     });
   });
 

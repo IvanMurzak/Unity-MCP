@@ -50,7 +50,6 @@
     - [🚀 release.yml](#-releaseyml)
     - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
     - [🔧 test\_unity\_plugin.yml](#-test_unity_pluginyml)
-    - [📦 deploy.yml](#-deployyml)
   - [技術スタック](#技術スタック)
   - [セキュリティに関する考慮事項](#セキュリティに関する考慮事項)
   - [デプロイ先](#デプロイ先)
@@ -552,7 +551,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - **PR 内のワークフローファイルを変更しないでください** - `.github/workflows/` 内のファイルは変更しないでください — 信頼できないコントリビューターからこれらのファイルへの変更が検出されると CI チェックは中断されます。
 - **PR がマージされる前に18のテストマトリックスの組み合わせすべてが通過する必要があります**。変更が1つの組み合わせ（例: `2022-editmode`）のみを壊す場合、そのジョブは赤い ✗ を表示し、他は緑になります。
 - **失敗したジョブを再実行する:** PR → **Checks** タブ → 失敗したジョブをクリック → **Re-run failed jobs**。これは一時的な Unity Editor クラッシュに役立ちます。
-- **ワークフロー実行の順序:** `test_pull_request.yml` は PR 上で実行されます。`release.yml` は `main` へのマージ後にのみ実行されます。リリースを手動でトリガーする必要はありません。
+- **ワークフロー実行の順序:** `test_pull_request.yml` は PR 上で実行されます。`main` へのマージでは何も公開されません。リリースはメンテナーが `release.yml` を手動でディスパッチして作成します。
 
 ## ワークフロー概要
 
@@ -560,23 +559,30 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 ### 🚀 [release.yml](../../.github/workflows/release.yml)
 
-**トリガー:** `main` ブランチへのプッシュ
+**トリガー:** 手動の `workflow_dispatch` のみ（入力 `dry_run`、デフォルト `false`）。`main` へのマージでは何も公開されません。
 **目的:** リリースプロセス全体を調整するメインリリースワークフロー
+
+```bash
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main -f dry_run=true   # すべてのテストとビルドを実行し、何も公開しない
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                   # 本番リリース
+```
 
 **プロセス:**
 
-1. **バージョンチェック** - [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) からバージョンを抽出し、リリースタグが既に存在するかどうかを確認
+1. **バージョンチェック** - [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) からバージョンを抽出。本番実行は `main` 以外、またはリリースタグが既に存在する場合に失敗し、ドライランは警告して続行
 2. **Unity Installer のビルド** - Unity パッケージインストーラーをテストしてエクスポート（`AI-Game-Dev-Installer.unitypackage`）
 4. **Unity プラグインテスト** - 以下の組み合わせで包括的なテストを実行:
    - 3種類の Unity バージョン: `2022.3.62f3`、`2023.2.22f1`、`6000.3.1f1`
    - 3種類のテストモード: `editmode`、`playmode`、`standalone`
    - 2種類の OS: `windows-latest`、`ubuntu-latest`
    - 合計: **18のテストマトリックスの組み合わせ**
-5. **リリース作成** - コミットからリリースノートを生成し、タグ付きで GitHub リリースを作成
-6. **パブリッシング** - Unity インストーラーパッケージと署名済み UPM パッケージをリリースにアップロード
+5. **デプロイ** - `unity-mcp-cli` npm パッケージをビルド・テストし、provenance 付きで公開（OIDC Trusted Publishing、`release.yml` 内で直接実行。同じバージョンが既に npm にある場合はスキップ）
+6. **リリース作成** - タグと GitHub リリースを作成し、Unity インストーラーパッケージと署名済み UPM パッケージを添付（OpenUPM はここから取得）
 7. **Discord 通知** - フォーマットされたリリースノートを Discord チャンネルに送信
-8. **デプロイ** - npm CLI のデプロイワークフローをトリガー
+8. **検証** - GitHub リリース、npm、OpenUPM のすべてが新しいバージョンを提供していなければ実行を失敗させる
 9. **クリーンアップ** - 正常なパブリッシング後にビルドアーティファクトを削除
+
+手順 5〜9 はドライランではスキップされます。
 
 ### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
 
@@ -602,18 +608,6 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - PR でワークフローファイルが変更された場合に中断
 - 以降の実行を高速化するために Unity Library をキャッシュ
 - デバッグのためにテストアーティファクトをアップロード
-
-### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
-
-**トリガー:** リリースワークフローからの呼び出し、または手動ディスパッチ
-**目的:** `unity-mcp-cli` npm パッケージを公開
-
-**ジョブ:**
-
-**CLI を npm にデプロイ:**
-
-- CLI をビルドしてテスト
-- provenance 付きで [npm](https://www.npmjs.com/package/unity-mcp-cli) に公開
 
 > MCP Server の NuGet パッケージと Docker イメージのデプロイは共有リポジトリ [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) に移動しました（Docker: [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server)）。
 

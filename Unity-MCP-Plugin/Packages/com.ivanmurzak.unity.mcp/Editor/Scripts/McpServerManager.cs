@@ -22,6 +22,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.ServerLaunch;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.DevControl;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -117,6 +118,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Check if server process is still running (e.g., after domain reload)
             EditorApplication.update += CheckExistingProcess;
 
+            // Announced AFTER the two registrations above on purpose: resolving the override reads
+            // <projectRoot>/.env from disk, and nothing added to this class initializer should be able to
+            // leave the editor-quit cleanup unregistered.
+            var serverPathOverride = ResolveServerPathOverride();
+            if (serverPathOverride != null)
+                _logger.LogInformation(
+                    "{envVar} override active: launching {path} — server download and version check are skipped.",
+                    ServerPathEnvVar,
+                    serverPathOverride);
+
             DownloadServerBinaryIfNeeded(unattended: true)
                 .ContinueWith(task =>
                 {
@@ -145,7 +156,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// <c>v&lt;ServerVersion&gt;</c> release with all 7 RID zips exists on GameDev-MCP-Server
         /// BEFORE cutting a plugin release that pins it — otherwise the download 404s).
         /// </summary>
-        public const string ServerVersion = "9.2.0";
+        public const string ServerVersion = "9.2.9";
 
         public const string ExecutableName = "gamedev-mcp-server";
 
@@ -179,6 +190,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 ? ".exe"
                 : string.Empty);
 
+        /// <summary>
+        /// DEV / CI-ONLY override: an absolute path to an EXISTING <c>gamedev-mcp-server(.exe)</c> that the
+        /// editor must launch INSTEAD of the pinned <see cref="ServerVersion"/> GitHub release. When it
+        /// resolves, the download and the version match are skipped entirely, so a workspace-built server
+        /// binary can be driven end-to-end without cutting a release. Mirrors Unreal's
+        /// <c>UNREAL_MCP_SERVER_PATH</c> semantics: the override wins when set AND the file exists, and a
+        /// set-but-missing value FALLS THROUGH to the normal pinned-release behaviour.
+        /// </summary>
+        public const string ServerPathEnvVar = "UNITY_MCP_SERVER_PATH";
+
+        /// <summary>
+        /// Resolve <see cref="ServerPathEnvVar"/> for the current Unity project, or null when it is unset,
+        /// blank, or points at a file that does not exist.
+        /// </summary>
+        public static string? ResolveServerPathOverride()
+            => ResolveServerPathOverride(UnityMcpPluginEditor.ProjectRootPath);
+
+        /// <summary>
+        /// <paramref name="projectRootPath"/>-scoped overload (also the unit-test seam). Reads through
+        /// <see cref="DevControlEnv.Resolve"/> so the lookup layers process-env &gt;
+        /// <c>&lt;projectRoot&gt;/.env</c> — a GUI/IDE-launched editor inherits no shell exports, so a bare
+        /// <c>Environment.GetEnvironmentVariable</c> would be unusable for exactly the developer this
+        /// override exists for. Returns the FULL path when the target exists, else null.
+        /// </summary>
+        public static string? ResolveServerPathOverride(string? projectRootPath)
+        {
+            var raw = DevControlEnv.Resolve(ServerPathEnvVar, projectRootPath);
+            if (string.IsNullOrEmpty(raw))
+                return null;
+
+            return File.Exists(raw)
+                ? Path.GetFullPath(raw)
+                : null;
+        }
+
         // Full path to the server executable
         // Sample (mac linux): ../Library/mcp-server
         // Sample   (windows): ../Library/mcp-server
@@ -191,10 +237,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 )
             );
 
-        // Full path to the server executable
+        // The per-RID DOWNLOAD CACHE folder. The ServerPathEnvVar override deliberately does NOT redirect
+        // this: a manual "Download server" menu run must always publish into Library/, never overwrite the
+        // developer's own binary that the override points at.
         // Sample (mac linux): ../Library/mcp-server/osx-x64
         // Sample   (windows): ../Library/mcp-server/win-x64
-        public static string ExecutableFolderPath
+        public static string CachedExecutableFolderPath
             => Path.GetFullPath(
                 Path.Combine(
                     ExecutableFolderRootPath,
@@ -202,16 +250,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 )
             );
 
-        // Full path to the server executable
+        // Folder the server is LAUNCHED from (StartServer's WorkingDirectory) and the folder VersionFullPath
+        // sits in. Equals CachedExecutableFolderPath unless ServerPathEnvVar overrides the binary, in which
+        // case it is the override's own directory.
+        // Sample (mac linux): ../Library/mcp-server/osx-x64
+        // Sample   (windows): ../Library/mcp-server/win-x64
+        public static string ExecutableFolderPath
+        {
+            get
+            {
+                var overridePath = ResolveServerPathOverride();
+                return overridePath != null
+                    ? Path.GetDirectoryName(overridePath)!
+                    : CachedExecutableFolderPath;
+            }
+        }
+
+        // The executable INSIDE the download cache — what DownloadAndUnpackBinary publishes and must verify.
+        // Never redirected by ServerPathEnvVar, so it stays usable as the download path's own ground truth
+        // while ExecutableFullPath (the LAUNCH target, below) follows the override. Not public: the launch
+        // target is the only path a caller outside this class has ever needed.
         // Sample (mac linux): ../Library/mcp-server/osx-x64/gamedev-mcp-server
         // Sample   (windows): ../Library/mcp-server/win-x64/gamedev-mcp-server.exe
-        public static string ExecutableFullPath
+        static string CachedExecutableFullPath
             => Path.GetFullPath(
                 Path.Combine(
-                    ExecutableFolderPath,
+                    CachedExecutableFolderPath,
                     ExecutableFullName
                 )
             );
+
+        // Full path to the server executable the editor LAUNCHES: the ServerPathEnvVar override when one
+        // resolves, otherwise the pinned release in the download cache.
+        // Sample (mac linux): ../Library/mcp-server/osx-x64/gamedev-mcp-server
+        // Sample   (windows): ../Library/mcp-server/win-x64/gamedev-mcp-server.exe
+        public static string ExecutableFullPath
+            => ResolveServerPathOverride() ?? CachedExecutableFullPath;
 
         public static string VersionFullPath
             => Path.GetFullPath(
@@ -272,8 +346,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return File.ReadAllText(VersionFullPath);
         }
 
+        // The `version` marker inside the download cache — what a download just published. Distinct from
+        // GetBinaryVersion(), which follows ExecutableFolderPath and therefore reports the OVERRIDE directory
+        // (where no marker normally sits) whenever ServerPathEnvVar is active. The download path must ask
+        // this one, or it reports the launch target's version for a payload it wrote somewhere else.
+        public static string? GetCachedBinaryVersion()
+        {
+            var cachedVersionPath = Path.Combine(CachedExecutableFolderPath, "version");
+            if (!File.Exists(cachedVersionPath))
+                return null;
+
+            return File.ReadAllText(cachedVersionPath);
+        }
+
         public static bool IsVersionMatches()
         {
+            // Under the ServerPathEnvVar override the launched binary is NOT a pinned GameDev-MCP-Server
+            // release and carries no `version` marker beside it, so the pinned-version comparison does not
+            // apply. Reporting a match is what lets IsBinaryReadyToStart() and DownloadServerBinaryIfNeeded()
+            // short-circuit instead of downloading over the developer's binary. It deliberately does NOT
+            // stand in for DownloadAndUnpackBinary's post-publish verification: that check runs on a path
+            // where a download really happened, so it asks the cache directly (GetCachedBinaryVersion).
+            if (ResolveServerPathOverride() != null)
+                return true;
+
             var binaryVersion = GetBinaryVersion();
             if (binaryVersion == null)
                 return false;
@@ -550,14 +646,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     {
                         // Atomic publish: a single same-volume rename of the fully-prepared payload into the
                         // per-RID cache folder. Either it lands complete or not at all.
-                        PublishStagedBinary(payloadFolder, ExecutableFolderPath);
+                        // CachedExecutableFolderPath, NOT ExecutableFolderPath: a manual menu-driven download
+                        // must land in Library/ even when ServerPathEnvVar is set, so it can never delete and
+                        // replace the developer's own override directory.
+                        PublishStagedBinary(payloadFolder, CachedExecutableFolderPath);
 
-                        if (!File.Exists(ExecutableFullPath))
+                        // Verify the CACHE this publish actually targeted, NOT ExecutableFullPath /
+                        // IsBinaryExists() / IsVersionMatches(): under an active ServerPathEnvVar override
+                        // those three describe the developer's own binary, which exists and reports a match
+                        // by construction — so they would pass however the publish went, and the one path
+                        // that still downloads (the manual menu item) would lose its verification entirely.
+                        if (!File.Exists(CachedExecutableFullPath))
                         {
-                            publishFailReason = $"Server binary missing after publish at: {ExecutableFullPath}";
+                            publishFailReason = $"Server binary missing after publish at: {CachedExecutableFullPath}";
                             return false;
                         }
-                        if (!(IsBinaryExists() && IsVersionMatches()))
+                        if (GetCachedBinaryVersion() != ServerVersion)
                         {
                             publishFailReason = "The published server binary failed the post-publish version check.";
                             return false;
@@ -583,7 +687,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (outcome == ServerUpdateRestartOutcome.PublishFailed)
                     return FailDownload(publishFailReason ?? "The published server binary failed verification.", unattended);
 
-                UnityEngine.Debug.Log($"Downloaded and unpacked GameDev-MCP-Server binary to: <color=green>{ExecutableFullPath}</color>");
+                // CachedExecutableFullPath, not ExecutableFullPath: this line reports where the DOWNLOAD
+                // landed, which under a ServerPathEnvVar override is not the file the editor will launch.
+                UnityEngine.Debug.Log($"Downloaded and unpacked GameDev-MCP-Server binary to: <color=green>{CachedExecutableFullPath}</color>");
                 UnityEngine.Debug.Log($"MCP server version file created at: <color=green><b>COMPLETED</b></color>");
 
                 // Restart is handled inside the orchestrator when restartAfterPublish is true. When it is false,
@@ -794,8 +900,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 minHeight: 235,
                 title: success ? "Server Binary Updated" : "Server Binary Update Failed",
                 message: success
+                    // GetCachedBinaryVersion(), not GetBinaryVersion(): this popup describes the DOWNLOAD, and
+                    // the launch-target marker it would otherwise read sits in the ServerPathEnvVar override's
+                    // own directory, where there is normally no marker at all.
                     ? "The MCP server binary was successfully downloaded and updated. \n\n" +
-                        $"Version: {GetBinaryVersion()}\n\n" +
+                        $"Version: {GetCachedBinaryVersion()}\n\n" +
                         "You may need to restart your AI agent to reconnect to the updated server."
                     : "Failed to download and update the MCP server binary. Please check the logs for details.");
         }
@@ -1260,7 +1369,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         CreateNoWindow = true,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
-                        WorkingDirectory = ExecutableFolderPath
+                        // Derived from executablePath rather than read from ExecutableFolderPath again: both
+                        // re-resolve ServerPathEnvVar independently, so a second read could hand the process
+                        // a working directory belonging to a different binary than FileName.
+                        WorkingDirectory = Path.GetDirectoryName(executablePath)!
                     };
 
                     // Set executable permissions on Unix-like systems

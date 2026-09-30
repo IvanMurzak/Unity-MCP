@@ -31,6 +31,21 @@ The **MCP Server** acts as the bridge between the **AI Client** (Claude, Cursor,
 ### 1. Local Automatic (Recommended)
 The **Unity Plugin** automatically downloads and runs the appropriate server binary for your OS. No manual setup required. Configuration is done via the Unity Editor window.
 
+#### Overriding the launched binary — `UNITY_MCP_SERVER_PATH` (dev / CI only)
+
+| Environment Variable    | Value                                                                        | Effect                                                                                                                              |
+| :---------------------- | :--------------------------------------------------------------------------- | :---------------------------------------------------------------------------------------------------------------------------------- |
+| `UNITY_MCP_SERVER_PATH` | Absolute path to an **existing** `gamedev-mcp-server` (`.exe` on Windows)     | The Editor launches **that** file instead of the release pinned by `ServerVersion`, and skips both the download and the version match. |
+
+Intended for developing the server itself and for CI chains that build the server from source — not for everyday use. Details:
+
+- The value is read through the same `process env` → `<projectRoot>/.env` → unset chain as `UNITY_MCP_DEV_CONTROL`, so an Editor launched from the GUI or an IDE (which inherits no shell exports) can still pick it up from a `.env` file at the Unity project root.
+- **Set-but-missing falls through**: if the path does not exist, the plugin behaves exactly as if the variable were unset. This matches Unreal-MCP's `UNREAL_MCP_SERVER_PATH`. That fall-through is silent, so confirm from the Editor console rather than assuming: the `Starting MCP server: <path> …` line names the binary that was actually launched, every time. The `UNITY_MCP_SERVER_PATH override active: …` notice is emitted only when the override already resolves as the domain loads, so it is absent if you write the `.env` afterwards — the launch line is the one to trust.
+- Use an **absolute** path. A relative value is resolved against the Editor process's working directory, not against the Unity project root. The filename itself is not constrained: whatever file the path names is the file that gets launched.
+- The override also becomes the `command` written into generated AI-agent configs, so the agent launches the same binary the Editor does.
+- `Tools/AI Game Developer/Server/Download Binaries` (the manual menu item) still downloads into `Library/mcp-server/<rid>/` regardless of the override; the override still wins at launch.
+- `Tools/AI Game Developer/Server/Open Server Logs` follows the override, because the server's working directory is the folder its binary sits in — so the logs you open are the ones the overridden server actually wrote.
+
 ### 2. Docker
 See **[Docker Deployment](DOCKER_DEPLOYMENT.md)**. Best for cloud hosting or isolated environments.
 

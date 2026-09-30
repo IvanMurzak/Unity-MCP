@@ -1,0 +1,23 @@
+{
+  "schema": 1,
+  "_comment": [
+    "Unity-MCP's T2 chain battery (format: MCP-Plugin-dotnet docs/chain-fixtures.md). Recorded in-process",
+    "by Tests/Editor/Chain/ChainRecordTests.cs on the base/editmode game-ci legs; the committed result is",
+    "tests/chain-fixtures/<unity-version>/tools.jsonl.",
+    "READ-ONLY TOOLS ONLY: nothing here may mutate the project, the scene or editor state, because the",
+    "recorder runs inside the ordinary EditMode suite.",
+    "Only tools the tool manager actually registers: `ping` is a System tool and is NOT in it (measured:",
+    "Tool with Name 'ping' not found).",
+    "Every response must be DETERMINISTIC across runs of the same editor build, or the diff is noise:",
+    "editor-application-get-state (TimeSinceStartup) and profiler-get-status (MaxUsedMemoryMB) carry",
+    "unmasked volatile numbers, and scene-list-opened depends on which tests ran first - all excluded.",
+    "unity-tool-list appears twice with different arguments so the (name, args_hash) key is observable;",
+    "the unknown tool records the manager's not-found error contract."
+  ],
+  "calls": [
+    { "name": "unity-tool-list", "args": {} },
+    { "name": "unity-tool-list", "args": { "regexSearch": "^scene-", "includeDescription": true } },
+    { "name": "type-get-json-schema", "args": { "typeName": "UnityEngine.Vector3" } },
+    { "name": "chain-record-unknown-tool", "args": {} }
+  ]
+}

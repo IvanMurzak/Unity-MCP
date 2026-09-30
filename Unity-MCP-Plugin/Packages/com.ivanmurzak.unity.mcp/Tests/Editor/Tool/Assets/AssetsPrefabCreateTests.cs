@@ -51,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var id = go.GetEntityId();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":true}}");
+                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""connectGameObjectToPrefab"":true}}");
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(prefab, $"Prefab should be created at: {prefabPath}");
@@ -68,7 +68,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var id = go.GetEntityId();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":false}}");
+                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""connectGameObjectToPrefab"":false}}");
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(prefab, $"Prefab should be created at: {prefabPath}");
@@ -85,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var id = go.GetEntityId();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}}}}");
+                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}}}");
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(prefab, $"Prefab should be created at: {prefabPath}");
@@ -102,7 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var id = go.GetEntityId();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}}}}");
+                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}}}");
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(prefab, $"Prefab should be created at nested path: {prefabPath}");
@@ -121,7 +121,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var id = go.GetEntityId();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":false}}");
+                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""connectGameObjectToPrefab"":false}}");
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(prefab, $"Prefab should be created at: {prefabPath}");
@@ -145,14 +145,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var baseId = baseGo.GetEntityId();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{basePath}"",""gameObjectRef"":{{""instanceID"":{baseId}}},""connectGameObjectToPrefab"":true}}");
+                $@"{{""prefabAssetPath"":""{basePath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(baseId)}}},""connectGameObjectToPrefab"":true}}");
 
             // baseGo is now a prefab instance — modify it and save as variant
             baseGo.AddComponent<SphereCollider>();
             var variantPath = $"{TestFolder}/Variant_FromInstance.prefab";
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{variantPath}"",""gameObjectRef"":{{""instanceID"":{baseId}}},""connectGameObjectToPrefab"":true}}");
+                $@"{{""prefabAssetPath"":""{variantPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(baseId)}}},""connectGameObjectToPrefab"":true}}");
 
             var variant = AssetDatabase.LoadAssetAtPath<GameObject>(variantPath);
             Assert.IsNotNull(variant, $"Variant prefab should be created at: {variantPath}");
@@ -176,7 +176,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var baseId = baseGo.GetEntityId();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{basePath}"",""gameObjectRef"":{{""instanceID"":{baseId}}},""connectGameObjectToPrefab"":false}}");
+                $@"{{""prefabAssetPath"":""{basePath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(baseId)}}},""connectGameObjectToPrefab"":false}}");
 
             // Step 2: create a variant from the asset path
             var variantPath = $"{TestFolder}/Variant_FromAsset.prefab";
@@ -204,7 +204,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var id = go.GetEntityId();
 
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":true}}");
+                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""connectGameObjectToPrefab"":true}}");
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(prefab, $"Prefab should be created at: {prefabPath}");
@@ -221,7 +221,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var id = go.GetEntityId();
 
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}},""connectGameObjectToPrefab"":false}}");
+                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""connectGameObjectToPrefab"":false}}");
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(prefab, $"Prefab should be created at: {prefabPath}");
@@ -238,7 +238,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var id = go.GetEntityId();
 
             yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{id}}}}}");
+                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}}}");
 
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(prefabPath);
             Assert.IsNotNull(prefab, $"Prefab should be created at nested path (background thread): {prefabPath}");
@@ -255,7 +255,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var baseId = baseGo.GetEntityId();
 
             yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{basePath}"",""gameObjectRef"":{{""instanceID"":{baseId}}},""connectGameObjectToPrefab"":false}}");
+                $@"{{""prefabAssetPath"":""{basePath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(baseId)}}},""connectGameObjectToPrefab"":false}}");
 
             // Step 2: create variant from background thread
             var variantPath = $"{TestFolder}/Variant_FromAsset_Bg.prefab";
@@ -288,7 +288,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ExpectToolErrorLogs();
 
             var jsonResult = RunToolRaw(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":"""",""gameObjectRef"":{{""instanceID"":{id}}}}}");
+                $@"{{""prefabAssetPath"":"""",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}}}");
 
             StringAssert.Contains("Prefab path is empty", jsonResult);
             yield return null;
@@ -304,7 +304,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             ExpectToolErrorLogs();
 
             var jsonResult = RunToolRaw(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{TestFolder}/NotAPrefab.txt"",""gameObjectRef"":{{""instanceID"":{id}}}}}");
+                $@"{{""prefabAssetPath"":""{TestFolder}/NotAPrefab.txt"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}}}");
 
             StringAssert.Contains("invalid", jsonResult);
             yield return null;
