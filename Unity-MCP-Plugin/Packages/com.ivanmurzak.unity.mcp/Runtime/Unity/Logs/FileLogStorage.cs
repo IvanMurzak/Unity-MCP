@@ -113,7 +113,10 @@ namespace com.IvanMurzak.Unity.MCP
 
                     _logger.LogDebug("Creating log file stream: {file}", filePath);
 
-                    var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite, bufferSize: _fileBufferSize, useAsync: false)
+                    // FileShare.Delete is required, not cosmetic: Windows refuses DeleteFile while ANY
+                    // open handle omits FILE_SHARE_DELETE. Without it a second Editor process holding
+                    // this file makes Clear() throw "used by another process" (#855).
+                    var stream = new FileStream(filePath, FileMode.Append, FileAccess.Write, FileShare.ReadWrite | FileShare.Delete, bufferSize: _fileBufferSize, useAsync: false)
                         ?? throw new Exception("Failed to create file stream for log storage.");
 
                     resultFileName = currentFileName;
@@ -320,7 +323,7 @@ namespace com.IvanMurzak.Unity.MCP
             if (!File.Exists(filePath))
                 return Array.Empty<LogEntry>();
 
-            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite | FileShare.Delete))
             {
                 var cutoffTime = lastMinutes > 0
                     ? DateTime.Now.AddMinutes(-lastMinutes)
