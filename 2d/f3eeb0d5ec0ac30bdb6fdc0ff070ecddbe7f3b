@@ -1,0 +1,19 @@
+cli/src/utils/server-version.ts
+  s_507460336b9c68::t_a87991b7491bc1 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.14",
+  "base_commit_sha": "2df3eeb0d5ec0ac30bdb6fdc0ff070ecddbe7f3b",
+  "prompts": {},
+  "sessions": {
+    "s_507460336b9c68": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_507460336b9c68",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

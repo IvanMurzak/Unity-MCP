@@ -1,0 +1,67 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/HttpRefresherWiringTests.cs.meta
+  s_5b742bf37a2587::t_8eeb1c1747cacc 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/DeviceAuthFlowTests.cs
+  s_5b742bf37a2587::t_e86edf0fc9e265 191,193,199
+  s_5b742bf37a2587::t_19a489b0c69161 28-29,41-42,170
+  s_5b742bf37a2587::t_071a8899b2bb1d 86-96,99,103,106,118,120,123,140-169,171-173
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/LoginCommitServiceTests.cs.meta
+  s_5b742bf37a2587::t_8eeb1c1747cacc 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/LegacyV1AdoptionTests.cs
+  s_5b742bf37a2587::t_4f18b2954d6548 1-103
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AccountCredentialService.cs
+  s_5b742bf37a2587::t_369c62cf1b8fa9 13-15,19,25-31,33-34,37-38,42-48,50-52,61,64-76,79-80,91,94-120,124,128-143,151-152,171-173,178-184,186,192-210,217-416,418-442
+  s_5b742bf37a2587::t_00c0755838e096 211-216
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/HttpRefresherWiringTests.cs
+  s_5b742bf37a2587::t_01a7c2d816314c 1-18,20-162
+  s_5b742bf37a2587::t_f8abc725d511ff 19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/UI/MainWindowEditor.StatusLogicTests.cs
+  s_5b742bf37a2587::t_ae481dec688327 292-295
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.Connection.cs
+  s_5b742bf37a2587::t_24641b2593347b 388-411,416-419,421-450,463-464,466-469
+  s_5b742bf37a2587::t_8ef443d594e1d4 282
+  s_5b742bf37a2587::t_2a3e644b05d64a 13-14,20
+  s_5b742bf37a2587::t_158a0e00585384 491-494
+  s_5b742bf37a2587::t_7144285659f985 332,334-346,348-353,356-358,368-385
+  s_5b742bf37a2587::t_102596afbf6d3f 412-415,420
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/LegacyV1AdoptionTests.cs.meta
+  s_5b742bf37a2587::t_8eeb1c1747cacc 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/DeviceAuthFlow.cs
+  s_5b742bf37a2587::t_f9ca27df1ac951 90,96
+  s_5b742bf37a2587::t_93a15d5419b46f 35-62,64-69
+  s_5b742bf37a2587::t_957286308230a5 145-148,155-158,160-161
+  s_5b742bf37a2587::t_12876ea0b450a8 76
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/DeviceAuthService.cs
+  s_5b742bf37a2587::t_590c9003472400 90-97
+  s_5b742bf37a2587::t_4153c3d44085b6 177-213
+  s_5b742bf37a2587::t_3e762379aab443 73,75-80
+  s_5b742bf37a2587::t_90bd9674824eb4 113-114,121,125-126
+  s_5b742bf37a2587::t_80b84f34c435b0 128-130
+  s_5b742bf37a2587::t_01ad7fdf6750b8 29-35,127
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/CredentialWiringTestKit.cs.meta
+  s_5b742bf37a2587::t_8eeb1c1747cacc 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/DeviceAuthServiceTests.cs
+  s_5b742bf37a2587::t_b066a3de0d8327 147,149-155
+  s_5b742bf37a2587::t_2d870ee8c9552a 119,121-122,125-146,148,156-163
+  s_5b742bf37a2587::t_7b889ff5791f0f 22-24,32,34,36-47,164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/CredentialWiringTestKit.cs
+  s_5b742bf37a2587::t_7b2fda149d478e 1-191
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/LoginCommitServiceTests.cs
+  s_5b742bf37a2587::t_b99d603ee04643 1-224,226,228-233,239-253
+  s_5b742bf37a2587::t_7e6b2c60ad7dce 225,227,234-238
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.22",
+  "base_commit_sha": "1d58806ebe25319d2aef1e839acabdceb84af221",
+  "prompts": {},
+  "sessions": {
+    "s_5b742bf37a2587": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ba723765-770d-456d-823d-c53d8073ed95",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.Isolated.cs
+  eeb5835356aad1c0 98,611,620,642-647
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotIsolatedTests.cs
+  eeb5835356aad1c0 289-322
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "4a3fef811d10ef7ee9d9b2f372b1cf65369d07dd",
+  "prompts": {
+    "eeb5835356aad1c0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "31c4fa80-959c-4675-979d-991e8df90743",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 374,
+      "total_deletions": 2,
+      "accepted_lines": 1338,
+      "overriden_lines": 0
+    }
+  }
+}

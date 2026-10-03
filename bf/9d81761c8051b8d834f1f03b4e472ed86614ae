@@ -1,0 +1,21 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.JsonPatchObjectOrString.cs
+  s_5fd6444b4d41de::t_7e159d10fef96b 1-282
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.JsonPatchObjectOrString.cs.meta
+  s_5fd6444b4d41de::t_eee159c51e0b07 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "bf9d81761c8051b8d834f1f03b4e472ed86614ae",
+  "prompts": {},
+  "sessions": {
+    "s_5fd6444b4d41de": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7c3c29c8-20ae-4e58-b199-acfc3956bb78",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

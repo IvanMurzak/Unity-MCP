@@ -1,0 +1,42 @@
+cli/src/commands/setup-skills.ts
+  4aa1cc2b08e6c364 14,28,111,113,152
+cli/src/commands/run-tool.ts
+  4aa1cc2b08e6c364 16,113,147,149,196
+cli/README.md
+  4aa1cc2b08e6c364 40-41,80-81,272,301-356,410-413
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/SystemTool/Skills.Create.cs
+  5ecc20a3da4e4e3a 207-209
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "a8ab657d6858bc98960899d1e2d7daa9b606a423",
+  "prompts": {
+    "4aa1cc2b08e6c364": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0323f95e-54e5-40b8-adf4-7ea4f44bad52",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 452,
+      "total_deletions": 388,
+      "accepted_lines": 311,
+      "overriden_lines": 0
+    },
+    "5ecc20a3da4e4e3a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "616e0a6d-e8ec-42b7-9a7d-2c6d5c881d60",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 227,
+      "total_deletions": 224,
+      "accepted_lines": 16,
+      "overriden_lines": 0
+    }
+  }
+}

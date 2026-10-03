@@ -1,0 +1,25 @@
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Tests/VersionComparisonTests.cs"
+  a170a8ed31130589 200-201,206-207
+.github/workflows/test_unity_plugin.yml
+  a170a8ed31130589 113-121
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "0fe7066ad460e684886334e223b2e04b7734e942",
+  "prompts": {
+    "a170a8ed31130589": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5ddc6cb6-4397-4acb-8547-d08d50571127",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 353,
+      "total_deletions": 343,
+      "accepted_lines": 49,
+      "overriden_lines": 0
+    }
+  }
+}

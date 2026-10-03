@@ -1,0 +1,39 @@
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_5292f63d8e83c9::t_e7d26e0da41a1d 4,10
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_5292f63d8e83c9::t_a7ae13ae50f1d7 66
+Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_3c149407cdd5d4::t_0dcbc5ffdc03e4 4,10
+Unity-Tests/2023.2.22f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_3c149407cdd5d4::t_3de10f4f329598 4,10
+Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_3c149407cdd5d4::t_b3eb616d46b544 4,10
+Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_3c149407cdd5d4::t_f814c602627c8a 4,10
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/.nuget-installed.json
+  s_3c149407cdd5d4::t_af23604ef48023 4,10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.12",
+  "base_commit_sha": "015b82302904b9a7ddd16a43ce37934a544307a5",
+  "prompts": {},
+  "sessions": {
+    "s_3c149407cdd5d4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "845aef5f-a4aa-4844-b9e6-479df3530c09",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_5292f63d8e83c9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "2d3a0d21-6d64-43ad-9722-911ea60169ce",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
