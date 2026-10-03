@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Text.Json.Serialization;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
@@ -20,6 +21,14 @@ namespace com.IvanMurzak.Unity.MCP
         public string Message { get; set; }
         public DateTime Timestamp { get; set; }
         public string? StackTrace { get; set; }
+
+        /// <summary>
+        /// Monotonic capture number (starts at 1), assigned by the log storage atomically with storing the entry.
+        /// 0 means "not assigned" (never stored, or written before sequences existed).
+        /// Serialized as lowercase <c>sequence</c>; agents pass the highest value they received as <c>sinceSequence</c>.
+        /// </summary>
+        [JsonPropertyName("sequence")]
+        public long Sequence { get; set; }
 
         public LogEntry()
         {
@@ -49,6 +58,13 @@ namespace com.IvanMurzak.Unity.MCP
             Timestamp = timestamp;
             StackTrace = string.IsNullOrEmpty(stackTrace) ? null : stackTrace;
         }
+
+        /// <summary>
+        /// Returns an independent copy. Storages share entry instances (the buffered storage hands out its own
+        /// buffer slots), so anything that strips a field for a caller must strip it on a copy.
+        /// </summary>
+        public LogEntry Clone(bool includeStackTrace)
+            => new LogEntry(LogType, Message, Timestamp, includeStackTrace ? StackTrace : null) { Sequence = Sequence };
 
         public override string ToString() => ToString(includeStackTrace: false);
 

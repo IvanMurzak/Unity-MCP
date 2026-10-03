@@ -21,6 +21,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public static string InvalidMaxEntries(int entriesCount)
                 => $"Invalid maxEntries value '{entriesCount}'. Must be greater than 0.";
 
+            public static string InvalidSinceSequence(long sinceSequence)
+                => $"Invalid sinceSequence value '{sinceSequence}'. Must be 0 or greater.";
+
             public static string InvalidLogTypeFilter(string logType)
                 => $"Invalid logType filter '{logType}'. Valid values: All, Error, Assert, Warning, Log, Exception.";
         }

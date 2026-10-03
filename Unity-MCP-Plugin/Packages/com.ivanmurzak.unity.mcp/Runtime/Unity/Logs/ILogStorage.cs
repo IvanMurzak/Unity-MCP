@@ -33,6 +33,25 @@ namespace com.IvanMurzak.Unity.MCP
             bool includeStackTrace = false,
             int lastMinutes = 0);
 
+        /// <summary>
+        /// Entries newer than <paramref name="sinceSequence"/>, oldest first (cursor, then filters, then sort, then
+        /// limit - an overflowing result is the OLDEST page, so the next call continues without a gap).
+        /// A cursor above every sequence ever issued is treated as "before everything".
+        /// </summary>
+        Task<LogEntry[]> QuerySinceAsync(
+            long sinceSequence,
+            int maxEntries = 100,
+            UnityEngine.LogType? logTypeFilter = null,
+            bool includeStackTrace = false,
+            int lastMinutes = 0);
+        /// <inheritdoc cref="QuerySinceAsync"/>
+        LogEntry[] QuerySince(
+            long sinceSequence,
+            int maxEntries = 100,
+            UnityEngine.LogType? logTypeFilter = null,
+            bool includeStackTrace = false,
+            int lastMinutes = 0);
+
         void Clear();
     }
 }

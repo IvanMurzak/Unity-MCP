@@ -60,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     var entriesToFlush = new LogEntry[_logEntriesBufferLength];
                     Array.Copy(_logEntriesBuffer, entriesToFlush, _logEntriesBufferLength);
-                    base.AppendInternal(entriesToFlush);
+                    WriteEntries(entriesToFlush);
                     _logEntriesBufferLength = 0;
                 }
                 fileWriteStream?.Flush();
@@ -81,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     var entriesToFlush = new LogEntry[_logEntriesBufferLength];
                     Array.Copy(_logEntriesBuffer, entriesToFlush, _logEntriesBufferLength);
-                    base.AppendInternal(entriesToFlush);
+                    WriteEntries(entriesToFlush);
                     _logEntriesBufferLength = 0;
                 }
                 fileWriteStream?.Flush();
@@ -97,9 +97,12 @@ namespace com.IvanMurzak.Unity.MCP
                     nameof(AppendInternal));
                 return;
             }
+            // Numbered here, under the file mutex the callers hold, in the same step that buffers the entry.
+            AssignSequences(entries);
+
             if (_logEntriesBufferLength >= _flushEntriesThreshold)
             {
-                base.AppendInternal(_logEntriesBuffer);
+                WriteEntries(_logEntriesBuffer);
                 _logEntriesBufferLength = 0;
             }
             foreach (var entry in entries)
@@ -109,7 +112,7 @@ namespace com.IvanMurzak.Unity.MCP
 
                 if (_logEntriesBufferLength >= _flushEntriesThreshold)
                 {
-                    base.AppendInternal(_logEntriesBuffer);
+                    WriteEntries(_logEntriesBuffer);
                     _logEntriesBufferLength = 0;
                 }
             }
@@ -132,6 +135,9 @@ namespace com.IvanMurzak.Unity.MCP
                 fileWriteStream?.Dispose();
                 fileWriteStream = null;
                 _logEntriesBufferLength = 0;
+
+                // The sequence must outlive the entries that carried it.
+                PersistHighWaterMark();
 
                 if (File.Exists(filePath))
                     File.Delete(filePath);
@@ -185,7 +191,8 @@ namespace com.IvanMurzak.Unity.MCP
                     }
                 }
 
-                result.Add(entry);
+                // The buffer slot is shared with the writer and with later queries: hand out a copy.
+                result.Add(entry.Clone(includeStackTrace));
                 if (result.Count >= maxEntries)
                     return result.AsEnumerable().Reverse().ToArray();
             }
@@ -202,6 +209,30 @@ namespace com.IvanMurzak.Unity.MCP
             result.AddRange(fileEntries);
 
             return result.ToArray();
+        }
+
+        protected override void CollectBufferedEntriesNewerThan(
+            List<LogEntry> collected,
+            long cursor,
+            LogType? logTypeFilter,
+            bool includeStackTrace,
+            DateTime? cutoffTime)
+        {
+            // Newest are at the end of the buffer; everything in it is newer than everything in the file.
+            for (int i = _logEntriesBufferLength - 1; i >= 0; i--)
+            {
+                var entry = _logEntriesBuffer[i];
+                if (entry.Sequence <= cursor)
+                    break;
+
+                if (cutoffTime.HasValue && entry.Timestamp < cutoffTime.Value)
+                    break;
+
+                if (logTypeFilter.HasValue && entry.LogType != logTypeFilter.Value)
+                    continue;
+
+                collected.Add(entry.Clone(includeStackTrace));
+            }
         }
 
         ~BufferedFileLogStorage() => Dispose();
