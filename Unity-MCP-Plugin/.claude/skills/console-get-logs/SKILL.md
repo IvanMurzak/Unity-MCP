@@ -13,6 +13,11 @@ Retrieves Unity Editor logs. Useful for debugging and monitoring Unity Editor ac
 - `logTypeFilter` — Unity `LogType` filter; `null` returns all severities.
 - `includeStackTrace` (default `false`) — include stack-trace strings in each entry.
 - `lastMinutes` (default 0) — when non-zero, only logs from the last N minutes are returned.
+- `sinceSequence` (default 0) — every entry carries a `sequence` number. When greater than 0, only entries with a higher `sequence` are returned, oldest first, up to `maxEntries`.
+
+## Polling
+
+To read only what is new, pass the highest `sequence` you have received as `sinceSequence`; if the result has `maxEntries` entries, call again with the new highest `sequence` to continue. If returned sequences are lower than your cursor, the log restarted.
 
 ## How to Call
 
@@ -21,7 +26,8 @@ unity-mcp-cli run-tool console-get-logs --input '{
   "maxEntries": 0,
   "logTypeFilter": "string_value",
   "includeStackTrace": false,
-  "lastMinutes": 0
+  "lastMinutes": 0,
+  "sinceSequence": 0
 }'
 ```
 
@@ -51,6 +57,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 | `logTypeFilter` | `any` | No | Filter by log type. 'null' means All. |
 | `includeStackTrace` | `boolean` | No | Include stack traces in the output. Default: false |
 | `lastMinutes` | `integer` | No | Return logs from the last N minutes. If 0, returns all available logs. Default: 0 |
+| `sinceSequence` | `integer` | No | Return only entries whose `sequence` is greater than this value, oldest first. If 0, returns the most recent entries. Default: 0 |
 
 ### Input JSON Schema
 
@@ -68,6 +75,9 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "boolean"
     },
     "lastMinutes": {
+      "type": "integer"
+    },
+    "sinceSequence": {
       "type": "integer"
     }
   },
@@ -121,11 +131,15 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         },
         "StackTrace": {
           "type": "string"
+        },
+        "sequence": {
+          "type": "integer"
         }
       },
       "required": [
         "LogType",
-        "Timestamp"
+        "Timestamp",
+        "sequence"
       ]
     },
     "com.IvanMurzak.Unity.MCP.LogEntry-1": {
