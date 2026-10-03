@@ -102,7 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
             var duration = DateTime.Now - startTime;
             _summary.Duration = DateTime.Now - startTime;
-            _summary.TotalTests = CountTests(result.Test);
+            // RunStarted receives the filtered test set; result.Test can contain the full tree.
             if (_summary.FailedTests > 0)
             {
                 _summary.Status = TestRunStatus.Failed;
