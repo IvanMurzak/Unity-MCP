@@ -75,7 +75,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (logCollector == null)
                 throw new InvalidOperationException("LogCollector is not initialized.");
 
-            // Get all log entries as array to avoid concurrent modification
             if (sinceSequence > 0)
             {
                 return logCollector.QuerySince(
