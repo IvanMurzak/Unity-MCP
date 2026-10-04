@@ -13,7 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Threading.Tasks;
+using System.Threading;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
 using UnityEngine;
@@ -32,6 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         const string LogFileName = "sequence-cursor-logs.txt";
 
         readonly List<string> _directories = new();
+        readonly List<string> _files = new();
         readonly List<FileLogStorage> _storages = new();
 
         [TearDown]
@@ -40,6 +41,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             foreach (var storage in _storages)
                 storage.Dispose();
             _storages.Clear();
+
+            foreach (var file in _files)
+            {
+                try { File.Delete(file); }
+                catch { /* best effort */ }
+            }
+            _files.Clear();
 
             foreach (var directory in _directories)
             {
@@ -193,6 +201,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
+        public void Query_WithoutCursor_NewestPageSpanningBufferAndFile_IsChronological()
+        {
+            // Threshold 10: entries 0-19 reach the file, 20-24 stay in the buffer, so a page of 8 spans both.
+            var storage = Open(NewDirectory(), buffered: true, flushEntriesThreshold: 10);
+            for (var i = 0; i < 25; i++)
+                storage.Append(new LogEntry(LogType.Log, $"entry {i}"));
+
+            var newest = storage.Query(maxEntries: 8);
+
+            CollectionAssert.AreEqual(
+                Enumerable.Range(17, 8).Select(i => $"entry {i}"),
+                newest.Select(e => e.Message),
+                "The file part is older than the buffered part, so it must come first.");
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void QuerySince_HugeMaxEntries_ReturnsTheEntries(bool buffered)
+        {
+            var storage = Open(NewDirectory(), buffered);
+            for (var i = 0; i < 3; i++)
+                storage.Append(new LogEntry(LogType.Log, $"entry {i}"));
+
+            // maxEntries comes straight from the caller: it must only cap the result, never size an allocation.
+            var all = storage.QuerySince(0, maxEntries: int.MaxValue);
+
+            CollectionAssert.AreEqual(
+                new[] { "entry 0", "entry 1", "entry 2" },
+                all.Select(e => e.Message));
+        }
+
+        [Test]
         public void Cursor_AtTheHighestSequence_ReturnsNothing_AndNewEntriesAreSeenOnce()
         {
             var storage = Open(NewDirectory(), buffered: true);
@@ -240,6 +280,80 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         [TestCase(false)]
         [TestCase(true)]
+        public void Clear_SameInstance_SequencesContinue_AndTheOldCursorSeesOnlyNewEntries(bool buffered)
+        {
+            // What `console-clear-logs` does: clear the live storage and keep logging into it.
+            var storage = Open(NewDirectory(), buffered);
+            for (var i = 0; i < 10; i++)
+                storage.Append(new LogEntry(LogType.Log, $"before {i}"));
+            var preClearMax = storage.Query(maxEntries: 100).Max(e => e.Sequence);
+
+            storage.Clear();
+            Assert.IsEmpty(storage.QuerySince(preClearMax), "Nothing new right after the clear.");
+
+            for (var i = 0; i < 3; i++)
+                storage.Append(new LogEntry(LogType.Log, $"after {i}"));
+
+            var fresh = storage.QuerySince(preClearMax);
+            CollectionAssert.AreEqual(new[] { "after 0", "after 1", "after 2" }, fresh.Select(e => e.Message));
+            Assert.AreEqual(preClearMax + 1, fresh[0].Sequence, "Clear() must not restart the counter.");
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void SidecarLost_ThenClearAndCrash_SequenceStaysAboveEverythingIssued(bool buffered)
+        {
+            var sidecarName = Path.GetFileNameWithoutExtension(LogFileName) + ".sequence";
+            var directory = NewDirectory();
+            var first = Open(directory, buffered);
+            for (var i = 0; i < 5; i++)
+                first.Append(new LogEntry(LogType.Log, $"entry {i}"));
+            first.Flush();
+            var issued = first.Query(maxEntries: 100).Max(e => e.Sequence);
+            first.Dispose();
+
+            // The sidecar is lost; only the log still knows which numbers were issued.
+            File.Delete(Path.Combine(directory, sidecarName));
+
+            var reopened = Open(directory, buffered);
+            reopened.Clear(); // deletes the log: from here on only the sidecar remembers
+
+            // Crash: no Dispose. The next instance starts from what is on disk.
+            Assert.IsTrue(File.Exists(Path.Combine(directory, sidecarName)),
+                "Deleting the log must not leave the counter with no record at all.");
+            var restartedDirectory = NewDirectory();
+            File.Copy(Path.Combine(directory, sidecarName), Path.Combine(restartedDirectory, sidecarName));
+
+            var restarted = Open(restartedDirectory, buffered);
+            restarted.Append(new LogEntry(LogType.Log, "after restart"));
+
+            Assert.Greater(restarted.Query()[0].Sequence, issued, "A sequence must never be reissued.");
+        }
+
+        [Test]
+        public void DefaultLocation_SequenceSidecarIsNotInTheServerBinaryFolder()
+        {
+            var name = $"sidecar-location-{Guid.NewGuid():N}.txt";
+            var sidecar = Path.GetFileNameWithoutExtension(name) + ".sequence";
+            var projectRoot = Path.GetDirectoryName(Application.dataPath)!;
+            var expected = Path.Combine(projectRoot, "Library", "mcp-logs", sidecar);
+            var insideServerFolder = Path.Combine(McpServerManager.ExecutableFolderRootPath, sidecar);
+            _files.Add(expected);
+            _files.Add(insideServerFolder);
+            _files.Add(Path.Combine(projectRoot, "Temp", "mcp-server", name));
+
+            var storage = new FileLogStorage(requestedFileName: name); // the Editor default: no directory given
+            _storages.Add(storage);
+            storage.Append(new LogEntry(LogType.Log, "entry"));
+            storage.Dispose(); // writes the exact high-water mark
+
+            // McpServerManager.DeleteBinaryFolderIfExists deletes that folder recursively on every server update.
+            Assert.IsFalse(File.Exists(insideServerFolder), "The sidecar must not live in the server binary cache.");
+            Assert.IsTrue(File.Exists(expected), "The sidecar lives under Library/, which survives the Temp/ wipe.");
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
         public void CursorAboveEverythingIssued_ReturnsTheOldestPage_NotEmpty(bool buffered)
         {
             var storage = Open(NewDirectory(), buffered);
@@ -253,6 +367,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Enumerable.Range(0, 5).Select(i => $"entry {i}"),
                 page.Select(e => e.Message),
                 "A cursor above the highest sequence means the counter restarted: return the oldest page.");
+            CollectionAssert.AreEqual(
+                page.Select(e => e.Sequence),
+                storage.QuerySince(highest + 1, maxEntries: 5).Select(e => e.Sequence),
+                "The boundary: one above the highest is already a restarted counter.");
         }
 
         [TestCase(false)]
@@ -290,14 +408,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var storage = Open(NewDirectory(), buffered, flushEntriesThreshold: 16);
             const int threads = 8;
-            const int perThread = 150;
+            const int perThread = 151; // 1208 entries: not a multiple of 16, so the buffered tail is non-empty
 
-            var workers = Enumerable.Range(0, threads).Select(t => Task.Run(() =>
+            // Dedicated threads released together, so the appends really interleave (a thread pool may start
+            // its workers one after another).
+            using var start = new Barrier(threads);
+            var workers = Enumerable.Range(0, threads).Select(t => new Thread(() =>
             {
+                start.SignalAndWait();
                 for (var i = 0; i < perThread; i++)
                     storage.Append(new LogEntry(LogType.Log, $"t{t}-{i}"));
-            })).ToArray();
-            Task.WaitAll(workers);
+            })).ToList();
+            workers.ForEach(worker => worker.Start());
+            workers.ForEach(worker => worker.Join());
 
             var all = ReadAllPages(storage, pageSize: 37, filter: null, out _);
 

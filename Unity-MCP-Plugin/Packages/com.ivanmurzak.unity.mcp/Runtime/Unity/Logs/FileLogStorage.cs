@@ -106,10 +106,11 @@ namespace com.IvanMurzak.Unity.MCP
 
             fileWriteStream = CreateWriteStream(_requestedFileName, out fileName, out filePath);
 
-            // Editor: Library/ survives the Temp/ wipe that happens on every Editor start. A caller-chosen
-            // directory keeps its sidecar next to the log; so does a player build (no Library there).
+            // Editor: Library/ survives the Temp/ wipe that happens on every Editor start. Not Library/mcp-server:
+            // that is the server binary cache, deleted on every server update. A caller-chosen directory keeps its
+            // sidecar next to the log; so does a player build (no Library there).
             var sequenceDirectory = directoryPath == null && Application.isEditor
-                ? Path.GetFullPath($"{Path.GetDirectoryName(Application.dataPath)}/Library/mcp-server")
+                ? Path.GetFullPath($"{Path.GetDirectoryName(Application.dataPath)}/Library/mcp-logs")
                 : _directoryPath;
             try
             {
