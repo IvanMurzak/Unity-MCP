@@ -1,0 +1,21 @@
+tests/chain-fixtures/2023.2.22f1/tools.jsonl
+  s_c0506a385307d1::t_97ce78e95851bd 1-78
+tests/chain-fixtures/6000.3.1f1/tools.jsonl
+  s_c0506a385307d1::t_cd8dc6cb5ee8a0 1-78
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "013c83ed581fd9dd4d896314f67dae6894f117e5",
+  "prompts": {},
+  "sessions": {
+    "s_c0506a385307d1": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a09d29-2443-7f71-8287-bb185cb3ad03",
+        "model": "gpt-5.6-sol"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

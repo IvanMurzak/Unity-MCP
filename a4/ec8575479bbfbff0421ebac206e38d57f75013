@@ -1,0 +1,45 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Runtime/com.IvanMurzak.Unity.MCP.Tests.asmdef
+  s_96a889b2a9ec0f::t_dfd8fe190dc9e1 15-22,31
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetExtractorFlatLayoutTests.cs
+  s_96a889b2a9ec0f::t_7ac5570f7e9fbf 22-25,53,55-56,59,61-62,65-66,70,72-73,79,84-86,91-114,127
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetInstallManifest.cs
+  s_96a889b2a9ec0f::t_f02dca3a18476d 17,34,39-41,48-53,103-201
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetLegacyMigrationTests.cs
+  s_96a889b2a9ec0f::t_15f086a53fd563 116,125
+  s_96a889b2a9ec0f::t_b7ce286a63d7bb 65-69,75
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetExtractor.cs
+  s_96a889b2a9ec0f::t_1cbd72f29d2cc5 28-40,54,69,71-72,79-80,82-84,86,93,117-136
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageRestorer.cs
+  s_96a889b2a9ec0f::t_38f9b8f578b24a 66-81
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPluginConfigurator.cs
+  s_96a889b2a9ec0f::t_22e8b5bd59b704 87-94
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/com.IvanMurzak.Unity.MCP.Runtime.asmdef
+  s_96a889b2a9ec0f::t_2034ecd4d55ae0 12-21,29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/com.IvanMurzak.Unity.MCP.Editor.asmdef
+  s_96a889b2a9ec0f::t_9b4d7c8a43a1da 15-26,34
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs
+  s_96a889b2a9ec0f::t_da5e4b19e7aef2 137-141,161
+  s_96a889b2a9ec0f::t_c129f5317c473f 270-276
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetInstallManifestTests.cs
+  s_96a889b2a9ec0f::t_84d53f331a20a5 20-22,60-61,66-67,82,134,147-232
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetPackageInstallerStaleVersionCleanupTests.cs
+  s_96a889b2a9ec0f::t_81da8b587788ba 21-23,58,64-66,79,85-86,93-94,96,113,128,134,153,155,170,182-185
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/com.IvanMurzak.Unity.MCP.Editor.Tests.asmdef
+  s_96a889b2a9ec0f::t_70885bff345748 19-26,34
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "a4ec8575479bbfbff0421ebac206e38d57f75013",
+  "prompts": {},
+  "sessions": {
+    "s_96a889b2a9ec0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f69faed4-0135-4243-87c8-981a7cb298cc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

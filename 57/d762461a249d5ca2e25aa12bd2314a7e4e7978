@@ -1,0 +1,26 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Unity/Logs/FileLogStorage.cs
+  s_c318ff925a6f98::t_7648d81fae9b48 109-111,113
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Console/TestLogSequenceCursor.cs
+  s_c318ff925a6f98::t_2a3cc978778e7e 204-234
+  s_c318ff925a6f98::t_70ce702c038f03 16
+  s_c318ff925a6f98::t_55dec9aa1280fe 283-354
+  s_c318ff925a6f98::t_8a9da77a639413 35,45-51,203,281-282
+  s_c318ff925a6f98::t_61870bcee60ed7 370-373
+  s_c318ff925a6f98::t_61b142530d7807 411,413-416,418,421-423
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "57d762461a249d5ca2e25aa12bd2314a7e4e7978",
+  "prompts": {},
+  "sessions": {
+    "s_c318ff925a6f98": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f18f0a3d-5bea-4017-a8c1-2c4000dad348",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
