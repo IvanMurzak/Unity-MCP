@@ -1,0 +1,87 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/AssetObjectRef.cs
+  49d53a818dbb2c3d 12,46,60-61,85,99,125,148
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/ComponentRef.cs
+  49d53a818dbb2c3d 12,46,68,83,93
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/SceneRef.cs
+  49d53a818dbb2c3d 12,39,41,51
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/SceneRef.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-52
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/AssetObjectRef.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-148
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/ObjectRefConverter.cs
+  49d53a818dbb2c3d 12,45,79
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/AssetObjectRefConverter.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-103
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/Asset/UnityEngine_Asset_ReflectionConverter.Editor.cs
+  49d53a818dbb2c3d 11,56-57,59,63,68,111,113
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/UnityEngine_GameObject_ReflectionConverter.cs
+  49d53a818dbb2c3d 12,71,233
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/UnityEngine_GameObject_ReflectionConverter.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-231
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Extensions/ExtensionsRuntimeAssetObjectRef.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-137
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/GameObjectRef.cs
+  49d53a818dbb2c3d 12,44,77,79,89,103
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Extensions/ExtensionsRuntimeObjectRef.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-42
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/ComponentRef.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-93
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Extensions/ExtensionsRuntimeAssetObjectRef.cs
+  49d53a818dbb2c3d 12,37,83,125
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/ComponentDataShallow.cs
+  49d53a818dbb2c3d 12,20,27,52
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/ComponentRefConverter.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-91
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/GameObjectRefConverter.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-111
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/GameObjectRefConverter.cs
+  49d53a818dbb2c3d 12,48,111
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/GameObjectRef.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-104
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/GameObjectMetadata.cs
+  49d53a818dbb2c3d 86
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/ComponentRefConverter.cs
+  49d53a818dbb2c3d 12,46,91
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Extensions/ExtensionsComponentRef.cs
+  49d53a818dbb2c3d 23,25,36
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/Asset/UnityEngine_Asset_ReflectionConverter.Editor.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-135
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/UnityEngine_Material_ReflectionConverter.cs
+  49d53a818dbb2c3d 12,256
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/Asset/Impl/UnityEngine_Sprite_ReflectionConverter.Editor.cs
+  49d53a818dbb2c3d 55
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/AssetObjectRefConverter.cs
+  49d53a818dbb2c3d 12,48,85,103
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/Asset/Impl/UnityEngine_Texture_ReflectionConverter.Editor.cs
+  49d53a818dbb2c3d 12,56,58
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Data/ObjectRef.cs
+  49d53a818dbb2c3d 34,36-37,40,46,52
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/Asset/Impl/UnityEngine_Texture_ReflectionConverter.Editor.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-87
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Extensions/ExtensionsRuntimeObjectRef.cs
+  49d53a818dbb2c3d 12,25,27,38
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/UnityEngine_Material_ReflectionConverter.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-392
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/ObjectRefConverter.pre-Unity.6.5.cs
+  49d53a818dbb2c3d 1-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "46e20f1c46e5e7478968c254f49483c29d7bba2c",
+  "prompts": {
+    "49d53a818dbb2c3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f8975c4-7518-4266-b175-022ab5d78b9f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 2106,
+      "total_deletions": 709,
+      "accepted_lines": 2425,
+      "overriden_lines": 7
+    }
+  }
+}

@@ -1,0 +1,19 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_6009cd18fe4856::t_b455106d7e1f14 66
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.3",
+  "base_commit_sha": "42814d8e1a986db0ca8c84723974f04156d6a00e",
+  "prompts": {},
+  "sessions": {
+    "s_6009cd18fe4856": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f6211f32-f6fe-4c1d-a603-efe42798f8fe",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <ivandmurzak@gmail.com>"
+    }
+  }
+}

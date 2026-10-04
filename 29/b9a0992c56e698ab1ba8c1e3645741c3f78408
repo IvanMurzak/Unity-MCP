@@ -1,0 +1,37 @@
+Unity-MCP-Plugin/Assets/packages-merged-link/link.xml
+  8d4d689498114267 1-30
+Unity-Tests/6000.3.1f1/ProjectSettings/ProjectSettings.asset
+  8d4d689498114267 831-832
+Unity-MCP-Plugin/Assets/packages-merged-link/link.xml.meta
+  8d4d689498114267 1-7
+Unity-MCP-Plugin/ProjectSettings/ProjectSettings.asset
+  8d4d689498114267 20
+Unity-Tests/6000.5.0b1/Packages/manifest.json
+  8d4d689498114267 47
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetAssetPostprocessor.cs
+  8d4d689498114267 74-81,88,90,93,97-99
+Unity-Tests/6000.5.0b1/ProjectSettings/ProjectSettings.asset
+  8d4d689498114267 933
+Unity-MCP-Plugin/Assets/packages-merged-link.meta
+  8d4d689498114267 1-8
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "29b9a0992c56e698ab1ba8c1e3645741c3f78408",
+  "prompts": {
+    "8d4d689498114267": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "36761876-bbce-477d-9fbd-04b51c7ad534",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 64,
+      "total_deletions": 11,
+      "accepted_lines": 64,
+      "overriden_lines": 0
+    }
+  }
+}

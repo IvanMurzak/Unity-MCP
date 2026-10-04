@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.cs
+  fd2f06962167b434 85,87,91-98
+Unity-MCP-Plugin/Assets/root/Editor/UI/uxml/MainWindow.uxml
+  fd2f06962167b434 30-31
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "6e9d4aca447ea25f042fc37fa2fe3c7ca7483e4e",
+  "prompts": {
+    "fd2f06962167b434": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "604f06b2-e978-469c-93c7-8a8d8d2bda05",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 304,
+      "total_deletions": 295,
+      "accepted_lines": 29,
+      "overriden_lines": 0
+    }
+  }
+}

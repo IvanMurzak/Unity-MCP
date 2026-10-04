@@ -1,0 +1,29 @@
+.github/workflows/test_cli.yml
+  s_de71e20c9d8602::t_a51c10bee52c47 119
+.github/workflows/test_pull_request.yml
+  s_de71e20c9d8602::t_91bfad94dfb6a9 133
+  s_de71e20c9d8602::t_28f07c33d9c7b0 54-56,65
+.gitattributes
+  s_de71e20c9d8602::t_c25a39a0ca4dc7 6
+.github/workflows/test_unity_plugin.yml
+  s_de71e20c9d8602::t_05a5e5dbc6200d 153-157,159,163
+  s_de71e20c9d8602::t_159eac9fc98700 237
+.github/scripts/chain_feed.py
+  s_de71e20c9d8602::t_777171b2093633 198-204,455-460,685-688,767-774,836-837,847-849,944-945,948-949,951-955,984-993,1006-1019,1134-1279,2208-2239,2275-2277,2289,2405-2415,2473-2477,2491,2496,3084-3099,3172-3173
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "d48319298c16c370eac7d9642269aac87ac97a8a",
+  "prompts": {},
+  "sessions": {
+    "s_de71e20c9d8602": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b1fa7ae0-224c-4b0e-8499-22456e0d6a3f",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
