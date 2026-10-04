@@ -12,7 +12,6 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
-using System.Runtime.CompilerServices;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using NUnit.Framework;
@@ -94,30 +93,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         static LogEntry Entry(string message, LogType type, long sequence = 0)
             => new LogEntry(type, message, DateTime.Now, "trace " + message) { Sequence = sequence };
 
-        static LegacyLogStorage Unsequenced(int count)
+        /// <summary>
+        /// <paramref name="count"/> entries, every third a Warning. When <paramref name="sequenced"/> they carry
+        /// sequences 1..count, as if stored through a sequencing writer; otherwise all are 0.
+        /// </summary>
+        static LegacyLogStorage Fill(int count, bool sequenced)
         {
             var storage = new LegacyLogStorage();
             for (var i = 1; i <= count; i++)
-                storage.Append(Entry($"entry {i}", i % 3 == 0 ? LogType.Warning : LogType.Log));
+                storage.Append(Entry($"entry {i}", i % 3 == 0 ? LogType.Warning : LogType.Log, sequence: sequenced ? i : 0));
             return storage;
         }
 
-        /// <summary>Entries carrying sequences 1..count, as if stored through a sequencing writer.</summary>
-        static LegacyLogStorage Sequenced(int count)
-        {
-            var storage = new LegacyLogStorage();
-            for (var i = 1; i <= count; i++)
-                storage.Append(Entry($"entry {i}", i % 3 == 0 ? LogType.Warning : LogType.Log, sequence: i));
-            return storage;
-        }
+        static LegacyLogStorage Unsequenced(int count) => Fill(count, sequenced: false);
+        static LegacyLogStorage Sequenced(int count) => Fill(count, sequenced: true);
 
         static string[] Messages(IEnumerable<LogEntry> entries) => entries.Select(e => e.Message).ToArray();
-
-        [Test]
-        public void Runtime_SupportsDefaultInterfaceMethods()
-        {
-            Assert.IsTrue(RuntimeFeature.IsSupported(RuntimeFeature.DefaultImplementationsOfInterfaces));
-        }
 
         [TestCase(typeof(FileLogStorage))]
         [TestCase(typeof(BufferedFileLogStorage))]
@@ -168,6 +159,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
+        public void Unsequenced_QuerySince_Unfiltered_ReadsTheStorageOnce()
+        {
+            var storage = Unsequenced(12);
+            ILogStorage asInterface = storage;
+
+            var expected = asInterface.Query(maxEntries: 4);
+            storage.QueryCalls = 0;
+            var actual = asInterface.QuerySince(5, maxEntries: 4);
+            var syncCalls = storage.QueryCalls;
+            storage.QueryCalls = 0;
+            var actualAsync = asInterface.QuerySinceAsync(5, maxEntries: 4).GetAwaiter().GetResult();
+
+            CollectionAssert.AreEqual(Messages(expected), Messages(actual));
+            CollectionAssert.AreEqual(Messages(expected), Messages(actualAsync));
+            Assert.AreEqual(1, syncCalls, "The first unfiltered read already is Query's answer; QuerySince must not re-read.");
+            Assert.AreEqual(1, storage.QueryCalls, "The first unfiltered read already is QueryAsync's answer; QuerySinceAsync must not re-read.");
+        }
+
+        [Test]
         public void Empty_QuerySince_ReturnsEmpty()
         {
             ILogStorage storage = new LegacyLogStorage();
@@ -202,6 +212,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 var page = storage.QuerySince(cursor, maxEntries: 4, logTypeFilter: LogType.Warning);
                 if (page.Length == 0)
                     break;
+                Assert.LessOrEqual(page.Length, 4, "A page never exceeds maxEntries.");
                 CollectionAssert.IsOrdered(page.Select(e => e.Sequence), "Oldest first.");
                 seen.AddRange(page.Select(e => e.Sequence));
                 cursor = page.Max(e => e.Sequence);

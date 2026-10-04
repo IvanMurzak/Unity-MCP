@@ -35,9 +35,7 @@ namespace com.IvanMurzak.Unity.MCP
             int lastMinutes = 0);
 
         /// <inheritdoc cref="QuerySince"/>
-        /// <remarks>
-        /// The default implementation is <see cref="QuerySince"/>'s, built on <see cref="QueryAsync"/> instead.
-        /// </remarks>
+        /// <remarks>Default: the same as <see cref="QuerySince"/>'s, but built on <see cref="QueryAsync"/>.</remarks>
         async Task<LogEntry[]> QuerySinceAsync(
             long sinceSequence,
             int maxEntries = 100,
@@ -56,7 +54,9 @@ namespace com.IvanMurzak.Unity.MCP
                     case LogStorageCursor.Step.Done:
                         return page;
                     case LogStorageCursor.Step.Unsequenced:
-                        return await QueryAsync(maxEntries, logTypeFilter, includeStackTrace, lastMinutes).ConfigureAwait(false);
+                        return LogStorageCursor.IsQueryAnswer(window, maxEntries, logTypeFilter)
+                            ? newest
+                            : await QueryAsync(maxEntries, logTypeFilter, includeStackTrace, lastMinutes).ConfigureAwait(false);
                 }
             }
         }
@@ -68,22 +68,11 @@ namespace com.IvanMurzak.Unity.MCP
         /// </summary>
         /// <remarks>
         /// Added after the first release of this interface, so it has a default implementation built only on
-        /// <see cref="Query"/>: an implementer written before it existed still compiles and still answers.
-        /// The built-in storages override it with a single scan under their file lock.
-        /// <para>
-        /// The default reads the newest entries through <see cref="Query"/> (no type filter), doubling the window
-        /// until it reaches the cursor or holds everything stored, then applies the cursor, the type filter, the
-        /// sort and the limit itself. "Every sequence ever issued" is taken as the highest sequence the storage
-        /// returns.
-        /// </para>
-        /// <para>
-        /// If the storage assigns no sequences at all (its newest entry has <see cref="LogEntry.Sequence"/> 0, as
-        /// with any implementer written before sequences existed), no cursor can be honoured. The default then
-        /// returns exactly what <see cref="Query"/> returns for the same arguments - the newest page, i.e. the
-        /// <c>sinceSequence = 0</c> answer. That is what the contract's restart backstop leads the caller to
-        /// anyway (every returned sequence is below its cursor, so it re-reads from 0), and it never presents
-        /// the oldest stored entries as "new".
-        /// </para>
+        /// <see cref="Query"/>: an implementer written before it existed still compiles and still answers. The
+        /// built-in storages override it. "Every sequence ever issued" is taken as the highest one stored.
+        /// A storage that assigns no sequences (<see cref="LogEntry.Sequence"/> 0) cannot honour a cursor; the
+        /// default then returns exactly what <see cref="Query"/> returns for the same arguments - the newest page,
+        /// i.e. the <c>sinceSequence = 0</c> answer.
         /// </remarks>
         LogEntry[] QuerySince(
             long sinceSequence,
@@ -103,7 +92,9 @@ namespace com.IvanMurzak.Unity.MCP
                     case LogStorageCursor.Step.Done:
                         return page;
                     case LogStorageCursor.Step.Unsequenced:
-                        return Query(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
+                        return LogStorageCursor.IsQueryAnswer(window, maxEntries, logTypeFilter)
+                            ? newest
+                            : Query(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
                 }
             }
         }
@@ -112,7 +103,9 @@ namespace com.IvanMurzak.Unity.MCP
     }
 
     /// <summary>
-    /// The cursor arithmetic behind <see cref="ILogStorage"/>'s default <c>QuerySince</c> implementations.
+    /// The cursor arithmetic behind <see cref="ILogStorage"/>'s default <c>QuerySince</c> implementations: read the
+    /// newest entries unfiltered, doubling the window until it reaches the cursor or holds everything stored, then
+    /// apply the cursor, the type filter, the sort and the limit here.
     /// </summary>
     static class LogStorageCursor
     {
@@ -120,6 +113,13 @@ namespace com.IvanMurzak.Unity.MCP
 
         internal static int Grow(int window)
             => window > int.MaxValue / 2 ? int.MaxValue : window * 2;
+
+        /// <summary>
+        /// Whether the unfiltered read of <paramref name="window"/> entries is already what
+        /// <c>Query(maxEntries, logTypeFilter, ...)</c> would return, so the unsequenced fallback need not re-read.
+        /// </summary>
+        internal static bool IsQueryAnswer(int window, int maxEntries, UnityEngine.LogType? logTypeFilter)
+            => window == maxEntries && !logTypeFilter.HasValue;
 
         /// <param name="newest">What <see cref="ILogStorage.Query"/> returned for <paramref name="window"/> entries, unfiltered.</param>
         internal static Step Select(
@@ -141,9 +141,9 @@ namespace com.IvanMurzak.Unity.MCP
             // A cursor above everything issued means the counter restarted: read from the beginning.
             var cursor = sinceSequence > highest ? 0 : Math.Max(sinceSequence, 0);
 
-            // Complete once the window holds everything stored, or reaches down to the cursor.
+            // Complete once the window holds everything stored, or reaches down to the cursor. Terminates: Grow
+            // saturates at int.MaxValue, which no array's Length reaches.
             var complete = newest.Length < window
-                || window == int.MaxValue
                 || newest.Min(entry => entry.Sequence) <= cursor;
             if (!complete)
                 return Step.Grow;
