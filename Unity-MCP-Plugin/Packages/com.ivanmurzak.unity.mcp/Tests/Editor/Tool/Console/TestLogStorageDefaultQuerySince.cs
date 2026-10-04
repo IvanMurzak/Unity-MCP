@@ -37,6 +37,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             readonly List<LogEntry> _entries = new();
 
             public int QueryCalls;
+            /// <summary>Reads with no type filter - the interface default's window reads always are.</summary>
+            public int UnfilteredQueryCalls;
 
             public Task AppendAsync(params LogEntry[] entries)
             {
@@ -69,6 +71,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 lock (_lock)
                 {
                     QueryCalls++;
+                    if (!logTypeFilter.HasValue)
+                        UnfilteredQueryCalls++;
                     var cutoff = lastMinutes > 0 ? DateTime.Now.AddMinutes(-lastMinutes) : DateTime.MinValue;
                     return _entries
                         .Where(entry => entry.Timestamp >= cutoff)
@@ -248,6 +252,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             CollectionAssert.AreEqual(viaSync.Select(e => e.Sequence), viaAsync.Select(e => e.Sequence));
         }
 
+        [Test]
+        public void Sequenced_QuerySince_PassesIncludeStackTraceThrough()
+        {
+            ILogStorage storage = Sequenced(40);
+
+            // Cursor 7, limit 5: the cursor-honouring path, with a window that has to grow past the first read.
+            var withTraces = storage.QuerySince(7, maxEntries: 5, includeStackTrace: true);
+            var withTracesAsync = storage.QuerySinceAsync(7, maxEntries: 5, includeStackTrace: true).GetAwaiter().GetResult();
+            var withoutTraces = storage.QuerySince(7, maxEntries: 5, includeStackTrace: false);
+            var withoutTracesAsync = storage.QuerySinceAsync(7, maxEntries: 5, includeStackTrace: false).GetAwaiter().GetResult();
+
+            Assert.AreEqual(5, withTraces.Length, "Fixture: a full page.");
+            Assert.IsTrue(withTraces.All(e => e.StackTrace == "trace " + e.Message), "QuerySince keeps stack traces when asked.");
+            Assert.IsTrue(withTracesAsync.All(e => e.StackTrace == "trace " + e.Message), "QuerySinceAsync keeps stack traces when asked.");
+            Assert.IsTrue(withoutTraces.All(e => e.StackTrace == null), "QuerySince strips stack traces by default.");
+            Assert.IsTrue(withoutTracesAsync.All(e => e.StackTrace == null), "QuerySinceAsync strips stack traces by default.");
+        }
+
         // ── The tool, end to end, against a legacy storage ──────────────────────────────────────────
 
         [Test]
@@ -266,12 +288,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Debug.Log($"legacy-storage {marker}");
 
                 LogEntry[] result = Array.Empty<LogEntry>();
-                Assert.DoesNotThrow(() => result = new Tool_Console().GetLogs(maxEntries: 1000, sinceSequence: 5));
+                // A type filter makes the default's path observable: its window reads are unfiltered, while a tool
+                // that bypassed QuerySince and called Query directly would only ever pass the filter through.
+                Assert.DoesNotThrow(() => result = new Tool_Console().GetLogs(
+                    maxEntries: 1000, logTypeFilter: LogType.Log, sinceSequence: 5));
 
                 Assert.IsTrue(result.Any(e => e.Message.Contains($"legacy-storage {marker}")),
                     "Unsequenced storage: the newest page is returned.");
                 Assert.IsTrue(result.All(e => e.Sequence == 0));
-                Assert.Greater(storage.QueryCalls, 0, "The tool reached the legacy storage through the interface default.");
+                Assert.IsTrue(result.All(e => e.LogType == LogType.Log), "The type filter is honoured.");
+                Assert.Greater(storage.UnfilteredQueryCalls, 0, "The tool reached the legacy storage through the interface default.");
             }
             finally
             {

@@ -73,6 +73,9 @@ namespace com.IvanMurzak.Unity.MCP
         /// A storage that assigns no sequences (<see cref="LogEntry.Sequence"/> 0) cannot honour a cursor; the
         /// default then returns exactly what <see cref="Query"/> returns for the same arguments - the newest page,
         /// i.e. the <c>sinceSequence = 0</c> answer.
+        /// The default reads ever larger windows and treats a <see cref="Query"/> that returns fewer entries than
+        /// asked for as "everything stored": a storage that caps its result below <c>maxEntries</c> must override
+        /// this member, or the default skips the entries between the cursor and the capped window.
         /// </remarks>
         LogEntry[] QuerySince(
             long sinceSequence,
