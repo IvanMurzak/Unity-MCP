@@ -16,7 +16,7 @@
 #   every future CI run. A .ulf generated from a DESKTOP .alf binds to your local
 #   machine and fails in CI with a "machine binding mismatch".
 #
-# Full procedure: docs/claude/ci-unity-license.md
+# Full procedure: docs/agents/ci-unity-license.md
 
 name: generate-unity-activation-file
 
@@ -81,7 +81,7 @@ jobs:
 
           IMPORTANT: always generate the .alf here (in CI), never on your
           desktop, or the resulting .ulf will bind to the wrong machine.
-          Details: docs/claude/ci-unity-license.md
+          Details: docs/agents/ci-unity-license.md
           ============================================================
           EOF
         shell: bash
