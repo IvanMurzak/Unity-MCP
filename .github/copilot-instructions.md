@@ -51,7 +51,7 @@ Before performing any code review, you **MUST** read the project constitution: [
 - **Documentation**:
     - [Unity-MCP.wiki](Unity-MCP.wiki/) for user docs.
     - [docs/](docs/) for translations and repo docs.
-    - See `CLAUDE.md` in subdirectories for specific agent notes.
+    - See `AGENTS.md` (root and subdirectories) for agent notes.
 - **Versioning**: `package.json` in `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json`.
 
 ## Integration Points
