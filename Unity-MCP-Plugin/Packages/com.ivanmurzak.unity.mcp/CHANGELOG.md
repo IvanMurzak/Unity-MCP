@@ -16,6 +16,17 @@
 
 ### Fixed
 
+- **Agent-initiated destroys register with the Editor undo stack.**
+  `gameobject-destroy` and `gameobject-component-destroy` both carry
+  `DestructiveHint = true`, yet called `UnityEngine.Object.DestroyImmediate`, so
+  the destroyed subtree or component never reached the undo stack and the
+  editor's undo shortcut could not bring it back. `Undo.` appeared nowhere in
+  the plugin. Both tools — and both sides of the `UNITY_6000_5_OR_NEWER` split
+  for `gameobject-destroy` — now call `UnityEditor.Undo.DestroyObjectImmediate`.
+  The transient `DestroyImmediate` calls in `Screenshot.*`,
+  `Assets.Prefab.Create` and `MainThreadDispatcher` are unchanged: they release
+  temporary objects that do not belong on a user's undo stack.
+
 - **`EntityId` wire format moved from JSON number to JSON string of decimal digits**
   (Unity 6.5+ paths only). Closes #759, resolves #754. JS-based MCP clients
   (Claude Agent SDK, etc.) parse JSON numbers as IEEE-754 doubles, so any
