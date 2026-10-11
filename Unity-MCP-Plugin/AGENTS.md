@@ -23,6 +23,6 @@ Open this folder in Unity (2022.3+ minimum; compiles automatically).
 - No spaces in the project path (validated on startup).
 - Every Unity API call goes through `MainThread.Instance.Run()`.
 
-Detail in `Docs/claude/`: `startup-flow.md` (init, CI detection) · `transport.md` (port hashing,
+Detail in `Docs/agents/`: `startup-flow.md` (init, CI detection) · `transport.md` (port hashing,
 server binary, domain reload) · `models.md` (`ObjectRef`) · `auto-config.md` (AI client
 configurators) · `structure.md` (key classes) · `protocol.md` (MCP attributes, tests, errors).

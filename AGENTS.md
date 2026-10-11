@@ -30,14 +30,14 @@ from the plugin version). Bumping the consumed server = changing that constant; 
 - `tests/chain-fixtures/` — recorded tool-call fixtures for chain tests, compared byte-for-byte
   (LF); re-recorded by the plugin's `Tests/Editor/Chain/ChainRecordTests.cs`, never hand-edited.
 - `commands/` — PowerShell/Python utility scripts (version bump, Unity tests, release notes).
-- `docs/` — README translations, dev docs (`docs/dev/`), agent detail docs (`docs/claude/`).
+- `docs/` — README translations, dev docs (`docs/dev/`), agent detail docs (`docs/agents/`).
 - `memory/` — durable agent lessons (`memory/MEMORY.md` is the index).
 - `.github/workflows/`, `.github/scripts/` — CI/CD and its helper scripts.
 
 ## Find detail in
 
-- [docs/claude/architecture.md](docs/claude/architecture.md) — SignalR bridge, main-thread execution, deterministic port hashing
-- [docs/claude/style.md](docs/claude/style.md) — coding conventions: `#nullable enable`, no reflection for private access, namespaces, copyright headers
-- [docs/claude/release.md](docs/claude/release.md) — release, versioning, CI/CD
-- [docs/claude/ci-unity-license.md](docs/claude/ci-unity-license.md) — Unity license for CI
-- [docs/claude/documentation-sync.md](docs/claude/documentation-sync.md) — README translation/copy sync requirements
+- [docs/agents/architecture.md](docs/agents/architecture.md) — SignalR bridge, main-thread execution, deterministic port hashing
+- [docs/agents/style.md](docs/agents/style.md) — coding conventions: `#nullable enable`, no reflection for private access, namespaces, copyright headers
+- [docs/agents/release.md](docs/agents/release.md) — release, versioning, CI/CD
+- [docs/agents/ci-unity-license.md](docs/agents/ci-unity-license.md) — Unity license for CI
+- [docs/agents/documentation-sync.md](docs/agents/documentation-sync.md) — README translation/copy sync requirements

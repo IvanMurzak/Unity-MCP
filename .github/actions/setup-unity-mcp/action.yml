@@ -11,7 +11,7 @@ description: "Start MCP Server and Unity Editor in Docker containers using a sto
 
 inputs:
   unity-license:
-    description: "Unity Personal license file content (ULF XML). Pass the UNITY_LICENSE secret (see docs/claude/ci-unity-license.md)."
+    description: "Unity Personal license file content (ULF XML). Pass the UNITY_LICENSE secret (see docs/agents/ci-unity-license.md)."
     required: true
   unity-project-path:
     description: "Relative path to the Unity project folder"
@@ -79,7 +79,7 @@ runs:
       run: |
         if [ -z "$LICENSE_FROM_INPUT" ]; then
           echo "::error::unity-license input is empty. Pass the UNITY_LICENSE secret (contents of your .ulf file)."
-          echo "Generate one via the generate-unity-activation-file workflow + https://license.unity3d.com/manual — see docs/claude/ci-unity-license.md"
+          echo "Generate one via the generate-unity-activation-file workflow + https://license.unity3d.com/manual — see docs/agents/ci-unity-license.md"
           exit 1
         fi
         mkdir -p "${GITHUB_WORKSPACE}/.unity-license"
