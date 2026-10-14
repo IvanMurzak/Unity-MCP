@@ -45,6 +45,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         }
 
         [Test]
+        public void AssetsAreAssignableByPath()
+        {
+            AssertOk(M($"editor | call CreateMaterial(\"{Folder}/ByPath.mat\")"));
+            var renderer = GameObject.CreatePrimitive(PrimitiveType.Cube).GetComponent<MeshRenderer>();
+            AssertOk(M($"objects | get components | where $ is MeshRenderer | set sharedMaterial = \"{Folder}/ByPath.mat\""));
+            Assert.AreEqual("ByPath", renderer.sharedMaterial.name);
+            AssertFails(M("objects | get components | where $ is MeshRenderer | set sharedMaterial = \"Assets/NoSuch.mat\""), "coercion-failed", "no asset at");
+            AssertFails(M($"objects | get components | where $ is MeshRenderer | set sharedMaterial = \"{Folder}\""), "coercion-failed", "expected Material");
+        }
+
+        [Test]
+        public void SpritesFromTexturesAndPaths()
+        {
+            var path = $"{Folder}/dot.png";
+            var tex = new Texture2D(4, 4);
+            System.IO.File.WriteAllBytes(path, tex.EncodeToPNG());
+            Object.DestroyImmediate(tex);
+            AssetDatabase.ImportAsset(path);
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            importer.textureType = TextureImporterType.Sprite;
+            importer.SaveAndReimport();
+
+            var sr = new GameObject("S").AddComponent<SpriteRenderer>();
+            AssertOk(M($"objects | get components | where $ is SpriteRenderer | set sprite = \"{path}\""));
+            StringAssert.StartsWith("dot", sr.sprite.name);   // "dot" or "dot_0" depending on the sprite import mode
+            sr.sprite = null;
+            AssertOk(M($"objects | get components | where $ is SpriteRenderer | set sprite = unity.asset(\"{path}\")"));
+            Assert.IsNotNull(sr.sprite);
+            AssertFails(M($"objects | get components | where $ is SpriteRenderer | set sprite = \"{path}#nope\""), "coercion-failed", "has no sprite 'nope'");
+        }
+
+        [Test]
         public void CreateFolderMakesParents()
         {
             AssertOk(M($"editor | call CreateFolder(\"{Folder}/a/b/c\")"));

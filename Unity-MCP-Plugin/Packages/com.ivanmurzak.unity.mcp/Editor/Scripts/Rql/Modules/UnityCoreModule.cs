@@ -62,7 +62,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
                .AddAdapter(new UnityEngine_MeshFilter_Adapter());
 
             // Assets
-            ctx.AddAdapter(new UnityEngine_Material_Adapter());
+            ctx.AddAdapter(new UnityEngine_Material_Adapter())
+               .AddAdapter(new UnityEngine_Sprite_Adapter());
 
             // Structs
             ctx.AddAdapter(new UnityEngine_Vector2_Adapter())
@@ -71,6 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
                .AddAdapter(new UnityEngine_Vector2Int_Adapter())
                .AddAdapter(new UnityEngine_Vector3Int_Adapter())
                .AddAdapter(new UnityEngine_LayerMask_Adapter())
+               .AddAdapter(new UnityEngine_BoundsInt_Adapter())
                .AddAdapter(new UnityEngine_Quaternion_Adapter())
                .AddAdapter(new UnityEngine_Color_Adapter())
                .AddAdapter(new UnityEngine_Gradient_Adapter())

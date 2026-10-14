@@ -28,6 +28,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         }
 
         [Test]
+        public void BoundsIntShowsMinMaxSizeOnly()
+        {
+            var schema = Schema("BoundsInt");
+            StringAssert.Contains("min", schema);
+            StringAssert.DoesNotContain("allPositionsWithin", schema);
+        }
+
+        [Test]
         public void OnlyWhitelistedMembersAreVisible()
         {
             var schema = Schema("Scene");
