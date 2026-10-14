@@ -170,8 +170,8 @@ namespace com.IvanMurzak.Unity.MCP
 
             /// <summary>
             /// EXPERIMENTAL: how tools are presented to the AI agent (Json = standard JSON schema and results; RqlText = RQL
-            /// literal arguments, compact type text and results; RqlLean = RqlText without member descriptions). Hosts such as
-            /// the AI Game Dev app may write it.
+            /// literal arguments, compact type text and results; RqlLean = RqlText without member descriptions; Rql = RQL instead
+            /// of ReflectorNet for schemas, arguments and results). Hosts such as the AI Game Dev app may write it.
             /// </summary>
             public ToolPresentationFormat ToolFormat { get; set; } = ToolPresentationFormat.Json;
 
@@ -263,6 +263,8 @@ namespace com.IvanMurzak.Unity.MCP
     {
         Json,
         RqlText,
-        RqlLean
+        RqlLean,
+        /// <summary>RQL is the data layer of every tool (schemas, arguments, results) in place of ReflectorNet.</summary>
+        Rql
     }
 }

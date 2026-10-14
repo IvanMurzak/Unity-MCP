@@ -105,7 +105,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             MutateStages + MutateExamples +
             "Object literals build values: set settings = {speed: 2, \"$type\": \"FastSettings\"}. At most 20 targets per call.\n\n" +
-            "Query syntax:\n" + Language;
+            QuerySyntaxShort;
+
+        /// <summary>
+        /// rql-mutate's reminder of the query part; the full language guide is in rql-query's description (sent once per
+        /// request instead of twice).
+        /// </summary>
+        public const string QuerySyntaxShort =
+            "Query part: the RQL of rql-query (full guide in its description). Sources: objects, roots, scenes, selection, prefab, " +
+            "console, shaders, componentTypes, editor; unity.assets(\"t:Material\"), unity.asset(path), unity.find(\"Name\"), " +
+            "ref(\"Light#1234\"). Stages: where, select, sort, first N, get <path>, recurse children. Operators: == != < > and or " +
+            "not, contains, starts-with, $ is Light. Paths a.b.c, list[0], map[\"key\"]. Vectors/colors as \"(1, 2, 3)\" or " +
+            "\"#ff8800\"; enums as strings.";
 
         public const string SchemaDescription =
             "Without a type: RQL sources, asset functions, and the component types present in the loaded scenes (with counts), plus " +

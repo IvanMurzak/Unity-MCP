@@ -53,6 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                 ToolPresentationFormat.RqlLean => Lean,
                 _ => null,
             };
+            ToolBinding.Current = format == ToolPresentationFormat.Rql ? RqlToolBinding.Instance : null;
         }
 
         private readonly bool _memberDescriptions;

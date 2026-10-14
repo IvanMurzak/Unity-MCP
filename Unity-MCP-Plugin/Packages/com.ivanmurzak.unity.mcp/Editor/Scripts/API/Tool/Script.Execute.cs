@@ -79,6 +79,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 "- 'AIGD.ComponentRef': passes a ComponentRef POCO. " +
                 "- 'AIGD.ObjectRef': passes a base ObjectRef POCO. " +
                 "If the method does not require parameters, leave this empty.")]
+            [Rql.ToolFormat.RqlArgument("Values for the method's parameters by name, e.g. {go: ref(\"GameObject#12\"), n: 6}. " +
+                "Leave empty if the method takes none.")]
             SerializedMemberList? parameters = null,
             [Description("When true, 'csharpCode' is treated as just the method body. " +
                 "The tool auto-generates standard using directives (System, UnityEngine, " +
