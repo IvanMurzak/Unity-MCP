@@ -1,6 +1,8 @@
 ---
 name: profiler-start
 description: "Enable Unity's runtime profiler and open the Profiler window. Idempotent: calling when already enabled returns the current enabled state without error."
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Start

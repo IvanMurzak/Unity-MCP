@@ -1,6 +1,8 @@
 ---
 name: profiler-capture-frame
 description: Capture the current frame's timing info (delta time, FPS, frame counts, runtime). Snapshot only — historical frames live in Unity's Profiler window.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Capture Frame

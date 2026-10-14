@@ -1,6 +1,8 @@
 ---
 name: script-execute
 description: Compiles and executes C# code dynamically using Roslyn. Supports a full-code mode (default) and a body-only mode — see the skill body for the difference and for how to pass Unity object references as parameters.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Script / Execute

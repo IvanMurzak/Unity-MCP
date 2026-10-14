@@ -70,13 +70,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  roots | recurse children | where components.count() == 1 | select $path name\n" +
             "  unity.assets(\"t:Material\") | select name shader.name properties[\"_Color\"]\n" + QueryExamplesExtra;
 
-        public const string MutateDescription =
-            "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
-            "value is checked before anything is written; a failure changes nothing. Undoable in the Editor (Ctrl+Z). " +
-            "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; " +
-            "a read-only member fails with readonly-member instead of being approximated.\n" +
+        public const string MutateStages =
             "  set path = expr, ...   assign members (paths may go through structs: set transform.position.y = transform.position.y + 1)\n" +
-            "  call Method(args)      invoke a method the tools expose\n" +
+            "  call Method(args)      invoke a method the tools expose\n";
+
+        public const string MutateExamples =
             "Examples:\n" +
             "  objects | where name == \"Player\" | set transform.position = \"(0, 1, 0)\"\n" +
             "  objects | get components | where $ is Light | set intensity = intensity * 2, color = \"#ffcc88\"\n" +
@@ -97,7 +95,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name == \"Crate\" | call SaveAsPrefab(\"Assets/Prefabs/Crate.prefab\")\n" +
             "  editor | call OpenPrefab(\"Assets/Prefabs/Enemy.prefab\")  then  prefab | recurse children | …  then  editor | call ClosePrefab()\n" +
             "  editor | call CreateMaterial(\"Assets/Mats/Glow.mat\")        editor | call MoveAsset(\"Assets/A.mat\", \"Assets/Mats/A.mat\")\n" +
-            "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true\n" +
+            "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true\n";
+
+        public const string MutateDescription =
+            "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
+            "value is checked before anything is written; a failure changes nothing. Undoable in the Editor (Ctrl+Z). " +
+            "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; " +
+            "a read-only member fails with readonly-member instead of being approximated.\n" +
+            MutateStages + MutateExamples +
             "Object literals build values: set settings = {speed: 2, \"$type\": \"FastSettings\"}. At most 20 targets per call.\n\n" +
             "Query syntax:\n" + Language;
 

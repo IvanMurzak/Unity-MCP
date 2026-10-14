@@ -10,6 +10,7 @@
 
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters;
+using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -37,6 +38,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.AreEqual("2", Cell(Q("editor | select selection.count()")));
             AssertOk(M("editor | set selection = []"));
             Assert.AreEqual(0, Selection.objects.Length);
+        }
+
+        [Test]
+        public void SchemaDescribesSourcesByName()
+        {
+            var editor = RqlUnitySchema.Render(RqlUnity.Engine, "editor");
+            StringAssert.Contains("OpenScene(", editor);
+            StringAssert.Contains("isPlaying", editor);
+            StringAssert.Contains("Message", RqlUnitySchema.Render(RqlUnity.Engine, "console"));
         }
 
         [Test]

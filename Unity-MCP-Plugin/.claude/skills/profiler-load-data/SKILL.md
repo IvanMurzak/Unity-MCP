@@ -1,6 +1,8 @@
 ---
 name: profiler-load-data
 description: Read back a previously-saved JSON snapshot from `profiler-save-data` and return its raw text.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Load Data

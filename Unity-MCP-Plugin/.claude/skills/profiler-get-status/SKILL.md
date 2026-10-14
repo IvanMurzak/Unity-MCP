@@ -1,6 +1,8 @@
 ---
 name: profiler-get-status
 description: Return the Unity profiler's current enabled state, active modules, max-used memory, and platform support flag. Read-only.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Get Status

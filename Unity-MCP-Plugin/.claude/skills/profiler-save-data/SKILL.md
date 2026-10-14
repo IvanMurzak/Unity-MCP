@@ -1,6 +1,8 @@
 ---
 name: profiler-save-data
 description: Save a snapshot of profiler-derived stats (status + memory + rendering + script + frame capture) to a JSON file. Built-in Unity APIs only.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Save Data

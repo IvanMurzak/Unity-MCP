@@ -59,9 +59,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return sb.ToString();
         }
 
+        /// <summary>A source name ("editor", "console") or the type of a source's items, e.g. RqlEditorApi or LogEntry.</summary>
+        private static IEnumerable<Type> SourceTypes(RqlEngine engine, string name)
+        {
+            foreach (var s in engine.Sources.Values)
+            {
+                Type? t;
+                try { t = s.Getter()?.GetType(); } catch { continue; }
+                if (t == null) continue;
+                var info = engine.Types.Info(t);
+                if ((info.IsList || info.IsMap) && info.ElementType != null) t = info.ElementType;
+                if (string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase) || string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase))
+                    yield return t;
+            }
+        }
+
         private static string RenderType(RqlEngine engine, string typeName)
         {
-            var candidates = UnityTypes.Candidates(typeName).Take(3).ToList();
+            var candidates = SourceTypes(engine, typeName).Concat(UnityTypes.Candidates(typeName)).Distinct().Take(3).ToList();
             if (candidates.Count == 0) return AgentFormat.UnknownTypeError(typeName, UnityTypes.ShortNames());
             var sb = new StringBuilder();
             foreach (var t in candidates)

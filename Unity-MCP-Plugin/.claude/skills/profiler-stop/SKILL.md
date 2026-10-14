@@ -1,6 +1,8 @@
 ---
 name: profiler-stop
 description: Disable Unity's runtime profiler. Idempotent — calling when already disabled returns the current disabled state.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Stop

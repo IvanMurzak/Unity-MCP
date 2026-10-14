@@ -1,6 +1,8 @@
 ---
 name: script-delete
 description: Delete one or more `.cs` script files from disk, refresh the AssetDatabase, and wait for Unity compilation to settle before delivering the final result via the request's `requestId`. Pair with 'script-read' to inspect files before deletion.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Script / Delete

@@ -28,6 +28,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Particles
         }
 
         [Test]
+        public void TheModuleGuideIsPartOfTheRqlSkill() =>
+            StringAssert.Contains("## Particle systems", global::com.IvanMurzak.Unity.MCP.Editor.API.Skill_Rql.Render());
+
+        [Test]
         public void SchemaFindsNestedParticleTypes()
         {
             // ParticleSystem.MinMaxCurve / MainModule are nested types: the type index must include them.

@@ -1,6 +1,8 @@
 ---
 name: profiler-get-script-stats
 description: Return script execution timing (frame time, fixed dt, time scale, frame count, runtime) plus Mono / GC memory usage in MB.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Get Script Stats
