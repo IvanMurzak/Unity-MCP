@@ -52,6 +52,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         }
 
         [Test]
+        public void FindNamesAGameObjectInsideExpressions()
+        {
+            var player = new GameObject("Player");
+            var lamp = new GameObject("Lamp");
+            AssertOk(M("objects | where name == \"Lamp\" | set transform.parent = unity.find(\"Player\")"));
+            Assert.AreSame(player.transform, lamp.transform.parent);
+            Assert.AreEqual("Lamp", Cell(Q("unity.find(\"Player/Lamp\") | select name")));
+            new GameObject("Player");
+            var ambiguous = M("objects | where name == \"Lamp\" | set transform.parent = unity.find(\"Player\")");
+            Assert.IsFalse(ambiguous.Ok, Table(ambiguous));
+            StringAssert.Contains("2 GameObjects are named 'Player'", Table(ambiguous));
+        }
+
+        [Test]
         public void EulerAnglesAndLocalScaleAreWritable()
         {
             var go = new GameObject("Spin");

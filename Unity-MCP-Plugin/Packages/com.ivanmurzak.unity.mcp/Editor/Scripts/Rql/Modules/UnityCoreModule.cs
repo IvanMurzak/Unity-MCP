@@ -41,6 +41,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
                .AddSource("componentTypes", RqlEditorApi.ComponentTypes, "component types that can be added (name fullName namespace)")
                .AddFunction("unity.assets", RqlUnity.FindAssets,
                    $"unity.assets(filter, folder?): AssetDatabase search, e.g. \"t:Material\", \"t:Prefab Enemy\" (at most {RqlUnity.MaxAssets}, loaded as needed)")
+               .AddFunction("unity.find", RqlUnity.FindGameObject,
+                   "unity.find(name): the GameObject with that unique name or hierarchy path (\"Level/Pillar_1\"), e.g. set Follow = unity.find(\"Player\")")
                .AddFunction("unity.asset", RqlUnity.LoadAsset, "unity.asset(path): the main asset at a path, e.g. \"Assets/Mats/Red.mat\"");
 
             // Transform enumerates its children, but RQL must treat it as an object with members.

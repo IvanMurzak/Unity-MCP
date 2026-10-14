@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, prefab (the prefab open " +
             "in prefab editing mode), console (Editor log entries), shaders, componentTypes, editor (Editor state and operations). " +
             "Assets: unity.assets(\"t:Material\") or unity.assets(\"t:Prefab\", \"Assets/Enemies\"), unity.asset(\"Assets/Mats/Red.mat\"). " +
-            "ref(\"Light#1234\") resolves a $ref.\n" +
+            "ref(\"Light#1234\") resolves a $ref; unity.find(\"Player\") or unity.find(\"Level/Pillar_1\") a GameObject by unique name or path.\n" +
             "Stages:\n" +
             "  where <predicate>                  filter\n" +
             "  select a b.c alias=(expr)          project columns (wrap computed expressions in parentheses)\n" +

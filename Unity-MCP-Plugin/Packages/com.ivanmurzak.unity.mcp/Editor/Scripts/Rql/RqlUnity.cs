@@ -147,6 +147,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             }
         }
 
+        /// <summary>
+        /// <c>unity.find("Player")</c> / <c>unity.find("Level/Pillar_1")</c>: the GameObject with that hierarchy path or that
+        /// unique name in the loaded scenes (inactive ones included); an error when there is none or several.
+        /// </summary>
+        public static object? FindGameObject(object?[] args)
+        {
+            if (args.Length != 1 || !(args[0] is string key) || key.Length == 0)
+                return new RqlError("type-mismatch", "unity.find(name) expects a GameObject name or hierarchy path such as \"Level/Pillar_1\"");
+            var all = AllGameObjects();
+            var byPath = all.Where(g => PathOf(g.transform) == key).ToList();
+            var hits = byPath.Count > 0 ? byPath : all.Where(g => g.name == key).ToList();
+            if (hits.Count == 1) return hits[0];
+            return hits.Count == 0
+                ? new RqlError("not-found", $"no GameObject named '{key}' in the loaded scenes")
+                : new RqlError("ambiguous", $"{hits.Count} GameObjects are named '{key}': use the hierarchy path, e.g. \"{PathOf(hits[0].transform)}\", or a ref");
+        }
+
+        private static string PathOf(Transform t) => t.parent == null ? t.name : PathOf(t.parent) + "/" + t.name;
+
         /// <summary><c>unity.asset("Assets/…/Red.mat")</c>: the main asset at a path, or null.</summary>
         public static object? LoadAsset(object?[] args)
         {
