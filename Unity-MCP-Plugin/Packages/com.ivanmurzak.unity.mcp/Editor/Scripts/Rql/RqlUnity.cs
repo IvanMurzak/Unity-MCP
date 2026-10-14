@@ -79,8 +79,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             var owners = new List<Object>();
             var seen = new HashSet<Object>();
+            // The nearest Unity object enclosing each change: a write into a plain view object (e.g. a spline knot view) is
+            // recorded on the component or asset that holds it.
             foreach (var r in records)
-                if (r.Owner is Object o && o != null && seen.Add(o)) owners.Add(o);
+                foreach (var candidate in r.Owners)
+                    if (candidate is Object o)
+                    {
+                        if (o != null && seen.Add(o)) owners.Add(o);
+                        break;
+                    }
             return owners;
         }
 

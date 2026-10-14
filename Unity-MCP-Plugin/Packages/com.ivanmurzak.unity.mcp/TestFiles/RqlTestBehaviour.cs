@@ -14,6 +14,13 @@ using UnityEngine;
 namespace com.IvanMurzak.Unity.MCP.TestFiles
 {
     /// <summary>A script with the member kinds the adapters handle (in its own file so Unity can serialize it).</summary>
+    /// <summary>A plain serializable class inside a component (writes into it are recorded on the component for Undo).</summary>
+    [System.Serializable]
+    public class RqlTestSettings
+    {
+        public float speed = 1;
+    }
+
     public class RqlTestBehaviour : MonoBehaviour
     {
         [SerializeField] private int secret = 7;
@@ -26,5 +33,8 @@ namespace com.IvanMurzak.Unity.MCP.TestFiles
         public Vector4 weights;
         public Color tint = Color.white;
         public Gradient gradient = new Gradient();
+        public LayerMask layers;
+        public Vector3Int cell;
+        public RqlTestSettings settings = new RqlTestSettings();
     }
 }

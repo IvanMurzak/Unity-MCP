@@ -30,8 +30,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         public override void ConfigureMembers(MemberTable members) =>
             members
-                .HideWhere(m => m.Member != null && (m.Member.IsDefined(typeof(ObsoleteAttribute), true) || m.Member.IsDefined(typeof(NonSerializedAttribute), true)))
+                // Include the private [SerializeField] fields first, so the [Obsolete] / [NonSerialized] rule hides them too.
                 .IncludeFields(f => f.IsPrivate && f.IsDefined(typeof(UnityEngine.SerializeField), false))
+                .HideWhere(m => m.Member != null && (m.Member.IsDefined(typeof(ObsoleteAttribute), true) || m.Member.IsDefined(typeof(NonSerializedAttribute), true)))
                 .Hide("hideFlags")
                 .Display("name");
     }

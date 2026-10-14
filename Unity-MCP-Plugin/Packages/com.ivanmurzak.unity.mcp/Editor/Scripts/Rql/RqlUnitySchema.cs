@@ -77,7 +77,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private static string RenderType(RqlEngine engine, string typeName)
         {
             var candidates = SourceTypes(engine, typeName).Concat(UnityTypes.Candidates(typeName)).Distinct().Take(3).ToList();
-            if (candidates.Count == 0) return AgentFormat.UnknownTypeError(typeName, UnityTypes.ShortNames());
+            if (candidates.Count == 0)
+            {
+                // Types only reachable through sources (e.g. an extension's view objects): RQL's own schema walk finds them.
+                var reachable = AgentFormat.Schema(engine, typeName);
+                return reachable.StartsWith("error unknown-type", StringComparison.Ordinal)
+                    ? AgentFormat.UnknownTypeError(typeName, UnityTypes.ShortNames())
+                    : reachable;
+            }
             var sb = new StringBuilder();
             foreach (var t in candidates)
             {

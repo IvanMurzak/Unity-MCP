@@ -1,0 +1,34 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Editor.Rql.Mathematics",
+    "rootNamespace": "",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Editor",
+        "Unity.Mathematics"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "System.Text.Json.dll",
+        "Rql.Contracts.dll",
+        "Rql.Parser.dll",
+        "Rql.Execution.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY",
+        "UNITY_MCP_DEPS_8",
+        "UNITY_MCP_RQL_MATHEMATICS"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.mathematics",
+            "expression": "1.0.0",
+            "define": "UNITY_MCP_RQL_MATHEMATICS"
+        }
+    ],
+    "noEngineReferences": false
+}

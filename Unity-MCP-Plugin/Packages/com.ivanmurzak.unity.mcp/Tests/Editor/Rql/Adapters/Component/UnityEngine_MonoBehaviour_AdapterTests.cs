@@ -28,6 +28,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         }
 
         [Test]
+        public void WritesIntoPlainNestedObjectsAreUndoneOnTheComponent()
+        {
+            var b = new GameObject("B").AddComponent<RqlTestBehaviour>();
+            AssertOk(M("objects | get components | where $ is RqlTestBehaviour | set settings.speed = 7"));
+            Assert.AreEqual(7f, b.settings.speed, 1e-6f);
+            UnityEditor.Undo.PerformUndo();
+            Assert.AreEqual(1f, b.settings.speed, 1e-6f);
+        }
+
+        [Test]
         public void EnabledAndScriptFieldsAreWritable()
         {
             var b = new GameObject("B").AddComponent<RqlTestBehaviour>();
