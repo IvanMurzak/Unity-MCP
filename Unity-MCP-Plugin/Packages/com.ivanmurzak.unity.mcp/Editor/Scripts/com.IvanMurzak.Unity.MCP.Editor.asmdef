@@ -24,7 +24,10 @@
         "Microsoft.CodeAnalysis.CSharp.dll",
         "Microsoft.CodeAnalysis.dll",
         "System.Collections.Immutable.dll",
-        "System.Text.Json.dll"
+        "System.Text.Json.dll",
+        "Rql.Contracts.dll",
+        "Rql.Parser.dll",
+        "Rql.Execution.dll"
     ],
     "autoReferenced": true,
     "defineConstraints": [
