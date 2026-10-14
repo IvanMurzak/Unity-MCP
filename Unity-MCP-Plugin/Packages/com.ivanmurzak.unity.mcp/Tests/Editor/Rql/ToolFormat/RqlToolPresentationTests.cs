@@ -65,7 +65,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         }
 
         [TearDown]
-        public void TearDown() => RqlToolPresentation.Enabled = false;
+        public void TearDown()
+        {
+            RqlToolPresentation.Enabled = false;
+            ToolPresentation.Escaping = ToolTextEscaping.Minimal;
+        }
 
         private ResponseListTool Listed() => _manager.RunListTool(new RequestListTool()).Result.Value!.Single(t => t.Name == Tool);
 
@@ -121,6 +125,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
             Assert.AreEqual(ResponseStatus.Error, result.Status, text);
             StringAssert.Contains("argument 'settings'", text);
             StringAssert.Contains("PresentationTestSettings", text);
+        }
+
+        [TestCase(ToolTextEscaping.Minimal, "title: \"é+<, x\"")]
+        [TestCase(ToolTextEscaping.Ascii, "title: \"\\u00e9+<, x\"")]
+        [TestCase(ToolTextEscaping.Json, "title: \"\\u00E9\\u002B\\u003C, x\"")]
+        public void ResultTextFollowsTheConfiguredEscaping(ToolTextEscaping escaping, string expected)
+        {
+            ToolPresentation.Escaping = escaping;
+            var (result, text) = Call("{\"settings\": {\"title\": \"é+<, x\"}}");
+            Assert.AreEqual(ResponseStatus.Success, result.Status, text);
+            StringAssert.Contains(expected, text);
+        }
+
+        [Test]
+        public void ConfigSelectsThePresentation()
+        {
+            RqlToolPresentation.Apply(ToolPresentationFormat.RqlLean, ToolTextEscaping.Ascii);
+            Assert.AreSame(RqlToolPresentation.Lean, ToolPresentation.Current);
+            Assert.AreEqual(ToolTextEscaping.Ascii, ToolPresentation.Escaping);
+            RqlToolPresentation.Apply(ToolPresentationFormat.Json, ToolTextEscaping.Minimal);
+            Assert.IsNull(ToolPresentation.Current);
         }
 
         [Test]

@@ -16,6 +16,7 @@ using System.Linq;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
+using com.IvanMurzak.McpPlugin;
 using Rql;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
@@ -90,28 +91,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         /// <summary>JSON result → compact text: <c>key: value</c> lines, RQL-style literals, tables for lists of flat objects.</summary>
         internal static class Compact
         {
-            // Agent-facing text, not HTML: only quotes, backslashes and control characters are escaped ('+', '<', non-ASCII stay).
-            private static string Quote(string s)
-            {
-                var sb = new StringBuilder(s.Length + 2).Append('"');
-                foreach (var c in s)
-                {
-                    switch (c)
-                    {
-                        case '"': sb.Append("\\\""); break;
-                        case '\\': sb.Append("\\\\"); break;
-                        case '\n': sb.Append("\\n"); break;
-                        case '\r': sb.Append("\\r"); break;
-                        case '\t': sb.Append("\\t"); break;
-                        default:
-                            if (c < ' ') sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
-                            else sb.Append(c);
-                            break;
-                    }
-                }
-                return sb.Append('"').ToString();
-            }
-
             public static string Render(JsonNode? node)
             {
                 if (node is JsonObject o && o.Count > 0)
@@ -156,20 +135,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                         return "[" + string.Join(", ", a.Select(Inline)) + "]";
                     case JsonValue v when v.GetValueKind() == JsonValueKind.String:
                         var s = v.GetValue<string>();
-                        return NeedsQuotes(s) ? Quote(s) : s;
+                        return NeedsQuotes(s) ? ToolPresentation.Quote(s) : s;
                     default:
                         return node.ToJsonString();
                 }
             }
 
-            // Bare text unless it could be misread (empty, separators, a number / keyword look-alike, surrounding spaces).
+            // Bare text unless it could be misread (empty, separators, a number / keyword look-alike, surrounding spaces) or the
+            // configured escaping (ToolPresentation.Escaping) has to escape something in it.
             private static bool NeedsQuotes(string s) =>
+                ToolPresentation.Quote(s).Length != s.Length + 2 ||
                 s.Length == 0 || s.Trim() != s || s.IndexOfAny(new[] { '|', ',', '\n', '\r', '{', '}', '[', ']', '"', ':' }) >= 0 ||
                 s == "null" || s == "true" || s == "false" || double.TryParse(s, NumberStyles.Float, CultureInfo.InvariantCulture, out _);
 
             private static string Key(string key) =>
                 key.Length > 0 && (char.IsLetter(key[0]) || key[0] == '_' || key[0] == '$') && key.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '$')
-                    ? key : Quote(key);
+                    ? key : ToolPresentation.Quote(key);
 
             private static bool IsEmpty(JsonNode? v) => v == null || (v is JsonArray a && a.Count == 0) || (v is JsonObject o && o.Count == 0);
         }

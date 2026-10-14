@@ -43,6 +43,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
             set => ToolPresentation.Current = value ? Instance : (ToolPresentation.Current == Instance ? null : ToolPresentation.Current);
         }
 
+        /// <summary>Install the presentation the configuration asks for (<see cref="ToolPresentationFormat.Json"/> = none).</summary>
+        public static void Apply(ToolPresentationFormat format, ToolTextEscaping escaping)
+        {
+            ToolPresentation.Escaping = escaping;
+            ToolPresentation.Current = format switch
+            {
+                ToolPresentationFormat.RqlText => Instance,
+                ToolPresentationFormat.RqlLean => Lean,
+                _ => null,
+            };
+        }
+
         private readonly bool _memberDescriptions;
 
         private RqlToolPresentation(bool memberDescriptions) { _memberDescriptions = memberDescriptions; }

@@ -169,6 +169,16 @@ namespace com.IvanMurzak.Unity.MCP
             public Dictionary<string, bool> SkillAutoGenerate { get; set; } = new();
 
             /// <summary>
+            /// EXPERIMENTAL: how tools are presented to the AI agent (Json = standard JSON schema and results; RqlText = RQL
+            /// literal arguments, compact type text and results; RqlLean = RqlText without member descriptions). Hosts such as
+            /// the AI Game Dev app may write it.
+            /// </summary>
+            public ToolPresentationFormat ToolFormat { get; set; } = ToolPresentationFormat.Json;
+
+            /// <summary>EXPERIMENTAL: escaping of quoted text in the RqlText / RqlLean presentations.</summary>
+            public com.IvanMurzak.McpPlugin.ToolTextEscaping ToolTextEscaping { get; set; } = com.IvanMurzak.McpPlugin.ToolTextEscaping.Minimal;
+
+            /// <summary>
             /// When non-null, only the tools whose names appear in this list are enabled;
             /// all others are disabled. Set by the <c>UNITY_MCP_TOOLS</c> environment variable
             /// (comma-separated tool IDs). Not persisted to disk.
@@ -246,5 +256,13 @@ namespace com.IvanMurzak.Unity.MCP
     {
         Custom,
         Cloud
+    }
+
+    /// <summary>EXPERIMENTAL tool presentation, see <see cref="UnityMcpPlugin.UnityConnectionConfig.ToolFormat"/>.</summary>
+    public enum ToolPresentationFormat
+    {
+        Json,
+        RqlText,
+        RqlLean
     }
 }

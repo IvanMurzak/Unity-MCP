@@ -146,6 +146,7 @@ namespace com.IvanMurzak.Unity.MCP
                     }
                 }
 
+                com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat.RqlToolPresentation.Apply(config.ToolFormat, config.ToolTextEscaping);
                 return config;
             }
             catch (Exception e)
