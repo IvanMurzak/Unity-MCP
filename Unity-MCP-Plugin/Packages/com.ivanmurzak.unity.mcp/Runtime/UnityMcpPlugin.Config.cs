@@ -173,7 +173,7 @@ namespace com.IvanMurzak.Unity.MCP
             /// literal arguments, compact type text and results; RqlLean = RqlText without member descriptions; Rql = RQL instead
             /// of ReflectorNet for schemas, arguments and results). Hosts such as the AI Game Dev app may write it.
             /// </summary>
-            public ToolPresentationFormat ToolFormat { get; set; } = ToolPresentationFormat.Json;
+            public ToolPresentationFormat ToolFormat { get; set; } = ToolPresentationFormat.Rql;
 
             /// <summary>EXPERIMENTAL: escaping of quoted text in the RqlText / RqlLean presentations.</summary>
             public com.IvanMurzak.McpPlugin.ToolTextEscaping ToolTextEscaping { get; set; } = com.IvanMurzak.McpPlugin.ToolTextEscaping.Minimal;
