@@ -109,9 +109,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         [Test]
         public void JsonObjectArgumentsStillWork()
         {
-            var (result, text) = Call("{\"settings\": {\"title\": \"Json\", \"items\": [{\"name\": \"x\", \"count\": 1}]}}");
+            var (result, text) = Call("{\"settings\": {\"title\": \"Json, a+b<c\", \"items\": [{\"name\": \"x\", \"count\": 1}]}}");
             Assert.AreEqual(ResponseStatus.Success, result.Status, text);
-            StringAssert.Contains("title: Json", text);
+            StringAssert.Contains("title: \"Json, a+b<c\"", text);   // quoted for the comma, '+' and '<' not escaped
         }
 
         [Test]

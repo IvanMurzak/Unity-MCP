@@ -90,6 +90,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         /// <summary>JSON result → compact text: <c>key: value</c> lines, RQL-style literals, tables for lists of flat objects.</summary>
         internal static class Compact
         {
+            // Agent-facing text, not HTML: only quotes, backslashes and control characters are escaped ('+', '<', non-ASCII stay).
+            private static string Quote(string s)
+            {
+                var sb = new StringBuilder(s.Length + 2).Append('"');
+                foreach (var c in s)
+                {
+                    switch (c)
+                    {
+                        case '"': sb.Append("\\\""); break;
+                        case '\\': sb.Append("\\\\"); break;
+                        case '\n': sb.Append("\\n"); break;
+                        case '\r': sb.Append("\\r"); break;
+                        case '\t': sb.Append("\\t"); break;
+                        default:
+                            if (c < ' ') sb.Append("\\u").Append(((int)c).ToString("x4", CultureInfo.InvariantCulture));
+                            else sb.Append(c);
+                            break;
+                    }
+                }
+                return sb.Append('"').ToString();
+            }
+
             public static string Render(JsonNode? node)
             {
                 if (node is JsonObject o && o.Count > 0)
@@ -134,7 +156,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                         return "[" + string.Join(", ", a.Select(Inline)) + "]";
                     case JsonValue v when v.GetValueKind() == JsonValueKind.String:
                         var s = v.GetValue<string>();
-                        return NeedsQuotes(s) ? JsonSerializer.Serialize(s) : s;
+                        return NeedsQuotes(s) ? Quote(s) : s;
                     default:
                         return node.ToJsonString();
                 }
@@ -147,7 +169,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
 
             private static string Key(string key) =>
                 key.Length > 0 && (char.IsLetter(key[0]) || key[0] == '_' || key[0] == '$') && key.All(c => char.IsLetterOrDigit(c) || c == '_' || c == '$')
-                    ? key : JsonSerializer.Serialize(key);
+                    ? key : Quote(key);
 
             private static bool IsEmpty(JsonNode? v) => v == null || (v is JsonArray a && a.Count == 0) || (v is JsonObject o && o.Count == 0);
         }
