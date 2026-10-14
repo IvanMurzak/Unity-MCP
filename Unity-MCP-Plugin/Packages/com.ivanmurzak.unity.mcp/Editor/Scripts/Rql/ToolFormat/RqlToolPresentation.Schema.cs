@@ -79,10 +79,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
             {
                 private readonly JsonObject? _defs;
                 private readonly bool _memberDescriptions;
-                private readonly Dictionary<string, string> _names = new Dictionary<string, string>(); // $defs key → short name
+                private readonly Dictionary<string, string> _names = new Dictionary<string, string>(); // $defs key → display name
+                private readonly HashSet<string> _listed = new HashSet<string>();
                 private readonly List<(string name, JsonObject def)> _named = new List<(string, JsonObject)>();
 
-                public Writer(JsonObject? defs, bool memberDescriptions) { _defs = defs; _memberDescriptions = memberDescriptions; }
+                public Writer(JsonObject? defs, bool memberDescriptions)
+                {
+                    _defs = defs;
+                    _memberDescriptions = memberDescriptions;
+                    // Names are assigned for all record types of the tool at once, so a clash renames every type in it.
+                    if (defs != null)
+                        _names = TypeNames.Assign(defs.Where(kv => kv.Value is JsonObject d && IsRecord(d)).Select(kv => kv.Key));
+                }
 
                 /// <summary>Follows $ref chains to the definition (the referencing node's own keys win, as JSON schema does).</summary>
                 public JsonObject Resolve(JsonObject node)
@@ -158,21 +166,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
 
                 private static bool IsRecord(JsonObject def) => def["properties"] is JsonObject p && p.Count > 0;
 
+                /// <summary>The type's display name (see <see cref="TypeNames"/>); lists the type in the type block on first use.</summary>
                 private string Name(string key, JsonObject def)
                 {
-                    if (_names.TryGetValue(key, out var known)) return known;
-                    var name = ShortName(key);
-                    if (_names.ContainsValue(name)) name = key;
-                    _names[key] = name;
-                    _named.Add((name, def));
+                    var name = _names.TryGetValue(key, out var assigned) ? assigned : key;
+                    if (_listed.Add(key)) _named.Add((name, def));
                     return name;
-                }
-
-                /// <summary>"com.IvanMurzak.ReflectorNet.Model.SerializedMember" → "SerializedMember", "Tool_X-Mode" → "Mode".</summary>
-                private static string ShortName(string key)
-                {
-                    var cut = key.LastIndexOfAny(new[] { '.', '-', '+' });
-                    return cut >= 0 && cut < key.Length - 1 ? key.Substring(cut + 1) : key;
                 }
 
                 /// <summary>Inline form of an anonymous object type: <c>{name type, …}</c>.</summary>
