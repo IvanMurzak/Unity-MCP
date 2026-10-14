@@ -29,7 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public const string Language =
             "RQL: source | stage | stage ...\n" +
-            "Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, editor (Editor operations). " +
+            "Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, prefab (the prefab open " +
+            "in prefab editing mode), console (Editor log entries), shaders, componentTypes, editor (Editor state and operations). " +
             "Assets: unity.assets(\"t:Material\") or unity.assets(\"t:Prefab\", \"Assets/Enemies\"), unity.asset(\"Assets/Mats/Red.mat\"). " +
             "ref(\"Light#1234\") resolves a $ref.\n" +
             "Stages:\n" +
@@ -55,13 +56,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "Results come back as compact rows (header line, then col|col). Long results are truncated — refine with where/first or use count. " +
             "Unknown members produce warnings with suggestions; rql-schema(type) lists a type's members.";
 
+        public const string QueryExamplesExtra =
+            "  console | where logType == \"Error\" | sort sequence desc | first 5 | select message\n" +
+            "  scenes | select name path isDirty rootCount\n" +
+            "  componentTypes | where name contains \"Collider\" | select name\n" +
+            "  editor | select isPlaying isPaused selection";
+
         public const string QueryDescription =
             "Run a read-only RQL query against the live Unity Editor scene and return compact rows. One precise query beats many " +
             "exploratory calls. Changes need rql-mutate.\n\n" + Language + "\n\nExamples:\n" +
             "  objects | where name contains \"Enemy\" and active | select $ref name transform.position\n" +
             "  objects | get components | where $ is Light and intensity > 2 | select gameObject.name intensity color\n" +
             "  roots | recurse children | where components.count() == 1 | select $path name\n" +
-            "  unity.assets(\"t:Material\") | select name shader.name properties[\"_Color\"]";
+            "  unity.assets(\"t:Material\") | select name shader.name properties[\"_Color\"]\n" + QueryExamplesExtra;
 
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
@@ -82,6 +89,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name == \"Crate\" | call AddComponent(\"Rigidbody\")           add a component by type name\n" +
             "  objects | where name == \"Old\" | call Destroy()                             remove a GameObject (components: get components | where $ is X | call Destroy())\n" +
             "  objects | where name == \"Lamp\" | set transform.parent = ref(\"GameObject#1234\")   reparent (keeps the world position)\n" +
+            "  objects | where name == \"Crate\" | call Duplicate()                          copy next to it (returns the copy)\n" +
+            "Scenes, prefabs, assets, Editor state:\n" +
+            "  editor | call OpenScene(\"Assets/Scenes/Level.unity\")          editor | call NewScene(\"Assets/Scenes/New.unity\")\n" +
+            "  scenes | where isDirty | call Save()                           scenes | where name == \"Level\" | call SetActive()\n" +
+            "  editor | call InstantiatePrefab(\"Assets/Prefabs/Enemy.prefab\", ref(\"GameObject#1234\"), \"(0, 0, 5)\")\n" +
+            "  objects | where name == \"Crate\" | call SaveAsPrefab(\"Assets/Prefabs/Crate.prefab\")\n" +
+            "  editor | call OpenPrefab(\"Assets/Prefabs/Enemy.prefab\")  then  prefab | recurse children | …  then  editor | call ClosePrefab()\n" +
+            "  editor | call CreateMaterial(\"Assets/Mats/Glow.mat\")        editor | call MoveAsset(\"Assets/A.mat\", \"Assets/Mats/A.mat\")\n" +
+            "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true\n" +
             "Object literals build values: set settings = {speed: 2, \"$type\": \"FastSettings\"}. At most 20 targets per call.\n\n" +
             "Query syntax:\n" + Language;
 

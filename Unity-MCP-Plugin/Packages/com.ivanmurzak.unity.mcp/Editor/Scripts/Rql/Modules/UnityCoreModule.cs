@@ -31,7 +31,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
                .AddSource("roots", RqlUnity.RootGameObjects, "root GameObjects of the loaded scenes")
                .AddSource("scenes", RqlUnity.Scenes, "loaded scenes")
                .AddSource("selection", RqlUnity.SelectedObjects, "objects selected in the Editor")
-               .AddSource("editor", () => RqlEditorApi.Instance, "Editor operations: call CreateGameObject(name, parent?, primitive?)")
+               .AddSource("editor", () => RqlEditorApi.Instance,
+                   "Editor state (isPlaying, isPaused, selection …) and operations: CreateGameObject, OpenScene, NewScene, SaveScenes, " +
+                   "InstantiatePrefab, OpenPrefab / SavePrefab / ClosePrefab, CopyAsset / MoveAsset / DeleteAsset / CreateFolder, " +
+                   "CreateMaterial, SaveAssets, RefreshAssets, ClearConsole, ExecuteMenuItem (rql-schema \"RqlEditorApi\" for signatures)")
+               .AddSource("prefab", RqlEditorApi.OpenPrefabRoot, "root GameObject of the prefab open in prefab editing mode (none otherwise)")
+               .AddSource("console", RqlEditorApi.ConsoleEntries, $"captured Editor log entries, oldest first (last {RqlEditorApi.MaxLogEntries}): logType message timestamp stackTrace sequence")
+               .AddSource("shaders", RqlEditorApi.Shaders, "every shader the Editor knows (built-in and project): name supported hasErrors")
+               .AddSource("componentTypes", RqlEditorApi.ComponentTypes, "component types that can be added (name fullName namespace)")
                .AddFunction("unity.assets", RqlUnity.FindAssets,
                    $"unity.assets(filter, folder?): AssetDatabase search, e.g. \"t:Material\", \"t:Prefab Enemy\" (at most {RqlUnity.MaxAssets}, loaded as needed)")
                .AddFunction("unity.asset", RqlUnity.LoadAsset, "unity.asset(path): the main asset at a path, e.g. \"Assets/Mats/Red.mat\"");

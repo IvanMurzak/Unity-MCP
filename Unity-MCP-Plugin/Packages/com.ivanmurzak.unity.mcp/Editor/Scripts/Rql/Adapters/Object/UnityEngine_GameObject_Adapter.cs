@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using Rql.Execution;
 using UnityEditor;
 using UnityEngine;
+using Object = UnityEngine.Object;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 {
@@ -30,7 +31,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
              .Add<bool>("active", g => g.activeSelf, (g, v) => g.SetActive(v), description: "activeSelf; assigning calls SetActive")
              .Function<string, Component>("AddComponent", (g, type) => AddComponent(g, type), "type",
                  "add a component by type name (e.g. \"Rigidbody\", \"Light\", \"BoxCollider\", a script class) and return it")
-             .Method("Destroy", g => Undo.DestroyObjectImmediate(g), "destroy this GameObject (undoable)");
+             .Method("Destroy", g => Undo.DestroyObjectImmediate(g), "destroy this GameObject (undoable)")
+             .Function("Duplicate", g => Duplicate(g), "copy this GameObject next to it (prefab instances stay linked) and return the copy (undoable)")
+             .Function<string, GameObject>("SaveAsPrefab", (g, path) => SaveAsPrefab(g, path), "path",
+                 "save as a prefab asset (\"Assets/…/X.prefab\"); this GameObject becomes its instance; returns the prefab asset");
             m.Untyped.Reference("transform").Hide("gameObject");
         }
 
@@ -39,6 +43,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             var type = UnityTypes.Find(typeName, typeof(Component))
                        ?? throw new ArgumentException($"no component type named '{typeName}'");
             return Undo.AddComponent(g, type);
+        }
+
+        // The Editor's own Ctrl+D path: prefab instances stay linked with their overrides, names stay unique, undo is
+        // registered by Unity. It works on the selection, which is restored afterwards.
+        private static GameObject Duplicate(GameObject g)
+        {
+            var selection = Selection.objects;
+            try
+            {
+                Selection.objects = new Object[] { g };
+                Unsupported.DuplicateGameObjectsUsingPasteboard();
+                return Selection.activeGameObject != null && Selection.activeGameObject != g
+                    ? Selection.activeGameObject
+                    : throw new InvalidOperationException($"could not duplicate '{g.name}'");
+            }
+            finally { Selection.objects = selection; }
+        }
+
+        private static GameObject SaveAsPrefab(GameObject g, string path)
+        {
+            var folder = System.IO.Path.GetDirectoryName(path)?.Replace('\\', '/');
+            if (!string.IsNullOrEmpty(folder) && !AssetDatabase.IsValidFolder(folder)) throw new ArgumentException($"folder '{folder}' does not exist (editor | call CreateFolder(\"{folder}\"))");
+            return PrefabUtility.SaveAsPrefabAssetAndConnect(g, path, InteractionMode.UserAction, out var ok) is GameObject asset && ok
+                ? asset : throw new ArgumentException($"could not save a prefab at '{path}'");
         }
 
         private static List<Component> Components(GameObject g)
