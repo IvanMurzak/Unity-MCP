@@ -25,7 +25,7 @@ unity-mcp-cli run-tool rql-mutate --input '{"query": "objects | where name == \"
 
 ```
 RQL: source | stage | stage ...
-Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, prefab (the prefab open in prefab editing mode), console (Editor log entries), shaders, componentTypes, editor (Editor state and operations). Assets: unity.assets("t:Material") or unity.assets("t:Prefab", "Assets/Enemies"), unity.asset("Assets/Mats/Red.mat"). ref("Light#1234") resolves a $ref.
+Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, prefab (the prefab open in prefab editing mode), console (Editor log entries), shaders, componentTypes, editor (Editor state and operations). Assets: unity.assets("t:Material") or unity.assets("t:Prefab", "Assets/Enemies"), unity.asset("Assets/Mats/Red.mat"). ref("Light#1234") resolves a $ref; unity.find("Player") or unity.find("Level/Pillar_1") a GameObject by unique name or path.
 Stages:
   where <predicate>                  filter
   select a b.c alias=(expr)          project columns (wrap computed expressions in parentheses)
@@ -84,23 +84,10 @@ Scenes, prefabs, assets, Editor state:
 | `shaders` | every shader the Editor knows (built-in and project): name supported hasErrors |
 | `unity.asset(…)` | unity.asset(path): the main asset at a path, e.g. "Assets/Mats/Red.mat" |
 | `unity.assets(…)` | unity.assets(filter, folder?): AssetDatabase search, e.g. "t:Material", "t:Prefab Enemy" (at most 200, loaded as needed) |
-
-## Particle systems
-
-Particle systems are components: `objects | get components | where $ is ParticleSystem`. Module structs (`main`,
-`emission`, `shape` …) are written through, even though they are get-only properties:
-
-```
-objects | get components | where $ is ParticleSystem | set main.startLifetime = 3, main.loop = false
-objects | get components | where $ is ParticleSystem | set emission.rateOverTime = [5, 25]          random between two
-objects | get components | where $ is ParticleSystem | set main.startColor = "#ff8800"
-objects | get components | where $ is ParticleSystem | set main.startColor = [["#ff0000", 0], ["#0000ff", 1]]   gradient
-```
-
-`MinMaxCurve` takes a number or `[min, max]`; `MinMaxGradient` a color, `[color, color]` or gradient keys.
+| `unity.find(…)` | unity.find(name): the GameObject with that unique name or hierarchy path ("Level/Pillar_1"), e.g. set Follow = unity.find("Player") |
 
 ## Installed RQL modules
 
 - `com.IvanMurzak.Unity.MCP.Editor.Rql.Modules.UnityCoreModule`
-- `com.IvanMurzak.Unity.MCP.Editor.Rql.Particles.ParticleSystemModule`
+- `com.IvanMurzak.Unity.MCP.Editor.Rql.Mathematics.MathematicsModule`
 - `com.IvanMurzak.Unity.MCP.Editor.Rql.Physics3D.PhysicsModule`
