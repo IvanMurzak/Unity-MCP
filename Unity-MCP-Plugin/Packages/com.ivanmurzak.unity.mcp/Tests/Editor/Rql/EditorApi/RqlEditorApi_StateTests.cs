@@ -62,6 +62,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         }
 
         [Test]
+        public void ConsoleSequenceSupportsIncrementalReads()
+        {
+            var marker = System.Guid.NewGuid().ToString("N");
+            Debug.Log($"cursor-first {marker}");
+            UnityMcpPluginEditor.Instance.LogCollector!.Save();
+            var first = Cell(Q($"console | where message contains \"cursor-first {marker}\" | select sequence"));
+            Debug.Log($"cursor-second {marker}");
+            UnityMcpPluginEditor.Instance.LogCollector!.Save();
+            var newer = Table(Q($"console | where sequence > {first} and message contains \"{marker}\" | select message"));
+            StringAssert.Contains("cursor-second", newer);
+            StringAssert.DoesNotContain("cursor-first", newer);
+        }
+
+        [Test]
         public void CreateGameObjectAtAPosition()
         {
             AssertOk(M("editor | call CreateGameObject(\"Spot\", null, \"Sphere\", \"(1, 2, 3)\")"));

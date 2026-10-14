@@ -84,433 +84,62 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         // ================================================================
+        // RQL tools (replace the gameobject / assets / scene / editor / console tools)
+        // ================================================================
+
+        [UnityTest] public IEnumerator RqlQuery_BothThreads()
+            => RunToolBothThreads(Tool_Rql.QueryToolId, @"{""query"":""objects | count""}");
+
+        [UnityTest] public IEnumerator RqlSchema_BothThreads()
+            => RunToolBothThreads(Tool_Rql.SchemaToolId, "{}");
+
+        [UnityTest]
+        public IEnumerator RqlMutate_BothThreads()
+        {
+            yield return RunToolMainThreadCoop(Tool_Rql.MutateToolId, @"{""query"":""editor | call CreateGameObject(\""bg_main\"")""}");
+            Assert.IsNotNull(GameObject.Find("bg_main"));
+            yield return RunToolFromBackgroundThread(Tool_Rql.MutateToolId, @"{""query"":""editor | call CreateGameObject(\""bg_bg\"")""}");
+            Assert.IsNotNull(GameObject.Find("bg_bg"));
+        }
+
+        [UnityTest]
+        public IEnumerator RqlMutateClearConsole_BothThreads()
+        {
+            // Regression for #632/#637 (formerly console-clear-logs): Debug.ClearDeveloperConsole() MUST run on the main thread.
+            yield return RunToolBothThreads(Tool_Rql.MutateToolId, @"{""query"":""editor | call ClearConsole()""}");
+        }
+
+        // ================================================================
         // NO-ARG / READ-ONLY tools  (happy path, empty JSON)
         // ================================================================
 
         [UnityTest] public IEnumerator ToolList_BothThreads()
             => RunToolBothThreads(Tool_Tool.ToolListId, "{}");
 
-        [UnityTest] public IEnumerator GameObjectComponentListAll_BothThreads()
-            => RunToolBothThreads(Tool_GameObject.ComponentListToolId, @"{""pageSize"":3}");
-
-        [UnityTest] public IEnumerator SceneListOpened_BothThreads()
-            => RunToolBothThreads(Tool_Scene.SceneListOpenedToolId, "{}");
-
-        [UnityTest] public IEnumerator SceneGetData_BothThreads()
-            => RunToolBothThreads(Tool_Scene.SceneGetDataToolId, "{}");
-
-        [UnityTest] public IEnumerator EditorApplicationGetState_BothThreads()
-            => RunToolBothThreads(Tool_Editor.EditorApplicationGetStateToolId, "{}");
-
-        [UnityTest] public IEnumerator EditorSelectionGet_BothThreads()
-            => RunToolBothThreads(Tool_Editor_Selection.EditorSelectionGetToolId, "{}");
-
-        [UnityTest] public IEnumerator ConsoleGetLogs_BothThreads()
-            => RunToolBothThreads(Tool_Console.ConsoleGetLogsToolId, "{}");
-
-        [UnityTest]
-        public IEnumerator ConsoleClearLogs_BothThreads()
-        {
-            // Regression for #632/#637: ClearLogs calls Debug.ClearDeveloperConsole() which
-            // MUST be invoked on the main thread.
-            yield return RunToolBothThreads(Tool_Console.ConsoleClearLogsToolId, "{}");
-        }
-
-        [UnityTest] public IEnumerator AssetsFind_BothThreads()
-            => RunToolBothThreads(Tool_Assets.AssetsFindToolId, @"{""filter"":""t:Scene"",""maxResults"":3}");
-
-        [UnityTest] public IEnumerator AssetsFindBuiltIn_BothThreads()
-            => RunToolBothThreads(Tool_Assets.AssetsFindBuiltInToolId, @"{""maxResults"":3}");
-
-        [UnityTest] public IEnumerator AssetsShaderListAll_BothThreads()
-            => RunToolBothThreads(Tool_Assets_Shader.AssetsShaderListAllToolId, "{}");
-
-        [UnityTest] public IEnumerator AssetsRefresh_BothThreads()
-            => RunToolBothThreads(Tool_Assets.AssetsRefreshToolId, "{}");
-
         [UnityTest] public IEnumerator PackageList_BothThreads()
             => RunToolBothThreads(Tool_Package.PackageListToolId, "{}");
-
-        [UnityTest] public IEnumerator TypeGetJsonSchema_BothThreads()
-            => RunToolBothThreads(Tool_Type.TypeGetJsonSchemaToolId, @"{""typeName"":""UnityEngine.Vector3""}");
 
         // ================================================================
         // GAMEOBJECT tools — happy path, per-call setup
         // ================================================================
 
-        [UnityTest]
-        public IEnumerator GameObjectCreate_BothThreads()
-        {
-            yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectCreateToolId, @"{""name"":""bg_main""}");
-            Assert.IsNotNull(GameObject.Find("bg_main"));
-            yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectCreateToolId, @"{""name"":""bg_bg""}");
-            Assert.IsNotNull(GameObject.Find("bg_bg"));
-        }
-
-        [UnityTest]
-        public IEnumerator GameObjectFind_BothThreads()
-        {
-            var go = new GameObject("bg_find");
-            var id = go.GetEntityId();
-            yield return RunToolBothThreads(Tool_GameObject.GameObjectFindToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}}}");
-        }
-
-        [UnityTest]
-        public IEnumerator GameObjectDestroy_BothThreads()
-        {
-            var a = new GameObject("bg_destroy_a").GetEntityId();
-            yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectDestroyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(a)}}}}}");
-
-            var b = new GameObject("bg_destroy_b").GetEntityId();
-            yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectDestroyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(b)}}}}}");
-        }
-
-        [UnityTest]
-        public IEnumerator GameObjectDuplicate_BothThreads()
-        {
-            var a = new GameObject("bg_dup_a").GetEntityId();
-            yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectDuplicateToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(a)}}}]}}");
-
-            var b = new GameObject("bg_dup_b").GetEntityId();
-            yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectDuplicateToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(b)}}}]}}");
-        }
-
-        [UnityTest]
-        public IEnumerator GameObjectSetParent_BothThreads()
-        {
-            var parent = new GameObject("bg_parent").GetEntityId();
-            var child1 = new GameObject("bg_child_a").GetEntityId();
-            yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectSetParentToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(child1)}}}],""parentGameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(parent)}}}}}");
-
-            var child2 = new GameObject("bg_child_b").GetEntityId();
-            yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectSetParentToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(child2)}}}],""parentGameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(parent)}}}}}");
-        }
-
-        [UnityTest]
-        public IEnumerator GameObjectComponentAdd_BothThreads()
-        {
-            var a = new GameObject("bg_addc_a").GetEntityId();
-            yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectComponentAddToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(a)}}},""componentNames"":[""UnityEngine.BoxCollider""]}}");
-
-            var b = new GameObject("bg_addc_b").GetEntityId();
-            yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectComponentAddToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(b)}}},""componentNames"":[""UnityEngine.SphereCollider""]}}");
-        }
-
-        [UnityTest]
-        public IEnumerator GameObjectComponentGet_BothThreads()
-        {
-            var go = new GameObject("bg_getc");
-            var id = go.GetEntityId();
-            // Transform lives at component index 0 on every GameObject.
-            yield return RunToolBothThreads(Tool_GameObject.GameObjectComponentGetToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""componentRef"":{{""index"":0}}}}");
-        }
-
-        [UnityTest]
-        public IEnumerator GameObjectComponentDestroy_BothThreads()
-        {
-            var a = new GameObject("bg_destc_a");
-            a.AddComponent<BoxCollider>();
-            var idA = a.GetEntityId();
-            yield return RunToolMainThreadCoop(Tool_GameObject.GameObjectComponentDestroyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(idA)}}},""destroyComponentRefs"":[{{""typeName"":""UnityEngine.BoxCollider""}}]}}");
-
-            var b = new GameObject("bg_destc_b");
-            b.AddComponent<SphereCollider>();
-            var idB = b.GetEntityId();
-            yield return RunToolFromBackgroundThread(Tool_GameObject.GameObjectComponentDestroyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(idB)}}},""destroyComponentRefs"":[{{""typeName"":""UnityEngine.SphereCollider""}}]}}");
-        }
-
-        [UnityTest]
-        public IEnumerator GameObjectModify_ThreadSafetyOnly()
-        {
-            // gameobject-modify requires a SerializedMember tree — we cover thread safety
-            // only (business errors from an empty diff are tolerated).
-            var id = new GameObject("bg_modify").GetEntityId();
-            yield return RunToolExpectNoThreadViolation(Tool_GameObject.GameObjectModifyToolId,
-                $@"{{""gameObjectRefs"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}],""gameObjectDiffs"":[{{""name"":""root""}}]}}");
-        }
-
-        [UnityTest]
-        public IEnumerator GameObjectComponentModify_ThreadSafetyOnly()
-        {
-            var go = new GameObject("bg_cmodify");
-            go.AddComponent<BoxCollider>();
-            var id = go.GetEntityId();
-            yield return RunToolExpectNoThreadViolation(Tool_GameObject.GameObjectComponentModifyToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""componentRef"":{{""typeName"":""UnityEngine.BoxCollider""}},""componentDiff"":{{""name"":""root""}}}}");
-        }
-
         // ================================================================
         // OBJECT tools
         // ================================================================
-
-        [UnityTest]
-        public IEnumerator ObjectGetData_BothThreads()
-        {
-            var id = new GameObject("bg_obj").GetEntityId();
-            yield return RunToolBothThreads(Tool_Object.ObjectGetDataToolId,
-                $@"{{""objectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}}}");
-        }
-
-        [UnityTest]
-        public IEnumerator ObjectModify_ThreadSafetyOnly()
-        {
-            var id = new GameObject("bg_objmod").GetEntityId();
-            yield return RunToolExpectNoThreadViolation(Tool_Object.ObjectModifyToolId,
-                $@"{{""objectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}},""objectDiff"":{{""name"":""root""}}}}");
-        }
 
         // ================================================================
         // EDITOR tools
         // ================================================================
 
-        [UnityTest]
-        public IEnumerator EditorSelectionSet_BothThreads()
-        {
-            var id = new GameObject("bg_select").GetEntityId();
-            yield return RunToolBothThreads(Tool_Editor_Selection.EditorSelectionSetToolId,
-                $@"{{""select"":[{{""instanceID"":{UnityEngine.EntityId.ToULong(id)}}}]}}");
-        }
-
-        [UnityTest]
-        public IEnumerator EditorApplicationSetState_BothThreads()
-        {
-            // No-op toggle: current state is not-playing, not-paused.
-            yield return RunToolBothThreads(Tool_Editor.EditorApplicationSetStateToolId,
-                @"{""isPlaying"":false,""isPaused"":false}");
-        }
-
         // ================================================================
         // ASSETS tools
         // ================================================================
 
-        [UnityTest]
-        public IEnumerator AssetsCreateFolder_BothThreads()
-        {
-            EnsureTmpFolder();
-            yield return RunToolMainThreadCoop(Tool_Assets.AssetsCreateFolderToolId,
-                $@"{{""inputs"":[{{""parentFolderPath"":""{TmpFolder}"",""newFolderName"":""a""}}]}}");
-            yield return RunToolFromBackgroundThread(Tool_Assets.AssetsCreateFolderToolId,
-                $@"{{""inputs"":[{{""parentFolderPath"":""{TmpFolder}"",""newFolderName"":""b""}}]}}");
-        }
-
-        [UnityTest]
-        public IEnumerator AssetsGetData_BothThreads()
-        {
-            var assetPath = CreateTmpTextAsset("get_data.txt", "hello");
-            yield return RunToolBothThreads(Tool_Assets.AssetsGetDataToolId,
-                $@"{{""assetRef"":{{""assetPath"":""{assetPath}""}}}}");
-        }
-
-        [UnityTest]
-        public IEnumerator AssetsModify_ThreadSafetyOnly()
-        {
-            var assetPath = CreateTmpTextAsset("modify.txt", "hello");
-            yield return RunToolExpectNoThreadViolation(Tool_Assets.AssetsModifyToolId,
-                $@"{{""assetRef"":{{""assetPath"":""{assetPath}""}},""content"":{{""name"":""root""}}}}");
-        }
-
-        [UnityTest]
-        public IEnumerator AssetsMaterialCreate_BothThreads()
-        {
-            EnsureTmpFolder();
-            yield return RunToolMainThreadCoop(Tool_Assets.AssetsMaterialCreateToolId,
-                $@"{{""assetPath"":""{TmpFolder}/mat_main.mat"",""shaderName"":""Standard""}}");
-            yield return RunToolFromBackgroundThread(Tool_Assets.AssetsMaterialCreateToolId,
-                $@"{{""assetPath"":""{TmpFolder}/mat_bg.mat"",""shaderName"":""Standard""}}");
-        }
-
-        [UnityTest]
-        public IEnumerator AssetsShaderGetData_BothThreads()
-        {
-            // Find any shader asset in the project to query.
-            var shaderPath = FindFirstShaderPath();
-            if (shaderPath == null)
-            {
-                Assert.Ignore("No shader asset available in project.");
-                yield break;
-            }
-            yield return RunToolBothThreads(Tool_Assets_Shader.AssetsShaderGetDataToolId,
-                $@"{{""assetRef"":{{""assetPath"":""{shaderPath}""}}}}");
-        }
-
-        [UnityTest]
-        public IEnumerator AssetsCopy_BothThreads()
-        {
-            var src = CreateTmpTextAsset("copy_src.txt", "source");
-            yield return RunToolMainThreadCoop(Tool_Assets.AssetsCopyToolId,
-                $@"{{""sourcePaths"":[""{src}""],""destinationPaths"":[""{TmpFolder}/copy_main.txt""]}}");
-            yield return RunToolFromBackgroundThread(Tool_Assets.AssetsCopyToolId,
-                $@"{{""sourcePaths"":[""{src}""],""destinationPaths"":[""{TmpFolder}/copy_bg.txt""]}}");
-        }
-
-        [UnityTest]
-        public IEnumerator AssetsMove_BothThreads()
-        {
-            var src1 = CreateTmpTextAsset("move_a.txt", "a");
-            yield return RunToolMainThreadCoop(Tool_Assets.AssetsMoveToolId,
-                $@"{{""sourcePaths"":[""{src1}""],""destinationPaths"":[""{TmpFolder}/move_a_done.txt""]}}");
-
-            var src2 = CreateTmpTextAsset("move_b.txt", "b");
-            yield return RunToolFromBackgroundThread(Tool_Assets.AssetsMoveToolId,
-                $@"{{""sourcePaths"":[""{src2}""],""destinationPaths"":[""{TmpFolder}/move_b_done.txt""]}}");
-        }
-
-        [UnityTest]
-        public IEnumerator AssetsDelete_BothThreads()
-        {
-            var src1 = CreateTmpTextAsset("del_a.txt", "a");
-            yield return RunToolMainThreadCoop(Tool_Assets.AssetsDeleteToolId, $@"{{""paths"":[""{src1}""]}}");
-
-            var src2 = CreateTmpTextAsset("del_b.txt", "b");
-            yield return RunToolFromBackgroundThread(Tool_Assets.AssetsDeleteToolId,
-                $@"{{""paths"":[""{src2}""]}}");
-        }
-
         // ---------- Prefabs ----------
-
-        [UnityTest]
-        public IEnumerator AssetsPrefabCreate_BothThreads()
-        {
-            EnsureTmpFolder();
-            var idA = new GameObject("bg_prefab_a").GetEntityId();
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{TmpFolder}/prefab_a.prefab"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(idA)}}}}}");
-
-            var idB = new GameObject("bg_prefab_b").GetEntityId();
-            yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{TmpFolder}/prefab_b.prefab"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(idB)}}}}}");
-        }
-
-        [UnityTest]
-        public IEnumerator AssetsPrefabInstantiate_BothThreads()
-        {
-            EnsureTmpFolder();
-            var seedId = new GameObject("bg_seed_prefab").GetEntityId();
-            var prefabPath = $"{TmpFolder}/seed.prefab";
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(seedId)}}}}}");
-
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabInstantiateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectPath"":""bg_inst_main""}}");
-            yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabInstantiateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPath}"",""gameObjectPath"":""bg_inst_bg""}}");
-        }
-
-        [UnityTest]
-        public IEnumerator AssetsPrefabOpenSaveClose_BothThreads()
-        {
-            EnsureTmpFolder();
-
-            // Create a prefab asset from a scene GameObject.
-            var seedA = new GameObject("bg_prefab_osc_a").GetEntityId();
-            var prefabPathA = $"{TmpFolder}/osc_a.prefab";
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPathA}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(seedA)}}}}}");
-
-            // Instantiate it so we get a prefab instance to open.
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabInstantiateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPathA}"",""gameObjectPath"":""bg_osc_inst_a""}}");
-            var instanceA = GameObject.Find("bg_osc_inst_a");
-            Assert.IsNotNull(instanceA, "Prefab instance not found after instantiate.");
-
-            // Open → Save → Close (main thread).
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabOpenToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(instanceA!.GetEntityId())}}}}}");
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabSaveToolId, "{}");
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCloseToolId, @"{""save"":false}");
-
-            // Same sequence from a background thread.
-            var seedB = new GameObject("bg_prefab_osc_b").GetEntityId();
-            var prefabPathB = $"{TmpFolder}/osc_b.prefab";
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabCreateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPathB}"",""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(seedB)}}}}}");
-            yield return RunToolMainThreadCoop(Tool_Assets_Prefab.AssetsPrefabInstantiateToolId,
-                $@"{{""prefabAssetPath"":""{prefabPathB}"",""gameObjectPath"":""bg_osc_inst_b""}}");
-            var instanceB = GameObject.Find("bg_osc_inst_b");
-            Assert.IsNotNull(instanceB, "Prefab instance not found after instantiate.");
-
-            yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabOpenToolId,
-                $@"{{""gameObjectRef"":{{""instanceID"":{UnityEngine.EntityId.ToULong(instanceB!.GetEntityId())}}}}}");
-            yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabSaveToolId, "{}");
-            yield return RunToolFromBackgroundThread(Tool_Assets_Prefab.AssetsPrefabCloseToolId, @"{""save"":false}");
-        }
 
         // ================================================================
         // SCENE tools
         // ================================================================
-
-        [UnityTest]
-        public IEnumerator SceneCreate_BothThreads()
-        {
-            EnsureTmpFolder();
-            var startingActive = UnityEngine.SceneManagement.SceneManager.GetActiveScene();
-            yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId,
-                $@"{{""path"":""{TmpFolder}/scene_main.unity""}}");
-            yield return RunToolFromBackgroundThread(Tool_Scene.SceneCreateToolId,
-                $@"{{""path"":""{TmpFolder}/scene_bg.unity""}}");
-
-            // Restore a baseline active scene if the test clobbered it.
-            if (startingActive.IsValid() && UnityEngine.SceneManagement.SceneManager.GetActiveScene() != startingActive)
-                UnityEngine.SceneManagement.SceneManager.SetActiveScene(startingActive);
-        }
-
-        [UnityTest]
-        public IEnumerator SceneOpenSaveSetActive_BothThreads()
-        {
-            EnsureTmpFolder();
-            var scenePath = $"{TmpFolder}/reopen.unity";
-            yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId, $@"{{""path"":""{scenePath}""}}");
-
-            // open (main + bg)
-            yield return RunToolMainThreadCoop(Tool_Scene.SceneOpenToolId,
-                $@"{{""sceneRef"":{{""assetPath"":""{scenePath}""}}}}");
-            yield return RunToolFromBackgroundThread(Tool_Scene.SceneOpenToolId,
-                $@"{{""sceneRef"":{{""assetPath"":""{scenePath}""}}}}");
-
-            // set-active (both)
-            yield return RunToolBothThreads(Tool_Scene.SceneSetActiveToolId,
-                $@"{{""sceneRef"":{{""assetPath"":""{scenePath}""}}}}");
-
-            // save (both)
-            yield return RunToolBothThreads(Tool_Scene.SceneSaveToolId, "{}");
-        }
-
-        [UnityTest]
-        public IEnumerator SceneUnload_BothThreads()
-        {
-            EnsureTmpFolder();
-
-            // Create a saved scene so we can open additional scenes additively.
-            var basePath = $"{TmpFolder}/unload_base.unity";
-            yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId,
-                $@"{{""path"":""{basePath}""}}");
-
-            // Create two extra scenes additively (allowed now because base is saved).
-            var mainPath = $"{TmpFolder}/unload_main.unity";
-            var bgPath = $"{TmpFolder}/unload_bg.unity";
-            yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId,
-                $@"{{""path"":""{mainPath}"",""newSceneMode"":""Additive""}}");
-            yield return RunToolMainThreadCoop(Tool_Scene.SceneCreateToolId,
-                $@"{{""path"":""{bgPath}"",""newSceneMode"":""Additive""}}");
-
-            // Unload each additive scene from both threads (tool takes scene name, not path).
-            yield return RunToolMainThreadCoop(Tool_Scene.SceneUnloadToolId,
-                @"{""name"":""unload_main""}");
-            yield return RunToolFromBackgroundThread(Tool_Scene.SceneUnloadToolId,
-                @"{""name"":""unload_bg""}");
-        }
 
         // ================================================================
         // SCRIPT tools
@@ -565,23 +194,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // ================================================================
         // REFLECTION (complex MethodRef schema → thread-safety only)
         // ================================================================
-
-        [UnityTest]
-        public IEnumerator ReflectionMethodFind_ThreadSafetyOnly()
-        {
-            yield return RunToolExpectNoThreadViolation(Tool_Reflection.ReflectionMethodFindToolId,
-                @"{""filter"":{""Namespace"":""UnityEngine"",""TypeName"":""Transform"",""MethodName"":""LookAt""}}");
-        }
-
-        [UnityTest]
-        public IEnumerator ReflectionMethodCall_BothThreads()
-        {
-            // Call a static method on a test-scoped GameObject's Transform via instance method.
-            var go = new GameObject("bg_reflect");
-            var id = go.GetEntityId();
-            yield return RunToolBothThreads(Tool_Reflection.ReflectionMethodCallToolId,
-                $@"{{""filter"":{{""Namespace"":""UnityEngine"",""TypeName"":""GameObject"",""MethodName"":""Find"",""InputParameters"":[{{""TypeName"":""System.String"",""Name"":""name""}}]}},""inputParameters"":[{{""typeName"":""System.String"",""name"":""name"",""value"":""bg_reflect""}}]}}");
-        }
 
         // ================================================================
         // PACKAGE MANAGER — package-add / package-remove intentionally NOT

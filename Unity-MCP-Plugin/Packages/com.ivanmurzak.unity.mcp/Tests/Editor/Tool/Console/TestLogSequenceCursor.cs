@@ -484,32 +484,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(7, roundTrip.Sequence);
         }
 
-        [Test]
-        public void Tool_SinceSequence_ReturnsOnlyNewerEntries()
-        {
-            var tool = new Tool_Console();
-            var marker = Guid.NewGuid().ToString("N");
-
-            Debug.Log($"cursor-first {marker}");
-            UnityMcpPluginEditor.Instance.LogCollector!.Save();
-            var seen = tool.GetLogs(maxEntries: 1000).First(e => e.Message.Contains($"cursor-first {marker}"));
-            Assert.Greater(seen.Sequence, 0, "Every returned entry carries a sequence.");
-
-            Debug.Log($"cursor-second {marker}");
-            UnityMcpPluginEditor.Instance.LogCollector!.Save();
-
-            var newer = tool.GetLogs(maxEntries: 1000, sinceSequence: seen.Sequence);
-
-            Assert.IsTrue(newer.All(e => e.Sequence > seen.Sequence));
-            Assert.IsTrue(newer.Any(e => e.Message.Contains($"cursor-second {marker}")));
-            Assert.IsFalse(newer.Any(e => e.Message.Contains($"cursor-first {marker}")));
-            CollectionAssert.IsOrdered(newer.Select(e => e.Sequence), "Cursor results are oldest first.");
-        }
-
-        [Test]
-        public void Tool_NegativeSinceSequence_IsRejected()
-        {
-            Assert.Throws<ArgumentException>(() => new Tool_Console().GetLogs(sinceSequence: -1));
-        }
     }
 }
