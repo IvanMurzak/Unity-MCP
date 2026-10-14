@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "walk hierarchies. Far fewer calls/tokens than reading objects one by one.";
 
         public const string MutateBlurb =
-            "Change the live Unity scene with RQL set/call: bulk edits in one all-or-nothing, undoable call; dry_run previews.";
+            "Change the live Unity scene with RQL set/call: bulk edits in one all-or-nothing, undoable call, saved to disk; dry_run previews.";
 
         public const string SchemaBlurb =
             "List RQL sources and the component types present in the loaded scenes; pass a type name for its members.";
@@ -90,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name == \"Crate\" | call Duplicate()                          copy next to it (returns the copy)\n" +
             "Scenes, prefabs, assets, Editor state:\n" +
             "  editor | call OpenScene(\"Assets/Scenes/Level.unity\")          editor | call NewScene(\"Assets/Scenes/New.unity\")\n" +
-            "  scenes | where isDirty | call Save()                           scenes | where name == \"Level\" | call SetActive()\n" +
+            "  scenes | where path == \"\" | call SaveAs(\"Assets/Scenes/New.unity\")   scenes | where name == \"Level\" | call SetActive()\n" +
             "  editor | call InstantiatePrefab(\"Assets/Prefabs/Enemy.prefab\", ref(\"GameObject#1234\"), \"(0, 0, 5)\")\n" +
             "  objects | where name == \"Crate\" | call SaveAsPrefab(\"Assets/Prefabs/Crate.prefab\")\n" +
             "  editor | call OpenPrefab(\"Assets/Prefabs/Enemy.prefab\")  then  prefab | recurse children | …  then  editor | call ClosePrefab()\n" +
@@ -99,7 +99,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
-            "value is checked before anything is written; a failure changes nothing. Undoable in the Editor (Ctrl+Z). " +
+            "value is checked before anything is written; a failure changes nothing. Undoable in the Editor (Ctrl+Z). Changed assets, " +
+            "scenes and the open prefab are saved to disk automatically; an untitled scene needs SaveAs(path). " +
             "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; " +
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             MutateStages + MutateExamples +

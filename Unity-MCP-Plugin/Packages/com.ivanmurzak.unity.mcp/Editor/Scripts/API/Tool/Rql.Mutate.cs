@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             bool dry_run = false
         )
         {
-            return Run(() => RqlUnity.Engine.Execute(query, null, new QueryOptions { AllowMutation = true, DryRun = dry_run }));
+            return Run(() => RqlUnity.Mutate(query, dry_run));
         }
     }
 }

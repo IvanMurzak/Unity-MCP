@@ -1,13 +1,13 @@
 ---
 name: rql-mutate
-description: "Change the live Unity scene with RQL set/call: bulk edits in one all-or-nothing, undoable call; dry_run previews."
+description: "Change the live Unity scene with RQL set/call: bulk edits in one all-or-nothing, undoable call, saved to disk; dry_run previews."
 metadata:
   generated-by: mcp-plugin-dotnet
 ---
 
 # RQL / Mutate
 
-Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and value is checked before anything is written; a failure changes nothing. Undoable in the Editor (Ctrl+Z). dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; a read-only member fails with readonly-member instead of being approximated.
+Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and value is checked before anything is written; a failure changes nothing. Undoable in the Editor (Ctrl+Z). Changed assets, scenes and the open prefab are saved to disk automatically; an untitled scene needs SaveAs(path). dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; a read-only member fails with readonly-member instead of being approximated.
   set path = expr, ...   assign members (paths may go through structs: set transform.position.y = transform.position.y + 1)
   call Method(args)      invoke a method the tools expose
 Examples:
@@ -25,7 +25,7 @@ Create / add / remove (call; the receipt's result column holds the new object's 
   objects | where name == "Crate" | call Duplicate()                          copy next to it (returns the copy)
 Scenes, prefabs, assets, Editor state:
   editor | call OpenScene("Assets/Scenes/Level.unity")          editor | call NewScene("Assets/Scenes/New.unity")
-  scenes | where isDirty | call Save()                           scenes | where name == "Level" | call SetActive()
+  scenes | where path == "" | call SaveAs("Assets/Scenes/New.unity")   scenes | where name == "Level" | call SetActive()
   editor | call InstantiatePrefab("Assets/Prefabs/Enemy.prefab", ref("GameObject#1234"), "(0, 0, 5)")
   objects | where name == "Crate" | call SaveAsPrefab("Assets/Prefabs/Crate.prefab")
   editor | call OpenPrefab("Assets/Prefabs/Enemy.prefab")  then  prefab | recurse children | …  then  editor | call ClosePrefab()

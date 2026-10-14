@@ -23,7 +23,8 @@ Kept as tools: `script-*`, `tests-run`, `screenshot-*`, `package-*`, `profiler-*
 ## Code
 
 - `Editor/Plugins/Rql/` — RQL DLLs (netstandard2.1, Editor-only). Rebuild with `shared/RQL/unity/build-rql-dlls.sh` and copy.
-- `Editor/Scripts/Rql/` — engine (`RqlUnity`: Undo group per mutation, dirty marking), `RqlEditorApi` (the `editor`
+- `Editor/Scripts/Rql/` — engine (`RqlUnity`: Undo group per mutation, dirty marking; `RqlUnity.Mutate` saves assets,
+  scenes and the open prefab after every `rql-mutate`, modules flush deferred file writes on `RqlUnity.Saving`), `RqlEditorApi` (the `editor`
   source), schema, type index, guide texts, `Modules/UnityCoreModule.cs`, one adapter per file in `Adapters/`.
 - `Editor/Scripts/API/Tool/Rql*.cs` — the tools; `Editor/Scripts/Skills/Skill_Rql.cs` — the `unity-rql` skill.
 - `Editor/RqlModules/<Feature>/` — optional modules in their own asmdef, compiled only when the Unity module exists

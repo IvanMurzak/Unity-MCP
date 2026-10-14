@@ -61,7 +61,7 @@ Create / add / remove (call; the receipt's result column holds the new object's 
   objects | where name == "Crate" | call Duplicate()                          copy next to it (returns the copy)
 Scenes, prefabs, assets, Editor state:
   editor | call OpenScene("Assets/Scenes/Level.unity")          editor | call NewScene("Assets/Scenes/New.unity")
-  scenes | where isDirty | call Save()                           scenes | where name == "Level" | call SetActive()
+  scenes | where path == "" | call SaveAs("Assets/Scenes/New.unity")   scenes | where name == "Level" | call SetActive()
   editor | call InstantiatePrefab("Assets/Prefabs/Enemy.prefab", ref("GameObject#1234"), "(0, 0, 5)")
   objects | where name == "Crate" | call SaveAsPrefab("Assets/Prefabs/Crate.prefab")
   editor | call OpenPrefab("Assets/Prefabs/Enemy.prefab")  then  prefab | recurse children | …  then  editor | call ClosePrefab()
