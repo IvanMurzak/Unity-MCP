@@ -43,7 +43,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             AssertOk(Q("roots | recurse children | get components"));
             Assert.AreSame(_red, _renderer.sharedMaterial, "a material instance was created by a read");
             Assert.AreEqual("Red", Cell(Q("objects | get components | where $ is MeshRenderer | select sharedMaterial.name")));
-            StringAssert.Contains("explicit-only", Schema("MeshRenderer"));
+            // material / materials read the shared materials: selecting them explicitly creates no copies either.
+            Assert.AreEqual("Red", Cell(Q("objects | get components | where $ is MeshRenderer | select material.name")));
+            AssertOk(Q("objects | get components | where $ is MeshRenderer | select materials"));
+            Assert.AreSame(_red, _renderer.sharedMaterial, "a material instance was created by reading material(s)");
+        }
+
+        [Test]
+        public void MaterialsWritesGoToTheSharedMaterials()
+        {
+            _renderer.sharedMaterial = _blue;
+            var blueRef = Cell(Q("objects | where name == \"Cube\" | get components | where $ is MeshRenderer | get sharedMaterial | select $ref"));
+            _renderer.sharedMaterial = _red;
+            AssertOk(M($"objects | where name == \"Cube\" | get components | where $ is MeshRenderer | set materials[0] = ref(\"{blueRef}\")"));
+            Assert.AreSame(_blue, _renderer.sharedMaterial);
         }
 
         [Test]

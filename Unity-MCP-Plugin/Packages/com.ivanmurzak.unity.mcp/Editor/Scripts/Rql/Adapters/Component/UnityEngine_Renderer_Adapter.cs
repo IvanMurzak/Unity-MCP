@@ -14,9 +14,16 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 {
-    /// <summary>Renderer: material(s) instantiate copies when read — explicit-only; sharedMaterials returns a copy — written back.</summary>
+    /// <summary>
+    /// Renderer: reading Unity's material(s) in the Editor instantiates material copies into the scene (a read that changes
+    /// the scene), so <c>material</c> / <c>materials</c> read and write the shared materials, as an Inspector edit does.
+    /// The material arrays are copies — element writes are assigned back.
+    /// </summary>
     public sealed class UnityEngine_Renderer_Adapter : RqlTypeAdapter<Renderer>
     {
-        protected override void Members(MemberTable<Renderer> m) => m.Untyped.ExplicitOnly("material", "materials").CopyOnRead("sharedMaterials");
+        protected override void Members(MemberTable<Renderer> m) => m
+            .Add("material", r => r.sharedMaterial, (r, v) => r.sharedMaterial = v, description: "same as sharedMaterial")
+            .Add("materials", r => r.sharedMaterials, (r, v) => r.sharedMaterials = v, description: "same as sharedMaterials")
+            .CopyOnRead("sharedMaterials", "materials");
     }
 }
