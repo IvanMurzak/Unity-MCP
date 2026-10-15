@@ -40,4 +40,38 @@ describe('findUnityProcess', () => {
       expect.objectContaining({ timeout: 10000 }),
     );
   });
+
+  it('skips asset-import workers of the same project and returns the Editor (macOS / Linux)', async () => {
+    const projectPath = '/Users/dev/Game';
+    const unity = '/Applications/Unity/Hub/Editor/6000.6.3f1/Unity.app/Contents/MacOS/Unity';
+    const worker = `24435 ${unity} -adb2 -batchMode -noUpm -name AssetImportWorkerHW2 -projectPath ${projectPath} -logFile Logs/AssetImportWorkerHW2.log -parentPid 33383`;
+    const editor = `33383 ${unity} -projectPath ${projectPath}`;
+    const execSyncMock = vi.fn(() => `${worker}\n${editor}\n`);
+
+    vi.doMock('os', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('os')>();
+      return { ...actual, platform: () => 'darwin' };
+    });
+    vi.doMock('child_process', () => ({ execFileSync: vi.fn(), execSync: execSyncMock }));
+
+    const { findUnityProcess } = await import('../src/utils/unity-process.js');
+    expect(findUnityProcess(projectPath)?.pid).toBe(33383);
+  });
+
+  it('skips asset-import workers on Windows', async () => {
+    const projectPath = 'E:\\Game';
+    const exe = '"C:\\Unity\\Editor\\Unity.exe"';
+    const execFileSyncMock = vi.fn(() =>
+      `100|||${exe} -batchMode -name AssetImportWorker0 -projectPath "${projectPath}" -parentPid 200\n` +
+      `200|||${exe} -projectPath "${projectPath}"\n`);
+
+    vi.doMock('os', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('os')>();
+      return { ...actual, platform: () => 'win32' };
+    });
+    vi.doMock('child_process', () => ({ execFileSync: execFileSyncMock, execSync: vi.fn() }));
+
+    const { findUnityProcess } = await import('../src/utils/unity-process.js');
+    expect(findUnityProcess(projectPath)?.pid).toBe(200);
+  });
 });

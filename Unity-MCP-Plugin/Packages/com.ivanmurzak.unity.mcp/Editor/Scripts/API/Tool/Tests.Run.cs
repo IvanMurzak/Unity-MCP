@@ -111,7 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (requestId == null || string.IsNullOrWhiteSpace(requestId))
                 return ResponseCallValueTool<TestRunResponse>.Error("Original request with valid RequestID must be provided.");
 
-            return await MainThread.Instance.RunAsync(async () =>
+            return await MainThread.Instance.RunAsync(() =>
             {
                 if (IsTestRunActive(out var activeRequestId))
                     return ResponseCallValueTool<TestRunResponse>
@@ -205,17 +205,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] Running {testMode} tests with filters: {filterParams}");
 
-                    var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
-                    if (validation != null)
-                    {
-                        ClearActiveTestRun(requestId);
-                        return ResponseCallValueTool<TestRunResponse>.Error(validation).SetRequestID(requestId);
-                    }
-
-                    var filter = CreateTestFilter(testMode, filterParams);
-
-                    // Delay test running, first need to return response to caller
-                    MainThread.Instance.Run(() => TestRunnerApi.Execute(new ExecutionSettings(filter)));
+                    // Validation waits for Unity's test tree (up to TestListTimeout on a cold Editor), longer than the
+                    // server's plugin timeout (10 s by default), after which the server retries this call with the same
+                    // request id and gets "already running". So answer Processing now; validation failures and the run's
+                    // results are delivered through the request id.
+                    _ = ValidateAndExecuteTestRun(requestId, testMode, filterParams);
 
                     return ResponseCallValueTool<TestRunResponse>.Processing().SetRequestID(requestId);
                 }
@@ -229,7 +223,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     ClearActiveTestRun(requestId);
                     return ResponseCallValueTool<TestRunResponse>.Error(Error.TestExecutionFailed(ex.Message)).SetRequestID(requestId);
                 }
-            }).Unwrap();
+            });
         }
 
         /// <summary>Select the tests of <paramref name="query"/> into <paramref name="filterParams"/> (groups and names).</summary>
@@ -386,39 +380,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// </summary>
         static async Task<(int count, List<string> unmatched)> MatchTestTree(TestRunnerApi testRunnerApi, TestMode testMode, TestFilterParameters filterParams)
         {
-            try
+            var tcs = new TaskCompletionSource<(int, List<string>)>();
+
+            testRunnerApi.RetrieveTestList(testMode, (testRoot) =>
             {
-                var tcs = new TaskCompletionSource<(int, List<string>)>();
+                var testCount = testRoot != null
+                    ? CountFilteredTests(testRoot, filterParams)
+                    : 0;
+                var unmatched = filterParams.SelectedNames == null ? new List<string>()
+                    : testRoot == null ? filterParams.SelectedNames.ToList()
+                    : UnmatchedNames(testRoot, filterParams.SelectedNames);
 
-                testRunnerApi.RetrieveTestList(testMode, (testRoot) =>
-                {
-                    var testCount = testRoot != null
-                        ? CountFilteredTests(testRoot, filterParams)
-                        : 0;
-                    var unmatched = filterParams.SelectedNames == null ? new List<string>()
-                        : testRoot == null ? filterParams.SelectedNames.ToList()
-                        : UnmatchedNames(testRoot, filterParams.SelectedNames);
+                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
+                    Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
 
-                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                        Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
+                tcs.SetResult((testCount, unmatched));
+            });
 
-                    tcs.SetResult((testCount, unmatched));
-                });
+            // The first retrieval after the Editor starts builds the whole test tree, which can take well over a few
+            // seconds; a timeout is reported as such (ValidateTestFilters), never as "no tests found".
+            var timeoutTask = Task.Delay(TestListTimeout);
+            var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
-                // Wait for the test count result with timeout
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(5));
-                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+            if (completedTask == timeoutTask)
+                throw new TimeoutException($"Unity's test list was not retrieved within {TestListTimeout.TotalSeconds:0} s; try again");
 
-                if (completedTask == timeoutTask)
-                    throw new OperationCanceledException("Test list retrieval timed out");
-
-                return await tcs.Task;
-            }
-            catch (Exception)
-            {
-                return (0, new List<string>());
-            }
+            return await tcs.Task;
         }
+
+        static readonly TimeSpan TestListTimeout = TimeSpan.FromSeconds(60);
 
         internal static List<string> UnmatchedNames(ITestAdaptor root, IReadOnlyList<string> names)
         {

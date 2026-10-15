@@ -242,7 +242,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     FailDeferredTestRun(requestId, Error.TestExecutionFailed(ex.Message));
                     return;
                 }
-                _ = ValidateAndExecuteDeferredTestRun(requestId, testMode, filterParams);
+                _ = ValidateAndExecuteTestRun(requestId, testMode, filterParams);
                 return;
             }
 
@@ -254,9 +254,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         }
 
         /// <summary>
-        /// A deferred RQL selection gets the same check as an immediate one (never a silent subset or an empty run).
+        /// Validates the filters against Unity's test tree (never a silent subset or an empty run), then starts the run;
+        /// a failure is delivered through <paramref name="requestId"/>. Used by the immediate path and a deferred RQL selection.
         /// </summary>
-        static async Task ValidateAndExecuteDeferredTestRun(string requestId, TestMode testMode, TestFilterParameters filterParams)
+        static async Task ValidateAndExecuteTestRun(string requestId, TestMode testMode, TestFilterParameters filterParams)
         {
             try
             {
@@ -266,9 +267,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     FailDeferredTestRun(requestId, validation);
                     return;
                 }
-
-                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                    Debug.Log($"[TestRunner] Resuming test run after recompilation. Mode: {testMode}, Filters: {filterParams}");
 
                 TestRunnerApi.Execute(new ExecutionSettings(CreateTestFilter(testMode, filterParams)));
             }
