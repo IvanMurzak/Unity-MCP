@@ -170,7 +170,7 @@ unity-mcp-cli open ./MyUnityProject
 - `script-execute` — 使用 Roslyn 动态编译并执行 C# 代码
 - `script-read` — 读取脚本文件的内容
 - `script-update-or-create` — 根据提供的 C# 代码更新或创建脚本文件
-- `tests-run` — 执行 Unity 测试（EditMode/PlayMode），支持过滤和详细结果
+- `tests-run` — 执行 Unity 测试（EditMode/PlayMode）：对 `tests` 数据源的任意 RQL 选择一次运行，结果可用 RQL 过滤
 - `type-get-json-schema` — 通过反射为 C# 类型生成 JSON Schema
 
 </details>

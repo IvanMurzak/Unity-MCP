@@ -53,13 +53,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 
         private static readonly ProfilerArea[] Areas = RqlProfiler.Areas().ToArray();
 
-        private static long Count(string rql)
-        {
-            var r = Q(rql);
-            AssertOk(r);
-            return r.Value!.GetValue<long>();
-        }
-
         private static double Number(string cell) => double.Parse(cell, CultureInfo.InvariantCulture);
 
         [Test]

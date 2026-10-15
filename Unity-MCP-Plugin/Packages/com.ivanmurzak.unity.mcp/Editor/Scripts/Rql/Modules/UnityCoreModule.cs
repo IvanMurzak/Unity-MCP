@@ -39,6 +39,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
                .AddSource("console", RqlEditorApi.ConsoleEntries, $"captured Editor log entries, oldest first (last {RqlEditorApi.MaxLogEntries}): logType message timestamp stackTrace sequence")
                .AddSource("shaders", RqlEditorApi.Shaders, "every shader the Editor knows (built-in and project): name supported hasErrors")
                .AddSource("componentTypes", RqlEditorApi.ComponentTypes, "component types that can be added (name fullName namespace)")
+               .AddSource("tests", RqlTests.All,
+                   "test methods (fullName name fixture namespace assembly mode categories parameterized explicit ignored); run a selection " +
+                   "with tests-run query, e.g. tests | where fixture == \"PlayerTests\"")
+               .AddSource("testResults", RqlTests.LastResults, "results of the last tests-run: name status durationMs message stackTrace")
                .AddSource("profiler", () => RqlProfiler.Instance,
                    "Unity profiler: enabled supported memory rendering script frame modules (live snapshots, MB / ms); calls Start, Stop, " +
                    "ClearFrames, EnableModule, Save, Load (rql-schema \"profiler\" for signatures)")

@@ -111,7 +111,7 @@ Manage scene objects and hierarchy.
 ## 🧪 Testing
 | Tool | ID | Description |
 | :--- | :--- | :--- |
-| **Tests / Run** | `tests-run` | Execute Unity tests (EditMode/PlayMode) with optional filters and return detailed results. |
+| **Tests / Run** | `tests-run` | Execute Unity tests (EditMode/PlayMode): filters or an RQL `query` over the `tests` source (one run), results optionally filtered with an RQL `result` over `testResults`. |
 
 ## 💡 Advanced & Editor
 | Tool | ID | Description |
