@@ -192,11 +192,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsEmpty(UnityMcpPluginEditor.Instance.Tools!.GetAllTools().Select(t => t.Name).Where(n => n.StartsWith("profiler-")));
 
             var start = CallThroughMcpPlugin(Tool_Rql.MutateToolId, "{\"query\": \"profiler | call Start(false)\"}").Value!;
-            Assert.AreEqual(ResponseStatus.Success, start.Status, string.Join("\n", start.Content.Select(c => c.Text)));
+            Assert.AreEqual(ResponseStatus.Success, start.Status, Text(start));
             Assert.IsTrue(UnityProfiler.enabled);
 
             var read = CallThroughMcpPlugin(Tool_Rql.QueryToolId, "{\"query\": \"profiler | select enabled memory.totalAllocatedMB\"}").Value!;
-            var text = string.Join("\n", read.Content.Select(c => c.Text));
+            var text = Text(read);
             Assert.AreEqual(ResponseStatus.Success, read.Status, text);
             StringAssert.Contains("memory.totalAllocatedMB", text);
             StringAssert.Contains("true", text);

@@ -13,7 +13,6 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.TestFiles
 {
-    /// <summary>A script with the member kinds the adapters handle (in its own file so Unity can serialize it).</summary>
     /// <summary>A plain serializable class inside a component (writes into it are recorded on the component for Undo).</summary>
     [System.Serializable]
     public class RqlTestSettings
@@ -21,6 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.TestFiles
         public float speed = 1;
     }
 
+    /// <summary>A script with the member kinds the adapters handle (in its own file so Unity can serialize it).</summary>
     public class RqlTestBehaviour : MonoBehaviour
     {
         [SerializeField] private int secret = 7;

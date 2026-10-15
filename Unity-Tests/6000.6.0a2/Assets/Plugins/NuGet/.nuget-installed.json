@@ -18,6 +18,14 @@
         "ReflectorNet.dll"
       ]
     },
+    "com.IvanMurzak.Rql": {
+      "version": "0.1.0",
+      "dlls": [
+        "Rql.Contracts.dll",
+        "Rql.Execution.dll",
+        "Rql.Parser.dll"
+      ]
+    },
     "Microsoft.AspNetCore.Connections.Abstractions": {
       "version": "8.0.15",
       "dlls": [

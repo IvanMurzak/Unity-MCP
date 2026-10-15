@@ -64,14 +64,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             foreach (var s in engine.Sources.Values)
             {
-                Type? t;
-                try { t = s.Getter()?.GetType(); } catch { continue; }
+                var t = SourceItemType(engine, s);
                 if (t == null) continue;
-                var info = engine.Types.Info(t);
-                if ((info.IsList || info.IsMap) && info.ElementType != null) t = info.ElementType;
                 if (string.Equals(s.Name, name, StringComparison.OrdinalIgnoreCase) || string.Equals(t.Name, name, StringComparison.OrdinalIgnoreCase))
                     yield return t;
             }
+        }
+
+        // A source's item type: learned by calling its getter once (some walk the whole scene, read the log file or list every
+        // shader), then cached per engine and source; a source that returned nothing is asked again next time.
+        private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<RqlEngine, Dictionary<string, Type>> ItemTypes =
+            new System.Runtime.CompilerServices.ConditionalWeakTable<RqlEngine, Dictionary<string, Type>>();
+
+        private static Type? SourceItemType(RqlEngine engine, SourceRegistration source)
+        {
+            var cache = ItemTypes.GetOrCreateValue(engine);
+            if (cache.TryGetValue(source.Name, out var known)) return known;
+            Type? t;
+            try { t = source.Getter()?.GetType(); } catch { return null; }
+            if (t == null) return null;
+            var info = engine.Types.Info(t);
+            if ((info.IsList || info.IsMap) && info.ElementType != null) t = info.ElementType;
+            return cache[source.Name] = t;
         }
 
         private static string RenderType(RqlEngine engine, string typeName)

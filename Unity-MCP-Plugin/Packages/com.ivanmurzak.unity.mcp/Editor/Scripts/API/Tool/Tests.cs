@@ -231,13 +231,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // The RQL selection is evaluated here, in the recompiled domain: the tests it names are the current ones.
                 try
                 {
-                    if (!TrySelectTests(query, out var groups, out var names, out testMode, out var selectError))
+                    if (!TryApplySelection(query, ref filterParams, out testMode, out var selectError))
                     {
                         FailDeferredTestRun(requestId, selectError!);
                         return;
                     }
-                    filterParams.Groups = groups;
-                    filterParams.SelectedNames = names;
                 }
                 catch (Exception ex)
                 {

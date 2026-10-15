@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
     /// <summary>
@@ -115,9 +116,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// request instead of twice).
         /// </summary>
         public const string QuerySyntaxShort =
-            "Query part: the RQL of rql-query (full guide in its description). Sources: objects, roots, scenes, selection, prefab, " +
-            "console, shaders, componentTypes, profiler, tests, testResults, editor; unity.assets(\"t:Material\"), unity.asset(path), unity.find(\"Name\"), " +
-            "ref(\"Light#1234\"). Stages: where, select, sort, first N, get <path>, recurse children. Operators: == != < > and or " +
+            "Query part: the RQL of rql-query (full guide and the sources in its description); unity.assets(\"t:Material\"), " +
+            "unity.asset(path), unity.find(\"Name\"), ref(\"Light#1234\"). Stages: where, select, sort, first N, get <path>, recurse children. Operators: == != < > and or " +
             "not, contains, starts-with, $ is Light. Paths a.b.c, list[0], map[\"key\"]. Vectors/colors as \"(1, 2, 3)\" or " +
             "\"#ff8800\"; enums as strings.";
 

@@ -134,8 +134,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         static System.Collections.Generic.IEnumerable<ITestAdaptor> Leaves(ITestAdaptor t) =>
             t.HasChildren ? t.Children.SelectMany(Leaves) : new[] { t };
 
-        private static string Text(com.IvanMurzak.McpPlugin.Common.Model.ResponseCallTool r) => string.Join("\n", r.Content.Select(c => c.Text));
-
         [Test]
         public void ResultsAreQueryableAndProjected()
         {

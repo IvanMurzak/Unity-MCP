@@ -195,14 +195,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod);
                     if (selection != null)
                     {
-                        if (!TrySelectTests(selection, out var groups, out var names, out var selectedMode, out var selectError))
+                        if (!TryApplySelection(selection, ref filterParams, out testMode, out var selectError))
                         {
                             ClearActiveTestRun(requestId);
                             return ResponseCallValueTool<TestRunResponse>.Error(selectError!).SetRequestID(requestId);
                         }
-                        testMode = selectedMode;
-                        filterParams.Groups = groups;
-                        filterParams.SelectedNames = names;
                     }
 
                     if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
@@ -235,13 +232,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }).Unwrap();
         }
 
+        /// <summary>Select the tests of <paramref name="query"/> into <paramref name="filterParams"/> (groups and names).</summary>
+        static bool TryApplySelection(string query, ref TestFilterParameters filterParams, out TestMode mode, out string? error)
+        {
+            if (!TrySelectTests(query, out var groups, out var names, out mode, out error)) return false;
+            filterParams.Groups = groups;
+            filterParams.SelectedNames = names;
+            return true;
+        }
+
+        internal static bool TrySelectTests(string query, out string[]? groups, out TestMode mode, out string? error)
+            => TrySelectTests(query, out groups, out _, out mode, out error);
+
         /// <summary>
         /// Run <paramref name="query"/> (RQL over the <c>tests</c> source) and turn the selected tests into one anchored
         /// groupNames pattern. The mode comes from the tests; a selection mixing EditMode and PlayMode is refused.
         /// </summary>
-        internal static bool TrySelectTests(string query, out string[]? groups, out TestMode mode, out string? error)
-            => TrySelectTests(query, out groups, out _, out mode, out error);
-
         internal static bool TrySelectTests(string query, out string[]? groups, out List<string> names, out TestMode mode, out string? error)
         {
             groups = null;
