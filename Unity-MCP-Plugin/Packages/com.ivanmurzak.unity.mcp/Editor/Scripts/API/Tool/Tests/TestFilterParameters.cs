@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         public string? TestMethod { get; set; }
         /// <summary>Anchored groupNames patterns selecting exact tests (from an RQL query over the <c>tests</c> source).</summary>
         public string[]? Groups { get; set; }
-        /// <summary>The RQL selection's test names, checked against Unity's test tree before the run (not persisted).</summary>
+        /// <summary>The RQL selection's test names, checked against Unity's test tree before the run.</summary>
         public IReadOnlyList<string>? SelectedNames { get; set; }
         public bool HasGroups => Groups is { Length: > 0 };
 

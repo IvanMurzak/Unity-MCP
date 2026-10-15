@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using System.Text.Json.Nodes;
 using Rql;
 using UnityEditor;
 using UnityEditor.Compilation;
@@ -52,11 +53,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             _byName ??= (_all ??= Discover()).ToDictionary(t => t.fullName, StringComparer.Ordinal);
 
         /// <summary>The <c>testResults</c> source: the results of the last tests-run (empty before the first one).</summary>
-        public static List<RqlTestResult> LastResults() => new List<RqlTestResult>(_lastResults);
+        public static List<RqlTestResult> LastResults() => new List<RqlTestResult>(_lastResults ??= LoadLastResults());
 
-        static List<RqlTestResult> _lastResults = new List<RqlTestResult>();
+        // Kept in SessionState as well: the results outlive the domain reloads of later compiles and Play Mode entries.
+        const string LastResultsKey = "Unity_MCP_Rql_TestResults";
+        static List<RqlTestResult>? _lastResults;
 
-        internal static void SetLastResults(IEnumerable<RqlTestResult> results) => _lastResults = results.ToList();
+        internal static void SetLastResults(IEnumerable<RqlTestResult> results)
+        {
+            _lastResults = results.ToList();
+            var json = new JsonArray(_lastResults.Select(r => (JsonNode)new JsonObject
+            {
+                ["name"] = r.name,
+                ["status"] = r.status,
+                ["durationMs"] = r.durationMs,
+                ["message"] = r.message,
+                ["stackTrace"] = r.stackTrace,
+            }).ToArray());
+            SessionState.SetString(LastResultsKey, json.ToJsonString());
+        }
+
+        static List<RqlTestResult> LoadLastResults()
+        {
+            var raw = SessionState.GetString(LastResultsKey, string.Empty);
+            if (string.IsNullOrEmpty(raw)) return new List<RqlTestResult>();
+            try
+            {
+                return (JsonNode.Parse(raw) as JsonArray ?? new JsonArray()).OfType<JsonObject>().Select(o => new RqlTestResult
+                {
+                    name = (string?)o["name"] ?? "",
+                    status = (string?)o["status"] ?? "",
+                    durationMs = (double?)o["durationMs"] ?? 0,
+                    message = (string?)o["message"],
+                    stackTrace = (string?)o["stackTrace"],
+                }).ToList();
+            }
+            catch (Exception)
+            {
+                return new List<RqlTestResult>();
+            }
+        }
 
         static List<RqlTest> Discover()
         {
@@ -85,10 +121,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 foreach (var method in TypeCache.GetMethodsWithAttribute(attribute))
                 {
                     var declaring = method.DeclaringType;
-                    if (declaring == null || declaring.ContainsGenericParameters) continue;
+                    if (declaring == null) continue;
+                    // A generic base's tests still run in its closed subclasses; static classes (abstract + sealed) are fixtures.
                     if (!fixturesOf.TryGetValue(declaring, out var fixtures))
                         fixturesOf[declaring] = fixtures = TypeCache.GetTypesDerivedFrom(declaring).Prepend(declaring)
-                            .Where(t => !t.IsAbstract && !t.ContainsGenericParameters).ToArray();
+                            .Where(t => (!t.IsAbstract || t.IsSealed) && !t.ContainsGenericParameters).ToArray();
                     foreach (var fixture in fixtures)
                     {
                         var fullName = (fixture.FullName ?? fixture.Name) + "." + method.Name;

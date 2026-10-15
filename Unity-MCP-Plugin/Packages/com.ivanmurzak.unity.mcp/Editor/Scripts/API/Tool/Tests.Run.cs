@@ -126,20 +126,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // AssetDatabase.Refresh so nothing is side-effected on abort.
                 ThrowIfAnyOpenSceneIsDirty();
 
-                // An RQL selection decides the tests and their mode before any run state is written.
-                string[]? groups = null;
-                List<string>? selectedNames = null;
-                if (!string.IsNullOrWhiteSpace(query))
-                {
-                    if (testAssembly != null || testNamespace != null || testClass != null || testMethod != null)
-                        return ResponseCallValueTool<TestRunResponse>
-                            .Error("Give either 'query' or the testAssembly / testNamespace / testClass / testMethod filters, not both.")
-                            .SetRequestID(requestId);
-                    if (!TrySelectTests(query!, out groups, out var names, out var selectedMode, out var selectError))
-                        return ResponseCallValueTool<TestRunResponse>.Error(selectError!).SetRequestID(requestId);
-                    testMode = selectedMode;
-                    selectedNames = names;
-                }
+                // An RQL selection replaces the four filters. It is evaluated only after the AssetDatabase.Refresh below
+                // (and, when scripts recompile, in the new domain): tests written since the last compile must be selectable.
+                var selection = string.IsNullOrWhiteSpace(query) ? null : query;
+                if (selection != null && (!string.IsNullOrEmpty(testAssembly) || !string.IsNullOrEmpty(testNamespace) ||
+                    !string.IsNullOrEmpty(testClass) || !string.IsNullOrEmpty(testMethod)))
+                    return ResponseCallValueTool<TestRunResponse>
+                        .Error("Give either 'query' or the testAssembly / testNamespace / testClass / testMethod filters, not both.")
+                        .SetRequestID(requestId);
 
                 if (!TryBeginTestRun(requestId, out activeRequestId))
                     return ResponseCallValueTool<TestRunResponse>
@@ -170,7 +164,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         Debug.Log($"[TestRunner] Scripts are compiling. Deferring test run until after domain reload.");
 
                     // Save filter params to SessionState (survives domain reload)
-                    SavePendingTestRun(testMode, testAssembly, testNamespace, testClass, testMethod, groups);
+                    SavePendingTestRun(testMode, testAssembly, testNamespace, testClass, testMethod, selection);
 
                     // Register resume callback now — handles compilation failure (no domain reload).
                     // If compilation succeeds, domain reload destroys this registration,
@@ -198,7 +192,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 try
                 {
-                    var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod) { Groups = groups, SelectedNames = selectedNames };
+                    var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod);
+                    if (selection != null)
+                    {
+                        if (!TrySelectTests(selection, out var groups, out var names, out var selectedMode, out var selectError))
+                        {
+                            ClearActiveTestRun(requestId);
+                            return ResponseCallValueTool<TestRunResponse>.Error(selectError!).SetRequestID(requestId);
+                        }
+                        testMode = selectedMode;
+                        filterParams.Groups = groups;
+                        filterParams.SelectedNames = names;
+                    }
 
                     if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] Running {testMode} tests with filters: {filterParams}");
@@ -367,9 +372,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// <returns>Regex-safe escaped string</returns>
         static string EscapeRegex(string input)
             => Regex.Escape(input);
-
-        static async Task<int> GetMatchingTestCount(TestRunnerApi testRunnerApi, TestMode testMode, TestFilterParameters filterParams)
-            => (await MatchTestTree(testRunnerApi, testMode, filterParams)).count;
 
         /// <summary>
         /// Unity's own test tree for <paramref name="testMode"/>: how many tests the filters select, and which of the RQL
