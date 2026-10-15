@@ -1,6 +1,8 @@
 ---
 name: profiler-enable-module
 description: Toggle the wrapper's local 'enabled' flag for a named profiler module. Bookkeeping only — Unity's runtime API does not expose direct module control; for real module visibility use the Profiler window.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Enable Module

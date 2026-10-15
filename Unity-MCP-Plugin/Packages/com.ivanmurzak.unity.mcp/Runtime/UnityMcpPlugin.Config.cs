@@ -169,6 +169,15 @@ namespace com.IvanMurzak.Unity.MCP
             public Dictionary<string, bool> SkillAutoGenerate { get; set; } = new();
 
             /// <summary>
+            /// EXPERIMENTAL: the tools' data layer (Rql = RQL instead of ReflectorNet for schemas, arguments and results;
+            /// Json = ReflectorNet's JSON schemas and results). Hosts such as the AI Game Dev app may write it.
+            /// </summary>
+            public ToolPresentationFormat ToolFormat { get; set; } = ToolPresentationFormat.Rql;
+
+            /// <summary>EXPERIMENTAL: escaping of quoted text in RQL tool results.</summary>
+            public com.IvanMurzak.McpPlugin.ToolTextEscaping ToolTextEscaping { get; set; } = com.IvanMurzak.McpPlugin.ToolTextEscaping.Minimal;
+
+            /// <summary>
             /// When non-null, only the tools whose names appear in this list are enabled;
             /// all others are disabled. Set by the <c>UNITY_MCP_TOOLS</c> environment variable
             /// (comma-separated tool IDs). Not persisted to disk.
@@ -198,6 +207,8 @@ namespace com.IvanMurzak.Unity.MCP
                 Tools = DefaultTools;
                 Prompts = DefaultPrompts;
                 Resources = DefaultResources;
+                ToolFormat = ToolPresentationFormat.Rql;
+                ToolTextEscaping = com.IvanMurzak.McpPlugin.ToolTextEscaping.Minimal;
                 // Seed the LOCAL server token directly. `GenerateToken()` produces the local server secret;
                 // Cloud-mode credentials come from the shared machine store (T9), never from this config, so
                 // nothing cloud-related is seeded here. Seeding LocalToken up front keeps the generate-if-empty
@@ -246,5 +257,14 @@ namespace com.IvanMurzak.Unity.MCP
     {
         Custom,
         Cloud
+    }
+
+    /// <summary>EXPERIMENTAL tools' data layer, see <see cref="UnityMcpPlugin.UnityConnectionConfig.ToolFormat"/>.</summary>
+    public enum ToolPresentationFormat
+    {
+        /// <summary>ReflectorNet: JSON schemas, JSON arguments and structured results.</summary>
+        Json,
+        /// <summary>RQL is the data layer of every tool (schemas, arguments, results) in place of ReflectorNet.</summary>
+        Rql
     }
 }

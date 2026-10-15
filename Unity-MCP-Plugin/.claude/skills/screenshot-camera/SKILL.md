@@ -1,6 +1,8 @@
 ---
 name: screenshot-camera
 description: Capture a screenshot from a Unity `Camera` and return it as a PNG image for direct LLM inspection. Falls back to `Camera.main` (then any active camera) when `cameraRef` is null. Width and height are capped to keep response size manageable.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Screenshot / Camera
@@ -69,6 +71,10 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     }
   },
   "$defs": {
+    "UnityEngine.EntityId": {
+      "type": "string",
+      "pattern": "^[0-9]+$"
+    },
     "System.Type": {
       "type": "string"
     },
@@ -76,7 +82,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "object",
       "properties": {
         "instanceID": {
-          "type": "integer",
+          "$ref": "#/$defs/UnityEngine.EntityId",
           "description": "instanceID of the UnityEngine.Object. If it is '0' and 'path', 'name', 'assetPath' and 'assetGuid' is not provided, empty or null, then it will be used as 'null'. Priority: 1 (Recommended)"
         },
         "path": {

@@ -1,6 +1,8 @@
 ---
 name: package-search
 description: Search Unity's package registry plus locally installed packages (Git, local, embedded sources) by query string. Returns available versions and installation status. Online mode fetches exact matches from the live registry then supplements with cached substring matches.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Package Manager / Search

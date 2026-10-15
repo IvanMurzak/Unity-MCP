@@ -449,6 +449,28 @@ public class Script
         }
 
         [Test]
+        public void Script_Execute_BodyOnly_ReturnsValue_Success()
+        {
+            // A body that returns a value compiles to an object-returning method (it used to be void: CS0127).
+            new CallToolExecutor(
+                toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                json: $@"{{
+                    ""csharpCode"": {JsonEscape("var n = 6;\nreturn n * 7;")},
+                    ""isMethodBody"": true
+                }}")
+                .AddChild(new ValidateValueReturnExecutor(42))
+                .Execute();
+        }
+
+        [TestCase("return 42;", true)]
+        [TestCase("var go = GameObject.Find(\"A\");\nreturn go.name;", true)]
+        [TestCase("Debug.Log(1);", false)]
+        [TestCase("if (x) return;\nDebug.Log(1);", false)]
+        [TestCase("returnValue = 1;", false)]
+        public void Script_Execute_BodyOnly_ReturnTypeDetection(string body, bool returnsValue) =>
+            Assert.AreEqual(returnsValue, Tool_Script.BodyReturnsValue(body));
+
+        [Test]
         public void Script_Execute_ReturnsNull_Success()
         {
             var csharpCode = @"using UnityEngine;
@@ -565,7 +587,9 @@ public class Script
                     var jsonResult = result.ToJson(reflector)!;
                     Debug.Log($"Value return result:\n{jsonResult}");
 
-                    Assert.IsTrue(jsonResult.Contains("result"), "Result should contain 'result'");
+                    // The returned value itself, under either data layer (RQL text "System.Int32: 42" or ReflectorNet JSON).
+                    var expected = System.Convert.ToString(_expectedValue, System.Globalization.CultureInfo.InvariantCulture)!;
+                    StringAssert.Contains(expected, ToolResults.ResultJson(result.Value!), "Result should contain the returned value");
 
                     return result;
                 });

@@ -1,6 +1,8 @@
 ---
 name: profiler-clear-data
 description: Discard all frames currently held by the Editor Profiler (UnityEditorInternal.ProfilerDriver.ClearAllFrames). Cannot be undone.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Clear Data

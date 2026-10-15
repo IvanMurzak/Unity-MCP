@@ -1,6 +1,8 @@
 ---
 name: unity-tool-list
 description: List all Unity-MCP tools registered in the connected Unity Editor instance. Optional regex filter matches against tool name, description, and argument names/descriptions. Use the `includeDescription` / `includeInputs` toggles to control the response size.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Tool / List

@@ -1,6 +1,8 @@
 ---
 name: profiler-get-memory-stats
 description: Return memory statistics snapshot from UnityEngine.Profiling.Profiler — reserved, allocated, mono heap, graphics, etc. (in MB).
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Get Memory Stats

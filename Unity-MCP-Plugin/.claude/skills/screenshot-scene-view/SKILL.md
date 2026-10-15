@@ -1,6 +1,8 @@
 ---
 name: screenshot-scene-view
 description: Capture a screenshot from the Unity Editor Scene View at the requested size. Renders via the Scene View's active camera onto a temporary `RenderTexture`. Requires an open Scene View.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Screenshot / Scene View

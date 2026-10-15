@@ -16,6 +16,7 @@ using System.Text.Json;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
 using UnityEngine;
 using UnityEngine.TestTools;
@@ -74,14 +75,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            if (root.TryGetProperty("result", out var resultEl))
+            if (root.TryGetPropertyCI("result", out var resultEl))
                 root = resultEl;
 
             Assert.IsTrue(
-                root.TryGetProperty("Success", out var success) || root.TryGetProperty("success", out success),
+                root.TryGetPropertyCI("Success", out var success) || root.TryGetPropertyCI("success", out success),
                 "No 'Success' property found in JSON");
 
-            Assert.IsTrue(success.TryGetProperty(toolName, out var value), $"No entry for tool '{toolName}' in Success");
+            Assert.IsTrue(success.TryGetPropertyCI(toolName, out var value), $"No entry for tool '{toolName}' in Success");
             return value.GetBoolean();
         }
 
@@ -90,10 +91,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
 
-            if (root.TryGetProperty("result", out var resultEl))
+            if (root.TryGetPropertyCI("result", out var resultEl))
                 root = resultEl;
 
-            if (!root.TryGetProperty("Success", out var success) && !root.TryGetProperty("success", out success))
+            if (!root.TryGetPropertyCI("Success", out var success) && !root.TryGetPropertyCI("success", out success))
                 return 0;
 
             var count = 0;
@@ -110,7 +111,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                 ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
                 ""includeLogs"": false
-            }}").Value!.GetMessage()!;
+            }}").Value!.ToolResultJson();
 
             Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should successfully disable tool '{_testToolName}'");
 
@@ -130,7 +131,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                 ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
                 ""includeLogs"": false
-            }}").Value!.GetMessage()!;
+            }}").Value!.ToolResultJson();
 
             Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should successfully enable tool '{_testToolName}'");
             Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be enabled");
@@ -144,7 +145,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                 ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
                 ""includeLogs"": false
-            }}").Value!.GetMessage()!;
+            }}").Value!.ToolResultJson();
 
             Assert.IsTrue(GetSuccessValue(json, _testToolName!), "Should return true when tool is already in desired state");
         }
@@ -158,7 +159,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                 ""tools"": [{{ ""name"": ""{fakeName}"", ""enabled"": true }}],
                 ""includeLogs"": false
-            }}").Value!.GetMessage()!;
+            }}").Value!.ToolResultJson();
 
             Assert.IsFalse(GetSuccessValue(json, fakeName), "Should return false for non-existent tool");
         }
@@ -172,7 +173,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                 ""tools"": [{{ ""name"": ""{wrongCase}"", ""enabled"": false }}],
                 ""includeLogs"": false
-            }}").Value!.GetMessage()!;
+            }}").Value!.ToolResultJson();
 
             Assert.IsTrue(GetSuccessValue(json, wrongCase), $"Should resolve '{wrongCase}' to '{_testToolName}'");
         }
@@ -198,7 +199,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                         {{ ""name"": ""{secondTool.Name}"", ""enabled"": false }}
                     ],
                     ""includeLogs"": false
-                }}").Value!.GetMessage()!;
+                }}").Value!.ToolResultJson();
 
                 Assert.AreEqual(2, GetSuccessCount(json), "Should have results for both tools");
                 Assert.IsTrue(GetSuccessValue(json, _testToolName!), "Should have result for first tool");
@@ -219,15 +220,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                 ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
                 ""includeLogs"": true
-            }}").Value!.GetMessage()!;
+            }}").Value!.ToolResultJson();
 
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-            if (root.TryGetProperty("result", out var resultEl))
+            if (root.TryGetPropertyCI("result", out var resultEl))
                 root = resultEl;
 
             Assert.IsTrue(
-                root.TryGetProperty("Logs", out var logs) || root.TryGetProperty("logs", out logs),
+                root.TryGetPropertyCI("Logs", out var logs) || root.TryGetPropertyCI("logs", out logs),
                 "Should have Logs property");
             Assert.AreNotEqual(JsonValueKind.Null, logs.ValueKind, "Logs should not be null when includeLogs is true");
         }
@@ -240,14 +241,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                 ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
                 ""includeLogs"": false
-            }}").Value!.GetMessage()!;
+            }}").Value!.ToolResultJson();
 
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
-            if (root.TryGetProperty("result", out var resultEl))
+            if (root.TryGetPropertyCI("result", out var resultEl))
                 root = resultEl;
 
-            var hasLogs = root.TryGetProperty("Logs", out var logs) || root.TryGetProperty("logs", out logs);
+            var hasLogs = root.TryGetPropertyCI("Logs", out var logs) || root.TryGetPropertyCI("logs", out logs);
             Assert.IsTrue(!hasLogs || logs.ValueKind == JsonValueKind.Null,
                 "Logs should be null or absent when includeLogs is false");
         }
@@ -333,7 +334,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                     ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
                     ""includeLogs"": false
-                }}").Value!.GetMessage()!;
+                }}").Value!.ToolResultJson();
 
                 Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should enable tool '{_testToolName}' even when all tools start disabled");
                 Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be enabled after operation");
@@ -361,7 +362,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                     ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": false }}],
                     ""includeLogs"": false
-                }}").Value!.GetMessage()!;
+                }}").Value!.ToolResultJson();
 
                 Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should disable tool '{_testToolName}' even with LogLevel.None");
                 Assert.IsFalse(UnityMcpPluginEditor.Instance.Tools!.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be disabled");
@@ -396,7 +397,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                     ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
                     ""includeLogs"": false
-                }}").Value!.GetMessage()!;
+                }}").Value!.ToolResultJson();
 
                 Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should enable tool '{_testToolName}' with LogLevel.None and all tools disabled");
                 Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be enabled after operation");

@@ -1,6 +1,8 @@
 ---
 name: profiler-list-modules
 description: List all known profiler module names with their local 'enabled' bookkeeping flag.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / List Modules

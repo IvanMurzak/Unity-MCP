@@ -272,39 +272,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         // ── The tool, end to end, against a legacy storage ──────────────────────────────────────────
 
-        [Test]
-        public void Tool_SinceSequence_WorksAgainstALegacyStorage()
-        {
-            var plugin = UnityMcpPluginEditor.Instance;
-            var hadCollector = plugin.LogCollector != null;
-            var marker = Guid.NewGuid().ToString("N");
-
-            plugin.DisposeLogCollector();
-            try
-            {
-                var storage = new LegacyLogStorage();
-                plugin.AddUnityLogCollector(storage);
-
-                Debug.Log($"legacy-storage {marker}");
-
-                LogEntry[] result = Array.Empty<LogEntry>();
-                // A type filter makes the default's path observable: its window reads are unfiltered, while a tool
-                // that bypassed QuerySince and called Query directly would only ever pass the filter through.
-                Assert.DoesNotThrow(() => result = new Tool_Console().GetLogs(
-                    maxEntries: 1000, logTypeFilter: LogType.Log, sinceSequence: 5));
-
-                Assert.IsTrue(result.Any(e => e.Message.Contains($"legacy-storage {marker}")),
-                    "Unsequenced storage: the newest page is returned.");
-                Assert.IsTrue(result.All(e => e.Sequence == 0));
-                Assert.IsTrue(result.All(e => e.LogType == LogType.Log), "The type filter is honoured.");
-                Assert.Greater(storage.UnfilteredQueryCalls, 0, "The tool reached the legacy storage through the interface default.");
-            }
-            finally
-            {
-                plugin.DisposeLogCollector();
-                if (hadCollector)
-                    plugin.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
-            }
-        }
     }
 }

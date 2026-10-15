@@ -1,6 +1,8 @@
 ---
 name: profiler-get-rendering-stats
 description: Return current frame timing, FPS, vsync, target frame rate, threading mode, and graphics device type from Unity Time / QualitySettings / SystemInfo.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Profiler / Get Rendering Stats

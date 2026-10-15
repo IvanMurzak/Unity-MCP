@@ -1,6 +1,8 @@
 ---
 name: tests-run
 description: "Execute Unity tests (`EditMode` or `PlayMode`) and return per-test results. Supports filtering by test assembly, namespace, class, and method. Refreshes the AssetDatabase first; defers execution across domain reloads if scripts changed. Precondition: every open scene must be saved — dirty scenes abort the run."
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Tests / Run

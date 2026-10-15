@@ -1,6 +1,8 @@
 ---
 name: package-add
 description: Install a Unity package from the registry, a Git URL, or a local path. Modifies `manifest.json` and triggers package resolution; may also trigger a domain reload — the final result is delivered after the reload via the request's `requestId`. Use 'package-search' / 'package-list' for discovery first.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Package Manager / Add

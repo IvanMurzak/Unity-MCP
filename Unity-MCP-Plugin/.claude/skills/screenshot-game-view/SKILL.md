@@ -1,6 +1,8 @@
 ---
 name: screenshot-game-view
 description: Capture a screenshot of the Unity Editor's Game View by reading its internal render texture directly. Image size matches the current Game View resolution; the tool corrects Y-flip on DirectX / Metal so the output is always upright. Requires an open Game View window.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Screenshot / Game View
