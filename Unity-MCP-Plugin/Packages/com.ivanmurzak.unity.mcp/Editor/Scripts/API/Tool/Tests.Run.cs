@@ -386,39 +386,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// </summary>
         static async Task<(int count, List<string> unmatched)> MatchTestTree(TestRunnerApi testRunnerApi, TestMode testMode, TestFilterParameters filterParams)
         {
-            try
+            var tcs = new TaskCompletionSource<(int, List<string>)>();
+
+            testRunnerApi.RetrieveTestList(testMode, (testRoot) =>
             {
-                var tcs = new TaskCompletionSource<(int, List<string>)>();
+                var testCount = testRoot != null
+                    ? CountFilteredTests(testRoot, filterParams)
+                    : 0;
+                var unmatched = filterParams.SelectedNames == null ? new List<string>()
+                    : testRoot == null ? filterParams.SelectedNames.ToList()
+                    : UnmatchedNames(testRoot, filterParams.SelectedNames);
 
-                testRunnerApi.RetrieveTestList(testMode, (testRoot) =>
-                {
-                    var testCount = testRoot != null
-                        ? CountFilteredTests(testRoot, filterParams)
-                        : 0;
-                    var unmatched = filterParams.SelectedNames == null ? new List<string>()
-                        : testRoot == null ? filterParams.SelectedNames.ToList()
-                        : UnmatchedNames(testRoot, filterParams.SelectedNames);
+                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
+                    Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
 
-                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                        Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
+                tcs.SetResult((testCount, unmatched));
+            });
 
-                    tcs.SetResult((testCount, unmatched));
-                });
+            // The first retrieval after the Editor starts builds the whole test tree, which can take well over a few
+            // seconds; a timeout is reported as such (ValidateTestFilters), never as "no tests found".
+            var timeoutTask = Task.Delay(TestListTimeout);
+            var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
 
-                // Wait for the test count result with timeout
-                var timeoutTask = Task.Delay(TimeSpan.FromSeconds(5));
-                var completedTask = await Task.WhenAny(tcs.Task, timeoutTask);
+            if (completedTask == timeoutTask)
+                throw new TimeoutException($"Unity's test list was not retrieved within {TestListTimeout.TotalSeconds:0} s; try again");
 
-                if (completedTask == timeoutTask)
-                    throw new OperationCanceledException("Test list retrieval timed out");
-
-                return await tcs.Task;
-            }
-            catch (Exception)
-            {
-                return (0, new List<string>());
-            }
+            return await tcs.Task;
         }
+
+        static readonly TimeSpan TestListTimeout = TimeSpan.FromSeconds(60);
 
         internal static List<string> UnmatchedNames(ITestAdaptor root, IReadOnlyList<string> names)
         {
