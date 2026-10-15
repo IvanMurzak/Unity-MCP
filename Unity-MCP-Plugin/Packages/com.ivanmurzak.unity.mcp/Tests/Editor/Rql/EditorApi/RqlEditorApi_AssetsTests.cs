@@ -65,6 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssetDatabase.ImportAsset(path);
             var importer = (TextureImporter)AssetImporter.GetAtPath(path);
             importer.textureType = TextureImporterType.Sprite;
+            importer.spriteImportMode = SpriteImportMode.Single; // not the default on every Unity version
             importer.SaveAndReimport();
 
             var sr = new GameObject("S").AddComponent<SpriteRenderer>();

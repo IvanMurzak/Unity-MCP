@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         [Test]
         public void ShaderPropertiesAreATypedMap()
         {
-            Assert.AreEqual("(0.1, 0.2, 0.3, 1)", Cell(Q(Mat + " | select properties[\"_Color\"]")));
+            AssertTuple("(0.1, 0.2, 0.3, 1)", Cell(Q(Mat + " | select properties[\"_Color\"]")));
             Assert.AreEqual("0.5", Cell(Q(Mat + " | select properties[\"_Glossiness\"]")));
             AssertOk(M(Mat + " | set properties[\"_Glossiness\"] = 0.8, properties[\"_Color\"] = \"#ff0000\""));
             Assert.AreEqual(0.8f, _mat.GetFloat("_Glossiness"), 1e-6f);

@@ -44,6 +44,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             return node == null ? "null" : node.ToJsonString().Trim('"');
         }
 
+        /// <summary>A tuple such as "(0.1, 0.2, 0.3, 1)", compared per component: some Unity versions round-trip colors
+        /// through the color space, so 0.1 can come back as 0.09999997.</summary>
+        protected static void AssertTuple(string expected, string actual, float tolerance = 1e-4f)
+        {
+            float[] Parse(string t) => t.Trim('(', ')').Split(',').Select(x => float.Parse(x.Trim(), System.Globalization.CultureInfo.InvariantCulture)).ToArray();
+            var e = Parse(expected);
+            var a = Parse(actual);
+            Assert.AreEqual(e.Length, a.Length, actual);
+            for (int i = 0; i < e.Length; i++) Assert.AreEqual(e[i], a[i], tolerance, actual);
+        }
+
         protected static void AssertOk(QueryResult r) => Assert.IsTrue(r.Ok, Table(r));
 
         /// <summary>The query failed with <paramref name="code"/> and its message contains <paramref name="text"/>.</summary>

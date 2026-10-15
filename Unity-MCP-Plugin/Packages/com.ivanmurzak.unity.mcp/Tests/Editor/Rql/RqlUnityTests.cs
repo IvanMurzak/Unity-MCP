@@ -140,7 +140,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             var id = Cell(Q("objects | where $ is GameObject and components.any($ is MeshRenderer) | select $ref"));
 
             var before = Q($"ref(\"{id}\") | get components | where $ is Renderer | select sharedMaterial.name c=sharedMaterial.properties[\"_EmissionColor\"]");
-            Assert.AreEqual("(0.2, 0.4, 0.6, 1)", Cell(before, 0, 1));
+            AssertTuple("(0.2, 0.4, 0.6, 1)", Cell(before, 0, 1));
 
             var set = M($"ref(\"{id}\") | get components | where $ is Renderer | set sharedMaterial.properties[\"_EmissionColor\"].a = 0.25");
             Assert.IsTrue(set.Ok, Table(set));
