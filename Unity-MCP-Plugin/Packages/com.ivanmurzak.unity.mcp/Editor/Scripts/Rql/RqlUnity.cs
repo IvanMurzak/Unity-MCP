@@ -47,19 +47,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
             engine.Mutations.Enabled = true;
             // One Undo group per mutation: recorded owners, created / destroyed objects and added components undo together.
-            int undoGroup = -1;
             engine.Mutations.BeforeWrite = records =>
             {
-                if (records.Any(ChangesProjectState)) _wrote = true; // Mutate saves only after writes that change project state
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("RQL mutation");
-                undoGroup = Undo.GetCurrentGroup();
+                _undoGroup = Undo.GetCurrentGroup();
                 var owners = Owners(records);
                 if (owners.Count > 0) Undo.RecordObjects(owners.ToArray(), "RQL mutation");
             };
+            // Committed gets exactly the applied records: every set after all writes succeeded, the completed calls when a
+            // later call threw. A set the engine rolled back never gets here, so it does not trigger Mutate's save.
             engine.Mutations.Committed = records =>
             {
-                if (undoGroup >= 0) { Undo.CollapseUndoOperations(undoGroup); undoGroup = -1; }
+                if (records.Any(ChangesProjectState)) _wrote = true; // Mutate saves only after writes that change project state
+                CloseUndoGroup();
                 var scenes = new HashSet<Scene>();
                 foreach (var o in Owners(records))
                 {
@@ -77,23 +78,56 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return engine;
         }
 
-        /// <summary>False for writes to [RqlNoAutoSave] types and calls of [RqlNoAutoSave] methods (all overloads).</summary>
+        // The open "RQL mutation" Undo group (BeforeWrite), or -1.
+        private static int _undoGroup = -1;
+
+        /// <summary>
+        /// Collapse the running mutation's Undo group into one step. Also called by <see cref="Mutate"/> when the engine
+        /// never reached Committed (a rolled-back set, a first call that threw): Undo operations its setters / calls
+        /// registered before the failure (e.g. Undo.SetTransformParent and its rollback) then form one step as well.
+        /// </summary>
+        private static void CloseUndoGroup()
+        {
+            if (_undoGroup < 0) return;
+            Undo.CollapseUndoOperations(_undoGroup);
+            _undoGroup = -1;
+        }
+
+        /// <summary>
+        /// False for writes to [RqlNoAutoSave] types or [RqlNoAutoSave] properties / fields of the item (the first member of
+        /// the written path) and for calls of [RqlNoAutoSave] methods (all overloads).
+        /// </summary>
         internal static bool ChangesProjectState(MutationRecord record)
         {
             var type = record.Item?.GetType();
             if (type == null) return true;
-            return !NoAutoSave.GetOrAdd((type, record.Method?.Name), key =>
+            var isCall = record.Method != null;
+            var member = isCall ? record.Method!.Name : FirstMember(record.Member);
+            return !NoAutoSave.GetOrAdd((type, member, isCall), key =>
             {
                 if (key.type.IsDefined(typeof(RqlNoAutoSaveAttribute), false)) return true;
-                if (key.method == null) return false;
-                var overloads = key.type.GetMethods().Where(m => m.Name == key.method).ToList();
+                if (string.IsNullOrEmpty(key.member)) return false;
+                if (!key.isCall)
+                    return key.type.GetMember(key.member!, System.Reflection.MemberTypes.Property | System.Reflection.MemberTypes.Field,
+                            System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance)
+                        .Any(m => m.IsDefined(typeof(RqlNoAutoSaveAttribute), false));
+                var overloads = key.type.GetMethods().Where(m => m.Name == key.member).ToList();
                 return overloads.Count > 0 && overloads.All(m => m.IsDefined(typeof(RqlNoAutoSaveAttribute), false));
             });
         }
 
-        // (type, called method or null for a write) -> it changes no project state; types and attributes are fixed per domain.
-        private static readonly System.Collections.Concurrent.ConcurrentDictionary<(Type type, string? method), bool> NoAutoSave =
-            new System.Collections.Concurrent.ConcurrentDictionary<(Type, string?), bool>();
+        // "selection" / "transform.position" / "properties[\"_Color\"]" -> the member written on the item.
+        private static string FirstMember(string path)
+        {
+            var end = path.IndexOfAny(MemberPathBreaks);
+            return end < 0 ? path : path.Substring(0, end);
+        }
+
+        private static readonly char[] MemberPathBreaks = { '.', '[' };
+
+        // (type, called method or first written member, call?) -> it changes no project state; fixed per domain.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<(Type type, string? member, bool isCall), bool> NoAutoSave =
+            new System.Collections.Concurrent.ConcurrentDictionary<(Type, string?, bool), bool>();
 
         private static List<Object> Owners(IReadOnlyList<MutationRecord> records)
         {

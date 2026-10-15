@@ -27,9 +27,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public static readonly RqlEditorApi Instance = new RqlEditorApi();
 
         [RqlDescription("true while in Play Mode; assign to enter or exit Play Mode")]
+        [RqlNoAutoSave] // entering Play Mode must not save the user's unsaved scene edits
         public bool isPlaying { get => EditorApplication.isPlaying; set => EditorApplication.isPlaying = value; }
 
         [RqlDescription("Play Mode paused; assign to pause / resume")]
+        [RqlNoAutoSave]
         public bool isPaused { get => EditorApplication.isPaused; set => EditorApplication.isPaused = value; }
 
         [RqlDescription("scripts are compiling")]
@@ -43,6 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public string projectPath => UnityMcpPluginEditor.ProjectRootPath;
 
         [RqlDescription("objects selected in the Editor; assign a list of refs to change the selection")]
+        [RqlNoAutoSave]
         public Object[] selection { get => Selection.objects; set => Selection.objects = value ?? Array.Empty<Object>(); }
 
         [RqlCallable("create a GameObject (optionally under a parent, as a primitive: Cube, Sphere, Capsule, Cylinder, Plane, Quad; at a local position) and return it")]

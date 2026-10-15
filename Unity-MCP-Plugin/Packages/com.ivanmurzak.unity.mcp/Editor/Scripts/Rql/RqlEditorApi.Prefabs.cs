@@ -42,14 +42,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return stage.assetPath;
         }
 
-        [RqlCallable("leave prefab editing mode (save = true saves first, false discards the changes)")]
+        [RqlCallable("leave the prefab being edited, back to the previous stage (save = true saves first, false discards the changes)")]
         public void ClosePrefab(bool save = true)
         {
             var stage = PrefabStageUtility.GetCurrentPrefabStage() ?? throw new InvalidOperationException("no prefab is open");
             if (save) Save(stage);
             // A dirty stage makes Unity ask "save changes?" in a modal dialog on leaving, which blocks the main thread.
             stage.ClearDirtiness();
-            StageUtility.GoToMainStage();
+            // Back one stage, not to the main stage: leaving the outer stages of a nested prefab edit would ask the same
+            // modal "save changes?" for each dirty one.
+            StageUtility.GoBackToPreviousStage();
         }
 
         private static void Save(PrefabStage stage)

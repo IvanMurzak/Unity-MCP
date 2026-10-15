@@ -232,10 +232,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }).Unwrap();
         }
 
-        /// <summary>
-        /// Run <paramref name="query"/> (RQL over the <c>tests</c> source) and turn the selected tests into one anchored
-        /// groupNames pattern. The mode comes from the tests; a selection mixing EditMode and PlayMode is refused.
-        /// </summary>
         /// <summary>Select the tests of <paramref name="query"/> into <paramref name="filterParams"/> (groups and names).</summary>
         static bool TryApplySelection(string query, ref TestFilterParameters filterParams, out TestMode mode, out string? error)
         {
@@ -248,6 +244,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         internal static bool TrySelectTests(string query, out string[]? groups, out TestMode mode, out string? error)
             => TrySelectTests(query, out groups, out _, out mode, out error);
 
+        /// <summary>
+        /// Run <paramref name="query"/> (RQL over the <c>tests</c> source) and turn the selected tests into one anchored
+        /// groupNames pattern. The mode comes from the tests; a selection mixing EditMode and PlayMode is refused.
+        /// </summary>
         internal static bool TrySelectTests(string query, out string[]? groups, out List<string> names, out TestMode mode, out string? error)
         {
             groups = null;

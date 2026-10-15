@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 
+#nullable enable
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
     /// <summary>

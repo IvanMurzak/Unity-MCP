@@ -41,6 +41,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         }
 
         [Test]
+        public void ASelectionChangeDoesNotSaveUnrelatedSceneEdits()
+        {
+            var path = $"{Folder}/Untouched.unity";
+            AssertOk(M($"editor | call NewScene(\"{path}\", true)"));
+            var scene = SceneManager.GetActiveScene();
+            new UnityEngine.GameObject("UnsavedEdit");
+            EditorSceneManager.MarkSceneDirty(scene);
+            AssertOk(RqlUnity.Mutate("editor | set selection = []"));
+            Assert.IsTrue(scene.isDirty);
+            StringAssert.DoesNotContain("UnsavedEdit", File.ReadAllText(path));
+        }
+
+        [Test]
         public void AnUntitledSceneIsReportedNotSaved()
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);

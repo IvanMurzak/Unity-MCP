@@ -22,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     {
         private static int _mutating;
 
-        // Set by the engine's BeforeWrite hook: the running Mutate reached the write phase (a set or call with targets).
+        // Set by the engine's Committed hook: the running Mutate applied a set or call that changes project state.
         private static bool _wrote;
 
         /// <summary>
@@ -36,9 +36,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         /// <summary>
         /// Run a set / call query and save the result to disk: changed assets, modified scenes and the open prefab. Saving
-        /// runs after failed queries too, because completed calls are not rolled back; a query that wrote nothing (a parse
-        /// error, no matching items) saves nothing, so it never persists unrelated unsaved edits. Untitled scenes (no path
-        /// yet) stay in memory and are reported as a warning.
+        /// runs after failed queries too when calls completed before the failure (they are not rolled back); a query that
+        /// applied nothing (a parse error, no matching items, a set the engine rolled back) saves nothing, so it never
+        /// persists unrelated unsaved edits. Untitled scenes (no path yet) stay in memory and are reported as a warning.
         /// </summary>
         public static QueryResult Mutate(string query, bool dryRun = false)
         {
@@ -52,10 +52,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             finally
             {
                 _mutating--;
+                if (_mutating == 0) CloseUndoGroup(); // a mutation that failed before Committed
             }
             if (!dryRun && _mutating == 0 && _wrote)
-                foreach (var problem in SaveChanges())
+            {
+                List<string> problems;
+                // The changes are applied: a save that throws must not turn the receipt into a tool error.
+                try { problems = SaveChanges(); }
+                catch (Exception ex) { problems = new List<string> { $"saving failed: {ex.GetType().Name}: {ex.Message}" }; }
+                foreach (var problem in problems)
                     result.Diagnostics.Add(Diagnostic.Warning("not-saved", problem));
+            }
             return result;
         }
 
@@ -82,6 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>Save the prefab open in prefab editing mode and clear its dirty flag; the problem, or null when saved.</summary>
         internal static string? SavePrefabStage(PrefabStage stage)
         {
+            if (stage.prefabContentsRoot == null) return $"the prefab '{stage.assetPath}' has no root object to save";
             PrefabUtility.SaveAsPrefabAsset(stage.prefabContentsRoot, stage.assetPath, out var saved);
             if (!saved) return $"the prefab '{stage.assetPath}' could not be saved";
             stage.ClearDirtiness();
