@@ -86,6 +86,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             return UnityMcpPluginEditor.Instance.Tools!.RunCallTool(new RequestCallTool(tool, args)).Result;
         }
 
+        /// <summary>A tool response's text content, one block per line.</summary>
+        protected static string Text(ResponseCallTool response) => string.Join("\n", response.Content.Select(c => c.Text));
+
         protected static string Schema(string type) => RqlUnitySchema.Render(RqlUnity.Engine, type);
     }
 }

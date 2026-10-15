@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using Rql;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -42,11 +43,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public bool SaveScenes()
         {
             // Not SaveOpenScenes: it opens the modal "Save Scene" dialog for an untitled scene, which blocks the main thread.
-            var ok = true;
-            foreach (var scene in RqlUnity.Scenes())
-                if (scene.isDirty && (string.IsNullOrEmpty(scene.path) || !EditorSceneManager.SaveScene(scene)))
-                    ok = false;
-            return ok;
+            var problems = new List<string>();
+            RqlUnity.SaveDirtyScenes(problems);
+            return problems.Count == 0;
         }
     }
 }

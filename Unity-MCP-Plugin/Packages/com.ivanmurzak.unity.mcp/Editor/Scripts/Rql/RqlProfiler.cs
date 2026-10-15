@@ -132,7 +132,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         internal static string ProjectPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("a file path is required");
-            var root = Path.GetFullPath(Path.GetDirectoryName(Application.dataPath) ?? ".");
+            var root = Path.GetFullPath(UnityMcpPluginEditor.ProjectRootPath);
             var full = Path.GetFullPath(Path.Combine(root, path));
             var prefix = root.EndsWith(Path.DirectorySeparatorChar.ToString()) ? root : root + Path.DirectorySeparatorChar;
             if (!full.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))

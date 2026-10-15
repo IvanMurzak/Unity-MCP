@@ -82,11 +82,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             var type = record.Item?.GetType();
             if (type == null) return true;
-            if (type.IsDefined(typeof(RqlNoAutoSaveAttribute), false)) return false;
-            if (record.Method == null) return true;
-            var overloads = type.GetMethods().Where(m => m.Name == record.Method.Name).ToList();
-            return overloads.Count == 0 || !overloads.All(m => m.IsDefined(typeof(RqlNoAutoSaveAttribute), false));
+            return !NoAutoSave.GetOrAdd((type, record.Method?.Name), key =>
+            {
+                if (key.type.IsDefined(typeof(RqlNoAutoSaveAttribute), false)) return true;
+                if (key.method == null) return false;
+                var overloads = key.type.GetMethods().Where(m => m.Name == key.method).ToList();
+                return overloads.Count > 0 && overloads.All(m => m.IsDefined(typeof(RqlNoAutoSaveAttribute), false));
+            });
         }
+
+        // (type, called method or null for a write) -> it changes no project state; types and attributes are fixed per domain.
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<(Type type, string? method), bool> NoAutoSave =
+            new System.Collections.Concurrent.ConcurrentDictionary<(Type, string?), bool>();
 
         private static List<Object> Owners(IReadOnlyList<MutationRecord> records)
         {

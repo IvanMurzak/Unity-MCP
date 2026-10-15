@@ -40,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public string unityVersion => Application.unityVersion;
 
-        public string projectPath => System.IO.Path.GetDirectoryName(Application.dataPath) ?? "";
+        public string projectPath => UnityMcpPluginEditor.ProjectRootPath;
 
         [RqlDescription("objects selected in the Editor; assign a list of refs to change the selection")]
         public Object[] selection { get => Selection.objects; set => Selection.objects = value ?? Array.Empty<Object>(); }
@@ -52,9 +52,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (string.IsNullOrEmpty(primitive)) go = new GameObject(name);
             else if (Enum.TryParse<PrimitiveType>(primitive, ignoreCase: true, out var type)) { go = GameObject.CreatePrimitive(type); go.name = name; }
             else throw new ArgumentException($"unknown primitive '{primitive}' (Cube, Sphere, Capsule, Cylinder, Plane, Quad)");
+            return Place(go, parent, position, "RQL create " + name);
+        }
+
+        /// <summary>A new object under <paramref name="parent"/> at a local <paramref name="position"/>, registered for Undo.</summary>
+        private static GameObject Place(GameObject go, GameObject? parent, Vector3? position, string undoName)
+        {
             if (parent != null) go.transform.SetParent(parent.transform, false);
             if (position.HasValue) go.transform.localPosition = position.Value;
-            Undo.RegisterCreatedObjectUndo(go, "RQL create " + name);
+            Undo.RegisterCreatedObjectUndo(go, undoName);
             return go;
         }
 

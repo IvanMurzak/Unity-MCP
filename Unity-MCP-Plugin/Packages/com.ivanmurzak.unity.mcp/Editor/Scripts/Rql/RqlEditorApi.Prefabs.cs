@@ -23,11 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public GameObject InstantiatePrefab(string path, GameObject? parent = null, Vector3? position = null)
         {
             var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path) ?? throw new ArgumentException($"no prefab at '{path}'");
-            var go = (GameObject)PrefabUtility.InstantiatePrefab(prefab);
-            if (parent != null) go.transform.SetParent(parent.transform, false);
-            if (position.HasValue) go.transform.localPosition = position.Value;
-            Undo.RegisterCreatedObjectUndo(go, "RQL instantiate " + prefab.name);
-            return go;
+            return Place((GameObject)PrefabUtility.InstantiatePrefab(prefab), parent, position, "RQL instantiate " + prefab.name);
         }
 
         [RqlCallable("open a prefab asset in prefab editing mode; its contents are then the prefab source")]
@@ -43,7 +39,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             var stage = PrefabStageUtility.GetCurrentPrefabStage() ?? throw new InvalidOperationException("no prefab is open (OpenPrefab first)");
             Save(stage);
-            stage.ClearDirtiness();
             return stage.assetPath;
         }
 
@@ -59,8 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         private static void Save(PrefabStage stage)
         {
-            PrefabUtility.SaveAsPrefabAsset(stage.prefabContentsRoot, stage.assetPath, out var saved);
-            if (!saved) throw new InvalidOperationException($"could not save the prefab '{stage.assetPath}'");
+            if (RqlUnity.SavePrefabStage(stage) is string problem) throw new InvalidOperationException(problem);
         }
 
         /// <summary>The <c>prefab</c> source: the root of the prefab open in prefab editing mode, or nothing.</summary>

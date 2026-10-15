@@ -73,12 +73,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (EditorApplication.isPlaying) return problems; // play mode scene changes are temporary by design
 
             var stage = PrefabStageUtility.GetCurrentPrefabStage();
-            if (stage != null && stage.scene.isDirty)
-            {
-                PrefabUtility.SaveAsPrefabAsset(stage.prefabContentsRoot, stage.assetPath, out var saved);
-                if (saved) stage.ClearDirtiness();
-                else problems.Add($"the prefab '{stage.assetPath}' could not be saved");
-            }
+            if (stage != null && stage.scene.isDirty && SavePrefabStage(stage) is string prefabProblem)
+                problems.Add(prefabProblem);
+            SaveDirtyScenes(problems);
+            return problems;
+        }
+
+        /// <summary>Save the prefab open in prefab editing mode and clear its dirty flag; the problem, or null when saved.</summary>
+        internal static string? SavePrefabStage(PrefabStage stage)
+        {
+            PrefabUtility.SaveAsPrefabAsset(stage.prefabContentsRoot, stage.assetPath, out var saved);
+            if (!saved) return $"the prefab '{stage.assetPath}' could not be saved";
+            stage.ClearDirtiness();
+            return null;
+        }
+
+        /// <summary>
+        /// Save every modified loaded scene, adding what could not be saved to <paramref name="problems"/>. Untitled scenes are
+        /// skipped (saving one would open the modal "Save Scene" dialog, which blocks the main thread).
+        /// </summary>
+        internal static void SaveDirtyScenes(List<string> problems)
+        {
             foreach (var scene in Scenes())
             {
                 if (!scene.isDirty) continue;
@@ -87,7 +102,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 else if (!EditorSceneManager.SaveScene(scene))
                     problems.Add($"scene '{scene.path}' could not be saved");
             }
-            return problems;
         }
 
         private static string Name(Scene scene) => string.IsNullOrEmpty(scene.name) ? "Untitled" : scene.name;
