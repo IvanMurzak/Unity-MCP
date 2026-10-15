@@ -25,7 +25,7 @@ unity-mcp-cli run-tool rql-mutate --input '{"query": "objects | where name == \"
 
 ```
 RQL: source | stage | stage ...
-Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, prefab (the prefab open in prefab editing mode), console (Editor log entries), shaders, componentTypes, editor (Editor state and operations). Assets: unity.assets("t:Material") or unity.assets("t:Prefab", "Assets/Enemies"), unity.asset("Assets/Mats/Red.mat"). ref("Light#1234") resolves a $ref; unity.find("Player") or unity.find("Level/Pillar_1") a GameObject by unique name or path.
+Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, prefab (the prefab open in prefab editing mode), console (Editor log entries), shaders, componentTypes, profiler (memory / rendering / frame snapshots; call Start / Stop / Save), editor (Editor state and operations). Assets: unity.assets("t:Material") or unity.assets("t:Prefab", "Assets/Enemies"), unity.asset("Assets/Mats/Red.mat"). ref("Light#1234") resolves a $ref; unity.find("Player") or unity.find("Level/Pillar_1") a GameObject by unique name or path.
 Stages:
   where <predicate>                  filter
   select a b.c alias=(expr)          project columns (wrap computed expressions in parentheses)
@@ -67,6 +67,7 @@ Scenes, prefabs, assets, Editor state:
   editor | call OpenPrefab("Assets/Prefabs/Enemy.prefab")  then  prefab | recurse children | …  then  editor | call ClosePrefab()
   editor | call CreateMaterial("Assets/Mats/Glow.mat")        editor | call MoveAsset("Assets/A.mat", "Assets/Mats/A.mat")
   editor | set selection = [ref("GameObject#1234")]         editor | set isPlaying = true
+  profiler | call Start()      profiler | call Save("Logs/profile.json")      (read: profiler | select memory frame)
 ```
 
 ## Sources
@@ -78,6 +79,7 @@ Scenes, prefabs, assets, Editor state:
 | `editor` | Editor state (isPlaying, isPaused, selection …) and operations: CreateGameObject, OpenScene, NewScene, SaveScenes, InstantiatePrefab, OpenPrefab / SavePrefab / ClosePrefab, CopyAsset / MoveAsset / DeleteAsset / CreateFolder, CreateMaterial, SaveAssets, RefreshAssets, ClearConsole, ExecuteMenuItem (rql-schema "editor" for signatures) |
 | `objects` | every GameObject in the loaded scenes, depth-first, inactive ones included |
 | `prefab` | root GameObject of the prefab open in prefab editing mode (none otherwise) |
+| `profiler` | Unity profiler: enabled supported memory rendering script frame modules (live snapshots, MB / ms); calls Start, Stop, ClearFrames, EnableModule, Save, Load (rql-schema "profiler" for signatures) |
 | `roots` | root GameObjects of the loaded scenes |
 | `scenes` | loaded scenes |
 | `selection` | objects selected in the Editor |
@@ -89,5 +91,6 @@ Scenes, prefabs, assets, Editor state:
 ## Installed RQL modules
 
 - `com.IvanMurzak.Unity.MCP.Editor.Rql.Modules.UnityCoreModule`
+- `com.IvanMurzak.Unity.MCP.Editor.Rql.ToolTypesModule`
 - `com.IvanMurzak.Unity.MCP.Editor.Rql.Mathematics.MathematicsModule`
 - `com.IvanMurzak.Unity.MCP.Editor.Rql.Physics3D.PhysicsModule`

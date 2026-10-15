@@ -16,8 +16,9 @@ McpPlugin and its tool plumbing (ReflectorNet for tool parameters and the Runtim
 | `editor-application-*`, `editor-selection-*` | `editor` members `isPlaying`, `isPaused`, `selection` (writable) |
 | `console-get-logs / clear-logs` | `console` source (`where logType == "Error"`, `sequence > N`), `editor \| call ClearConsole()` |
 | `reflection-method-*`, `type-get-json-schema` | RQL `call`, `rql-schema` |
+| `profiler-*` (12 tools) | `profiler` source: `enabled`, `supported`, `memory`, `rendering`, `script`, `frame`, `modules`; `profiler \| call Start / Stop / ClearFrames / EnableModule / Save / Load` |
 
-Kept as tools: `script-*`, `tests-run`, `screenshot-*`, `package-*`, `profiler-*`, `unity-tool-list`,
+Kept as tools: `script-*`, `tests-run`, `screenshot-*`, `package-*`, `unity-tool-list`,
 `tool-set-enabled-state`, `ping`, skills tools.
 
 ## Code
@@ -25,7 +26,7 @@ Kept as tools: `script-*`, `tests-run`, `screenshot-*`, `package-*`, `profiler-*
 - `Editor/Plugins/Rql/` — RQL DLLs (netstandard2.1, Editor-only). Rebuild with `shared/RQL/unity/build-rql-dlls.sh` and copy.
 - `Editor/Scripts/Rql/` — engine (`RqlUnity`: Undo group per mutation, dirty marking; `RqlUnity.Mutate` saves assets,
   scenes and the open prefab after every `rql-mutate`, modules flush deferred file writes on `RqlUnity.Saving`), `RqlEditorApi` (the `editor`
-  source), schema, type index, guide texts, `Modules/UnityCoreModule.cs`, one adapter per file in `Adapters/`.
+  source), `RqlProfiler` (the `profiler` source), schema, type index, guide texts, `Modules/UnityCoreModule.cs`, one adapter per file in `Adapters/`.
 - `Editor/Scripts/API/Tool/Rql*.cs` — the tools; `Editor/Scripts/Skills/Skill_Rql.cs` — the `unity-rql` skill.
 - `Editor/RqlModules/<Feature>/` — optional modules in their own asmdef, compiled only when the Unity module exists
   (`versionDefines` + `defineConstraints`): Physics. Feature modules live in the extensions (e.g. the Particle System

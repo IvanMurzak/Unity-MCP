@@ -30,7 +30,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public const string Language =
             "RQL: source | stage | stage ...\n" +
             "Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, prefab (the prefab open " +
-            "in prefab editing mode), console (Editor log entries), shaders, componentTypes, editor (Editor state and operations). " +
+            "in prefab editing mode), console (Editor log entries), shaders, componentTypes, profiler (memory / rendering / frame " +
+            "snapshots; call Start / Stop / Save), editor (Editor state and operations). " +
             "Assets: unity.assets(\"t:Material\") or unity.assets(\"t:Prefab\", \"Assets/Enemies\"), unity.asset(\"Assets/Mats/Red.mat\"). " +
             "ref(\"Light#1234\") resolves a $ref; unity.find(\"Player\") or unity.find(\"Level/Pillar_1\") a GameObject by unique name or path.\n" +
             "Stages:\n" +
@@ -95,7 +96,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name == \"Crate\" | call SaveAsPrefab(\"Assets/Prefabs/Crate.prefab\")\n" +
             "  editor | call OpenPrefab(\"Assets/Prefabs/Enemy.prefab\")  then  prefab | recurse children | …  then  editor | call ClosePrefab()\n" +
             "  editor | call CreateMaterial(\"Assets/Mats/Glow.mat\")        editor | call MoveAsset(\"Assets/A.mat\", \"Assets/Mats/A.mat\")\n" +
-            "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true\n";
+            "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true\n" +
+            "  profiler | call Start()      profiler | call Save(\"Logs/profile.json\")      (read: profiler | select memory frame)\n";
 
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
@@ -113,7 +115,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// </summary>
         public const string QuerySyntaxShort =
             "Query part: the RQL of rql-query (full guide in its description). Sources: objects, roots, scenes, selection, prefab, " +
-            "console, shaders, componentTypes, editor; unity.assets(\"t:Material\"), unity.asset(path), unity.find(\"Name\"), " +
+            "console, shaders, componentTypes, profiler, editor; unity.assets(\"t:Material\"), unity.asset(path), unity.find(\"Name\"), " +
             "ref(\"Light#1234\"). Stages: where, select, sort, first N, get <path>, recurse children. Operators: == != < > and or " +
             "not, contains, starts-with, $ is Light. Paths a.b.c, list[0], map[\"key\"]. Vectors/colors as \"(1, 2, 3)\" or " +
             "\"#ff8800\"; enums as strings.";
