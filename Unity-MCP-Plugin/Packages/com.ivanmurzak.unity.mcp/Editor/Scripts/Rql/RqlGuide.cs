@@ -31,7 +31,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "RQL: source | stage | stage ...\n" +
             "Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, prefab (the prefab open " +
             "in prefab editing mode), console (Editor log entries), shaders, componentTypes, profiler (memory / rendering / frame " +
-            "snapshots; call Start / Stop / Save), editor (Editor state and operations). " +
+            "snapshots; call Start / Stop / Save), tests (test methods; run a selection with tests-run query), testResults (last run), " +
+            "editor (Editor state and operations). " +
             "Assets: unity.assets(\"t:Material\") or unity.assets(\"t:Prefab\", \"Assets/Enemies\"), unity.asset(\"Assets/Mats/Red.mat\"). " +
             "ref(\"Light#1234\") resolves a $ref; unity.find(\"Player\") or unity.find(\"Level/Pillar_1\") a GameObject by unique name or path.\n" +
             "Stages:\n" +
@@ -115,7 +116,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// </summary>
         public const string QuerySyntaxShort =
             "Query part: the RQL of rql-query (full guide in its description). Sources: objects, roots, scenes, selection, prefab, " +
-            "console, shaders, componentTypes, profiler, editor; unity.assets(\"t:Material\"), unity.asset(path), unity.find(\"Name\"), " +
+            "console, shaders, componentTypes, profiler, tests, testResults, editor; unity.assets(\"t:Material\"), unity.asset(path), unity.find(\"Name\"), " +
             "ref(\"Light#1234\"). Stages: where, select, sort, first N, get <path>, recurse children. Operators: == != < > and or " +
             "not, contains, starts-with, $ is Light. Paths a.b.c, list[0], map[\"key\"]. Vectors/colors as \"(1, 2, 3)\" or " +
             "\"#ff8800\"; enums as strings.";
