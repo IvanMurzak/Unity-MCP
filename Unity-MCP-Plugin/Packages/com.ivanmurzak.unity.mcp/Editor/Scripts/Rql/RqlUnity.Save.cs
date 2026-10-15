@@ -31,6 +31,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// </summary>
         public static event Action? Saving;
 
+        /// <summary>
+        /// Raised by <see cref="Mutate"/> when its query ended without saving (nothing applied, a rolled-back set, a dry run, an
+        /// error): modules drop the file writes they deferred during it (e.g. restore <c>.inputactions</c> files' state).
+        /// </summary>
+        public static event Action? Discarded;
+
         /// <summary>True while <see cref="Mutate"/> runs a query: writes may be deferred to <see cref="Saving"/>.</summary>
         public static bool InMutation => _mutating > 0;
 
@@ -49,11 +55,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             {
                 result = Engine.Execute(query, null, new QueryOptions { AllowMutation = true, DryRun = dryRun });
             }
+            catch
+            {
+                if (_mutating == 1) RaiseDiscarded();
+                throw;
+            }
             finally
             {
                 _mutating--;
                 if (_mutating == 0) CloseUndoGroup(); // a mutation that failed before Committed
             }
+            if (_mutating == 0 && (dryRun || !_wrote))
+                foreach (var problem in RaiseDiscarded())
+                    result.Diagnostics.Add(Diagnostic.Warning("not-discarded", problem));
             if (!dryRun && _mutating == 0 && _wrote)
             {
                 List<string> problems;
@@ -64,6 +78,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                     result.Diagnostics.Add(Diagnostic.Warning("not-saved", problem));
             }
             return result;
+        }
+
+        private static List<string> RaiseDiscarded()
+        {
+            var problems = new List<string>();
+            if (Discarded != null)
+                foreach (Action discard in Discarded.GetInvocationList())
+                {
+                    try { discard(); }
+                    catch (Exception ex) { problems.Add(ex.Message); }
+                }
+            return problems;
         }
 
         /// <summary>Write every pending change to disk; returns what could not be saved.</summary>

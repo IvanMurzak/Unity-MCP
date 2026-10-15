@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "9";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "10";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -122,6 +122,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // compile-fail against 5.0.0. 5.1.1 adds defensive try/catch around
             // reflection so the documented no-throw contract on Try* methods holds.
             new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.4.2",  includeInBuild: true),
+            // RQL (the query language of rql-query / rql-mutate and the tools' data layer): Editor-only, so it never
+            // reaches player builds. Its only dependency is System.Text.Json 8.0.5, the version pinned below.
+            new NuGetPackage("com.IvanMurzak.Rql",                                    "0.1.0"),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),

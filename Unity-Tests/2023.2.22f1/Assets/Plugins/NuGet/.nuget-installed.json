@@ -12,6 +12,14 @@
         "McpPlugin.Common.dll"
       ]
     },
+    "com.IvanMurzak.Rql": {
+      "version": "0.1.0",
+      "dlls": [
+        "Rql.Contracts.dll",
+        "Rql.Execution.dll",
+        "Rql.Parser.dll"
+      ]
+    },
     "com.IvanMurzak.ReflectorNet": {
       "version": "5.4.2",
       "dlls": [

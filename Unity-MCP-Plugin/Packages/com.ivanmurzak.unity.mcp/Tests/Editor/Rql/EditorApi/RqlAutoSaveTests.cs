@@ -54,6 +54,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         }
 
         [Test]
+        public void ModulesHearWhetherAMutationSavedOrDiscarded()
+        {
+            int saving = 0, discarded = 0;
+            void OnSaving() => saving++;
+            void OnDiscarded() => discarded++;
+            RqlUnity.Saving += OnSaving;
+            RqlUnity.Discarded += OnDiscarded;
+            try
+            {
+                new UnityEngine.GameObject("Target");
+                RqlUnity.Mutate("objects | where name == \"Nobody\" | set name = \"X\"");   // nothing applied
+                Assert.AreEqual((0, 1), (saving, discarded));
+                RqlUnity.Mutate("objects | where name == \"Target\" | set name = \"X\"", dryRun: true);
+                Assert.AreEqual((0, 2), (saving, discarded));
+                RqlUnity.Mutate("objects | where");                                              // parse error
+                Assert.AreEqual((0, 3), (saving, discarded));
+                RqlUnity.Mutate("objects | where name == \"Target\" | set name = \"Renamed\"");   // applied
+                Assert.AreEqual((1, 3), (saving, discarded));
+            }
+            finally
+            {
+                RqlUnity.Saving -= OnSaving;
+                RqlUnity.Discarded -= OnDiscarded;
+            }
+        }
+
+        [Test]
         public void AnUntitledSceneIsReportedNotSaved()
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
