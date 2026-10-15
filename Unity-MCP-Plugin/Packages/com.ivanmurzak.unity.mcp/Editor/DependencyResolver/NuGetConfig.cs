@@ -122,9 +122,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // compile-fail against 5.0.0. 5.1.1 adds defensive try/catch around
             // reflection so the documented no-throw contract on Try* methods holds.
             new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.4.2",  includeInBuild: true),
-            // RQL (the query language of rql-query / rql-mutate and the tools' data layer): Editor-only, so it never
-            // reaches player builds. Its only dependency is System.Text.Json 8.0.5, the version pinned below.
-            new NuGetPackage("com.IvanMurzak.Rql",                                    "0.1.0"),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
@@ -145,6 +142,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             new NuGetPackage("R3",                                                    "1.3.0",  includeInBuild: true),
 
             // --- Editor-only dependencies (excluded from builds) ---
+            // RQL (the query language of rql-query / rql-mutate and the tools' data layer): Editor-only, so it never
+            // reaches player builds. Its only dependency is System.Text.Json 8.0.5, the version pinned above.
+            new NuGetPackage("com.IvanMurzak.Rql",                                    "0.1.0"),
             new NuGetPackage("Microsoft.Bcl.Memory",                                  "10.0.3"),
             // Pinned to 4.8.0 so transitive System.Collections.Immutable stays at 7.0.0
             // (forward-compatible with Unity 6.6's built-in 8.0.0). Roslyn 4.14 requires

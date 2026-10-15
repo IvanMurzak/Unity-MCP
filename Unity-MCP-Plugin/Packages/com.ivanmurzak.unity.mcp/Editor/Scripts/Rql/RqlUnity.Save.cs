@@ -51,42 +51,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (_mutating == 0) _wrote = false;
             _mutating++;
             QueryResult result;
+            var completed = false;
             try
             {
                 result = Engine.Execute(query, null, new QueryOptions { AllowMutation = true, DryRun = dryRun });
-            }
-            catch
-            {
-                if (_mutating == 1) RaiseDiscarded();
-                throw;
+                completed = true;
             }
             finally
             {
                 _mutating--;
-                if (_mutating == 0) CloseUndoGroup(); // a mutation that failed before Committed
+                if (_mutating == 0)
+                {
+                    CloseUndoGroup(); // a mutation that failed before Committed
+                    // Execute threw: nothing gets saved. Raised here, like below, once InMutation is false again.
+                    if (!completed) Raise(Discarded);
+                }
             }
-            if (_mutating == 0 && (dryRun || !_wrote))
-                foreach (var problem in RaiseDiscarded())
-                    result.Diagnostics.Add(Diagnostic.Warning("not-discarded", problem));
-            if (!dryRun && _mutating == 0 && _wrote)
+            if (_mutating > 0) return result;
+            if (dryRun || !_wrote)
             {
-                List<string> problems;
-                // The changes are applied: a save that throws must not turn the receipt into a tool error.
-                try { problems = SaveChanges(); }
-                catch (Exception ex) { problems = new List<string> { $"saving failed: {ex.GetType().Name}: {ex.Message}" }; }
-                foreach (var problem in problems)
-                    result.Diagnostics.Add(Diagnostic.Warning("not-saved", problem));
+                foreach (var problem in Raise(Discarded))
+                    result.Diagnostics.Add(Diagnostic.Warning("not-discarded", problem));
+                return result;
             }
+            List<string> problems;
+            // The changes are applied: a save that throws must not turn the receipt into a tool error.
+            try { problems = SaveChanges(); }
+            catch (Exception ex) { problems = new List<string> { $"saving failed: {ex.GetType().Name}: {ex.Message}" }; }
+            foreach (var problem in problems)
+                result.Diagnostics.Add(Diagnostic.Warning("not-saved", problem));
             return result;
         }
 
-        private static List<string> RaiseDiscarded()
+        /// <summary>Invoke every handler of <paramref name="handlers"/>, even after one threw; returns the messages of those that did.</summary>
+        private static List<string> Raise(Action? handlers)
         {
             var problems = new List<string>();
-            if (Discarded != null)
-                foreach (Action discard in Discarded.GetInvocationList())
+            if (handlers != null)
+                foreach (Action handler in handlers.GetInvocationList())
                 {
-                    try { discard(); }
+                    try { handler(); }
                     catch (Exception ex) { problems.Add(ex.Message); }
                 }
             return problems;
@@ -95,13 +99,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>Write every pending change to disk; returns what could not be saved.</summary>
         public static List<string> SaveChanges()
         {
-            var problems = new List<string>();
-            if (Saving != null)
-                foreach (Action flush in Saving.GetInvocationList())
-                {
-                    try { flush(); }
-                    catch (Exception ex) { problems.Add(ex.Message); }
-                }
+            var problems = Raise(Saving);
             AssetDatabase.SaveAssets();
             if (EditorApplication.isPlaying) return problems; // play mode scene changes are temporary by design
 
