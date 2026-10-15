@@ -46,6 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Act
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo: methodInfo, title: "Test Tool");
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Assert
             Assert.IsNotNull(runTool, "RunTool should be created successfully");
@@ -62,6 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Act
             var runTool = RunTool.CreateFromInstanceMethod(_reflector, _mockLogger, name: "name", testInstance, methodInfo, title: "Instance Tool");
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Assert
             Assert.IsNotNull(runTool, "RunTool should be created successfully");
@@ -75,6 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.AddNumbers));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None, 5, 3);
@@ -98,6 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.AddNumbers));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
             var namedParams = new Dictionary<string, JsonElement>
             {
                 {"a", JsonSerializer.SerializeToElement(10)},
@@ -125,6 +129,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.MethodWithRequestID));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
             const string expectedRequestId = "test-request-123";
 
             // Act
@@ -148,6 +153,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.ThrowingMethod));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -172,6 +178,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.SimpleStaticMethod));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo: methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Act
             var task = runTool.Run("test-request-id", null!, CancellationToken.None);
@@ -209,6 +216,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.AsyncMethod));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None, "Hello");

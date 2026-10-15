@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
     /// </summary>
     public static class ToolResults
     {
-        public static bool IsRql => ToolBinding.Current is RqlToolBinding;
+        public static bool IsRql => ToolDataLayerSetUp.Binding is RqlToolBinding;
 
         /// <summary>The value wrapped as ReflectorNet's {"result": value} JSON text, for tests that parse that shape.</summary>
         public static string ResultJson(ResponseCallTool response) => new JsonObject { ["result"] = Data(response)?.DeepClone() }.ToJsonString();
@@ -80,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
         private static JsonNode? Value(string s)
         {
             if (s == "null") return null;
-            return RqlToolPresentation.Literal.TryToJson(s, out var json, out _) && json != null ? json : JsonValue.Create(s);
+            return RqlLiteral.TryToJson(s, out var json, out _) && json != null ? json : JsonValue.Create(s);
         }
 
         // Split a row on '|' outside double-quoted strings.

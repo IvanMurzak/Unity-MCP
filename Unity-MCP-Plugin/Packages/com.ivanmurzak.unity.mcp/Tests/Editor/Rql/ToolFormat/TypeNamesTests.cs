@@ -70,18 +70,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         [Test]
         public void TheTypeBlockListsClashingTypesUnderDistinctNames()
         {
-            var schema = "{\"type\":\"object\",\"properties\":{" +
-                "\"a\":{\"$ref\":\"#/$defs/Game.Alpha.Settings\"},\"b\":{\"$ref\":\"#/$defs/Game.Beta.Settings\"},\"w\":{\"$ref\":\"#/$defs/Game.Wrapper(Game.Item)\"}}," +
-                "\"$defs\":{\"Game.Alpha.Settings\":{\"type\":\"object\",\"properties\":{\"speed\":{\"type\":\"number\"}}}," +
-                "\"Game.Beta.Settings\":{\"type\":\"object\",\"properties\":{\"color\":{\"type\":\"string\"}}}," +
-                "\"Game.Wrapper(Game.Item)\":{\"type\":\"object\",\"properties\":{\"value\":{\"type\":\"integer\"}}}}}";
-            var text = RqlToolPresentation.SchemaText.Convert(schema);
-            StringAssert.Contains("Alpha.Settings {speed float}", text.Types);
-            StringAssert.Contains("Beta.Settings {color string}", text.Types);
-            StringAssert.Contains("Wrapper<Item> {value int}", text.Types);
-            Assert.AreEqual("Alpha.Settings", text.Literals["a"]);
-            Assert.AreEqual("Beta.Settings", text.Literals["b"]);
-            Assert.AreEqual("Wrapper<Item>", text.Literals["w"]);
+            RqlToolBinding.Instance.Reset();
+            var method = typeof(ClashTools).GetMethod(nameof(ClashTools.Configure))!;
+            var signature = RqlToolBinding.Instance.Describe("clash", method, null)!;
+            StringAssert.Contains("ClashAlpha.Settings {speed float}", signature.Description);
+            StringAssert.Contains("ClashBeta.Settings {color string}", signature.Description);
+            var properties = signature.InputSchema["properties"]!;
+            StringAssert.Contains("RQL: ClashAlpha.Settings", properties["a"]!["description"]!.GetValue<string>());
+            StringAssert.Contains("RQL: ClashBeta.Settings", properties["b"]!["description"]!.GetValue<string>());
         }
     }
+
+    public static class ClashTools
+    {
+        public static string Configure(ClashAlpha.Settings a, ClashBeta.Settings b) => "ok";
+    }
+}
+
+namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat.ClashAlpha
+{
+    public class Settings { public float speed; }
+}
+
+namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat.ClashBeta
+{
+    public class Settings { public string? color; }
 }

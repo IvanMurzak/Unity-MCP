@@ -26,22 +26,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// </summary>
     public class RunToolRqlResultTests
     {
-        private IToolBinding? _savedBinding;
-
-        [SetUp]
-        public void SetUp()
-        {
-            _savedBinding = ToolBinding.Current;
-            ToolBinding.Current = RqlToolBinding.Instance;
-        }
-
-        [TearDown]
-        public void TearDown() => ToolBinding.Current = _savedBinding;
-
         private static (ResponseCallTool result, string text, JsonNode? data) Run(string method)
         {
             UnityMcpPluginEditor.InitSingletonIfNeeded();
             var runTool = RunTool.CreateFromStaticMethod(UnityMcpPluginEditor.Instance.Reflector!, null, "rql-result", typeof(TestReturnTypeMethods).GetMethod(method)!);
+            runTool.Binding = RqlToolBinding.Instance;
             var result = runTool.Run("request", CancellationToken.None).Result;
             Assert.AreEqual(ResponseStatus.Success, result.Status, result.GetMessage());
             Assert.IsNull(result.StructuredContent, "RQL results are text, not structured content");
@@ -66,6 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             UnityMcpPluginEditor.InitSingletonIfNeeded();
             var runTool = RunTool.CreateFromStaticMethod(UnityMcpPluginEditor.Instance.Reflector!, null, "rql-result", typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnNull))!);
+            runTool.Binding = RqlToolBinding.Instance;
             Assert.AreEqual(ResponseStatus.Success, runTool.Run("request", CancellationToken.None).Result.Status);
         }
 

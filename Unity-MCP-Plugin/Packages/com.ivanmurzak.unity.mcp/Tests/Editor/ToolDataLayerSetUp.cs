@@ -24,7 +24,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [SetUpFixture]
     public class ToolDataLayerSetUp
     {
-        public static string Active => ToolBinding.Current is RqlToolBinding ? "Rql" : ToolPresentation.Current != null ? "RqlText" : "Json";
+        /// <summary>The binding of the plugin's tool manager (null = ReflectorNet), for tools a test creates itself.</summary>
+        public static IToolBinding? Binding => UnityMcpPluginEditor.Instance.Tools?.ToolBinding;
+
+        public static string Active => Binding is RqlToolBinding ? "Rql" : "Json";
 
         [OneTimeSetUp]
         public void Apply()
@@ -33,7 +36,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var args = Environment.GetCommandLineArgs();
             var i = Array.IndexOf(args, "-toolDataLayer");
             if (i >= 0 && i + 1 < args.Length && Enum.TryParse<ToolPresentationFormat>(args[i + 1], true, out var forced))
-                RqlToolPresentation.Apply(forced, ToolPresentation.Escaping);
+            {
+                // Also in the config, so a plugin rebuilt during the run keeps the forced layer.
+                UnityMcpPluginEditor.Instance.ConnectionConfigForTests.ToolFormat = forced;
+                RqlToolBinding.Apply(UnityMcpPluginEditor.Instance.Tools, forced, RqlToolBinding.Instance.Escaping);
+            }
             Debug.Log($"[TESTS] tool data layer: {Active}");
         }
     }

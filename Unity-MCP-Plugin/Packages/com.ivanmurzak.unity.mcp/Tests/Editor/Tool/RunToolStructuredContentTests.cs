@@ -33,17 +33,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         private Microsoft.Extensions.Logging.ILogger _mockLogger = UnityLoggerFactory.LoggerFactory.CreateLogger<RunToolStructuredContentTests>();
 
         // These tests pin ReflectorNet's structured-content contract (the data layer McpPlugin keeps for hosts without a
-        // binding); RunToolRqlResultTests covers the same return types under RQL.
-        private IToolBinding? _savedBinding;
-
-        [TearDown]
-        public void RestoreBinding() => ToolBinding.Current = _savedBinding;
+        // binding, so the tools here get none); RunToolRqlResultTests covers the same return types under RQL.
 
         [SetUp]
         public void SetUp()
         {
-            _savedBinding = ToolBinding.Current;
-            ToolBinding.Current = null;
             _reflector = new Reflector();
 
             // Register Unity type converters to avoid circular reference issues

@@ -43,6 +43,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
     {
         public static readonly RqlToolBinding Instance = new RqlToolBinding();
 
+        /// <summary>
+        /// Install the data layer the configuration asks for on <paramref name="tools"/>: <see cref="ToolPresentationFormat.Rql"/>
+        /// = this binding, <see cref="ToolPresentationFormat.Json"/> = none (ReflectorNet).
+        /// </summary>
+        public static void Apply(IToolManager? tools, ToolPresentationFormat format, ToolTextEscaping escaping)
+        {
+            Instance.Escaping = escaping;
+            if (tools != null)
+                tools.ToolBinding = format == ToolPresentationFormat.Rql ? Instance : null;
+        }
+
+        private CompactText _compact = new CompactText(ToolTextEscaping.Minimal);
+        private ToolTextEscaping _escaping = ToolTextEscaping.Minimal;
+
+        /// <summary>How quoted text in results is escaped (Minimal keeps non-ASCII and most characters as they are).</summary>
+        public ToolTextEscaping Escaping
+        {
+            get => _escaping;
+            set
+            {
+                if (_escaping == value) return;
+                _escaping = value;
+                _compact = new CompactText(value);
+            }
+        }
+
         public const string TypesHeader =
             "Argument types — give these arguments as RQL values (as in rql-mutate): {key: value, …}, [a, b], \"text\", 1.5, true, " +
             "ref(\"GameObject#12\") from a query result, unity.find(\"Name\"); leave out keys you do not need:";
@@ -251,7 +277,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                     if (response.StructuredContent == null) return null;
                     var node = response.StructuredContent is JsonObject o && o.Count == 1 && o.ContainsKey("result") ? o["result"] : response.StructuredContent;
                     response.StructuredContent = null;
-                    response.Content = new List<ContentBlock> { Text(RqlToolPresentation.Compact.Render(node)) };
+                    response.Content = new List<ContentBlock> { Text(_compact.Render(node)) };
                     return response;
                 case string s:
                     return ResponseCallTool.Success(s);
@@ -273,7 +299,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         /// A presented value as text: a list of flat objects as rows ("2 results / name|count / a|1 …", like rql-query
         /// output, keys once instead of on every line); anything else in RQL's agent format.
         /// </summary>
-        internal static string Show(QueryResult r)
+        internal string Show(QueryResult r)
         {
             if (r.Ok && r.Items is { Count: > 1 } items && items.All(i => i is JsonObject o && o.All(kv => !(kv.Value is JsonObject) && !(kv.Value is JsonArray))))
             {
@@ -294,27 +320,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
             return AgentFormat.Render(r, OutputFormat.Table);
         }
 
-        private static string Cell(JsonNode? v) => v switch
+        private string Cell(JsonNode? v) => v switch
         {
             null => "null",
             JsonValue jv when jv.GetValueKind() == JsonValueKind.String => jv.GetValue<string>() is var s && (s.IndexOfAny(new[] { '|', '\n', '\r' }) >= 0 || s.Length == 0)
-                ? ToolPresentation.Quote(s) : s,
+                ? ToolText.Quote(s, _escaping) : s,
             _ => v.ToJsonString(),
         };
 
         private static ContentBlock Text(string text) => new ContentBlock { Type = com.IvanMurzak.McpPlugin.Common.Consts.ContentType.Text, Text = text };
 
         /// <summary>script-execute's result: "System.Int32: 42"; nested fields / properties as compact text.</summary>
-        private static string Render(SerializedMember member)
+        private string Render(SerializedMember member)
         {
             var value = member.valueJsonElement is JsonElement e && e.ValueKind != JsonValueKind.Undefined ? JsonNode.Parse(e.GetRawText()) : null;
-            var text = member.typeName + ": " + RqlToolPresentation.Compact.Render(value);
+            var text = member.typeName + ": " + _compact.Render(value);
             if (member.fields is { Count: > 0 } || member.props is { Count: > 0 })
             {
                 var nested = new JsonObject();
                 foreach (var f in (member.fields ?? new SerializedMemberList()).Concat(member.props ?? new SerializedMemberList()))
                     nested[f.name ?? "?"] = f.valueJsonElement is JsonElement fe ? JsonNode.Parse(fe.GetRawText()) : null;
-                text += "\n" + RqlToolPresentation.Compact.Render(nested);
+                text += "\n" + _compact.Render(nested);
             }
             return text;
         }

@@ -169,13 +169,12 @@ namespace com.IvanMurzak.Unity.MCP
             public Dictionary<string, bool> SkillAutoGenerate { get; set; } = new();
 
             /// <summary>
-            /// EXPERIMENTAL: how tools are presented to the AI agent (Json = standard JSON schema and results; RqlText = RQL
-            /// literal arguments, compact type text and results; RqlLean = RqlText without member descriptions; Rql = RQL instead
-            /// of ReflectorNet for schemas, arguments and results). Hosts such as the AI Game Dev app may write it.
+            /// EXPERIMENTAL: the tools' data layer (Rql = RQL instead of ReflectorNet for schemas, arguments and results;
+            /// Json = ReflectorNet's JSON schemas and results). Hosts such as the AI Game Dev app may write it.
             /// </summary>
             public ToolPresentationFormat ToolFormat { get; set; } = ToolPresentationFormat.Rql;
 
-            /// <summary>EXPERIMENTAL: escaping of quoted text in the RqlText / RqlLean presentations.</summary>
+            /// <summary>EXPERIMENTAL: escaping of quoted text in RQL tool results.</summary>
             public com.IvanMurzak.McpPlugin.ToolTextEscaping ToolTextEscaping { get; set; } = com.IvanMurzak.McpPlugin.ToolTextEscaping.Minimal;
 
             /// <summary>
@@ -258,12 +257,11 @@ namespace com.IvanMurzak.Unity.MCP
         Cloud
     }
 
-    /// <summary>EXPERIMENTAL tool presentation, see <see cref="UnityMcpPlugin.UnityConnectionConfig.ToolFormat"/>.</summary>
+    /// <summary>EXPERIMENTAL tools' data layer, see <see cref="UnityMcpPlugin.UnityConnectionConfig.ToolFormat"/>.</summary>
     public enum ToolPresentationFormat
     {
+        /// <summary>ReflectorNet: JSON schemas, JSON arguments and structured results.</summary>
         Json,
-        RqlText,
-        RqlLean,
         /// <summary>RQL is the data layer of every tool (schemas, arguments, results) in place of ReflectorNet.</summary>
         Rql
     }

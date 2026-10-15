@@ -28,39 +28,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
     public class RqlToolBindingTests
     {
         private const string Echo = "binding-echo";
+
+        private const string Items = "binding-items";
         private McpToolManager _local = null!;
 
-        // The suite runs under the configured data layer (toolFormat, default Rql): restore it after each test.
+        // The suite runs under the configured data layer (toolFormat, default Rql): these tests force RQL on the plugin's
+        // tools and restore the layer after each test.
         private IToolBinding? _savedBinding;
-        private IToolPresentation? _savedPresentation;
         private ToolTextEscaping _savedEscaping;
 
         [SetUp]
         public void SetUp()
         {
-            _savedBinding = ToolBinding.Current;
-            _savedPresentation = ToolPresentation.Current;
-            _savedEscaping = ToolPresentation.Escaping;
+            UnityMcpPluginEditor.InitSingletonIfNeeded();
+            _savedBinding = Plugin.ToolBinding;
+            _savedEscaping = RqlToolBinding.Instance.Escaping;
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             new GameObject("Alpha");
             RqlUnity.Reset();
             RqlToolBinding.Instance.Reset();
-            UnityMcpPluginEditor.InitSingletonIfNeeded();
             var reflector = UnityMcpPluginEditor.Instance.Reflector!;
             var tools = new ToolRunnerCollection(reflector, null)
             {
                 [Echo] = RunTool.CreateFromStaticMethod(reflector, null, Echo, typeof(PresentationTestTools).GetMethod(nameof(PresentationTestTools.Echo))!),
+                [Items] = RunTool.CreateFromStaticMethod(reflector, null, Items, typeof(PresentationTestTools).GetMethod(nameof(PresentationTestTools.Items))!),
             };
-            _local = new McpToolManager(NullLogger<McpToolManager>.Instance, reflector, tools);
-            ToolBinding.Current = RqlToolBinding.Instance;
+            _local = new McpToolManager(NullLogger<McpToolManager>.Instance, reflector, tools) { ToolBinding = RqlToolBinding.Instance };
+            Plugin.ToolBinding = RqlToolBinding.Instance;
         }
 
         [TearDown]
         public void TearDown()
         {
-            ToolBinding.Current = _savedBinding;
-            ToolPresentation.Current = _savedPresentation;
-            ToolPresentation.Escaping = _savedEscaping;
+            Plugin.ToolBinding = _savedBinding;
+            RqlToolBinding.Instance.Escaping = _savedEscaping;
         }
 
         private static ResponseListTool Listed(IToolManager manager, string name) =>
@@ -127,11 +128,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         [Test]
         public void ConfigSelectsTheBinding()
         {
-            RqlToolPresentation.Apply(ToolPresentationFormat.Rql, ToolTextEscaping.Minimal);
-            Assert.AreSame(RqlToolBinding.Instance, ToolBinding.Current);
-            Assert.IsNull(ToolPresentation.Current);
-            RqlToolPresentation.Apply(ToolPresentationFormat.Json, ToolTextEscaping.Minimal);
-            Assert.IsNull(ToolBinding.Current);
+            RqlToolBinding.Apply(_local, ToolPresentationFormat.Json, ToolTextEscaping.Ascii);
+            Assert.IsNull(_local.ToolBinding);
+            Assert.AreEqual(ToolTextEscaping.Ascii, RqlToolBinding.Instance.Escaping);
+            StringAssert.Contains("$defs", Listed(_local, Echo).InputSchema.GetRawText(), "Json = ReflectorNet's schema");
+            RqlToolBinding.Apply(_local, ToolPresentationFormat.Rql, ToolTextEscaping.Minimal);
+            Assert.AreSame(RqlToolBinding.Instance, _local.ToolBinding);
+            StringAssert.DoesNotContain("$defs", Listed(_local, Echo).InputSchema.GetRawText());
+        }
+
+        [Test]
+        public void ThePluginsToolsGetTheConfiguredLayer()
+        {
+            var config = UnityMcpPluginEditor.Instance.ConnectionConfigForTests;
+            var saved = config.ToolFormat;
+            try
+            {
+                config.ToolFormat = ToolPresentationFormat.Json;
+                UnityMcpPluginEditor.Instance.ApplyToolFormat(UnityMcpPluginEditor.Instance.McpPluginInstance!);
+                Assert.IsNull(Plugin.ToolBinding);
+                config.ToolFormat = ToolPresentationFormat.Rql;
+                UnityMcpPluginEditor.Instance.ApplyToolFormat(UnityMcpPluginEditor.Instance.McpPluginInstance!);
+                Assert.AreSame(RqlToolBinding.Instance, Plugin.ToolBinding);
+            }
+            finally { config.ToolFormat = saved; }
+        }
+
+        [TestCase(ToolTextEscaping.Minimal, "\"é+<|x\"")]
+        [TestCase(ToolTextEscaping.Ascii, "\"\\u00e9+<|x\"")]
+        [TestCase(ToolTextEscaping.Json, "\"\\u00E9\\u002B\\u003C|x\"")]
+        public void QuotedResultTextFollowsTheConfiguredEscaping(ToolTextEscaping escaping, string expected)
+        {
+            RqlToolBinding.Instance.Escaping = escaping;
+            var (r, text) = Call(_local, Items, "{\"name\": \"é+<|x\"}");
+            Assert.AreEqual(ResponseStatus.Success, r.Status, text);
+            StringAssert.StartsWith("2 results\nname|count", text);
+            StringAssert.Contains(expected + "|1", text);
         }
     }
 }
