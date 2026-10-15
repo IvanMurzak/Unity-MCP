@@ -24,7 +24,7 @@ ARTIFACT it was read from (`project.assets.json`, a DLL sha256, `chain-identity.
 an exit code.
 """
 
-CHAIN_FEED_VERSION = "5"
+CHAIN_FEED_VERSION = "6"
 
 import argparse
 import hashlib
@@ -115,6 +115,10 @@ PNPM_PINS = ("package.json", "pnpm-workspace.yaml", "pnpm-lock.yaml")
 UNITY_PACKAGE_PREFIX = "com.IvanMurzak."
 UNITY_LIB_ENTRY = "lib/netstandard2.1/{name}"
 UNITY_MANIFEST_NAME = ".nuget-installed.json"
+#: The Unity resolver config whose `new NuGetPackage("<id>", "<ver>"` literals are the consumer's
+#: REAL pins (mirrors `chain/manifest.py` `read_pin` for `NuGetConfig.cs`; parity-tested).
+UNITY_RESOLVER_CONFIG_NAME = "NuGetConfig.cs"
+UNITY_RESOLVER_PIN_TEMPLATE = r'new\s+NuGetPackage\(\s*"{id}"\s*,\s*"([^"]+)"'
 
 SERVER_MARKER_NAME = "chain-identity.json"
 SERVER_MARKER_FIELDS = ("ws_version", "sha", "rid", "publish_cmd", "exe_sha256", "product_version")
@@ -2989,6 +2993,33 @@ def _nuget_proofs(ctx, edges):
     return proofs
 
 
+def unity_consumer_pin(ctx, edge):
+    """The version the consumer's `NuGetConfig.cs` pins for `edge`'s package, or None.
+
+    A package the resolver does not pin directly (`McpPlugin.Common` follows `McpPlugin`
+    transitively) takes the pin of a sibling unity-dll artifact of the SAME producer node (one
+    node, one version), looked up in the full recipe so an `--edges` subset cannot hide it.
+    """
+    siblings = [
+        other for other in RECIPES[ctx.node].get("consumes") or ()
+        if other is not edge and other["mode"] == edge["mode"] and other["node"] == edge["node"]
+    ]
+    for candidate in [edge] + siblings:
+        package_id = RECIPES[candidate["node"]]["artifacts"][candidate["artifact"]]["id"]
+        pattern = re.compile(UNITY_RESOLVER_PIN_TEMPLATE.format(id=re.escape(package_id)))
+        for pin_rel in candidate.get("pins") or ():
+            path = ctx.checkout / pin_rel
+            if Path(pin_rel).name != UNITY_RESOLVER_CONFIG_NAME or not path.is_file():
+                continue
+            try:
+                match = pattern.search(path.read_text(encoding="utf-8-sig"))
+            except (OSError, ValueError):
+                continue
+            if match:
+                return match.group(1)
+    return None
+
+
 def _unity_proofs(ctx, edges):
     """sha256(dropped DLL) == sha256 of the same DLL inside the ws nupkg (byte identity)."""
     proofs = []
@@ -3017,8 +3048,11 @@ def _unity_proofs(ctx, edges):
                 "sha256 vs %s!%s" % (nupkg.name, UNITY_LIB_ENTRY.format(name=dll_name)),
                 package_id, observed, expected_sha, observed == expected_sha,
             ))
-        # The manifest MUST stay at the pin (A2): a ws value there makes the in-editor
-        # resolver re-download the released nupkg and delete these very DLLs.
+        # The manifest MUST stay at the CONSUMER'S pin (A2): a ws value there makes the
+        # in-editor resolver re-download the released nupkg and delete these very DLLs. The
+        # pin is read from the consumer's own NuGetConfig.cs, never derived from ws_version: a
+        # train tests the producer's NEXT version while the consumer still pins the released one.
+        pin = unity_consumer_pin(ctx, edge)
         for drop in edge.get("drops") or ():
             manifest_path = ctx.checkout / drop / UNITY_MANIFEST_NAME
             if not manifest_path.is_file():
@@ -3028,11 +3062,11 @@ def _unity_proofs(ctx, edges):
             except (OSError, ValueError):
                 continue
             recorded = ((data.get("packages") or {}).get(package_id) or {}).get("version")
-            pin = (ws_version or "").split("-ws.g", 1)[0]
             proofs.append(_proof(
                 "%s/%s" % (drop, UNITY_MANIFEST_NAME),
-                "%s[%s].version stays at the PIN (A2)" % (UNITY_MANIFEST_NAME, package_id),
-                package_id, recorded, pin, recorded == pin,
+                "%s[%s].version stays at the consumer's %s pin (A2)"
+                % (UNITY_MANIFEST_NAME, package_id, UNITY_RESOLVER_CONFIG_NAME),
+                package_id, recorded, pin, pin is not None and recorded == pin,
             ))
     return proofs
 
