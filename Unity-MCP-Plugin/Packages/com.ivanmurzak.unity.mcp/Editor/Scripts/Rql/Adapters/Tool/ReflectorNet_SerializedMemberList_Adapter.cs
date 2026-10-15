@@ -70,7 +70,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             var typeName = value switch
             {
                 null => "System.Object",
-                GameObject _ => typeof(GameObject).FullName!,
                 UnityEngine.Object o => o.GetType().FullName!,
                 string _ => "System.String",
                 bool _ => "System.Boolean",

@@ -55,26 +55,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         }
 
         private CompactText _compact = new CompactText(ToolTextEscaping.Minimal);
-        private ToolTextEscaping _escaping = ToolTextEscaping.Minimal;
 
         /// <summary>How quoted text in results is escaped (Minimal keeps non-ASCII and most characters as they are).</summary>
         public ToolTextEscaping Escaping
         {
-            get => _escaping;
-            set
-            {
-                if (_escaping == value) return;
-                _escaping = value;
-                _compact = new CompactText(value);
-            }
+            get => _compact.Escaping;
+            set { if (value != _compact.Escaping) _compact = new CompactText(value); }
         }
 
-        public const string TypesHeader =
+        private const string TypesHeader =
             "Argument types — give these arguments as RQL values (as in rql-mutate): {key: value, …}, [a, b], \"text\", 1.5, true, " +
             "ref(\"GameObject#12\") from a query result, unity.find(\"Name\"); leave out keys you do not need:";
 
         private readonly ConcurrentDictionary<MethodInfo, ToolSignature> _signatures = new ConcurrentDictionary<MethodInfo, ToolSignature>();
-        private readonly ConcurrentDictionary<Type, string> _typeRefs = new ConcurrentDictionary<Type, string>();
 
         private static RqlEngine Engine => RqlUnity.Engine;
 
@@ -87,7 +80,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         public void Reset()
         {
             _signatures.Clear();
-            _typeRefs.Clear();
         }
 
         private ToolSignature Build(MethodInfo method, string? description)
@@ -97,22 +89,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
             var required = new JsonArray();
             foreach (var p in AgentParameters(method))
             {
-                var type = Nullable.GetUnderlyingType(p.ParameterType) ?? p.ParameterType;
+                var nullable = Nullable.GetUnderlyingType(p.ParameterType) != null;
                 var text = (p.GetCustomAttribute<RqlArgumentAttribute>()?.Description ?? p.GetCustomAttribute<DescriptionAttribute>()?.Description)?.Trim();
-                var schema = Simple(type);
+                var schema = Simple(p.ParameterType);
                 if (schema == null)
                 {
                     schema = new JsonObject { ["type"] = "string" };
-                    text = (text == null ? "" : text + " ") + "RQL: " + writer.Ref(type);
+                    text = (text == null ? "" : text + " ") + "RQL: " + writer.Ref(p.ParameterType);
                 }
                 if (!string.IsNullOrEmpty(text)) schema["description"] = text;
                 properties[p.Name!] = schema;
-                if (!p.HasDefaultValue && !p.IsOptional && Nullable.GetUnderlyingType(p.ParameterType) == null) required.Add(p.Name);
+                if (!p.HasDefaultValue && !p.IsOptional && !nullable) required.Add(p.Name);
             }
             var block = writer.Block();
             foreach (var kv in properties)
                 if (kv.Value is JsonObject schema && schema["description"] is JsonValue d && d.TryGetValue<string>(out var text))
-                    schema["description"] = writer.Final(text);
+                    schema["description"] = writer.Resolve(text);
             var input = new JsonObject { ["type"] = "object", ["properties"] = properties };
             if (required.Count > 0) input["required"] = required;
             var full = block.Length == 0 ? description : string.IsNullOrWhiteSpace(description) ? block : description!.TrimEnd() + "\n\n" + block;
@@ -122,20 +114,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         private static IEnumerable<ParameterInfo> AgentParameters(MethodInfo method) =>
             method.GetParameters().Where(p => p.GetCustomAttribute<RequestIDAttribute>() == null && p.ParameterType != typeof(CancellationToken));
 
-        /// <summary>Plain JSON schema for text, numbers, bools, enums and lists of those; null for anything else.</summary>
-        private static JsonObject? Simple(Type t)
+        private enum Scalar { None, Text, Bool, Enum, Int, Float }
+
+        /// <summary>The scalar kind of <paramref name="t"/> (already unwrapped from Nullable), shared by the schema and the type text.</summary>
+        private static Scalar ScalarOf(Type t)
         {
-            t = Nullable.GetUnderlyingType(t) ?? t;
-            if (t == typeof(string) || t == typeof(char)) return new JsonObject { ["type"] = "string" };
-            if (t == typeof(bool)) return new JsonObject { ["type"] = "boolean" };
-            if (t.IsEnum) return new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(Enum.GetNames(t).Select(n => (JsonNode)JsonValue.Create(n)!).ToArray()) };
+            if (t == typeof(string) || t == typeof(char)) return Scalar.Text;
+            if (t == typeof(bool)) return Scalar.Bool;
+            if (t.IsEnum) return Scalar.Enum;
             switch (Type.GetTypeCode(t))
             {
                 case TypeCode.Byte: case TypeCode.SByte: case TypeCode.Int16: case TypeCode.UInt16:
                 case TypeCode.Int32: case TypeCode.UInt32: case TypeCode.Int64: case TypeCode.UInt64:
-                    return new JsonObject { ["type"] = "integer" };
+                    return Scalar.Int;
                 case TypeCode.Single: case TypeCode.Double: case TypeCode.Decimal:
-                    return new JsonObject { ["type"] = "number" };
+                    return Scalar.Float;
+                default:
+                    return Scalar.None;
+            }
+        }
+
+        /// <summary>Plain JSON schema for text, numbers, bools, enums and lists of those; null for anything else.</summary>
+        private static JsonObject? Simple(Type t)
+        {
+            t = Nullable.GetUnderlyingType(t) ?? t;
+            switch (ScalarOf(t))
+            {
+                case Scalar.Text: return new JsonObject { ["type"] = "string" };
+                case Scalar.Bool: return new JsonObject { ["type"] = "boolean" };
+                case Scalar.Enum: return new JsonObject { ["type"] = "string", ["enum"] = new JsonArray(Enum.GetNames(t).Select(n => (JsonNode)JsonValue.Create(n)!).ToArray()) };
+                case Scalar.Int: return new JsonObject { ["type"] = "integer" };
+                case Scalar.Float: return new JsonObject { ["type"] = "number" };
             }
             var element = t.IsArray ? t.GetElementType() : t.IsGenericType && t.GetGenericTypeDefinition() == typeof(List<>) ? t.GetGenericArguments()[0] : null;
             return element != null && Simple(element) is JsonObject item ? new JsonObject { ["type"] = "array", ["items"] = item } : null;
@@ -154,18 +163,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
             {
                 t = Nullable.GetUnderlyingType(t) ?? t;
                 if (depth > 8) return "any";
-                if (t == typeof(string) || t == typeof(char)) return "string";
-                if (t == typeof(bool)) return "bool";
-                if (t == typeof(object) || t == typeof(JsonElement) || t == typeof(JsonNode)) return "any";
-                if (t.IsEnum) return string.Join("|", Enum.GetNames(t));
-                switch (Type.GetTypeCode(t))
+                switch (ScalarOf(t))
                 {
-                    case TypeCode.Byte: case TypeCode.SByte: case TypeCode.Int16: case TypeCode.UInt16:
-                    case TypeCode.Int32: case TypeCode.UInt32: case TypeCode.Int64: case TypeCode.UInt64:
-                        return "int";
-                    case TypeCode.Single: case TypeCode.Double: case TypeCode.Decimal:
-                        return "float";
+                    case Scalar.Text: return "string";
+                    case Scalar.Bool: return "bool";
+                    case Scalar.Enum: return string.Join("|", Enum.GetNames(t));
+                    case Scalar.Int: return "int";
+                    case Scalar.Float: return "float";
                 }
+                if (t == typeof(object) || t == typeof(JsonElement) || t == typeof(JsonNode)) return "any";
                 var info = _engine.Types.Info(t);
                 if (info.Description == null)
                 {
@@ -212,15 +218,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                 return Resolve(sb.ToString().TrimEnd());
             }
 
-            private string Resolve(string text)
+            /// <summary>Text with final type names in place of the placeholders (names are final after <see cref="Block"/>).</summary>
+            public string Resolve(string text)
             {
                 foreach (var kv in _names) text = text.Replace(Placeholder(kv.Key), kv.Value);
                 // A type first met while writing the block (beyond the discovery depth): its plain short name.
                 return System.Text.RegularExpressions.Regex.Replace(text, "\u0001([^\u0002]*)\u0002",
                     m => Type.GetType(m.Groups[1].Value) is Type t ? TypeModel.FriendlyName(t) : "any");
             }
-
-            public string Final(string inline) => Resolve(inline);
         }
 
         // ------------------------------------------------------------ arguments
@@ -255,15 +260,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         }
 
         /// <summary>One type as the agent sees it in a tool's schema (for error messages).</summary>
-        private string TypeText(Type type) => _typeRefs.GetOrAdd(type, t =>
+        private static string TypeText(Type type)
         {
             var writer = new TypeWriter(Engine);
-            var inline = writer.Ref(t);
+            var inline = writer.Ref(type);
             var block = writer.Block();
-            var name = writer.Final(inline);
+            var name = writer.Resolve(inline);
             var line = block.Split('\n').Skip(1).FirstOrDefault(l => l.StartsWith(name + " ", StringComparison.Ordinal));
             return line ?? name;
-        });
+        }
 
         // ------------------------------------------------------------ results
 
@@ -301,12 +306,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         /// </summary>
         internal string Show(QueryResult r)
         {
-            if (r.Ok && r.Items is { Count: > 1 } items && items.All(i => i is JsonObject o && o.All(kv => !(kv.Value is JsonObject) && !(kv.Value is JsonArray))))
+            if (r.Ok && r.Items is { } items && CompactText.FlatColumns(items, v => v != null) is List<string> columns)
             {
-                var columns = new List<string>();
-                foreach (JsonObject row in items)
-                    foreach (var kv in row)
-                        if (kv.Value != null && !columns.Contains(kv.Key)) columns.Add(kv.Key);
                 // One column would read like a list of plain values: keep the "{k:v}" item lines then.
                 if (columns.Count < 2) return AgentFormat.Render(r, OutputFormat.Table);
                 var sb = new StringBuilder();
@@ -314,32 +315,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                 if (r.Total is long total && total > items.Count) sb.Append(" (of ").Append(total).Append(')');
                 sb.Append('\n').Append(string.Join("|", columns));
                 foreach (JsonObject row in items)
-                    sb.Append('\n').Append(string.Join("|", columns.Select(c => row.TryGetPropertyValue(c, out var v) ? Cell(v) : "")));
+                    sb.Append('\n').Append(string.Join("|", columns.Select(c => row.TryGetPropertyValue(c, out var v) ? _compact.RowCell(v) : "")));
                 return sb.ToString();
             }
             return AgentFormat.Render(r, OutputFormat.Table);
         }
-
-        private string Cell(JsonNode? v) => v switch
-        {
-            null => "null",
-            JsonValue jv when jv.GetValueKind() == JsonValueKind.String => jv.GetValue<string>() is var s && (s.IndexOfAny(new[] { '|', '\n', '\r' }) >= 0 || s.Length == 0)
-                ? ToolText.Quote(s, _escaping) : s,
-            _ => v.ToJsonString(),
-        };
 
         private static ContentBlock Text(string text) => new ContentBlock { Type = com.IvanMurzak.McpPlugin.Common.Consts.ContentType.Text, Text = text };
 
         /// <summary>script-execute's result: "System.Int32: 42"; nested fields / properties as compact text.</summary>
         private string Render(SerializedMember member)
         {
-            var value = member.valueJsonElement is JsonElement e && e.ValueKind != JsonValueKind.Undefined ? JsonNode.Parse(e.GetRawText()) : null;
+            var value = member.valueJsonElement is JsonElement e && e.ValueKind != JsonValueKind.Undefined ? JsonSerializer.SerializeToNode(e) : null;
             var text = member.typeName + ": " + _compact.Render(value);
             if (member.fields is { Count: > 0 } || member.props is { Count: > 0 })
             {
                 var nested = new JsonObject();
                 foreach (var f in (member.fields ?? new SerializedMemberList()).Concat(member.props ?? new SerializedMemberList()))
-                    nested[f.name ?? "?"] = f.valueJsonElement is JsonElement fe ? JsonNode.Parse(fe.GetRawText()) : null;
+                    nested[f.name ?? "?"] = f.valueJsonElement is JsonElement fe ? JsonSerializer.SerializeToNode(fe) : null;
                 text += "\n" + _compact.Render(nested);
             }
             return text;

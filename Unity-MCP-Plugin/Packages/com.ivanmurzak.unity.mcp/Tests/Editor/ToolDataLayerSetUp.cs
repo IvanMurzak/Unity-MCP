@@ -39,7 +39,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             {
                 // Also in the config, so a plugin rebuilt during the run keeps the forced layer.
                 UnityMcpPluginEditor.Instance.ConnectionConfigForTests.ToolFormat = forced;
-                RqlToolBinding.Apply(UnityMcpPluginEditor.Instance.Tools, forced, RqlToolBinding.Instance.Escaping);
+                if (UnityMcpPluginEditor.Instance.McpPluginInstance is { } plugin)
+                    UnityMcpPluginEditor.Instance.ApplyToolFormat(plugin);
             }
             Debug.Log($"[TESTS] tool data layer: {Active}");
         }

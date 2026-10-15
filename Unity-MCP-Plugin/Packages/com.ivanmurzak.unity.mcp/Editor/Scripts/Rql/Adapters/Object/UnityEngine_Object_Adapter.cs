@@ -28,6 +28,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         public override bool? IsAlive(object value) => value is Object o ? o != null : (bool?)null;
 
+        /// <summary>Text naming a project asset ("Assets/…" or "Packages/…", either slash), normalized to forward slashes.</summary>
+        internal static bool TryAssetPath(string text, out string path)
+        {
+            path = text.Replace('\\', '/');
+            return path.StartsWith("Assets/", StringComparison.Ordinal) || path.StartsWith("Packages/", StringComparison.Ordinal);
+        }
+
         /// <summary>
         /// Wherever an asset is expected, its path works too: <c>set sharedMaterial = "Assets/Mats/Red.mat"</c>,
         /// <c>call SetTile("(0, 0, 0)", "Assets/Tiles/Grass.asset")</c>. Sub-assets of the requested type are found as well.
@@ -36,9 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             result = null;
             reason = null;
-            if (!(value is string text)) return AdapterOutcome.NotHandled;
-            var path = text.Replace('\\', '/');
-            if (!path.StartsWith("Assets/", StringComparison.Ordinal) && !path.StartsWith("Packages/", StringComparison.Ordinal)) return AdapterOutcome.NotHandled;
+            if (!(value is string text) || !TryAssetPath(text, out var path)) return AdapterOutcome.NotHandled;
             var asset = UnityEditor.AssetDatabase.LoadAssetAtPath(path, target);
             if (asset == null)
                 foreach (var sub in UnityEditor.AssetDatabase.LoadAllAssetsAtPath(path))

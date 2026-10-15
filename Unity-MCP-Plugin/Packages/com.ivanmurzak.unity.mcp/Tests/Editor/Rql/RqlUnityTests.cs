@@ -25,7 +25,7 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
 {
-    public class RqlUnityTests
+    public class RqlUnityTests : Adapters.AdapterTestBase
     {
         private GameObject _a = null!;
         private GameObject _b = null!;
@@ -34,8 +34,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
         [SetUp]
         public void SetUp()
         {
-            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            RqlUnity.Reset();
             _a = new GameObject("Alpha");
             _a.transform.position = new Vector3(1, 2, 3);
             _b = new GameObject("Beta");
@@ -43,19 +41,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             _light = new GameObject("Lamp").AddComponent<Light>();
             _light.intensity = 2.5f;
             _light.color = new Color(1, 0, 0, 1);
-        }
-
-        private static QueryResult Q(string rql) => RqlUnity.Engine.Execute(rql);
-
-        private static QueryResult M(string rql, bool dryRun = false) =>
-            RqlUnity.Engine.Execute(rql, null, new QueryOptions { AllowMutation = true, DryRun = dryRun });
-
-        private static string Table(QueryResult r) => AgentFormat.Render(r, OutputFormat.Table);
-
-        private static string Cell(QueryResult r, int row = 0, int col = 0)
-        {
-            Assert.IsTrue(r.Ok, Table(r));
-            return r.Rows![row][col]!.ToJsonString().Trim('"');
         }
 
         [Test]

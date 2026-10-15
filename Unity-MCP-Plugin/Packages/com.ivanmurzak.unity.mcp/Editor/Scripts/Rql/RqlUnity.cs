@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Rql.Execution;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -93,16 +94,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         // ------------------------------------------------------------ sources
 
-        public static List<Scene> Scenes()
-        {
-            var scenes = new List<Scene>();
-            for (int i = 0; i < SceneManager.sceneCount; i++)
-            {
-                var s = SceneManager.GetSceneAt(i);
-                if (s.IsValid() && s.isLoaded) scenes.Add(s);
-            }
-            return scenes;
-        }
+        public static List<Scene> Scenes() => SceneUtils.GetAllOpenedScenes().ToList();
 
         public static List<Object> SelectedObjects() => Selection.objects.Where(o => o != null).ToList();
 
@@ -155,16 +147,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             if (args.Length != 1 || !(args[0] is string key) || key.Length == 0)
                 return new RqlError("type-mismatch", "unity.find(name) expects a GameObject name or hierarchy path such as \"Level/Pillar_1\"");
-            var all = AllGameObjects();
-            var byPath = all.Where(g => PathOf(g.transform) == key).ToList();
-            var hits = byPath.Count > 0 ? byPath : all.Where(g => g.name == key).ToList();
+            // A path match ends with the object's own name: build paths only for those candidates.
+            var candidates = AllGameObjects().Where(g => key.EndsWith(g.name, StringComparison.Ordinal)).ToList();
+            var byPath = candidates.Where(g => g.GetPath() == key).ToList();
+            var hits = byPath.Count > 0 ? byPath : candidates.Where(g => g.name == key).ToList();
             if (hits.Count == 1) return hits[0];
             return hits.Count == 0
                 ? new RqlError("not-found", $"no GameObject named '{key}' in the loaded scenes")
-                : new RqlError("ambiguous", $"{hits.Count} GameObjects are named '{key}': use the hierarchy path, e.g. \"{PathOf(hits[0].transform)}\", or a ref");
+                : new RqlError("ambiguous", $"{hits.Count} GameObjects are named '{key}': use the hierarchy path, e.g. \"{hits[0].GetPath()}\", or a ref");
         }
-
-        private static string PathOf(Transform t) => t.parent == null ? t.name : PathOf(t.parent) + "/" + t.name;
 
         /// <summary><c>unity.asset("Assets/…/Red.mat")</c>: the main asset at a path, or null.</summary>
         public static object? LoadAsset(object?[] args)

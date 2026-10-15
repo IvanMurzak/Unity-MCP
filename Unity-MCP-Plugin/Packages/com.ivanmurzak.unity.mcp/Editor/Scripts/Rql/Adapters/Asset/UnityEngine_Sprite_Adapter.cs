@@ -38,8 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                     if (string.IsNullOrEmpty(path)) { reason = $"texture '{texture.name}' is not an asset"; return AdapterOutcome.Failed; }
                     break;
                 case string text:
-                    path = text.Replace('\\', '/');
-                    if (!path.StartsWith("Assets/", StringComparison.Ordinal) && !path.StartsWith("Packages/", StringComparison.Ordinal)) return AdapterOutcome.NotHandled;
+                    if (!UnityEngine_Object_Adapter.TryAssetPath(text, out path)) return AdapterOutcome.NotHandled;
                     int hash = path.LastIndexOf('#');
                     if (hash > 0) { name = path.Substring(hash + 1); path = path.Substring(0, hash); }
                     break;
