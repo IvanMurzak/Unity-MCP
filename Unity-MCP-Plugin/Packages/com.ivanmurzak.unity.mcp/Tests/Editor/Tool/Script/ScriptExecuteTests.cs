@@ -587,7 +587,9 @@ public class Script
                     var jsonResult = result.ToJson(reflector)!;
                     Debug.Log($"Value return result:\n{jsonResult}");
 
-                    Assert.IsTrue(jsonResult.Contains("result"), "Result should contain 'result'");
+                    // The returned value itself, under either data layer (RQL text "System.Int32: 42" or ReflectorNet JSON).
+                    var expected = System.Convert.ToString(_expectedValue, System.Globalization.CultureInfo.InvariantCulture)!;
+                    StringAssert.Contains(expected, ToolResults.ResultJson(result.Value!), "Result should contain the returned value");
 
                     return result;
                 });

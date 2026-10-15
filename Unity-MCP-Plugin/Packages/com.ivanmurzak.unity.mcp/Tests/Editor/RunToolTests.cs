@@ -19,6 +19,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using Microsoft.Extensions.Logging;
+using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
@@ -88,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
 
             var expectedJson = JsonSerializer.Serialize(new { result = 8 });
-            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return correct calculation result");
+            Assert.AreEqual(expectedJson, ToolResults.ResultJson(result), "Should return correct calculation result");
         }
 
         [UnityTest]
@@ -115,7 +116,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
 
             var expectedJson = JsonSerializer.Serialize(new { result = 25 });
-            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return correct calculation result");
+            Assert.AreEqual(expectedJson, ToolResults.ResultJson(result), "Should return correct calculation result");
         }
 
         [UnityTest]
@@ -138,7 +139,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
 
             var expectedJson = JsonSerializer.Serialize(new { result = expectedRequestId });
-            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return injected request ID");
+            Assert.AreEqual(expectedJson, ToolResults.ResultJson(result), "Should return injected request ID");
         }
 
         [UnityTest]
@@ -221,7 +222,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
 
             var expectedJson = JsonSerializer.Serialize(new { result = "Hello Async" });
-            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return async method result");
+            Assert.AreEqual(expectedJson, ToolResults.ResultJson(result), "Should return async method result");
         }
     }
 

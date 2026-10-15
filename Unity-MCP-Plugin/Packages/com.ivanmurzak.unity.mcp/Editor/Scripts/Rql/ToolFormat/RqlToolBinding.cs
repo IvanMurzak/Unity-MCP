@@ -258,9 +258,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                 case SerializedMember member:
                     return ResponseCallTool.Success(Render(member));
                 default:
-                    return ResponseCallTool.Success(com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(() => AgentFormat.Render(Engine.Present(value), OutputFormat.Table)));
+                    return ResponseCallTool.Success(com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(() =>
+                    {
+                        var presented = Engine.Present(value);
+                        // One object (not a list) reads as the object itself, without a "1 result" header.
+                        return Engine.Types.Info(value.GetType()).Kind != TypeKind.List && presented.Ok && presented.Items is { Count: 1 } one
+                            ? AgentFormat.Cell(one[0])
+                            : Show(presented);
+                    }));
             }
         }
+
+        /// <summary>
+        /// A presented value as text: a list of flat objects as rows ("2 results / name|count / a|1 …", like rql-query
+        /// output, keys once instead of on every line); anything else in RQL's agent format.
+        /// </summary>
+        internal static string Show(QueryResult r)
+        {
+            if (r.Ok && r.Items is { Count: > 1 } items && items.All(i => i is JsonObject o && o.All(kv => !(kv.Value is JsonObject) && !(kv.Value is JsonArray))))
+            {
+                var columns = new List<string>();
+                foreach (JsonObject row in items)
+                    foreach (var kv in row)
+                        if (kv.Value != null && !columns.Contains(kv.Key)) columns.Add(kv.Key);
+                // One column would read like a list of plain values: keep the "{k:v}" item lines then.
+                if (columns.Count < 2) return AgentFormat.Render(r, OutputFormat.Table);
+                var sb = new StringBuilder();
+                sb.Append(items.Count).Append(" results");
+                if (r.Total is long total && total > items.Count) sb.Append(" (of ").Append(total).Append(')');
+                sb.Append('\n').Append(string.Join("|", columns));
+                foreach (JsonObject row in items)
+                    sb.Append('\n').Append(string.Join("|", columns.Select(c => row.TryGetPropertyValue(c, out var v) ? Cell(v) : "")));
+                return sb.ToString();
+            }
+            return AgentFormat.Render(r, OutputFormat.Table);
+        }
+
+        private static string Cell(JsonNode? v) => v switch
+        {
+            null => "null",
+            JsonValue jv when jv.GetValueKind() == JsonValueKind.String => jv.GetValue<string>() is var s && (s.IndexOfAny(new[] { '|', '\n', '\r' }) >= 0 || s.Length == 0)
+                ? ToolPresentation.Quote(s) : s,
+            _ => v.ToJsonString(),
+        };
 
         private static ContentBlock Text(string text) => new ContentBlock { Type = com.IvanMurzak.McpPlugin.Common.Consts.ContentType.Text, Text = text };
 

@@ -19,8 +19,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     {
         public int Order => 10;
 
-        public void Configure(RqlModuleContext ctx) => ctx
-            .AddAdapter(new AIGD_GameObjectRef_Adapter())
-            .AddAdapter(new ReflectorNet_SerializedMemberList_Adapter());
+        public void Configure(RqlModuleContext ctx)
+        {
+            ctx.AddAdapter(new AIGD_GameObjectRef_Adapter())
+               .AddAdapter(new ReflectorNet_SerializedMemberList_Adapter());
+#if UNITY_6000_5_OR_NEWER
+            ctx.AddAdapter(new UnityEngine_EntityId_Adapter());
+#endif
+        }
     }
 }

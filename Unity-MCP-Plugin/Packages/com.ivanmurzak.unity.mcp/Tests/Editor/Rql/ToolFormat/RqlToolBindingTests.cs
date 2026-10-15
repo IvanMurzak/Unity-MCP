@@ -30,9 +30,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         private const string Echo = "binding-echo";
         private McpToolManager _local = null!;
 
+        // The suite runs under the configured data layer (toolFormat, default Rql): restore it after each test.
+        private IToolBinding? _savedBinding;
+        private IToolPresentation? _savedPresentation;
+        private ToolTextEscaping _savedEscaping;
+
         [SetUp]
         public void SetUp()
         {
+            _savedBinding = ToolBinding.Current;
+            _savedPresentation = ToolPresentation.Current;
+            _savedEscaping = ToolPresentation.Escaping;
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             new GameObject("Alpha");
             RqlUnity.Reset();
@@ -48,7 +56,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         }
 
         [TearDown]
-        public void TearDown() => ToolBinding.Current = null;
+        public void TearDown()
+        {
+            ToolBinding.Current = _savedBinding;
+            ToolPresentation.Current = _savedPresentation;
+            ToolPresentation.Escaping = _savedEscaping;
+        }
 
         private static ResponseListTool Listed(IToolManager manager, string name) =>
             manager.RunListTool(new RequestListTool()).Result.Value!.Single(t => t.Name == name);

@@ -51,9 +51,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         private const string Tool = "presentation-echo";
         private McpToolManager _manager = null!;
 
+        // The suite runs under the configured data layer (toolFormat, default Rql): restore it after each test.
+        private IToolBinding? _savedBinding;
+        private IToolPresentation? _savedPresentation;
+        private ToolTextEscaping _savedEscaping;
+
         [SetUp]
         public void SetUp()
         {
+            _savedBinding = ToolBinding.Current;
+            _savedPresentation = ToolPresentation.Current;
+            _savedEscaping = ToolPresentation.Escaping;
             UnityMcpPluginEditor.InitSingletonIfNeeded();
             var reflector = UnityMcpPluginEditor.Instance.Reflector!;
             var tools = new ToolRunnerCollection(reflector, null)
@@ -61,14 +69,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
                 [Tool] = RunTool.CreateFromStaticMethod(reflector, null, Tool, typeof(PresentationTestTools).GetMethod(nameof(PresentationTestTools.Echo))!),
             };
             _manager = new McpToolManager(NullLogger<McpToolManager>.Instance, reflector, tools);
+            ToolBinding.Current = null;
             RqlToolPresentation.Enabled = true;
         }
 
         [TearDown]
         public void TearDown()
         {
-            RqlToolPresentation.Enabled = false;
-            ToolPresentation.Escaping = ToolTextEscaping.Minimal;
+            ToolBinding.Current = _savedBinding;
+            ToolPresentation.Current = _savedPresentation;
+            ToolPresentation.Escaping = _savedEscaping;
         }
 
         private ResponseListTool Listed() => _manager.RunListTool(new RequestListTool()).Result.Value!.Single(t => t.Name == Tool);
