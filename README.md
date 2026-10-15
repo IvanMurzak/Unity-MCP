@@ -178,18 +178,7 @@ The plugin ships with 70+ built-in tools across four categories. Each tool bring
 <details>
   <summary>Profiling & Diagnostics</summary>
 
-- `profiler-capture-frame` - Capture the current frame's timing info (delta time, FPS, frame counts)
-- `profiler-clear-data` - Discard all frames currently held by the Editor Profiler
-- `profiler-enable-module` - Toggle the local enabled flag for a named profiler module
-- `profiler-get-memory-stats` - Return a memory statistics snapshot (reserved, allocated, mono heap, graphics)
-- `profiler-get-rendering-stats` - Return frame timing, FPS, vsync, target frame rate, graphics device type
-- `profiler-get-script-stats` - Return script execution timing plus Mono / GC memory usage
-- `profiler-get-status` - Return the profiler's enabled state, active modules, and platform support
-- `profiler-list-modules` - List all known profiler module names with their enabled flag
-- `profiler-load-data` - Read back a previously-saved profiler JSON snapshot
-- `profiler-save-data` - Save a snapshot of profiler-derived stats to a JSON file
-- `profiler-start` - Enable Unity's runtime profiler and open the Profiler window
-- `profiler-stop` - Disable Unity's runtime profiler
+- RQL source `profiler` (via `rql-query` / `rql-mutate`) - memory, rendering, script and frame snapshots, module flags; `Start`, `Stop`, `ClearFrames`, `EnableModule`, `Save`, `Load`
 
 </details>
 

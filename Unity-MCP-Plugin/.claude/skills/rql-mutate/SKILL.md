@@ -31,9 +31,10 @@ Scenes, prefabs, assets, Editor state:
   editor | call OpenPrefab("Assets/Prefabs/Enemy.prefab")  then  prefab | recurse children | …  then  editor | call ClosePrefab()
   editor | call CreateMaterial("Assets/Mats/Glow.mat")        editor | call MoveAsset("Assets/A.mat", "Assets/Mats/A.mat")
   editor | set selection = [ref("GameObject#1234")]         editor | set isPlaying = true
+  profiler | call Start()      profiler | call Save("Logs/profile.json")      (read: profiler | select memory frame)
 Object literals build values: set settings = {speed: 2, "$type": "FastSettings"}. At most 20 targets per call.
 
-Query part: the RQL of rql-query (full guide in its description). Sources: objects, roots, scenes, selection, prefab, console, shaders, componentTypes, editor; unity.assets("t:Material"), unity.asset(path), unity.find("Name"), ref("Light#1234"). Stages: where, select, sort, first N, get <path>, recurse children. Operators: == != < > and or not, contains, starts-with, $ is Light. Paths a.b.c, list[0], map["key"]. Vectors/colors as "(1, 2, 3)" or "#ff8800"; enums as strings.
+Query part: the RQL of rql-query (full guide in its description). Sources: objects, roots, scenes, selection, prefab, console, shaders, componentTypes, profiler, editor; unity.assets("t:Material"), unity.asset(path), unity.find("Name"), ref("Light#1234"). Stages: where, select, sort, first N, get <path>, recurse children. Operators: == != < > and or not, contains, starts-with, $ is Light. Paths a.b.c, list[0], map["key"]. Vectors/colors as "(1, 2, 3)" or "#ff8800"; enums as strings.
 
 ## How to Call
 

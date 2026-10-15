@@ -178,18 +178,7 @@ unity-mcp-cli open ./MyUnityProject
 <details>
   <summary>性能分析与诊断</summary>
 
-- `profiler-capture-frame` — 捕获当前帧的计时信息（增量时间、FPS、帧计数）
-- `profiler-clear-data` — 丢弃编辑器 Profiler 当前持有的所有帧
-- `profiler-enable-module` — 切换指定 Profiler 模块的本地启用标志
-- `profiler-get-memory-stats` — 返回内存统计快照（已预留、已分配、mono 堆、图形）
-- `profiler-get-rendering-stats` — 返回帧计时、FPS、垂直同步、目标帧率、图形设备类型
-- `profiler-get-script-stats` — 返回脚本执行计时以及 Mono / GC 内存使用情况
-- `profiler-get-status` — 返回 Profiler 的启用状态、活动模块和平台支持情况
-- `profiler-list-modules` — 列出所有已知的 Profiler 模块名称及其启用标志
-- `profiler-load-data` — 读取之前保存的 Profiler JSON 快照
-- `profiler-save-data` — 将 Profiler 派生统计的快照保存到 JSON 文件
-- `profiler-start` — 启用 Unity 运行时 Profiler 并打开 Profiler 窗口
-- `profiler-stop` — 禁用 Unity 运行时 Profiler
+- RQL 数据源 `profiler`（通过 `rql-query` / `rql-mutate`）— 内存、渲染、脚本与帧快照及模块标志；`Start`、`Stop`、`ClearFrames`、`EnableModule`、`Save`、`Load`
 
 </details>
 

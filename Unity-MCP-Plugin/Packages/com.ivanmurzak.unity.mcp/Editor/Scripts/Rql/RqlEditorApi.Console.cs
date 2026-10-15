@@ -33,6 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public const int MaxLogEntries = 1000;
 
         [RqlCallable("clear the Editor Console and the captured log entries")]
+        [RqlNoAutoSave]
         public void ClearConsole()
         {
             Debug.ClearDeveloperConsole();

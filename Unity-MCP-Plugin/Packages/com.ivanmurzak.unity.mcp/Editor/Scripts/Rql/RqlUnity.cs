@@ -50,7 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             int undoGroup = -1;
             engine.Mutations.BeforeWrite = records =>
             {
-                _wrote = true; // Mutate saves only when something was (about to be) written
+                if (records.Any(ChangesProjectState)) _wrote = true; // Mutate saves only after writes that change project state
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("RQL mutation");
                 undoGroup = Undo.GetCurrentGroup();
@@ -75,6 +75,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var reports = engine.AddModules(TypeCache.GetTypesDerivedFrom<IRqlModule>());
             foreach (var failed in reports.Where(r => !r.Ok)) Debug.LogWarning($"[RQL] module skipped: {failed}");
             return engine;
+        }
+
+        /// <summary>False for writes to [RqlNoAutoSave] types and calls of [RqlNoAutoSave] methods (all overloads).</summary>
+        internal static bool ChangesProjectState(MutationRecord record)
+        {
+            var type = record.Item?.GetType();
+            if (type == null) return true;
+            if (type.IsDefined(typeof(RqlNoAutoSaveAttribute), false)) return false;
+            if (record.Method == null) return true;
+            var overloads = type.GetMethods().Where(m => m.Name == record.Method.Name).ToList();
+            return overloads.Count == 0 || !overloads.All(m => m.IsDefined(typeof(RqlNoAutoSaveAttribute), false));
         }
 
         private static List<Object> Owners(IReadOnlyList<MutationRecord> records)

@@ -195,12 +195,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             StringAssert.Contains("unknown-type", RqlUnitySchema.Render(RqlUnity.Engine, "NoSuchTypeAtAll"));
         }
 
-        private static ResponseData<ResponseCallTool> CallThroughMcpPlugin(string tool, string json)
-        {
-            var args = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json)!;
-            return UnityMcpPluginEditor.Instance.Tools!.RunCallTool(new RequestCallTool(tool, args)).Result;
-        }
-
         [Test]
         public void ToolsAreRegisteredAndCallableThroughTheMcpPipeline()
         {

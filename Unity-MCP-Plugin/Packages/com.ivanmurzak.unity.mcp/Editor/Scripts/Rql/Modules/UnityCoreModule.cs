@@ -39,6 +39,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
                .AddSource("console", RqlEditorApi.ConsoleEntries, $"captured Editor log entries, oldest first (last {RqlEditorApi.MaxLogEntries}): logType message timestamp stackTrace sequence")
                .AddSource("shaders", RqlEditorApi.Shaders, "every shader the Editor knows (built-in and project): name supported hasErrors")
                .AddSource("componentTypes", RqlEditorApi.ComponentTypes, "component types that can be added (name fullName namespace)")
+               .AddSource("profiler", () => RqlProfiler.Instance,
+                   "Unity profiler: enabled supported memory rendering script frame modules (live snapshots, MB / ms); calls Start, Stop, " +
+                   "ClearFrames, EnableModule, Save, Load (rql-schema \"profiler\" for signatures)")
                .AddFunction("unity.assets", RqlUnity.FindAssets,
                    $"unity.assets(filter, folder?): AssetDatabase search, e.g. \"t:Material\", \"t:Prefab Enemy\" (at most {RqlUnity.MaxAssets}, loaded as needed)")
                .AddFunction("unity.find", RqlUnity.FindGameObject,

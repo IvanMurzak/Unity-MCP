@@ -9,7 +9,10 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
 using System.Linq;
+using System.Text.Json;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using Rql;
@@ -66,6 +69,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         }
 
         protected static bool Warns(QueryResult r, string code) => r.Diagnostics.Any(d => d.Code == code);
+
+        /// <summary>A tool call through the plugin's McpPlugin pipeline (the agent's path), e.g. rql-query.</summary>
+        protected static ResponseData<ResponseCallTool> CallThroughMcpPlugin(string tool, string json)
+        {
+            UnityMcpPluginEditor.InitSingletonIfNeeded();
+            var args = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json)!;
+            return UnityMcpPluginEditor.Instance.Tools!.RunCallTool(new RequestCallTool(tool, args)).Result;
+        }
 
         protected static string Schema(string type) => RqlUnitySchema.Render(RqlUnity.Engine, type);
     }
