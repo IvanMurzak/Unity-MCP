@@ -38,8 +38,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             _wasEnabled = UnityProfiler.enabled;
             _areas = Areas.Select(UnityProfiler.GetAreaEnabled).ToArray();
-            _file = Path.Combine(Path.GetTempPath(), "rql-profiler-" + System.Guid.NewGuid().ToString("N") + ".json");
-            _path = _file.Replace("\\", "/");
+            // Save / Load accept only paths inside the project: the project's Temp folder (not under version control).
+            _path = "Temp/rql-profiler-" + System.Guid.NewGuid().ToString("N") + ".json";
+            _file = RqlProfiler.ProjectPath(_path);
         }
 
         [TearDown]
@@ -50,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             if (File.Exists(_file)) File.Delete(_file);
         }
 
-        private static readonly ProfilerArea[] Areas = ((ProfilerArea[])System.Enum.GetValues(typeof(ProfilerArea))).Distinct().ToArray();
+        private static readonly ProfilerArea[] Areas = RqlProfiler.Areas().ToArray();
 
         private static long Count(string rql)
         {
@@ -137,6 +138,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsFalse(r.Ok, Table(r));
             StringAssert.Contains("Telepathy", Table(r));
             StringAssert.Contains("Rendering", Table(r));
+            Assert.IsFalse(M("profiler | call EnableModule(\"3\")").Ok, "a number is not a module name");
+            Assert.IsFalse(M("profiler | call EnableModule(\"CPU, Audio\")").Ok, "a flag combination is not a module name");
         }
 
         [Test]
@@ -154,6 +157,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             var loaded = M($"profiler | call Load(\"{_path}\")");
             AssertOk(loaded);
             StringAssert.Contains("totalAllocatedMB", Table(loaded));
+        }
+
+        [Test]
+        public void SaveAndLoadStayInsideTheProject()
+        {
+            var outside = Path.Combine(Path.GetTempPath(), "rql-outside.json").Replace("\\", "/");
+            var save = M($"profiler | call Save(\"{outside}\")");
+            Assert.IsFalse(save.Ok, Table(save));
+            StringAssert.Contains("outside the project", Table(save));
+            Assert.IsFalse(File.Exists(outside));
+            var load = M("profiler | call Load(\"../../outside.json\")");
+            Assert.IsFalse(load.Ok, Table(load));
+            StringAssert.Contains("outside the project", Table(load));
         }
 
         [Test]
@@ -191,6 +207,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.AreEqual(ResponseStatus.Success, read.Status, text);
             StringAssert.Contains("memory.totalAllocatedMB", text);
             StringAssert.Contains("true", text);
+        }
+    }
+
+    /// <summary>Profiler calls through rql-mutate never save the user's unrelated scene edits.</summary>
+    public class RqlProfilerAutoSaveTests : EditorApiTestBase
+    {
+        [Test]
+        public void AProfilerCallLeavesADirtySceneUnsaved()
+        {
+            var path = Folder + "/Profiled.unity";
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene);
+            Assert.IsTrue(UnityEditor.SceneManagement.EditorSceneManager.SaveScene(scene, path));
+            new GameObject("Unsaved edit");
+            UnityEditor.SceneManagement.EditorSceneManager.MarkSceneDirty(scene);
+            var wasEnabled = UnityProfiler.enabled;
+            try
+            {
+                AssertOk(RqlUnity.Mutate("profiler | call Stop()"));
+                AssertOk(RqlUnity.Mutate("profiler | set enabled = false"));
+                Assert.IsTrue(scene.isDirty, "the profiler call saved the user's unsaved scene");
+
+                AssertOk(RqlUnity.Mutate("objects | where name == \"Unsaved edit\" | set name = \"Edited\""));
+                Assert.IsFalse(scene.isDirty, "a scene write still saves (the auto-save itself is unchanged)");
+            }
+            finally { UnityProfiler.enabled = wasEnabled; }
         }
     }
 }

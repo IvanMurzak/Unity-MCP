@@ -29,6 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     /// <c>profiler | select memory.totalAllocatedMB, frame.fps</c>, <c>profiler | call Start()</c>.
     /// Every member is read live; values are megabytes / milliseconds as named. Built-in Unity APIs only.
     /// </summary>
+    [RqlNoAutoSave] // profiler state is not project state: its calls never save scenes or assets
     public sealed class RqlProfiler
     {
         public static readonly RqlProfiler Instance = new RqlProfiler();
@@ -63,7 +64,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public bool Start(bool openWindow = true)
         {
             UnityProfiler.enabled = true;
-            if (openWindow && !EditorApplication.ExecuteMenuItem("Window/Analysis/Profiler"))
+            // No window in batch mode: there is no graphics device to show it on.
+            if (openWindow && !Application.isBatchMode && !EditorApplication.ExecuteMenuItem("Window/Analysis/Profiler"))
                 Debug.LogWarning("[RQL] could not open 'Window/Analysis/Profiler'; the runtime profiler is enabled anyway");
             return UnityProfiler.enabled;
         }
@@ -85,17 +87,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("enable or disable a profiler area (CPU, GPU, Rendering, Memory …, Profiler.SetAreaEnabled); returns its new state")]
         public bool EnableModule(string name, bool enabled = true)
         {
-            if (!Enum.TryParse<ProfilerArea>(name, ignoreCase: true, out var area) || !Enum.IsDefined(typeof(ProfilerArea), area))
-                throw new ArgumentException($"unknown profiler module '{name}'; known: {string.Join(", ", Areas())}");
+            // Match names only: Enum.TryParse would also take "3" or "CPU, Audio" (flag-combined) and switch an area silently.
+            var area = Areas().Cast<ProfilerArea?>().FirstOrDefault(a => string.Equals(a.ToString(), name?.Trim(), StringComparison.OrdinalIgnoreCase))
+                ?? throw new ArgumentException($"unknown profiler module '{name}'; known: {string.Join(", ", Areas())}");
             UnityProfiler.SetAreaEnabled(area, enabled);
             return UnityProfiler.GetAreaEnabled(area);
         }
 
-        [RqlCallable("save a JSON snapshot (status, modules, memory, frame, rendering, script) to a file; returns the full path")]
+        [RqlCallable("save a JSON snapshot (status, modules, memory, frame, rendering, script) to a file inside the project, e.g. \"Logs/profile.json\"; returns the full path")]
         public string Save(string path)
         {
-            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("a file path is required");
-            var full = Path.GetFullPath(path);
+            var full = ProjectPath(path);
             var snapshot = new
             {
                 savedAt = DateTime.UtcNow.ToString("O"),
@@ -113,15 +115,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return full;
         }
 
-        [RqlCallable("read back a snapshot written by Save (at most 10 MB) as text")]
+        [RqlCallable("read back a snapshot written by Save (a file inside the project, at most 10 MB) as text")]
         public string Load(string path)
         {
-            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("a file path is required");
-            var info = new FileInfo(path);
+            var info = new FileInfo(ProjectPath(path));
             if (!info.Exists) throw new ArgumentException($"no profiler snapshot at '{path}'");
             if (info.Length > MaxLoadFileSizeBytes)
                 throw new ArgumentException($"'{path}' is {info.Length} bytes, more than the {MaxLoadFileSizeBytes}-byte limit");
-            return File.ReadAllText(path);
+            return File.ReadAllText(info.FullName);
+        }
+
+        /// <summary>
+        /// <paramref name="path"/> (relative to the project root, or absolute) as a full path that must lie inside the project:
+        /// Save / Load are reachable through rql-mutate, which is on by default, so they never touch files elsewhere.
+        /// </summary>
+        internal static string ProjectPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("a file path is required");
+            var root = Path.GetFullPath(Path.GetDirectoryName(Application.dataPath) ?? ".");
+            var full = Path.GetFullPath(Path.Combine(root, path));
+            var prefix = root.EndsWith(Path.DirectorySeparatorChar.ToString()) ? root : root + Path.DirectorySeparatorChar;
+            if (!full.StartsWith(prefix, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"'{path}' is outside the project; use a project-relative path such as \"Logs/profile.json\"");
+            return full;
         }
 
         internal static IEnumerable<ProfilerArea> Areas() => ((ProfilerArea[])Enum.GetValues(typeof(ProfilerArea))).Distinct();
