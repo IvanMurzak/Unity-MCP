@@ -13,10 +13,10 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
-using System.Text.RegularExpressions;
 using Rql;
 using UnityEditor;
 using UnityEditor.Compilation;
+using UnityEditor.TestTools.TestRunner.Api;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
@@ -27,20 +27,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     /// </summary>
     public static class RqlTests
     {
-        static readonly string[] TestAttributeNames =
+        // The test attributes and whether they mark a parameterized test. Found by name: the Editor assembly has no
+        // nunit.framework reference (overrideReferences).
+        static readonly (string type, bool parameterized)[] TestAttributes =
         {
-            "NUnit.Framework.TestAttribute, nunit.framework",
-            "NUnit.Framework.TestCaseAttribute, nunit.framework",
-            "NUnit.Framework.TestCaseSourceAttribute, nunit.framework",
-            "NUnit.Framework.TheoryAttribute, nunit.framework",
-            "UnityEngine.TestTools.UnityTestAttribute, UnityEngine.TestRunner",
+            ("NUnit.Framework.TestAttribute, nunit.framework", false),
+            ("NUnit.Framework.TestCaseAttribute, nunit.framework", true),
+            ("NUnit.Framework.TestCaseSourceAttribute, nunit.framework", true),
+            ("NUnit.Framework.TheoryAttribute, nunit.framework", true),
+            ("UnityEngine.TestTools.UnityTestAttribute, UnityEngine.TestRunner", false),
         };
+
+        static Type? NUnit(string name) => Type.GetType($"NUnit.Framework.{name}Attribute, nunit.framework");
 
         // TypeCache and the compiled assemblies cannot change within a domain (statics reset on reload).
         static List<RqlTest>? _all;
+        static Dictionary<string, RqlTest>? _byName;
 
         /// <summary>The <c>tests</c> source.</summary>
         public static List<RqlTest> All() => new List<RqlTest>(_all ??= Discover());
+
+        /// <summary>Every test by its full name.</summary>
+        internal static IReadOnlyDictionary<string, RqlTest> ByName =>
+            _byName ??= (_all ??= Discover()).ToDictionary(t => t.fullName, StringComparer.Ordinal);
 
         /// <summary>The <c>testResults</c> source: the results of the last tests-run (empty before the first one).</summary>
         public static List<RqlTestResult> LastResults() => new List<RqlTestResult>(_lastResults);
@@ -49,53 +58,47 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         internal static void SetLastResults(IEnumerable<RqlTestResult> results) => _lastResults = results.ToList();
 
-        /// <summary>
-        /// Unity Test Runner <c>groupNames</c> patterns that select exactly these tests (parameterized cases included):
-        /// <c>^Namespace\.Fixture\.Method(\(…\))?$</c>.
-        /// </summary>
-        public static string[] GroupPatterns(IEnumerable<string> fullNames) =>
-            fullNames.Distinct(StringComparer.Ordinal).Select(n => "^" + Regex.Escape(n) + @"(\(.*\))?$").ToArray();
-
         static List<RqlTest> Discover()
         {
             var playerAssemblies = new HashSet<string>(
                 CompilationPipeline.GetAssemblies(AssembliesType.Player).Select(a => a.name), StringComparer.Ordinal);
-            var category = Type.GetType("NUnit.Framework.CategoryAttribute, nunit.framework");
+            var category = NUnit("Category");
             var categoryName = category?.GetProperty("Name");
-            var explicitAttr = Type.GetType("NUnit.Framework.ExplicitAttribute, nunit.framework");
-            var ignoreAttr = Type.GetType("NUnit.Framework.IgnoreAttribute, nunit.framework");
-            var parameterized = new HashSet<Type?>
-            {
-                Type.GetType("NUnit.Framework.TestCaseAttribute, nunit.framework"),
-                Type.GetType("NUnit.Framework.TestCaseSourceAttribute, nunit.framework"),
-                Type.GetType("NUnit.Framework.TheoryAttribute, nunit.framework"),
-            };
+            var explicitAttr = NUnit("Explicit");
+            var ignoreAttr = NUnit("Ignore");
 
-            IEnumerable<string> Categories(MemberInfo m) => category == null || categoryName == null
-                ? Enumerable.Empty<string>()
-                : m.GetCustomAttributes(category, inherit: true).Select(a => categoryName.GetValue(a) as string).Where(s => !string.IsNullOrEmpty(s))!;
+            List<string> Categories(MemberInfo m) => category == null || categoryName == null
+                ? new List<string>()
+                : m.GetCustomAttributes(category, inherit: true).Select(a => categoryName.GetValue(a) as string).Where(c => !string.IsNullOrEmpty(c)).ToList()!;
+            bool Has(MemberInfo m, Type? attribute) => attribute != null && m.IsDefined(attribute, true);
+
+            // Per fixture type, computed once: the concrete fixtures a declaring type's tests run in (an abstract base's tests
+            // run once per concrete subclass, named after it, as NUnit does) and the fixture-level attributes.
+            var fixturesOf = new Dictionary<Type, Type[]>();
+            var fixtureInfo = new Dictionary<Type, (List<string> categories, bool @explicit, bool ignored)>();
 
             var tests = new Dictionary<string, RqlTest>(StringComparer.Ordinal);
-            foreach (var attributeName in TestAttributeNames)
+            foreach (var (typeName, parameterized) in TestAttributes)
             {
-                var attribute = Type.GetType(attributeName);
+                var attribute = Type.GetType(typeName);
                 if (attribute == null) continue;
                 foreach (var method in TypeCache.GetMethodsWithAttribute(attribute))
                 {
                     var declaring = method.DeclaringType;
                     if (declaring == null || declaring.ContainsGenericParameters) continue;
-                    // A test declared in an abstract base runs once per concrete fixture deriving from it.
-                    var fixtures = declaring.IsAbstract
-                        ? TypeCache.GetTypesDerivedFrom(declaring).Where(t => !t.IsAbstract && !t.ContainsGenericParameters)
-                        : new[] { declaring }.Concat(TypeCache.GetTypesDerivedFrom(declaring).Where(t => !t.IsAbstract && !t.ContainsGenericParameters));
+                    if (!fixturesOf.TryGetValue(declaring, out var fixtures))
+                        fixturesOf[declaring] = fixtures = TypeCache.GetTypesDerivedFrom(declaring).Prepend(declaring)
+                            .Where(t => !t.IsAbstract && !t.ContainsGenericParameters).ToArray();
                     foreach (var fixture in fixtures)
                     {
                         var fullName = (fixture.FullName ?? fixture.Name) + "." + method.Name;
                         if (tests.TryGetValue(fullName, out var known))
                         {
-                            if (parameterized.Contains(attribute)) known.parameterized = true;
+                            known.parameterized |= parameterized;
                             continue;
                         }
+                        if (!fixtureInfo.TryGetValue(fixture, out var info))
+                            fixtureInfo[fixture] = info = (Categories(fixture), Has(fixture, explicitAttr), Has(fixture, ignoreAttr));
                         var assembly = fixture.Assembly.GetName().Name ?? "";
                         tests[fullName] = new RqlTest
                         {
@@ -104,15 +107,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                             fixture = fixture.Name,
                             @namespace = fixture.Namespace ?? "",
                             assembly = assembly,
-                            mode = playerAssemblies.Contains(assembly) ? "PlayMode" : "EditMode",
-                            categories = Categories(method).Concat(Categories(fixture)).Distinct().ToList(),
-                            parameterized = parameterized.Contains(attribute),
-                            @explicit = explicitAttr != null && (method.IsDefined(explicitAttr, true) || fixture.IsDefined(explicitAttr, true)),
-                            ignored = ignoreAttr != null && (method.IsDefined(ignoreAttr, true) || fixture.IsDefined(ignoreAttr, true)),
+                            mode = playerAssemblies.Contains(assembly) ? nameof(TestMode.PlayMode) : nameof(TestMode.EditMode),
+                            categories = Categories(method).Concat(info.categories).Distinct().ToList(),
+                            parameterized = parameterized,
+                            @explicit = info.@explicit || Has(method, explicitAttr),
+                            ignored = info.ignored || Has(method, ignoreAttr),
                         };
                     }
                 }
             }
+            if (tests.Count == 0 && TestAttributes.All(a => Type.GetType(a.type) == null))
+                UnityEngine.Debug.LogWarning("[RQL] tests: no NUnit / Unity test attribute type resolved; the source is empty");
             return tests.Values.OrderBy(t => t.fullName, StringComparer.Ordinal).ToList();
         }
     }
@@ -128,7 +133,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public string @namespace { get; internal set; } = "";
         public string assembly { get; internal set; } = "";
         [RqlDescription("EditMode or PlayMode")]
-        public string mode { get; internal set; } = "EditMode";
+        public string mode { get; internal set; } = nameof(TestMode.EditMode);
         public List<string> categories { get; internal set; } = new List<string>();
         [RqlDescription("TestCase / TestCaseSource / Theory: several cases")]
         public bool parameterized { get; internal set; }

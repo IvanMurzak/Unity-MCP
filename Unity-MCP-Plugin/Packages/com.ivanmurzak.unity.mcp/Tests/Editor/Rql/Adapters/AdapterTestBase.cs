@@ -58,6 +58,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             for (int i = 0; i < e.Length; i++) Assert.AreEqual(e[i], a[i], tolerance, actual);
         }
 
+        /// <summary>The value of a query ending in <c>count</c>.</summary>
+        protected static long Count(string rql)
+        {
+            var r = Q(rql);
+            Assert.IsTrue(r.Ok, Table(r));
+            return r.Value!.GetValue<long>();
+        }
+
         protected static void AssertOk(QueryResult r) => Assert.IsTrue(r.Ok, Table(r));
 
         /// <summary>The query failed with <paramref name="code"/> and its message contains <paramref name="text"/>.</summary>

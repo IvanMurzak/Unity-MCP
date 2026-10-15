@@ -142,33 +142,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             var requestId = TestCallRequestID.Value;
             Tool_Tests.ClearActiveTestRun(requestId);
             var resultQuery = ResultQuery.Value;
-            if (string.IsNullOrEmpty(requestId) == false && string.IsNullOrWhiteSpace(resultQuery) == false)
+            if (string.IsNullOrEmpty(requestId) == false)
             {
-                _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
+                ResponseCallTool response;
+                if (string.IsNullOrWhiteSpace(resultQuery) == false)
+                    response = ProjectedResponse(_summary, resultQuery!);
+                else
                 {
-                    RequestId = requestId,
-                    Result = ProjectedResponse(_summary, resultQuery!).SetRequestID(requestId)
-                });
-            }
-            else if (string.IsNullOrEmpty(requestId) == false)
-            {
-                var structuredResponse = CreateStructuredResponse(
-                    includePassingTests: IncludePassingTests.Value,
-                    includeMessage: IncludeMessage.Value,
-                    includeLogs: IncludeLogs.Value,
-                    includeMessageStacktrace: IncludeMessageStacktrace.Value,
-                    includeLogsStacktrace: IncludeLogsStacktrace.Value);
-
-                var mcpPlugin = UnityMcpPluginEditor.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
-
-                var response = ResponseCallValueTool<TestRunResponse>
-                    .SuccessStructured(mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(structuredResponse))
-                    .SetRequestID(requestId);
+                    var structuredResponse = CreateStructuredResponse(
+                        includePassingTests: IncludePassingTests.Value,
+                        includeMessage: IncludeMessage.Value,
+                        includeLogs: IncludeLogs.Value,
+                        includeMessageStacktrace: IncludeMessageStacktrace.Value,
+                        includeLogsStacktrace: IncludeLogsStacktrace.Value);
+                    var mcpPlugin = UnityMcpPluginEditor.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
+                    response = ResponseCallValueTool<TestRunResponse>
+                        .SuccessStructured(mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(structuredResponse));
+                }
 
                 _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
                 {
                     RequestId = requestId,
-                    Result = response
+                    Result = response.SetRequestID(requestId)
                 });
             }
             else
@@ -257,9 +252,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             var head = $"{summary.Status}: {summary.PassedTests} passed, {summary.FailedTests} failed, {summary.SkippedTests} skipped " +
                 $"of {summary.TotalTests} in {summary.Duration.TotalSeconds:0.0}s";
             var r = Rql.RqlUnity.Engine.Execute(query);
-            var body = r.Ok
-                ? com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat.RqlToolBinding.Instance.Show(r)
-                : "result query failed: " + global::Rql.Execution.AgentFormat.Render(r, global::Rql.Execution.OutputFormat.Table);
+            var body = (r.Ok ? "" : "result query failed: ") + Rql.ToolFormat.RqlToolBinding.Instance.Show(r);
             return ResponseCallTool.Success(head + "\n" + body);
         }
 
