@@ -41,6 +41,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         const string PendingTestNamespaceKey = "MCP_PendingTestRun_TestNamespace";
         const string PendingTestClassKey = "MCP_PendingTestRun_TestClass";
         const string PendingTestMethodKey = "MCP_PendingTestRun_TestMethod";
+        const string PendingTestGroupsKey = "MCP_PendingTestRun_TestGroups";
         const string ActiveTestRunStartedUtcTicksKey = "Unity_MCP_TestRunner_ActiveStartedUtcTicks";
 
         static readonly TimeSpan ActiveTestRunTimeoutGrace = TimeSpan.FromMinutes(1);
@@ -164,8 +165,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return utcNow - startedUtc > ActiveTestRunStaleAfter;
         }
 
-        static void SavePendingTestRun(TestMode testMode, string? testAssembly, string? testNamespace, string? testClass, string? testMethod)
+        static void SavePendingTestRun(TestMode testMode, string? testAssembly, string? testNamespace, string? testClass, string? testMethod, string[]? groups = null)
         {
+            SessionState.SetString(PendingTestGroupsKey, groups == null ? string.Empty : string.Join("\n", groups));
             SessionState.SetString(PendingTestRunKey, "pending");
             SessionState.SetInt(PendingTestModeKey, (int)testMode);
             SessionState.SetString(PendingTestAssemblyKey, testAssembly ?? string.Empty);
@@ -182,6 +184,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SessionState.EraseString(PendingTestNamespaceKey);
             SessionState.EraseString(PendingTestClassKey);
             SessionState.EraseString(PendingTestMethodKey);
+            SessionState.EraseString(PendingTestGroupsKey);
         }
 
         static void ResumePendingTestRunOnce()
@@ -227,6 +230,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var testNamespace = SessionState.GetString(PendingTestNamespaceKey, string.Empty);
             var testClass = SessionState.GetString(PendingTestClassKey, string.Empty);
             var testMethod = SessionState.GetString(PendingTestMethodKey, string.Empty);
+            var groups = SessionState.GetString(PendingTestGroupsKey, string.Empty);
 
             ClearPendingTestRun();
 
@@ -236,7 +240,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (string.IsNullOrEmpty(testClass)) testClass = null;
             if (string.IsNullOrEmpty(testMethod)) testMethod = null;
 
-            var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod);
+            var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod)
+            {
+                Groups = string.IsNullOrEmpty(groups) ? null : groups.Split('\n')
+            };
 
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log($"[TestRunner] Resuming test run after recompilation. Mode: {testMode}, Filters: {filterParams}");

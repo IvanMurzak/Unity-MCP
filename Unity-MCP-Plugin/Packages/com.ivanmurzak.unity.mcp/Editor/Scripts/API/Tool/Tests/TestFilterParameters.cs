@@ -19,6 +19,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         public string? TestNamespace { get; set; }
         public string? TestClass { get; set; }
         public string? TestMethod { get; set; }
+        /// <summary>Anchored groupNames patterns selecting exact tests (from an RQL query over the <c>tests</c> source).</summary>
+        public string[]? Groups { get; set; }
 
         public TestFilterParameters(string? testAssembly = null, string? testNamespace = null, string? testClass = null, string? testMethod = null)
         {
@@ -26,13 +28,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             TestNamespace = testNamespace;
             TestClass = testClass;
             TestMethod = testMethod;
+            Groups = null;
         }
 
         public bool HasAnyFilter =>
             !string.IsNullOrEmpty(TestAssembly) ||
             !string.IsNullOrEmpty(TestNamespace) ||
             !string.IsNullOrEmpty(TestClass) ||
-            !string.IsNullOrEmpty(TestMethod);
+            !string.IsNullOrEmpty(TestMethod) ||
+            (Groups != null && Groups.Length > 0);
 
         public override string ToString()
         {
@@ -44,6 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             if (!string.IsNullOrEmpty(TestNamespace)) filters.Add($"namespace '{TestNamespace}'");
             if (!string.IsNullOrEmpty(TestClass)) filters.Add($"class '{TestClass}'");
             if (!string.IsNullOrEmpty(TestMethod)) filters.Add($"method '{TestMethod}'");
+            if (Groups != null && Groups.Length > 0) filters.Add($"{Groups.Length} test(s) selected by RQL");
 
             return $"Test filter: {string.Join(", ", filters)}";
         }
