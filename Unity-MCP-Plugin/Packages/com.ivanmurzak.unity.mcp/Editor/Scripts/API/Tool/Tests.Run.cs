@@ -48,7 +48,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `testMode` (default `EditMode`) — `EditMode` or `PlayMode`. EditMode is faster; prefer it during iteration.\n" +
             "- `testAssembly` / `testNamespace` / `testClass` / `testMethod` — optional, layered filters. Namespace and " +
             "class filters become regex `groupNames` so the validation count and Unity's execution stay in sync. " +
-            "`testMethod` must be fully qualified (`Namespace.FixtureName.TestName`).\n\n" +
+            "`testMethod` must be fully qualified (`Namespace.FixtureName.TestName`).\n" +
+            "- `query` — RQL over the `tests` source instead of the four filters: any selection, run as ONE Test Runner run, " +
+            "e.g. `tests | where fixture == \"PlayerTests\" or categories contains \"Smoke\"`. One mode per run; the mode comes " +
+            "from the selected tests. Explore first with rql-query: `tests | where fullName contains \"Spline\" | select fullName mode`.\n" +
+            "- `result` — RQL stages applied to the results (source `testResults`: name status durationMs message stackTrace), " +
+            "e.g. `where status == \"Failed\" | select name message`; the answer is then a summary line plus compact RQL text.\n\n" +
             "## Response toggles\n\n" +
             "- `includePassingTests` (default `false`) — include details for passing tests; otherwise only failing test details are returned.\n" +
             "- `includeMessages` (default `true`) — include per-test result messages.\n" +
@@ -77,6 +82,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             string? testClass = null,
             [Description("Specific fully qualified test method to run (optional). Example: 'MyTestNamespace.FixtureName.TestName'")]
             string? testMethod = null,
+            [Description("RQL over the 'tests' source selecting the tests (instead of the filters above), run as one run. " +
+                "Example: tests | where fullName contains \"Player\" and mode == \"EditMode\"")]
+            string? query = null,
+            [Description("RQL stages applied to the results (source 'testResults': name status durationMs message stackTrace); " +
+                "the answer is a summary line plus compact text. Example: where status == \"Failed\" | select name message")]
+            string? result = null,
 
             [Description("Include details for all tests, both passing and failing (default: false). If you just need details for failing tests, set to false.")]
             bool includePassingTests = false,
@@ -114,6 +125,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // AssetDatabase.Refresh so nothing is side-effected on abort.
                 ThrowIfAnyOpenSceneIsDirty();
 
+                // An RQL selection decides the tests and their mode before any run state is written.
+                string[]? groups = null;
+                if (!string.IsNullOrWhiteSpace(query))
+                {
+                    if (testAssembly != null || testNamespace != null || testClass != null || testMethod != null)
+                        return ResponseCallValueTool<TestRunResponse>
+                            .Error("Give either 'query' or the testAssembly / testNamespace / testClass / testMethod filters, not both.")
+                            .SetRequestID(requestId);
+                    if (!TrySelectTests(query!, out groups, out var selectedMode, out var selectError))
+                        return ResponseCallValueTool<TestRunResponse>.Error(selectError!).SetRequestID(requestId);
+                    testMode = selectedMode;
+                }
+
                 if (!TryBeginTestRun(requestId, out activeRequestId))
                     return ResponseCallValueTool<TestRunResponse>
                         .Error(Error.TestsAlreadyRunning(activeRequestId))
@@ -128,6 +152,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 TestResultCollector.IncludeLogs.Value = includeLogs;
                 TestResultCollector.IncludeLogsMinLevel.Value = (int)logType;
                 TestResultCollector.IncludeLogsStacktrace.Value = includeLogsStacktrace;
+                TestResultCollector.ResultQuery.Value = result ?? string.Empty;
 
                 // Trigger AssetDatabase.Refresh to detect and compile any changed scripts
                 if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
@@ -142,7 +167,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         Debug.Log($"[TestRunner] Scripts are compiling. Deferring test run until after domain reload.");
 
                     // Save filter params to SessionState (survives domain reload)
-                    SavePendingTestRun(testMode, testAssembly, testNamespace, testClass, testMethod);
+                    SavePendingTestRun(testMode, testAssembly, testNamespace, testClass, testMethod, groups);
 
                     // Register resume callback now — handles compilation failure (no domain reload).
                     // If compilation succeeds, domain reload destroys this registration,
@@ -170,7 +195,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 try
                 {
-                    var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod);
+                    var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod) { Groups = groups };
 
                     if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] Running {testMode} tests with filters: {filterParams}");
@@ -202,6 +227,72 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }).Unwrap();
         }
 
+        /// <summary>
+        /// Run <paramref name="query"/> (RQL over the <c>tests</c> source) and turn the selected tests into anchored
+        /// groupNames patterns. The mode comes from the tests; a selection mixing EditMode and PlayMode is refused.
+        /// </summary>
+        internal static bool TrySelectTests(string query, out string[]? groups, out TestMode mode, out string? error)
+        {
+            groups = null;
+            mode = TestMode.EditMode;
+            error = null;
+            // The whole selection is needed, not a page of it: lift the row / output budgets to the engine's hard limits.
+            var r = Rql.RqlUnity.Engine.Execute(query, new global::Rql.Budgets { MaxRows = 10_000, MaxOutputBytes = 64 * 1024 * 1024 });
+            if (!r.Ok)
+            {
+                error = "query failed: " + global::Rql.Execution.AgentFormat.Render(r, global::Rql.Execution.OutputFormat.Table);
+                return false;
+            }
+            if (r.Truncated)
+            {
+                error = $"the query selects more tests than one run takes ({r.Total}); narrow it down";
+                return false;
+            }
+            var names = SelectedFullNames(r);
+            if (names.Count == 0)
+            {
+                error = "the query selected no tests (it must return tests from the 'tests' source, or rows with a fullName column): " + query;
+                return false;
+            }
+            var known = Rql.RqlTests.All().ToDictionary(t => t.fullName, StringComparer.Ordinal);
+            var unknown = names.Where(n => !known.ContainsKey(n)).ToList();
+            if (unknown.Count > 0)
+            {
+                error = $"not tests of the 'tests' source: {string.Join(", ", unknown.Take(5))}";
+                return false;
+            }
+            var modes = names.Select(n => known[n].mode).Distinct().ToList();
+            if (modes.Count > 1)
+            {
+                error = "the selection mixes EditMode and PlayMode tests; run one mode at a time (add: where mode == \"EditMode\")";
+                return false;
+            }
+            mode = modes[0] == nameof(TestMode.PlayMode) ? TestMode.PlayMode : TestMode.EditMode;
+            groups = Rql.RqlTests.GroupPatterns(names);
+            return true;
+        }
+
+        static List<string> SelectedFullNames(global::Rql.QueryResult r)
+        {
+            var names = new List<string>();
+            if (r.Columns != null && r.Rows != null)
+            {
+                var column = r.Columns.FindIndex(c => string.Equals(c, "fullName", StringComparison.OrdinalIgnoreCase));
+                if (column < 0 && r.Columns.Count == 1) column = 0;
+                if (column >= 0)
+                    foreach (var row in r.Rows)
+                        if (row[column] is System.Text.Json.Nodes.JsonValue v && v.TryGetValue<string>(out var s)) names.Add(s);
+                return names;
+            }
+            if (r.Items != null)
+                foreach (var item in r.Items)
+                {
+                    if (item is System.Text.Json.Nodes.JsonObject o && o["fullName"] is System.Text.Json.Nodes.JsonValue v && v.TryGetValue<string>(out var s)) names.Add(s);
+                    else if (item is System.Text.Json.Nodes.JsonValue sv && sv.TryGetValue<string>(out var text)) names.Add(text);
+                }
+            return names;
+        }
+
         static Filter CreateTestFilter(TestMode testMode, TestFilterParameters filterParams)
         {
             var filter = new Filter
@@ -226,6 +317,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // Handle class filtering with regex (shared pattern ensures validation sync)
             if (!string.IsNullOrEmpty(filterParams.TestClass))
                 groupNames.Add(CreateClassRegexPattern(filterParams.TestClass!));
+
+            if (filterParams.Groups != null)
+                groupNames.AddRange(filterParams.Groups);
 
             if (groupNames.Any())
                 filter.groupNames = groupNames.ToArray();
@@ -353,6 +447,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     var classPattern = CreateClassRegexPattern(filterParams.TestClass!);
                     if (Regex.IsMatch(test.FullName, classPattern))
                         matches = true;
+                }
+
+                // Check the RQL selection with the same patterns Unity receives as Filter.groupNames
+                if (!matches && filterParams.Groups != null)
+                {
+                    foreach (var pattern in filterParams.Groups)
+                        if (Regex.IsMatch(test.FullName, pattern)) { matches = true; break; }
                 }
 
                 // Check method filter (FixtureName.TestName format, same as Filter.testNames)

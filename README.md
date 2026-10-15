@@ -170,7 +170,7 @@ The plugin ships with 70+ built-in tools across four categories. Each tool bring
 - `script-execute` - Compiles and executes C# code dynamically using Roslyn
 - `script-read` - Reads the content of a script file
 - `script-update-or-create` - Updates or creates script file with the provided C# code
-- `tests-run` - Execute Unity tests (EditMode/PlayMode) with filtering and detailed results
+- `tests-run` - Execute Unity tests (EditMode/PlayMode): any RQL selection over the `tests` source as one run, results filtered with RQL
 - `type-get-json-schema` - Generate a JSON Schema for a C# type via reflection
 
 </details>

@@ -60,6 +60,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         public static SessionStateInt IncludeLogsMinLevel = new("Unity_MCP_TestRunner_IncludeLogsMinLevel", (int)LogType.Warning);
         public static SessionStateBool IncludeLogsStacktrace = new("Unity_MCP_TestRunner_IncludeLogsStacktrace");
 
+        /// <summary>RQL stages applied to the results (tests-run 'result'); empty = the structured response.</summary>
+        public static SessionStateString ResultQuery = new("Unity_MCP_TestRunner_ResultQuery");
+
         public TestResultCollector()
         {
             int newCount = System.Threading.Interlocked.Increment(ref counter);
@@ -126,9 +129,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             if (!EnvironmentUtils.IsCi())
                 UnityMcpPluginEditor.ConnectIfNeeded();
 
+            // The testResults RQL source: this run's results, also after the request is answered.
+            Rql.RqlTests.SetLastResults(_results.Select(r => new Rql.RqlTestResult
+            {
+                name = r.Name,
+                status = r.Status.ToString(),
+                durationMs = System.Math.Round(r.Duration.TotalMilliseconds, 1),
+                message = string.IsNullOrEmpty(r.Message) ? null : r.Message,
+                stackTrace = string.IsNullOrEmpty(r.StackTrace) ? null : r.StackTrace,
+            }));
+
             var requestId = TestCallRequestID.Value;
             Tool_Tests.ClearActiveTestRun(requestId);
-            if (string.IsNullOrEmpty(requestId) == false)
+            var resultQuery = ResultQuery.Value;
+            if (string.IsNullOrEmpty(requestId) == false && string.IsNullOrWhiteSpace(resultQuery) == false)
+            {
+                _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
+                {
+                    RequestId = requestId,
+                    Result = ProjectedResponse(_summary, resultQuery!).SetRequestID(requestId)
+                });
+            }
+            else if (string.IsNullOrEmpty(requestId) == false)
             {
                 var structuredResponse = CreateStructuredResponse(
                     includePassingTests: IncludePassingTests.Value,
@@ -222,6 +244,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             {
                 _logs.Add(entry);
             }
+        }
+
+        /// <summary>
+        /// The answer for a tests-run 'result' query: one summary line, then the query over <c>testResults</c> as compact
+        /// RQL text. A query that fails still answers with the summary and the query's error.
+        /// </summary>
+        internal static ResponseCallTool ProjectedResponse(TestSummaryData summary, string resultQuery)
+        {
+            var stages = resultQuery.Trim();
+            var query = stages.StartsWith("testResults", System.StringComparison.Ordinal) ? stages : "testResults | " + stages;
+            var head = $"{summary.Status}: {summary.PassedTests} passed, {summary.FailedTests} failed, {summary.SkippedTests} skipped " +
+                $"of {summary.TotalTests} in {summary.Duration.TotalSeconds:0.0}s";
+            var r = Rql.RqlUnity.Engine.Execute(query);
+            var body = r.Ok
+                ? com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat.RqlToolBinding.Instance.Show(r)
+                : "result query failed: " + global::Rql.Execution.AgentFormat.Render(r, global::Rql.Execution.OutputFormat.Table);
+            return ResponseCallTool.Success(head + "\n" + body);
         }
 
         TestRunResponse CreateStructuredResponse(bool includePassingTests, bool includeMessage, bool includeMessageStacktrace, bool includeLogs, bool includeLogsStacktrace)
