@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, result.GetMessage());
             Assert.IsNull(result.StructuredContent, "RQL results are text, not structured content");
             Assert.IsNull(((IRunTool)runTool).OutputSchema, "no output schema under RQL");
-            return (result, string.Join("\n", result.Content.Select(c => c.Text)), ToolResults.Data(result));
+            return (result, string.Join("\n", result.Content.Select(c => c.Text)), ToolResults.Data(result, rql: true));
         }
 
         [TestCase(nameof(TestReturnTypeMethods.ReturnInt), "42")]

@@ -32,12 +32,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
         /// <summary>The value wrapped as ReflectorNet's {"result": value} JSON text, for tests that parse that shape.</summary>
         public static string ResultJson(ResponseCallTool response) => new JsonObject { ["result"] = Data(response)?.DeepClone() }.ToJsonString();
 
-        public static JsonNode? Data(ResponseCallTool response)
+        /// <param name="rql">The layer that produced the response; null = the suite's (<see cref="IsRql"/>).</param>
+        public static JsonNode? Data(ResponseCallTool response, bool? rql = null)
         {
             if (response.StructuredContent is JsonObject structured)
                 return structured.Count == 1 && structured.ContainsKey("result") ? structured["result"] : structured;
             var text = string.Join("\n", response.Content.Where(c => c.Text != null).Select(c => c.Text)).Trim();
-            if (!IsRql)
+            if (!(rql ?? IsRql))
             {
                 try
                 {
