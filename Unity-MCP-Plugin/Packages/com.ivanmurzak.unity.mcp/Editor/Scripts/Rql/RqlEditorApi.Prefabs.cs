@@ -42,17 +42,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public string SavePrefab()
         {
             var stage = PrefabStageUtility.GetCurrentPrefabStage() ?? throw new InvalidOperationException("no prefab is open (OpenPrefab first)");
-            PrefabUtility.SaveAsPrefabAsset(stage.prefabContentsRoot, stage.assetPath);
+            Save(stage);
             stage.ClearDirtiness();
             return stage.assetPath;
         }
 
-        [RqlCallable("leave prefab editing mode (save = true saves first)")]
+        [RqlCallable("leave prefab editing mode (save = true saves first, false discards the changes)")]
         public void ClosePrefab(bool save = true)
         {
             var stage = PrefabStageUtility.GetCurrentPrefabStage() ?? throw new InvalidOperationException("no prefab is open");
-            if (save) PrefabUtility.SaveAsPrefabAsset(stage.prefabContentsRoot, stage.assetPath);
+            if (save) Save(stage);
+            // A dirty stage makes Unity ask "save changes?" in a modal dialog on leaving, which blocks the main thread.
+            stage.ClearDirtiness();
             StageUtility.GoToMainStage();
+        }
+
+        private static void Save(PrefabStage stage)
+        {
+            PrefabUtility.SaveAsPrefabAsset(stage.prefabContentsRoot, stage.assetPath, out var saved);
+            if (!saved) throw new InvalidOperationException($"could not save the prefab '{stage.assetPath}'");
         }
 
         /// <summary>The <c>prefab</c> source: the root of the prefab open in prefab editing mode, or nothing.</summary>

@@ -50,6 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             int undoGroup = -1;
             engine.Mutations.BeforeWrite = records =>
             {
+                _wrote = true; // Mutate saves only when something was (about to be) written
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("RQL mutation");
                 undoGroup = Undo.GetCurrentGroup();

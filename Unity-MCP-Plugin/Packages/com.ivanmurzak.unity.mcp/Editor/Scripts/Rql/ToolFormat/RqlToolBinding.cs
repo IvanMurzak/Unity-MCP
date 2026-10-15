@@ -50,8 +50,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         public static void Apply(IToolManager? tools, ToolPresentationFormat format, ToolTextEscaping escaping)
         {
             Instance.Escaping = escaping;
-            if (tools != null)
-                tools.ToolBinding = format == ToolPresentationFormat.Rql ? Instance : null;
+            if (tools == null) return;
+            if (format == ToolPresentationFormat.Rql) Instance.Prebuild(tools);
+            tools.ToolBinding = format == ToolPresentationFormat.Rql ? Instance : null;
+        }
+
+        /// <summary>
+        /// Build every tool's signature now, on the calling (main) thread, before the binding is installed. McpPlugin asks
+        /// for a signature inside a locked Lazy, and building one waits for the main thread: a tools/list on a background
+        /// thread would otherwise hold that lock while the main thread (a tools window reading the schema) waits on it.
+        /// Prebuilt signatures come from the cache without touching the main thread.
+        /// </summary>
+        private void Prebuild(IToolManager tools)
+        {
+            foreach (var tool in tools.GetAllTools())
+                if (tool is RunTool run && run.Method != null)
+                {
+                    // The class member is ReflectorNet's description, the one McpPlugin passes. A failure here is left to
+                    // McpPlugin's guarded Describe (it logs and keeps ReflectorNet's signature for that tool).
+                    try { Describe(run.Name, run.Method, run.Description); }
+                    catch (Exception) { }
+                }
         }
 
         private CompactText _compact = new CompactText(ToolTextEscaping.Minimal);
@@ -289,14 +308,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                 case SerializedMember member:
                     return ResponseCallTool.Success(Render(member));
                 default:
-                    return ResponseCallTool.Success(com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(() =>
+                    return com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(() =>
                     {
                         var presented = Engine.Present(value);
+                        // A value RQL could not present is reported as an error, not as success with error text.
+                        if (!presented.Ok) return ResponseCallTool.Error(Show(presented));
                         // One object (not a list) reads as the object itself, without a "1 result" header.
-                        return Engine.Types.Info(value.GetType()).Kind != TypeKind.List && presented.Ok && presented.Items is { Count: 1 } one
+                        return ResponseCallTool.Success(Engine.Types.Info(value.GetType()).Kind != TypeKind.List && presented.Items is { Count: 1 } one
                             ? AgentFormat.Cell(one[0])
-                            : Show(presented);
-                    }));
+                            : Show(presented));
+                    });
             }
         }
 

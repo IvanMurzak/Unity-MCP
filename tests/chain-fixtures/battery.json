@@ -9,15 +9,15 @@
     "Only tools the tool manager actually registers: `ping` is a System tool and is NOT in it (measured:",
     "Tool with Name 'ping' not found).",
     "Every response must be DETERMINISTIC across runs of the same editor build, or the diff is noise:",
-    "editor-application-get-state (TimeSinceStartup) and profiler-get-status (MaxUsedMemoryMB) carry",
-    "unmasked volatile numbers, and scene-list-opened depends on which tests ran first - all excluded.",
+    "profiler-get-status (MaxUsedMemoryMB) carries unmasked volatile numbers, and rql-query / rql-schema without",
+    "a type depend on which tests ran first (the loaded scenes) - all excluded.",
     "unity-tool-list appears twice with different arguments so the (name, args_hash) key is observable;",
     "the unknown tool records the manager's not-found error contract."
   ],
   "calls": [
     { "name": "unity-tool-list", "args": {} },
-    { "name": "unity-tool-list", "args": { "regexSearch": "^scene-", "includeDescription": true } },
-    { "name": "type-get-json-schema", "args": { "typeName": "UnityEngine.Vector3" } },
+    { "name": "unity-tool-list", "args": { "regexSearch": "^rql-", "includeDescription": true } },
+    { "name": "rql-schema", "args": { "type": "Vector3" } },
     { "name": "chain-record-unknown-tool", "args": {} }
   ]
 }

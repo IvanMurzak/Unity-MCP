@@ -30,13 +30,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("create a scene and save it at path (\"Assets/…/X.unity\"); empty = no camera / light; additive keeps the loaded scenes")]
         public Scene NewScene(string path, bool empty = false, bool additive = false)
         {
+            // An empty path would make SaveScene open the modal "Save Scene" dialog.
+            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("NewScene needs a path such as \"Assets/Scenes/X.unity\"");
             var scene = EditorSceneManager.NewScene(empty ? NewSceneSetup.EmptyScene : NewSceneSetup.DefaultGameObjects,
                 additive ? NewSceneMode.Additive : NewSceneMode.Single);
             if (!EditorSceneManager.SaveScene(scene, path)) throw new ArgumentException($"could not save the new scene at '{path}'");
             return scene;
         }
 
-        [RqlCallable("save every modified loaded scene; returns false when a scene could not be saved")]
-        public bool SaveScenes() => EditorSceneManager.SaveOpenScenes();
+        [RqlCallable("save every modified loaded scene; returns false when a scene could not be saved (untitled scenes: SaveAs on the scene)")]
+        public bool SaveScenes()
+        {
+            // Not SaveOpenScenes: it opens the modal "Save Scene" dialog for an untitled scene, which blocks the main thread.
+            var ok = true;
+            foreach (var scene in RqlUnity.Scenes())
+                if (scene.isDirty && (string.IsNullOrEmpty(scene.path) || !EditorSceneManager.SaveScene(scene)))
+                    ok = false;
+            return ok;
+        }
     }
 }

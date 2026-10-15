@@ -138,6 +138,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         }
 
         [Test]
+        public void ApplyPrebuildsSignaturesSoABackgroundListingNeverWaitsForTheMainThread()
+        {
+            RqlToolBinding.Instance.Reset();
+            RqlToolBinding.Apply(_local, ToolPresentationFormat.Rql, ToolTextEscaping.Minimal);
+            var echo = (RunTool)_local.GetAllTools().Single(t => t.Name == Echo);
+            // The main thread blocks here: a Describe that still had to build the signature would wait for it forever.
+            var background = System.Threading.Tasks.Task.Run(() => RqlToolBinding.Instance.Describe(echo.Name, echo.Method, echo.Description));
+            Assert.IsTrue(background.Wait(System.TimeSpan.FromSeconds(5)), "Describe on a background thread waited for the main thread");
+            StringAssert.Contains("PresentationTestSettings", background.Result!.Description);
+        }
+
+        [Test]
         public void ThePluginsToolsGetTheConfiguredLayer()
         {
             var config = UnityMcpPluginEditor.Instance.ConnectionConfigForTests;

@@ -22,6 +22,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     {
         private static int _mutating;
 
+        // Set by the engine's BeforeWrite hook: the running Mutate reached the write phase (a set or call with targets).
+        private static bool _wrote;
+
         /// <summary>
         /// Raised by <see cref="Mutate"/> once its query finished, before assets and scenes are saved: modules that defer
         /// their own file writes during a mutation (e.g. <c>.inputactions</c> files) flush them here.
@@ -33,11 +36,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         /// <summary>
         /// Run a set / call query and save the result to disk: changed assets, modified scenes and the open prefab. Saving
-        /// runs after failed queries too, because completed calls are not rolled back. Untitled scenes (no path yet) stay
-        /// in memory and are reported as a warning.
+        /// runs after failed queries too, because completed calls are not rolled back; a query that wrote nothing (a parse
+        /// error, no matching items) saves nothing, so it never persists unrelated unsaved edits. Untitled scenes (no path
+        /// yet) stay in memory and are reported as a warning.
         /// </summary>
         public static QueryResult Mutate(string query, bool dryRun = false)
         {
+            if (_mutating == 0) _wrote = false;
             _mutating++;
             QueryResult result;
             try
@@ -48,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             {
                 _mutating--;
             }
-            if (!dryRun && _mutating == 0)
+            if (!dryRun && _mutating == 0 && _wrote)
                 foreach (var problem in SaveChanges())
                     result.Diagnostics.Add(Diagnostic.Warning("not-saved", problem));
             return result;

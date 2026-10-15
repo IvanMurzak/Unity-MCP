@@ -24,8 +24,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             // A Scene is a handle: a copy refers to the same loaded scene, so calls on items are real (writes-through).
             m.Untyped.Only("name", "path", "buildIndex", "isLoaded", "isDirty", "rootCount").WritesThrough();
             m.Add("roots", s => s.GetRootGameObjects().ToList(), description: "root GameObjects", owning: true)
-             .Function("Save", s => EditorSceneManager.SaveScene(s), "save the scene to its asset (false when it failed)")
-             .Function<string, bool>("SaveAs", (s, path) => EditorSceneManager.SaveScene(s, path), "path", "save the scene to a new asset path")
+             // An untitled scene (or an empty path) would make SaveScene open the modal "Save Scene" dialog.
+             .Function("Save", s => string.IsNullOrEmpty(s.path)
+                 ? throw new System.InvalidOperationException($"scene '{s.name}' has no file yet; use SaveAs(\"Assets/Scenes/X.unity\")")
+                 : EditorSceneManager.SaveScene(s), "save the scene to its asset (false when it failed)")
+             .Function<string, bool>("SaveAs", (s, path) => string.IsNullOrWhiteSpace(path)
+                 ? throw new System.ArgumentException("SaveAs needs a path such as \"Assets/Scenes/X.unity\"")
+                 : EditorSceneManager.SaveScene(s, path), "path", "save the scene to a new asset path")
              .Function("SetActive", s => SceneManager.SetActiveScene(s), "make it the active scene (new GameObjects go there)")
              .Function("Close", s => EditorSceneManager.CloseScene(s, removeScene: true), "close the scene (one scene must stay open; unsaved changes are lost)");
         }

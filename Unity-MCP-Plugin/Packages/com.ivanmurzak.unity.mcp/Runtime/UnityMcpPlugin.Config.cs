@@ -207,6 +207,8 @@ namespace com.IvanMurzak.Unity.MCP
                 Tools = DefaultTools;
                 Prompts = DefaultPrompts;
                 Resources = DefaultResources;
+                ToolFormat = ToolPresentationFormat.Rql;
+                ToolTextEscaping = com.IvanMurzak.McpPlugin.ToolTextEscaping.Minimal;
                 // Seed the LOCAL server token directly. `GenerateToken()` produces the local server secret;
                 // Cloud-mode credentials come from the shared machine store (T9), never from this config, so
                 // nothing cloud-related is seeded here. Seeding LocalToken up front keeps the generate-if-empty
