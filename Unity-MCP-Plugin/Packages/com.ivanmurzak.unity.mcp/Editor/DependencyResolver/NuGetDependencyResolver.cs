@@ -140,7 +140,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
             NuGetPluginConfigurator.ConfigureAll();
 
-            RecompileGate.EnsureReadyDefine();
+            // Restore() logs and swallows a failed download (offline, a proxy, nuget.org down). Opening the gate then
+            // would compile the plugin against missing DLLs (CS0246, Safe Mode): keep it closed until every package is
+            // on disk. The next domain reload, or Tools > AI Game Developer > Dependencies > Force Resolve, retries.
+            if (NuGetPackageRestorer.AllPackagesInstalled())
+                RecompileGate.EnsureReadyDefine();
+            else
+                Debug.LogError($"{Tag} Not every NuGet package could be installed (check the network / proxy access to " +
+                    "api.nuget.org). Unity-MCP stays disabled until they are; it retries on the next domain reload, or use " +
+                    "Tools > AI Game Developer > Dependencies > Force Resolve NuGet DLLs.");
 
             if (changed)
             {
