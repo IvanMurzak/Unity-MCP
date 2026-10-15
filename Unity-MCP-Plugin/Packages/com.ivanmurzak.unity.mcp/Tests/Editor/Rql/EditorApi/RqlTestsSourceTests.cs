@@ -47,13 +47,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
     {
         const string Probe = "com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi.RqlTestsProbe";
 
-        private static long Count(string rql)
-        {
-            var r = Q(rql);
-            AssertOk(r);
-            return r.Value!.GetValue<long>();
-        }
-
         [Test]
         public void TestsAreListedWithTheirFixtureModeAndCategories()
         {
@@ -83,22 +76,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         [Test]
         public void GroupPatternsSelectExactlyTheTestAndItsCases()
         {
-            var pattern = RqlTests.GroupPatterns(new[] { Probe + ".Cases" }).Single();
+            var pattern = Tool_Tests.CreateTestsRegexPattern(new[] { Probe + ".Cases", Probe + ".Plain" });
             Assert.IsTrue(Regex.IsMatch(Probe + ".Cases(1)", pattern));
             Assert.IsTrue(Regex.IsMatch(Probe + ".Cases", pattern));
             Assert.IsFalse(Regex.IsMatch(Probe + ".CasesMore", pattern));
             Assert.IsFalse(Regex.IsMatch("Other." + Probe + ".Cases", pattern));
+            Assert.IsTrue(Regex.IsMatch(Probe + ".Plain", pattern));
+            Assert.IsFalse(Regex.IsMatch(Probe + ".OnlyByName", pattern));
         }
 
         [Test]
         public void AQuerySelectsTestsAndTheirMode()
         {
-            Assert.IsTrue(Tool_Tests.TrySelectTests("tests | where fixture == \"RqlTestsProbe\"", out var groups, out var mode, out var error), error);
+            Assert.IsTrue(Tool_Tests.TrySelectTests("tests | where fixture == \"RqlTestsProbe\"", out var groups, out var names, out var mode, out var error), error);
             Assert.AreEqual(TestMode.EditMode, mode);
-            Assert.AreEqual(3, groups!.Length);
+            Assert.AreEqual(3, names.Count);
+            Assert.AreEqual(1, groups!.Length, "one combined pattern");
             // A projected column works as well as whole tests.
-            Assert.IsTrue(Tool_Tests.TrySelectTests("tests | where fixture == \"RqlTestsProbe\" | select fullName", out groups, out _, out error), error);
-            Assert.AreEqual(3, groups!.Length);
+            Assert.IsTrue(Tool_Tests.TrySelectTests("tests | where fixture == \"RqlTestsProbe\" | select fullName", out _, out names, out _, out error), error);
+            Assert.AreEqual(3, names.Count);
             Assert.IsTrue(Tool_Tests.TrySelectTests("tests | where fixture == \"DemoTest\" and namespace == \"com.IvanMurzak.Unity.MCP.Runtime.Tests\"", out _, out mode, out error), error);
             Assert.AreEqual(TestMode.PlayMode, mode);
         }
@@ -129,11 +125,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsNotNull(root, "Unity's test tree was not retrieved");
             var hits = Leaves(root!).Where(t => groups!.Any(g => Regex.IsMatch(t.FullName, g))).Select(t => t.FullName).OrderBy(n => n).ToList();
             CollectionAssert.AreEqual(new[] { Probe + ".Cases(1)", Probe + ".Cases(2)", Probe + ".Plain" }, hits);
+            // tests-run refuses a selection whose names are missing from Unity's tree instead of running a subset.
+            CollectionAssert.AreEqual(new[] { "No.Such.Fixture.Test" },
+                Tool_Tests.UnmatchedNames(root!, new[] { Probe + ".Plain", Probe + ".Cases", "No.Such.Fixture.Test" }));
             Object.DestroyImmediate(api);
         }
 
         static System.Collections.Generic.IEnumerable<ITestAdaptor> Leaves(ITestAdaptor t) =>
             t.HasChildren ? t.Children.SelectMany(Leaves) : new[] { t };
+
+        private static string Text(com.IvanMurzak.McpPlugin.Common.Model.ResponseCallTool r) => string.Join("\n", r.Content.Select(c => c.Text));
 
         [Test]
         public void ResultsAreQueryableAndProjected()
@@ -147,14 +148,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 
             var summary = new TestSummaryData { Status = TestRunStatus.Failed, TotalTests = 2, PassedTests = 1, FailedTests = 1, Duration = TimeSpan.FromSeconds(1.2) };
             var response = TestResultCollector.ProjectedResponse(summary, "where status == \"Failed\" | select name message");
-            var text = string.Join("\n", response.Content.Select(c => c.Text));
+            var text = Text(response);
             StringAssert.StartsWith("Failed: 1 passed, 1 failed, 0 skipped of 2 in 1.2s", text);
             StringAssert.Contains("A.Fail", text);
             StringAssert.Contains("Expected 1 but was 2", text);
             StringAssert.DoesNotContain("A.Pass", text);
             StringAssert.DoesNotContain("at A.Fail()", text);   // not selected
 
-            var broken = string.Join("\n", TestResultCollector.ProjectedResponse(summary, "where").Content.Select(c => c.Text));
+            var broken = Text(TestResultCollector.ProjectedResponse(summary, "where"));
             StringAssert.Contains("result query failed", broken);
             StringAssert.StartsWith("Failed: 1 passed", broken);
         }

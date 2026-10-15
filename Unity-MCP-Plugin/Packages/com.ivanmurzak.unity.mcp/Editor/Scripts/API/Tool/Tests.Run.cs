@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Linq;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
@@ -127,15 +128,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 // An RQL selection decides the tests and their mode before any run state is written.
                 string[]? groups = null;
+                List<string>? selectedNames = null;
                 if (!string.IsNullOrWhiteSpace(query))
                 {
                     if (testAssembly != null || testNamespace != null || testClass != null || testMethod != null)
                         return ResponseCallValueTool<TestRunResponse>
                             .Error("Give either 'query' or the testAssembly / testNamespace / testClass / testMethod filters, not both.")
                             .SetRequestID(requestId);
-                    if (!TrySelectTests(query!, out groups, out var selectedMode, out var selectError))
+                    if (!TrySelectTests(query!, out groups, out var names, out var selectedMode, out var selectError))
                         return ResponseCallValueTool<TestRunResponse>.Error(selectError!).SetRequestID(requestId);
                     testMode = selectedMode;
+                    selectedNames = names;
                 }
 
                 if (!TryBeginTestRun(requestId, out activeRequestId))
@@ -195,7 +198,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 try
                 {
-                    var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod) { Groups = groups };
+                    var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod) { Groups = groups, SelectedNames = selectedNames };
 
                     if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] Running {testMode} tests with filters: {filterParams}");
@@ -228,19 +231,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         }
 
         /// <summary>
-        /// Run <paramref name="query"/> (RQL over the <c>tests</c> source) and turn the selected tests into anchored
-        /// groupNames patterns. The mode comes from the tests; a selection mixing EditMode and PlayMode is refused.
+        /// Run <paramref name="query"/> (RQL over the <c>tests</c> source) and turn the selected tests into one anchored
+        /// groupNames pattern. The mode comes from the tests; a selection mixing EditMode and PlayMode is refused.
         /// </summary>
         internal static bool TrySelectTests(string query, out string[]? groups, out TestMode mode, out string? error)
+            => TrySelectTests(query, out groups, out _, out mode, out error);
+
+        internal static bool TrySelectTests(string query, out string[]? groups, out List<string> names, out TestMode mode, out string? error)
         {
             groups = null;
+            names = new List<string>();
             mode = TestMode.EditMode;
             error = null;
             // The whole selection is needed, not a page of it: lift the row / output budgets to the engine's hard limits.
             var r = Rql.RqlUnity.Engine.Execute(query, new global::Rql.Budgets { MaxRows = 10_000, MaxOutputBytes = 64 * 1024 * 1024 });
             if (!r.Ok)
             {
-                error = "query failed: " + global::Rql.Execution.AgentFormat.Render(r, global::Rql.Execution.OutputFormat.Table);
+                error = "query failed: " + Rql.ToolFormat.RqlToolBinding.Instance.Show(r);
                 return false;
             }
             if (r.Truncated)
@@ -248,13 +255,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 error = $"the query selects more tests than one run takes ({r.Total}); narrow it down";
                 return false;
             }
-            var names = SelectedFullNames(r);
+            names = SelectedFullNames(r);
             if (names.Count == 0)
             {
                 error = "the query selected no tests (it must return tests from the 'tests' source, or rows with a fullName column): " + query;
                 return false;
             }
-            var known = Rql.RqlTests.All().ToDictionary(t => t.fullName, StringComparer.Ordinal);
+            var known = Rql.RqlTests.ByName;
             var unknown = names.Where(n => !known.ContainsKey(n)).ToList();
             if (unknown.Count > 0)
             {
@@ -268,30 +275,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return false;
             }
             mode = modes[0] == nameof(TestMode.PlayMode) ? TestMode.PlayMode : TestMode.EditMode;
-            groups = Rql.RqlTests.GroupPatterns(names);
+            groups = new[] { CreateTestsRegexPattern(names) };
             return true;
         }
 
+        /// <summary>The selected full names: a fullName column (or the only column) of rows, or the tests themselves.</summary>
         static List<string> SelectedFullNames(global::Rql.QueryResult r)
         {
-            var names = new List<string>();
+            static string? Str(JsonNode? n) => n is JsonValue v && v.TryGetValue<string>(out var s) ? s : null;
+            IEnumerable<string?> names;
             if (r.Columns != null && r.Rows != null)
             {
                 var column = r.Columns.FindIndex(c => string.Equals(c, "fullName", StringComparison.OrdinalIgnoreCase));
                 if (column < 0 && r.Columns.Count == 1) column = 0;
-                if (column >= 0)
-                    foreach (var row in r.Rows)
-                        if (row[column] is System.Text.Json.Nodes.JsonValue v && v.TryGetValue<string>(out var s)) names.Add(s);
-                return names;
+                names = column < 0 ? Enumerable.Empty<string?>() : r.Rows.Select(row => Str(row[column]));
             }
-            if (r.Items != null)
-                foreach (var item in r.Items)
-                {
-                    if (item is System.Text.Json.Nodes.JsonObject o && o["fullName"] is System.Text.Json.Nodes.JsonValue v && v.TryGetValue<string>(out var s)) names.Add(s);
-                    else if (item is System.Text.Json.Nodes.JsonValue sv && sv.TryGetValue<string>(out var text)) names.Add(text);
-                }
-            return names;
+            else
+                names = (r.Items ?? new List<JsonNode?>()).Select(i => Str((i as JsonObject)?["fullName"]) ?? Str(i));
+            return names.Where(n => n != null).Distinct(StringComparer.Ordinal).ToList()!;
         }
+
+        /// <summary>
+        /// One groupNames pattern selecting exactly these tests, parameterized cases included:
+        /// <c>^(?:Ns\.Fixture\.A|Ns\.Fixture\.B)(\(.*\))?$</c>. One pattern, not one per test: .NET caches only 15 regexes.
+        /// </summary>
+        internal static string CreateTestsRegexPattern(IEnumerable<string> fullNames)
+            => "^(?:" + string.Join("|", fullNames.Distinct(StringComparer.Ordinal).Select(EscapeRegex)) + @")(\(.*\))?$";
 
         static Filter CreateTestFilter(TestMode testMode, TestFilterParameters filterParams)
         {
@@ -360,21 +369,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             => Regex.Escape(input);
 
         static async Task<int> GetMatchingTestCount(TestRunnerApi testRunnerApi, TestMode testMode, TestFilterParameters filterParams)
+            => (await MatchTestTree(testRunnerApi, testMode, filterParams)).count;
+
+        /// <summary>
+        /// Unity's own test tree for <paramref name="testMode"/>: how many tests the filters select, and which of the RQL
+        /// selection's names (<see cref="TestFilterParameters.SelectedNames"/>) match no test there (a fixture with
+        /// arguments, a generic fixture: the tests source names them differently).
+        /// </summary>
+        static async Task<(int count, List<string> unmatched)> MatchTestTree(TestRunnerApi testRunnerApi, TestMode testMode, TestFilterParameters filterParams)
         {
             try
             {
-                var tcs = new TaskCompletionSource<int>();
+                var tcs = new TaskCompletionSource<(int, List<string>)>();
 
                 testRunnerApi.RetrieveTestList(testMode, (testRoot) =>
                 {
                     var testCount = testRoot != null
                         ? CountFilteredTests(testRoot, filterParams)
                         : 0;
+                    var unmatched = filterParams.SelectedNames == null ? new List<string>()
+                        : testRoot == null ? filterParams.SelectedNames.ToList()
+                        : UnmatchedNames(testRoot, filterParams.SelectedNames);
 
                     if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                         Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
 
-                    tcs.SetResult(testCount);
+                    tcs.SetResult((testCount, unmatched));
                 });
 
                 // Wait for the test count result with timeout
@@ -388,17 +408,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }
             catch (Exception)
             {
-                return 0;
+                return (0, new List<string>());
             }
+        }
+
+        internal static List<string> UnmatchedNames(ITestAdaptor root, IReadOnlyList<string> names)
+        {
+            // A leaf's full name is the method's, with "(args)" for a parameterized case.
+            var found = new HashSet<string>(StringComparer.Ordinal);
+            void Walk(ITestAdaptor t)
+            {
+                if (t.HasChildren) foreach (var c in t.Children) Walk(c);
+                else if (!t.IsSuite)
+                {
+                    var name = t.FullName;
+                    var paren = name.IndexOf('(');
+                    found.Add(paren > 0 && name.EndsWith(")") ? name.Substring(0, paren) : name);
+                }
+            }
+            Walk(root);
+            return names.Where(n => !found.Contains(n)).ToList();
         }
 
         static async Task<string?> ValidateTestFilters(TestRunnerApi testRunnerApi, TestMode testMode, TestFilterParameters filterParams)
         {
             try
             {
-                var testCount = await GetMatchingTestCount(testRunnerApi, testMode, filterParams);
+                var (testCount, unmatched) = await MatchTestTree(testRunnerApi, testMode, filterParams);
                 if (testCount == 0)
                     return Error.NoTestsFound(filterParams);
+                // Never run a silent subset of an RQL selection.
+                if (unmatched.Count > 0)
+                    return Error.TestExecutionFailed($"{unmatched.Count} selected test(s) are not in Unity's {testMode} test tree " +
+                        $"(fixtures with arguments or generic fixtures are listed differently): {string.Join(", ", unmatched.Take(5))}");
 
                 return null; // No error, tests found
             }
@@ -449,12 +491,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         matches = true;
                 }
 
-                // Check the RQL selection with the same patterns Unity receives as Filter.groupNames
-                if (!matches && filterParams.Groups != null)
-                {
-                    foreach (var pattern in filterParams.Groups)
-                        if (Regex.IsMatch(test.FullName, pattern)) { matches = true; break; }
-                }
+                // Check the RQL selection with the same pattern Unity receives as Filter.groupNames
+                if (!matches && filterParams.HasGroups)
+                    matches = filterParams.Groups!.Any(pattern => Regex.IsMatch(test.FullName, pattern));
 
                 // Check method filter (FixtureName.TestName format, same as Filter.testNames)
                 if (!matches && !string.IsNullOrEmpty(filterParams.TestMethod))
