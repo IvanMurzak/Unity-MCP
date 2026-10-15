@@ -144,9 +144,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             var resultQuery = ResultQuery.Value;
             if (string.IsNullOrEmpty(requestId) == false)
             {
+                var mcpPlugin = UnityMcpPluginEditor.Instance.McpPluginInstance;
                 ResponseCallTool response;
                 if (string.IsNullOrWhiteSpace(resultQuery) == false)
-                    response = ProjectedResponse(_summary, resultQuery!);
+                {
+                    // tests-run declares a TestRunResponse output schema: the summary stays structured, the text is the projection.
+                    var summaryOnly = new TestRunResponse { Summary = _summary };
+                    response = ProjectedResponse(_summary, resultQuery!,
+                        mcpPlugin?.McpManager.Reflector.JsonSerializer.SerializeToNode(summaryOnly));
+                }
                 else
                 {
                     var structuredResponse = CreateStructuredResponse(
@@ -155,7 +161,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                         includeLogs: IncludeLogs.Value,
                         includeMessageStacktrace: IncludeMessageStacktrace.Value,
                         includeLogsStacktrace: IncludeLogsStacktrace.Value);
-                    var mcpPlugin = UnityMcpPluginEditor.Instance.McpPluginInstance ?? throw new InvalidOperationException("MCP Plugin instance is not available.");
+                    if (mcpPlugin == null) throw new InvalidOperationException("MCP Plugin instance is not available.");
                     response = ResponseCallValueTool<TestRunResponse>
                         .SuccessStructured(mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(structuredResponse));
                 }
@@ -243,9 +249,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
         /// <summary>
         /// The answer for a tests-run 'result' query: one summary line, then the query over <c>testResults</c> as compact
-        /// RQL text. A query that fails still answers with the summary and the query's error.
+        /// RQL text. A query that fails still answers with the summary and the query's error. <paramref name="structured"/>
+        /// (the summary as a <see cref="TestRunResponse"/>) is attached as structured content: MCP clients reject a success
+        /// without it from a tool that declares an output schema.
         /// </summary>
-        internal static ResponseCallTool ProjectedResponse(TestSummaryData summary, string resultQuery)
+        internal static ResponseCallTool ProjectedResponse(TestSummaryData summary, string resultQuery, System.Text.Json.Nodes.JsonNode? structured = null)
         {
             var stages = resultQuery.Trim();
             var query = stages.StartsWith("testResults", System.StringComparison.Ordinal) ? stages : "testResults | " + stages;
@@ -253,7 +261,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 $"of {summary.TotalTests} in {summary.Duration.TotalSeconds:0.0}s";
             var r = Rql.RqlUnity.Engine.Execute(query);
             var body = (r.Ok ? "" : "result query failed: ") + Rql.ToolFormat.RqlToolBinding.Instance.Show(r);
-            return ResponseCallTool.Success(head + "\n" + body);
+            var text = ResponseCallTool.Success(head + "\n" + body);
+            if (structured == null)
+                return text;
+            var response = ResponseCallValueTool<TestRunResponse>.SuccessStructured(structured);
+            response.Content = text.Content;
+            return response;
         }
 
         TestRunResponse CreateStructuredResponse(bool includePassingTests, bool includeMessage, bool includeMessageStacktrace, bool includeLogs, bool includeLogsStacktrace)
