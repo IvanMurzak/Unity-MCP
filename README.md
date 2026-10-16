@@ -25,7 +25,7 @@
     <a href="https://code.visualstudio.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/vs-code-64.png" alt="VS Code" title="VS Code" height="36"></a>&nbsp;&nbsp;
     <a href="https://www.jetbrains.com/rider/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/rider-64.png" alt="Rider" title="Rider" height="36"></a>&nbsp;&nbsp;
     <a href="https://visualstudio.microsoft.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/visual-studio-64.png" alt="Visual Studio" title="Visual Studio" height="36"></a>&nbsp;&nbsp;
-    <a href="https://github.com/anthropics/claude-code"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
+    <a href="https://opencode.ai/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
     <a href="https://github.com/cline/cline"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/cline-64.png" alt="Cline" title="Cline" height="36"></a>&nbsp;&nbsp;
     <a href="https://github.com/Kilo-Org/kilocode"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
   </p>
@@ -170,7 +170,7 @@ The plugin ships with 70+ built-in tools across four categories. Each tool bring
 - `script-execute` - Compiles and executes C# code dynamically using Roslyn
 - `script-read` - Reads the content of a script file
 - `script-update-or-create` - Updates or creates script file with the provided C# code
-- `tests-run` - Execute Unity tests (EditMode/PlayMode) with filtering and detailed results
+- `tests-run` - Execute Unity tests (EditMode/PlayMode): any RQL selection over the `tests` source as one run, results filtered with RQL
 - `type-get-json-schema` - Generate a JSON Schema for a C# type via reflection
 
 </details>
@@ -178,18 +178,7 @@ The plugin ships with 70+ built-in tools across four categories. Each tool bring
 <details>
   <summary>Profiling & Diagnostics</summary>
 
-- `profiler-capture-frame` - Capture the current frame's timing info (delta time, FPS, frame counts)
-- `profiler-clear-data` - Discard all frames currently held by the Editor Profiler
-- `profiler-enable-module` - Toggle the local enabled flag for a named profiler module
-- `profiler-get-memory-stats` - Return a memory statistics snapshot (reserved, allocated, mono heap, graphics)
-- `profiler-get-rendering-stats` - Return frame timing, FPS, vsync, target frame rate, graphics device type
-- `profiler-get-script-stats` - Return script execution timing plus Mono / GC memory usage
-- `profiler-get-status` - Return the profiler's enabled state, active modules, and platform support
-- `profiler-list-modules` - List all known profiler module names with their enabled flag
-- `profiler-load-data` - Read back a previously-saved profiler JSON snapshot
-- `profiler-save-data` - Save a snapshot of profiler-derived stats to a JSON file
-- `profiler-start` - Enable Unity's runtime profiler and open the Profiler window
-- `profiler-stop` - Disable Unity's runtime profiler
+- RQL source `profiler` (via `rql-query` / `rql-mutate`) - memory, rendering, script and frame snapshots, module flags; `Start`, `Stop`, `ClearFrames`, `EnableModule`, `Save`, `Load`
 
 </details>
 

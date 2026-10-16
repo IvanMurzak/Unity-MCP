@@ -111,7 +111,7 @@ Manage scene objects and hierarchy.
 ## 🧪 Testing
 | Tool | ID | Description |
 | :--- | :--- | :--- |
-| **Tests / Run** | `tests-run` | Execute Unity tests (EditMode/PlayMode) with optional filters and return detailed results. |
+| **Tests / Run** | `tests-run` | Execute Unity tests (EditMode/PlayMode): filters or an RQL `query` over the `tests` source (one run), results optionally filtered with an RQL `result` over `testResults`. |
 
 ## 💡 Advanced & Editor
 | Tool | ID | Description |
@@ -129,17 +129,6 @@ Manage scene objects and hierarchy.
 ## 📊 Profiling & Diagnostics
 | Tool | ID | Description |
 | :--- | :--- | :--- |
-| **Profiler / Start** | `profiler-start` | Enable Unity's runtime profiler and open the Profiler window. |
-| **Profiler / Stop** | `profiler-stop` | Disable Unity's runtime profiler. |
-| **Profiler / Get Status** | `profiler-get-status` | Return the profiler's enabled state, active modules, and platform support. |
-| **Profiler / Capture Frame** | `profiler-capture-frame` | Capture the current frame's timing info (delta time, FPS, frame counts). |
-| **Profiler / Get Memory Stats** | `profiler-get-memory-stats` | Return a memory statistics snapshot (reserved, allocated, mono heap, graphics). |
-| **Profiler / Get Rendering Stats** | `profiler-get-rendering-stats` | Return frame timing, FPS, vsync, target frame rate, and graphics device type. |
-| **Profiler / Get Script Stats** | `profiler-get-script-stats` | Return script execution timing plus Mono / GC memory usage. |
-| **Profiler / List Modules** | `profiler-list-modules` | List all known profiler module names with their enabled flag. |
-| **Profiler / Enable Module** | `profiler-enable-module` | Toggle the local enabled flag for a named profiler module. |
-| **Profiler / Clear Data** | `profiler-clear-data` | Discard all frames currently held by the Editor Profiler. |
-| **Profiler / Save Data** | `profiler-save-data` | Save a snapshot of profiler-derived stats to a JSON file. |
-| **Profiler / Load Data** | `profiler-load-data` | Read back a previously-saved profiler JSON snapshot. |
+| **Profiler (RQL)** | `rql-query` / `rql-mutate` on source `profiler` | Memory, rendering, script and frame snapshots and module flags; calls `Start`, `Stop`, `ClearFrames`, `EnableModule`, `Save`, `Load`. |
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

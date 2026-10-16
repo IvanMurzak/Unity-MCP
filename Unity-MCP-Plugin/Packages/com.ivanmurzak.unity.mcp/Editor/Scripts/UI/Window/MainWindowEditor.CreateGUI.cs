@@ -72,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             "The authorization token is a shared secret key. When required, every AI agent " +
             "must include this token in its MCP server configuration. The server rejects any " +
             "connection that does not supply the correct token.\n\n" +
-            "Treat this token like a password — do not share it publicly or commit it to version control.";
+            "Treat this token like a password — do not share it publicly.";
 
         // ── Per-element tooltips ─────────────────────────────────────────────────────
 
@@ -218,8 +218,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private VisualElement? _aiAgentLabelsContainer;
         private VisualElement? _aiAgentStatusCircle;
-
-        private DeviceAuthFlow? _deviceAuthFlow;
 
         private long _mcpServerDataVersion;
         private long _aiAgentDataVersion;

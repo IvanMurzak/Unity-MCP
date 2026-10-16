@@ -1,6 +1,8 @@
 ---
 name: unity-skill-create
 description: Create a new skill (MCP tool) for the Unity Editor by writing a C# (.cs) file that Unity compiles into the project. After compilation the new tool becomes callable through MCP. The file must be a partial class decorated with [AiToolType], each tool method must be decorated with [AiTool], the class name should match the file name, all Unity API calls must run via com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(), and the method should either return a structured data model (for parseable output) or void (for side-effect-only operations). See the body of this skill for a full sample and best-practice notes.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Skill (Tool) / Create
@@ -177,7 +179,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
 | `path` | `string` | Yes | Path for the C# (.cs) file to be created. Sample: "Assets/Skills/MySkill.cs".
-CRITICAL — Assembly Definition placement: If the project uses Assembly Definition files (.asmdef), you MUST place the script inside a folder that belongs to an assembly definition which already references all required dependencies (e.g. com.IvanMurzak.McpPlugin, UnityEditor, UnityEngine). Placing the file in the wrong assembly will cause compile errors due to missing type references. Before choosing a path, inspect existing .asmdef files with the assets-find tool to identify the correct assembly folder. |
+CRITICAL — Assembly Definition placement: If the project uses Assembly Definition files (.asmdef), you MUST place the script inside a folder that belongs to an assembly definition which already references all required dependencies (e.g. com.IvanMurzak.McpPlugin, UnityEditor, UnityEngine). Placing the file in the wrong assembly will cause compile errors due to missing type references. Before choosing a path, inspect existing .asmdef files with the rql-query tool (e.g. unity.assets("t:AssemblyDefinitionAsset")) to identify the correct assembly folder. |
 | `code` | `string` | Yes | C# code for the skill tool. |
 
 ### Input JSON Schema

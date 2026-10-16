@@ -8,15 +8,48 @@ import {
   MCP_SERVER_NAME,
 } from '../utils/agents.js';
 import { setupMcp } from '../lib/setup-mcp.js';
-import type { McpTransport } from '../lib/types.js';
+import type { McpTransport, SetupMcpSuccess } from '../lib/types.js';
 
 interface SetupMcpCliOptions {
   transport?: string;
   url?: string;
   token?: string;
+  oauth?: boolean;
+  regenerateKey?: boolean;
   list?: boolean;
   /** commander sets this to `false` when `--no-pin` is passed (defaults to `true`). */
   pin?: boolean;
+}
+
+/** Which credential the written config carries — never the key itself, only its server-side id. */
+function describeCredential(
+  result: Pick<SetupMcpSuccess, 'credential' | 'projectKeyId' | 'projectKeySource'>,
+): string {
+  switch (result.credential) {
+    case 'project-key': {
+      const id = result.projectKeyId ? ` ${result.projectKeyId}` : '';
+      const source = result.projectKeySource ? ` (${result.projectKeySource})` : '';
+      return `project key${id}${source}`;
+    }
+    case 'token':
+      return 'access token (--token)';
+    default:
+      return 'none (URL-only — the agent signs in itself)';
+  }
+}
+
+/** One labelled line per path — an agent (Antigravity) can own several config files. */
+function labelEach(label: string, paths: readonly string[]): void {
+  for (const p of paths) {
+    ui.label(label, p);
+  }
+}
+
+function printWarnings(warnings: readonly string[]): void {
+  for (const warning of warnings) {
+    console.log('');
+    ui.warn(warning);
+  }
 }
 
 function listAgents(): void {
@@ -33,7 +66,9 @@ export const setupMcpCommand = new Command('setup-mcp')
     'http',
   )
   .option('--url <url>', 'Server URL override (for http transport)')
-  .option('--token <token>', 'Explicit PAT opt-in — writes a static credential into the config (default: credential-free, native OAuth)')
+  .option('--token <token>', 'Explicit PAT — written as the Authorization header instead of the project key')
+  .option('--oauth', 'Write a URL-only Cloud config (the agent signs in with its own OAuth) instead of the project key')
+  .option('--regenerate-key', 'Mint a fresh project key, rewrite the config, and revoke the previous key (Cloud http only)')
   .option('--no-pin', 'Write an unpinned URL / omit the project= arg (default: pin to this project via /mcp/p/<pin>)')
   .option('--list', 'List all available agent IDs')
   .action(
@@ -77,6 +112,8 @@ export const setupMcpCommand = new Command('setup-mcp')
         transport,
         url: options.url,
         token: options.token,
+        oauth: options.oauth,
+        regenerateKey: options.regenerateKey,
         // commander sets `options.pin === false` when `--no-pin` was passed.
         noPin: options.pin === false,
       });
@@ -84,26 +121,27 @@ export const setupMcpCommand = new Command('setup-mcp')
       if (result.kind === 'failure') {
         spinner.error('Failed to write config');
         ui.error(result.error.message);
+        // A failed write can leave the previous project key active or other configs already moved to
+        // the new key — cli-core reports both as warnings on the failure, so surface them here too.
+        printWarnings(result.warnings);
         process.exit(1);
       }
 
-      // Narrowed: result.kind === 'success' below — `configPath` and
-      // `transport` are non-optional.
+      // Narrowed: result.kind === 'success' below — `configPaths` and
+      // `transport` are non-optional. Some agents (Antigravity) write more than one config file.
       if (positionalPath) {
         verbose(`Project path: ${positionalPath}`);
       }
-      verbose(`Config file: ${result.configPath}`);
 
       spinner.success(`${agent.name} configured successfully`);
 
       console.log('');
-      ui.label('Config file', result.configPath);
+      labelEach('Config file', result.configPaths);
+      labelEach('Moved to new key', result.rewrittenConfigPaths ?? []);
       ui.label('Transport', result.transport);
       ui.label('Server name', MCP_SERVER_NAME);
+      ui.label('Credential', describeCredential(result));
 
-      for (const warning of result.warnings) {
-        console.log('');
-        ui.warn(warning);
-      }
+      printWarnings(result.warnings);
     },
   );

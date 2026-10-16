@@ -12,17 +12,20 @@
 using com.IvanMurzak.McpPlugin.AgentConfig;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using NUnit.Framework;
+using UnityEngine.UIElements;
+using CustomConfigurator = com.IvanMurzak.McpPlugin.AgentConfig.Impl.CustomConfigurator;
+using TransportMethod = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod;
 using AgentConnectionMode = com.IvanMurzak.McpPlugin.AgentConfig.ConnectionMode;
 using AuthOption = com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.AuthOption;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     /// <summary>
-    /// Pure-logic tests for the mcp-authorize PR5 configurator-UI deltas (design 06):
-    /// the sign-in state chip, the default view omitting the token field, and the advanced
-    /// access-token path writing the legacy Bearer-header shape. No UIToolkit / Editor state is
-    /// exercised — the view's decision points are unit-tested through internal static helpers
-    /// (same pattern as <c>MainWindowEditorStatusLogicTests</c>).
+    /// Pure-logic tests for the configurator view's decision points: the sign-in state chip, the
+    /// credential mode each connection mode writes, and the Cloud project key (project-keys contract
+    /// §7) being written as <c>Authorization: Bearer</c> for every agent. No Editor state is exercised — the
+    /// view's decision points are unit-tested through internal static helpers (same pattern as
+    /// <c>MainWindowEditorStatusLogicTests</c>); the one UIToolkit test only clones a UXML template to pin its layout.
     /// </summary>
     public class AiAgentConfiguratorViewLogicTests
     {
@@ -46,25 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         #endregion
 
-        #region Default view omits the token field (advanced-affordance gating)
-
-        [Test]
-        public void ShouldOfferAccessTokenAffordance_HiddenForOAuthClients()
-        {
-            // Default (SupportsOAuth == true) path is credential-free: no token field is offered.
-            Assert.IsFalse(AiAgentConfiguratorView.ShouldOfferAccessTokenAffordance(supportsOAuth: true));
-        }
-
-        [Test]
-        public void ShouldOfferAccessTokenAffordance_ShownForNonOAuthClients()
-        {
-            // Only a client that cannot do MCP OAuth surfaces the legacy token field.
-            Assert.IsTrue(AiAgentConfiguratorView.ShouldOfferAccessTokenAffordance(supportsOAuth: false));
-        }
-
-        #endregion
-
-        #region Advanced path writes the Bearer shape; default path omits it
+        #region AccessToken mode writes the Bearer shape; the default path omits it
 
         private static AgentConfiguratorSettings MakeSettings(string? token)
             => new AgentConfiguratorSettings(
@@ -93,12 +78,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
-        public void AdvancedAccessTokenPath_WritesBearerShape()
+        public void AccessTokenMode_WritesBearerShape()
         {
             var configurator = AiAgentConfiguratorRegistry.GetByAgentId("claude-code");
             Assert.IsNotNull(configurator);
 
-            // The advanced escape hatch (HttpCredentialMode.AccessToken) writes the legacy Bearer header.
+            // HttpCredentialMode.AccessToken writes the Bearer header.
             var http = configurator!.GetHttpConfig(
                 MakeSettings("SECRET-PAT-XYZ"),
                 credentialMode: HttpCredentialMode.AccessToken);
@@ -125,8 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ResolveHttpCredentialMode_LocalTokenMode_UsesAccessToken()
         {
             // A loopback token-gated server MUST get the Authorization: Bearer header in the client config.
-            var mode = AiAgentConfiguratorView.ResolveHttpCredentialMode(
-                MakeSettings(AgentConnectionMode.Local, AuthOption.token));
+            var mode = MakeSettings(AgentConnectionMode.Local, AuthOption.token).ResolveHttpCredentialMode();
             Assert.AreEqual(HttpCredentialMode.AccessToken, mode);
         }
 
@@ -136,11 +120,135 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [TestCase(AgentConnectionMode.Cloud, AuthOption.none)]
         public void ResolveHttpCredentialMode_OtherModes_StayOAuthUrlOnly(AgentConnectionMode connectionMode, AuthOption authOption)
         {
-            // none/oauth (local) authorize natively or are anonymous; Cloud uses the credential-free
-            // OAuth golden path — all keep the URL-only default.
-            var mode = AiAgentConfiguratorView.ResolveHttpCredentialMode(
-                MakeSettings(connectionMode, authOption));
+            // none/oauth (local) authorize natively or are anonymous; Cloud WITHOUT a project key (signed
+            // out, or the mint failed) keeps the credential-free URL-only default.
+            var mode = MakeSettings(connectionMode, authOption).ResolveHttpCredentialMode();
             Assert.AreEqual(HttpCredentialMode.Oauth, mode);
+        }
+
+        #endregion
+
+        #region Cloud project key is written for every agent (project-keys contract §7)
+
+        private const string ProjectKey = "agd_pk_TESTKEY-0123456789";
+
+        private static AgentConfiguratorSettings CloudWithKey(string? key)
+            => MakeSettings(AgentConnectionMode.Cloud, AuthOption.oauth).WithProjectKey(key);
+
+        [Test]
+        public void CloudWithProjectKey_EveryAgentWritesTheKey_AndReadsBackConfigured()
+        {
+            var settings = CloudWithKey(ProjectKey);
+            Assert.AreEqual(HttpCredentialMode.AccessToken, settings.ResolveHttpCredentialMode());
+
+            foreach (var configurator in AiAgentConfiguratorRegistry.All)
+            {
+                if (configurator is CustomConfigurator)
+                    continue;
+                var http = configurator.GetHttpConfig(settings, credentialMode: settings.ResolveHttpCredentialMode());
+                StringAssert.Contains(ProjectKey, http.ExpectedFileContent, $"{configurator.AgentId} must carry the project key");
+                StringAssert.DoesNotContain("LOCAL-SECRET", http.ExpectedFileContent, $"{configurator.AgentId} must not carry the local secret");
+            }
+        }
+
+        [Test]
+        public void CloudWithoutProjectKey_StaysUrlOnly()
+        {
+            // Signed out / mint failed / feature off (404): the config is URL-only, never an error.
+            var settings = CloudWithKey(null);
+            Assert.IsFalse(settings.HasProjectKey);
+            Assert.AreEqual(HttpCredentialMode.Oauth, settings.ResolveHttpCredentialMode());
+
+            var configurator = AiAgentConfiguratorRegistry.GetByAgentId("claude-code");
+            var http = configurator!.GetHttpConfig(settings, credentialMode: settings.ResolveHttpCredentialMode());
+            StringAssert.DoesNotContain("Bearer", http.ExpectedFileContent);
+        }
+
+        [Test]
+        public void LocalServer_IgnoresProjectKey()
+        {
+            // Local-server mode is unchanged: a key never replaces the local secret.
+            var settings = MakeSettings(AgentConnectionMode.Local, AuthOption.token).WithProjectKey(ProjectKey);
+            Assert.IsFalse(settings.HasProjectKey);
+            var http = AiAgentConfiguratorRegistry.GetByAgentId("claude-code")!
+                .GetHttpConfig(settings, credentialMode: settings.ResolveHttpCredentialMode());
+            StringAssert.Contains("Bearer LOCAL-SECRET", http.ExpectedFileContent);
+            StringAssert.DoesNotContain(ProjectKey, http.ExpectedFileContent);
+        }
+
+        [Test]
+        public void Describe_NeverRendersTheRawProjectKey()
+        {
+            var settings = CloudWithKey(ProjectKey);
+            foreach (var configurator in AiAgentConfiguratorRegistry.All)
+            {
+                var description = configurator.Describe(settings, TransportMethod.streamableHttp);
+                foreach (var section in description.Sections)
+                    foreach (var item in section.Items)
+                        StringAssert.DoesNotContain(ProjectKey, item.Text ?? string.Empty, $"{configurator.AgentId}: {section.Heading}");
+            }
+        }
+
+        [TestCase(true, true)]
+        [TestCase(true, false)]
+        [TestCase(false, false)]
+        public void DescribeKeyState_SaysWhetherAKeyIsInUse(bool isSignedIn, bool hasKey)
+        {
+            var text = AiAgentConfiguratorView.DescribeKeyState(isSignedIn, hasKey);
+            if (hasKey)
+                StringAssert.StartsWith("Project key in use", text);
+            else
+                StringAssert.Contains("URL-only", text);
+            if (!isSignedIn)
+                StringAssert.Contains("Sign in", text);
+            StringAssert.DoesNotContain("git", text.ToLowerInvariant());
+        }
+
+        #endregion
+
+        #region Regenerate key shares the Configure button's right edge
+
+        /// <summary>
+        /// The "Regenerate key" row must sit in the SAME column as the Configure row with the SAME row layout: that
+        /// column is the `.row` child that `.row > * { margin-right }` insets, so sharing it is what puts both buttons'
+        /// right edges on one line. A row added to the template root instead escapes that inset (the 0.92.0 bug).
+        /// </summary>
+        [Test]
+        public void ConfigureStatusTemplate_KeyRowSharesTheConfigureColumnAndLayout()
+        {
+            var root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
+            var btnConfigure = root.Q<Button>("btnConfigure");
+            var btnRegenerate = root.Q<Button>("btnRegenerateKey");
+            var configureStatusText = root.Q<Label>("configureStatusText");
+            var keyStatusText = root.Q<Label>("projectKeyStatusText");
+            Assert.IsNotNull(btnConfigure);
+            Assert.IsNotNull(btnRegenerate);
+            Assert.IsNotNull(configureStatusText);
+            Assert.IsNotNull(keyStatusText);
+
+            var configureRow = configureStatusText!.parent;
+            var keyRow = btnRegenerate!.parent;
+            Assert.AreEqual("projectKeyRow", keyRow.name);
+            Assert.AreSame(keyStatusText!.parent, keyRow);
+
+            // Same column, and that column is the `.row` child the right-edge inset applies to.
+            Assert.AreSame(configureRow.parent, keyRow.parent);
+            Assert.AreEqual("templateConfigurationStatus", keyRow.parent.name);
+            Assert.IsTrue(keyRow.parent.parent.ClassListContains("row"));
+
+            // Each button (group) is its row's last child under the same row layout.
+            Assert.AreSame(btnConfigure!.parent, configureRow[configureRow.childCount - 1]);
+            Assert.AreSame(btnRegenerate, keyRow[keyRow.childCount - 1]);
+            Assert.AreEqual(configureRow.style.flexDirection.value, keyRow.style.flexDirection.value);
+            Assert.AreEqual(configureRow.style.alignItems.value, keyRow.style.alignItems.value);
+            Assert.AreEqual(configureRow.style.justifyContent.value, keyRow.style.justifyContent.value);
+            Assert.AreEqual(configureRow.style.marginTop.value, keyRow.style.marginTop.value);
+
+            // Same button + label styling, and the tooltip is kept.
+            CollectionAssert.AreEquivalent(btnConfigure.GetClasses(), btnRegenerate.GetClasses());
+            CollectionAssert.AreEquivalent(configureStatusText.GetClasses(), keyStatusText.GetClasses());
+            Assert.AreEqual(configureStatusText.style.marginBottom.value, keyStatusText.style.marginBottom.value);
+            Assert.IsFalse(string.IsNullOrEmpty(btnRegenerate.tooltip));
         }
 
         #endregion

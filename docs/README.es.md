@@ -170,7 +170,7 @@ El plugin incluye más de 70 herramientas integradas en cuatro categorías. Cada
 - `script-execute` - Compila y ejecuta código C# dinámicamente usando Roslyn
 - `script-read` - Lee el contenido de un archivo de script
 - `script-update-or-create` - Actualiza o crea un archivo de script con el código C# proporcionado
-- `tests-run` - Ejecuta pruebas de Unity (EditMode/PlayMode) con filtrado y resultados detallados
+- `tests-run` - Ejecuta pruebas de Unity (EditMode/PlayMode): cualquier selección RQL sobre la fuente `tests` en una sola ejecución, resultados filtrados con RQL
 - `type-get-json-schema` - Genera un JSON Schema para un tipo C# mediante reflexión
 
 </details>
@@ -178,18 +178,7 @@ El plugin incluye más de 70 herramientas integradas en cuatro categorías. Cada
 <details>
   <summary>Profiling y diagnóstico</summary>
 
-- `profiler-capture-frame` - Captura la información de tiempos del frame actual (delta time, FPS, conteo de frames)
-- `profiler-clear-data` - Descarta todos los frames que mantiene actualmente el Profiler del Editor
-- `profiler-enable-module` - Alterna el indicador local de activación de un módulo de profiler con nombre
-- `profiler-get-memory-stats` - Devuelve una instantánea de estadísticas de memoria (reservada, asignada, mono heap, gráficos)
-- `profiler-get-rendering-stats` - Devuelve tiempos de frame, FPS, vsync, frame rate objetivo, tipo de dispositivo gráfico
-- `profiler-get-script-stats` - Devuelve los tiempos de ejecución de scripts más el uso de memoria Mono / GC
-- `profiler-get-status` - Devuelve el estado de activación del profiler, módulos activos y soporte de plataforma
-- `profiler-list-modules` - Lista todos los nombres de módulos de profiler conocidos con su indicador de activación
-- `profiler-load-data` - Lee de vuelta una instantánea JSON del profiler guardada previamente
-- `profiler-save-data` - Guarda una instantánea de estadísticas derivadas del profiler en un archivo JSON
-- `profiler-start` - Activa el profiler en runtime de Unity y abre la ventana del Profiler
-- `profiler-stop` - Desactiva el profiler en runtime de Unity
+- Fuente RQL `profiler` (con `rql-query` / `rql-mutate`) - instantáneas de memoria, renderizado, scripts y frame, indicadores de módulos; `Start`, `Stop`, `ClearFrames`, `EnableModule`, `Save`, `Load`
 
 </details>
 

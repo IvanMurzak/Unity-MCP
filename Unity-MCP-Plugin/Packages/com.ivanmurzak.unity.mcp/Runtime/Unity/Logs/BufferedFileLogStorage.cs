@@ -12,11 +12,9 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text.Json;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Logging;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP
 {
@@ -141,67 +139,20 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
-        public override LogEntry[] Query(
-            int maxEntries = 100,
-            LogType? logTypeFilter = null,
-            bool includeStackTrace = false,
-            int lastMinutes = 0)
+        protected override IEnumerable<LogEntry> ReadNewestFirst(DateTime? cutoffTime)
         {
-            if (_isDisposed.Value)
-            {
-                _logger.LogWarning("{method} called but already disposed, ignored.",
-                    nameof(Query));
-                return Array.Empty<LogEntry>();
-            }
-            lock (_fileMutex)
-            {
-                return QueryInternal(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
-            }
-        }
-
-        protected override LogEntry[] QueryInternal(
-            int maxEntries = 100,
-            LogType? logTypeFilter = null,
-            bool includeStackTrace = false,
-            int lastMinutes = 0)
-        {
-            var result = new List<LogEntry>();
-            var cutoffTime = lastMinutes > 0
-                ? System.DateTime.Now.AddMinutes(-lastMinutes)
-                : System.DateTime.MinValue;
-
-            // 1. Get from buffer (Newest are at the end of buffer)
+            // Not-yet-written entries first (newest at the end of the buffer): all of them are newer than the file.
             for (int i = _logEntriesBufferLength - 1; i >= 0; i--)
             {
                 var entry = _logEntriesBuffer[i];
-                if (logTypeFilter.HasValue && entry.LogType != logTypeFilter.Value)
-                    continue;
+                if (cutoffTime.HasValue && entry.Timestamp < cutoffTime.Value)
+                    yield break;
 
-                if (lastMinutes > 0)
-                {
-                    if (entry.Timestamp < cutoffTime)
-                    {
-                        return result.AsEnumerable().Reverse().ToArray();
-                    }
-                }
-
-                result.Add(entry);
-                if (result.Count >= maxEntries)
-                    return result.AsEnumerable().Reverse().ToArray();
+                yield return entry;
             }
 
-            // 2. Exit if we already have enough entries
-            var neededLogsCount = maxEntries - result.Count;
-            if (neededLogsCount <= 0)
-                return result.AsEnumerable().Reverse().ToArray();
-
-            result.Reverse();
-
-            // 3. Get from file
-            var fileEntries = base.QueryInternal(neededLogsCount, logTypeFilter, includeStackTrace, lastMinutes);
-            result.AddRange(fileEntries);
-
-            return result.ToArray();
+            foreach (var entry in base.ReadNewestFirst(cutoffTime))
+                yield return entry;
         }
 
         ~BufferedFileLogStorage() => Dispose();

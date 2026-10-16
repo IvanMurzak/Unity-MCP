@@ -96,7 +96,7 @@ export const setupSkillsCommand = new Command('setup-skills')
       verbose(`Skills path: ${skillsPath}`);
 
       // Resolve server connection
-      let { url: serverUrl, token } = resolveConnection(projectPath, options);
+      let { url: serverUrl, token } = await resolveConnection(projectPath, options);
 
       // Call the MCP server to generate skills
       const endpoint = `${serverUrl}/api/system-tools/unity-skill-generate`;

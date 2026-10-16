@@ -16,12 +16,16 @@ import { runCliAsync } from './helpers/cli.js';
 // ---------------------------------------------------------------------------
 
 describe('login command', () => {
-  it('shows help with --help (documents --force and --project)', async () => {
+  it('shows help with --help (documents --force, --project, --tools-only and --yes)', async () => {
     const { stdout, exitCode } = await runCliAsync(['login', '--help']);
     expect(exitCode).toBe(0);
     expect(stdout).toContain('login');
     expect(stdout).toContain('--force');
     expect(stdout).toContain('--project');
+    // O10 ruling: the CI/automation flag is named exactly --tools-only.
+    expect(stdout).toContain('--tools-only');
+    // F7: the account-switch prompt is --yes-gated.
+    expect(stdout).toContain('--yes');
   });
 
   it('reports "Already signed in" when a --project store credential exists (offline short-circuit)', async () => {

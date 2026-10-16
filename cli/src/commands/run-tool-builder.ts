@@ -2,6 +2,7 @@ import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
+import { refreshCloudAccessToken } from '../utils/cloud-credentials.js';
 import { parseInput } from '../utils/input.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from '../lib/types.js';
 
@@ -69,7 +70,8 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
       // Resolve path + connection up front so the heading and verbose
       // output reflect the final endpoint before the HTTP call fires.
       const projectPath = resolveAndValidateProjectPath(positionalPath, options);
-      const { url: baseUrl, token, cloudAuthMissing } = resolveConnection(projectPath, options);
+      const { url: baseUrl, token, cloudAuthMissing, tokenFromCloudStore } =
+        await resolveConnection(projectPath, options);
       if (cloudAuthMissing) {
         ui.error(
           'Not logged in to ai-game.dev. Run `unity-mcp-cli login` to sign in, then retry — or pass --token / --url to target a specific server.',
@@ -97,13 +99,33 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
 
       // The CLI already resolved url/token, so passing them explicitly
       // makes the lib's resolver a no-op rather than re-reading config.
-      const result = await cfg.invoke({
-        toolName,
-        url: baseUrl,
-        ...(token ? { token } : {}),
-        input: body,
-        timeoutMs,
-      });
+      const invokeOnce = (bearer: string | undefined): ReturnType<typeof cfg.invoke> =>
+        cfg.invoke({
+          toolName,
+          url: baseUrl,
+          ...(bearer ? { token: bearer } : {}),
+          input: body,
+          timeoutMs,
+        });
+
+      let result = await invokeOnce(token);
+
+      // Reactive refresh (unified-machine-auth 04 §3 rule 1): a 401 against a machine-store
+      // Bearer means revocation or clock skew the proactive check could not see — refresh the
+      // plugin family once under the cross-process lock and retry. Explicit --token/--url
+      // overrides are never refreshed.
+      if (
+        result.kind === 'failure' &&
+        result.reason === 'http-error' &&
+        result.httpStatus === 401 &&
+        tokenFromCloudStore
+      ) {
+        const fresh = await refreshCloudAccessToken();
+        if (fresh) {
+          verbose('Server answered 401; retrying once with a refreshed cloud credential.');
+          result = await invokeOnce(fresh);
+        }
+      }
 
       if (result.kind === 'success') {
         spinner?.success(`${toolName} completed`);

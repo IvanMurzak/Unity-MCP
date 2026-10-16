@@ -289,7 +289,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void GetAuthFlowStatusMessage_Authorized()
         {
-            Assert.AreEqual("Authorized!", MainWindowEditor.GetAuthFlowStatusMessage(DeviceAuthFlowState.Authorized, null, null));
+            // "Authorized" here means the DEVICE GRANT was approved — the F1 login commit (agent
+            // family → exchange → plugin family) is still completing, and its own status messages
+            // (AccountCredentialService.CommitLoginAsync onStatus) take over from this one.
+            Assert.AreEqual("Authorized — completing sign-in...", MainWindowEditor.GetAuthFlowStatusMessage(DeviceAuthFlowState.Authorized, null, null));
         }
 
         [Test]
@@ -348,6 +351,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void IsMcpServerControlEnabled(TransportMethod transport, bool expected)
         {
             Assert.AreEqual(expected, MainWindowEditor.IsMcpServerControlEnabled(transport));
+        }
+
+        #endregion
+
+        #region ShouldPromptOnAuthorizationRejected (oauth-client-error-hygiene 02 §C4)
+
+        // The silent-red early-return is GONE: a Cloud-mode authorization rejection surfaces the
+        // prompt path even while the provider still reads as signed in. A dead credential family
+        // can never be refreshed, so "signed in ⇒ the coordinator will recover" was false — the
+        // early-return left the editor silently red while the AS was hit every 60 s. Restoring
+        // `if (isSignedIn) return false;` reddens the signed-in case below.
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CloudMode_AlwaysReachesThePromptPath(bool isSignedIn)
+        {
+            Assert.IsTrue(MainWindowEditor.ShouldPromptOnAuthorizationRejected(ConnectionMode.Cloud, isSignedIn));
+        }
+
+        // LocalServer (Custom) mode keeps its behavior: no cloud sign-in prompt.
+        [TestCase(true)]
+        [TestCase(false)]
+        public void CustomMode_NeverPrompts(bool isSignedIn)
+        {
+            Assert.IsFalse(MainWindowEditor.ShouldPromptOnAuthorizationRejected(ConnectionMode.Custom, isSignedIn));
         }
 
         #endregion

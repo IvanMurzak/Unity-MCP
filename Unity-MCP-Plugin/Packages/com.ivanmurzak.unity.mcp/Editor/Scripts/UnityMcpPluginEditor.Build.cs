@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using Microsoft.Extensions.Logging;
@@ -75,6 +76,17 @@ namespace com.IvanMurzak.Unity.MCP
 
             return this;
         }
+
+        protected override void ApplyConfigToMcpPlugin(IMcpPlugin mcpPlugin)
+        {
+            base.ApplyConfigToMcpPlugin(mcpPlugin);
+            ApplyToolFormat(mcpPlugin);
+        }
+
+        /// <summary>The tools' data layer from the config (RQL or ReflectorNet). Setting it re-lists the tools (OnToolsUpdated).</summary>
+        internal void ApplyToolFormat(IMcpPlugin mcpPlugin) =>
+            Editor.Rql.ToolFormat.RqlToolBinding.Apply(mcpPlugin.McpManager.ToolManager,
+                unityConnectionConfig.ToolFormat, unityConnectionConfig.ToolTextEscaping);
 
         public void DisposeMcpPluginInstance()
         {

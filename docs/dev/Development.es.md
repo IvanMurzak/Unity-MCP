@@ -50,7 +50,6 @@ Este documento explica la estructura interna, el diseño, el estilo de código y
     - [🚀 release.yml](#-releaseyml)
     - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
     - [🔧 test\_unity\_plugin.yml](#-test_unity_pluginyml)
-    - [📦 deploy.yml](#-deployyml)
   - [Stack tecnológico](#stack-tecnológico)
   - [Consideraciones de seguridad](#consideraciones-de-seguridad)
   - [Destinos de despliegue](#destinos-de-despliegue)
@@ -552,7 +551,7 @@ Esto es lo que necesitas saber al trabajar con CI como colaborador:
 - **No modifiques los archivos de workflow** en `.github/workflows/` en tu PR — la verificación de CI se abortará si detecta cambios en estos archivos de un colaborador no confiable.
 - **Las 18 combinaciones de la matriz de pruebas deben pasar** antes de que un PR pueda fusionarse. Si tu cambio rompe solo una combinación (por ej., `2022-editmode`), ese trabajo mostrará una ✗ roja mientras los demás están en verde.
 - **Re-ejecutar trabajos fallidos:** Ve al PR → pestaña **Checks** → haz clic en un trabajo fallido → **Re-run failed jobs**. Esto es útil para fallos transitorios del Unity Editor.
-- **Orden de ejecución de workflows:** `test_pull_request.yml` se ejecuta en tu PR. `release.yml` solo se ejecuta después de fusionar en `main`. No necesitas activar las releases manualmente.
+- **Orden de ejecución de workflows:** `test_pull_request.yml` se ejecuta en tu PR. Fusionar en `main` no publica nada: un mantenedor crea la release despachando manualmente `release.yml`.
 
 ## Resumen de workflows
 
@@ -560,23 +559,30 @@ Esto es lo que necesitas saber al trabajar con CI como colaborador:
 
 ### 🚀 [release.yml](../../.github/workflows/release.yml)
 
-**Disparador:** Push a la rama `main`
+**Disparador:** Solo `workflow_dispatch` manual (entrada `dry_run`, por defecto `false`). Fusionar en `main` no publica nada.
 **Propósito:** Workflow principal de release que orquesta todo el proceso de publicación
+
+```bash
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main -f dry_run=true   # todas las pruebas y compilaciones, no publica nada
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                   # release real
+```
 
 **Proceso:**
 
-1. **Verificación de versión** - Extrae la versión de [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) y comprueba si ya existe el tag de release
+1. **Verificación de versión** - Extrae la versión de [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json). Una ejecución real falla si no es sobre `main` o si el tag de release ya existe; un dry run avisa y continúa
 2. **Compilación del Installer de Unity** - Prueba y exporta el instalador del paquete Unity (`AI-Game-Dev-Installer.unitypackage`)
 4. **Pruebas del Plugin de Unity** - Ejecuta pruebas completas en:
    - 3 versiones de Unity: `2022.3.62f3`, `2023.2.22f1`, `6000.3.1f1`
    - 3 modos de prueba: `editmode`, `playmode`, `standalone`
    - 2 sistemas operativos: `windows-latest`, `ubuntu-latest`
    - Total: **18 combinaciones en la matriz de pruebas**
-5. **Creación de release** - Genera notas de versión a partir de commits y crea la release de GitHub con el tag
-6. **Publicación** - Sube el paquete del instalador de Unity y el paquete UPM firmado a la release
+5. **Despliegue** - Compila, prueba y publica el paquete npm `unity-mcp-cli` con procedencia (OIDC Trusted Publishing, directamente en `release.yml`; se omite si esa versión exacta ya está en npm)
+6. **Creación de release** - Crea el tag y la release de GitHub con el paquete del instalador de Unity y el paquete UPM firmado adjuntos (OpenUPM lo toma de ahí)
 7. **Notificación de Discord** - Envía las notas de la release formateadas al canal de Discord
-8. **Despliegue** - Activa el workflow de despliegue de la CLI de npm
+8. **Verificación** - Falla la ejecución a menos que la release de GitHub, npm y OpenUPM sirvan la nueva versión
 9. **Limpieza** - Elimina los artefactos de compilación tras la publicación exitosa
+
+Los pasos 5-9 se omiten en un dry run.
 
 ### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
 
@@ -602,18 +608,6 @@ Esto es lo que necesitas saber al trabajar con CI como colaborador:
 - Aborta si los archivos de workflow son modificados en PRs
 - Almacena en caché la Librería de Unity para ejecuciones posteriores más rápidas
 - Sube artefactos de prueba para depuración
-
-### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
-
-**Disparador:** Llamado por el workflow de release O dispatch manual
-**Propósito:** Publica el paquete npm `unity-mcp-cli`
-
-**Trabajos:**
-
-**Despliegue de la CLI en npm:**
-
-- Compila y prueba la CLI
-- Publica en [npm](https://www.npmjs.com/package/unity-mcp-cli) con procedencia (provenance)
 
 > Los despliegues del paquete NuGet del servidor MCP y de la imagen Docker se trasladaron al repositorio compartido [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (Docker: [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server)).
 

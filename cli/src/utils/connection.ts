@@ -3,6 +3,7 @@ import * as path from 'path';
 import { verbose } from './ui.js';
 import { generatePortFromDirectory } from './port.js';
 import { readConfig, resolveConnectionFromConfig, isCloudMode } from './config.js';
+import { readCloudAccessToken } from './cloud-credentials.js';
 import * as ui from './ui.js';
 
 export interface ConnectionOptions {
@@ -66,20 +67,29 @@ export function resolveAndValidateProjectPath(positionalPath: string | undefined
 export interface ResolveConnectionDeps {
   /**
    * Injection point for the Cloud-mode machine-store credential read. Forwarded to
-   * `resolveConnectionFromConfig`; defaults to the real per-machine store. Tests inject a
-   * deterministic value.
+   * `resolveConnectionFromConfig`; defaults to `readCloudAccessToken` — cli-core's
+   * `MachineCredentialProvider` (proactive refresh under the cross-process lock, never a raw
+   * on-disk read). Tests inject a deterministic value.
    */
-  readCloudToken?: () => string | undefined;
+  readCloudToken?: () => Promise<string | undefined> | string | undefined;
 }
 
-export function resolveConnection(
+export async function resolveConnection(
   projectPath: string,
   options: ConnectionOptions,
   deps: ResolveConnectionDeps = {},
-): { url: string; token: string | undefined; cloudAuthMissing: boolean } {
+): Promise<{
+  url: string;
+  token: string | undefined;
+  cloudAuthMissing: boolean;
+  /** True when the Bearer came from the shared machine store (Cloud mode, no --token override). */
+  tokenFromCloudStore: boolean;
+}> {
   const config = readConfig(projectPath);
   const fromConfig = config
-    ? resolveConnectionFromConfig(config, { readCloudToken: deps.readCloudToken })
+    ? await resolveConnectionFromConfig(config, {
+        readCloudToken: deps.readCloudToken ?? readCloudAccessToken,
+      })
     : { url: undefined, token: undefined };
 
   verbose(`Config loaded: connectionMode=${config?.connectionMode ?? 'N/A'}, configUrl=${fromConfig.url ?? 'N/A'}, hasToken=${!!fromConfig.token}`);
@@ -110,6 +120,7 @@ export function resolveConnection(
   // signal this so the run-tool command surfaces an actionable "not logged in" error instead of a
   // silent unauthenticated cloud call (defect E / D11).
   const cloudAuthMissing = usingCloudUrl && !token;
+  const tokenFromCloudStore = usingCloudUrl && !options.token && !!token;
 
-  return { url, token, cloudAuthMissing };
+  return { url, token, cloudAuthMissing, tokenFromCloudStore };
 }

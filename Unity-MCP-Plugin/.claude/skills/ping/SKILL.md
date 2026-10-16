@@ -1,6 +1,8 @@
 ---
 name: ping
 description: Lightweight readiness probe. Returns the input `message` echoed back, or `'pong'` when omitted. Useful for CLI health checks and SignalR connectivity smoke tests.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Ping

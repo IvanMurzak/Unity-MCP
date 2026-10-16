@@ -19,6 +19,7 @@ using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet;
 using Microsoft.Extensions.Logging;
+using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
 using NUnit.Framework;
 using UnityEngine.TestTools;
 
@@ -45,6 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Act
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo: methodInfo, title: "Test Tool");
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Assert
             Assert.IsNotNull(runTool, "RunTool should be created successfully");
@@ -61,6 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             // Act
             var runTool = RunTool.CreateFromInstanceMethod(_reflector, _mockLogger, name: "name", testInstance, methodInfo, title: "Instance Tool");
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Assert
             Assert.IsNotNull(runTool, "RunTool should be created successfully");
@@ -74,6 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.AddNumbers));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None, 5, 3);
@@ -88,7 +92,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
 
             var expectedJson = JsonSerializer.Serialize(new { result = 8 });
-            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return correct calculation result");
+            Assert.AreEqual(expectedJson, ToolResults.ResultJson(result), "Should return correct calculation result");
         }
 
         [UnityTest]
@@ -97,6 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.AddNumbers));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
             var namedParams = new Dictionary<string, JsonElement>
             {
                 {"a", JsonSerializer.SerializeToElement(10)},
@@ -115,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
 
             var expectedJson = JsonSerializer.Serialize(new { result = 25 });
-            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return correct calculation result");
+            Assert.AreEqual(expectedJson, ToolResults.ResultJson(result), "Should return correct calculation result");
         }
 
         [UnityTest]
@@ -124,6 +129,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.MethodWithRequestID));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
             const string expectedRequestId = "test-request-123";
 
             // Act
@@ -138,7 +144,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
 
             var expectedJson = JsonSerializer.Serialize(new { result = expectedRequestId });
-            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return injected request ID");
+            Assert.AreEqual(expectedJson, ToolResults.ResultJson(result), "Should return injected request ID");
         }
 
         [UnityTest]
@@ -147,6 +153,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.ThrowingMethod));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None);
@@ -171,6 +178,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.SimpleStaticMethod));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo: methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Act
             var task = runTool.Run("test-request-id", null!, CancellationToken.None);
@@ -208,6 +216,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // Arrange
             var methodInfo = typeof(TestStaticMethods).GetMethod(nameof(TestStaticMethods.AsyncMethod));
             var runTool = RunTool.CreateFromStaticMethod(_reflector, _mockLogger, name: "name", methodInfo);
+            runTool.Binding = ToolDataLayerSetUp.Binding;
 
             // Act
             var task = runTool.Run("test-request-id", CancellationToken.None, "Hello");
@@ -221,7 +230,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, "Should return success status");
 
             var expectedJson = JsonSerializer.Serialize(new { result = "Hello Async" });
-            Assert.AreEqual(expectedJson, result.GetMessage(), "Should return async method result");
+            Assert.AreEqual(expectedJson, ToolResults.ResultJson(result), "Should return async method result");
         }
     }
 
