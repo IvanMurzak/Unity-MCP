@@ -4,9 +4,9 @@
   - [Installation](/#installation)
 
 - **Tools & Features**
-  - [Tools Reference](/#tools-reference)
+  - [Skills and Tools Reference](/#skills-and-tools-reference)
   - [Default MCP Tools](/default-mcp-tools.md)
-  - [Customize MCP](/#customize-mcp)
+  - [Customize Tools](/#customize-tools)
   - [Runtime Usage](/#runtime-usage-in-game)
 
 - **Server & Deployment**

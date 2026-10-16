@@ -2,7 +2,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=49BC5C 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -35,6 +35,7 @@ Manage files, folders, and project resources.
 | :--- | :--- | :--- |
 | **Assets / Create Material** | `assets-material-create` | Create a new Material asset. |
 | **Assets / List Shaders** | `assets-shader-list-all` | List all available shaders in the project. |
+| **Assets / Shader / Get Data** | `assets-shader-get-data` | Get shader data — properties, subshaders, passes, and compilation messages. |
 
 ### Prefabs
 | Tool | ID | Description |
@@ -105,21 +106,29 @@ Manage scene objects and hierarchy.
 | **Screenshot / Camera** | `screenshot-camera` | Capture a screenshot from a camera (defaults to Main Camera). |
 | **Screenshot / Game View** | `screenshot-game-view` | Capture a screenshot from the Unity Editor Game View. |
 | **Screenshot / Scene View** | `screenshot-scene-view` | Capture a screenshot from the Unity Editor Scene View. |
+| **Screenshot / Isolated GameObject** | `screenshot-isolated` | Render a target GameObject in isolation from a chosen angle, with optional Composite (2x2) view. |
 
 ## 🧪 Testing
 | Tool | ID | Description |
 | :--- | :--- | :--- |
-| **Tests / Run** | `tests-run` | Execute Unity tests (EditMode/PlayMode) with optional filters and return detailed results. |
+| **Tests / Run** | `tests-run` | Execute Unity tests (EditMode/PlayMode): filters or an RQL `query` over the `tests` source (one run), results optionally filtered with an RQL `result` over `testResults`. |
 
 ## 💡 Advanced & Editor
 | Tool | ID | Description |
 | :--- | :--- | :--- |
 | **Console / Get Logs** | `console-get-logs` | Retrieve Unity Console logs. |
+| **Console / Clear Logs** | `console-clear-logs` | Clear the MCP log cache and the Unity Editor Console window. |
 | **Editor / Application / Get State** | `editor-application-get-state` | Check Play/Pause/Edit mode status. |
 | **Editor / Application / Set State** | `editor-application-set-state` | Set Play/Pause status. |
 | **Editor / Selection / Get** | `editor-selection-get` | Get current selection. |
 | **Editor / Selection / Set** | `editor-selection-set` | Set current selection. |
 | **Method C# / Find** | `reflection-method-find` | Find any C# method (public/private). |
 | **Method C# / Call** | `reflection-method-call` | Execute any found method. |
+| **Type / Get Json Schema** | `type-get-json-schema` | Generate a JSON Schema for a C# type via reflection. |
+
+## 📊 Profiling & Diagnostics
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Profiler (RQL)** | `rql-query` / `rql-mutate` on source `profiler` | Memory, rendering, script and frame snapshots and module flags; calls `Start`, `Stop`, `ClearFrames`, `EnableModule`, `Save`, `Load`. |
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

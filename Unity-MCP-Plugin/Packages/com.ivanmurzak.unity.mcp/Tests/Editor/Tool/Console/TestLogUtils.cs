@@ -180,7 +180,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 const int expectedLogs = 3;
                 yield return WaitForLogCount(expectedLogs);
 
-                var originalLogs = logCollector.Query();
+                var originalLogs = logCollector.Query(includeStackTrace: true);
                 Assert.AreEqual(expectedLogs, originalLogs.Length);
 
                 // Verify original logs have stack traces
@@ -196,7 +196,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 logCollector.Dispose();
                 logCollector = new UnityLogCollector(new FileLogStorage(requestedFileName: "test-editor-logs.txt"));
 
-                var loadedLogs = logCollector.Query();
+                var loadedLogs = logCollector.Query(includeStackTrace: true);
                 Assert.AreEqual(expectedLogs, loadedLogs.Length, "All logs should be preserved");
 
                 // Verify stack traces are preserved

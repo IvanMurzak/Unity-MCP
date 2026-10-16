@@ -54,10 +54,6 @@ describe('addPluginToManifest', () => {
   const REQUIRED_SCOPES = [
     'com.ivanmurzak',
     'extensions.unity',
-    'org.nuget.com.ivanmurzak',
-    'org.nuget.microsoft',
-    'org.nuget.system',
-    'org.nuget.r3',
   ];
 
   beforeEach(() => {
@@ -164,8 +160,8 @@ describe('addPluginToManifest', () => {
     assertHasAllScopes(result);
   });
 
-  // --- partial scopes (4 scopes present) ---
-  it('adds missing scopes when 4 of 6 are present', () => {
+  // --- partial scopes (only extensions.unity present) ---
+  it('adds missing scopes when only extensions.unity is present', () => {
     writeManifest({
       dependencies: { 'com.unity.ugui': '1.0.0' },
       scopedRegistries: [
@@ -173,10 +169,7 @@ describe('addPluginToManifest', () => {
           name: 'package.openupm.com',
           url: 'https://package.openupm.com',
           scopes: [
-            'com.ivanmurzak',
             'extensions.unity',
-            'org.nuget.com.ivanmurzak',
-            'org.nuget.microsoft',
           ],
         },
       ],
@@ -324,10 +317,6 @@ describe('removePluginFromManifest', () => {
   const REQUIRED_SCOPES = [
     'com.ivanmurzak',
     'extensions.unity',
-    'org.nuget.com.ivanmurzak',
-    'org.nuget.microsoft',
-    'org.nuget.system',
-    'org.nuget.r3',
   ];
 
   beforeEach(() => {

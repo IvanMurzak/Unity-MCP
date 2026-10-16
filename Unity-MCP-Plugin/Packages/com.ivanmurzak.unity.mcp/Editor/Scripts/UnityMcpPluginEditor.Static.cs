@@ -185,15 +185,6 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
         public static string CloudServerUrl => UnityMcpPlugin.UnityConnectionConfig.CloudServerUrl;
-        public static string? CloudToken
-        {
-            get => Instance.unityConnectionConfig.CloudToken;
-            set
-            {
-                Instance.unityConnectionConfig.CloudToken = value;
-                NotifyChanged(Instance.unityConnectionConfig);
-            }
-        }
 
         public static bool IsAutoGenerateSkills(string agentId)
         {

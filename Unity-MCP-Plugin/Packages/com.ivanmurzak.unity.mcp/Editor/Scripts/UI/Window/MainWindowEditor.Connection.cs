@@ -10,11 +10,14 @@
 
 #nullable enable
 using System;
+using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.Services;
 using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
 using Microsoft.AspNetCore.SignalR.Client;
 using R3;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.UIElements;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
@@ -86,23 +89,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void OnAuthorizationRejected()
         {
-            if (UnityMcpPluginEditor.ConnectionMode != ConnectionMode.Cloud)
+            if (!ShouldPromptOnAuthorizationRejected(UnityMcpPluginEditor.ConnectionMode, AccountCredentialService.IsSignedIn))
                 return;
 
-            Debug.LogWarning("[AI Game Developer] The server rejected the authorization token. " +
-                "The token has been cleared. Please click 'Authorize' to obtain a new token.");
-
-            UnityMcpPluginEditor.CloudToken = null;
-            UnityMcpPluginEditor.Instance.Save();
+            // The machine store is the only Cloud credential source (T9 — the cloudToken
+            // UserSettings mirror was removed). A rejection here means the presented credential is
+            // not usable right now — surface the prompt path instead of staying silently red
+            // (oauth-client-error-hygiene 02 §C4). On a dead-family verdict the
+            // AssistedReauthService additionally auto-opens the browser (D4), once-gated.
+            Debug.LogWarning("[AI Game Developer] The server rejected the authorization. " +
+                "Please click 'Authorize' to sign in again.");
 
             UpdateCloudAuthState();
             RefreshConnectionUI();
         }
 
+        /// <summary>
+        /// Whether a server authorization rejection surfaces the sign-in prompt path. Cloud mode
+        /// ALWAYS prompts (oauth-client-error-hygiene 02 §C4): the old signed-in early-return
+        /// assumed the coordinator's silent refresh+reconnect would recover, but a DEAD credential
+        /// family can never be refreshed — the early-return left a signed-in editor silently red
+        /// while the authorization server was hit every 60 s. <paramref name="isSignedIn"/> stays an
+        /// explicit input so tests pin the removal (restoring the early-return reddens them).
+        /// </summary>
+        internal static bool ShouldPromptOnAuthorizationRejected(ConnectionMode mode, bool isSignedIn)
+            => mode == ConnectionMode.Cloud;
+
         private void UpdateConnectionUI(HubConnectionState state, bool keepConnected)
         {
             if (_inputFieldHost == null || _connectionStatusText == null
                 || _btnConnect == null || _connectionStatusCircle == null)
+                return;
+
+            // DEV-ONLY: a dev-injected connection status pins the row — skip the live re-sync so the
+            // injection sticks on screen (see _devConnectionStatusOverride). Never set in a shipped plugin.
+            if (_devConnectionStatusOverride != null)
                 return;
 
             UpdateHostFieldState(_inputFieldHost, keepConnected, state);
@@ -231,9 +252,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     UnityMcpPluginEditor.ConnectionMode = ConnectionMode.Cloud;
 
-                    // Cloud requires streamableHttp + authorization
+                    // Cloud requires streamableHttp. Cloud authorization is driven by ConnectionMode.Cloud
+                    // itself (the shared configurator's IsHttpAuthRequired / OAuth account path), NOT by the
+                    // local-server AuthOption — so we no longer stamp the retired `required` value here
+                    // (mcp-authorize g5/g6). AuthOption stays a purely local-server (Custom-mode) setting.
                     UnityMcpPluginEditor.TransportMethod = TransportMethod.streamableHttp;
-                    UnityMcpPluginEditor.AuthOption = AuthOption.required;
 
                     UnityMcpPluginEditor.Instance.Save();
                     UpdateModeVisibility(ConnectionMode.Cloud);
@@ -246,8 +269,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     if (McpServerManager.IsRunning || McpServerManager.IsStarting)
                         McpServerManager.StopServer();
 
-                    // Reconnect to cloud server (only if authorized)
-                    if (!string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken))
+                    // Reconnect to cloud server (only if authorized via the machine store)
+                    if (AccountCredentialService.IsSignedIn)
                         ReconnectAfterModeSwitch();
                     ScheduleConnectionUIRefresh();
                 }
@@ -264,7 +287,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             DeviceAuthFlowState.Initiating => "Initiating...",
             DeviceAuthFlowState.WaitingForUser => $"Code: {userCode} — Authorize in browser",
             DeviceAuthFlowState.Polling => $"Code: {userCode} — Waiting for authorization...",
-            DeviceAuthFlowState.Authorized => "Authorized!",
+            DeviceAuthFlowState.Authorized => "Authorized — completing sign-in...",
             DeviceAuthFlowState.Failed => $"Failed: {errorMessage}",
             DeviceAuthFlowState.Expired => "Expired — try again",
             DeviceAuthFlowState.Cancelled => "Cancelled",
@@ -292,37 +315,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             });
 
             const string tokenPlaceholder = "Token — press Authorize";
-            void SetTokenValue(string? token)
+            const string signedInDisplay = "Signed in via account";
+            // The raw cloud JWT is no longer mirrored into the config (T9); it lives only in the shared
+            // machine store. This read-only field therefore reflects sign-in state, not the token value.
+            void UpdateTokenDisplay()
             {
-                var isEmpty = string.IsNullOrEmpty(token);
-                inputCloudToken.value = isEmpty ? tokenPlaceholder : token!;
-                inputCloudToken.EnableInClassList("token-placeholder", isEmpty);
+                var signedIn = AccountCredentialService.IsSignedIn;
+                inputCloudToken.value = signedIn ? signedInDisplay : tokenPlaceholder;
+                inputCloudToken.EnableInClassList("token-placeholder", !signedIn);
             }
 
-            SetTokenValue(UnityMcpPluginEditor.CloudToken);
+            UpdateTokenDisplay();
             UpdateCloudAuthState();
 
             void UpdateRevokeButtonVisibility()
             {
                 if (btnRevoke != null)
-                    btnRevoke.style.display = string.IsNullOrEmpty(UnityMcpPluginEditor.CloudToken)
-                        ? DisplayStyle.None
-                        : DisplayStyle.Flex;
+                    btnRevoke.style.display = AccountCredentialService.IsSignedIn
+                        ? DisplayStyle.Flex
+                        : DisplayStyle.None;
             }
             UpdateRevokeButtonVisibility();
 
-            btnRevoke?.RegisterCallback<ClickEvent>(evt =>
+            async Task SignOutMachineWideThenRefreshUiAsync()
             {
-                UnityMcpPluginEditor.CloudToken = null;
-                UnityMcpPluginEditor.Instance.Save();
-                SetTokenValue(null);
-                UpdateRevokeButtonVisibility();
-
-                if (statusLabel != null)
+                try
                 {
-                    statusLabel.text = "Token revoked.";
-                    statusLabel.style.display = DisplayStyle.Flex;
+                    var result = await AccountCredentialService.SignOutMachineWideAsync();
+                    // Never surface token material (07 rule 2) — state only.
+                    if (statusLabel != null)
+                    {
+                        statusLabel.text = result.StoreDeleted
+                            ? "Signed out on this machine."
+                            : "Sign-out incomplete — another tool holds the credential lock. Try again.";
+                        statusLabel.style.display = DisplayStyle.Flex;
+                    }
                 }
+                catch (Exception ex)
+                {
+                    Debug.LogWarning($"[AI Game Developer] Machine-wide sign-out failed: {ex.Message}");
+                    if (statusLabel != null)
+                    {
+                        statusLabel.text = "Sign-out failed — see the Console for details.";
+                        statusLabel.style.display = DisplayStyle.Flex;
+                    }
+                }
+
+                UpdateTokenDisplay();
+                UpdateRevokeButtonVisibility();
 
                 // Invalidate cached AI agent configs
                 InvalidateAndReloadAgentUI();
@@ -333,62 +373,100 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud
                     && UnityMcpPluginEditor.Instance.HasMcpPluginInstance)
                     _ = UnityMcpPluginEditor.Instance.Disconnect();
+                Repaint();
+            }
+
+            btnRevoke?.RegisterCallback<ClickEvent>(evt =>
+            {
+                // F6 (D5): sign-out is MACHINE-WIDE — every engine plugin, CLI, and the desktop app
+                // share the one machine credential store, so signing out here signs them all out.
+                // Interactive confirm first (03 F6.1 / 08 J5), then best-effort RFC 7009 revocation
+                // of every stored family + the lock-protocol store delete.
+                var confirmed = EditorUtility.DisplayDialog(
+                    "Sign out of AI Game Dev?",
+                    "This signs out ALL AI Game Dev tools on this machine — every engine plugin, CLI, and the desktop app.\n\n"
+                    + "Tokens are revoked server-side (best effort) and the shared machine credential is deleted.",
+                    "Sign Out",
+                    "Cancel");
+                if (!confirmed)
+                    return;
+                _ = SignOutMachineWideThenRefreshUiAsync();
             });
 
-            _startAuthorizeAction = async () =>
+            // The Authorize flow lives in the service now (oauth-client-error-hygiene 02 §C4:
+            // extraction, not reuse) — it runs the whole D4 ladder (device code → default-browser
+            // open → poll until approval → F1 login commit → reload + reconnect) with or without
+            // this window; the window only renders its state and delegates the button.
+            void RefreshAuthFlowUi()
             {
-                // If currently running, cancel
-                if (_deviceAuthFlow != null && IsAuthFlowRunning(_deviceAuthFlow.State))
+                // Service events may fire on any thread. Use RunAsync (EditorApplication.update-
+                // based) instead of delayCall so the UI updates even when the Unity Editor window is
+                // not focused — delayCall is throttled/paused when Unity loses application focus.
+                MainThread.Instance.RunAsync(() =>
                 {
-                    _deviceAuthFlow.Cancel();
+                    if (statusLabel != null)
+                    {
+                        // The persistent status (D4 ladder step 3 / commit progress) wins over the
+                        // flow-state line; both come from the service.
+                        statusLabel.text = AssistedReauthService.StatusMessage
+                            ?? GetAuthFlowStatusMessage(
+                                AssistedReauthService.FlowState,
+                                AssistedReauthService.UserCode,
+                                AssistedReauthService.FlowErrorMessage);
+                        statusLabel.style.display = string.IsNullOrEmpty(statusLabel.text)
+                            ? DisplayStyle.None
+                            : DisplayStyle.Flex;
+                    }
+                    if (btnAuthorize != null)
+                    {
+                        btnAuthorize.text = AssistedReauthService.IsFlowRunning ? "Cancel" : "Authorize";
+                    }
+                    UpdateTokenDisplay();
+                    UpdateRevokeButtonVisibility();
+                    UpdateCloudAuthState();
+                    Repaint();
+                });
+            }
+
+            // Replace any previous handler (CreateGUI reruns on Invalidate) and keep a reference so
+            // OnDisable can detach — a static event must never retain a closed window.
+            if (_assistedReauthChangedHandler != null)
+                AssistedReauthService.Changed -= _assistedReauthChangedHandler;
+            _assistedReauthChangedHandler = RefreshAuthFlowUi;
+            AssistedReauthService.Changed += _assistedReauthChangedHandler;
+            RefreshAuthFlowUi(); // render pre-window state (e.g. an auto flow already in flight, or the carousel status)
+
+            async Task AuthorizeThenRefreshUiAsync()
+            {
+                // NOTE (d1): DeviceAuthFlowState.Authorized means the DEVICE GRANT was approved —
+                // the service completes the F1 login commit (agent family → exchange → plugin
+                // family), reloads the provider, and reconnects (KeepConnected intent respected)
+                // before this await returns Committed.
+                var outcome = await AssistedReauthService.AuthorizeAsync();
+
+                await MainThread.Instance.RunAsync(() =>
+                {
+                    UpdateTokenDisplay();
+                    UpdateRevokeButtonVisibility();
+                    UpdateCloudAuthState();
+                    if (outcome == AssistedReauthOutcome.Committed)
+                    {
+                        // Invalidate cached AI agent configs so they pick up the new credential
+                        InvalidateAndReloadAgentUI();
+                    }
+                    Repaint();
+                });
+            }
+
+            _startAuthorizeAction = () =>
+            {
+                // Click while the flow is running = cancel (unchanged UX).
+                if (AssistedReauthService.IsFlowRunning)
+                {
+                    AssistedReauthService.CancelFlow();
                     return;
                 }
-
-                _deviceAuthFlow?.Cancel();
-                _deviceAuthFlow = new DeviceAuthFlow();
-                var capturedFlow = _deviceAuthFlow; // Capture to avoid stale field reference in async callbacks
-
-                capturedFlow.OnStateChanged += state =>
-                {
-                    // Use RunAsync (EditorApplication.update-based) instead of delayCall so that
-                    // the UI updates even when the Unity Editor window is not focused — delayCall
-                    // is throttled/paused when Unity loses application focus.
-                    MainThread.Instance.RunAsync(() =>
-                    {
-                        // Ignore stale events from a previous auth flow
-                        if (_deviceAuthFlow != capturedFlow) return;
-
-                        if (statusLabel != null)
-                        {
-                            statusLabel.text = GetAuthFlowStatusMessage(state, capturedFlow.UserCode, capturedFlow.ErrorMessage);
-                            statusLabel.style.display = string.IsNullOrEmpty(statusLabel.text)
-                                ? DisplayStyle.None
-                                : DisplayStyle.Flex;
-                        }
-                        if (state == DeviceAuthFlowState.Authorized && inputCloudToken != null)
-                        {
-                            SetTokenValue(UnityMcpPluginEditor.CloudToken);
-                            UpdateRevokeButtonVisibility();
-                            UpdateCloudAuthState();
-                        }
-                        if (state == DeviceAuthFlowState.Authorized)
-                        {
-                            // Invalidate cached AI agent configs so they pick up the new cloud token
-                            InvalidateAndReloadAgentUI();
-
-                            // Reconnect to cloud server with the new token (only if still in Cloud mode)
-                            if (UnityMcpPluginEditor.ConnectionMode == ConnectionMode.Cloud)
-                                ReconnectAfterModeSwitch();
-                        }
-                        if (btnAuthorize != null)
-                        {
-                            btnAuthorize.text = IsAuthFlowRunning(state) ? "Cancel" : "Authorize";
-                        }
-                        Repaint();
-                    });
-                };
-
-                await capturedFlow.StartAsync(UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl, "Unity Editor");
+                _ = AuthorizeThenRefreshUiAsync();
             };
 
             btnAuthorize.RegisterCallback<ClickEvent>(_ => _startAuthorizeAction?.Invoke());

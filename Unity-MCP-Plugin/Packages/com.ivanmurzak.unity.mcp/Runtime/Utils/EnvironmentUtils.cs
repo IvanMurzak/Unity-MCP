@@ -64,7 +64,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public const string FieldKeepConnected = nameof(UnityMcpPlugin.UnityConnectionConfig.KeepConnected);
         public const string FieldAuthOption = nameof(UnityMcpPlugin.UnityConnectionConfig.AuthOption);
         public const string FieldLocalToken = nameof(UnityMcpPlugin.UnityConnectionConfig.LocalToken);
-        public const string FieldCloudToken = nameof(UnityMcpPlugin.UnityConnectionConfig.CloudToken);
         public const string FieldTools = nameof(UnityMcpPlugin.UnityConnectionConfig.EnabledToolsOverride);
         public const string FieldStartServer = nameof(UnityMcpPlugin.UnityConnectionConfig.KeepServerRunning);
         public const string FieldTransport = nameof(UnityMcpPlugin.UnityConnectionConfig.TransportMethod);
@@ -216,32 +215,21 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 _logger.LogInformation("[MCP] Override: {Key}={Value}", EnvAuthOption, ao);
             }
 
-            // Resolved AFTER ConnectionMode so we route to the correct underlying field
-            // (LocalToken in Custom mode, CloudToken in Cloud mode). We track the specific
-            // backing field rather than the abstract Token property because only the backing
-            // fields are serialised — restoring the baseline must target the same field that
-            // was clobbered.
+            // The env/flag token override targets the LOCAL server token only. Cloud-mode credentials come
+            // exclusively from the shared machine store (T9 — the cloudToken UserSettings mirror was
+            // removed), so UNITY_MCP_TOKEN / --token no longer seeds a persisted cloud token; in Cloud mode
+            // the machine store is authoritative and this local override is inert for the connection. We
+            // track the backing field (not the abstract Token property) because only the backing field is
+            // serialised — restoring the baseline must target the same field that was clobbered.
             var rawToken = Resolve(EnvToken, FlagToken);
             if (rawToken != null)
             {
                 var token = Sanitize(rawToken);
-                if (config.ConnectionMode == ConnectionMode.Cloud)
+                if (!string.Equals(token, config.LocalToken, StringComparison.Ordinal))
                 {
-                    if (!string.Equals(token, config.CloudToken, StringComparison.Ordinal))
-                    {
-                        record.Track(FieldCloudToken, config.CloudToken, token);
-                        config.CloudToken = token;
-                        _logger.LogInformation("[MCP] Override: {Key}=*** (CloudToken)", EnvToken);
-                    }
-                }
-                else
-                {
-                    if (!string.Equals(token, config.LocalToken, StringComparison.Ordinal))
-                    {
-                        record.Track(FieldLocalToken, config.LocalToken, token);
-                        config.LocalToken = token;
-                        _logger.LogInformation("[MCP] Override: {Key}=*** (LocalToken)", EnvToken);
-                    }
+                    record.Track(FieldLocalToken, config.LocalToken, token);
+                    config.LocalToken = token;
+                    _logger.LogInformation("[MCP] Override: {Key}=*** (LocalToken)", EnvToken);
                 }
             }
 
@@ -325,9 +313,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                         break;
                     case FieldLocalToken:
                         config.LocalToken = (string?)kvp.Value;
-                        break;
-                    case FieldCloudToken:
-                        config.CloudToken = (string?)kvp.Value;
                         break;
                     case FieldTools:
                         config.EnabledToolsOverride = (List<string>?)kvp.Value;

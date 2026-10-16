@@ -2,6 +2,18 @@
 
 ## [Unreleased]
 
+### Added
+
+- **`UNITY_MCP_SERVER_PATH` — dev/CI override for the launched MCP server binary.** When the
+  variable resolves to a file that exists, the Editor launches that binary instead of the
+  `GameDev-MCP-Server` release pinned by `McpServerManager.ServerVersion`, and skips both the
+  download and the version match; the override also becomes the `command` written into generated
+  AI-agent configs. Set-but-missing falls through to the pinned release, matching Unreal-MCP's
+  `UNREAL_MCP_SERVER_PATH`. Resolved through `DevControlEnv.Resolve`, so it layers
+  process env > `<projectRoot>/.env` and therefore works for a GUI/IDE-launched Editor.
+  `Tools/AI Game Developer/Server/Download Binaries` still downloads into `Library/mcp-server/<rid>/`
+  regardless of the override. See `docs/mcp-server.md`.
+
 ### Fixed
 
 - **`EntityId` wire format moved from JSON number to JSON string of decimal digits**

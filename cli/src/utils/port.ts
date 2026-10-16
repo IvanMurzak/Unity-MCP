@@ -1,22 +1,20 @@
-import { createHash } from 'crypto';
-
-const MIN_PORT = 20000;
-const MAX_PORT = 29999;
-const PORT_RANGE = MAX_PORT - MIN_PORT + 1;
+// Copyright (c) 2024 Ivan Murzak. All rights reserved.
+// Licensed under the Apache License, Version 2.0.
 
 /**
- * Generate a deterministic port from a directory path.
- * Ports the C# UnityMcpPlugin.GeneratePortFromDirectory() logic.
- * SHA256 hash of lowercased directory → first 4 bytes as uint32 → modulo 10000 + 20000.
+ * Project-identity derivation (routing pin + deterministic local port) now lives in
+ * `@baizor/gamedev-cli-core` (auth-fixes T3/T7): ONE port of the C# `ProjectIdentity`, gated by the
+ * SAME golden vectors as the .NET reference. This module re-exports the **v1** algorithm under the
+ * historical names the CLI has always used, so existing call sites (`utils/config.ts`,
+ * `utils/connection.ts`) and the golden-vector parity tests keep matching byte-for-byte.
+ *
+ * The **v2** algorithm (the `\`→`/` normalization that fixes B5) is what the configurators emit —
+ * `setup-mcp` / `enroll` derive their pins with `derivePinV2` inside cli-core; import `derivePinV2` /
+ * `derivePortV2` directly from `@baizor/gamedev-cli-core` when the v2 pin is needed.
  */
-export function generatePortFromDirectory(dir: string): number {
-  const hash = createHash('sha256')
-    .update(dir.toLowerCase())
-    .digest();
 
-  // Read first 4 bytes as little-endian int32, then treat as unsigned
-  const int32 = hash.readInt32LE(0);
-  const uint32 = int32 >>> 0;
-
-  return MIN_PORT + (uint32 % PORT_RANGE);
-}
+export {
+  derivePin as deriveProjectPin,
+  derivePort as generatePortFromDirectory,
+  normalize as normalizeProjectRoot,
+} from '@baizor/gamedev-cli-core';

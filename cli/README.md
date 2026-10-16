@@ -66,8 +66,8 @@ unity-mcp-cli create-project ./MyUnityProject              #  │ codex         
 # 2. Install "AI Game Developer" in Unity project          #  │ gemini             │
 unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
                                                            #  │ kilo-code          │
-# 3. Login to cloud server                                 #  │ open-code          │
-unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
+# 3. Sign in to ai-game.dev (OAuth device flow)            #  │ open-code          │
+unity-mcp-cli login                                        #  │ rider-junie        │
                                                            #  │ unity-ai           │
 # 4. Open Unity project (auto-connects and generates skills)  │ vs-copilot         │
 unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
@@ -93,8 +93,10 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
 - [Commands](#commands)
   - [`configure`](#configure)
   - [`create-project`](#create-project)
+  - [`install-extension`](#install-extension)
   - [`install-plugin`](#install-plugin)
   - [`install-unity`](#install-unity)
+  - [`login`](#login)
   - [`open`](#open)
   - [`close`](#close)
   - [`run-tool`](#run-tool)
@@ -180,18 +182,73 @@ unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
-## `install-plugin`
+## `install-extension`
 
-Install the Unity-MCP plugin into a Unity project's `Packages/manifest.json`.
+Install one of the Unity-MCP extensions — the optional tool packs that add MCP tools for Animation, Cinemachine, Input System, Navigation, Particle System, ProBuilder, Splines, Terrain, Tilemap, and Timeline — into a Unity project's `Packages/manifest.json`. This is the command-line equivalent of the **Extensions** section in the *AI Game Developer* editor window, and it installs from the same shared catalogue.
 
 ```bash
-unity-mcp-cli install-plugin ./MyGame
+# See what is installable (no project and no network required)
+unity-mcp-cli install-extension --list
+
+# Run from inside the Unity project folder — the path is optional
+cd ./MyGame && unity-mcp-cli install-extension Tilemap
+```
+
+| Argument / Option | Required | Description |
+|---|---|---|
+| `[id]` | Yes (unless `--list`) | Extension to install — the OpenUPM package id (`com.ivanmurzak.unity.mcp.tilemap`) or the catalogue name (`Tilemap`). Matched case-insensitively. An unknown id lists every installable extension so you can self-correct. |
+| `[path]` | No | Path to the Unity project (positional or `--path`). Defaults to the current directory, verified the same way as `install-plugin`. |
+| `--extension-version <version>` | No | Extension version to install (defaults to latest from OpenUPM). **Not `--version`** — that is the CLI's own global version flag. |
+| `--list` | No | List the installable extensions and exit. |
+
+This command:
+1. Adds the **OpenUPM scoped registry** with all required scopes (the `com.ivanmurzak` scope is what makes the extension resolvable at all)
+2. Adds the extension's package id to `dependencies`, resolving OpenUPM's `latest` at install time
+3. **Never downgrades** on an auto-resolved version — if a higher version is already installed, it is preserved and a warning is printed. Pass `--extension-version` to force a specific value, including a downgrade.
+4. Is **idempotent** — a re-run that finds the extension already up to date reports so and writes nothing
+
+**Example — install a specific extension version:**
+
+```bash
+unity-mcp-cli install-extension Cinemachine ./MyGame --extension-version 1.0.17
+```
+
+**Example — in-process, from the library:**
+
+```ts
+import { installExtension, EXTENSIONS_CATALOG } from 'unity-mcp-cli';
+
+const result = await installExtension({
+  unityProjectPath: './MyGame',
+  extensionId: 'Tilemap',
+});
+if (result.kind === 'success') {
+  console.log(result.outcome, result.fromVersion, '->', result.toVersion);
+}
+```
+
+> After running this command, open (or focus) the Unity Editor so the Package Manager resolves the new dependency.
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `install-plugin`
+
+Install the Unity-MCP plugin into a Unity project's `Packages/manifest.json`. Optionally download the RID-matched MCP server binary and redeem a team enrollment code in the same run.
+
+```bash
+# Run from inside the Unity project folder — the path is optional
+cd ./MyGame && unity-mcp-cli install-plugin
 ```
 
 | Option | Required | Description |
 |---|---|---|
-| `[path]` | Yes | Path to the Unity project (positional or `--path`) |
+| `[path]` | No | Path to the Unity project (positional or `--path`). Defaults to the current directory; the resolved directory is verified to be a real Unity project (`Packages/manifest.json` marker) and, on a miss, the error lists exactly what was checked. |
 | `--plugin-version <version>` | No | Plugin version to install (defaults to latest from [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)) |
+| `--with-server` | No | Also download the RID-matched [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) binary into the CLI-managed directory |
+| `--server-version <version>` | No | Server version to download with `--with-server` (default: the CLI's pinned server version) |
+| `--server-source <path-or-url>` | No | Offline/CI override — install the server from a local zip path or URL (skips checksum verification) |
+| `--enroll <code>` | No | Redeem an enrollment code for a plugin credential (planted in the shared machine store and pinned to this project) |
+| `--enroll-stdin` | No | Read the enrollment code from stdin instead of argv (keeps it out of shell history) |
 
 This command:
 1. Adds the **OpenUPM scoped registry** with all required scopes
@@ -202,6 +259,12 @@ This command:
 
 ```bash
 unity-mcp-cli install-plugin ./MyGame --plugin-version 0.51.6
+```
+
+**Example — redeem a team enrollment code (path defaults to cwd):**
+
+```bash
+cd ./MyGame && unity-mcp-cli install-plugin --enroll <code>
 ```
 
 > After running this command, open the project in Unity Editor to complete the package installation.
@@ -231,6 +294,43 @@ unity-mcp-cli install-unity --path ./MyGame
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `login`
+
+Sign in to **ai-game.dev** and store the credential in the shared machine credential store (`~/.ai-game-dev/credentials.json`). Runs the browser-based **OAuth 2.1 device flow** — there is no personal access token to create or paste. The sign-in authorizes the whole machine: it mints an **agent** credential and derives an engine-tools credential from it, and every consumer (the CLI's cloud commands, the Unity Editor plugin, the desktop app) refreshes it automatically — tokens rotate in the background, so you sign in once per machine, not once per session.
+
+```bash
+unity-mcp-cli login
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `--project <path>` | No | Store the credential in a project-local store (`<path>/.ai-game-dev/`) instead of the shared machine store |
+| `--force` | No | Re-authenticate even if a credential already exists |
+| `--tools-only` | No | Authorize **engine tools only** (no agent credential is stored, so desktop-app pickup is impossible). Intended for CI / automation runners, which then appear as their own revocable device group |
+| `--yes` | No | Assume "yes" for prompts — required to confirm an **account switch** non-interactively (signing in as a different account than the machine currently holds) |
+
+The command prints a short user code and a verification URL, opens your browser, and polls until you approve the sign-in. If a credential already exists it exits early with *"Already signed in"* — pass `--force` to replace it. Signing in as a **different account** than the one the machine holds asks for confirmation first (declining leaves everything unchanged); pass `--yes` to confirm in scripts.
+
+**Example — sign in (shared machine store):**
+
+```bash
+unity-mcp-cli login
+```
+
+**Example — CI runner, engine tools only:**
+
+```bash
+unity-mcp-cli login --tools-only
+```
+
+**Example — store the credential next to a specific project:**
+
+```bash
+unity-mcp-cli login --project ./MyGame
+```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## `open`
 
 Open a Unity project in the Unity Editor. By default, sets MCP connection environment variables if connection options are provided. Use `--no-connect` to open without MCP connection.
@@ -249,10 +349,10 @@ cd ./MyGame && unity-mcp-cli open
 | `--unity <version>` | — | No | Specific Unity Editor version to use (defaults to version from project settings, falls back to highest installed) |
 | `--editor-path <path>` | — | No | Explicit path to the Unity Editor executable. Skips Unity Hub discovery, useful for custom install locations. |
 | `--no-connect` | — | No | Open without MCP connection environment variables |
-| `--url <url>` | `UNITY_MCP_HOST` | No | MCP server URL to connect to |
+| `--url <url>` | `UNITY_MCP_CLOUD_URL` | No | MCP server URL to connect to (the CLI still exports the legacy alias `UNITY_MCP_HOST`, which the plugin also accepts) |
 | `--keep-connected` | `UNITY_MCP_KEEP_CONNECTED` | No | Force keep the connection alive |
 | `--token <token>` | `UNITY_MCP_TOKEN` | No | Authentication token |
-| `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | No | Auth mode: `none` or `required` |
+| `--auth <option>` | `UNITY_MCP_AUTH_OPTION` | No | Auth mode: `none`, `oauth`, or `token` |
 | `--tools <names>` | `UNITY_MCP_TOOLS` | No | Comma-separated list of tools to enable |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Transport method: `streamableHttp` or `stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Set to `true` or `false` to control MCP server auto-start |
@@ -292,7 +392,7 @@ unity-mcp-cli open ./MyGame --no-connect
 unity-mcp-cli open ./MyGame \
   --url http://my-server:8080 \
   --token my-secret-token \
-  --auth required \
+  --auth token \
   --tools gameobject-create,gameobject-find
 ```
 
@@ -428,6 +528,8 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 Write MCP config files for AI agents, enabling headless/CI setup without the Unity Editor UI. Supports all 14 agents (Claude Code, Cursor, Gemini, Codex, etc.).
 
+The config is **pinned** to this project via a per-project URL (`https://ai-game.dev/mcp/p/<pin>` for http transport, or a `project=<pin>` argument for stdio). For the Cloud http transport it also carries this project's **project key** (`Authorization: Bearer agd_pk_…`) for every agent: a non-expiring, revocable credential bound to this project only, reused from `~/.ai-game-dev/project-keys.json` or minted with the account you signed in with via [`login`](#login). Without a sign-in (or if the key cannot be obtained) the config is URL-only and the agent signs in with its own OAuth. Pass `--oauth` to always write the URL-only config, `--regenerate-key` to replace the key (this project's other agent configs that carry the previous key are moved to the new one and printed, then the previous key is revoked; if any of them cannot be rewritten, the previous key is left active and a warning names it), `--token` to write an explicit PAT instead, or `--no-pin` for the shared, unpinned endpoint. stdio and local-server configs never carry a project key. Antigravity reads either `~/.gemini/config/mcp_config.json` or `~/.gemini/antigravity/mcp_config.json` depending on the install, so both files are written and every path written is printed; if any of them cannot be written the command fails. This output matches the Unity Editor's **Configure** button.
+
 ```bash
 unity-mcp-cli setup-mcp claude-code ./MyGame
 ```
@@ -438,7 +540,10 @@ unity-mcp-cli setup-mcp claude-code ./MyGame
 | `[path]` | No | Unity project path (defaults to cwd) |
 | `--transport <transport>` | No | Transport method: `stdio` or `http` (default: `http`) |
 | `--url <url>` | No | Server URL override (for http transport) |
-| `--token <token>` | No | Auth token override |
+| `--token <token>` | No | Explicit PAT — written as the `Authorization` header instead of the project key |
+| `--oauth` | No | Write a URL-only Cloud config (the agent signs in with its own OAuth) instead of the project key |
+| `--regenerate-key` | No | Mint a fresh project key, rewrite the config, and revoke the previous key (Cloud http only) |
+| `--no-pin` | No | Write an unpinned URL / omit the `project=` argument (default: pin to this project via `/mcp/p/<pin>`) |
 | `--list` | No | List all available agent IDs |
 
 **Example — list all supported agents:**
@@ -451,6 +556,18 @@ unity-mcp-cli setup-mcp --list
 
 ```bash
 unity-mcp-cli setup-mcp cursor ./MyGame --transport stdio
+```
+
+**Example — replace this project's key (the old key stops working):**
+
+```bash
+unity-mcp-cli setup-mcp claude-code ./MyGame --regenerate-key
+```
+
+**Example — write an unpinned config (shared `/mcp` endpoint):**
+
+```bash
+unity-mcp-cli setup-mcp claude-code ./MyGame --no-pin
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -568,8 +685,8 @@ unity-mcp-cli install-plugin ./MyAIGame
 # 3. Enable all MCP tools
 unity-mcp-cli configure ./MyAIGame --enable-all-tools
 
-# 4. Login to cloud server (authenticates and saves token)
-unity-mcp-cli login ./MyAIGame
+# 4. Sign in to ai-game.dev (browser OAuth; credential saved to ~/.ai-game-dev)
+unity-mcp-cli login
 
 # 5. Open the project (auto-connects and generates skills for claude-code)
 unity-mcp-cli open ./MyAIGame
@@ -593,7 +710,7 @@ The CLI generates a **deterministic port** for each Unity project based on its d
 
 The `install-plugin` command modifies `Packages/manifest.json` directly:
 - Adds the [OpenUPM](https://openupm.com/) scoped registry (`package.openupm.com`)
-- Registers all required scopes (`com.ivanmurzak`, `extensions.unity`, `org.nuget.*`)
+- Registers all required scopes (`com.ivanmurzak`, `extensions.unity`)
 - Adds the `com.ivanmurzak.unity.mcp` dependency with version-aware updates (never downgrades)
 
 ### Configuration File

@@ -3,6 +3,7 @@ import * as path from 'path';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { configure } from '../lib/configure.js';
+import { proxyConfigure } from '../utils/managed-server.js';
 import type { FeatureAction } from '../lib/types.js';
 
 function parseCommaSeparated(value: string): string[] {
@@ -25,9 +26,11 @@ function buildAction(
 }
 
 export const configureCommand = new Command('configure')
-  .description('Configure MCP tools, prompts, and resources in AI-Game-Developer-Config.json')
+  .description('Configure MCP tools/prompts/resources, or (with --agent) write an AI agent config via the managed server')
   .argument('[path]', 'Path to the Unity project')
   .option('--path <path>', 'Path to the Unity project')
+  .option('--agent <id>', 'Write an AI agent MCP config by proxying to the managed GameDev-MCP-Server configurator')
+  .option('--url <url>', 'Explicit server URL forwarded to the managed configurator (with --agent)')
   .option('--enable-tools <names>', 'Enable specific tools (comma-separated)', parseCommaSeparated)
   .option('--disable-tools <names>', 'Disable specific tools (comma-separated)', parseCommaSeparated)
   .option('--enable-all-tools', 'Enable all tools')
@@ -43,6 +46,8 @@ export const configureCommand = new Command('configure')
   .option('--list', 'List current configuration')
   .action(async (positionalPath: string | undefined, options: {
     path?: string;
+    agent?: string;
+    url?: string;
     enableTools?: string[];
     disableTools?: string[];
     enableAllTools?: boolean;
@@ -64,6 +69,22 @@ export const configureCommand = new Command('configure')
     }
 
     const projectPath = path.resolve(resolvedPath);
+
+    // `--agent` mode: proxy to the managed GameDev-MCP-Server binary's `configure` subcommand
+    // (design 06/09 Phase 3) so the shared C# configurator writes the agent config with the
+    // derived project pin + port. This is a distinct mode from the tools/prompts/resources
+    // toggles below and short-circuits them.
+    if (options.agent) {
+      verbose(`Proxying configure --agent ${options.agent} to the managed server for: ${projectPath}`);
+      try {
+        proxyConfigure({ agentId: options.agent, projectPath, url: options.url });
+      } catch (err) {
+        ui.error(err instanceof Error ? err.message : String(err));
+        process.exit(1);
+      }
+      ui.success(`Configured agent "${options.agent}" via the managed server.`);
+      return;
+    }
 
     verbose(`Loading config for project: ${projectPath}`);
 

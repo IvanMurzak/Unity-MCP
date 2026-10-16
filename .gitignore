@@ -11,8 +11,10 @@
 
 # Commands and env files
 commands/TestResults
-commands/.env
-!commands/.env.example
+# Local env files (secrets / dev config such as the dev-control bridge flags) — never commit,
+# anywhere in the repo. Keep any committed example templates.
+.env
+!**/.env.example
 
 # Unity package lock files (auto-generated)
 **/Packages/packages-lock.json
@@ -22,3 +24,10 @@ commands/.env
 
 # Wiki project
 Unity-MCP.wiki
+
+# Claude Code subagent memory can leak here when an agent runs with its cwd inside this repo.
+# Canonical agent memory lives ONLY in the top-level infra repo; ignore it everywhere here.
+**/.claude/agent-memory/
+
+# Python bytecode (e.g. .github/scripts/ generates __pycache__/*.pyc when CI gates run locally).
+__pycache__/

@@ -75,6 +75,8 @@ describe('library entry — no top-level side effects', () => {
     const ids = listAgentIds();
     expect(Array.isArray(ids)).toBe(true);
     expect(ids.length).toBeGreaterThan(0);
+    // Generic-MCP-client escape hatch — parity with godot-cli / unreal-mcp-cli.
+    expect(ids).toContain('custom');
 
     expect(log).not.toHaveBeenCalled();
     expect(err).not.toHaveBeenCalled();
@@ -427,6 +429,8 @@ describe('setupMcp', () => {
       agentId,
       unityProjectPath: tmpDir,
       transport: 'http',
+      // Signed-out resolver: the default one would read the real machine login and mint a real key.
+      projectKeyResolver: async () => ({ kind: 'no-login', reason: 'not signed in' }),
     });
 
     expect(result.kind).toBe('success');
@@ -483,6 +487,8 @@ describe('setupMcp', () => {
       agentId: listAgentIds()[0],
       unityProjectPath: tmpDir,
       transport: 'http',
+      // Signed-out resolver: the default one would read the real machine login and mint a real key.
+      projectKeyResolver: async () => ({ kind: 'no-login', reason: 'not signed in' }),
     });
     expect(ok.success).toBe(ok.kind === 'success');
 

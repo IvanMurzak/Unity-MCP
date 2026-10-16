@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
@@ -41,6 +42,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         const string PendingTestNamespaceKey = "MCP_PendingTestRun_TestNamespace";
         const string PendingTestClassKey = "MCP_PendingTestRun_TestClass";
         const string PendingTestMethodKey = "MCP_PendingTestRun_TestMethod";
+        const string PendingTestQueryKey = "MCP_PendingTestRun_TestQuery";
+        const string ActiveTestRunStartedUtcTicksKey = "Unity_MCP_TestRunner_ActiveStartedUtcTicks";
+
+        static readonly TimeSpan ActiveTestRunTimeoutGrace = TimeSpan.FromMinutes(1);
+        static readonly TimeSpan MinimumActiveTestRunLease = TimeSpan.FromMinutes(10);
 
         static Tool_Tests()
         {
@@ -98,8 +104,71 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         static bool HasPendingTestRun()
             => !string.IsNullOrEmpty(SessionState.GetString(PendingTestRunKey, string.Empty));
 
-        static void SavePendingTestRun(TestMode testMode, string? testAssembly, string? testNamespace, string? testClass, string? testMethod)
+        internal static TimeSpan ActiveTestRunStaleAfter
         {
+            get
+            {
+                var configuredTimeout = TimeSpan.FromMilliseconds(Math.Max(1000, UnityMcpPluginEditor.TimeoutMs));
+                var staleAfter = configuredTimeout + ActiveTestRunTimeoutGrace;
+                return staleAfter < MinimumActiveTestRunLease ? MinimumActiveTestRunLease : staleAfter;
+            }
+        }
+
+        internal static bool IsTestRunActive(out string activeRequestId)
+        {
+            activeRequestId = TestResultCollector.TestCallRequestID.Value;
+            if (HasPendingTestRun())
+                return true;
+
+            if (string.IsNullOrEmpty(activeRequestId))
+                return false;
+
+            if (!IsActiveTestRunStale(DateTime.UtcNow))
+                return true;
+
+            ClearActiveTestRun(activeRequestId);
+            activeRequestId = string.Empty;
+            return false;
+        }
+
+        internal static bool TryBeginTestRun(string requestId, out string activeRequestId)
+        {
+            if (IsTestRunActive(out activeRequestId))
+                return false;
+
+            TestResultCollector.TestCallRequestID.Value = requestId;
+            SetActiveTestRunStartedUtc(DateTime.UtcNow);
+            activeRequestId = requestId;
+            return true;
+        }
+
+        internal static void ClearActiveTestRun(string? requestId = null)
+        {
+            if (string.IsNullOrEmpty(requestId) || TestResultCollector.TestCallRequestID.Value == requestId)
+            {
+                TestResultCollector.TestCallRequestID.Value = string.Empty;
+                SessionState.EraseString(ActiveTestRunStartedUtcTicksKey);
+            }
+        }
+
+        internal static void SetActiveTestRunStartedUtc(DateTime utcStarted)
+        {
+            SessionState.SetString(ActiveTestRunStartedUtcTicksKey, utcStarted.ToUniversalTime().Ticks.ToString());
+        }
+
+        static bool IsActiveTestRunStale(DateTime utcNow)
+        {
+            var rawTicks = SessionState.GetString(ActiveTestRunStartedUtcTicksKey, string.Empty);
+            if (!long.TryParse(rawTicks, out var ticks))
+                return true;
+
+            var startedUtc = new DateTime(ticks, DateTimeKind.Utc);
+            return utcNow - startedUtc > ActiveTestRunStaleAfter;
+        }
+
+        static void SavePendingTestRun(TestMode testMode, string? testAssembly, string? testNamespace, string? testClass, string? testMethod, string? query = null)
+        {
+            SessionState.SetString(PendingTestQueryKey, query ?? string.Empty);
             SessionState.SetString(PendingTestRunKey, "pending");
             SessionState.SetInt(PendingTestModeKey, (int)testMode);
             SessionState.SetString(PendingTestAssemblyKey, testAssembly ?? string.Empty);
@@ -116,6 +185,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SessionState.EraseString(PendingTestNamespaceKey);
             SessionState.EraseString(PendingTestClassKey);
             SessionState.EraseString(PendingTestMethodKey);
+            SessionState.EraseString(PendingTestQueryKey);
         }
 
         static void ResumePendingTestRunOnce()
@@ -133,18 +203,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (EditorUtility.scriptCompilationFailed)
             {
                 ClearPendingTestRun();
-                TestResultCollector.TestCallRequestID.Value = string.Empty;
-
-                var errorDetails = ScriptUtils.GetCompilationErrorDetails();
-                var response = ResponseCallValueTool<TestRunResponse>
-                    .Error($"Cannot run tests: compilation errors after script recompilation.\n\n{errorDetails}")
-                    .SetRequestID(requestId);
-
-                _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
-                {
-                    RequestId = requestId,
-                    Result = response
-                });
+                FailDeferredTestRun(requestId,
+                    $"Cannot run tests: compilation errors after script recompilation.\n\n{ScriptUtils.GetCompilationErrorDetails()}");
                 return;
             }
 
@@ -154,6 +214,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var testNamespace = SessionState.GetString(PendingTestNamespaceKey, string.Empty);
             var testClass = SessionState.GetString(PendingTestClassKey, string.Empty);
             var testMethod = SessionState.GetString(PendingTestMethodKey, string.Empty);
+            var query = SessionState.GetString(PendingTestQueryKey, string.Empty);
 
             ClearPendingTestRun();
 
@@ -165,11 +226,73 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             var filterParams = new TestFilterParameters(testAssembly, testNamespace, testClass, testMethod);
 
+            if (!string.IsNullOrEmpty(query))
+            {
+                // The RQL selection is evaluated here, in the recompiled domain: the tests it names are the current ones.
+                try
+                {
+                    if (!TryApplySelection(query, ref filterParams, out testMode, out var selectError))
+                    {
+                        FailDeferredTestRun(requestId, selectError!);
+                        return;
+                    }
+                }
+                catch (Exception ex)
+                {
+                    FailDeferredTestRun(requestId, Error.TestExecutionFailed(ex.Message));
+                    return;
+                }
+                _ = ValidateAndExecuteTestRun(requestId, testMode, filterParams);
+                return;
+            }
+
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log($"[TestRunner] Resuming test run after recompilation. Mode: {testMode}, Filters: {filterParams}");
 
             var filter = CreateTestFilter(testMode, filterParams);
             TestRunnerApi.Execute(new ExecutionSettings(filter));
+        }
+
+        /// <summary>
+        /// Validates the filters against Unity's test tree (never a silent subset or an empty run), then starts the run;
+        /// a failure is delivered through <paramref name="requestId"/>. Used by the immediate path and a deferred RQL selection.
+        /// </summary>
+        static async Task ValidateAndExecuteTestRun(string requestId, TestMode testMode, TestFilterParameters filterParams)
+        {
+            try
+            {
+                var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
+                if (validation != null)
+                {
+                    FailDeferredTestRun(requestId, validation);
+                    return;
+                }
+
+                TestRunnerApi.Execute(new ExecutionSettings(CreateTestFilter(testMode, filterParams)));
+            }
+            catch (Exception ex)
+            {
+                FailDeferredTestRun(requestId, Error.TestExecutionFailed(ex.Message));
+            }
+        }
+
+        /// <summary>Ends a deferred test run that cannot start and delivers <paramref name="message"/> to its request.</summary>
+        static void FailDeferredTestRun(string requestId, string message)
+        {
+            ClearActiveTestRun(requestId);
+            if (string.IsNullOrEmpty(requestId))
+            {
+                UnityMcpPluginEditor.Instance.LogError(
+                    "A deferred test run could not start, but the pending MCP request id was missing. The error response cannot be delivered to the client: {message}",
+                    typeof(Tool_Tests), message);
+                return;
+            }
+
+            _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
+            {
+                RequestId = requestId,
+                Result = ResponseCallValueTool<TestRunResponse>.Error(message).SetRequestID(requestId)
+            });
         }
 
         /// <summary>
@@ -180,7 +303,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// Running tests while a scene is dirty is unsafe: Unity may reload the scene when
         /// entering play mode, silently discarding the unsaved edits and producing a test run
         /// against a scene state that does not match either the in-memory scene or the asset
-        /// on disk. This check aborts before any state is mutated (no PlayerPrefs, no
+        /// on disk. This check aborts before any state is mutated (no test-run state, no
         /// AssetDatabase.Refresh, no domain reload is triggered).
         ///
         /// MUST be called on the Unity main thread.
@@ -238,6 +361,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             public static string TestTimeout(int timeoutMs)
                 => $"Test execution timed out after {timeoutMs} ms";
 
+            public static string TestsAlreadyRunning(string activeRequestId)
+            {
+                var suffix = string.IsNullOrEmpty(activeRequestId)
+                    ? string.Empty
+                    : $" Active request id: {activeRequestId}.";
+
+                return $"Cannot run tests: another test run is already in progress.{suffix} Wait for it to finish and try again.";
+            }
+
             public static string NoTestsFound(TestFilterParameters filterParams)
             {
                 var filters = new List<string>();
@@ -246,6 +378,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 if (!string.IsNullOrEmpty(filterParams.TestNamespace)) filters.Add($"namespace '{filterParams.TestNamespace}'");
                 if (!string.IsNullOrEmpty(filterParams.TestClass)) filters.Add($"class '{filterParams.TestClass}'");
                 if (!string.IsNullOrEmpty(filterParams.TestMethod)) filters.Add($"method '{filterParams.TestMethod}'");
+                if (filterParams.HasGroups) filters.Add("the 'query' selection");
 
                 var filterText = filters.Count > 0
                     ? $" matching {string.Join(", ", filters)}"

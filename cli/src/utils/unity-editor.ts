@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
-import { platform } from 'os';
+import { homedir, platform } from 'os';
 import { findUnityHub, ensureUnityHub, listInstalledEditors } from './unity-hub.js';
 import { readCachedEditorPath, writeCachedEditorPath } from './editor-cache.js';
 import * as ui from './ui.js';
@@ -79,16 +79,21 @@ export async function findEditorPath(version?: string): Promise<string | null> {
     return cached;
   }
 
-  // Fast path: if we know the version, check common install locations first (instant filesystem check)
-  if (version) {
-    const fastStartedAt = Date.now();
-    const fastResult = findEditorPathByCommonLocations(version);
-    verbose(`findEditorPath fast path completed in ${Date.now() - fastStartedAt}ms (${fastResult ? 'hit' : 'miss'})`);
-    if (fastResult) {
-      writeCachedEditorPath(version, fastResult);
-      verbose(`findEditorPath resolved via common locations in ${Date.now() - startedAt}ms`);
-      return fastResult;
-    }
+  // Fast path: check common install locations first (instant filesystem
+  // check). Runs for both explicit-version requests (`findEditorPath('X')`)
+  // and the version-less "highest installed" request (`findEditorPath()`).
+  // Both branches benefit equally from reading
+  // `secondaryInstallPath.json` — the only difference is the candidate list
+  // shape (version-specific vs sorted-directory listing). When the fast path
+  // hits, it returns without ever spawning the Unity Hub Electron probe
+  // (the ~14s cache-miss cost in issue #784).
+  const fastStartedAt = Date.now();
+  const fastResult = findEditorPathByCommonLocations(version);
+  verbose(`findEditorPath fast path completed in ${Date.now() - fastStartedAt}ms (${fastResult ? 'hit' : 'miss'})`);
+  if (fastResult) {
+    writeCachedEditorPath(version, fastResult);
+    verbose(`findEditorPath resolved via common locations in ${Date.now() - startedAt}ms`);
+    return fastResult;
   }
 
   // Slow path: query Unity Hub CLI for installed editors
@@ -126,80 +131,226 @@ export async function findEditorPath(version?: string): Promise<string | null> {
     }
   }
 
-  // Return the highest installed editor by version-aware sorting
+  // Return the highest installed editor by version-aware sorting.
+  // Cache discipline: only write under the requested key when the
+  // resolved editor's version actually matches the request. Otherwise
+  // (e.g. the user asked for `999.0.0f0` which is not installed)
+  // we still return the highest installed editor as a best-effort
+  // fallback, but DO NOT cache it — caching would silently return the
+  // wrong editor for that version forever after (issue #784). The
+  // version-less `__auto__` slot is always safe to cache.
   const sorted = [...editors].sort((a, b) => compareUnityVersions(b.version, a.version));
   const resolved = getEditorBinary(sorted[0].path);
-  writeCachedEditorPath(version, resolved);
+  if (version === undefined || sorted[0].version === version) {
+    writeCachedEditorPath(version, resolved);
+  } else {
+    verbose(`findEditorPath skipping cache write: requested ${version} did not match resolved ${sorted[0].version}`);
+  }
   verbose(`findEditorPath selected highest installed version ${sorted[0].version} in ${Date.now() - startedAt}ms`);
   return resolved;
 }
 
 /**
+ * Resolve Unity Hub's `secondaryInstallPath.json` file location for the given
+ * platform. Returns null on unsupported platforms or when the required env var
+ * (e.g. `APPDATA` on Windows) is missing.
+ *
+ * Exported for tests; not part of the package's public API.
+ */
+export function getSecondaryInstallPathFile(os: NodeJS.Platform): string | null {
+  switch (os) {
+    case 'win32': {
+      const appData = process.env['APPDATA'];
+      if (!appData) return null;
+      return path.join(appData, 'UnityHub', 'secondaryInstallPath.json');
+    }
+    case 'darwin':
+      return path.join(homedir(), 'Library', 'Application Support', 'UnityHub', 'secondaryInstallPath.json');
+    case 'linux':
+      return path.join(homedir(), '.config', 'UnityHub', 'secondaryInstallPath.json');
+    default:
+      return null;
+  }
+}
+
+/**
+ * Read Unity Hub's `secondaryInstallPath.json` and return the parsed install
+ * root(s). The file is a single JSON-encoded string (per Unity Hub) on every
+ * supported platform, e.g. `"C:\\UnityEditor"`. We also tolerate an array of
+ * strings defensively in case Unity Hub ever extends the format.
+ *
+ * Treats every failure mode as "no secondary roots configured":
+ *   - file absent
+ *   - file empty / whitespace only
+ *   - file not valid JSON
+ *   - parsed value is not a non-empty string (or array of strings)
+ *   - I/O error reading the file
+ *
+ * In all those cases we return `[]` and the caller silently falls through to
+ * today's default-Hub-root scan. This matches the issue's "best-effort" spec
+ * and keeps `findEditorPathByCommonLocations` crash-free on misconfigured
+ * machines.
+ */
+export function readSecondaryInstallPaths(os: NodeJS.Platform): string[] {
+  const file = getSecondaryInstallPathFile(os);
+  if (!file) return [];
+  if (!fs.existsSync(file)) return [];
+
+  let raw: string;
+  try {
+    raw = fs.readFileSync(file, 'utf-8');
+  } catch {
+    return [];
+  }
+  if (!raw.trim()) return [];
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(raw);
+  } catch {
+    return [];
+  }
+
+  if (typeof parsed === 'string') {
+    const trimmed = parsed.trim();
+    return trimmed ? [trimmed] : [];
+  }
+  if (Array.isArray(parsed)) {
+    return parsed
+      .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+      .map((p) => p.trim());
+  }
+  return [];
+}
+
+/**
+ * Build a comparison key for an editor-root path, used to dedupe a
+ * `secondaryInstallPath.json` entry against the platform's default root.
+ * Returns a normalized form: redundant separators collapsed via
+ * `path.normalize`, a single trailing separator stripped, and (on Windows
+ * only) lowercased so `c:\…` and `C:\…` compare equal. Posix paths preserve
+ * their case because Posix filesystems are case-sensitive. The original
+ * string is still used for `existsSync` and verbose logs — only the
+ * comparison key is normalized.
+ */
+function normalizeRootForDedup(root: string, os: NodeJS.Platform): string {
+  let normalized = path.normalize(root);
+  // Strip a single trailing separator (path.sep is `\\` on win32, `/` on posix).
+  if (normalized.length > 1 && normalized.endsWith(path.sep)) {
+    normalized = normalized.slice(0, -1);
+  }
+  return os === 'win32' ? normalized.toLowerCase() : normalized;
+}
+
+/**
  * Find editor by checking common installation directories.
+ *
+ * Scans, in order:
+ *   1. The platform's default Unity Hub editor root
+ *      (e.g. `%PROGRAMFILES%\Unity\Hub\Editor` on Windows).
+ *   2. Every root listed in Unity Hub's `secondaryInstallPath.json`
+ *      (e.g. `C:\UnityEditor\` if the user moved their installs).
+ *
+ * Reading `secondaryInstallPath.json` keeps cache-miss latency in the
+ * sub-100ms range for users whose editors live outside the default Hub root,
+ * avoiding the ~14s Unity Hub Electron probe (issue #784).
  */
 function findEditorPathByCommonLocations(version?: string): string | null {
   const startedAt = Date.now();
   const os = platform();
   const candidates: string[] = [];
 
+  // Layout per platform: a `defaultRoots` list of "Hub editor root"
+  // directories (e.g. `<programFiles>/Unity/Hub/Editor`) and a per-platform
+  // builder that turns "(root, version)" into the binary path under it.
+  // We append the same shapes for every root, default + secondary, so the
+  // candidate list is uniform regardless of where the install lives.
+  const defaultRoots: string[] = [];
+  let buildBinaryPath: (root: string, ver: string) => string;
+
   switch (os) {
     case 'win32': {
       const programFiles = process.env['PROGRAMFILES'] ?? 'C:\\Program Files';
-      if (version) {
-        candidates.push(path.join(programFiles, 'Unity', 'Hub', 'Editor', version, 'Editor', 'Unity.exe'));
-      }
-      // Check for any editor
-      const hubEditorDir = path.join(programFiles, 'Unity', 'Hub', 'Editor');
-      if (fs.existsSync(hubEditorDir)) {
-        try {
-          const versions = fs.readdirSync(hubEditorDir).sort((a, b) => compareUnityVersions(b, a));
-          for (const v of versions) {
-            candidates.push(path.join(hubEditorDir, v, 'Editor', 'Unity.exe'));
-          }
-        } catch { /* ignore */ }
-      }
+      defaultRoots.push(path.join(programFiles, 'Unity', 'Hub', 'Editor'));
+      buildBinaryPath = (root, ver) => path.join(root, ver, 'Editor', 'Unity.exe');
       break;
     }
     case 'darwin': {
-      if (version) {
-        candidates.push(`/Applications/Unity/Hub/Editor/${version}/Unity.app/Contents/MacOS/Unity`);
-      }
-      const hubEditorDir = '/Applications/Unity/Hub/Editor';
-      if (fs.existsSync(hubEditorDir)) {
-        try {
-          const versions = fs.readdirSync(hubEditorDir).sort((a, b) => compareUnityVersions(b, a));
-          for (const v of versions) {
-            candidates.push(path.join(hubEditorDir, v, 'Unity.app', 'Contents', 'MacOS', 'Unity'));
-          }
-        } catch { /* ignore */ }
-      }
+      defaultRoots.push('/Applications/Unity/Hub/Editor');
+      buildBinaryPath = (root, ver) => path.join(root, ver, 'Unity.app', 'Contents', 'MacOS', 'Unity');
       break;
     }
     case 'linux': {
+      defaultRoots.push('/opt/unity/hub/Editor');
       const home = process.env['HOME'];
-      if (version) {
-        candidates.push(`/opt/unity/hub/Editor/${version}/Editor/Unity`);
-        if (home) candidates.push(path.join(home, 'Unity', 'Hub', 'Editor', version, 'Editor', 'Unity'));
-      }
-      const linuxBaseDirs = ['/opt/unity/hub/Editor'];
-      if (home) linuxBaseDirs.push(path.join(home, 'Unity', 'Hub', 'Editor'));
-      for (const baseDir of linuxBaseDirs) {
-        if (fs.existsSync(baseDir)) {
-          try {
-            const versions = fs.readdirSync(baseDir).sort((a, b) => compareUnityVersions(b, a));
-            for (const v of versions) {
-              candidates.push(path.join(baseDir, v, 'Editor', 'Unity'));
-            }
-          } catch { /* ignore */ }
-        }
-      }
+      if (home) defaultRoots.push(path.join(home, 'Unity', 'Hub', 'Editor'));
+      buildBinaryPath = (root, ver) => path.join(root, ver, 'Editor', 'Unity');
       break;
+    }
+    default:
+      verbose(`findEditorPathByCommonLocations unsupported platform ${os} after ${Date.now() - startedAt}ms`);
+      return null;
+  }
+
+  // Secondary roots: read `secondaryInstallPath.json`. On every supported
+  // platform Unity Hub stores them as a single JSON string (or, defensively,
+  // an array of strings). Missing/malformed → empty array, no crash.
+  const secondaryRootsBeforeFiltering = readSecondaryInstallPaths(os);
+  // Drop duplicates that already appear in `defaultRoots` so the candidate
+  // list doesn't double-stat them. Compare via `normalizeRootForDedup` so a
+  // user-typed trailing separator (e.g. `C:\Program Files\Unity\Hub\Editor\`)
+  // or, on Windows, a drive-letter case difference (`c:\...` vs `C:\...`)
+  // still dedupes against the default root. The original string is kept for
+  // downstream `existsSync` and verbose logs — only the comparison key is
+  // normalized.
+  const defaultRootKeys = new Set(defaultRoots.map((r) => normalizeRootForDedup(r, os)));
+  const secondaryRoots = secondaryRootsBeforeFiltering.filter(
+    (r) => !defaultRootKeys.has(normalizeRootForDedup(r, os)),
+  );
+  if (secondaryRoots.length > 0) {
+    verbose(`findEditorPathByCommonLocations including ${secondaryRoots.length} secondary root(s): ${secondaryRoots.join(', ')}`);
+  }
+
+  // Build the candidate list. When the caller requested a specific version we
+  // ONLY emit the version-specific candidate under each root — never the
+  // sorted-directory fallback. Falling through to "any installed editor"
+  // inside a version-specific lookup is what produced the cache-poisoning
+  // failure mode in issue #784 (the fast path silently returned a wrong-
+  // version editor and the caller cached it under the requested key). When
+  // the caller did NOT supply a version, we DO emit the sorted directory
+  // listing — that's a legitimate "highest installed" lookup. The default
+  // root is scanned before any secondary root, preserving the previous
+  // behaviour for users without secondary roots.
+  const allRoots = [...defaultRoots, ...secondaryRoots];
+  const rootIsSecondary = new Map<string, boolean>(
+    allRoots.map((r) => [r, secondaryRoots.includes(r)] as const),
+  );
+
+  for (const root of allRoots) {
+    if (version) {
+      candidates.push(buildBinaryPath(root, version));
+      continue;
+    }
+    if (fs.existsSync(root)) {
+      try {
+        const versions = fs.readdirSync(root).sort((a, b) => compareUnityVersions(b, a));
+        for (const v of versions) {
+          candidates.push(buildBinaryPath(root, v));
+        }
+      } catch { /* ignore */ }
     }
   }
 
   for (const candidate of candidates) {
     if (fs.existsSync(candidate)) {
-      verbose(`findEditorPathByCommonLocations hit ${candidate} after ${Date.now() - startedAt}ms (${candidates.length} candidates)`);      
+      // Identify which root the hit came from so verbose logs distinguish a
+      // default-root hit from a `secondaryInstallPath` hit — useful when
+      // debugging users who report slow opens. Candidates are always built via
+      // `buildBinaryPath(root, ver)` which joins extra segments under `root`,
+      // so `startsWith(root + path.sep)` is the only reachable case.
+      const fromRoot = allRoots.find((root) => candidate.startsWith(root + path.sep));
+      const origin = fromRoot && rootIsSecondary.get(fromRoot) ? 'secondaryInstallPath' : 'default Hub root';
+      verbose(`findEditorPathByCommonLocations hit ${candidate} (${origin}) after ${Date.now() - startedAt}ms (${candidates.length} candidates)`);
       return candidate;
     }
   }

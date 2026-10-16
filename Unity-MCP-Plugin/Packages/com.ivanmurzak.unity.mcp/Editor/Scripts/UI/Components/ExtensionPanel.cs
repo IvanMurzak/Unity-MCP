@@ -40,11 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private static readonly string[] RequiredScopes =
         {
             "com.ivanmurzak",
-            "extensions.unity",
-            "org.nuget.com.ivanmurzak",
-            "org.nuget.microsoft",
-            "org.nuget.system",
-            "org.nuget.r3"
+            "extensions.unity"
         };
 
         private readonly Label _name;

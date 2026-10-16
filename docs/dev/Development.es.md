@@ -3,7 +3,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -28,7 +28,7 @@ Este documento explica la estructura interna, el diseño, el estilo de código y
 - [Configuración del entorno local](#configuración-del-entorno-local)
 - [Contribuir](#contribuir)
 - [Estructura del proyecto](#estructura-del-proyecto)
-  - [🔹Unity-MCP-Server](#unity-mcp-server)
+  - [🔹MCP Server (shared GameDev-MCP-Server)](#mcp-server-shared-gamedev-mcp-server)
     - [Imagen Docker](#imagen-docker)
   - [🔸Unity-MCP-Plugin](#unity-mcp-plugin)
     - [Paquete UPM](#paquete-upm)
@@ -50,8 +50,6 @@ Este documento explica la estructura interna, el diseño, el estilo de código y
     - [🚀 release.yml](#-releaseyml)
     - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
     - [🔧 test\_unity\_plugin.yml](#-test_unity_pluginyml)
-    - [📦 deploy.yml](#-deployyml)
-    - [🎯 deploy\_server\_executables.yml](#-deploy_server_executablesyml)
   - [Stack tecnológico](#stack-tecnológico)
   - [Consideraciones de seguridad](#consideraciones-de-seguridad)
   - [Destinos de despliegue](#destinos-de-despliegue)
@@ -105,14 +103,15 @@ Antes de contribuir, asegúrate de tener instaladas las siguientes herramientas:
    - Abre Unity Hub → Añadir proyecto → selecciona la carpeta `Unity-MCP-Plugin/`
    - Unity compilará todos los ensamblados automáticamente al abrirlo por primera vez
 
-3. **Abrir el Servidor en tu IDE**
-   - Abre `Unity-MCP-Server/Server.sln` en Visual Studio, Rider o VS Code
-   - Restaura los paquetes NuGet: `dotnet restore`
+3. **Obtener el MCP Server** *(vive en su propio repositorio)*
+   - El servidor es el compartido [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) — clónalo por separado solo si necesitas modificar o depurar el servidor
+   - El plugin descarga automáticamente el binario de release fijado por la constante `ServerVersion` en `McpServerManager.cs`
 
-4. **Ejecutar el Servidor localmente**
+4. **Ejecutar el Servidor localmente** *(opcional — solo al desarrollar contra una build propia del servidor)*
    ```bash
-   cd Unity-MCP-Server
-   dotnet run --project com.IvanMurzak.Unity.MCP.Server.csproj -- --port 8080 --client-transport stdio
+   git clone https://github.com/IvanMurzak/GameDev-MCP-Server.git
+   cd GameDev-MCP-Server
+   dotnet run --project com.IvanMurzak.GameDev.MCP.Server.csproj -- --port 8080 --client-transport stdio
    ```
 
 5. **Apuntar el Plugin a tu servidor local** *(opcional — omite el binario descargado automáticamente)*
@@ -123,7 +122,6 @@ Antes de contribuir, asegúrate de tener instaladas las siguientes herramientas:
 6. **Depurar con MCP Inspector** *(opcional)*
    ```bash
    Unity-MCP-Plugin/Commands/start_mcp_inspector.bat   # Windows (.bat)
-   Unity-MCP-Server/commands/start-mcp-inspector.ps1   # PowerShell (multiplataforma)
    ```
    Requiere Node.js. Abre una interfaz en el navegador en `http://localhost:5173` para la inspección en tiempo real de los mensajes del protocolo MCP.
 
@@ -146,7 +144,7 @@ Construyamos juntos el brillante futuro del desarrollo de videojuegos; contribuy
 ```mermaid
 graph LR
   A(◽Agente IA)
-  B(🔹Unity-MCP-Server)
+  B(🔹GameDev-MCP-Server)
   C(🔸Unity-MCP-Plugin)
   D(🎮Unity)
 
@@ -158,62 +156,31 @@ graph LR
 
 ◽**Agente IA** - Cualquier interfaz de IA como: *Claude*, *Copilot*, *Cursor* u otras. No forma parte de este proyecto, pero es un elemento importante de la arquitectura.
 
-🔹**Unity-MCP-Server** - `Servidor MCP` que se conecta al `Agente IA` y opera con él. Al mismo tiempo, `Unity-MCP-Server` se comunica con `Unity-MCP-Plugin` a través de SignalR. Puede ejecutarse localmente o en la nube con transporte HTTP. Stack tecnológico: `C#`, `ASP.NET Core`, `SignalR`
+🔹**GameDev-MCP-Server** - el `Servidor MCP` compartido (vive en su propio repositorio: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)) que se conecta al `Agente IA` y opera con él. Se comunica con `Unity-MCP-Plugin` a través de SignalR. Puede ejecutarse localmente o en la nube con transporte HTTP. Stack tecnológico: `C#`, `ASP.NET Core`, `SignalR`
 
-🔸**Unity-MCP-Plugin** - `Plugin de Unity` integrado en un proyecto Unity con acceso a la API de Unity. Se comunica con `Unity-MCP-Server` y ejecuta comandos provenientes del servidor. Stack tecnológico: `C#`, `Unity`, `SignalR`
+🔸**Unity-MCP-Plugin** - `Plugin de Unity` integrado en un proyecto Unity con acceso a la API de Unity. Se comunica con el `GameDev-MCP-Server` compartido y ejecuta comandos provenientes del servidor. Stack tecnológico: `C#`, `Unity`, `SignalR`
 
 🎮**Unity** - Unity Engine, motor de videojuegos.
 
 ---
 
-## 🔹Unity-MCP-Server
+## 🔹MCP Server (shared GameDev-MCP-Server)
 
 Una aplicación C# ASP.NET Core que actúa como puente entre los agentes de IA (interfaces de IA como Claude o Cursor) e instancias de Unity Editor. El servidor implementa el [Model Context Protocol](https://github.com/modelcontextprotocol) utilizando el [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk).
 
-> Ubicación del proyecto: `Unity-MCP-Server`
+> Ubicación del proyecto: el repositorio compartido [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) — un único servidor agnóstico del motor, consumido por Unity-MCP, Godot-MCP y Unreal-MCP. **Ya no forma parte de este repositorio.**
 
-**Responsabilidades principales:**
-
-1. **Implementación del protocolo MCP** ([ExtensionsMcpServer.cs](Unity-MCP-Server/src/Extension/ExtensionsMcpServer.cs))
-   - Implementa el servidor MCP con soporte para Tools, Prompts y Resources
-   - Soporta métodos de transporte STDIO y HTTP
-   - Gestiona solicitudes de agentes de IA: `CallTool`, `GetPrompt`, `ReadResource` y sus operaciones de listado
-   - Envía notificaciones a los agentes de IA cuando cambian las capacidades (actualizaciones de listas de tools/prompts)
-
-2. **Comunicación a través del Hub SignalR** ([RemoteApp.cs](Unity-MCP-Server/src/Hub/RemoteApp.cs), [BaseHub.cs](Unity-MCP-Server/src/Hub/BaseHub.cs))
-   - Gestiona la comunicación bidireccional en tiempo real con Unity-MCP-Plugin mediante SignalR
-   - Maneja el handshake de versión para garantizar la compatibilidad de API entre el servidor y el plugin
-   - Rastrea las conexiones de clientes y gestiona las desconexiones
-   - Enruta las notificaciones de actualización de tools/prompts/resources desde Unity a los agentes de IA
-
-3. **Enrutamiento y ejecución de solicitudes** ([ToolRouter.Call.cs](Unity-MCP-Server/src/Routing/Tool/ToolRouter.Call.cs), [PromptRouter.Get.cs](Unity-MCP-Server/src/Routing/Prompt/PromptRouter.Get.cs), [ResourceRouter.ReadResource.cs](Unity-MCP-Server/src/Routing/Resource/ResourceRouter.ReadResource.cs))
-   - Enruta las solicitudes de los agentes de IA a la instancia adecuada de Unity-MCP-Plugin
-   - Gestiona llamadas a Tools, solicitudes de Prompts y lecturas de Resources
-   - Realiza el manejo de errores y validación
-   - Convierte entre los formatos del protocolo MCP y los modelos de datos internos
-
-4. **Servicio de ejecución remota** ([RemoteToolRunner.cs](Unity-MCP-Server/src/Client/RemoteToolRunner.cs), [RemotePromptRunner.cs](Unity-MCP-Server/src/Client/RemotePromptRunner.cs), [RemoteResourceRunner.cs](Unity-MCP-Server/src/Client/RemoteResourceRunner.cs))
-   - Invoca procedimientos remotos en Unity-MCP-Plugin a través de SignalR
-   - Rastrea solicitudes asíncronas y gestiona tiempos de espera
-   - Implementa patrones de solicitud/respuesta con soporte de cancelación
-   - Maneja callbacks de finalización de solicitudes desde instancias de Unity
-
-5. **Gestión del ciclo de vida del servidor** ([Program.cs](Unity-MCP-Server/src/Program.cs), [McpServerService.cs](Unity-MCP-Server/src/McpServerService.cs))
-   - Configura e inicia el servidor web ASP.NET Core con Kestrel
-   - Inicializa el servidor MCP, el hub SignalR y la inyección de dependencias
-   - Gestiona el registro con NLog (redirige los logs a stderr en modo STDIO)
-   - Maneja el apagado ordenado y la limpieza de recursos
-   - Se suscribe a eventos de cambio de lista de tools/prompts de Unity
+El plugin descarga el binario de release (`gamedev-mcp-server-<rid>.zip`) fijado por la constante `ServerVersion` en [McpServerManager.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs). Consulta el [README de GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server#readme) para la arquitectura y las instrucciones de compilación.
 
 ### Imagen Docker
 
-`Unity-MCP-Server` puede desplegarse en una imagen Docker. El proyecto contiene los archivos `Dockerfile` y `.dockerignore` en su carpeta raíz.
+El servidor compartido se publica en Docker Hub como [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server) desde el repositorio GameDev-MCP-Server.
 
 ---
 
 ## 🔸Unity-MCP-Plugin
 
-Se integra en el entorno de Unity. Utiliza `Unity-MCP-Common` para buscar *Tools*, *Resources* y *Prompts* MCP en el código base local mediante reflexión. Se comunica con `Unity-MCP-Server` para enviar actualizaciones sobre *Tools*, *Resources* y *Prompts* MCP. Recibe comandos del `Unity-MCP-Server` y los ejecuta.
+Se integra en el entorno de Unity. Utiliza `Unity-MCP-Common` para buscar *Tools*, *Resources* y *Prompts* MCP en el código base local mediante reflexión. Se comunica con el `GameDev-MCP-Server` compartido para enviar actualizaciones sobre *Tools*, *Resources* y *Prompts* MCP. Recibe comandos del servidor y los ejecuta.
 
 > Ubicación del proyecto: `Unity-MCP-Plugin`
 
@@ -225,7 +192,7 @@ Se integra en el entorno de Unity. Utiliza `Unity-MCP-Common` para buscar *Tools
 
 ### Editor
 
-El componente Editor proporciona integración con Unity Editor, implementando capacidades MCP (Tools, Prompts, Resources) y gestionando el ciclo de vida de `Unity-MCP-Server`.
+El componente Editor proporciona integración con Unity Editor, implementando capacidades MCP (Tools, Prompts, Resources) y gestionando el ciclo de vida del `GameDev-MCP-Server` local.
 
 > Ubicación: `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor`
 
@@ -237,7 +204,7 @@ El componente Editor proporciona integración con Unity Editor, implementando ca
    - Reconexión automática tras la recarga del dominio o la salida del modo Play
 
 2. **Gestión del binario del servidor MCP** ([McpServerManager.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs))
-   - Descarga y gestiona el ejecutable de `Unity-MCP-Server` desde las releases de GitHub
+   - Descarga y gestiona el ejecutable compartido de `GameDev-MCP-Server` desde sus releases de GitHub (fijado por la constante `ServerVersion`)
    - Selección de binario multiplataforma (Windows/macOS/Linux, x86/x64/ARM/ARM64)
    - Aplicación de compatibilidad de versiones entre el servidor y el plugin
    - Generación de configuración para agentes de IA (JSON con rutas de ejecutables y ajustes de conexión)
@@ -247,7 +214,7 @@ El componente Editor proporciona integración con Unity Editor, implementando ca
    - **Prompts**: Plantillas predefinidas para tareas comunes de desarrollo en Unity
    - **Resources**: Acceso basado en URI a datos del Unity Editor con serialización JSON
    - Todas las operaciones se ejecutan en el hilo principal de Unity para garantizar la seguridad de hilos
-   - Descubrimiento basado en atributos mediante `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]`
+   - Descubrimiento basado en atributos mediante `[AiTool]`, `[AiPrompt]`, `[AiResource]`
 
 4. **Interfaz del Editor** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
    - Ventana de configuración para la gestión de conexiones (`Window > AI Game Developer`)
@@ -264,7 +231,7 @@ El componente Runtime proporciona la infraestructura principal compartida entre 
 1. **Núcleo del Plugin y conexión SignalR** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs))
    - Singleton thread-safe que gestiona el ciclo de vida del plugin mediante `BuildAndStart()`
    - Descubre MCP Tools/Prompts/Resources de los ensamblados usando reflexión
-   - Establece la conexión SignalR con Unity-MCP-Server con monitoreo de estado reactivo (biblioteca R3)
+   - Establece la conexión SignalR con el servidor MCP con monitoreo de estado reactivo (biblioteca R3)
    - Gestión de configuración: host, puerto, tiempo de espera, compatibilidad de versiones
 
 2. **Dispatcher del hilo principal** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/MainThreadDispatcher.cs))
@@ -287,10 +254,10 @@ El componente Runtime proporciona la infraestructura principal compartida entre 
 #### Añadir `MCP Tool`
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public class Tool_GameObject
 {
-    [McpPluginTool
+    [AiTool
     (
         "MyCustomTask",
         Title = "Create a new GameObject"
@@ -319,10 +286,10 @@ public class Tool_GameObject
 `MCP Prompt` te permite inyectar prompts personalizados en la conversación con el LLM. Soporta dos roles de emisor: User y Assistant. Es una forma rápida de instruir al LLM para que realice tareas específicas. Puedes generar prompts usando datos personalizados, proporcionando listas o cualquier otra información relevante.
 
 ```csharp
-[McpPluginPromptType]
+[AiPromptType]
 public static class Prompt_ScriptingCode
 {
-    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
     public string AddEventSystem()
     {
@@ -364,7 +331,7 @@ Este proyecto sigue patrones de codificación C# consistentes. Todo el código n
 
 1. **Encabezados de archivo**: Incluir aviso de copyright en formato de comentario de caja al inicio de cada archivo
 2. **Contexto nullable**: Usar `#nullable enable` para seguridad de nulos — sin nulos implícitos
-3. **Atributos**: Usar `[McpPluginTool]`, `[McpPluginPrompt]`, `[McpPluginResource]` para el descubrimiento MCP
+3. **Atributos**: Usar `[AiTool]`, `[AiPrompt]`, `[AiResource]` para el descubrimiento MCP
 4. **Clases parciales**: Dividir la funcionalidad en varios archivos (por ej., `Tool_GameObject.Create.cs`, `Tool_GameObject.Destroy.cs`)
 5. **Ejecución en el hilo principal**: Envolver todas las llamadas a la API de Unity con `MainThread.Instance.Run()`
 6. **Manejo de errores**: Lanzar excepciones para los errores — usar `ArgumentException` o `Exception`, nunca devolver cadenas de error
@@ -403,14 +370,14 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    // Usar [McpPluginToolType] para clases de tools - habilita el descubrimiento MCP via reflexión
-    [McpPluginToolType]
+    // Usar [AiToolType] para clases de tools - habilita el descubrimiento MCP via reflexión
+    [AiToolType]
     // Las clases parciales permiten dividir la implementación en múltiples archivos
     // Patrón: Un archivo por operación (por ej., GameObject.Create.cs, GameObject.Destroy.cs)
     public partial class Tool_GameObject
     {
         // Declaración de MCP Tool con metadatos basados en atributos
-        [McpPluginTool(
+        [AiTool(
             "gameobject-create",                    // Identificador único del tool (kebab-case)
             Title = "GameObject / Create"           // Título legible por humanos
         )]
@@ -496,11 +463,11 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
     }
 
     // Archivo de clase parcial separado para prompts
-    [McpPluginPromptType]
+    [AiPromptType]
     public static partial class Prompt_SceneManagement
     {
         // MCP Prompt con definición de rol (User o Assistant)
-        [McpPluginPrompt(Name = "setup-basic-scene", Role = Role.User)]
+        [AiPrompt(Name = "setup-basic-scene", Role = Role.User)]
         [Description("Setup a basic scene with camera, lighting, and environment.")]
         public static string SetupBasicScene()
         {
@@ -584,7 +551,7 @@ Esto es lo que necesitas saber al trabajar con CI como colaborador:
 - **No modifiques los archivos de workflow** en `.github/workflows/` en tu PR — la verificación de CI se abortará si detecta cambios en estos archivos de un colaborador no confiable.
 - **Las 18 combinaciones de la matriz de pruebas deben pasar** antes de que un PR pueda fusionarse. Si tu cambio rompe solo una combinación (por ej., `2022-editmode`), ese trabajo mostrará una ✗ roja mientras los demás están en verde.
 - **Re-ejecutar trabajos fallidos:** Ve al PR → pestaña **Checks** → haz clic en un trabajo fallido → **Re-run failed jobs**. Esto es útil para fallos transitorios del Unity Editor.
-- **Orden de ejecución de workflows:** `test_pull_request.yml` se ejecuta en tu PR. `release.yml` solo se ejecuta después de fusionar en `main`. No necesitas activar las releases manualmente.
+- **Orden de ejecución de workflows:** `test_pull_request.yml` se ejecuta en tu PR. Fusionar en `main` no publica nada: un mantenedor crea la release despachando manualmente `release.yml`.
 
 ## Resumen de workflows
 
@@ -592,24 +559,30 @@ Esto es lo que necesitas saber al trabajar con CI como colaborador:
 
 ### 🚀 [release.yml](../../.github/workflows/release.yml)
 
-**Disparador:** Push a la rama `main`
+**Disparador:** Solo `workflow_dispatch` manual (entrada `dry_run`, por defecto `false`). Fusionar en `main` no publica nada.
 **Propósito:** Workflow principal de release que orquesta todo el proceso de publicación
+
+```bash
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main -f dry_run=true   # todas las pruebas y compilaciones, no publica nada
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                   # release real
+```
 
 **Proceso:**
 
-1. **Verificación de versión** - Extrae la versión de [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) y comprueba si ya existe el tag de release
+1. **Verificación de versión** - Extrae la versión de [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json). Una ejecución real falla si no es sobre `main` o si el tag de release ya existe; un dry run avisa y continúa
 2. **Compilación del Installer de Unity** - Prueba y exporta el instalador del paquete Unity (`AI-Game-Dev-Installer.unitypackage`)
-3. **Compilación del servidor MCP** - Compila ejecutables multiplataforma (Windows, macOS, Linux) usando [build-all.sh](../../Unity-MCP-Server/build-all.sh)
 4. **Pruebas del Plugin de Unity** - Ejecuta pruebas completas en:
    - 3 versiones de Unity: `2022.3.62f3`, `2023.2.22f1`, `6000.3.1f1`
    - 3 modos de prueba: `editmode`, `playmode`, `standalone`
    - 2 sistemas operativos: `windows-latest`, `ubuntu-latest`
    - Total: **18 combinaciones en la matriz de pruebas**
-5. **Creación de release** - Genera notas de versión a partir de commits y crea la release de GitHub con el tag
-6. **Publicación** - Sube el paquete del instalador de Unity y los ejecutables del servidor MCP a la release
+5. **Despliegue** - Compila, prueba y publica el paquete npm `unity-mcp-cli` con procedencia (OIDC Trusted Publishing, directamente en `release.yml`; se omite si esa versión exacta ya está en npm)
+6. **Creación de release** - Crea el tag y la release de GitHub con el paquete del instalador de Unity y el paquete UPM firmado adjuntos (OpenUPM lo toma de ahí)
 7. **Notificación de Discord** - Envía las notas de la release formateadas al canal de Discord
-8. **Despliegue** - Activa el workflow de despliegue para NuGet y Docker
+8. **Verificación** - Falla la ejecución a menos que la release de GitHub, npm y OpenUPM sirvan la nueva versión
 9. **Limpieza** - Elimina los artefactos de compilación tras la publicación exitosa
+
+Los pasos 5-9 se omiten en un dry run.
 
 ### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
 
@@ -618,8 +591,7 @@ Esto es lo que necesitas saber al trabajar con CI como colaborador:
 
 **Proceso:**
 
-1. Compila los ejecutables del servidor MCP para todas las plataformas
-2. Ejecuta las mismas 18 combinaciones de la matriz de pruebas de Unity que el workflow de release
+1. Ejecuta las mismas 18 combinaciones de la matriz de pruebas de Unity que el workflow de release
 3. Todas las pruebas deben pasar antes de que el PR pueda fusionarse
 
 ### 🔧 [test_unity_plugin.yml](../../.github/workflows/test_unity_plugin.yml)
@@ -637,59 +609,29 @@ Esto es lo que necesitas saber al trabajar con CI como colaborador:
 - Almacena en caché la Librería de Unity para ejecuciones posteriores más rápidas
 - Sube artefactos de prueba para depuración
 
-### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
+> Los despliegues del paquete NuGet del servidor MCP y de la imagen Docker se trasladaron al repositorio compartido [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (Docker: [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server)).
 
-**Disparador:** Llamado por el workflow de release O dispatch manual O al publicar una release
-**Propósito:** Despliega el servidor MCP en NuGet y Docker Hub
-
-**Trabajos:**
-
-**1. Despliegue en NuGet:**
-
-- Compila y prueba el servidor MCP
-- Empaqueta el paquete NuGet
-- Publica en [nuget.org](https://www.nuget.org/packages/com.IvanMurzak.Unity.MCP.Server)
-
-**2. Despliegue de imagen Docker:**
-
-- Compila imagen Docker multiplataforma (linux/amd64, linux/arm64)
-- Sube a [Docker Hub](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
-- Etiqueta con número de versión y `latest`
-- Usa caché de GitHub Actions para optimización de compilación
-
-### 🎯 [deploy_server_executables.yml](../../.github/workflows/deploy_server_executables.yml)
-
-**Disparador:** Release de GitHub publicada
-**Propósito:** Compila y sube ejecutables multiplataforma del servidor a la release
-
-**Proceso:**
-
-- Se ejecuta en macOS para soporte de compilación cruzada
-- Compila ejecutables para Windows, macOS, Linux usando [build-all.sh](../../Unity-MCP-Server/build-all.sh)
-- Crea archivos ZIP para cada plataforma
-- Sube los archivos a la release de GitHub
 
 ## Stack tecnológico
 
 - **Plataforma de CI:** GitHub Actions
 - **Pruebas de Unity:** [Game CI](https://game.ci/) con Unity Test Runner
 - **Containerización:** Docker con compilaciones multiplataforma
-- **Gestión de paquetes:** NuGet, OpenUPM, Docker Hub
+- **Gestión de paquetes:** npm, OpenUPM
 - **Herramientas de compilación:** .NET 9.0, scripts bash
 - **Almacenamiento de artefactos:** Artefactos de GitHub Actions (temporales), GitHub Releases (permanente)
 
 ## Consideraciones de seguridad
 
 - Licencia, correo electrónico y contraseña de Unity almacenados como secretos de GitHub
-- Clave API de NuGet y credenciales de Docker protegidas
+- La publicación en npm usa trusted publishing / provenance (OIDC)
 - El workflow de PR incluye verificaciones de seguridad para modificaciones de archivos de workflow
 - Las contribuciones de PRs no confiables requieren aprobación del mantenedor mediante la etiqueta `ci-ok`
 
 ## Destinos de despliegue
 
-1. **GitHub Releases** - Paquete del instalador de Unity y ejecutables del servidor MCP
-2. **NuGet** - Paquete del servidor MCP para desarrolladores .NET
-3. **Docker Hub** - Servidor MCP en contenedor para despliegues en la nube
-4. **OpenUPM** - Paquete del plugin de Unity (sincronizado automáticamente desde las releases de GitHub)
+1. **GitHub Releases** - Paquete del instalador de Unity y paquete UPM firmado
+2. **npm** - el paquete `unity-mcp-cli`
+3. **OpenUPM** - Paquete del plugin de Unity (sincronizado automáticamente desde las releases de GitHub)
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

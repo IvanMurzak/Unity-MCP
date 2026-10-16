@@ -32,6 +32,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         private Reflector _reflector = new Reflector();
         private Microsoft.Extensions.Logging.ILogger _mockLogger = UnityLoggerFactory.LoggerFactory.CreateLogger<RunToolStructuredContentTests>();
 
+        // These tests pin ReflectorNet's structured-content contract (the data layer McpPlugin keeps for hosts without a
+        // binding, so the tools here get none); RunToolRqlResultTests covers the same return types under RQL.
+
         [SetUp]
         public void SetUp()
         {

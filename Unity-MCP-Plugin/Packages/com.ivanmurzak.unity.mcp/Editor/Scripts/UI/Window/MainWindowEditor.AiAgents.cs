@@ -14,6 +14,7 @@ using Microsoft.Extensions.Logging;
 using R3;
 using UnityEngine;
 using UnityEngine.UIElements;
+using AiAgentConfiguratorRegistry = com.IvanMurzak.McpPlugin.AgentConfig.AiAgentConfiguratorRegistry;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -21,7 +22,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     {
         internal static PlayerPrefsString selectedAiAgentId = new("Unity_MCP_SelectedAiAgent");
 
-        private AiAgentConfigurator? currentAiAgentConfigurator;
+        private AiAgentConfiguratorView? currentAiAgentConfigurator;
 
         private DropdownField? aiAgentDropdown;
         private VisualElement? aiAgentContainer;
@@ -136,11 +137,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
 
             var configurator = AiAgentConfiguratorRegistry.All[selectedIndex];
-            currentAiAgentConfigurator = configurator;
+            var view = new AiAgentConfiguratorView(configurator);
+            currentAiAgentConfigurator = view;
 
-            // Load agent-specific configuration UI from the configurator
-            // The configurator now contains its own AiAgentConfig via the AiAgentConfig property
-            var agentSpecificUI = configurator.CreateUI(container);
+            // Render the shared configurator's engine-agnostic description through the
+            // UIToolkit adapter (the view maps the shared DTO onto Unity's Template* elements).
+            var agentSpecificUI = view.CreateUI(container);
             if (agentSpecificUI == null)
                 return;
 

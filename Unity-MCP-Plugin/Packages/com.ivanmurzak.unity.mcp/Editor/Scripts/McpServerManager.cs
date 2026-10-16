@@ -14,11 +14,15 @@ using System.Diagnostics;
 using System.IO;
 using System.IO.Compression;
 using System.Net;
+using System.Net.Http;
 using System.Runtime.InteropServices;
+using System.Security.Cryptography;
 using System.Text.Json.Nodes;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin.ServerLaunch;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Editor.DevControl;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -34,6 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
     using Consts = McpPlugin.Common.Consts;
     using ILogger = Microsoft.Extensions.Logging.ILogger;
+    using AiAgentConfig = McpPlugin.AgentConfig.AiAgentConfig;
 
     public enum McpServerStatus
     {
@@ -41,7 +46,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         Starting,
         Running,
         Stopping,
-        External
+        External,
+        // The server binary is being downloaded/unpacked (issue #845). Distinct from Starting so the UI
+        // can show an honest "Downloading server…" state instead of a misleading "Starting…" while the
+        // process has not been launched yet.
+        Downloading
     }
 
     /// <summary>
@@ -51,19 +60,55 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     [InitializeOnLoad]
     public static class McpServerManager
     {
-        const string ProcessIdKey = "McpServerManager_ProcessId";
-        const string McpServerProcessName = "unity-mcp-server";
+        // The LEGACY, per-user-hive-wide EditorPrefs key (Fix B, 07 §7.2). Historically ALL projects and
+        // all modern editor versions shared this single key in the per-user EditorPrefs hive
+        // (Windows: HKCU\Software\Unity Technologies\Unity Editor 5.x), so concurrent editors — even on
+        // different Unity versions — adopted each other's server PIDs and poisoned the status machine.
+        // Retained ONLY as the source for the one-time migration in CheckExistingProcess; the live key is
+        // the per-project ProcessIdKey below.
+        const string LegacyProcessIdKey = "McpServerManager_ProcessId";
+
+        // The per-project server-PID EditorPrefs key (Fix B): the legacy base suffixed with a stable hash
+        // of THIS project's directory, so two projects — even opened in different editor versions that
+        // share the single per-user EditorPrefs hive — never collide on one key. See ProcessIdKeyForDirectory.
+        static string ProcessIdKey => ProcessIdKeyForDirectory(Environment.CurrentDirectory);
+
+        const string McpServerProcessName = "gamedev-mcp-server";
 
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(typeof(McpServerManager));
         static readonly ReactiveProperty<McpServerStatus> _serverStatus = new(McpServerStatus.Stopped);
+        // Last server-binary download/extract/checksum failure reason, or null when there is no outstanding
+        // failure. The editor window observes this to surface the error + a "Download / Retry server" button
+        // (issue #845). Cleared at the start of every download attempt and on a confirmed-current binary.
+        static readonly ReactiveProperty<string?> _lastDownloadError = new(null);
         static readonly object _processMutex = new();
 
         static Process? _serverProcess;
 
+        // Single-flight guard for the server-binary download (0 = idle, 1 = a DownloadAndUnpackBinary is in
+        // flight). Claimed atomically via Interlocked.CompareExchange in TryBeginDownload BEFORE the first await,
+        // released in EndDownload from DownloadAndUnpackBinary's finally. This is the TOCTOU-safe replacement for
+        // the old "read _serverStatus, later SetDownloadingStatus" check-then-set that let two first-install
+        // triggers both start a colliding download → "IOException: Sharing violation" on the temp zip.
+        static int _downloadInProgress;
+
         public static ReadOnlyReactiveProperty<McpServerStatus> ServerStatus => _serverStatus;
+
+        /// <summary>
+        /// Last server-binary download failure reason (null when none). The AI Game Developer window
+        /// subscribes to surface the failure + a retry button instead of silently dead-ending (issue #845).
+        /// </summary>
+        public static ReadOnlyReactiveProperty<string?> LastDownloadError => _lastDownloadError;
 
         public static bool IsRunning => _serverStatus.CurrentValue == McpServerStatus.Running;
         public static bool IsStarting => _serverStatus.CurrentValue == McpServerStatus.Starting;
+
+        /// <summary>
+        /// True when a verified, version-matching server binary is present on disk and can be launched
+        /// without a download. The Start path (<c>HandleServerButton</c>) uses this to decide whether to
+        /// recover a missing/outdated binary before launching (issue #845).
+        /// </summary>
+        public static bool IsBinaryReadyToStart() => IsBinaryExists() && IsVersionMatches();
 
         static McpServerManager()
         {
@@ -73,25 +118,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Check if server process is still running (e.g., after domain reload)
             EditorApplication.update += CheckExistingProcess;
 
-            DownloadServerBinaryIfNeeded()
-                .ContinueWith(task =>
-                {
-                    if (task.IsFaulted || !task.Result)
-                        return; // Failed to download binaries, skip auto-start
+            // Announced AFTER the two registrations above on purpose: resolving the override reads
+            // <projectRoot>/.env from disk, and nothing added to this class initializer should be able to
+            // leave the editor-quit cleanup unregistered.
+            var serverPathOverride = ResolveServerPathOverride();
+            if (serverPathOverride != null)
+                _logger.LogInformation(
+                    "{envVar} override active: launching {path} — server download and version check are skipped.",
+                    ServerPathEnvVar,
+                    serverPathOverride);
 
-                    if (!task.Result)
-                        return; // No binaries available (either in CI or failed to download), skip auto-start
+            // Poll the download from the main thread instead of subscribing from a ContinueWith
+            // (thread-pool) callback: EditorApplication.update is a plain delegate field, so a
+            // background `+=` races with main-thread subscribers and can drop one of them
+            // (e.g. the MainThread dispatch pump).
+            var download = DownloadServerBinaryIfNeeded(unattended: true);
+            void AutoStartAfterDownload()
+            {
+                if (!download.IsCompleted)
+                    return;
 
-                    if (EnvironmentUtils.IsCi())
-                        return; // Skip auto-start in CI environment
+                EditorApplication.update -= AutoStartAfterDownload;
 
-                    EditorApplication.update += StartServerIfNeeded;
-                });
+                if (download.IsFaulted || download.IsCanceled || !download.Result)
+                    return; // No binaries available (either in CI or failed to download), skip auto-start
+
+                if (EnvironmentUtils.IsCi())
+                    return; // Skip auto-start in CI environment
+
+                StartServerIfNeeded();
+            }
+            EditorApplication.update += AutoStartAfterDownload;
         }
 
         #region Binary Metadata
 
-        public const string ExecutableName = "unity-mcp-server";
+        /// <summary>
+        /// The PINNED version of the shared <c>GameDev-MCP-Server</c> this plugin downloads and runs.
+        /// The plugin version (<see cref="UnityMcpPlugin.Version"/>, 0.x) and the shared server version
+        /// (8.x) DIVERGE — the server is released from its own repo
+        /// (https://github.com/IvanMurzak/GameDev-MCP-Server) on its own cadence — so the download URL
+        /// must NEVER be derived from the plugin version. Bumping the consumed server is an explicit
+        /// plugin change: update THIS constant (and make sure the corresponding
+        /// <c>v&lt;ServerVersion&gt;</c> release with all 7 RID zips exists on GameDev-MCP-Server
+        /// BEFORE cutting a plugin release that pins it — otherwise the download 404s).
+        /// </summary>
+        public const string ServerVersion = "9.2.11";
+
+        public const string ExecutableName = "gamedev-mcp-server";
 
         public static string McpServerName
             => string.IsNullOrEmpty(Application.productName)
@@ -116,12 +190,47 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string PlatformName => $"{OperationSystem}-{CpuArch}";
 
         // Server executable file name
-        // Sample (mac linux): unity-mcp-server
-        // Sample   (windows): unity-mcp-server.exe
+        // Sample (mac linux): gamedev-mcp-server
+        // Sample   (windows): gamedev-mcp-server.exe
         public static string ExecutableFullName
             => ExecutableName.ToLowerInvariant() + (RuntimeInformation.IsOSPlatform(OSPlatform.Windows)
                 ? ".exe"
                 : string.Empty);
+
+        /// <summary>
+        /// DEV / CI-ONLY override: an absolute path to an EXISTING <c>gamedev-mcp-server(.exe)</c> that the
+        /// editor must launch INSTEAD of the pinned <see cref="ServerVersion"/> GitHub release. When it
+        /// resolves, the download and the version match are skipped entirely, so a workspace-built server
+        /// binary can be driven end-to-end without cutting a release. Mirrors Unreal's
+        /// <c>UNREAL_MCP_SERVER_PATH</c> semantics: the override wins when set AND the file exists, and a
+        /// set-but-missing value FALLS THROUGH to the normal pinned-release behaviour.
+        /// </summary>
+        public const string ServerPathEnvVar = "UNITY_MCP_SERVER_PATH";
+
+        /// <summary>
+        /// Resolve <see cref="ServerPathEnvVar"/> for the current Unity project, or null when it is unset,
+        /// blank, or points at a file that does not exist.
+        /// </summary>
+        public static string? ResolveServerPathOverride()
+            => ResolveServerPathOverride(UnityMcpPluginEditor.ProjectRootPath);
+
+        /// <summary>
+        /// <paramref name="projectRootPath"/>-scoped overload (also the unit-test seam). Reads through
+        /// <see cref="DevControlEnv.Resolve"/> so the lookup layers process-env &gt;
+        /// <c>&lt;projectRoot&gt;/.env</c> — a GUI/IDE-launched editor inherits no shell exports, so a bare
+        /// <c>Environment.GetEnvironmentVariable</c> would be unusable for exactly the developer this
+        /// override exists for. Returns the FULL path when the target exists, else null.
+        /// </summary>
+        public static string? ResolveServerPathOverride(string? projectRootPath)
+        {
+            var raw = DevControlEnv.Resolve(ServerPathEnvVar, projectRootPath);
+            if (string.IsNullOrEmpty(raw))
+                return null;
+
+            return File.Exists(raw)
+                ? Path.GetFullPath(raw)
+                : null;
+        }
 
         // Full path to the server executable
         // Sample (mac linux): ../Library/mcp-server
@@ -135,10 +244,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 )
             );
 
-        // Full path to the server executable
+        // The per-RID DOWNLOAD CACHE folder. The ServerPathEnvVar override deliberately does NOT redirect
+        // this: a manual "Download server" menu run must always publish into Library/, never overwrite the
+        // developer's own binary that the override points at.
         // Sample (mac linux): ../Library/mcp-server/osx-x64
         // Sample   (windows): ../Library/mcp-server/win-x64
-        public static string ExecutableFolderPath
+        public static string CachedExecutableFolderPath
             => Path.GetFullPath(
                 Path.Combine(
                     ExecutableFolderRootPath,
@@ -146,16 +257,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 )
             );
 
-        // Full path to the server executable
-        // Sample (mac linux): ../Library/mcp-server/osx-x64/unity-mcp-server
-        // Sample   (windows): ../Library/mcp-server/win-x64/unity-mcp-server.exe
-        public static string ExecutableFullPath
+        // Folder the server is LAUNCHED from (StartServer's WorkingDirectory) and the folder VersionFullPath
+        // sits in. Equals CachedExecutableFolderPath unless ServerPathEnvVar overrides the binary, in which
+        // case it is the override's own directory.
+        // Sample (mac linux): ../Library/mcp-server/osx-x64
+        // Sample   (windows): ../Library/mcp-server/win-x64
+        public static string ExecutableFolderPath
+        {
+            get
+            {
+                var overridePath = ResolveServerPathOverride();
+                return overridePath != null
+                    ? Path.GetDirectoryName(overridePath)!
+                    : CachedExecutableFolderPath;
+            }
+        }
+
+        // The executable INSIDE the download cache — what DownloadAndUnpackBinary publishes and must verify.
+        // Never redirected by ServerPathEnvVar, so it stays usable as the download path's own ground truth
+        // while ExecutableFullPath (the LAUNCH target, below) follows the override. Not public: the launch
+        // target is the only path a caller outside this class has ever needed.
+        // Sample (mac linux): ../Library/mcp-server/osx-x64/gamedev-mcp-server
+        // Sample   (windows): ../Library/mcp-server/win-x64/gamedev-mcp-server.exe
+        static string CachedExecutableFullPath
             => Path.GetFullPath(
                 Path.Combine(
-                    ExecutableFolderPath,
+                    CachedExecutableFolderPath,
                     ExecutableFullName
                 )
             );
+
+        // Full path to the server executable the editor LAUNCHES: the ServerPathEnvVar override when one
+        // resolves, otherwise the pinned release in the download cache.
+        // Sample (mac linux): ../Library/mcp-server/osx-x64/gamedev-mcp-server
+        // Sample   (windows): ../Library/mcp-server/win-x64/gamedev-mcp-server.exe
+        public static string ExecutableFullPath
+            => ResolveServerPathOverride() ?? CachedExecutableFullPath;
 
         public static string VersionFullPath
             => Path.GetFullPath(
@@ -165,8 +302,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 )
             );
 
+        /// <summary>
+        /// The Git release TAG for a server version: the version with a leading <c>v</c>
+        /// (e.g. <c>8.0.0</c> → <c>v8.0.0</c>). GameDev-MCP-Server tags every release
+        /// <c>v&lt;version&gt;</c> and the per-platform server zips are attached to THAT tag — so the
+        /// download path MUST use the v-prefixed tag, never the bare version (a bare-version path
+        /// 404s). Already-v-prefixed input is passed through unchanged so a caller cannot
+        /// accidentally double-prefix.
+        /// </summary>
+        public static string ServerReleaseTag(string serverVersion)
+        {
+            var version = (serverVersion ?? string.Empty).Trim();
+            return version.StartsWith("v", StringComparison.Ordinal) ? version : "v" + version;
+        }
+
+        /// <summary>
+        /// The release-asset zip NAME for the current platform: <c>gamedev-mcp-server-&lt;rid&gt;.zip</c>
+        /// (e.g. <c>gamedev-mcp-server-win-x64.zip</c>). This is the exact key looked up in the release's
+        /// <c>SHA256SUMS</c> integrity manifest (exact-key Ordinal — see <see cref="McpServerChecksum"/>), and
+        /// the trailing segment of <see cref="ExecutableZipUrl"/> — so the verified asset name can never drift
+        /// from the downloaded asset name.
+        /// </summary>
+        public static string ExecutableZipName
+            => $"{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
+
+        /// <summary>
+        /// The download URL of the shared GameDev-MCP-Server release zip for the current platform,
+        /// pinned by <see cref="ServerVersion"/> — NEVER the plugin version (the two diverge).
+        /// </summary>
         public static string ExecutableZipUrl
-            => $"https://github.com/IvanMurzak/Unity-MCP/releases/download/{UnityMcpPlugin.Version}/{ExecutableName.ToLowerInvariant()}-{PlatformName}.zip";
+            => $"https://github.com/IvanMurzak/GameDev-MCP-Server/releases/download/{ServerReleaseTag(ServerVersion)}/{ExecutableZipName}";
 
         #endregion // Binary Metadata
 
@@ -188,26 +353,59 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return File.ReadAllText(VersionFullPath);
         }
 
+        // The `version` marker inside the download cache — what a download just published. Distinct from
+        // GetBinaryVersion(), which follows ExecutableFolderPath and therefore reports the OVERRIDE directory
+        // (where no marker normally sits) whenever ServerPathEnvVar is active. The download path must ask
+        // this one, or it reports the launch target's version for a payload it wrote somewhere else.
+        public static string? GetCachedBinaryVersion()
+        {
+            var cachedVersionPath = Path.Combine(CachedExecutableFolderPath, "version");
+            if (!File.Exists(cachedVersionPath))
+                return null;
+
+            return File.ReadAllText(cachedVersionPath);
+        }
+
         public static bool IsVersionMatches()
         {
+            // Under the ServerPathEnvVar override the launched binary is NOT a pinned GameDev-MCP-Server
+            // release and carries no `version` marker beside it, so the pinned-version comparison does not
+            // apply. Reporting a match is what lets IsBinaryReadyToStart() and DownloadServerBinaryIfNeeded()
+            // short-circuit instead of downloading over the developer's binary. It deliberately does NOT
+            // stand in for DownloadAndUnpackBinary's post-publish verification: that check runs on a path
+            // where a download really happened, so it asks the cache directly (GetCachedBinaryVersion).
+            if (ResolveServerPathOverride() != null)
+                return true;
+
             var binaryVersion = GetBinaryVersion();
             if (binaryVersion == null)
                 return false;
 
-            return binaryVersion == UnityMcpPlugin.Version;
+            // Compared against the pinned shared-server version, NOT the plugin version —
+            // the cached binary is a GameDev-MCP-Server release.
+            return binaryVersion == ServerVersion;
         }
 
-        public static bool DeleteBinaryFolderIfExists()
+        /// <param name="interactive">
+        /// When true (menu / user-initiated paths) a blocking <see cref="EditorUtility.DisplayDialog"/> asks the
+        /// user to retry/skip if the folder can't be deleted (e.g. the server is still holding a file lock).
+        /// When false (the unattended <c>[InitializeOnLoad]</c> / package-update download path) the blocking
+        /// dialog is SKIPPED — after the silent retries the failure is rethrown so the caller surfaces it via the
+        /// non-modal failure popup + retry button instead of freezing editor startup behind a modal (issue #845).
+        /// </param>
+        public static bool DeleteBinaryFolderIfExists(bool interactive = true)
         {
             if (Directory.Exists(ExecutableFolderRootPath))
             {
-                // Intentional infinite loop:
+                // Intentional infinite loop (interactive path only):
                 // - Deletion can fail while the MCP server binaries are in use (e.g., server still running).
                 // - On the first failure, we automatically attempt to stop the server process via McpServerManager.
                 // - The retry/exit behavior is fully controlled by the user via the dialog below.
                 // - We do not impose a fixed maximum retry count so the user can take as long as needed
                 //   to shut down their MCP client and release file locks before trying again.
                 // - The loop terminates when the user selects "Skip", at which point the exception is rethrown.
+                // In the unattended path the blocking dialog is skipped: after the silent retries the exception
+                // is rethrown so the download path fails-loud (non-modal popup) instead of blocking startup.
                 var silentRetries = 0;
                 while (true)
                 {
@@ -250,9 +448,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                             continue;
                         }
 
+                        // Unattended path: never block startup behind a modal — rethrow so the caller
+                        // surfaces the failure via the non-modal popup + retry button (issue #845).
+                        if (!interactive)
+                        {
+                            UnityEngine.Debug.LogError(
+                                $"Failed to delete MCP server folder (unattended): {ex.Message}");
+                            throw;
+                        }
+
                         var retry = EditorUtility.DisplayDialog(
                             title: "Failed to Delete MCP Server Binaries",
-                            message: $"The current unity-mcp-server binaries can't be deleted. " +
+                            message: $"The current gamedev-mcp-server binaries can't be deleted. " +
                                 $"This is very likely because the MCP server is currently running.\n\n" +
                                 $"Please close your MCP client to make sure the server is not running, then click \"Retry\".\n\n" +
                                 $"Path: {ExecutableFolderRootPath}\n\n" +
@@ -272,7 +479,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return false;
         }
 
-        public static Task<bool> DownloadServerBinaryIfNeeded()
+        /// <param name="unattended">
+        /// When true (the <c>[InitializeOnLoad]</c> editor-startup path and the package-update re-check) the
+        /// download runs without any blocking modal and without the result popup — failures are surfaced only
+        /// through <see cref="LastDownloadError"/> (the in-window error + retry button). When false (menu /
+        /// Start button / retry button — user-initiated) the result popup is shown and the delete step may
+        /// prompt interactively. See <see cref="DownloadAndUnpackBinary"/>.
+        /// </param>
+        public static Task<bool> DownloadServerBinaryIfNeeded(bool unattended = false)
         {
             if (EnvironmentUtils.IsCi())
             {
@@ -281,28 +495,78 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 return Task.FromResult(false);
             }
 
-            if (IsBinaryExists() && IsVersionMatches())
-                return Task.FromResult(true);
+            // Cheap best-effort early-out: if a download already advanced the lifecycle machine to Downloading,
+            // skip re-entering DownloadAndUnpackBinary at all. This is only an OPTIMIZATION — the authoritative
+            // single-flight guard is DownloadAndUnpackBinary's atomic TryBeginDownload, which also covers the
+            // manual menu path (MenuItems.DownloadServer calls DownloadAndUnpackBinary directly, bypassing this
+            // method) and the tiny window before SetDownloadingStatus runs. UPM fires MULTIPLE registeredPackages
+            // events per install and ServerBinaryUpdateWatcher's _isRechecking flag resets synchronously before
+            // the fire-and-forget download Task completes, so this caller can legitimately re-enter while a
+            // download is in flight; let the in-flight one complete.
+            if (_serverStatus.CurrentValue == McpServerStatus.Downloading)
+                return Task.FromResult(true); // download already in progress; let it complete
 
-            return DownloadAndUnpackBinary();
+            if (IsBinaryExists() && IsVersionMatches())
+            {
+                // Binary is present and current — clear any stale failure so the window hides the error/retry UI.
+                _lastDownloadError.Value = null;
+                return Task.FromResult(true);
+            }
+
+            return DownloadAndUnpackBinary(unattended);
         }
 
-        public static async Task<bool> DownloadAndUnpackBinary()
+        /// <summary>
+        /// Downloads, verifies, and ATOMICALLY publishes the pinned GameDev-MCP-Server binary for this RID.
+        ///
+        /// <para>Atomicity (issue #845): the previous flow wiped the cache folder, pre-created an EMPTY
+        /// <c>Library/mcp-server/&lt;rid&gt;/</c>, then downloaded + extracted + wrote the version file LAST — so an
+        /// interrupted run (process kill, crash, cancelled domain reload) left an empty per-RID folder behind,
+        /// which then read as "binary present but version missing" forever while the UI hung on "Starting…".
+        /// This implementation instead extracts into a SAME-VOLUME staging folder, fully prepares the payload
+        /// there (binary + sidecars + exec bit + version marker), and only then performs a single
+        /// <see cref="Directory.Move"/> rename into the per-RID cache folder. The destination folder therefore
+        /// never exists in a partial state: it is either absent (download not finished) or complete. The old
+        /// working binary is left untouched until the replacement is fully staged + verified.</para>
+        /// </summary>
+        /// <param name="unattended">
+        /// When true ([InitializeOnLoad] startup / package-update re-check) no blocking modal and no result
+        /// popup are shown — failures surface only via <see cref="LastDownloadError"/> (the in-window error +
+        /// retry button) so editor startup is never blocked and is not spammed with a popup on every reload.
+        /// When false (menu / Start button / retry button — user-initiated) the result popup is shown on BOTH
+        /// success and EVERY failure branch, and the delete step may prompt interactively.
+        /// </param>
+        public static async Task<bool> DownloadAndUnpackBinary(bool unattended = false)
         {
-            UnityEngine.Debug.Log($"Downloading Unity-MCP-Server binary from: <color=yellow>{ExecutableZipUrl}</color>");
+            // SINGLE-FLIGHT GUARD (first-install "IOException: Sharing violation" fix). Atomically claim the one
+            // download slot BEFORE the first await. On a fresh install two triggers race into the download — the
+            // [InitializeOnLoad] static ctor and ServerBinaryUpdateWatcher's registeredPackages handler (which UPM
+            // fires multiple times per install) — and the manual menu (MenuItems.DownloadServer) calls THIS method
+            // directly, bypassing DownloadServerBinaryIfNeeded's status check. The old dedup was a TOCTOU: it read
+            // _serverStatus, then set Downloading only later (SetDownloadingStatus below), so two callers both
+            // passed the check, both ran DownloadFileTaskAsync against the same fixed temp archive path, and the
+            // second WebClient opening the file the first still held threw the Sharing violation. CompareExchange
+            // makes claim-the-slot atomic, so a concurrent second caller no-ops (returns the in-flight result)
+            // instead of starting a second, colliding download. Released in the finally.
+            if (!TryBeginDownload())
+                return true; // a download is already in progress; let it complete
 
+            string? stagingRoot = null;
+            string? archiveFilePath = null;
             try
             {
+                UnityEngine.Debug.Log($"Downloading GameDev-MCP-Server binary from: <color=yellow>{ExecutableZipUrl}</color>");
+
+                // Clear any prior failure + reflect the in-progress download in the status machine.
+                _lastDownloadError.Value = null;
+                SetDownloadingStatus();
+
                 var previousKeepServerRunning = UnityMcpPluginEditor.KeepServerRunning;
 
-                // Clear existed server folder
-                DeleteBinaryFolderIfExists();
-
-                // Create folder if needed
-                if (!Directory.Exists(ExecutableFolderPath))
-                    Directory.CreateDirectory(ExecutableFolderPath);
-
-                var archiveFilePath = Path.GetFullPath($"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{UnityMcpPlugin.Version}.zip");
+                // Per-attempt UNIQUE temp archive path (mirrors the staging folder's Guid below). Even if a future
+                // caller bypasses the single-flight guard, two downloads target DIFFERENT files and can never
+                // collide on the same zip — the defensive, belt-and-suspenders half of the fix.
+                archiveFilePath = BuildArchiveFilePath();
                 UnityEngine.Debug.Log($"Temporary archive file path: <color=yellow>{archiveFilePath}</color>");
 
                 // Download the zip file from the GitHub release notes
@@ -311,70 +575,497 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     await client.DownloadFileTaskAsync(ExecutableZipUrl, archiveFilePath);
                 }
 
-                // Unpack zip archive
-                UnityEngine.Debug.Log($"Unpacking Unity-MCP-Server binary to: <color=yellow>{ExecutableFolderPath}</color>");
-                ZipFile.ExtractToDirectory(archiveFilePath, ExecutableFolderRootPath, overwriteFiles: true);
-
-                if (!File.Exists(ExecutableFullPath))
+                // FAIL-CLOSED INTEGRITY GATE (verify-before-execute). The zip is on disk but UNTRUSTED. Before
+                // extracting or launching it, download the release's SHA256SUMS manifest (sibling of the zip URL
+                // under the same v<ServerVersion> tag), compute the downloaded zip's SHA256 (pure BCL), and
+                // compare against the manifest entry for THIS RID. On MISMATCH / MISSING entry / unparsable-or-
+                // unfetchable manifest we delete the temp zip and return WITHOUT extracting or launching — an
+                // unverified binary must NEVER be executed (a compromised release asset or a trusted-CA MITM
+                // would otherwise yield arbitrary code execution; issue #841).
+                if (!await VerifyDownloadedArchive(archiveFilePath, ServerVersion, ExecutableZipName))
                 {
-                    UnityEngine.Debug.LogError($"Failed to unpack server binary to: {ExecutableFolderRootPath}");
-                    UnityEngine.Debug.LogError($"Binary file not found at: {ExecutableFullPath}");
-                    return false;
+                    try { File.Delete(archiveFilePath); } catch { /* best effort */ }
+                    return FailDownload(
+                        "Checksum verification failed for the downloaded server binary (see logs).", unattended);
                 }
 
-                UnityEngine.Debug.Log($"Downloaded and unpacked Unity-MCP-Server binary to: <color=green>{ExecutableFullPath}</color>");
+                // Unpack zip archive into a SAME-VOLUME staging root (a sibling of the cache root, so the final
+                // publish is an atomic rename, never a cross-volume copy that could be interrupted mid-write).
+                // The shared GameDev-MCP-Server release zips are NOT layout-uniform: the win zips are FLAT
+                // (gamedev-mcp-server.exe + its sidecar files at the zip root) while the osx/linux zips wrap
+                // everything in a <rid>/ folder. Extract, FIND the binary wherever it landed, prepare the
+                // payload folder, then atomically Move it into the per-platform cache folder — so BOTH layouts
+                // (and any future re-arrangement) resolve correctly. The sidecar files (appsettings.json,
+                // NLog.config, server.json, ...) are LOAD-BEARING and must travel with the binary.
+                stagingRoot = Path.GetFullPath($"{ExecutableFolderRootPath}-staging-{Guid.NewGuid():N}");
+                var extractFolder = Path.Combine(stagingRoot, "extract");
+                Directory.CreateDirectory(extractFolder);
+                UnityEngine.Debug.Log($"Unpacking GameDev-MCP-Server binary to staging: <color=yellow>{extractFolder}</color>");
+                ZipFile.ExtractToDirectory(archiveFilePath, extractFolder, overwriteFiles: true);
+                try { File.Delete(archiveFilePath); } catch { /* best effort */ }
 
-                // Set executable permission on macOS and Linux
+                var extractedBinary = FindExtractedBinary(extractFolder, ExecutableFullName);
+                if (extractedBinary == null)
+                {
+                    return FailDownload(
+                        $"'{ExecutableFullName}' not found inside the downloaded zip.", unattended);
+                }
+
+                // The folder that holds the binary + its sidecars is the payload we publish.
+                var payloadFolder = Path.GetDirectoryName(extractedBinary)!;
+
+                // Set executable permission on macOS and Linux BEFORE publishing, so the published payload is
+                // launch-ready the instant it appears under the cache folder.
                 if (!RuntimeInformation.IsOSPlatform(OSPlatform.Windows))
                 {
-                    UnityEngine.Debug.Log($"Setting executable permission for: <color=green>{ExecutableFullPath}</color>");
-                    UnixUtils.Set0755(ExecutableFullPath);
+                    UnityEngine.Debug.Log($"Setting executable permission for: <color=green>{extractedBinary}</color>");
+                    UnixUtils.Set0755(extractedBinary);
                 }
 
-                File.WriteAllText(VersionFullPath, UnityMcpPlugin.Version);
+                // Write the version marker INTO the staged payload, so the published per-RID folder is complete
+                // the instant it appears — there is no window where the binary exists without its version file.
+                File.WriteAllText(Path.Combine(payloadFolder, "version"), ServerVersion);
 
+                // Fix A (version-aware server restart, 07 §7.1): when a server is currently Running/Starting, STOP
+                // it and await Stopped (bounded) BEFORE the binary folder is deleted. Otherwise the live server
+                // keeps its file locks and the status machine stays latched Running, so StartServer() after publish
+                // no-ops with "MCP server is already Running" (the user-visible "Failed to start MCP server after
+                // updating binary"). The whole stop -> delete -> publish -> restart sequence is driven through the
+                // pure OrchestrateServerBinaryUpdate so its ordering is guaranteed (and unit-tested with a mock
+                // layer). Everything above operated on staging, so a failure before this point leaves the working
+                // copy intact.
+                var serverWasRunning = WasServerRunningForUpdate(_serverStatus.CurrentValue);
+                var restartAfterPublish = ShouldRestartAfterUpdate(
+                    previousKeepServerRunning, UnityMcpPluginEditor.ConnectionMode);
+
+                // Capture the live PID/port BEFORE the stop (StopServer nulls _serverProcess) so a stop failure can
+                // name them in a single actionable error.
+                var runningPid = serverWasRunning ? (_serverProcess?.Id ?? -1) : -1;
+                var runningPort = UnityMcpPluginEditor.Port;
+
+                string? publishFailReason = null;
+                var outcome = OrchestrateServerBinaryUpdate(
+                    serverWasRunning: serverWasRunning,
+                    restartAfterPublish: restartAfterPublish,
+                    stopServerAndAwait: StopServerAndAwaitStopped,
+                    deleteBinaryFolder: () => DeleteBinaryFolderIfExists(interactive: !unattended),
+                    publishAndVerify: () =>
+                    {
+                        // Atomic publish: a single same-volume rename of the fully-prepared payload into the
+                        // per-RID cache folder. Either it lands complete or not at all.
+                        // CachedExecutableFolderPath, NOT ExecutableFolderPath: a manual menu-driven download
+                        // must land in Library/ even when ServerPathEnvVar is set, so it can never delete and
+                        // replace the developer's own override directory.
+                        PublishStagedBinary(payloadFolder, CachedExecutableFolderPath);
+
+                        // Verify the CACHE this publish actually targeted, NOT ExecutableFullPath /
+                        // IsBinaryExists() / IsVersionMatches(): under an active ServerPathEnvVar override
+                        // those three describe the developer's own binary, which exists and reports a match
+                        // by construction — so they would pass however the publish went, and the one path
+                        // that still downloads (the manual menu item) would lose its verification entirely.
+                        if (!File.Exists(CachedExecutableFullPath))
+                        {
+                            publishFailReason = $"Server binary missing after publish at: {CachedExecutableFullPath}";
+                            return false;
+                        }
+                        if (GetCachedBinaryVersion() != ServerVersion)
+                        {
+                            publishFailReason = "The published server binary failed the post-publish version check.";
+                            return false;
+                        }
+                        return true;
+                    },
+                    startServer: () =>
+                    {
+                        // StartServer() moves the status machine Downloading/Stopped -> Starting. If it
+                        // early-returns false it never wrote Starting, so reset Downloading -> Stopped (a no-op for
+                        // the Running/Starting/Stopping early-return) so the UI does not hang on "Downloading
+                        // server…" with the Start button permanently disabled (issue #845).
+                        if (!StartServer())
+                        {
+                            UnityEngine.Debug.LogError("Failed to start MCP server after updating binary. Please try starting the server manually.");
+                            ResetDownloadingToStopped();
+                        }
+                    });
+
+                if (outcome == ServerUpdateRestartOutcome.StopFailed)
+                    return FailDownload(StopBeforeUpdateFailedMessage(runningPid, runningPort), unattended);
+
+                if (outcome == ServerUpdateRestartOutcome.PublishFailed)
+                    return FailDownload(publishFailReason ?? "The published server binary failed verification.", unattended);
+
+                // CachedExecutableFullPath, not ExecutableFullPath: this line reports where the DOWNLOAD
+                // landed, which under a ServerPathEnvVar override is not the file the editor will launch.
+                UnityEngine.Debug.Log($"Downloaded and unpacked GameDev-MCP-Server binary to: <color=green>{CachedExecutableFullPath}</color>");
                 UnityEngine.Debug.Log($"MCP server version file created at: <color=green><b>COMPLETED</b></color>");
 
-                var binaryExists = IsBinaryExists();
-                var versionMatches = IsVersionMatches();
-                var success = binaryExists && versionMatches;
-
-                if (success && previousKeepServerRunning)
+                // Restart is handled inside the orchestrator when restartAfterPublish is true. When it is false,
+                // return the transient Downloading status to Stopped (preserving the original Cloud-skip log).
+                if (!restartAfterPublish)
                 {
-                    if (IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
-                    {
-                        if (!StartServer())
-                            UnityEngine.Debug.LogError($"Failed to start MCP server after updating binary. Please try starting the server manually.");
-                    }
-                    else
-                    {
+                    if (previousKeepServerRunning)
                         _logger.LogDebug("DownloadAndUnpackBinary: Cloud mode active, skipping local server auto-start after binary update");
-                    }
+                    ResetDownloadingToStopped();
                 }
 
-                NotificationPopupWindow.Show(
-                    windowTitle: success
-                        ? "Updated"
-                        : "Update Failed",
-                    height: 235,
-                    minHeight: 235,
-                    title: success
-                        ? "Server Binary Updated"
-                        : "Server Binary Update Failed",
-                    message: success
-                        ? "The MCP server binary was successfully downloaded and updated. \n\n" +
-                            $"Version: {GetBinaryVersion()}\n\n" +
-                            "You may need to restart your AI agent to reconnect to the updated server."
-                        : "Failed to download and update the MCP server binary. Please check the logs for details.");
+                if (!unattended)
+                    ShowUpdateResultPopup(success: true);
 
-                return success;
+                return true;
             }
             catch (Exception ex)
             {
                 UnityEngine.Debug.LogException(ex);
-                UnityEngine.Debug.LogError($"Failed to download and unpack server binary: {ex.Message}");
+                return FailDownload($"Failed to download and unpack server binary: {ex.Message}", unattended);
+            }
+            finally
+            {
+                // Release the single-flight download slot claimed at entry so a later retry / real download can
+                // proceed. Only the caller that acquired the slot reaches this finally (the early return above
+                // never entered the try), so this always pairs 1:1 with the TryBeginDownload that returned true.
+                EndDownload();
+
+                if (stagingRoot != null)
+                {
+                    try { if (Directory.Exists(stagingRoot)) Directory.Delete(stagingRoot, recursive: true); }
+                    catch { /* best effort */ }
+                }
+                // Clean up the downloaded temp zip on EVERY exit path. The inline File.Delete calls above
+                // free it on the happy/checksum-fail paths, but if ZipFile.ExtractToDirectory (or the download
+                // itself) throws, neither runs and the zip would leak in Application.temporaryCachePath. The
+                // File.Exists guard makes this a no-op when the inline delete already removed it.
+                if (archiveFilePath != null)
+                {
+                    try { if (File.Exists(archiveFilePath)) File.Delete(archiveFilePath); }
+                    catch { /* best effort */ }
+                }
+            }
+        }
+
+        // --- Version-aware server restart orchestration (Fix A, 07 §7.1) ---
+
+        /// <summary>The bounded wait (seconds) for the running server to reach Stopped during a version-aware
+        /// update restart (Fix A) before the stop is declared failed.</summary>
+        const double StopBeforeUpdateAwaitSeconds = 10.0;
+
+        /// <summary>
+        /// Stops the running server (force) and waits, bounded, until the status machine reaches Stopped (Fix A).
+        /// <see cref="StopServer"/> with <c>force:true</c> is synchronous (it blocks on process exit and cleans up
+        /// on the calling thread), so Stopped is normally reached immediately; the bounded poll is a defensive
+        /// guard against a lingering transition. Returns true when Stopped was reached within the bound, false
+        /// otherwise (the caller then surfaces a single actionable PID/port error instead of publishing over a
+        /// still-live server).
+        /// </summary>
+        static bool StopServerAndAwaitStopped()
+        {
+            StopServer(force: true);
+
+            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(StopBeforeUpdateAwaitSeconds);
+            while (_serverStatus.CurrentValue != McpServerStatus.Stopped && DateTime.UtcNow < deadline)
+                Thread.Sleep(50);
+
+            return _serverStatus.CurrentValue == McpServerStatus.Stopped;
+        }
+
+        /// <summary>The single actionable error surfaced when the running server could not be stopped before a
+        /// binary update (Fix A) — names the PID and port so the user can free them and retry.</summary>
+        static string StopBeforeUpdateFailedMessage(int pid, int port)
+            => $"Could not stop the running MCP server (PID: {pid}, port: {port}) before updating its binary. " +
+               "The update was aborted to avoid corrupting the live server. Please stop the server or close the " +
+               "MCP client holding it, then retry the update.";
+
+        /// <summary>
+        /// True when the status machine indicates a live server that must be stopped before its binary is replaced
+        /// (Fix A). Running or Starting count as live; Downloading/Stopping/Stopped/External do not. Pure —
+        /// unit-testable without a running Editor.
+        /// </summary>
+        internal static bool WasServerRunningForUpdate(McpServerStatus status)
+            => status == McpServerStatus.Running || status == McpServerStatus.Starting;
+
+        /// <summary>
+        /// True when the server should be auto-restarted after a binary update (Fix A): the user kept the server
+        /// running AND the connection mode auto-starts the local server. When false (autostart-false) the update
+        /// flow never calls StartServer(), so its "MCP server is already Running" path is unreachable. Pure —
+        /// unit-testable without a running Editor.
+        /// </summary>
+        internal static bool ShouldRestartAfterUpdate(bool previousKeepServerRunning, ConnectionMode mode)
+            => previousKeepServerRunning && IsAutoStartAllowedForMode(mode);
+
+        /// <summary>The result of <see cref="OrchestrateServerBinaryUpdate"/> (Fix A).</summary>
+        internal enum ServerUpdateRestartOutcome
+        {
+            /// <summary>Stop (if needed) → delete → publish succeeded → restart (if requested).</summary>
+            Completed,
+            /// <summary>The running server could not be stopped; nothing was deleted, published, or restarted.</summary>
+            StopFailed,
+            /// <summary>Publish/verify failed after the delete; the server was not restarted.</summary>
+            PublishFailed
+        }
+
+        /// <summary>
+        /// Pure orchestration of the version-aware server restart (Fix A, 07 §7.1). Guarantees the ordering the
+        /// bug requires: if the server is live, STOP it BEFORE deleting the binary folder; only then delete +
+        /// publish; and START it again ONLY when the caller wants it running (so the "already Running" path is
+        /// unreachable under autostart-false). Every side-effecting step is injected, so this can be unit-tested
+        /// with a mock process layer that records call order and asserts stop-before-delete + start-after-publish.
+        /// </summary>
+        /// <param name="serverWasRunning">Whether a live server must be stopped first.</param>
+        /// <param name="restartAfterPublish">Whether to restart the server after a successful publish.</param>
+        /// <param name="stopServerAndAwait">Stops the server and awaits Stopped; returns false on stop failure.</param>
+        /// <param name="deleteBinaryFolder">Removes the old cache folder.</param>
+        /// <param name="publishAndVerify">Publishes the staged payload and verifies it; returns false on failure.</param>
+        /// <param name="startServer">Restarts the server (invoked only when <paramref name="restartAfterPublish"/> is true).</param>
+        internal static ServerUpdateRestartOutcome OrchestrateServerBinaryUpdate(
+            bool serverWasRunning,
+            bool restartAfterPublish,
+            Func<bool> stopServerAndAwait,
+            Action deleteBinaryFolder,
+            Func<bool> publishAndVerify,
+            Action startServer)
+        {
+            if (serverWasRunning && !stopServerAndAwait())
+                return ServerUpdateRestartOutcome.StopFailed;
+
+            deleteBinaryFolder();
+
+            if (!publishAndVerify())
+                return ServerUpdateRestartOutcome.PublishFailed;
+
+            if (restartAfterPublish)
+                startServer();
+
+            return ServerUpdateRestartOutcome.Completed;
+        }
+
+        /// <summary>
+        /// Records a download failure: logs it, stores the reason in <see cref="LastDownloadError"/> (so the
+        /// window shows the error + retry button), returns the status machine to Stopped, and — for
+        /// user-initiated (non-unattended) calls — shows the "Update Failed" popup. Always returns false so it
+        /// can be used as the single return expression of every failure branch.
+        /// </summary>
+        static bool FailDownload(string reason, bool unattended)
+        {
+            UnityEngine.Debug.LogError($"MCP server binary download failed: {reason}");
+            _lastDownloadError.Value = reason;
+            ResetDownloadingToStopped();
+            if (!unattended)
+                ShowUpdateResultPopup(success: false);
+            return false;
+        }
+
+        /// <summary>Moves the status machine into Downloading from an idle state (Stopped/Downloading only).</summary>
+        static void SetDownloadingStatus()
+        {
+            var current = _serverStatus.CurrentValue;
+            if (current == McpServerStatus.Stopped || current == McpServerStatus.Downloading)
+                _serverStatus.Value = McpServerStatus.Downloading;
+        }
+
+        /// <summary>Returns the status machine to Stopped, but ONLY if it is still Downloading (so it never
+        /// stomps a Starting/Running/Stopping state that a concurrent path may have moved it to).</summary>
+        static void ResetDownloadingToStopped()
+        {
+            if (_serverStatus.CurrentValue == McpServerStatus.Downloading)
+                _serverStatus.Value = McpServerStatus.Stopped;
+        }
+
+        /// <summary>
+        /// Atomically claims the single server-binary download slot. Returns true when THIS caller acquired it
+        /// (and must eventually release it via <see cref="EndDownload"/>), or false when a download is already in
+        /// flight and the caller must no-op. The atomic claim-the-slot is the fix for the first-install
+        /// "IOException: Sharing violation" race: it replaces the non-atomic status check-then-set so two
+        /// concurrent triggers can never both start a download against the same temp archive path.
+        /// </summary>
+        internal static bool TryBeginDownload()
+            => Interlocked.CompareExchange(ref _downloadInProgress, 1, 0) == 0;
+
+        /// <summary>Releases the single download slot claimed by <see cref="TryBeginDownload"/>.</summary>
+        internal static void EndDownload()
+            => Interlocked.Exchange(ref _downloadInProgress, 0);
+
+        /// <summary>True while a server-binary download slot is currently held (diagnostic / test view).</summary>
+        internal static bool IsDownloadInProgress
+            => Volatile.Read(ref _downloadInProgress) != 0;
+
+        /// <summary>
+        /// Builds a PER-ATTEMPT-UNIQUE temp path for the downloaded server zip
+        /// (<c>{temporaryCachePath}/{executable}-{rid}-{version}-{guid}.zip</c>). The trailing Guid mirrors the
+        /// staging folder's Guid so two concurrent downloads never target the same file — the defensive half of
+        /// the first-install Sharing-violation fix. Internal so an EditMode test can assert per-call uniqueness
+        /// without performing a real download.
+        /// </summary>
+        internal static string BuildArchiveFilePath()
+            => Path.GetFullPath(
+                $"{Application.temporaryCachePath}/{ExecutableName.ToLowerInvariant()}-{PlatformName}-{ServerVersion}-{Guid.NewGuid():N}.zip");
+
+        /// <summary>Shows the non-modal server-binary download result popup (success or failure).</summary>
+        static void ShowUpdateResultPopup(bool success)
+        {
+            NotificationPopupWindow.Show(
+                windowTitle: success ? "Updated" : "Update Failed",
+                height: 235,
+                minHeight: 235,
+                title: success ? "Server Binary Updated" : "Server Binary Update Failed",
+                message: success
+                    // GetCachedBinaryVersion(), not GetBinaryVersion(): this popup describes the DOWNLOAD, and
+                    // the launch-target marker it would otherwise read sits in the ServerPathEnvVar override's
+                    // own directory, where there is normally no marker at all.
+                    ? "The MCP server binary was successfully downloaded and updated. \n\n" +
+                        $"Version: {GetCachedBinaryVersion()}\n\n" +
+                        "You may need to restart your AI agent to reconnect to the updated server."
+                    : "Failed to download and update the MCP server binary. Please check the logs for details.");
+        }
+
+        /// <summary>
+        /// Atomically publishes a fully-prepared staged payload folder into <paramref name="destFolder"/> via a
+        /// single same-volume <see cref="Directory.Move"/>. Ensures the destination's parent exists and removes
+        /// any existing destination first (Directory.Move requires the target to not exist). The caller
+        /// guarantees <paramref name="stagedFolder"/> and <paramref name="destFolder"/> share a volume (staging
+        /// is a sibling of the cache root) so the rename is atomic, never a partial cross-volume copy.
+        /// </summary>
+        internal static void PublishStagedBinary(string stagedFolder, string destFolder)
+        {
+            var parent = Path.GetDirectoryName(destFolder);
+            if (!string.IsNullOrEmpty(parent) && !Directory.Exists(parent))
+                Directory.CreateDirectory(parent);
+
+            if (Directory.Exists(destFolder))
+                Directory.Delete(destFolder, recursive: true);
+
+            Directory.Move(stagedFolder, destFolder);
+        }
+
+        /// <summary>
+        /// Locate the extracted server binary under the staging folder, wherever the zip layout put it —
+        /// at the root (the FLAT win zips) or nested in a <c>&lt;rid&gt;/</c> folder (the osx/linux zips).
+        /// Prefers the SHALLOWEST match so a hypothetical nested duplicate cannot shadow the real binary.
+        /// Returns null when the zip contains no file with the expected name.
+        /// </summary>
+        internal static string? FindExtractedBinary(string stagingFolder, string executableFileName)
+        {
+            string? best = null;
+            var bestDepth = int.MaxValue;
+            foreach (var candidate in Directory.GetFiles(stagingFolder, executableFileName, SearchOption.AllDirectories))
+            {
+                var relative = candidate.Substring(stagingFolder.Length).TrimStart(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                var depth = relative.Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar).Length;
+                if (depth < bestDepth)
+                {
+                    best = candidate;
+                    bestDepth = depth;
+                }
+            }
+            return best;
+        }
+
+        /// <summary>
+        /// The number of attempts for the SHA256SUMS manifest fetch (1 initial + retries) before we
+        /// fail-closed. A TRANSIENT network error on the manifest fetch is retried (the binary is already
+        /// downloaded; only the integrity manifest is missing) — but a persistent failure NEVER falls through
+        /// to executing an unverified binary.
+        /// </summary>
+        const int Sha256SumsFetchAttempts = 3;
+
+        /// <summary>Backoff between SHA256SUMS fetch attempts.</summary>
+        static readonly TimeSpan Sha256SumsRetryDelay = TimeSpan.FromSeconds(1.0);
+
+        /// <summary>
+        /// Fail-closed verify-before-execute gate. Downloads the release's <c>SHA256SUMS</c> manifest (with a
+        /// bounded transient-retry), computes the downloaded zip's SHA256 (pure BCL — the same
+        /// <c>SHA256.Create().ComputeHash</c> idiom the plugin already uses in <c>UnityMcpPlugin</c>, so it is
+        /// .NET-Standard-2.1-safe on the Unity 2022.3 floor; no new deps), and compares against the manifest
+        /// entry for <paramref name="assetZipName"/> via the pure-managed
+        /// <see cref="McpServerChecksum.VerifyZipChecksum"/>. Returns true ONLY when the digest matched the
+        /// manifest. Every failure path — a manifest we could not fetch after all retries, an unparsable
+        /// manifest, a missing entry, or a digest mismatch — returns false with a clear, actionable error so
+        /// the caller skips extraction/launch. Never throws.
+        /// </summary>
+        static async Task<bool> VerifyDownloadedArchive(string archiveFilePath, string serverVersion, string assetZipName)
+        {
+            var sumsUrl = McpServerChecksum.Sha256SumsUrl(serverVersion);
+
+            // 1) Fetch the integrity manifest (bounded transient-retry). A null result means every attempt
+            //    failed — fail-closed (do NOT execute an unverified binary).
+            var sha256SumsText = await FetchSha256SumsText(sumsUrl);
+            if (sha256SumsText == null)
+            {
+                UnityEngine.Debug.LogError(
+                    $"Refusing to launch MCP server: could not download the {McpServerChecksum.Sha256SumsAssetName} " +
+                    $"integrity manifest from {sumsUrl} after {Sha256SumsFetchAttempts} attempt(s). " +
+                    "The downloaded binary was NOT verified and will not be executed (fail-closed).");
                 return false;
             }
+
+            // 2) Compute the downloaded zip's SHA256 (pure BCL; .NET-Standard-2.1-safe on the Unity 2022.3
+            //    floor — SHA256.HashDataAsync / Convert.ToHexString are .NET 5+ and would not compile there).
+            string actualHexDigest;
+            try
+            {
+                byte[] hashBytes;
+                using (var sha256 = SHA256.Create())
+                using (var zipStream = File.OpenRead(archiveFilePath))
+                {
+                    hashBytes = sha256.ComputeHash(zipStream);
+                }
+                actualHexDigest = BitConverter.ToString(hashBytes).Replace("-", string.Empty); // upper-case hex; compare is case-insensitive
+            }
+            catch (Exception ex)
+            {
+                UnityEngine.Debug.LogError(
+                    $"Refusing to launch MCP server: failed to compute the downloaded zip's SHA256: {ex.Message}");
+                return false;
+            }
+
+            // 3) Parse + compare via the pure-managed verifier (unit-tested with no editor).
+            var verdict = McpServerChecksum.VerifyZipChecksum(sha256SumsText, assetZipName, actualHexDigest);
+            if (verdict != McpServerChecksum.ChecksumVerdict.Verified)
+            {
+                UnityEngine.Debug.LogError(
+                    $"Refusing to launch MCP server: {McpServerChecksum.ChecksumFailureReason(verdict, assetZipName)}. " +
+                    "The binary will not be extracted or executed (fail-closed).");
+                return false;
+            }
+
+            UnityEngine.Debug.Log(
+                $"Verified '{assetZipName}' against {McpServerChecksum.Sha256SumsAssetName} (SHA256 OK).");
+            return true;
+        }
+
+        /// <summary>
+        /// Download the <c>SHA256SUMS</c> manifest text with a bounded transient-retry. Returns the manifest
+        /// body, or null when every attempt failed (the fail-closed signal). The manifest is small text — read
+        /// it fully into a string. Never throws.
+        /// </summary>
+        static async Task<string?> FetchSha256SumsText(string sumsUrl)
+        {
+            for (var attempt = 1; attempt <= Sha256SumsFetchAttempts; attempt++)
+            {
+                try
+                {
+                    using var client = new HttpClient();
+                    using var response = await client.GetAsync(sumsUrl);
+                    response.EnsureSuccessStatusCode();
+                    return await response.Content.ReadAsStringAsync();
+                }
+                catch (Exception ex)
+                {
+                    if (attempt < Sha256SumsFetchAttempts)
+                    {
+                        UnityEngine.Debug.LogWarning(
+                            $"{McpServerChecksum.Sha256SumsAssetName} fetch attempt {attempt}/{Sha256SumsFetchAttempts} " +
+                            $"failed ({ex.Message}); retrying…");
+                        try { await Task.Delay(Sha256SumsRetryDelay); } catch { /* ignore */ }
+                    }
+                    else
+                    {
+                        UnityEngine.Debug.LogWarning(
+                            $"{McpServerChecksum.Sha256SumsAssetName} fetch attempt {attempt}/{Sha256SumsFetchAttempts} " +
+                            $"failed ({ex.Message}).");
+                    }
+                }
+            }
+
+            return null;
         }
 
         #endregion // Binary Lifecycle
@@ -388,8 +1079,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///   "mcpServers": {
         ///     "Unity ProjectName": {
         ///       "type": "...",    // optional, only if provided
-        ///       "command": "path/to/unity-mcp-server",
-        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio" /*, "token=..." if auth required */]
+        ///       "command": "path/to/gamedev-mcp-server",
+        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio"]
         ///     }
         ///   }
         /// }
@@ -411,17 +1102,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             serverConfig["command"] = ExecutableFullPath.Replace('\\', '/');
 
+            // stdio spawns in `none` mode (design 03 Flow D / b6): NO legacy authorization/token args.
+            // The offline `token` mode is HTTP-only; a client that needs the Bearer gets it via the
+            // shared configurator's HTTP credential path, never baked into the stdio spawn args here.
             var args = new JsonArray
             {
                 $"{Args.Port}={port}",
                 $"{Args.PluginTimeout}={timeoutMs}",
-                $"{Args.ClientTransportMethod}={TransportMethod.stdio}",
-                $"{Args.Authorization}={UnityMcpPluginEditor.AuthOption}"
+                $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
             };
-
-            var authRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
-            if (authRequired && !string.IsNullOrEmpty(UnityMcpPluginEditor.Token))
-                args.Add($"{Args.Token}={UnityMcpPluginEditor.Token}");
 
             serverConfig["args"] = args;
 
@@ -447,14 +1136,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///   "mcpServers": {
         ///     "Unity ProjectName": {
         ///       "type": "...",  // optional, only if provided
-        ///       "url": "http://localhost:port",
-        ///      "headers": {     // only if token is provided
-        ///        "Authorization": "Bearer token"
-        ///      }
+        ///       "url": "http://localhost:port"
         ///     }
         ///   }
         /// }
         /// </code>
+        /// URL-only: the offline-token Bearer is written by the shared configurator's HTTP
+        /// credential path (<c>HttpCredentialMode.AccessToken</c>), never baked in here.
         /// </summary>
         public static JsonNode RawJsonConfigurationHttp(
             string url,
@@ -471,14 +1159,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             serverConfig["url"] = url;
 
-            var authRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
-            if (authRequired && !string.IsNullOrEmpty(UnityMcpPluginEditor.Token))
-            {
-                serverConfig["headers"] = new JsonObject
-                {
-                    ["Authorization"] = $"Bearer {UnityMcpPluginEditor.Token}"
-                };
-            }
+            // URL-only: none/oauth carry no header (oauth authorizes natively against the URL). A client
+            // that needs the offline-token Bearer gets it via the shared configurator's HTTP credential
+            // path (AiAgentConfigurator + HttpCredentialMode.AccessToken), never baked in here.
 
             var innerContent = new JsonObject
             {
@@ -498,47 +1181,124 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static string DockerSetupRunCommand()
         {
             var dockerPortMapping = $"-p {UnityMcpPluginEditor.Port}:{UnityMcpPluginEditor.Port}";
+            // No legacy MCP_AUTHORIZATION / token env (g6 scrub): the offline `token` Bearer travels via
+            // the shared configurator's client-config path; none/oauth are URL-only. This is the
+            // anonymous-loopback container bring-up shape.
             var dockerEnvVars =
                 $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} " +
                 $"-e {Env.Port}={UnityMcpPluginEditor.Port} " +
-                $"-e {Env.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs} " +
-                $"-e {Env.Authorization}={UnityMcpPluginEditor.AuthOption}";
+                $"-e {Env.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}";
 
-            var authRequired = UnityMcpPluginEditor.AuthOption == AuthOption.required;
-            var token = UnityMcpPluginEditor.Token;
-            if (authRequired && !string.IsNullOrEmpty(token))
-                dockerEnvVars += $" -e {Env.Token}={token}";
-
-            var dockerContainer = $"--name unity-mcp-server-{UnityMcpPluginEditor.Port}";
-            var dockerImage = $"ivanmurzakdev/unity-mcp-server:{UnityMcpPlugin.Version}";
+            var dockerContainer = $"--name {ExecutableName}-{UnityMcpPluginEditor.Port}";
+            // The shared GameDev-MCP-Server Docker image, tagged by the pinned ServerVersion
+            // (NOT the plugin version — the two diverge).
+            var dockerImage = $"aigamedeveloper/mcp-server:{ServerVersion}";
             return $"docker run -d {dockerPortMapping} {dockerEnvVars} {dockerContainer} {dockerImage}";
         }
 
         public static string DockerRunCommand()
         {
-            return $"docker start unity-mcp-server-{UnityMcpPluginEditor.Port}";
+            return $"docker start {ExecutableName}-{UnityMcpPluginEditor.Port}";
         }
 
         public static string DockerStopCommand()
         {
-            return $"docker stop unity-mcp-server-{UnityMcpPluginEditor.Port}";
+            return $"docker stop {ExecutableName}-{UnityMcpPluginEditor.Port}";
         }
 
         public static string DockerRemoveCommand()
         {
-            return $"docker rm unity-mcp-server-{UnityMcpPluginEditor.Port}";
+            return $"docker rm {ExecutableName}-{UnityMcpPluginEditor.Port}";
         }
 
         #endregion // Client Configuration
 
         #region Process Lifecycle
 
+        // --- Per-project server-PID key + legacy-key migration (Fix B, 07 §7.2 / T10) ---
+
+        /// <summary>
+        /// A stable, project-path-derived suffix for the per-project server-PID EditorPrefs key (Fix B).
+        /// Reuses <see cref="UnityMcpPlugin.GeneratePortFromDirectory"/>'s hashing APPROACH — SHA256 over the
+        /// lower-cased directory — so the key can never collide across the many projects (and editor versions)
+        /// that share the single per-user EditorPrefs hive. Pure + deterministic (same directory,
+        /// case-insensitive, always the same suffix) so it is unit-testable without a running Editor.
+        /// Deliberately NOT port-qualified: the port is user-configurable, so a port change would orphan the PID
+        /// under the old key and resurrect the "already Running" ghost (owner ruling 2026-07-17).
+        /// </summary>
+        internal static string ProjectKeySuffixForDirectory(string directory)
+        {
+            var normalized = (directory ?? string.Empty).ToLowerInvariant();
+            using var sha256 = SHA256.Create();
+            var hashBytes = sha256.ComputeHash(System.Text.Encoding.UTF8.GetBytes(normalized));
+            // First 4 bytes as lower-case hex — the same leading SHA256 bytes GeneratePortFromDirectory maps to
+            // a port, rendered here as a stable 8-char key suffix.
+            return BitConverter.ToString(hashBytes, 0, 4).Replace("-", string.Empty).ToLowerInvariant();
+        }
+
+        /// <summary>
+        /// The full per-project server-PID EditorPrefs key for <paramref name="directory"/>: the legacy shared
+        /// base plus a stable project-path hash suffix. Two distinct project directories always map to distinct
+        /// keys (Fix B isolation); the key carries NO editor-version component, so the same project maps to the
+        /// same key across the editor versions that share the per-user hive.
+        /// </summary>
+        internal static string ProcessIdKeyForDirectory(string directory)
+            => LegacyProcessIdKey + "_" + ProjectKeySuffixForDirectory(directory);
+
+        /// <summary>
+        /// Pure decision for the one-time legacy-key migration (T10): adopt the legacy-keyed PID ONLY when it is
+        /// the process that owns THIS project's port (i.e. it is our own server, previously tracked under the
+        /// pre-Fix-B shared key), never a foreign editor's server that merely shared the per-user hive.
+        /// Everything else is ignored. Unit-testable without a running Editor.
+        /// </summary>
+        internal static bool ShouldAdoptLegacyPid(int legacyPid, int pidListeningOnThisProjectPort)
+            => legacyPid > 0 && legacyPid == pidListeningOnThisProjectPort;
+
+        /// <summary>
+        /// Resolves the server PID to reconnect to across a domain reload. Prefers the per-project key (Fix B).
+        /// When it is absent, performs the legacy-shared-key migration: the legacy PID is adopted only when it
+        /// owns this project's port (<see cref="ShouldAdoptLegacyPid"/> / T10). On ADOPT the PID is written to the
+        /// per-project key and the legacy key is consumed (ownership transferred). On IGNORE the legacy key is
+        /// LEFT intact so its rightful owner project can still migrate it on its own next open — the port-ownership
+        /// gate already prevents a foreign editor from ever adopting another project's PID, so leaving the key
+        /// cannot reintroduce the cross-project poisoning Fix B removes.
+        /// </summary>
+        static int ResolveTrackedServerPid()
+        {
+            var perProjectPid = EditorPrefs.GetInt(ProcessIdKey, -1);
+            if (perProjectPid > 0)
+                return perProjectPid;
+
+            // Per-project key absent — attempt the legacy migration (read once for this project).
+            if (!EditorPrefs.HasKey(LegacyProcessIdKey))
+                return -1;
+
+            var legacyPid = EditorPrefs.GetInt(LegacyProcessIdKey, -1);
+            var port = UnityMcpPluginEditor.Port;
+
+            if (ShouldAdoptLegacyPid(legacyPid, GetPidListeningOnPort(port)))
+            {
+                EditorPrefs.SetInt(ProcessIdKey, legacyPid); // write the new per-project key
+                EditorPrefs.DeleteKey(LegacyProcessIdKey);   // consume: ownership moved to the per-project key
+                _logger.LogInformation(
+                    "Migrated legacy MCP server PID {pid} to the per-project key (owns this project's port {port})",
+                    legacyPid, port);
+                return legacyPid;
+            }
+
+            _logger.LogDebug(
+                "Ignored legacy MCP server PID {pid}: it does not own this project's port {port} (foreign editor sharing the EditorPrefs hive)",
+                legacyPid, port);
+            return -1;
+        }
+
         static void CheckExistingProcess()
         {
             EditorApplication.update -= CheckExistingProcess;
             // Try to find an existing server process by checking if our tracked PID is still running
-            // This helps maintain state across domain reloads
-            var savedPid = EditorPrefs.GetInt(ProcessIdKey, -1);
+            // (per-project key, with a one-time legacy-key migration — Fix B). Helps maintain state across
+            // domain reloads.
+            var savedPid = ResolveTrackedServerPid();
             if (savedPid > 0)
             {
                 try
@@ -616,7 +1376,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         CreateNoWindow = true,
                         RedirectStandardOutput = true,
                         RedirectStandardError = true,
-                        WorkingDirectory = ExecutableFolderPath
+                        // Derived from executablePath rather than read from ExecutableFolderPath again: both
+                        // re-resolve ServerPathEnvVar independently, so a second read could hand the process
+                        // a working directory belonging to a different binary than FileName.
+                        WorkingDirectory = Path.GetDirectoryName(executablePath)!
                     };
 
                     // Set executable permissions on Unix-like systems
@@ -828,7 +1591,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         }
 
         /// <summary>
-        /// Kills an orphaned unity-mcp-server process that is occupying this project's port.
+        /// Kills an orphaned gamedev-mcp-server process that is occupying this project's port.
         /// Only targets the specific process listening on <see cref="UnityMcpPluginEditor.Port"/>.
         /// If the port owner cannot be determined, does nothing (fails safe).
         /// </summary>
@@ -973,21 +1736,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             var port = UnityMcpPluginEditor.Port;
             var timeout = UnityMcpPluginEditor.TimeoutMs;
-            var transportMethod = TransportMethod.streamableHttp; // always must be streamableHttp for launching the server.
-            var token = UnityMcpPluginEditor.Token;
+            // The local server is always launched over streamableHttp (the loopback HTTP endpoint
+            // the plugin and every AI-agent client connect to); stdio is a client-config transport only.
+            var transportMethod = TransportMethod.streamableHttp;
             var authOption = UnityMcpPluginEditor.AuthOption;
 
-            // Arguments format: port=XXXXX plugin-timeout=XXXXX client-transport=<TransportMethod> token=<Token>
-            var args =
-                $"{Args.Port}={port} " +
-                $"{Args.PluginTimeout}={timeout} " +
-                $"{Args.ClientTransportMethod}={transportMethod} " +
-                $"{Args.Authorization}={authOption}";
+            // g6 consolidation (owner directive: NO duplication): the launch-arg shape is produced by
+            // the ONE shared builder in McpPlugin (ServerLaunchArguments) — Unity no longer re-derives
+            // it. It emits the target-state `auth=<mode>` key (never the retired `authorization=required`),
+            // per mode:
+            //   none  => auth=none                                   (anonymous loopback, design-primary)
+            //   token => auth=token token=<local-secret>            (offline shared-secret, Bearer-gated)
+            //   oauth => auth=oauth auth-issuer=<issuer> public-url=<pinned loopback URL>  (account)
+            switch (authOption)
+            {
+                case AuthOption.oauth:
+                    // Signed-in account path. --public-url MUST equal the exact URL the Configure
+                    // button writes into the client config, or the resource server rejects the token's
+                    // audience — source it from the SAME settings factory so the two can never drift.
+                    var publicUrl = UI.AgentConfiguratorSettingsFactory.Create().PinnedHttpUrl;
+                    return ServerLaunchArguments.BuildCommandLine(
+                        port, timeout, transportMethod, AuthOption.oauth,
+                        authIssuer: UnityMcpPlugin.UnityConnectionConfig.DefaultCloudServerBaseUrl,
+                        publicUrl: publicUrl);
 
-            if (authOption == AuthOption.required && !string.IsNullOrEmpty(token))
-                args += $" {Args.Token}={token}";
+                case AuthOption.token:
+                    return ServerLaunchArguments.BuildCommandLine(
+                        port, timeout, transportMethod, AuthOption.token,
+                        token: UnityMcpPluginEditor.Token);
 
-            return args;
+                default:
+                    // none — plus any legacy value that somehow slipped past the load-time migration —
+                    // launches an anonymous loopback server (crash-safe default, D8).
+                    return ServerLaunchArguments.BuildCommandLine(
+                        port, timeout, transportMethod, AuthOption.none);
+            }
         }
 
         /// <summary>

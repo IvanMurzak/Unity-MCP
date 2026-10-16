@@ -55,6 +55,11 @@
                             <ui:Label text="MCP server" name="mcpServerLabel" class="timeline-label" />
                             <ui:Button name="btnStartStopServer" text="Start" class="btn-secondary timeline-btn" />
                         </ui:VisualElement>
+                        <!-- Row 1b: Server binary download error + retry (issue #845; hidden unless a download failed) -->
+                        <ui:VisualElement name="mcpServerErrorRow" style="flex-direction: column; margin-top: 2px; margin-bottom: 2px;">
+                            <ui:Label name="mcpServerErrorLabel" text="" class="section-desc" style="display: none; white-space: normal; color: rgb(220, 120, 120);" />
+                            <ui:Button name="btnDownloadRetryServer" text="Download / Retry server" class="btn-secondary" style="display: none;" />
+                        </ui:VisualElement>
                         <!-- Row 2: Transport -->
                         <ui:VisualElement style="flex-direction: row; align-items: center; justify-content: space-between; margin-top: 2px; margin-bottom: 2px;">
                             <ui:Label name="labelTransport" text="Transport" class="section-desc" style="margin-bottom: 0;" />

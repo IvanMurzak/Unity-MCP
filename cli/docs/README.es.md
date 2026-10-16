@@ -514,7 +514,7 @@ La CLI genera un **puerto determinista** para cada proyecto de Unity basandose e
 
 El comando `install-plugin` modifica `Packages/manifest.json` directamente:
 - Agrega el registro de ambito de [OpenUPM](https://openupm.com/) (`package.openupm.com`)
-- Registra todos los ambitos requeridos (`com.ivanmurzak`, `extensions.unity`, `org.nuget.*`)
+- Registra todos los ambitos requeridos (`com.ivanmurzak`, `extensions.unity`)
 - Agrega la dependencia `com.ivanmurzak.unity.mcp` con actualizaciones que respetan la version (nunca degrada)
 
 ### Archivo de configuracion

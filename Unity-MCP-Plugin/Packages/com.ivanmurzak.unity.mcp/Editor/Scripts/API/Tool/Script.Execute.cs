@@ -79,11 +79,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 "- 'AIGD.ComponentRef': passes a ComponentRef POCO. " +
                 "- 'AIGD.ObjectRef': passes a base ObjectRef POCO. " +
                 "If the method does not require parameters, leave this empty.")]
+            [Rql.ToolFormat.RqlArgument("Values for the method's parameters by name, e.g. {go: ref(\"GameObject#12\"), n: 6}. " +
+                "Leave empty if the method takes none.")]
             SerializedMemberList? parameters = null,
             [Description("When true, 'csharpCode' is treated as just the method body. " +
                 "The tool auto-generates standard using directives (System, UnityEngine, " +
                 "AIGD, com.IvanMurzak.Unity.MCP.Runtime.Extensions, UnityEditor), " +
-                "the class definition, and the method signature (void return type). " +
+                "the class definition, and the method signature (returns object when the body returns a value, void otherwise). " +
                 "Parameters from the 'parameters' list are automatically added to the method signature using their typeName and name. " +
                 "When false (default), 'csharpCode' must be a complete C# compilation unit with class and method definitions.")]
             bool isMethodBody = false
@@ -125,6 +127,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     code: codeToCompile,
                     parameters: parameters,
                     returnValue: out var result,
+                    returnType: out var returnType,
                     error: out var error,
                     logger: logger))
                 {
@@ -132,16 +135,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 if (result is null)
-                    return null;
+                {
+                    if (returnType is null)
+                        return null;
+
+                    var isVoid = returnType == typeof(void);
+                    var ret = new SerializedMember
+                    {
+                        name = JsonSchema.Result,
+                        typeName = isVoid ? "System.Void" : (returnType.FullName ?? returnType.Name ?? JsonSchema.Object)
+                    };
+                    return ret.SetJsonValue(isVoid ? "\"Success\"" : "\"null\"");
+                }
 
                 if (result is SerializedMember serializedResult)
                     return serializedResult;
 
                 var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
 
-                return reflector.Serialize(
+                var serializedResultByReflector = reflector.Serialize(
                     obj: result,
                     logger: logger);
+                if (string.IsNullOrEmpty(serializedResultByReflector.name))
+                    serializedResultByReflector.name = JsonSchema.Result;
+                return serializedResultByReflector;
             });
         }
 
@@ -174,20 +191,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 ? string.Join(", ", parameters.Select(p => $"{p.typeName ?? "object"} {p.name ?? "param"}"))
                 : "";
 
+            // A body that returns a value ("return go.name;") gets an object return type, so the value comes back instead
+            // of a compile error; a body with a bare "return;" (or none) keeps void.
+            var returnsValue = BodyReturnsValue(methodBody);
+
             sb.AppendLine($"public class {className}");
             sb.AppendLine("{");
-            sb.AppendLine($"    public static void {methodName}({methodParams})");
+            sb.AppendLine($"    public static {(returnsValue ? "object" : "void")} {methodName}({methodParams})");
             sb.AppendLine("    {");
 
             // Indent each line of the method body
             foreach (var line in methodBody.Split('\n'))
                 sb.AppendLine($"        {line.TrimEnd()}");
+            if (returnsValue)
+                sb.AppendLine("        return null;");
 
             sb.AppendLine("    }");
             sb.AppendLine("}");
 
             return sb.ToString();
         }
+
+        internal static bool BodyReturnsValue(string methodBody) =>
+            System.Text.RegularExpressions.Regex.IsMatch(methodBody, @"\breturn\s+[^;\s]")
+            && !System.Text.RegularExpressions.Regex.IsMatch(methodBody, @"\breturn\s*;");
 
         static bool IsAssemblyLoaded(string assemblyName)
             => AssemblyUtils.AllAssemblies.Any(a =>
@@ -199,18 +226,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             string code,
             SerializedMemberList? parameters,
             out object? returnValue,
+            out Type? returnType,
             out string? error,
             ILogger? logger = null)
         {
             if (string.IsNullOrEmpty(className))
             {
                 returnValue = null;
+                returnType = null;
                 error = $"'{nameof(className)}' cannot be null or empty.";
                 return false;
             }
             if (string.IsNullOrEmpty(methodName))
             {
                 returnValue = null;
+                returnType = null;
                 error = $"'{nameof(methodName)}' cannot be null or empty.";
                 return false;
             }
@@ -266,6 +296,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     error = $"Compilation failed:\n{string.Join("\n", result.Diagnostics.Select(d => d.ToString()))}";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
                 ms.Seek(0, SeekOrigin.Begin);
@@ -275,6 +306,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     error = $"Class '{className}' not found in the compiled assembly.";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
                 var method = type.GetMethod(methodName);
@@ -282,11 +314,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     error = $"Method '{methodName}' not found in class '{className}'.";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
                 try
                 {
                     returnValue = method.Invoke(null, parsedParameters);
+                    returnType = method.ReturnType;
                     error = null;
                     return true;
                 }
@@ -294,12 +328,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     error = $"Execution failed. TargetInvocationException: {ex.InnerException?.Message ?? ex.Message}\n{ex.InnerException?.StackTrace ?? ex.StackTrace}";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
                 catch (Exception ex)
                 {
                     error = $"Execution failed: {ex.InnerException?.Message ?? ex.Message}\n{ex.InnerException?.StackTrace ?? ex.StackTrace}";
                     returnValue = null;
+                    returnType = null;
                     return false;
                 }
             }

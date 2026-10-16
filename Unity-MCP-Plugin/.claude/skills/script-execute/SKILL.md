@@ -1,6 +1,8 @@
 ---
 name: script-execute
 description: Compiles and executes C# code dynamically using Roslyn. Supports a full-code mode (default) and a body-only mode — see the skill body for the difference and for how to pass Unity object references as parameters.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Script / Execute
@@ -58,7 +60,7 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 | `className` | `string` | No | The name of the class containing the method to execute. In body-only mode this becomes the generated class name. |
 | `methodName` | `string` | No | The name of the method to execute. Must be a static method. In body-only mode this becomes the generated method name. |
 | `parameters` | `any` | No | Serialized parameters to pass to the method. Each entry must specify 'name' and 'typeName'. Supported parameter types include primitives, strings, and Unity object references: - 'UnityEngine.GameObject': resolves an actual GameObject from value '{"instanceID": N}', '{"name": "..."}', or '{"path": "..."}'. - 'UnityEngine.Component' (or any component subtype): resolves from '{"instanceID": N}'. - 'AIGD.GameObjectRef': passes a GameObjectRef POCO directly;   the method body calls goRef.FindGameObject() to resolve it. - 'AIGD.ComponentRef': passes a ComponentRef POCO. - 'AIGD.ObjectRef': passes a base ObjectRef POCO. If the method does not require parameters, leave this empty. |
-| `isMethodBody` | `boolean` | No | When true, 'csharpCode' is treated as just the method body. The tool auto-generates standard using directives (System, UnityEngine, AIGD, com.IvanMurzak.Unity.MCP.Runtime.Extensions, UnityEditor), the class definition, and the method signature (void return type). Parameters from the 'parameters' list are automatically added to the method signature using their typeName and name. When false (default), 'csharpCode' must be a complete C# compilation unit with class and method definitions. |
+| `isMethodBody` | `boolean` | No | When true, 'csharpCode' is treated as just the method body. The tool auto-generates standard using directives (System, UnityEngine, AIGD, com.IvanMurzak.Unity.MCP.Runtime.Extensions, UnityEditor), the class definition, and the method signature (returns object when the body returns a value, void otherwise). Parameters from the 'parameters' list are automatically added to the method signature using their typeName and name. When false (default), 'csharpCode' must be a complete C# compilation unit with class and method definitions. |
 
 ### Input JSON Schema
 

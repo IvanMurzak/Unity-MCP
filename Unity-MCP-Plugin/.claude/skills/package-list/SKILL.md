@@ -1,6 +1,8 @@
 ---
 name: package-list
 description: List all UPM packages installed in the Unity project — name, version, source, description. Optionally filter by source (registry, embedded, local, git, built-in, local tarball), by name/display/description substring, and by direct-dependency-only.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Package Manager / List Installed

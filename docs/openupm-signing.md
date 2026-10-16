@@ -89,40 +89,48 @@ gh secret set UPM_SERVICE_ACCOUNT_KEY_SECRET --repo IvanMurzak/Unity-MCP
 gh secret set UPM_ORG_ID                     --repo IvanMurzak/Unity-MCP
 ```
 
-### 3. File the OpenUPM listing change
+### 3. The OpenUPM listing change — ✅ ALREADY DONE
 
-OpenUPM's package listing for `com.ivanmurzak.unity.mcp` currently has
-`trackingMode: git`, which makes OpenUPM pack and serve unsigned tarballs from
-the repository's git tags. To make OpenUPM serve the signed tarball that the
-workflow now uploads, the listing must be flipped to `trackingMode: githubRelease`.
+> **This step is complete. Do not re-file it.** Read live from
+> `https://raw.githubusercontent.com/openupm/openupm/master/data/packages/com.ivanmurzak.unity.mcp.yml`
+> (HTTP 200) on **2026-08-17**, the listing already carries **both** required values:
+>
+> ```yaml
+> trackingMode: githubRelease
+> githubReleaseAssetName: 'com.ivanmurzak.unity.mcp-'
+> ```
+>
+> An earlier revision of this document stated the listing "currently has
+> `trackingMode: git`" and "must be flipped". **That was true when written and is now
+> stale.** It was corrected here after a live read, because acting on it would have meant
+> opening a redundant PR against `openupm/openupm` — or, worse, treating a satisfied
+> precondition as a release blocker.
 
 The listing lives in the [openupm/openupm](https://github.com/openupm/openupm)
-repository at `data/packages/com.ivanmurzak.unity.mcp.yml`. Open a PR there
-changing:
+repository at `data/packages/com.ivanmurzak.unity.mcp.yml`, and only a PR there can change
+it — the value is registry-side, so nothing in this repository controls it.
 
-```yaml
-trackingMode: git
-```
+**What `trackingMode: githubRelease` means for a release.** OpenUPM republishes the
+`.tgz` **release asset** instead of packing the git tag, so the signed tarball is what
+Unity users receive. Two consequences worth keeping in mind:
 
-to:
+- The `com.ivanmurzak.unity.mcp-<version>.tgz` asset is **on OpenUPM's critical path**. A
+  release whose signed tarball failed to upload publishes a tag OpenUPM cannot ingest.
+  (Under the old `trackingMode: git` the tag alone was sufficient — that is no longer the
+  shape to reason about.)
+- The `githubReleaseAssetName` prefix guard makes OpenUPM select the tarball by filename
+  rather than guessing from the asset list. This matters because a release also ships
+  `.unitypackage` and may add further `.tgz` assets later.
 
-```yaml
-trackingMode: githubRelease
-```
+**Verified against the live releases:** release `0.88.0` carries exactly two assets —
+`com.ivanmurzak.unity.mcp-0.88.0.tgz` (756,589 bytes) and
+`AI-Game-Dev-Installer.unitypackage` (27,304 bytes) — and `package.openupm.com` serves
+`dist-tags.latest = 0.88.0`, so the ingest path is demonstrably working end to end.
 
-Per the OpenUPM blog, switch `trackingMode` to `githubRelease` **before** the
-first signed release ships, so OpenUPM does not race-publish the unsigned git
-tag in parallel.
-
-Also set `githubReleaseAssetName` so OpenUPM picks the signed tarball by
-filename prefix rather than guessing from the asset list. The release already
-ships `.unitypackage` and multiple server `.zip` assets, and may add more
-`.tgz` assets later (e.g. signing a second package), so the prefix guard
-prevents a future-breaking failure mode:
-
-```yaml
-githubReleaseAssetName: 'com.ivanmurzak.unity.mcp-'
-```
+Note also that this repository's release tags are **bare** (`0.88.0`), with no `v` prefix:
+`release.yml`'s `check-version-tag` job passes `tag: ${{ steps.get_version.outputs.current-version }}`
+straight to `mukunku/tag-exists-action`. A pre-release check for `v<version>` would look at
+a tag namespace this repo has never used and would always report "absent".
 
 ## Verifying signing worked
 

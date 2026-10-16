@@ -3,7 +3,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP 服务器')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM 包')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker 镜像')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker 镜像')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity 编辑器支持')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity 运行时支持')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg '测试通过')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -94,7 +94,9 @@ unity-mcp-cli open ./MyUnityProject
 
 # 技能和工具参考
 
-插件内置 100+ 个工具，分为三个类别。每个工具都为 AI 带来技能。安装后所有工具立即可用，无需额外配置。完整参考及详细说明请见 [docs/default-mcp-tools.md](docs/default-mcp-tools.md)。
+插件内置 70+ 个工具，分为四个类别。每个工具都为 AI 带来技能。安装后所有工具立即可用，无需额外配置。完整参考及详细说明请见 [docs/default-mcp-tools.md](docs/default-mcp-tools.md)。
+
+> 🧰 在线浏览完整的 MCP 工具注册表：[ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
 <details>
   <summary>项目与资产</summary>
@@ -114,6 +116,7 @@ unity-mcp-cli open ./MyUnityProject
 - `assets-prefab-open` — 为特定 GameObject 打开预制体编辑模式
 - `assets-prefab-save` — 保存预制体编辑模式中的预制体
 - `assets-refresh` — 刷新 AssetDatabase
+- `assets-shader-get-data` — 获取着色器资产的详细数据（属性、子着色器、通道）
 - `assets-shader-list-all` — 列出项目资产和包中所有可用的着色器
 - `package-add` — 从 Unity Package Manager 注册表、Git URL 或本地路径安装包
 - `package-list` — 列出 Unity 项目中安装的所有包（UPM 包）
@@ -147,6 +150,7 @@ unity-mcp-cli open ./MyUnityProject
 - `scene-unload` — 从 Unity 编辑器的已打开场景中卸载场景
 - `screenshot-camera` — 从摄像机捕获截图并以图像形式返回
 - `screenshot-game-view` — 从 Unity 编辑器游戏视图捕获截图
+- `screenshot-isolated` — 从选定角度隔离渲染 GameObject（可选 2x2 合成视图）
 - `screenshot-scene-view` — 从 Unity 编辑器场景视图捕获截图
 
 </details>
@@ -154,6 +158,7 @@ unity-mcp-cli open ./MyUnityProject
 <details>
   <summary>脚本与编辑器</summary>
 
+- `console-clear-logs` — 清除 MCP 日志缓存和 Unity 编辑器控制台窗口
 - `console-get-logs` — 通过过滤选项获取 Unity 编辑器日志
 - `editor-application-get-state` — 返回 Unity 编辑器应用程序状态（播放模式、暂停、编译）的信息
 - `editor-application-set-state` — 控制 Unity 编辑器应用程序状态（启动/停止/暂停播放模式）
@@ -165,7 +170,15 @@ unity-mcp-cli open ./MyUnityProject
 - `script-execute` — 使用 Roslyn 动态编译并执行 C# 代码
 - `script-read` — 读取脚本文件的内容
 - `script-update-or-create` — 根据提供的 C# 代码更新或创建脚本文件
-- `tests-run` — 执行 Unity 测试（EditMode/PlayMode），支持过滤和详细结果
+- `tests-run` — 执行 Unity 测试（EditMode/PlayMode）：对 `tests` 数据源的任意 RQL 选择一次运行，结果可用 RQL 过滤
+- `type-get-json-schema` — 通过反射为 C# 类型生成 JSON Schema
+
+</details>
+
+<details>
+  <summary>性能分析与诊断</summary>
+
+- RQL 数据源 `profiler`（通过 `rql-query` / `rql-mutate`）— 内存、渲染、脚本与帧快照及模块标志；`Start`、`Stop`、`ClearFrames`、`EnableModule`、`Save`、`Load`
 
 </details>
 
@@ -176,8 +189,15 @@ unity-mcp-cli open ./MyUnityProject
 | 扩展 | 描述 |
 | --- | --- |
 | **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Unity 动画附加工具集 |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | 用于 Cinemachine 的 MCP 工具 |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | 用于 Unity 输入系统的 MCP 工具 |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | 用于 AI 导航的 MCP 工具（NavMesh 表面、烘焙、智能体与链接） |
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Unity 粒子系统附加工具集 |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 附加工具集 |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | 用于 Unity Splines 的 MCP 工具 |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Unity 地形附加工具集 |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | 用于 Unity 2D 瓦片地图的 MCP 工具 |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | 用于 Unity Timeline 过场动画和序列的 MCP 工具 |
 
 ![AI 游戏开发者 — Unity SKILLS 和 MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -333,13 +353,13 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 
 | 平台                | `<command>`                                                                                                 |
 | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
-| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" port=<port> client-transport=stdio`     |
-| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" port=<port> client-transport=stdio`       |
-| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" port=<port> client-transport=stdio`     |
-| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" port=<port> client-transport=stdio`   |
+| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/gamedev-mcp-server.exe" port=<port> client-transport=stdio` |
+| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
+| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/gamedev-mcp-server" port=<port> client-transport=stdio`       |
+| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
+| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`   |
 
 **2. 将 `<unityProjectPath>` 替换为 Unity 项目的完整路径**
 
@@ -450,18 +470,18 @@ Unity MCP 提供高级工具，使 LLM 能够更快、更有效地工作，避�
 
 要添加自定义 `Tool`，你需要：
 
-1. 一个带有 `McpPluginToolType` 属性的类
-2. 类中带有 `McpPluginTool` 属性的方法
+1. 一个带有 `AiToolType` 属性的类
+2. 类中带有 `AiTool` 属性的方法
 3. *可选：* 为每个方法参数添加 `Description` 属性，帮助 LLM 理解参数含义
 4. *可选：* 使用带 `?` 和默认值的 `string? optional = null` 属性，将其标记为 LLM 的 `可选` 参数
 
 > 注意，`MainThread.Instance.Run(() =>` 这行代码允许你在主线程上运行代码，这是与 Unity API 交互所必需的。如果不需要这个且在后台线程中运行工具是可接受的，为了效率请避免使用主线程。
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public class Tool_GameObject
 {
-    [McpPluginTool
+    [AiTool
     (
         "MyCustomTask",
         Title = "Create a new GameObject"
@@ -490,10 +510,10 @@ public class Tool_GameObject
 `MCP Prompt` 允许你将自定义提示词注入到与 LLM 的对话中。它支持两种发送者角色：User 和 Assistant。这是指导 LLM 执行特定任务的快捷方式。你可以使用自定义数据生成提示词，提供列表或任何其他相关信息。
 
 ```csharp
-[McpPluginPromptType]
+[AiPromptType]
 public static class Prompt_ScriptingCode
 {
-    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
     public string AddEventSystem()
     {
@@ -522,7 +542,7 @@ var mcpPlugin = UnityMcpPluginRuntime.Initialize(builder =>
     })
     .Build();
 
-await mcpPlugin.Connect(); // Start active connection with retry to Unity-MCP-Server
+await mcpPlugin.Connect(); // Start active connection with retry to the MCP server
 
 await mcpPlugin.Disconnect(); // Stop active connection and close existed connection
 ```
@@ -532,17 +552,17 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 这是一个经典国际象棋游戏。让我们将机器人逻辑外包给 LLM。机器人应根据游戏规则进行落子。
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public static class ChessGameAI
 {
-    [McpPluginTool("chess-do-turn", Title = "Do the turn")]
+    [AiTool("chess-do-turn", Title = "Do the turn")]
     [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
     public static Task<bool> DoTurn(int figureId, Vector2Int position)
     {
         return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
     }
 
-    [McpPluginTool("chess-get-board", Title = "Get the board")]
+    [AiTool("chess-get-board", Title = "Get the board")]
     [Description("Get the current state of the chess board.")]
     public static Task<BoardData> GetBoard()
     {
@@ -570,8 +590,13 @@ public static class ChessGameAI
 | `MCP_PLUGIN_PORT`            | `--port`             | **客户端** -> **服务器** <- **插件** 连接端口（默认：8080）       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **插件** -> **服务器** 连接超时（毫秒）（默认：10000）            |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **客户端** -> **服务器** 传输类型：`stdio` 或 `streamableHttp`（默认：`streamableHttp`） |
+| `MCP_AUTHORIZATION`           | `--authorization`        | 传入**客户端**连接的认证模式：`none` 或 `required`（默认：`none`） |
+| `MCP_PLUGIN_TOKEN`            | `--token`                | 当 `--authorization=required` 时，**客户端**需提供的 Bearer 令牌（默认：未设置） |
+| `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | 在无连接持续这么多秒后关闭服务器（默认：600） |
 
 > 命令行参数也支持单个 `-` 前缀（`-port`）以及不带前缀的选项（`port`）。
+
+> 关于分析和授权**webhook**变量（`MCP_PLUGIN_WEBHOOK_*`），请参见 [docs/mcp-server.md](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)。
 
 > **选择传输方式：** 当 MCP 客户端直接启动服务器二进制文件时（本地使用 — 这是最常见的配置），使用 `stdio`。当以独立进程或在 Docker/云端运行服务器并通过 HTTP 连接时，使用 `streamableHttp`。
 
@@ -581,13 +606,16 @@ Unity MCP 插件在启动时读取以下环境变量（及命令行参数），�
 
 | 环境变量                    | 命令行参数                  | 值                  | 描述                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |
-| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL 字符串                    | 覆盖 MCP 服务器主机 URL                                    |
+| `UNITY_MCP_CLOUD_URL`       | `-url`                      | URL 字符串                    | 覆盖 MCP 服务器 URL（`UNITY_MCP_HOST` 是旧版别名）     |
+| `UNITY_MCP_CONNECTION_MODE` | `-UNITY_MCP_CONNECTION_MODE`| `Cloud` / `Custom`            | 强制设置连接模式（回环 URL 隐含 `Custom`）          |
 | `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`              | 强制启用或禁用活动连接                       |
-| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required`           | 强制设置认证模式                                   |
-| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | 字符串                        | 强制设置认证令牌                                  |
+| `UNITY_MCP_AUTH_OPTION`     | `-auth`                     | `none` / `required`           | 强制设置认证模式                                   |
+| `UNITY_MCP_TOKEN`           | `-token`                    | string                        | 强制设置认证令牌                                  |
+| `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | 强制设置插件配置的客户端传输方式                    |
+| `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | 强制设置插件是否保持本地服务器进程运行       |
 | `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | 逗号分隔的工具 ID      | 仅启用列出的工具，其余全部禁用。未知 ID 将记录为错误日志。 |
 
-> 命令行参数优先于环境变量。两者均会覆盖已保存的配置文件值。
+> 命令行参数优先于环境变量。两者均会覆盖已保存的配置文件值。短标志 `-url`、`-token` 和 `-auth` 是别名；完整的 `-UNITY_MCP_*` 参数名也被接受。
 
 **示例（CI/CD 批处理模式）：**
 
@@ -601,7 +629,7 @@ Unity.exe -batchmode -nographics \
 
 ## Docker 📦
 
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker 镜像')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker 镜像')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 
 确保已安装 Docker。如果你在 Windows 操作系统上，请确保 Docker Desktop 已启动。
 
@@ -610,7 +638,7 @@ Unity.exe -batchmode -nographics \
 ### `streamableHttp` 传输
 
 ```bash
-docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -p 8080:8080 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -635,7 +663,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 使用此方式，`MCP 客户端` 应在 Docker 中启动 `MCP 服务器`。这可以通过修改 `MCP 客户端` 配置来实现。
 
 ```bash
-docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -653,7 +681,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
         "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
         "-p",
         "8080:8080",
-        "ivanmurzakdev/unity-mcp-server"
+        "aigamedeveloper/mcp-server"
       ]
     }
   }
@@ -665,7 +693,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
 ### 自定义 `端口`
 
 ```bash
-docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
+docker run -e MCP_PLUGIN_PORT=123 -p 123:123 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -686,10 +714,10 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 
 ## 二进制可执行文件
 
-你可以直接从二进制文件启动 Unity `MCP Server`。你需要针对你的 CPU 架构专门编译的二进制文件。请查看 [GitHub 发布页面](https://github.com/IvanMurzak/Unity-MCP/releases)，其中包含为所有 CPU 架构预编译的二进制文件。
+你可以直接从二进制文件启动 Unity `MCP Server`。你需要针对你的 CPU 架构专门编译的二进制文件。请查看 [GitHub 发布页面](https://github.com/IvanMurzak/GameDev-MCP-Server/releases)，其中包含为所有 CPU 架构预编译的二进制文件。
 
 ```bash
-./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
+./gamedev-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
 ```
 
 <details>
@@ -701,7 +729,7 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 {
   "mcpServers": {
     "ai-game-developer": {
-      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
       "args": [
         "--port=8080",
         "--plugin-timeout=10000",
@@ -816,6 +844,15 @@ MCP — 模型上下文协议（Model Context Protocol）。简而言之，这�
 - "创建 UI 元素时，始终将其添加到 Scene/UI/MainCanvas 中的 Canvas"
 - "性能至关重要 — 对于频繁实例化的对象优先使用对象池"
 - "本项目遵循 SOLID 原则 — 解释任何架构决策"
+
+![AI 游戏开发者 — Unity SKILLS 和 MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# 卸载 🧹
+
+要将插件从 Unity 项目中彻底移除：
+
+1. 打开 **Window ▸ Package Manager**，选择 **AI Game Developer — MCP** 包，然后点击 **Remove**。
+2. 关闭 Unity，然后删除 `Assets/Plugins/NuGet` 文件夹（以及其 `Assets/Plugins/NuGet.meta` 文件）。
 
 ![AI 游戏开发者 — Unity SKILLS 和 MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

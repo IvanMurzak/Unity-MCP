@@ -4,6 +4,8 @@ description: |-
   Provides an initial setup for AI Skills, `unity-mcp-cli` command line tool installation
   and everything else that is helpful to set up at the start of the project. Essential packages,
   and basic configurations.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # AI Game Developer — Initial Setup
@@ -19,10 +21,12 @@ up a Unity project with AI Skills and MCP integration.
 
 `unity-mcp-cli` requires **Node.js ^20.19.0 || >=22.12.0** (Node 21.x is not supported). If you don't have Node.js installed:
 
-Download the installer from https://nodejs.org/ and run it, or use a package manager:
+Use Homebrew:
 ```
-winget install OpenJS.NodeJS.LTS
+brew install node@22
 ```
+
+Or download the installer from https://nodejs.org/.
 
 After installation, verify both `node` and `npm` are available:
 ```
@@ -45,6 +49,11 @@ Verify installation:
 unity-mcp-cli --version
 ```
 
+> **Permission errors?** Use `sudo npm install -g unity-mcp-cli` or configure npm to use a directory you own:
+> ```bash
+> npm config set prefix ~/.npm-global
+> ```
+> Then add `~/.npm-global/bin` to your PATH.
 
 > **Alternative**: Run any command without installing globally using `npx`:
 > ```bash

@@ -32,7 +32,15 @@ export function findUnityProcess(projectPath: string): UnityProcess | null {
 }
 
 /**
- * List all running Unity Editor processes with their project paths.
+ * Unity's background asset-import workers run the same Unity binary with the same `-projectPath`
+ * (`-batchMode -name AssetImportWorker0 ... -parentPid <editor>`); they are not the Editor.
+ */
+export function isAssetImportWorker(commandLine: string): boolean {
+  return /-name\s+"?AssetImportWorker/i.test(commandLine);
+}
+
+/**
+ * List all running Unity Editor processes with their project paths (asset-import workers excluded).
  */
 function listUnityProcesses(): UnityProcess[] {
   const os = platform();
@@ -58,6 +66,7 @@ function listUnityProcesses(): UnityProcess[] {
         const commandLine = line.substring(sepIdx + 3).trim();
 
         if (!Number.isFinite(pid) || pid === 0) continue;
+        if (isAssetImportWorker(commandLine)) continue;
 
         const projectPathMatch = commandLine.match(/-projectPath\s+"([^"]+)"/i)
           ?? commandLine.match(/-projectPath\s+(\S+)/i);
@@ -86,6 +95,7 @@ function listUnityProcesses(): UnityProcess[] {
         const commandLine = match[2];
 
         if (!commandLine.includes('-projectPath')) continue;
+        if (isAssetImportWorker(commandLine)) continue;
 
         const projectPathMatch = commandLine.match(/-projectPath\s+"([^"]+)"/)
           ?? commandLine.match(/-projectPath\s+(\S+)/);

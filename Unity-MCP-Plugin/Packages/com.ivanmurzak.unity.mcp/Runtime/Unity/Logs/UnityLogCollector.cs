@@ -88,6 +88,26 @@ namespace com.IvanMurzak.Unity.MCP
             return _logStorage.Query(maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
         }
 
+        public Task<LogEntry[]> QuerySinceAsync(
+            long sinceSequence,
+            int maxEntries = 100,
+            LogType? logTypeFilter = null,
+            bool includeStackTrace = false,
+            int lastMinutes = 0)
+        {
+            return _logStorage.QuerySinceAsync(sinceSequence, maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
+        }
+
+        public LogEntry[] QuerySince(
+            long sinceSequence,
+            int maxEntries = 100,
+            LogType? logTypeFilter = null,
+            bool includeStackTrace = false,
+            int lastMinutes = 0)
+        {
+            return _logStorage.QuerySince(sinceSequence, maxEntries, logTypeFilter, includeStackTrace, lastMinutes);
+        }
+
         void OnLogMessageReceived(string message, string stackTrace, LogType type)
         {
             try

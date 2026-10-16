@@ -7,21 +7,12 @@
 # └──────────────────────────────────────────────────────────────────┘
 
 name: "Setup Unity MCP"
-description: "Start MCP Server and Unity Editor in Docker containers with license activation"
+description: "Start MCP Server and Unity Editor in Docker containers using a stored Unity license"
 
 inputs:
-  unity-email:
-    description: "Unity account email for license activation"
-    required: false
-    default: ""
-  unity-password:
-    description: "Unity account password for license activation"
-    required: false
-    default: ""
   unity-license:
-    description: "Unity license file content (ULF XML). If provided, skips activation."
-    required: false
-    default: ""
+    description: "Unity Personal license file content (ULF XML). Pass the UNITY_LICENSE secret (see docs/agents/ci-unity-license.md)."
+    required: true
   unity-project-path:
     description: "Relative path to the Unity project folder"
     required: false
@@ -54,63 +45,48 @@ runs:
 
     - name: Start AI-Game-Developer MCP Server
       run: |
-        docker rm -f unity-mcp-server 2>/dev/null || true
+        docker rm -f gamedev-mcp-server 2>/dev/null || true
 
         docker run -d \
-          --name unity-mcp-server \
+          --name gamedev-mcp-server \
           --network host \
           -e MCP_PLUGIN_PORT=8080 \
           -e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp \
           -e MCP_AUTHORIZATION=none \
-          ivanmurzakdev/unity-mcp-server:latest
+          aigamedeveloper/mcp-server:latest
 
         echo "Waiting for MCP Server to be ready..."
         for i in $(seq 1 12); do
           sleep 5
-          if docker logs unity-mcp-server 2>&1 | grep -q "Start listening on port:"; then
+          if docker logs gamedev-mcp-server 2>&1 | grep -q "Start listening on port:"; then
             echo "MCP Server is ready."; break
           fi
           echo "Still waiting... ($((i*5))s)"
           if [ "$i" -eq 12 ]; then
             echo "Timeout waiting for MCP Server"
-            docker logs unity-mcp-server
+            docker logs gamedev-mcp-server
             exit 1
           fi
         done
       shell: bash
 
     # --------------------------------------------------------------------- #
-    # License activation: use provided license or activate from credentials
+    # License: write the provided Unity Personal .ulf (from the UNITY_LICENSE
+    # secret) to the license folder mounted into the Unity Editor container.
+    # No per-run web activation — the stored license is used directly.
     # --------------------------------------------------------------------- #
-    - name: Activate Unity license (with credentials)
-      if: inputs.unity-license == '' && inputs.unity-email != '' && inputs.unity-password != ''
-      id: activate-creds
-      uses: ./.github/actions/unity/activate-license
-      with:
-        unityVersion: ${{ steps.unity-version.outputs.unity_version }}
-        unity-email: ${{ inputs.unity-email }}
-        unity-password: ${{ inputs.unity-password }}
-
-    - name: Activate Unity license (with defaults)
-      if: inputs.unity-license == '' && (inputs.unity-email == '' || inputs.unity-password == '')
-      id: activate-defaults
-      uses: ./.github/actions/unity/activate-license
-      with:
-        unityVersion: ${{ steps.unity-version.outputs.unity_version }}
-
     - name: Write Unity license file
       run: |
-        mkdir -p "${GITHUB_WORKSPACE}/.unity-license"
-        if [ -n "$LICENSE_FROM_INPUT" ]; then
-          echo "$LICENSE_FROM_INPUT" > "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
-          echo "Unity license written from input"
-        else
-          echo "$LICENSE_B64" | base64 -d > "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
-          echo "Unity license written from activation"
+        if [ -z "$LICENSE_FROM_INPUT" ]; then
+          echo "::error::unity-license input is empty. Pass the UNITY_LICENSE secret (contents of your .ulf file)."
+          echo "Generate one via the generate-unity-activation-file workflow + https://license.unity3d.com/manual — see docs/agents/ci-unity-license.md"
+          exit 1
         fi
+        mkdir -p "${GITHUB_WORKSPACE}/.unity-license"
+        printf '%s\n' "$LICENSE_FROM_INPUT" > "${GITHUB_WORKSPACE}/.unity-license/Unity_lic.ulf"
+        echo "Unity license written from UNITY_LICENSE secret"
       env:
         LICENSE_FROM_INPUT: ${{ inputs.unity-license }}
-        LICENSE_B64: ${{ steps.activate-creds.outputs.license || steps.activate-defaults.outputs.license }}
       shell: bash
 
     - name: Start Unity Editor in background

@@ -397,6 +397,39 @@ describe('openProject — explicit editor path override (mocked)', () => {
     });
   });
 
+  // The App no longer writes `cloudToken` (the plugin stopped reading it), so the Cloud auto-setup must
+  // key on the connection mode alone. Plant: re-adding a `config.cloudToken` gate reddens this test.
+  it('Cloud mode WITHOUT a cloudToken enables claude-code skill auto-gen and keep-connected', async () => {
+    const configPath = path.join(tmpDir, 'UserSettings', 'AI-Game-Developer-Config.json');
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
+    fs.writeFileSync(configPath, JSON.stringify({ connectionMode: 'Cloud', timeoutMs: 10000 }, null, 2));
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+
+    const result = await mockedOpenProject({ projectPath: tmpDir, editorPath, autoDismissLaunchErrors: false });
+
+    expect(result.kind).toBe('success');
+    const written = JSON.parse(fs.readFileSync(configPath, 'utf-8')) as {
+      cloudToken?: string;
+      skillAutoGenerate?: Record<string, boolean>;
+    };
+    expect(written.skillAutoGenerate?.['claude-code']).toBe(true);
+    expect(written.cloudToken).toBeUndefined();
+    expect(launchEditorMock.mock.calls[0][2]).toMatchObject({ UNITY_MCP_KEEP_CONNECTED: 'true' });
+  });
+
+  it('a non-Cloud config is left untouched', async () => {
+    const configPath = path.join(tmpDir, 'UserSettings', 'AI-Game-Developer-Config.json');
+    fs.mkdirSync(path.dirname(configPath), { recursive: true });
+    const original = JSON.stringify({ connectionMode: 'Custom', host: 'http://localhost:12345' }, null, 2);
+    fs.writeFileSync(configPath, original);
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+
+    const result = await mockedOpenProject({ projectPath: tmpDir, editorPath, autoDismissLaunchErrors: false });
+
+    expect(result.kind).toBe('success');
+    expect(fs.readFileSync(configPath, 'utf-8')).toBe(original);
+  });
+
   it('rejects an empty string editorPath without spawning the editor', async () => {
     // Regression for review: `path.resolve('')` is `process.cwd()`,
     // which would otherwise pass `existsSync` and lead us to spawn

@@ -211,22 +211,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             child.transform.SetParent(parent.transform, false);
             return child;
         }
-        public static IEnumerable<KeyValuePair<string, GameObject>> GetAllRecursively(this GameObject root, string? path = null)
-        {
-            var currentPath = string.IsNullOrEmpty(path)
-                ? root.name
-                : $"{path}/{root.name}";
 
-            yield return new(currentPath, root);
-
-            foreach (Transform child in root.transform)
-            {
-                foreach (var childContent in GetAllRecursively(child.gameObject, currentPath))
-                {
-                    yield return childContent;
-                }
-            }
-        }
         public static string? GetPath(this GameObject? go)
         {
             if (go == null)
@@ -243,49 +228,6 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             }
 
             return path.ToString();
-        }
-
-        public static GameObjectMetadata? ToMetadata(this GameObject go, int includeChildrenDepth = 3)
-            => GameObjectMetadata.FromGameObject(go, includeChildrenDepth);
-
-        public static Bounds CalculateBounds(this GameObject go)
-        {
-            var renderers = go.GetComponentsInChildren<Renderer>();
-            if (renderers.Length == 0)
-                return new Bounds(go.transform.position, Vector3.zero);
-
-            var bounds = renderers[0].bounds;
-            foreach (var renderer in renderers.Skip(1))
-            {
-                bounds.Encapsulate(renderer.bounds);
-            }
-            return bounds;
-        }
-        public static GameObject SetTransform(this GameObject go,
-            Vector3? position = default,
-            Vector3? rotation = default,
-            Vector3? scale = default,
-            bool isLocalSpace = false)
-        {
-            if (isLocalSpace)
-            {
-                if (position.HasValue)
-                    go.transform.localPosition = position.Value;
-                if (rotation.HasValue)
-                    go.transform.localRotation = Quaternion.Euler(rotation.Value.x, rotation.Value.y, rotation.Value.z);
-                if (scale.HasValue)
-                    go.transform.localScale = scale.Value;
-            }
-            else
-            {
-                if (position.HasValue)
-                    go.transform.position = position.Value;
-                if (rotation.HasValue)
-                    go.transform.rotation = Quaternion.Euler(rotation.Value.x, rotation.Value.y, rotation.Value.z);
-                if (scale.HasValue)
-                    go.transform.localScale = scale.Value;
-            }
-            return go;
         }
     }
 }

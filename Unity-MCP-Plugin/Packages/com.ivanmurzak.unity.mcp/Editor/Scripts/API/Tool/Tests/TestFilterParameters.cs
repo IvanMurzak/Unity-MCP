@@ -19,6 +19,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         public string? TestNamespace { get; set; }
         public string? TestClass { get; set; }
         public string? TestMethod { get; set; }
+        /// <summary>Anchored groupNames patterns selecting exact tests (from an RQL query over the <c>tests</c> source).</summary>
+        public string[]? Groups { get; set; }
+        /// <summary>The RQL selection's test names, checked against Unity's test tree before the run.</summary>
+        public IReadOnlyList<string>? SelectedNames { get; set; }
+        public bool HasGroups => Groups is { Length: > 0 };
 
         public TestFilterParameters(string? testAssembly = null, string? testNamespace = null, string? testClass = null, string? testMethod = null)
         {
@@ -26,13 +31,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             TestNamespace = testNamespace;
             TestClass = testClass;
             TestMethod = testMethod;
+            Groups = null;
+            SelectedNames = null;
         }
 
         public bool HasAnyFilter =>
             !string.IsNullOrEmpty(TestAssembly) ||
             !string.IsNullOrEmpty(TestNamespace) ||
             !string.IsNullOrEmpty(TestClass) ||
-            !string.IsNullOrEmpty(TestMethod);
+            !string.IsNullOrEmpty(TestMethod) ||
+            HasGroups;
 
         public override string ToString()
         {
@@ -44,6 +52,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             if (!string.IsNullOrEmpty(TestNamespace)) filters.Add($"namespace '{TestNamespace}'");
             if (!string.IsNullOrEmpty(TestClass)) filters.Add($"class '{TestClass}'");
             if (!string.IsNullOrEmpty(TestMethod)) filters.Add($"method '{TestMethod}'");
+            if (SelectedNames != null) filters.Add($"{SelectedNames.Count} test(s) selected by RQL");
+            else if (HasGroups) filters.Add("tests selected by RQL");
 
             return $"Test filter: {string.Join(", ", filters)}";
         }

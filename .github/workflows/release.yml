@@ -8,13 +8,30 @@
 
 name: release
 
+# A release is cut ONLY by a manual dispatch of this workflow (software release-dispatch contract,
+# `.taskflow/2026-09-03-chain-testing/05-release-dispatch-contract.md`). Merging a version bump to
+# `main` publishes nothing. One run: full tests -> builds -> npm publish (unity-mcp-cli, job
+# deploy-cli-to-npm) -> tag + GitHub Release (the signed UPM tarball OpenUPM picks up) -> Discord ->
+# post-publish registry verification.
+#
+#   gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main -f dry_run=true   # tests + builds, publishes nothing
+#   gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                   # real release
 on:
-  push:
-    branches:
-      - main
+  workflow_dispatch:
+    inputs:
+      dry_run:
+        description: "Run every test and build job but publish NOTHING (no npm, no tag, no GitHub Release, no Discord)."
+        required: false
+        type: boolean
+        default: false
+
+concurrency:
+  group: release
+  cancel-in-progress: false
 
 jobs:
   test-cli:
+    needs: [check-version-tag]
     uses: ./.github/workflows/test_cli.yml
 
   check-version-tag:
@@ -24,6 +41,17 @@ jobs:
       prev_tag: ${{ steps.prev_tag.outputs.tag }}
       tag_exists: ${{ steps.tag_exists.outputs.exists }}
     steps:
+      # Ref guard: a real release publishes only what is on `main`. A dry run may target any ref.
+      - name: Ref guard
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+        run: |
+          if [ "$DRY_RUN" != "true" ] && [ "$GITHUB_REF" != "refs/heads/main" ]; then
+            echo "::error::A real release must be dispatched on refs/heads/main (got $GITHUB_REF). Re-dispatch with --ref main, or pass -f dry_run=true."
+            exit 1
+          fi
+          echo "ref=$GITHUB_REF dry_run=$DRY_RUN"
+
       - name: Checkout repository
         uses: actions/checkout@v6
         with:
@@ -46,12 +74,34 @@ jobs:
         with:
           tag: ${{ steps.get_version.outputs.current-version }}
 
+      # Version guard: tags are BARE semver (no `v`). A real run on an already-released version
+      # FAILS here, so a dispatch never "succeeds" having published nothing. A dry run warns and
+      # continues, so tests + builds can be rehearsed on an already-tagged commit.
+      - name: Version guard
+        env:
+          DRY_RUN: ${{ inputs.dry_run }}
+          VERSION: ${{ steps.get_version.outputs.current-version }}
+          TAG_EXISTS: ${{ steps.tag_exists.outputs.exists }}
+        run: |
+          if [ -z "$VERSION" ]; then
+            echo "::error::Could not read the version from Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json."
+            exit 1
+          fi
+          if [ "$TAG_EXISTS" = "true" ]; then
+            if [ "$DRY_RUN" = "true" ]; then
+              echo "::warning::Tag $VERSION already exists. Dry run: continuing with tests and builds; nothing will be published."
+            else
+              echo "::error::Tag $VERSION already exists - this version is already released. Bump the version (commands/bump-version.ps1) and merge it to main before dispatching a release."
+              exit 1
+            fi
+          fi
+          echo "version=$VERSION tag_exists=$TAG_EXISTS dry_run=$DRY_RUN"
+
   # Generates release notes (release.md) in parallel with tests/builds.
   # The artifact is consumed by release-unity-plugin's atomic publish step.
   prepare-release-notes:
     runs-on: ubuntu-latest
     needs: [check-version-tag]
-    if: needs.check-version-tag.outputs.tag_exists == 'false'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
@@ -108,29 +158,12 @@ jobs:
   build-unity-installer:
     runs-on: ubuntu-latest
     needs: [check-version-tag]
-    if: needs.check-version-tag.outputs.tag_exists == 'false'
     steps:
       - name: Checkout repository
         uses: actions/checkout@v6
 
-      - name: Activate Unity license
-        id: activate
-        uses: ./.github/actions/unity/activate-license
-        with:
-          unityVersion: "2022.3.62f3"
-          unity-email: ${{ secrets.UNITY_EMAIL }}
-          unity-password: ${{ secrets.UNITY_PASSWORD }}
-
-      - name: Decode Unity license
-        run: |
-          echo "$LICENSE_B64" | base64 -d > /tmp/unity_license.ulf
-          DELIM="UNITY_LIC_EOF_$(openssl rand -hex 16)"
-          echo "UNITY_LICENSE<<$DELIM" >> "$GITHUB_ENV"
-          cat /tmp/unity_license.ulf >> "$GITHUB_ENV"
-          printf '\n%s\n' "$DELIM" >> "$GITHUB_ENV"
-        env:
-          LICENSE_B64: ${{ steps.activate.outputs.license }}
-        shell: bash
+      # License: game-ci consumes the stored UNITY_LICENSE (.ulf) secret directly
+      # on the test/build steps below. No per-run web scraping.
 
       - name: Cache Unity Library
         uses: actions/cache@v5
@@ -139,8 +172,9 @@ jobs:
           key: Library-Unity-Installer
 
       - name: Test Unity Installer (EditMode)
-        uses: game-ci/unity-test-runner@v4
+        uses: game-ci/unity-test-runner@08fd329f00a18efa297140b14ac28ebce742759e # node24 runtime (PR #304); revert to @v4 once game-ci moves the tag
         env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
           FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
@@ -161,13 +195,19 @@ jobs:
           sudo rm -rf ./Installer/Temp/ || true
           sudo rm -rf ./artifacts-installer-editmode/ || true
 
-          # Reset only tracked files to their committed state
+          # Reset tracked files to their committed state...
           git reset --hard HEAD
-          echo "Cleaned Unity artifacts and reset tracked files"
+          # ...and remove untracked Unity junk (e.g. batch-mode error.html/error.png)
+          # that would otherwise leave the tree dirty. -d removes stray dirs; we do NOT
+          # pass -x, so gitignored caches like ./Installer/Library are preserved.
+          git clean -fd
+          echo "Cleaned Unity artifacts and reset git state"
+          git status --porcelain
 
       - name: Export Unity Package
         uses: game-ci/unity-builder@v5
         env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
           UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
         with:
@@ -178,6 +218,10 @@ jobs:
           buildsPath: build
           buildMethod: com.IvanMurzak.Unity.MCP.Installer.PackageExporter.ExportPackage
           customParameters: -CI true -GITHUB_ACTIONS true
+          # This job only exports a .unitypackage; it never reads Application.version.
+          # Default Semantic versioning runs a git-dirty check that fails when Unity
+          # leaves stray untracked files behind, so disable versioning entirely.
+          versioning: None
 
       - name: Upload Unity Package as artifact
         uses: actions/upload-artifact@v6
@@ -185,31 +229,9 @@ jobs:
           name: unity-installer-package
           path: ./Installer/build/AI-Game-Dev-Installer.unitypackage
 
-  build-and-zip-mcp-server:
-    runs-on: macos-latest
-    needs: check-version-tag
-    if: needs.check-version-tag.outputs.tag_exists == 'false'
-    steps:
-      - name: Checkout repository
-        uses: actions/checkout@v6
-
-      - name: Setup .NET
-        uses: actions/setup-dotnet@v5
-        with:
-          dotnet-version: "9.0.x"
-
-      - name: Make build script executable
-        run: chmod +x ./Unity-MCP-Server/build-all.sh
-
-      - name: Build executables for all platforms
-        shell: bash {0}
-        run: cd Unity-MCP-Server && ./build-all.sh Release
-
-      - name: Upload build zips as artifact
-        uses: actions/upload-artifact@v6
-        with:
-          name: mcp-server-zips
-          path: ./Unity-MCP-Server/publish/*.zip
+  # NOTE: the MCP server is no longer built or released from this repo — the plugin consumes
+  # the shared GameDev-MCP-Server (https://github.com/IvanMurzak/GameDev-MCP-Server) release
+  # pinned by McpServerManager.ServerVersion.
 
   # Builds the signed UPM package (.tgz with package/.attestation.p7m) in parallel
   # with tests/builds and uploads it as a `signed-upm-package` artifact for the
@@ -228,7 +250,6 @@ jobs:
   build-signed-upm-package:
     runs-on: ubuntu-latest
     needs: [check-version-tag]
-    if: needs.check-version-tag.outputs.tag_exists == 'false'
     env:
       UPM_SERVICE_ACCOUNT_KEY_ID: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_ID }}
       UPM_SERVICE_ACCOUNT_KEY_SECRET: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_SECRET }}
@@ -304,13 +325,46 @@ jobs:
           name: signed-upm-package
           path: /tmp/signed-upm-dist/*.tgz
 
+  # --- ENGINE-FREE TESTS ---
+  # The same two license-free gates test_pull_request.yml runs on every PR, so the release runs the
+  # FULL suite (recipes copied from there; the chain-feed steps are omitted because a release
+  # dispatch carries no lock and they are a no-op without one).
+
+  check-nuget-gate:
+    name: nuget gate (issue #957)
+    runs-on: ubuntu-latest
+    needs: [check-version-tag]
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.x"
+      - name: Check NuGet pins against the asmdef gate generation
+        run: python .github/scripts/check_nuget_gate.py
+
+  engine-free-tests:
+    name: engine-free tests (.NET 8)
+    runs-on: ubuntu-latest
+    needs: [check-version-tag]
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v6
+
+      - name: Setup .NET 8
+        uses: actions/setup-dotnet@v5
+        with:
+          dotnet-version: "8.0.x"
+
+      - name: Test
+        run: dotnet test Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj -c Release --logger trx -- RunConfiguration.TreatNoTestsAsError=true
+
   # --- UNITY TESTS ---
   # -------------------
 
   # --- EDIT MODE ---
 
   test-unity-2022-3-62f3-editmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2022.3.62f3"
@@ -319,7 +373,7 @@ jobs:
     secrets: inherit
 
   test-unity-2023-2-22f1-editmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2023.2.22f1"
@@ -328,7 +382,7 @@ jobs:
     secrets: inherit
 
   test-unity-6000-3-1f1-editmode:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.3.1f1"
@@ -336,10 +390,19 @@ jobs:
       testMode: "editmode"
     secrets: inherit
 
+  test-unity-6000-6-3f1-editmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
+      testMode: "editmode"
+    secrets: inherit
+
   # --- PLAY MODE ---
 
   # test-unity-2022-3-62f3-playmode:
-  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   needs: [build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-Tests/2022.3.62f3'
@@ -348,7 +411,7 @@ jobs:
   #   secrets: inherit
 
   # test-unity-2023-2-22f1-playmode:
-  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   needs: [build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-Tests/2023.2.22f1'
@@ -357,7 +420,7 @@ jobs:
   #   secrets: inherit
 
   # test-unity-6000-3-1f1-playmode:
-  #   needs: [build-and-zip-mcp-server, build-unity-installer]
+  #   needs: [build-unity-installer]
   #   uses: ./.github/workflows/test_unity_plugin.yml
   #   with:
   #     projectPath: './Unity-Tests/6000.3.1f1'
@@ -365,10 +428,19 @@ jobs:
   #     testMode: 'playmode'
   #   secrets: inherit
 
+  # test-unity-6000-6-3f1-playmode:
+  #   needs: [build-unity-installer]
+  #   uses: ./.github/workflows/test_unity_plugin.yml
+  #   with:
+  #     projectPath: './Unity-Tests/6000.6.3f1'
+  #     unityVersion: '6000.6.3f1'
+  #     testMode: 'playmode'
+  #   secrets: inherit
+
   # --- STANDALONE ---
 
   test-unity-2022-3-62f3-standalone:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2022.3.62f3"
@@ -377,7 +449,7 @@ jobs:
     secrets: inherit
 
   test-unity-2023-2-22f1-standalone:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2023.2.22f1"
@@ -386,7 +458,7 @@ jobs:
     secrets: inherit
 
   test-unity-6000-3-1f1-standalone:
-    needs: [build-and-zip-mcp-server, build-unity-installer]
+    needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.3.1f1"
@@ -394,20 +466,33 @@ jobs:
       testMode: "standalone"
     secrets: inherit
 
+  test-unity-6000-6-3f1-standalone:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
+      testMode: "standalone"
+    secrets: inherit
+
   # -------------------
 
-  # Atomic publish point — gated on EVERY prerequisite (tests, builds, signed
-  # UPM package, release notes). Downloads all asset artifacts and creates the
-  # GitHub Release + tag with the full asset set in a SINGLE
-  # softprops/action-gh-release@v2 call so a failed upload cannot strand the
-  # release with incomplete assets. Signing failure → no release (hard gate).
-  release-unity-plugin:
+  # npm publish of unity-mcp-cli — the FIRST side effect, gated on the complete test set and every
+  # build. It runs BEFORE the tag + GitHub Release so a failed publish leaves no tag behind and the
+  # same version can simply be re-dispatched; the publish is skipped when the exact version is
+  # already on npm, so a re-dispatch after a later failure is idempotent.
+  #
+  # The publish lives DIRECTLY in release.yml (it was a reusable deploy.yml): npm Trusted Publishing
+  # (OIDC, no NPM_TOKEN) from a reusable workflow under workflow_dispatch is a documented limitation
+  # (see AI-Game-Dev-CLI-Core's release.yml header), and a dry run cannot prove otherwise.
+  deploy-cli-to-npm:
     runs-on: ubuntu-latest
     needs: [
         check-version-tag,
         test-cli,
+        check-nuget-gate,
+        engine-free-tests,
         prepare-release-notes,
-        build-and-zip-mcp-server,
         build-unity-installer,
         build-signed-upm-package,
         test-unity-2022-3-62f3-editmode,
@@ -419,33 +504,115 @@ jobs:
         test-unity-6000-3-1f1-editmode,
         # test-unity-6000-3-1f1-playmode,
         test-unity-6000-3-1f1-standalone,
+        test-unity-6000-6-3f1-editmode,
+        # test-unity-6000-6-3f1-playmode,
+        test-unity-6000-6-3f1-standalone,
       ]
-    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    if: inputs.dry_run != true
+    permissions:
+      contents: read
+      id-token: write
+    env:
+      VERSION: ${{ needs.check-version-tag.outputs.version }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v6
+        with:
+          node-version: "24"
+          registry-url: "https://registry.npmjs.org"
+
+      - name: Set package version
+        run: |
+          cd cli
+          npm version "$VERSION" --no-git-tag-version --allow-same-version
+
+      - name: Install dependencies
+        run: |
+          cd cli
+          npm ci
+
+      - name: Build
+        run: |
+          cd cli
+          npm run build
+
+      - name: Test
+        run: |
+          cd cli
+          npm test
+
+      - name: Check whether this version is already on npm
+        id: npm_exists
+        run: |
+          cd cli
+          name="$(jq -r '.name' package.json)"
+          code="$(curl -sS -o /dev/null -w '%{http_code}' "https://registry.npmjs.org/${name}/${VERSION}")"
+          echo "npm ${name}@${VERSION}: HTTP ${code}"
+          case "$code" in
+            200) echo "exists=true" >> "$GITHUB_OUTPUT"; echo "::notice::${name}@${VERSION} is already on npm - skipping publish." ;;
+            404) echo "exists=false" >> "$GITHUB_OUTPUT" ;;
+            *) echo "::error::Unexpected HTTP ${code} from the npm registry for ${name}@${VERSION}."; exit 1 ;;
+          esac
+
+      - name: Publish to npm with provenance
+        if: steps.npm_exists.outputs.exists != 'true'
+        run: |
+          cd cli
+          npm publish --access public --provenance
+
+  # Atomic publish point — gated on EVERY prerequisite (tests, builds, signed
+  # UPM package, release notes, npm publish). Downloads all asset artifacts and creates the
+  # GitHub Release + tag with the full asset set in a SINGLE
+  # softprops/action-gh-release@v2 call so a failed upload cannot strand the
+  # release with incomplete assets. Signing failure → no release (hard gate).
+  # OpenUPM picks the signed UPM tarball up from this GitHub Release.
+  release-unity-plugin:
+    runs-on: ubuntu-latest
+    needs: [
+        check-version-tag,
+        test-cli,
+        check-nuget-gate,
+        engine-free-tests,
+        prepare-release-notes,
+        build-unity-installer,
+        build-signed-upm-package,
+        test-unity-2022-3-62f3-editmode,
+        # test-unity-2022-3-62f3-playmode,
+        test-unity-2022-3-62f3-standalone,
+        test-unity-2023-2-22f1-editmode,
+        # test-unity-2023-2-22f1-playmode,
+        test-unity-2023-2-22f1-standalone,
+        test-unity-6000-3-1f1-editmode,
+        # test-unity-6000-3-1f1-playmode,
+        test-unity-6000-3-1f1-standalone,
+        test-unity-6000-6-3f1-editmode,
+        # test-unity-6000-6-3f1-playmode,
+        test-unity-6000-6-3f1-standalone,
+        deploy-cli-to-npm,
+      ]
+    if: inputs.dry_run != true
     outputs:
       version: ${{ needs.check-version-tag.outputs.version }}
       success: ${{ steps.mark_success.outputs.success }}
       release_notes: ${{ steps.read_notes.outputs.release_body }}
     steps:
       - name: Download release notes artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: release-notes
           path: ./release-notes
 
       - name: Download Unity installer artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: unity-installer-package
           path: ./assets
 
-      - name: Download MCP server zips artifact
-        uses: actions/download-artifact@v6
-        with:
-          name: mcp-server-zips
-          path: ./assets
-
       - name: Download signed UPM package artifact
-        uses: actions/download-artifact@v6
+        uses: actions/download-artifact@v7
         with:
           name: signed-upm-package
           path: ./assets
@@ -466,8 +633,7 @@ jobs:
           # Expose the release notes body as a job output so downstream jobs
           # (publish_discord) can consume it without re-downloading the artifact.
           # Use a randomized delimiter so a release-notes line that happens to
-          # match the sentinel cannot terminate the heredoc early (mirrors the
-          # UNITY_LICENSE pattern above).
+          # match the sentinel cannot terminate the heredoc early.
           DELIM="ENDOFRELEASEBODY_$(openssl rand -hex 16)"
           {
             printf 'release_body<<%s\n' "$DELIM"
@@ -476,7 +642,7 @@ jobs:
           } >> "$GITHUB_OUTPUT"
 
       - name: Create Tag and Release with all assets
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v3
         with:
           tag_name: ${{ needs.check-version-tag.outputs.version }}
           name: ${{ needs.check-version-tag.outputs.version }}
@@ -486,7 +652,6 @@ jobs:
           fail_on_unmatched_files: true
           files: |
             ./assets/AI-Game-Dev-Installer.unitypackage
-            ./assets/*.zip
             ./assets/com.ivanmurzak.unity.mcp-*.tgz
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -504,10 +669,11 @@ jobs:
     needs:
       [
         release-unity-plugin,
-        deploy,
+        deploy-cli-to-npm,
       ]
     if: |
       always() &&
+      inputs.dry_run != true &&
       needs.release-unity-plugin.result == 'success'
     steps:
       - name: Send Release Notes to Discord
@@ -544,7 +710,13 @@ jobs:
           if [ ${#full_message} -gt 2000 ]; then
             # Remove lines from the end until it fits, keeping the link
             link_text=$'\n\n'"📦 **[View Full Release](${release_url})**"
-            max_length=$((2000 - ${#link_text}))
+            # The truncated message is reassembled below as `<notes>` + `\n...` + `<link>`,
+            # so the ellipsis line costs 4 more characters on top of the link. Budget for
+            # BOTH, otherwise the assembled message reaches 2004 chars and Discord rejects
+            # the whole announcement with a 400 — silently, since the step does not gate on
+            # the response. Godot-MCP and Unreal-MCP carry the identical budget.
+            ellipsis_text=$'\n'"..."
+            max_length=$((2000 - ${#link_text} - ${#ellipsis_text}))
 
             # Split into lines and rebuild until we exceed the limit
             truncated_notes=""
@@ -567,55 +739,151 @@ jobs:
             --arg content "$full_message" \
             '{content: $content, flags: 4}')
 
-          # Send to Discord webhook
-          curl -X POST "$DISCORD_WEBHOOK" \
+          # Send to the Discord webhook and GATE ON THE RESPONSE.
+          #
+          # curl exits 0 on an HTTP error status, so a bare `curl -X POST` proves only
+          # that a request was attempted -- never that Discord accepted it. Capture the
+          # status explicitly: 400 (payload over the 2000-char limit), 429 (rate
+          # limited) and 401/404 (revoked or wrong webhook) all used to leave this job
+          # green with no announcement posted and nothing in the log to say so. That
+          # blind spot is how the truncation-budget bug fixed above went unnoticed.
+          #
+          # `--retry 3` covers only what a retry can fix -- curl's transient set (429,
+          # 5xx and timeouts), honouring Discord's `Retry-After` header -- and
+          # `--retry-max-time` bounds it. A 4xx other than 429 is a permanent rejection
+          # and is never retried, and neither is a refused connection (that would need
+          # `--retry-connrefused`); both fail fast and loudly below. Accepted tradeoff:
+          # a webhook execute has no idempotency key, so a retry whose predecessor was
+          # actually processed (response lost in flight) can post the announcement
+          # twice. A duplicate announcement is strictly better than a missing one.
+          #
+          # The webhook URL is a credential: it is never echoed and `-v` is never
+          # passed (curl's own `-S` error text names at most the host). The response
+          # body IS printed -- it is Discord's JSON error object, the single most
+          # useful thing for whoever debugs the next failure.
+          response_file="$(mktemp)"
+          curl_exit=0
+          http_code=$(curl -sS -X POST "$DISCORD_WEBHOOK" \
             -H "Content-Type: application/json" \
-            -d "$json_payload"
+            -d "$json_payload" \
+            --retry 3 \
+            --retry-max-time 60 \
+            -o "$response_file" \
+            -w '%{http_code}') || curl_exit=$?
 
-          echo "Release notes sent to Discord for version $version"
+          # Safe to fail here: nothing downstream depends on this job and the release is
+          # already published, so a red step cannot block or undo it. It DOES redden the
+          # workflow run conclusion (and the release badge) -- that is the intended
+          # visibility, and the message below states exactly what did and did not ship.
+          if [ "$curl_exit" -ne 0 ]; then
+            echo "::error::Discord announcement for version ${version} was NOT delivered (curl exit ${curl_exit}). The release itself is published; only the announcement is missing."
+            exit 1
+          fi
 
-  deploy:
-    needs: release-unity-plugin
-    if: needs.release-unity-plugin.outputs.success == 'true'
-    permissions:
-      id-token: write
-      contents: read
-    uses: ./.github/workflows/deploy.yml
-    with:
-      version: ${{ needs.release-unity-plugin.outputs.version }}
-    secrets: inherit
+          case "$http_code" in
+            2??)
+              echo "Release notes accepted by Discord for version ${version} (HTTP ${http_code})."
+              ;;
+            *)
+              echo "::error::Discord REJECTED the release notes for version ${version} (HTTP ${http_code}). The release itself is published; only the announcement is missing."
+              echo "Discord response body:"
+              head -c 2000 "$response_file"
+              echo ""
+              exit 1
+              ;;
+          esac
 
-  # Cleanup job to remove build artifacts after the atomic publish + deploy.
+  # Post-publish verification (moved here from the software repo's local release pipeline, which
+  # waited out a 30-minute registry-indexing window after `release.yml` before anything consumed
+  # the version). The run is green ONLY if every channel serves the exact version: the GitHub
+  # Release carries both assets, npm serves unity-mcp-cli@<version>, and OpenUPM has indexed
+  # com.ivanmurzak.unity.mcp@<version> from the Release (observed lag 2-6 min; capped at 45).
+  verify-published:
+    runs-on: ubuntu-latest
+    needs: [check-version-tag, deploy-cli-to-npm, release-unity-plugin]
+    if: inputs.dry_run != true
+    timeout-minutes: 60
+    env:
+      VERSION: ${{ needs.check-version-tag.outputs.version }}
+      GH_TOKEN: ${{ github.token }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: GitHub Release carries both assets
+        run: |
+          set -euo pipefail
+          gh release view "$VERSION" -R "$GITHUB_REPOSITORY" --json tagName,isDraft,assets > release.json
+          jq '{tagName, isDraft, assets: [.assets[].name]}' release.json
+          if [ "$(jq -r '.isDraft' release.json)" != "false" ]; then
+            echo "::error::GitHub Release $VERSION is a draft."; exit 1
+          fi
+          if [ "$(jq '[.assets[].name | select(. == "AI-Game-Dev-Installer.unitypackage")] | length' release.json)" != "1" ]; then
+            echo "::error::GitHub Release $VERSION is missing AI-Game-Dev-Installer.unitypackage."; exit 1
+          fi
+          if [ "$(jq '[.assets[].name | select(startswith("com.ivanmurzak.unity.mcp-"))] | length' release.json)" != "1" ]; then
+            echo "::error::GitHub Release $VERSION is missing the signed com.ivanmurzak.unity.mcp-*.tgz."; exit 1
+          fi
+
+      - name: npm serves the CLI version
+        run: |
+          set -uo pipefail
+          name="$(jq -r '.name' cli/package.json)"
+          deadline=$(( $(date +%s) + 600 ))
+          while :; do
+            code="$(curl -sS -o npm.json -w '%{http_code}' "https://registry.npmjs.org/${name}/${VERSION}")" || code="curl-failed"
+            if [ "$code" = "200" ] && [ "$(jq -r '.version' npm.json 2>/dev/null)" = "$VERSION" ]; then
+              echo "npm: ${name}@${VERSION} is published."; break
+            fi
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::npm does not serve ${name}@${VERSION} after 10 minutes (last HTTP ${code})."; exit 1
+            fi
+            echo "npm: ${name}@${VERSION} not yet visible (HTTP ${code}); retrying in 30s"
+            sleep 30
+          done
+
+      - name: OpenUPM has indexed the plugin version
+        run: |
+          set -uo pipefail
+          name="$(jq -r '.name' Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json)"
+          deadline=$(( $(date +%s) + 2700 ))
+          while :; do
+            code="$(curl -sS -o upm.json -w '%{http_code}' "https://package.openupm.com/${name}")" || code="curl-failed"
+            if [ "$code" = "200" ] && [ "$(jq --arg v "$VERSION" -r '.versions[$v].version // empty' upm.json 2>/dev/null)" = "$VERSION" ]; then
+              echo "OpenUPM: ${name}@${VERSION} is indexed."; break
+            fi
+            if [ "$(date +%s)" -ge "$deadline" ]; then
+              echo "::error::OpenUPM has not indexed ${name}@${VERSION} after 45 minutes (last HTTP ${code}). Check https://openupm.com/packages/${name}/ build status."; exit 1
+            fi
+            echo "OpenUPM: ${name}@${VERSION} not yet indexed (HTTP ${code}); retrying in 60s"
+            sleep 60
+          done
+
+  # Cleanup job to remove build artifacts after the atomic publish + npm publish.
   # Re-pointed at release-unity-plugin (was: publish-mcp-server, publish-unity-installer)
   # since those post-release publish jobs collapsed into release-unity-plugin.
+  # Skipped on a dry run so the built installer + signed UPM tarball stay inspectable.
   cleanup-artifacts:
     runs-on: ubuntu-latest
-    needs: [release-unity-plugin, deploy]
-    if: always()
+    needs: [release-unity-plugin, deploy-cli-to-npm]
+    if: always() && inputs.dry_run != true
     steps:
-      - name: Delete MCP Server artifacts
-        uses: geekyeggo/delete-artifact@v5
-        with:
-          name: mcp-server-zips
-          failOnError: false
-        continue-on-error: true
-
       - name: Delete Unity Package artifacts
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: unity-installer-package
           failOnError: false
         continue-on-error: true
 
       - name: Delete signed UPM package artifacts
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: signed-upm-package
           failOnError: false
         continue-on-error: true
 
       - name: Delete release notes artifacts
-        uses: geekyeggo/delete-artifact@v5
+        uses: geekyeggo/delete-artifact@v6
         with:
           name: release-notes
           failOnError: false

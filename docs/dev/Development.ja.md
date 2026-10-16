@@ -3,7 +3,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -28,7 +28,7 @@
 - [ローカル開発環境のセットアップ](#ローカル開発環境のセットアップ)
 - [コントリビュート](#コントリビュート)
 - [プロジェクト構造](#プロジェクト構造)
-  - [🔹Unity-MCP-Server](#unity-mcp-server)
+  - [🔹MCP Server (shared GameDev-MCP-Server)](#mcp-server-shared-gamedev-mcp-server)
     - [Docker イメージ](#docker-イメージ)
   - [🔸Unity-MCP-Plugin](#unity-mcp-plugin)
     - [UPM パッケージ](#upm-パッケージ)
@@ -50,8 +50,6 @@
     - [🚀 release.yml](#-releaseyml)
     - [🧪 test\_pull\_request.yml](#-test_pull_requestyml)
     - [🔧 test\_unity\_plugin.yml](#-test_unity_pluginyml)
-    - [📦 deploy.yml](#-deployyml)
-    - [🎯 deploy\_server\_executables.yml](#-deploy_server_executablesyml)
   - [技術スタック](#技術スタック)
   - [セキュリティに関する考慮事項](#セキュリティに関する考慮事項)
   - [デプロイ先](#デプロイ先)
@@ -105,14 +103,15 @@ AI はゲーム開発において重要な役割を果たしている（もし�
    - Unity Hub を開く → プロジェクトを追加 → `Unity-MCP-Plugin/` フォルダを選択
    - Unity は初回起動時にすべてのアセンブリを自動でコンパイルします
 
-3. **IDE でサーバーを開く**
-   - `Unity-MCP-Server/Server.sln` を Visual Studio、Rider、または VS Code で開く
-   - NuGet パッケージを復元する: `dotnet restore`
+3. **MCP Server を入手する** *(別リポジトリにあります)*
+   - サーバーは共有の [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) です — サーバー自体を変更・デバッグする場合のみ別途クローンしてください
+   - プラグインは `McpServerManager.cs` の `ServerVersion` 定数で固定されたリリースバイナリを自動ダウンロードします
 
-4. **サーバーをローカルで実行する**
+4. **サーバーをローカルで実行する** *(任意 — カスタムサーバービルドで開発する場合のみ)*
    ```bash
-   cd Unity-MCP-Server
-   dotnet run --project com.IvanMurzak.Unity.MCP.Server.csproj -- --port 8080 --client-transport stdio
+   git clone https://github.com/IvanMurzak/GameDev-MCP-Server.git
+   cd GameDev-MCP-Server
+   dotnet run --project com.IvanMurzak.GameDev.MCP.Server.csproj -- --port 8080 --client-transport stdio
    ```
 
 5. **プラグインをローカルサーバーに向ける** *(任意 — 自動ダウンロードされるバイナリをスキップします)*
@@ -145,7 +144,7 @@ AI はゲーム開発において重要な役割を果たしている（もし�
 ```mermaid
 graph LR
   A(◽AI エージェント)
-  B(🔹Unity-MCP-Server)
+  B(🔹GameDev-MCP-Server)
   C(🔸Unity-MCP-Plugin)
   D(🎮Unity)
 
@@ -157,62 +156,31 @@ graph LR
 
 ◽**AI エージェント** - *Claude*、*Copilot*、*Cursor* などの任意の AI インターフェースです。このプロジェクトの一部ではありませんが、アーキテクチャの重要な要素です。
 
-🔹**Unity-MCP-Server** - `AI エージェント`に接続し、連携する `MCP Server` です。同時に `Unity-MCP-Plugin` と SignalR を通じて通信します。ローカルまたは HTTP トランスポートを使用したクラウド上で動作可能です。技術スタック: `C#`、`ASP.NET Core`、`SignalR`
+🔹**GameDev-MCP-Server** - 共有の `MCP Server` です（独立リポジトリ: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)）。`AI エージェント`に接続し、`Unity-MCP-Plugin` と SignalR を通じて通信します。ローカルまたは HTTP トランスポートを使用したクラウド上で動作可能です。技術スタック: `C#`、`ASP.NET Core`、`SignalR`
 
-🔸**Unity-MCP-Plugin** - Unity プロジェクトに統合される `Unity Plugin` で、Unity の API にアクセスできます。`Unity-MCP-Server` と通信し、サーバーからのコマンドを実行します。技術スタック: `C#`、`Unity`、`SignalR`
+🔸**Unity-MCP-Plugin** - Unity プロジェクトに統合される `Unity Plugin` で、Unity の API にアクセスできます。共有の `GameDev-MCP-Server` と通信し、サーバーからのコマンドを実行します。技術スタック: `C#`、`Unity`、`SignalR`
 
 🎮**Unity** - Unity Engine、ゲームエンジン。
 
 ---
 
-## 🔹Unity-MCP-Server
+## 🔹MCP Server (shared GameDev-MCP-Server)
 
-AI エージェント（Claude、Cursor などの AI インターフェース）と Unity Editor インスタンスの間のブリッジとして機能する C# ASP.NET Core アプリケーションです。[csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk) を使用して [Model Context Protocol](https://github.com/modelcontextprotocol) を実装しています。
+AI エージェント（Claude、Cursor などの AI インターフェース）と Unity Editor インスタンスの間のブリッジとして機能する C# ASP.NET Core アプリケーションです。サーバーは [csharp-sdk](https://github.com/modelcontextprotocol/csharp-sdk) を使用して [Model Context Protocol](https://github.com/modelcontextprotocol) を実装しています。
 
-> プロジェクトの場所: `Unity-MCP-Server`
+> プロジェクトの場所: 共有リポジトリ [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) — Unity-MCP、Godot-MCP、Unreal-MCP が共通で利用するエンジン非依存のサーバーです。**このリポジトリには含まれなくなりました。**
 
-**主な責務:**
-
-1. **MCP プロトコルの実装** ([ExtensionsMcpServer.cs](Unity-MCP-Server/src/Extension/ExtensionsMcpServer.cs))
-   - Tools、Prompts、Resources をサポートする MCP サーバーを実装
-   - STDIO および HTTP トランスポート方式の両方をサポート
-   - AI エージェントのリクエストを処理: `CallTool`、`GetPrompt`、`ReadResource`、およびそれらのリスト操作
-   - 機能が変更された際（ツール/プロンプトリストの更新）に AI エージェントへ通知を送信
-
-2. **SignalR ハブ通信** ([RemoteApp.cs](Unity-MCP-Server/src/Hub/RemoteApp.cs)、[BaseHub.cs](Unity-MCP-Server/src/Hub/BaseHub.cs))
-   - SignalR を通じた Unity-MCP-Plugin とのリアルタイム双方向通信を管理
-   - サーバーとプラグイン間の API 互換性を確保するバージョンハンドシェイクを処理
-   - クライアント接続を追跡し、切断を管理
-   - Unity から AI エージェントへのツール/プロンプト/リソース更新通知をルーティング
-
-3. **リクエストルーティングと実行** ([ToolRouter.Call.cs](Unity-MCP-Server/src/Routing/Tool/ToolRouter.Call.cs)、[PromptRouter.Get.cs](Unity-MCP-Server/src/Routing/Prompt/PromptRouter.Get.cs)、[ResourceRouter.ReadResource.cs](Unity-MCP-Server/src/Routing/Resource/ResourceRouter.ReadResource.cs))
-   - AI エージェントのリクエストを適切な Unity-MCP-Plugin インスタンスにルーティング
-   - ツール呼び出し、プロンプトリクエスト、リソース読み取りを処理
-   - エラーハンドリングとバリデーションを実行
-   - MCP プロトコル形式と内部データモデル間の変換
-
-4. **リモート実行サービス** ([RemoteToolRunner.cs](Unity-MCP-Server/src/Client/RemoteToolRunner.cs)、[RemotePromptRunner.cs](Unity-MCP-Server/src/Client/RemotePromptRunner.cs)、[RemoteResourceRunner.cs](Unity-MCP-Server/src/Client/RemoteResourceRunner.cs))
-   - SignalR を通じて Unity-MCP-Plugin 上でリモートプロシージャを呼び出す
-   - 非同期リクエストを追跡し、タイムアウトを管理
-   - キャンセルサポート付きのリクエスト/レスポンスパターンを実装
-   - Unity インスタンスからのリクエスト完了コールバックを処理
-
-5. **サーバーライフサイクル管理** ([Program.cs](Unity-MCP-Server/src/Program.cs)、[McpServerService.cs](Unity-MCP-Server/src/McpServerService.cs))
-   - Kestrel を使用した ASP.NET Core Web サーバーの設定と起動
-   - MCP サーバー、SignalR ハブ、依存性注入の初期化
-   - NLog を使用したロギングの管理（STDIO モードではログを stderr にリダイレクト）
-   - グレースフルシャットダウンとリソースクリーンアップの処理
-   - Unity のツール/プロンプトリスト変更イベントへのサブスクライブ
+プラグインは [McpServerManager.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs) の `ServerVersion` 定数で固定されたリリースバイナリ（`gamedev-mcp-server-<rid>.zip`）をダウンロードします。アーキテクチャとビルド手順は [GameDev-MCP-Server README](https://github.com/IvanMurzak/GameDev-MCP-Server#readme) を参照してください。
 
 ### Docker イメージ
 
-`Unity-MCP-Server` は Docker イメージにデプロイ可能です。プロジェクトのフォルダには `Dockerfile` と `.dockerignore` ファイルが含まれています。
+共有サーバーは GameDev-MCP-Server リポジトリから [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server) として Docker Hub に公開されています。
 
 ---
 
 ## 🔸Unity-MCP-Plugin
 
-Unity 環境に統合されます。`Unity-MCP-Common` を使用して、リフレクションによりローカルコードベースの MCP *Tool*、*Resource*、*Prompt* を検索します。MCP *Tool*、*Resource*、*Prompt* の更新情報を `Unity-MCP-Server` に送信するために通信します。`Unity-MCP-Server` からコマンドを受け取り実行します。
+Unity 環境に統合されます。`Unity-MCP-Common` を使用して、リフレクションによりローカルコードベースの MCP *Tool*、*Resource*、*Prompt* を検索します。MCP *Tool*、*Resource*、*Prompt* の更新情報を共有の `GameDev-MCP-Server` に送信するために通信します。サーバーからコマンドを受け取り実行します。
 
 > プロジェクトの場所: `Unity-MCP-Plugin`
 
@@ -224,7 +192,7 @@ Unity 環境に統合されます。`Unity-MCP-Common` を使用して、リフ�
 
 ### エディター
 
-エディターコンポーネントは Unity Editor との統合を提供し、MCP 機能（Tools、Prompts、Resources）を実装し、`Unity-MCP-Server` のライフサイクルを管理します。
+エディターコンポーネントは Unity Editor との統合を提供し、MCP 機能（Tools、Prompts、Resources）を実装し、ローカルの `GameDev-MCP-Server` のライフサイクルを管理します。
 
 > 場所: `Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor`
 
@@ -236,7 +204,7 @@ Unity 環境に統合されます。`Unity-MCP-Common` を使用して、リフ�
    - ドメインリロードまたは Play モード終了後の自動再接続
 
 2. **MCP Server バイナリ管理** ([McpServerManager.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs))
-   - GitHub リリースから `Unity-MCP-Server` 実行ファイルをダウンロードして管理
+   - 共有の `GameDev-MCP-Server` 実行ファイルをその GitHub リリースからダウンロードして管理（`ServerVersion` 定数で固定）
    - クロスプラットフォームバイナリ選択（Windows/macOS/Linux、x86/x64/ARM/ARM64）
    - サーバーとプラグイン間のバージョン互換性の適用
    - AI エージェント用の設定生成（実行ファイルパスと接続設定を含む JSON）
@@ -246,7 +214,7 @@ Unity 環境に統合されます。`Unity-MCP-Common` を使用して、リフ�
    - **Prompts**: 一般的な Unity 開発タスク用のあらかじめ構築されたテンプレート
    - **Resources**: JSON シリアライゼーションによる Unity Editor データへの URI ベースアクセス
    - スレッドセーフのため、すべての操作は Unity のメインスレッドで実行
-   - `[McpPluginTool]`、`[McpPluginPrompt]`、`[McpPluginResource]` を使用した属性ベースの検出
+   - `[AiTool]`、`[AiPrompt]`、`[AiResource]` を使用した属性ベースの検出
 
 4. **エディター UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
    - 接続管理のための設定ウィンドウ（`Window > AI Game Developer`）
@@ -263,7 +231,7 @@ Unity 環境に統合されます。`Unity-MCP-Common` を使用して、リフ�
 1. **プラグインコア & SignalR 接続** ([UnityMcpPlugin.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs))
    - `BuildAndStart()` を通じてプラグインライフサイクルを管理するスレッドセーフなシングルトン
    - リフレクションを使用してアセンブリから MCP Tools/Prompts/Resources を検出
-   - リアクティブ状態モニタリング (R3 ライブラリ) を使用して Unity-MCP-Server への SignalR 接続を確立
+   - リアクティブ状態モニタリング (R3 ライブラリ) を使用して MCP サーバーへの SignalR 接続を確立
    - 設定管理: ホスト、ポート、タイムアウト、バージョン互換性
 
 2. **メインスレッドディスパッチャー** ([MainThreadDispatcher.cs](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/MainThreadDispatcher.cs))
@@ -286,10 +254,10 @@ Unity 環境に統合されます。`Unity-MCP-Common` を使用して、リフ�
 #### `MCP Tool` の追加
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public class Tool_GameObject
 {
-    [McpPluginTool
+    [AiTool
     (
         "MyCustomTask",
         Title = "Create a new GameObject"
@@ -318,10 +286,10 @@ public class Tool_GameObject
 `MCP Prompt` を使用すると、LLM との会話にカスタムプロンプトを注入できます。ユーザーとアシスタントの2つの送信者ロールをサポートします。これは LLM に特定のタスクを実行させるための簡単な方法です。カスタムデータを使用してプロンプトを生成し、リストやその他の関連情報を提供できます。
 
 ```csharp
-[McpPluginPromptType]
+[AiPromptType]
 public static class Prompt_ScriptingCode
 {
-    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("GameObject 間の UnityEvent ベースの通信システムを実装します。")]
     public string AddEventSystem()
     {
@@ -363,7 +331,7 @@ graph LR
 
 1. **ファイルヘッダー**: すべてのファイルの先頭にボックスコメント形式で著作権表示を含める
 2. **Nullable コンテキスト**: null 安全性のために `#nullable enable` を使用する — 暗黙的な null は禁止
-3. **属性**: MCP 検出のために `[McpPluginTool]`、`[McpPluginPrompt]`、`[McpPluginResource]` を活用する
+3. **属性**: MCP 検出のために `[AiTool]`、`[AiPrompt]`、`[AiResource]` を活用する
 4. **部分クラス**: 機能をファイル間に分割する（例: `Tool_GameObject.Create.cs`、`Tool_GameObject.Destroy.cs`）
 5. **メインスレッド実行**: すべての Unity API 呼び出しを `MainThread.Instance.Run()` でラップする
 6. **エラーハンドリング**: 例外をスローしてエラーを処理する — `ArgumentException` または `Exception` を使用し、エラー文字列を返さない
@@ -402,14 +370,14 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
-    // ツールクラスには [McpPluginToolType] を使用 — リフレクションによる MCP 検出を有効化
-    [McpPluginToolType]
+    // ツールクラスには [AiToolType] を使用 — リフレクションによる MCP 検出を有効化
+    [AiToolType]
     // 部分クラスにより実装を複数ファイルに分割できます
     // パターン: 操作ごとに1ファイル（例: GameObject.Create.cs、GameObject.Destroy.cs）
     public partial class Tool_GameObject
     {
         // 属性ベースのメタデータを持つ MCP Tool の宣言
-        [McpPluginTool(
+        [AiTool(
             "gameobject-create",                    // 一意のツール識別子（ケバブケース）
             Title = "GameObject / Create"           // 人が読めるタイトル
         )]
@@ -495,11 +463,11 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
     }
 
     // プロンプト用の別の部分クラスファイル
-    [McpPluginPromptType]
+    [AiPromptType]
     public static partial class Prompt_SceneManagement
     {
         // ロール定義付きの MCP Prompt（User または Assistant）
-        [McpPluginPrompt(Name = "setup-basic-scene", Role = Role.User)]
+        [AiPrompt(Name = "setup-basic-scene", Role = Role.User)]
         [Description("カメラ、ライティング、環境を含む基本的なシーンをセットアップします。")]
         public static string SetupBasicScene()
         {
@@ -583,7 +551,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - **PR 内のワークフローファイルを変更しないでください** - `.github/workflows/` 内のファイルは変更しないでください — 信頼できないコントリビューターからこれらのファイルへの変更が検出されると CI チェックは中断されます。
 - **PR がマージされる前に18のテストマトリックスの組み合わせすべてが通過する必要があります**。変更が1つの組み合わせ（例: `2022-editmode`）のみを壊す場合、そのジョブは赤い ✗ を表示し、他は緑になります。
 - **失敗したジョブを再実行する:** PR → **Checks** タブ → 失敗したジョブをクリック → **Re-run failed jobs**。これは一時的な Unity Editor クラッシュに役立ちます。
-- **ワークフロー実行の順序:** `test_pull_request.yml` は PR 上で実行されます。`release.yml` は `main` へのマージ後にのみ実行されます。リリースを手動でトリガーする必要はありません。
+- **ワークフロー実行の順序:** `test_pull_request.yml` は PR 上で実行されます。`main` へのマージでは何も公開されません。リリースはメンテナーが `release.yml` を手動でディスパッチして作成します。
 
 ## ワークフロー概要
 
@@ -591,24 +559,30 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 ### 🚀 [release.yml](../../.github/workflows/release.yml)
 
-**トリガー:** `main` ブランチへのプッシュ
+**トリガー:** 手動の `workflow_dispatch` のみ（入力 `dry_run`、デフォルト `false`）。`main` へのマージでは何も公開されません。
 **目的:** リリースプロセス全体を調整するメインリリースワークフロー
+
+```bash
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main -f dry_run=true   # すべてのテストとビルドを実行し、何も公開しない
+gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                   # 本番リリース
+```
 
 **プロセス:**
 
-1. **バージョンチェック** - [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) からバージョンを抽出し、リリースタグが既に存在するかどうかを確認
+1. **バージョンチェック** - [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) からバージョンを抽出。本番実行は `main` 以外、またはリリースタグが既に存在する場合に失敗し、ドライランは警告して続行
 2. **Unity Installer のビルド** - Unity パッケージインストーラーをテストしてエクスポート（`AI-Game-Dev-Installer.unitypackage`）
-3. **MCP Server のビルド** - [build-all.sh](../../Unity-MCP-Server/build-all.sh) を使用してクロスプラットフォーム実行ファイル（Windows、macOS、Linux）をコンパイル
 4. **Unity プラグインテスト** - 以下の組み合わせで包括的なテストを実行:
    - 3種類の Unity バージョン: `2022.3.62f3`、`2023.2.22f1`、`6000.3.1f1`
    - 3種類のテストモード: `editmode`、`playmode`、`standalone`
    - 2種類の OS: `windows-latest`、`ubuntu-latest`
    - 合計: **18のテストマトリックスの組み合わせ**
-5. **リリース作成** - コミットからリリースノートを生成し、タグ付きで GitHub リリースを作成
-6. **パブリッシング** - Unity インストーラーパッケージと MCP Server 実行ファイルをリリースにアップロード
+5. **デプロイ** - `unity-mcp-cli` npm パッケージをビルド・テストし、provenance 付きで公開（OIDC Trusted Publishing、`release.yml` 内で直接実行。同じバージョンが既に npm にある場合はスキップ）
+6. **リリース作成** - タグと GitHub リリースを作成し、Unity インストーラーパッケージと署名済み UPM パッケージを添付（OpenUPM はここから取得）
 7. **Discord 通知** - フォーマットされたリリースノートを Discord チャンネルに送信
-8. **デプロイ** - NuGet と Docker のデプロイワークフローをトリガー
+8. **検証** - GitHub リリース、npm、OpenUPM のすべてが新しいバージョンを提供していなければ実行を失敗させる
 9. **クリーンアップ** - 正常なパブリッシング後にビルドアーティファクトを削除
+
+手順 5〜9 はドライランではスキップされます。
 
 ### 🧪 [test_pull_request.yml](../../.github/workflows/test_pull_request.yml)
 
@@ -617,8 +591,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 **プロセス:**
 
-1. すべてのプラットフォーム向けの MCP Server 実行ファイルをビルド
-2. リリースワークフローと同じ18の Unity テストマトリックスの組み合わせを実行
+1. リリースワークフローと同じ18の Unity テストマトリックスの組み合わせを実行
 3. PR がマージされる前にすべてのテストが通過する必要があります
 
 ### 🔧 [test_unity_plugin.yml](../../.github/workflows/test_unity_plugin.yml)
@@ -636,59 +609,29 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 - 以降の実行を高速化するために Unity Library をキャッシュ
 - デバッグのためにテストアーティファクトをアップロード
 
-### 📦 [deploy.yml](../../.github/workflows/deploy.yml)
+> MCP Server の NuGet パッケージと Docker イメージのデプロイは共有リポジトリ [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) に移動しました（Docker: [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server)）。
 
-**トリガー:** リリースワークフローから呼び出される OR 手動ディスパッチ OR リリース公開時
-**目的:** MCP Server を NuGet と Docker Hub にデプロイ
-
-**ジョブ:**
-
-**1. NuGet へのデプロイ:**
-
-- MCP Server をビルドしてテスト
-- NuGet パッケージをパック
-- [nuget.org](https://www.nuget.org/packages/com.IvanMurzak.Unity.MCP.Server) に公開
-
-**2. Docker イメージのデプロイ:**
-
-- マルチプラットフォーム Docker イメージをビルド（linux/amd64、linux/arm64）
-- [Docker Hub](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server) にプッシュ
-- バージョン番号と `latest` でタグ付け
-- ビルド最適化のために GitHub Actions キャッシュを使用
-
-### 🎯 [deploy_server_executables.yml](../../.github/workflows/deploy_server_executables.yml)
-
-**トリガー:** GitHub リリース公開時
-**目的:** クロスプラットフォームサーバー実行ファイルをビルドしてリリースにアップロード
-
-**プロセス:**
-
-- クロスコンパイルサポートのために macOS 上で実行
-- [build-all.sh](../../Unity-MCP-Server/build-all.sh) を使用して Windows、macOS、Linux 向けの実行ファイルをビルド
-- 各プラットフォーム用の ZIP アーカイブを作成
-- GitHub リリースにアップロード
 
 ## 技術スタック
 
 - **CI プラットフォーム:** GitHub Actions
 - **Unity テスト:** [Game CI](https://game.ci/) と Unity Test Runner
 - **コンテナ化:** マルチプラットフォームビルドを持つ Docker
-- **パッケージ管理:** NuGet、OpenUPM、Docker Hub
+- **パッケージ管理:** npm、OpenUPM
 - **ビルドツール:** .NET 9.0、bash スクリプト
 - **アーティファクトストレージ:** GitHub Actions アーティファクト（一時的）、GitHub Releases（永続的）
 
 ## セキュリティに関する考慮事項
 
 - Unity ライセンス、メール、パスワードは GitHub シークレットとして保存
-- NuGet API キーと Docker 認証情報を保護
+- npm への公開には trusted publishing / provenance（OIDC）を使用
 - PR ワークフローにはワークフローファイル変更のセーフティチェックを含む
 - 信頼できない PR コントリビューションは `ci-ok` ラベルによるメンテナーの承認が必要
 
 ## デプロイ先
 
-1. **GitHub Releases** - Unity インストーラーパッケージと MCP Server 実行ファイル
-2. **NuGet** - .NET 開発者向け MCP Server パッケージ
-3. **Docker Hub** - クラウドデプロイメント用のコンテナ化された MCP Server
-4. **OpenUPM** - Unity プラグインパッケージ（GitHub リリースから自動同期）
+1. **GitHub Releases** - Unity インストーラーパッケージと署名済み UPM パッケージ
+2. **npm** - `unity-mcp-cli` パッケージ
+3. **OpenUPM** - Unity プラグインパッケージ（GitHub リリースから自動同期）
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

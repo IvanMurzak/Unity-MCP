@@ -1,6 +1,8 @@
 ---
 name: tool-set-enabled-state
 description: Enable or disable MCP tools by name in batch. Persists the change via `UnityMcpPluginEditor.Instance.Save()` only when at least one tool actually flipped. Returns per-input success flags plus optional operation logs.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Tool / Set Enabled State

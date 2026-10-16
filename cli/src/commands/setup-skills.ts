@@ -6,6 +6,7 @@ import { resolveAndValidateProjectPath, resolveConnection } from '../utils/conne
 import { getAgentById, getAgentIds, listAgentTable } from '../utils/agents.js';
 import { readConfig, isCloudMode } from '../utils/config.js';
 import { runCloudLogin } from '../utils/cloud-login.js';
+import { MachineCredentialStore } from '../utils/machine-credentials.js';
 
 interface SetupSkillsOptions {
   url?: string;
@@ -95,7 +96,7 @@ export const setupSkillsCommand = new Command('setup-skills')
       verbose(`Skills path: ${skillsPath}`);
 
       // Resolve server connection
-      let { url: serverUrl, token } = resolveConnection(projectPath, options);
+      let { url: serverUrl, token } = await resolveConnection(projectPath, options);
 
       // Call the MCP server to generate skills
       const endpoint = `${serverUrl}/api/system-tools/unity-skill-generate`;
@@ -134,7 +135,7 @@ export const setupSkillsCommand = new Command('setup-skills')
           if (cloud && !options.token && !hadToken) {
             ui.info('Cloud authentication required. Starting login...');
             console.log();
-            const newToken = await runCloudLogin(projectPath);
+            const newToken = await runCloudLogin(new MachineCredentialStore());
             if (!newToken) {
               process.exit(1);
             }

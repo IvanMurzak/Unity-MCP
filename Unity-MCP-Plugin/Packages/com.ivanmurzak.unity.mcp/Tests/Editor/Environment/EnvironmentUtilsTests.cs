@@ -28,17 +28,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         const string DiskHost = "http://localhost:24029";
         const string DiskLocalToken = "DISK_LOCAL_TOKEN";
-        const string DiskCloudToken = "DISK_CLOUD_TOKEN";
 
         static UnityMcpPlugin.UnityConnectionConfig BuildDiskConfig(ConnectionMode mode = ConnectionMode.Cloud)
         {
-            // Simulates a config that came back from disk: explicit values for both
-            // local and cloud tokens, default mode = Cloud (matching the plugin's default).
+            // Simulates a config that came back from disk: an explicit local token and the plugin's default
+            // mode = Cloud. Cloud credentials no longer live in the config (T9 — the cloudToken mirror was
+            // removed); the shared machine store owns them.
             return new UnityMcpPlugin.UnityConnectionConfig
             {
                 LocalHost = DiskHost,
                 LocalToken = DiskLocalToken,
-                CloudToken = DiskCloudToken,
                 ConnectionMode = mode,
                 AuthOption = AuthOption.required,
                 KeepConnected = true,
@@ -74,7 +73,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.IsFalse(record.HasAny, "Expected no overrides when env and args are empty.");
             Assert.AreEqual(DiskHost, config.LocalHost);
-            Assert.AreEqual(DiskCloudToken, config.CloudToken);
             Assert.AreEqual(DiskLocalToken, config.LocalToken);
             Assert.AreEqual(ConnectionMode.Cloud, config.ConnectionMode);
             Assert.AreEqual(AuthOption.required, config.AuthOption);
@@ -83,19 +81,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // --- Env var override ---
 
         [Test]
-        public void Override_EnvToken_WritesToCloudTokenWhenModeIsCloud()
+        public void Override_EnvToken_WritesToLocalTokenEvenWhenModeIsCloud()
         {
+            // T9: the env/flag token override targets the LOCAL token only. Cloud-mode credentials come from
+            // the shared machine store, so UNITY_MCP_TOKEN no longer seeds a persisted cloud token; it always
+            // routes to LocalToken (inert for the Cloud connection, which the machine store serves).
             var config = BuildDiskConfig(mode: ConnectionMode.Cloud);
             var env = Env((EnvironmentUtils.EnvToken, "ENV_TOKEN"));
 
             var record = EnvironmentUtils.ApplyEnvironmentOverrides(config, NoArgs(), env);
 
             Assert.IsTrue(record.HasAny);
-            Assert.IsTrue(record.Contains(EnvironmentUtils.FieldCloudToken),
-                "Expected the CloudToken backing field to be tracked when mode is Cloud.");
-            Assert.AreEqual("ENV_TOKEN", config.CloudToken);
-            Assert.AreEqual(DiskLocalToken, config.LocalToken,
-                "LocalToken must remain at the disk baseline when mode is Cloud.");
+            Assert.IsTrue(record.Contains(EnvironmentUtils.FieldLocalToken),
+                "Expected the LocalToken backing field to be tracked for the token override.");
+            Assert.AreEqual("ENV_TOKEN", config.LocalToken);
         }
 
         [Test]
@@ -107,7 +106,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             EnvironmentUtils.ApplyEnvironmentOverrides(config, NoArgs(), env);
 
             Assert.AreEqual("ENV_TOKEN", config.LocalToken);
-            Assert.AreEqual(DiskCloudToken, config.CloudToken);
         }
 
         // --- Flag override (highest priority, beats env) ---
@@ -121,7 +119,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             EnvironmentUtils.ApplyEnvironmentOverrides(config, args, env);
 
-            Assert.AreEqual("FLAG_TOKEN", config.CloudToken,
+            Assert.AreEqual("FLAG_TOKEN", config.LocalToken,
                 "When both --token and UNITY_MCP_TOKEN are set, the flag must win.");
         }
 
@@ -136,7 +134,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             EnvironmentUtils.ApplyEnvironmentOverrides(config, args, env);
 
-            Assert.AreEqual("FLAG_VIA_FULL_NAME", config.CloudToken);
+            Assert.AreEqual("FLAG_VIA_FULL_NAME", config.LocalToken);
         }
 
         // --- Per-field layering ---
@@ -151,7 +149,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.AreEqual(DiskHost, config.LocalHost,
                 "Host must remain at the disk baseline when only the token was overridden.");
-            Assert.AreEqual("ENV_TOKEN", config.CloudToken);
+            Assert.AreEqual("ENV_TOKEN", config.LocalToken);
         }
 
         // --- Trailing-slash robustness ---
@@ -185,8 +183,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             // Worktree scenario: disk says Cloud, env supplies a localhost URL.
             // Expected: ConnectionMode is inferred to Custom so the worktree's local
-            // dev token routes to LocalToken (not CloudToken) and the SignalR client
-            // talks to <host>/hub/mcp-server (not <host>/mcp/hub/mcp-server).
+            // dev token routes to LocalToken and the SignalR client talks to
+            // <host>/hub/mcp-server (not <host>/mcp/hub/mcp-server).
             var config = BuildDiskConfig(mode: ConnectionMode.Cloud);
             var env = Env(
                 (EnvironmentUtils.EnvCloudUrl, "http://localhost:5220/"),
@@ -199,8 +197,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("http://localhost:5220", config.LocalHost);
             Assert.AreEqual("WORKTREE_TOKEN", config.LocalToken,
                 "Token override must route to LocalToken once mode is inferred Custom.");
-            Assert.AreEqual(DiskCloudToken, config.CloudToken,
-                "CloudToken on disk must NOT be clobbered by the env override.");
             Assert.IsTrue(record.Contains(EnvironmentUtils.FieldConnectionMode));
             Assert.IsTrue(record.Contains(EnvironmentUtils.FieldHost));
             Assert.IsTrue(record.Contains(EnvironmentUtils.FieldLocalToken));
@@ -302,7 +298,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             EnvironmentUtils.ApplyEnvironmentOverrides(config, NoArgs(), env);
 
-            Assert.AreEqual("QUOTED_TOKEN", config.CloudToken);
+            Assert.AreEqual("QUOTED_TOKEN", config.LocalToken);
         }
 
         // --- Helpers ---

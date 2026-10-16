@@ -10,7 +10,6 @@
     "ask": [],
     "additionalDirectories": [
       "../Installer",
-      "../Unity-MCP-Server",
       "../Unity-MCP.wiki",
       "../Unity-Tests",
       "../commands",

@@ -1,6 +1,8 @@
 ---
 name: script-update-or-create
 description: Write a `.cs` script file (create or overwrite) with the provided C# code. Validates syntax via Roslyn before write — invalid code is rejected with error details and the file is left untouched. Refreshes the AssetDatabase and delivers the final result via `requestId` after Unity finishes the triggered compilation. Use 'script-read' to inspect existing content first.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Script / Update or Create

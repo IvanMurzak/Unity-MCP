@@ -49,6 +49,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             btnStartStop.RegisterCallback<ClickEvent>(evt => HandleServerButton(btnStartStop, statusLabel));
 
+            // Issue #845: surface a server-binary download failure in the window with a visible retry button,
+            // instead of dead-ending silently. Both elements are optional in the UXML (null-tolerant) so an
+            // older UXML never crashes setup; they default hidden and are toggled by LastDownloadError.
+            var btnDownloadRetryServer = root.Q<Button>("btnDownloadRetryServer");
+            var mcpServerErrorLabel = root.Q<Label>("mcpServerErrorLabel");
+            if (btnDownloadRetryServer != null)
+            {
+                btnDownloadRetryServer.style.display = DisplayStyle.None;
+                btnDownloadRetryServer.RegisterCallback<ClickEvent>(evt =>
+                    HandleDownloadRetryButton(btnDownloadRetryServer, statusLabel));
+            }
+            if (mcpServerErrorLabel != null)
+                mcpServerErrorLabel.style.display = DisplayStyle.None;
+
+            McpServerManager.LastDownloadError
+                .ObserveOnCurrentSynchronizationContext()
+                .Subscribe(error => UpdateDownloadErrorUI(error, btnDownloadRetryServer, mcpServerErrorLabel))
+                .AddTo(_disposables);
+
             // MCP server authorization configuration UI elements
             var labelAuthorizationToken = root.Q<Label>("labelAuthorizationToken");
             var segmentAuthorization = root.Q<VisualElement>("segmentAuthorization");
@@ -67,8 +86,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-            var authControl = new SegmentedControl("none", "required");
-            authControl.SetTooltips(Tooltip_ToggleAuthNone, Tooltip_ToggleAuthRequired);
+            var authControl = new SegmentedControl("none", "oauth", "token");
+            authControl.SetTooltips(Tooltip_ToggleAuthNone, Tooltip_ToggleAuthOauth, Tooltip_ToggleAuthToken);
             segmentAuthorization.Add(authControl);
 
             inputAuthorizationToken.isPasswordField = true;
@@ -85,30 +104,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             btnGenerateToken.tooltip = Tooltip_BtnGenerateToken;
 
             var authOption = UnityMcpPluginEditor.AuthOption;
-            authControl.SetValueWithoutNotify(authOption == AuthOption.none ? 0 : 1);
+            authControl.SetValueWithoutNotify(AuthOptionToSegmentIndex(authOption));
             inputAuthorizationToken.SetValueWithoutNotify(UnityMcpPluginEditor.Token ?? string.Empty);
-            SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, authOption == AuthOption.required);
+            // The token field + Generate-Token button are meaningful ONLY in `token` mode (none is
+            // anonymous; oauth authorizes via the account, no manual secret).
+            SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, authOption == AuthOption.token);
 
             authControl.RegisterCallback<ChangeEvent<int>>(evt =>
             {
-                if (evt.newValue == 0)
+                var selected = SegmentIndexToAuthOption(evt.newValue);
+                ApplyServerSettingAndRestart(() =>
                 {
-                    ApplyServerSettingAndRestart(() =>
-                    {
-                        UnityMcpPluginEditor.AuthOption = AuthOption.none;
-                    });
-                    SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, false);
-                    InvalidateAndReloadAgentUI();
-                }
-                else
-                {
-                    ApplyServerSettingAndRestart(() =>
-                    {
-                        UnityMcpPluginEditor.AuthOption = AuthOption.required;
-                    });
-                    SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, true);
-                    InvalidateAndReloadAgentUI();
-                }
+                    UnityMcpPluginEditor.AuthOption = selected;
+                });
+                SetTokenFieldsVisible(inputAuthorizationToken, tokenSection, selected == AuthOption.token);
+                InvalidateAndReloadAgentUI();
             });
 
             inputAuthorizationToken.RegisterCallback<FocusOutEvent>(_ =>
@@ -137,6 +147,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             });
         }
 
+        // 3-way authorization segmented control (mcp-authorize g5/g6): index 0=none, 1=oauth, 2=token.
+        // Pure mapping helpers so the index↔AuthOption round-trip is unit-testable without a live Editor.
+        internal static int AuthOptionToSegmentIndex(AuthOption option) => option switch
+        {
+            AuthOption.oauth => 1,
+            AuthOption.token => 2,
+            // none — and any legacy value the load-time migration should have converted — maps to the
+            // anonymous segment so the UI never lands on an out-of-range index.
+            _ => 0,
+        };
+
+        internal static AuthOption SegmentIndexToAuthOption(int index) => index switch
+        {
+            1 => AuthOption.oauth,
+            2 => AuthOption.token,
+            _ => AuthOption.none,
+        };
+
         private void ApplyServerSettingAndRestart(Action applySetting)
         {
             var wasRunning = McpServerManager.IsRunning && UnityMcpPluginEditor.TransportMethod != TransportMethod.stdio;
@@ -158,6 +186,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             McpServerStatus.Running => "Stop",
             McpServerStatus.Starting => "Starting...",
             McpServerStatus.Stopping => "Stopping...",
+            McpServerStatus.Downloading => "Downloading...",
             McpServerStatus.External => "External",
             _ => "Start"
         };
@@ -167,6 +196,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             McpServerStatus.Running => "MCP server: Running (http)",
             McpServerStatus.Starting => "MCP server: Starting... (http)",
             McpServerStatus.Stopping => "MCP server: Stopping... (http)",
+            McpServerStatus.Downloading => "MCP server: Downloading server...",
             McpServerStatus.External => "MCP server: External" + serverTransport switch
             {
                 TransportMethod.stdio => " (stdio)",
@@ -179,15 +209,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         internal static string GetServerStatusClass(McpServerStatus status) => status switch
         {
             McpServerStatus.Running => USS_Connected,
-            McpServerStatus.Starting or McpServerStatus.Stopping => USS_Connecting,
+            McpServerStatus.Starting or McpServerStatus.Stopping or McpServerStatus.Downloading => USS_Connecting,
             McpServerStatus.External => USS_External,
             _ => USS_Disconnected
         };
 
+        // The button is interactive only in the two stable states (Running -> Stop, Stopped -> Start).
+        // Starting/Stopping/Downloading are transient and keep the button disabled.
         internal static bool IsServerButtonEnabled(McpServerStatus status) =>
             status == McpServerStatus.Running || status == McpServerStatus.Stopped;
 
-        private static void HandleServerButton(Button btnStartStop, Label statusLabel)
+        private static async void HandleServerButton(Button btnStartStop, Label statusLabel)
         {
             // Disable button immediately to prevent double-clicks
             btnStartStop.SetEnabled(false);
@@ -201,21 +233,101 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     UnityMcpPluginEditor.Instance.Save();
                     statusLabel.text = "MCP server: Stopping...";
                     McpServerManager.StopServer();
+                    return;
                 }
-                else
+
+                // User is starting the server - remember to auto-start
+                UnityMcpPluginEditor.KeepServerRunning = true;
+                UnityMcpPluginEditor.Instance.Save();
+
+                // Issue #845: if the server binary is missing/outdated, recover it before launching instead of
+                // calling StartServer() (which would return false and leave the UI stuck on "Starting…").
+                if (!McpServerManager.IsBinaryReadyToStart())
                 {
-                    // User is starting the server - remember to auto-start
-                    UnityMcpPluginEditor.KeepServerRunning = true;
-                    UnityMcpPluginEditor.Instance.Save();
-                    statusLabel.text = "MCP server: Starting...";
-                    McpServerManager.StartServer();
+                    statusLabel.text = "MCP server: Downloading server...";
+                    var downloaded = await McpServerManager.DownloadServerBinaryIfNeeded();
+                    if (!downloaded)
+                    {
+                        // Failure is already surfaced (popup + LastDownloadError -> error label + retry button).
+                        // The reactive subscription re-enables the button via the Stopped status; reset the label.
+                        ResetServerButtonAfterFailedStart(btnStartStop, statusLabel);
+                        return;
+                    }
+
+                    // On success the download path may have auto-started the server already
+                    // (KeepServerRunning was set true above), or another download (e.g. the package-update
+                    // watcher) may still be in flight — DownloadServerBinaryIfNeeded's dedup guard returns
+                    // true immediately in that case. In any of these the server is being driven centrally;
+                    // do NOT fall through to StartServer() and launch a (possibly stale) binary mid-download.
+                    if (McpServerManager.IsRunning || McpServerManager.IsStarting
+                        || McpServerManager.ServerStatus.CurrentValue == McpServerStatus.Downloading)
+                        return;
                 }
+
+                statusLabel.text = "MCP server: Starting...";
+
+                // Honor StartServer()'s bool: a false return must NOT leave the UI stuck on "Starting…".
+                if (!McpServerManager.StartServer())
+                    ResetServerButtonAfterFailedStart(btnStartStop, statusLabel);
             }
             catch
             {
                 // Re-enable button on exception to avoid infinite lock
                 btnStartStop.SetEnabled(true);
                 throw;
+            }
+        }
+
+        // Recovers the Start button + label after a start attempt that did not transition the status machine
+        // (StartServer returned false, or the recovery download failed). The reactive subscription also handles
+        // this via the Stopped status, but resetting here gives immediate, deterministic feedback.
+        private static void ResetServerButtonAfterFailedStart(Button btnStartStop, Label statusLabel)
+        {
+            statusLabel.text = GetServerLabelText(McpServerManager.ServerStatus.CurrentValue, null);
+            btnStartStop.SetEnabled(IsServerButtonEnabled(McpServerManager.ServerStatus.CurrentValue));
+        }
+
+        // Shows/hides the in-window server-binary error message + retry button based on the current
+        // McpServerManager.LastDownloadError value (issue #845). Both controls are optional (null-tolerant).
+        private static void UpdateDownloadErrorUI(string? error, Button? btnDownloadRetryServer, Label? mcpServerErrorLabel)
+        {
+            var hasError = !string.IsNullOrEmpty(error);
+            if (mcpServerErrorLabel != null)
+            {
+                mcpServerErrorLabel.text = hasError ? $"Server binary error: {error}" : string.Empty;
+                mcpServerErrorLabel.style.display = hasError ? DisplayStyle.Flex : DisplayStyle.None;
+            }
+            if (btnDownloadRetryServer != null)
+                btnDownloadRetryServer.style.display = hasError ? DisplayStyle.Flex : DisplayStyle.None;
+        }
+
+        // "Download / Retry server" button handler: re-runs the (user-initiated) download — which shows the
+        // result popup and updates LastDownloadError — and, on success, launches the server if the user wants
+        // it running. Reuses the same DownloadServerBinaryIfNeeded path as Tools ▸ Server ▸ Download Binaries.
+        private static async void HandleDownloadRetryButton(Button btnDownloadRetryServer, Label statusLabel)
+        {
+            btnDownloadRetryServer.SetEnabled(false);
+            try
+            {
+                statusLabel.text = "MCP server: Downloading server...";
+                var downloaded = await McpServerManager.DownloadServerBinaryIfNeeded();
+                if (downloaded
+                    && UnityMcpPluginEditor.KeepServerRunning
+                    && !McpServerManager.IsRunning
+                    && !McpServerManager.IsStarting
+                    && McpServerManager.ServerStatus.CurrentValue != McpServerStatus.Downloading)
+                {
+                    // Honor StartServer()'s bool: the download succeeded but this launch can still fail
+                    // (e.g. the binary was just installed but the process won't start). Surface it instead of
+                    // showing the "Updated" popup over a silently-not-running server (issue #845).
+                    if (!McpServerManager.StartServer())
+                        UnityEngine.Debug.LogWarning(
+                            "[Unity-MCP] Server binary installed but auto-start failed. Click Start to retry.");
+                }
+            }
+            finally
+            {
+                btnDownloadRetryServer.SetEnabled(true);
             }
         }
 

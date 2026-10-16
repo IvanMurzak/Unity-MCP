@@ -11,6 +11,8 @@
                     <ui:Label name="tutorialLink" text="YouTube Tutorial" class="section-desc link-label" />
                 </ui:VisualElement>
             </ui:VisualElement>
+            <!-- Machine-credential sign-in state chip (populated by AiAgentConfiguratorView.SetupSignInChip) -->
+            <ui:Label name="signInChip" text="Not signed in" class="signin-chip" style="display: none;" />
         </ui:VisualElement>
 
         <!-- Under header container -->

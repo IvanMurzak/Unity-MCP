@@ -52,8 +52,7 @@ jobs:
       - name: Setup Unity MCP
         uses: ./.github/actions/setup-unity-mcp
         with:
-          unity-email: ${{ secrets.UNITY_EMAIL }}
-          unity-password: ${{ secrets.UNITY_PASSWORD }}
+          unity-license: ${{ secrets.UNITY_LICENSE }}
           unity-mcp-tools: ${{ secrets.UNITY_MCP_TOOLS != '' && secrets.UNITY_MCP_TOOLS || 'assets-refresh,console-get-logs,script-execute,tests-run' }}
 
       - name: Run Claude Code
@@ -104,5 +103,5 @@ jobs:
       - name: Cleanup Docker containers
         if: always()
         run: |
-          docker rm -f unity-mcp-server unity-editor 2>/dev/null || true
+          docker rm -f gamedev-mcp-server unity-editor 2>/dev/null || true
         shell: bash

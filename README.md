@@ -3,7 +3,7 @@
 
 [![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
 [![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 [![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor supported')](https://unity.com/releases/editor/archive)
 [![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
 [![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
@@ -25,7 +25,7 @@
     <a href="https://code.visualstudio.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/vs-code-64.png" alt="VS Code" title="VS Code" height="36"></a>&nbsp;&nbsp;
     <a href="https://www.jetbrains.com/rider/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/rider-64.png" alt="Rider" title="Rider" height="36"></a>&nbsp;&nbsp;
     <a href="https://visualstudio.microsoft.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/visual-studio-64.png" alt="Visual Studio" title="Visual Studio" height="36"></a>&nbsp;&nbsp;
-    <a href="https://github.com/anthropics/claude-code"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
+    <a href="https://opencode.ai/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
     <a href="https://github.com/cline/cline"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/cline-64.png" alt="Cline" title="Cline" height="36"></a>&nbsp;&nbsp;
     <a href="https://github.com/Kilo-Org/kilocode"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
   </p>
@@ -65,8 +65,8 @@ npm install -g unity-mcp-cli
 # 2. Install "AI Game Developer" in Unity project
 unity-mcp-cli install-plugin ./MyUnityProject
 
-# 3. Login to cloud server
-unity-mcp-cli login ./MyUnityProject
+# 3. Sign in to ai-game.dev (opens your browser — OAuth device flow)
+unity-mcp-cli login
 
 # 4. Open Unity project (auto-connects and generates skills)
 unity-mcp-cli open ./MyUnityProject
@@ -94,7 +94,9 @@ That's it. Ask your AI *"Create 3 cubes in a circle with radius 2"* and watch it
 
 # Skills and Tools Reference
 
-The plugin ships with 100+ built-in tools across three categories. Each tool brings AI skill. All tools are available immediately after installation — no extra configuration required. See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference with detailed descriptions.
+The plugin ships with 70+ built-in tools across four categories. Each tool brings AI skill. All tools are available immediately after installation — no extra configuration required. See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference with detailed descriptions.
+
+> 🧰 Browse the full MCP tools registry online: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
 <details>
   <summary>Project & Assets</summary>
@@ -114,6 +116,7 @@ The plugin ships with 100+ built-in tools across three categories. Each tool bri
 - `assets-prefab-open` - Open prefab edit mode for a specific GameObject
 - `assets-prefab-save` - Save a prefab in prefab editing mode
 - `assets-refresh` - Refreshes the AssetDatabase
+- `assets-shader-get-data` - Get detailed data about a shader asset (properties, subshaders, passes)
 - `assets-shader-list-all` - List all available shaders in the project assets and packages
 - `package-add` - Install a package from the Unity Package Manager registry, Git URL, or local path
 - `package-list` - List all packages installed in the Unity project (UPM packages)
@@ -147,6 +150,7 @@ The plugin ships with 100+ built-in tools across three categories. Each tool bri
 - `scene-unload` - Unload scene from the opened scenes in Unity Editor
 - `screenshot-camera` - Captures a screenshot from a camera and returns it as an image
 - `screenshot-game-view` - Captures a screenshot from the Unity Editor Game View
+- `screenshot-isolated` - Render a GameObject in isolation from a chosen angle (optional composite 2x2 view)
 - `screenshot-scene-view` - Captures a screenshot from the Unity Editor Scene View
 
 </details>
@@ -154,6 +158,7 @@ The plugin ships with 100+ built-in tools across three categories. Each tool bri
 <details>
   <summary>Scripting & Editor</summary>
 
+- `console-clear-logs` - Clears the MCP log cache and the Unity Editor Console window
 - `console-get-logs` - Retrieves Unity Editor logs with filtering options
 - `editor-application-get-state` - Returns information about the Unity Editor application state (playmode, paused, compilation)
 - `editor-application-set-state` - Control the Unity Editor application state (start/stop/pause playmode)
@@ -165,7 +170,15 @@ The plugin ships with 100+ built-in tools across three categories. Each tool bri
 - `script-execute` - Compiles and executes C# code dynamically using Roslyn
 - `script-read` - Reads the content of a script file
 - `script-update-or-create` - Updates or creates script file with the provided C# code
-- `tests-run` - Execute Unity tests (EditMode/PlayMode) with filtering and detailed results
+- `tests-run` - Execute Unity tests (EditMode/PlayMode): any RQL selection over the `tests` source as one run, results filtered with RQL
+- `type-get-json-schema` - Generate a JSON Schema for a C# type via reflection
+
+</details>
+
+<details>
+  <summary>Profiling & Diagnostics</summary>
+
+- RQL source `profiler` (via `rql-query` / `rql-mutate`) - memory, rendering, script and frame snapshots, module flags; `Start`, `Stop`, `ClearFrames`, `EnableModule`, `Save`, `Load`
 
 </details>
 
@@ -176,8 +189,15 @@ Install extensions when need more tools or [create your own tools](#add-custom-t
 | Extension | Description |
 | --- | --- |
 | **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Set of additional tools for Unity Animations |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | MCP Tools for Cinemachine |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | MCP Tools for the Unity Input System |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | MCP Tools for AI Navigation (NavMesh surfaces, baking, agents, links) |
 | **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Set of additional tools for Unity Particle System |
 | **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Set of additional tools for Unity ProBuilder |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | MCP Tools for Unity Splines |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Set of additional tools for Unity Terrain |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | MCP Tools for Unity 2D Tilemaps |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | MCP Tools for Unity Timeline cutscenes and sequences |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -281,8 +301,8 @@ unity-mcp-cli create-project ./MyUnityProject              #  │ codex         
 # 2. Install "AI Game Developer" in Unity project          #  │ gemini             │
 unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
                                                            #  │ kilo-code          │
-# 3. Login to cloud server                                 #  │ open-code          │
-unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
+# 3. Sign in to ai-game.dev (OAuth device flow)            #  │ open-code          │
+unity-mcp-cli login                                        #  │ rider-junie        │
                                                            #  │ unity-ai           │
 # 4. Open Unity project (auto-connects and generates skills)  │ vs-copilot         │
 unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
@@ -292,6 +312,8 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 ```
 
 > See [full CLI documentation](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) for all available commands.
+
+> **Cloud sign-in & project pinning:** `unity-mcp-cli login` runs the browser OAuth device flow and stores the credential in the shared machine store (`~/.ai-game-dev/credentials.json`) — there is no personal access token to paste. By default the AI-agent config that `setup-mcp` writes points at a per-project **pinned** endpoint (`https://ai-game.dev/mcp/p/<pin>`); pass `--no-pin` to use the shared `https://ai-game.dev/mcp` endpoint instead. Teams can distribute access with an **enrollment code**: `unity-mcp-cli install-plugin --enroll <code>`.
 
 ## Step 2: Install `AI agent`
 
@@ -333,13 +355,13 @@ If automatic configuration doesn't work for you for any reason, use the JSON fro
 
 | Platform            | `<command>`                                                                                                 |
 | ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/unity-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/unity-mcp-server.exe" port=<port> client-transport=stdio` |
-| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/unity-mcp-server" port=<port> client-transport=stdio`     |
-| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/unity-mcp-server" port=<port> client-transport=stdio`       |
-| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/unity-mcp-server" port=<port> client-transport=stdio`     |
-| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/unity-mcp-server" port=<port> client-transport=stdio`   |
+| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
+| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/gamedev-mcp-server.exe" port=<port> client-transport=stdio` |
+| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
+| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/gamedev-mcp-server" port=<port> client-transport=stdio`       |
+| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
+| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`   |
 
 **2. Replace `<unityProjectPath>` with the full path to Unity project**
 
@@ -450,18 +472,18 @@ Unity MCP provides advanced tools that enable the LLM to work faster and more ef
 
 To add a custom `Tool`, you need:
 
-1. A class with the `McpPluginToolType` attribute
-2. A method in the class with the `McpPluginTool` attribute
+1. A class with the `AiToolType` attribute
+2. A method in the class with the `AiTool` attribute
 3. *Optional:* Add a `Description` attribute to each method argument to help the LLM understand it
 4. *Optional:* Use `string? optional = null` properties with `?` and default values to mark them as `optional` for the LLM
 
 > Note that the line `MainThread.Instance.Run(() =>` allows you to run code on the main thread, which is required for interacting with Unity's API. If you don't need this and running the tool in a background thread is acceptable, avoid using the main thread for efficiency purposes.
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public class Tool_GameObject
 {
-    [McpPluginTool
+    [AiTool
     (
         "MyCustomTask",
         Title = "Create a new GameObject"
@@ -490,10 +512,10 @@ public class Tool_GameObject
 `MCP Prompt` allows you to inject custom prompts into the conversation with the LLM. It supports two sender roles: User and Assistant. This is a quick way to instruct the LLM to perform specific tasks. You can generate prompts using custom data, providing lists or any other relevant information.
 
 ```csharp
-[McpPluginPromptType]
+[AiPromptType]
 public static class Prompt_ScriptingCode
 {
-    [McpPluginPrompt(Name = "add-event-system", Role = Role.User)]
+    [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
     public string AddEventSystem()
     {
@@ -522,7 +544,7 @@ var mcpPlugin = UnityMcpPluginRuntime.Initialize(builder =>
     })
     .Build();
 
-await mcpPlugin.Connect(); // Start active connection with retry to Unity-MCP-Server
+await mcpPlugin.Connect(); // Start active connection with retry to the MCP server
 
 await mcpPlugin.Disconnect(); // Stop active connection and close existed connection
 ```
@@ -532,17 +554,17 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 There is a classic Chess game. Lets outsource to LLM the bot logic. Bot should do the turn using game rules.
 
 ```csharp
-[McpPluginToolType]
+[AiToolType]
 public static class ChessGameAI
 {
-    [McpPluginTool("chess-do-turn", Title = "Do the turn")]
+    [AiTool("chess-do-turn", Title = "Do the turn")]
     [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
     public static Task<bool> DoTurn(int figureId, Vector2Int position)
     {
         return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
     }
 
-    [McpPluginTool("chess-get-board", Title = "Get the board")]
+    [AiTool("chess-get-board", Title = "Get the board")]
     [Description("Get the current state of the chess board.")]
     public static Task<BoardData> GetBoard()
     {
@@ -567,11 +589,16 @@ Doesn't matter what launch option you choose, all of them support custom configu
 
 | Environment Variable         | Command Line Args    | Description                                                                  |
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
-| `MCP_PLUGIN_PORT`            | `--port`             | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
-| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
+| `MCP_PLUGIN_PORT`             | `--port`                 | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
+| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`       | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
+| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport`     | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
+| `MCP_AUTHORIZATION`           | `--authorization`        | Authentication mode for incoming **Client** connections: `none`, `oauth`, or `token` (default: `none`; the legacy `required` mode was removed) |
+| `MCP_PLUGIN_TOKEN`            | `--token`                | Bearer token required from the **Client** when authorization is `token` (default: unset) |
+| `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | Shut down the server after this many seconds with no connections (default: 600) |
 
 > Command line args support also the option with a single `-` prefix (`-port`) and an option without prefix at all (`port`).
+
+> For analytics and authorization **webhook** variables (`MCP_PLUGIN_WEBHOOK_*`), see [docs/mcp-server.md](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md).
 
 > **Choosing a transport:** Use `stdio` when the MCP client launches the server binary directly (local use — this is the most common setup). Use `streamableHttp` when running the server as a standalone process or in Docker/cloud, and connecting over HTTP.
 
@@ -581,27 +608,30 @@ The Unity MCP Plugin reads the following environment variables (and command-line
 
 | Environment Variable        | Command Line Arg            | Values              | Description                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |
-| `UNITY_MCP_HOST`            | `-UNITY_MCP_HOST`           | URL string                    | Override the MCP Server host URL                                    |
+| `UNITY_MCP_CLOUD_URL`       | `-url`                      | URL string                    | Override the MCP Server URL (`UNITY_MCP_HOST` is a legacy alias)     |
+| `UNITY_MCP_CONNECTION_MODE` | `-UNITY_MCP_CONNECTION_MODE`| `Cloud` / `Custom`            | Force the connection mode (a loopback URL implies `Custom`)          |
 | `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`              | Force enable or disable the active connection                       |
-| `UNITY_MCP_AUTH_OPTION`     | `-UNITY_MCP_AUTH_OPTION`    | `none` / `required`           | Force set the authentication mode                                   |
-| `UNITY_MCP_TOKEN`           | `-UNITY_MCP_TOKEN`          | string                        | Force set the authentication token                                  |
+| `UNITY_MCP_AUTH_OPTION`     | `-auth`                     | `none` / `oauth` / `token`    | Force set the authentication mode (legacy `required` migrates to `token`) |
+| `UNITY_MCP_TOKEN`           | `-token`                    | string                        | Force set the authentication token                                  |
+| `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | Force the client transport the plugin configures                    |
+| `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | Force whether the plugin keeps a local server process running       |
 | `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | comma-separated tool IDs      | Enable only the listed tools; all others are disabled. Unknown IDs are logged as errors. |
 
-> Command-line args take precedence over environment variables. Both override the saved config file value.
+> Command-line args take precedence over environment variables. Both override the saved config file value. The short flags `-url`, `-token`, and `-auth` are aliases; the full `-UNITY_MCP_*` arg names are also accepted.
 
 **Example (CI/CD batch mode):**
 
 ```bash
 Unity.exe -batchmode -nographics \
-  -UNITY_MCP_HOST=http://localhost:8080 \
+  -UNITY_MCP_CLOUD_URL=http://localhost:8080 \
   -UNITY_MCP_KEEP_CONNECTED=true \
-  -UNITY_MCP_AUTH_OPTION=required \
+  -UNITY_MCP_AUTH_OPTION=token \
   -UNITY_MCP_TOKEN=my-secret-token
 ```
 
 ## Docker 📦
 
-[![Docker Image](https://img.shields.io/docker/image-size/ivanmurzakdev/unity-mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/ivanmurzakdev/unity-mcp-server)
+[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
 
 Make sure Docker is installed. And please make sure Docker Desktop is launched if you are at Windows operation system.
 
@@ -610,7 +640,7 @@ Make sure Docker is installed. And please make sure Docker Desktop is launched i
 ### `streamableHttp` Transport
 
 ```bash
-docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -p 8080:8080 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -635,7 +665,7 @@ docker run -p 8080:8080 ivanmurzakdev/unity-mcp-server
 For using this variant, `MCP Client` should launch the `MCP Server` in the docker. It is achievable through the modified `MCP Client` configuration.
 
 ```bash
-docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/unity-mcp-server
+docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -653,7 +683,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
         "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
         "-p",
         "8080:8080",
-        "ivanmurzakdev/unity-mcp-server"
+        "aigamedeveloper/mcp-server"
       ]
     }
   }
@@ -665,7 +695,7 @@ docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 ivanmurzakdev/un
 ### Custom `port`
 
 ```bash
-docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
+docker run -e MCP_PLUGIN_PORT=123 -p 123:123 aigamedeveloper/mcp-server
 ```
 
 <details>
@@ -686,10 +716,10 @@ docker run -e MCP_PLUGIN_PORT=123 -p 123:123 ivanmurzakdev/unity-mcp-server
 
 ## Binary executable
 
-You may launch Unity `MCP Server` directly from a binary file. You would need to have a binary compiled specifically for your CPU architecture. Check [GitHub Release Page](https://github.com/IvanMurzak/Unity-MCP/releases), it contains pre-compiled binaries for all CPU architectures.
+You may launch Unity `MCP Server` directly from a binary file. You would need to have a binary compiled specifically for your CPU architecture. Check [GitHub Release Page](https://github.com/IvanMurzak/GameDev-MCP-Server/releases), it contains pre-compiled binaries for all CPU architectures.
 
 ```bash
-./unity-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
+./gamedev-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
 ```
 
 <details>
@@ -701,7 +731,7 @@ You may launch Unity `MCP Server` directly from a binary file. You would need to
 {
   "mcpServers": {
     "ai-game-developer": {
-      "command": "<project>/Library/mcp-server/win-x64/unity-mcp-server.exe",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
       "args": [
         "--port=8080",
         "--plugin-timeout=10000",
@@ -816,6 +846,15 @@ It is a bridge between `MCP Client` and "something else", in this particular cas
 - "When creating UI elements, always add them to the Canvas in Scene/UI/MainCanvas"
 - "Performance is critical - prefer object pooling for frequently instantiated objects"
 - "This project follows SOLID principles - explain any architecture decisions"
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+# Uninstall 🧹
+
+To completely remove the plugin from your Unity project:
+
+1. Open **Window ▸ Package Manager**, select the **AI Game Developer — MCP** package, and click **Remove**.
+2. Close Unity, then delete the `Assets/Plugins/NuGet` folder (along with its `Assets/Plugins/NuGet.meta` file).
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

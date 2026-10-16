@@ -1,6 +1,8 @@
 ---
 name: package-remove
 description: Uninstall a UPM package from the Unity project. Modifies `manifest.json` and may trigger a domain reload — the final result is delivered after the reload via the request's `requestId`. Built-in packages and packages that are dependencies of others cannot be removed. Use 'package-list' to list installed packages first.
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Package Manager / Remove
