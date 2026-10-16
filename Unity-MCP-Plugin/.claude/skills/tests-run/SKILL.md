@@ -1,6 +1,8 @@
 ---
 name: tests-run
 description: "Execute Unity tests (`EditMode` or `PlayMode`) and return per-test results. Supports filtering by test assembly, namespace, class, and method. Refreshes the AssetDatabase first; defers execution across domain reloads if scripts changed. Precondition: every open scene must be saved — dirty scenes abort the run."
+metadata:
+  generated-by: mcp-plugin-dotnet
 ---
 
 # Tests / Run
@@ -11,6 +13,8 @@ Execute Unity tests and return detailed results. Supports filtering by test mode
 
 - `testMode` (default `EditMode`) — `EditMode` or `PlayMode`. EditMode is faster; prefer it during iteration.
 - `testAssembly` / `testNamespace` / `testClass` / `testMethod` — optional, layered filters. Namespace and class filters become regex `groupNames` so the validation count and Unity's execution stay in sync. `testMethod` must be fully qualified (`Namespace.FixtureName.TestName`).
+- `query` — RQL over the `tests` source instead of the four filters: any selection, run as ONE Test Runner run, e.g. `tests | where fixture == "PlayerTests" or categories contains "Smoke"`. One mode per run; the mode comes from the selected tests. Explore first with rql-query: `tests | where fullName contains "Spline" | select fullName mode`.
+- `result` — RQL stages applied to the results (source `testResults`: name status durationMs message stackTrace), e.g. `where status == "Failed" | select name message`; the answer is then a summary line plus compact RQL text.
 
 ## Response toggles
 
@@ -34,6 +38,8 @@ unity-mcp-cli run-tool tests-run --input '{
   "testNamespace": "string_value",
   "testClass": "string_value",
   "testMethod": "string_value",
+  "query": "string_value",
+  "result": "string_value",
   "includePassingTests": false,
   "includeMessages": false,
   "includeStacktrace": false,
@@ -70,6 +76,8 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 | `testNamespace` | `string` | No | Specific test namespace to run (optional). Example: 'MyTestNamespace' |
 | `testClass` | `string` | No | Specific test class name to run (optional). Example: 'MyTestClass' |
 | `testMethod` | `string` | No | Specific fully qualified test method to run (optional). Example: 'MyTestNamespace.FixtureName.TestName' |
+| `query` | `string` | No | RQL over the 'tests' source selecting the tests (instead of the filters above), run as one run. Example: tests | where fullName contains "Player" and mode == "EditMode" |
+| `result` | `string` | No | RQL stages applied to the results (source 'testResults': name status durationMs message stackTrace); the answer is a summary line plus compact text. Example: where status == "Failed" | select name message |
 | `includePassingTests` | `boolean` | No | Include details for all tests, both passing and failing (default: false). If you just need details for failing tests, set to false. |
 | `includeMessages` | `boolean` | No | Include test result messages in the test results (default: true). If you just need pass/fail status, set to false. |
 | `includeStacktrace` | `boolean` | No | Include stack traces in the test results (default: false). |
@@ -100,6 +108,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
       "type": "string"
     },
     "testMethod": {
+      "type": "string"
+    },
+    "query": {
+      "type": "string"
+    },
+    "result": {
       "type": "string"
     },
     "includePassingTests": {

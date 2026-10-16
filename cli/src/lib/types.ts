@@ -9,6 +9,11 @@
 // and cannot introduce a side effect. `ExtensionDescriptor` is the catalogue entry
 // shape, needed by `InstallExtensionOptions.catalog`.
 import type { ExtensionDescriptor } from '../utils/extensions-catalog.js';
+import type {
+  ProjectKeyResolver,
+  SetupMcpCredential,
+  SetupMcpResult as CoreSetupMcpResult,
+} from '@baizor/gamedev-cli-core';
 
 // ---------------------------------------------------------------------------
 // Progress events
@@ -329,6 +334,24 @@ export interface SetupMcpOptions {
    */
   token?: string;
   /**
+   * `--oauth`: write a URL-only Cloud config (the client signs in with its own OAuth) instead of the
+   * project key, removing any previous `Authorization` header.
+   */
+  oauth?: boolean;
+  /**
+   * `--regenerate-key`: mint a fresh project key (overwriting the cached one), rewrite the config, then
+   * revoke the previous key. Cloud http only; fails without a login.
+   */
+  regenerateKey?: boolean;
+  /** Machine name recorded on a minted project key; defaults to the host name. */
+  machineName?: string;
+  /**
+   * Resolves the Cloud project key. Defaults to cli-core's resolver over the machine credential store
+   * and `~/.ai-game-dev/project-keys.json`; injectable for tests and for hosts that own a credential
+   * provider already.
+   */
+  projectKeyResolver?: ProjectKeyResolver;
+  /**
    * `--no-pin` escape hatch (auth-fixes T4/B4). By default the http URL is pinned to this project's
    * routing segment (`<base>/mcp/p/<pin-v2>`) and the stdio config carries a `project=<pin>` arg, so
    * the config routes strictly to this project's engine instance. Set `true` to write an unpinned URL
@@ -343,10 +366,27 @@ export interface SetupMcpSuccess {
   success: true;
   /** The agent whose config file was written. */
   agentId: string;
-  /** Absolute path to the agent config file that was written. */
+  /** Absolute path to the agent's primary config file (the first of {@link configPaths}). */
   configPath: string;
+  /**
+   * Every agent config file that was written. One entry for most agents; Antigravity writes BOTH of
+   * its candidate locations (`~/.gemini/config/mcp_config.json` and
+   * `~/.gemini/antigravity/mcp_config.json`).
+   */
+  configPaths: string[];
+  /**
+   * `regenerateKey` only: the OTHER agent configs of this project that carried the previous project
+   * key and were moved to the new one before it was revoked.
+   */
+  rewrittenConfigPaths?: string[];
   /** Transport actually written. */
   transport: McpTransport;
+  /** Which credential the written config carries: an explicit PAT, the project key, or none (URL-only). */
+  credential: SetupMcpCredential;
+  /** Server-side id of the project key written (`credential === 'project-key'` only). */
+  projectKeyId?: string;
+  /** Whether the project key was reused from the local cache or freshly minted. */
+  projectKeySource?: Extract<CoreSetupMcpResult, { kind: 'success' }>['projectKeySource'];
   warnings: string[];
   nextSteps: string[];
 }

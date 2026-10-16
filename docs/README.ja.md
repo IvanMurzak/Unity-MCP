@@ -170,7 +170,7 @@ unity-mcp-cli open ./MyUnityProject
 - `script-execute` - Roslynを使用してC#コードを動的にコンパイル・実行
 - `script-read` - スクリプトファイルの内容を読み取る
 - `script-update-or-create` - 提供されたC#コードでスクリプトファイルを更新または作成
-- `tests-run` - フィルタリングと詳細な結果付きでUnityテスト（EditMode/PlayMode）を実行
+- `tests-run` - Unityテスト（EditMode/PlayMode）を実行：`tests` ソースに対する任意のRQL選択を1回の実行で、結果はRQLで絞り込み
 - `type-get-json-schema` - リフレクションを使用してC#型のJSON Schemaを生成
 
 </details>
@@ -178,18 +178,7 @@ unity-mcp-cli open ./MyUnityProject
 <details>
   <summary>プロファイリング＆診断</summary>
 
-- `profiler-capture-frame` - 現在のフレームのタイミング情報をキャプチャ（デルタタイム、FPS、フレーム数）
-- `profiler-clear-data` - Editor Profilerが現在保持しているすべてのフレームを破棄
-- `profiler-enable-module` - 指定されたプロファイラーモジュールのローカルな有効化フラグを切り替え
-- `profiler-get-memory-stats` - メモリ統計のスナップショットを返す（予約済み、割り当て済み、monoヒープ、グラフィックス）
-- `profiler-get-rendering-stats` - フレームタイミング、FPS、vsync、目標フレームレート、グラフィックスデバイスタイプを返す
-- `profiler-get-script-stats` - スクリプト実行タイミングとMono / GCメモリ使用量を返す
-- `profiler-get-status` - プロファイラーの有効状態、アクティブなモジュール、プラットフォームサポートを返す
-- `profiler-list-modules` - 既知のすべてのプロファイラーモジュール名とその有効化フラグを一覧表示
-- `profiler-load-data` - 以前に保存したプロファイラーのJSONスナップショットを読み戻す
-- `profiler-save-data` - プロファイラー由来の統計のスナップショットをJSONファイルに保存
-- `profiler-start` - Unityのランタイムプロファイラーを有効化しProfilerウィンドウを開く
-- `profiler-stop` - Unityのランタイムプロファイラーを無効化
+- RQLソース `profiler`（`rql-query` / `rql-mutate` 経由）- メモリ、レンダリング、スクリプト、フレームのスナップショットとモジュールフラグ。`Start`、`Stop`、`ClearFrames`、`EnableModule`、`Save`、`Load`
 
 </details>
 

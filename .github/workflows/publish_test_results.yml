@@ -24,7 +24,10 @@ permissions:
 jobs:
   publish:
     runs-on: ubuntu-latest
-    if: github.event.workflow_run.conclusion != 'cancelled'
+    # Skipped for chain dispatches (workflow_dispatch): they upload no `Test results for …` artifacts
+    # (chain mode keeps only the JSON leg records), so publishing would post a neutral "0 tests"
+    # `Test Results` check that REPLACES the PR run's real report on the same head commit.
+    if: github.event.workflow_run.conclusion != 'cancelled' && github.event.workflow_run.event != 'workflow_dispatch'
 
     steps:
       - name: Download all test result artifacts

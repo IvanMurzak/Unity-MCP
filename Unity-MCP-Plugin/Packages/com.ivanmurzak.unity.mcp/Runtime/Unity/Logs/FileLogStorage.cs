@@ -31,6 +31,13 @@ namespace com.IvanMurzak.Unity.MCP
     {
         protected const int DefaultMaxFileSizeMB = 512;
 
+        /// <summary>
+        /// While running, the sequence high-water mark is persisted in blocks of this size (a reserved ceiling),
+        /// so a crash or an editor restart can never reissue a number, without a disk write per entry.
+        /// An orderly Dispose persists the exact value instead.
+        /// </summary>
+        const long SequenceReservation = 256;
+
         protected readonly ILogger _logger;
         protected readonly string _directoryPath;
         protected readonly string _requestedFileName;
@@ -44,6 +51,18 @@ namespace com.IvanMurzak.Unity.MCP
         protected string filePath;
 
         protected FileStream? fileWriteStream;
+
+        /// <summary>
+        /// Sidecar holding the sequence high-water mark. It always covers every number issued, so deleting the log
+        /// file (Clear, ResetLogFile, the Temp/ wipe on Editor start) never restarts the counter.
+        /// </summary>
+        readonly string _sequenceFilePath;
+
+        /// <summary>Highest sequence issued so far. Only touched under <see cref="_fileMutex"/>.</summary>
+        long _sequence;
+
+        /// <summary>Highest value known to be persisted in the sidecar. Only touched under <see cref="_fileMutex"/>.</summary>
+        long _sequenceCeiling;
 
         public FileLogStorage(
             ILogger? logger = null,
@@ -86,6 +105,112 @@ namespace com.IvanMurzak.Unity.MCP
             };
 
             fileWriteStream = CreateWriteStream(_requestedFileName, out fileName, out filePath);
+
+            // Editor: Library/ survives the Temp/ wipe that happens on every Editor start. Not Library/mcp-server:
+            // that is the server binary cache, deleted on every server update. A caller-chosen directory keeps its
+            // sidecar next to the log; so does a player build (no Library there).
+            var sequenceDirectory = directoryPath == null && Application.isEditor
+                ? Path.GetFullPath($"{Path.GetDirectoryName(Application.dataPath)}/Library/mcp-logs")
+                : _directoryPath;
+            try
+            {
+                if (!Directory.Exists(sequenceDirectory))
+                    Directory.CreateDirectory(sequenceDirectory);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to create sequence directory {dir}. Using the log directory.", sequenceDirectory);
+                sequenceDirectory = _directoryPath;
+            }
+            _sequenceFilePath = Path.Combine(sequenceDirectory, Path.GetFileNameWithoutExtension(_requestedFileName) + ".sequence");
+
+            // Continue where the previous instance stopped: the larger of the persisted high-water mark
+            // (survives Clear and a Temp/ wipe) and the newest entry still in the log file.
+            lock (_fileMutex)
+            {
+                var persisted = ReadPersistedSequence();
+                _sequence = Math.Max(persisted, ReadHighestSequenceInFile());
+                _sequenceCeiling = persisted;
+
+                // The log knows a higher number than the sidecar (the sidecar was lost): record it now, so the
+                // sidecar alone covers every number issued before anything deletes the log.
+                if (_sequence > persisted)
+                    PersistSequence(_sequence);
+            }
+        }
+
+        long ReadPersistedSequence()
+        {
+            try
+            {
+                if (File.Exists(_sequenceFilePath)
+                    && long.TryParse(File.ReadAllText(_sequenceFilePath).Trim(), out var value)
+                    && value > 0)
+                    return value;
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to read sequence file {file}.", _sequenceFilePath);
+            }
+            return 0;
+        }
+
+        long ReadHighestSequenceInFile()
+        {
+            try
+            {
+                if (!File.Exists(filePath))
+                    return 0;
+
+                using var stream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+                // Sequences ascend through the file, so the newest readable entry carries the highest one.
+                foreach (var entry in ReadLogEntriesFromLinesInReverse(stream))
+                    return Math.Max(entry.Sequence, 0);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to read the last sequence from {file}.", filePath);
+            }
+            return 0;
+        }
+
+        /// <summary>
+        /// Persists <paramref name="value"/> to the sidecar. Writes a temp file and swaps it in, so a failed
+        /// write can never truncate the existing high-water mark. Must be called under <see cref="_fileMutex"/>.
+        /// </summary>
+        void PersistSequence(long value)
+        {
+            // Recorded before the write: the warning below is itself a Unity log that re-enters Append on this
+            // thread (the mutex is reentrant), and a failing disk must not make that recurse.
+            _sequenceCeiling = value;
+            try
+            {
+                var tempPath = _sequenceFilePath + ".tmp";
+                File.WriteAllText(tempPath, value.ToString());
+                if (File.Exists(_sequenceFilePath))
+                    File.Replace(tempPath, _sequenceFilePath, null);
+                else
+                    File.Move(tempPath, _sequenceFilePath);
+            }
+            catch (Exception ex)
+            {
+                _logger.LogWarning(ex, "Failed to persist sequence {value} to {file}.", value, _sequenceFilePath);
+            }
+        }
+
+        /// <summary>
+        /// Gives every entry its sequence number. Must be called under <see cref="_fileMutex"/>, in the same
+        /// critical section that stores the entry, because the capture callback fires from many threads.
+        /// </summary>
+        void AssignSequences(LogEntry[] entries)
+        {
+            // Reserve first, assign after: a failing reservation logs a warning that re-enters Append, and that
+            // nested entry must get its number before this batch is numbered, or the file would not ascend.
+            if (_sequence + entries.Length > _sequenceCeiling)
+                PersistSequence(_sequence + entries.Length + SequenceReservation);
+
+            foreach (var entry in entries)
+                entry.Sequence = ++_sequence;
         }
 
         protected virtual FileStream CreateWriteStream(string fileName, out string resultFileName, out string resultFilePath)
@@ -185,6 +310,7 @@ namespace com.IvanMurzak.Unity.MCP
                 }
                 lock (_fileMutex)
                 {
+                    AssignSequences(entries);
                     AppendInternal(entries);
                 }
             });
@@ -200,10 +326,13 @@ namespace com.IvanMurzak.Unity.MCP
             }
             lock (_fileMutex)
             {
+                // Numbered in the same critical section that stores the entries.
+                AssignSequences(entries);
                 AppendInternal(entries);
             }
         }
 
+        /// <summary>Stores entries that already carry their sequence. Must be called under <see cref="_fileMutex"/>.</summary>
         protected virtual void AppendInternal(params LogEntry[] entries)
         {
             if (_isDisposed.Value)
@@ -317,31 +446,98 @@ namespace com.IvanMurzak.Unity.MCP
             bool includeStackTrace = false,
             int lastMinutes = 0)
         {
-            if (!File.Exists(filePath))
-                return Array.Empty<LogEntry>();
+            var allLogs = ReadNewestFirst(CutoffTime(lastMinutes));
 
-            using (var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+            // Apply log type filter
+            if (logTypeFilter.HasValue)
             {
-                var cutoffTime = lastMinutes > 0
-                    ? DateTime.Now.AddMinutes(-lastMinutes)
-                    : (DateTime?)null;
+                allLogs = allLogs
+                    .Where(log => log.LogType == logTypeFilter.Value);
+            }
 
-                var allLogs = ReadLogEntriesFromLinesInReverse(fileStream, cutoffTime);
+            // Take the most recent entries (up to maxEntries), back in chronological order
+            return allLogs
+                .Take(maxEntries)
+                .Reverse()
+                .Select(log => log.Clone(includeStackTrace))
+                .ToArray();
+        }
 
-                // Apply log type filter
-                if (logTypeFilter.HasValue)
+        static DateTime? CutoffTime(int lastMinutes)
+            => lastMinutes > 0 ? DateTime.Now.AddMinutes(-lastMinutes) : (DateTime?)null;
+
+        /// <summary>
+        /// Every stored entry, newest first, ending at the first one older than <paramref name="cutoffTime"/>.
+        /// Yields the storage's own instances (a buffered storage shares them with its writer): hand out copies.
+        /// Must be enumerated under <see cref="_fileMutex"/>.
+        /// </summary>
+        protected virtual IEnumerable<LogEntry> ReadNewestFirst(DateTime? cutoffTime)
+        {
+            if (!File.Exists(filePath))
+                yield break;
+
+            using var fileStream = new FileStream(filePath, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            foreach (var entry in ReadLogEntriesFromLinesInReverse(fileStream, cutoffTime))
+                yield return entry;
+        }
+
+        public virtual Task<LogEntry[]> QuerySinceAsync(
+            long sinceSequence,
+            int maxEntries = 100,
+            LogType? logTypeFilter = null,
+            bool includeStackTrace = false,
+            int lastMinutes = 0)
+        {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(QuerySinceAsync));
+                return Task.FromResult(Array.Empty<LogEntry>());
+            }
+            return Task.Run(() => QuerySince(sinceSequence, maxEntries, logTypeFilter, includeStackTrace, lastMinutes));
+        }
+
+        public virtual LogEntry[] QuerySince(
+            long sinceSequence,
+            int maxEntries = 100,
+            LogType? logTypeFilter = null,
+            bool includeStackTrace = false,
+            int lastMinutes = 0)
+        {
+            if (_isDisposed.Value)
+            {
+                _logger.LogWarning("{method} called but already disposed, ignored.",
+                    nameof(QuerySince));
+                return Array.Empty<LogEntry>();
+            }
+            lock (_fileMutex)
+            {
+                // A cursor above everything issued means the counter restarted: read from the beginning.
+                var cursor = sinceSequence > _sequence ? 0 : Math.Max(sinceSequence, 0);
+                if (maxEntries <= 0 || cursor == _sequence)
+                    return Array.Empty<LogEntry>(); // nothing newer than the cursor exists
+
+                // Read newest first down to the cursor, keeping only the OLDEST maxEntries matches.
+                var page = new Queue<LogEntry>(); // no capacity: maxEntries comes from the caller and may be huge
+                foreach (var entry in ReadNewestFirst(CutoffTime(lastMinutes)))
                 {
-                    allLogs = allLogs
-                        .Where(log => log.LogType == logTypeFilter.Value);
+                    // Sequences ascend through the storage, so the first entry at or below the cursor ends the scan.
+                    // That also ends it at entries written before sequences existed (0).
+                    if (entry.Sequence <= cursor)
+                        break;
+
+                    if (logTypeFilter.HasValue && entry.LogType != logTypeFilter.Value)
+                        continue;
+
+                    if (page.Count == maxEntries)
+                        page.Dequeue(); // the newest kept so far; an older match takes its place
+                    page.Enqueue(entry);
                 }
 
-                // Take the most recent entries (up to maxEntries)
-                var filteredLogs = allLogs
-                    .Take(maxEntries)
+                return page
                     .Reverse()
+                    .Select(entry => entry.Clone(includeStackTrace))
                     .ToArray();
-
-                return filteredLogs;
             }
         }
 
@@ -439,8 +635,16 @@ namespace com.IvanMurzak.Unity.MCP
             }
             finally
             {
-                fileWriteStream?.Dispose();
-                fileWriteStream = null;
+                lock (_fileMutex)
+                {
+                    fileWriteStream?.Dispose();
+                    fileWriteStream = null;
+
+                    // Orderly shutdown: replace the block reservation with the exact value, so a reopened
+                    // storage continues right after the last number issued.
+                    if (_sequence > 0)
+                        PersistSequence(_sequence);
+                }
             }
 
             GC.SuppressFinalize(this);

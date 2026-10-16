@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "3";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "11";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -114,14 +114,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // SignInRequiredReason surface ("server configuration error" class for invalid_target),
             // and the ConnectionCredentialCoordinator stop-on-dead-credential / resume-on-SignedIn-edge
             // behavior the AssistedReauthService (02 §C4, D4 ladder) renders and relies on.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "8.3.0", includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "8.8.0", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised
             // by the EditMode tests under Tests/Editor/AtomicApi/, which
             // compile-fail against 5.0.0. 5.1.1 adds defensive try/catch around
             // reflection so the documented no-throw contract on Try* methods holds.
-            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.4.0",  includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.4.2",  includeInBuild: true),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
@@ -142,6 +142,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             new NuGetPackage("R3",                                                    "1.3.0",  includeInBuild: true),
 
             // --- Editor-only dependencies (excluded from builds) ---
+            // RQL (the query language of rql-query / rql-mutate and the tools' data layer): Editor-only, so it never
+            // reaches player builds. Its only dependency is System.Text.Json 8.0.5, the version pinned above.
+            new NuGetPackage("com.IvanMurzak.Rql",                                    "0.1.1"),
             new NuGetPackage("Microsoft.Bcl.Memory",                                  "10.0.3"),
             // Pinned to 4.8.0 so transitive System.Collections.Immutable stays at 7.0.0
             // (forward-compatible with Unity 6.6's built-in 8.0.0). Roslyn 4.14 requires
