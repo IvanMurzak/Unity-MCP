@@ -105,7 +105,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
             var duration = DateTime.Now - startTime;
             _summary.Duration = DateTime.Now - startTime;
-            // RunStarted receives the filtered test set; result.Test can contain the full tree.
+            // Count the run's results, not result.Test: that is the whole test tree of the test mode, whatever the filter.
+            // RunStarted's count is only provisional: before com.unity.test-framework 1.4 it gets the whole tree too.
+            _summary.TotalTests = CountTestResults(result);
             if (_summary.FailedTests > 0)
             {
                 _summary.Status = TestRunStatus.Failed;
@@ -330,6 +332,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             {
                 return 0;
             }
+        }
+
+        /// <summary>The tests in a result tree, which holds only the tests the run's filter selected.</summary>
+        public static int CountTestResults(ITestResultAdaptor result)
+        {
+            if (result == null)
+                return 0;
+
+            if (result.HasChildren && result.Children != null)
+                return result.Children.Sum(CountTestResults);
+
+            return result.Test == null || result.Test.IsSuite ? 0 : 1;
         }
 
         static TestResultStatus ConvertTestStatus(TestStatus testStatus)
