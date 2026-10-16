@@ -56,6 +56,21 @@ fail without the Cinemachine DLL and pass with it. Missing extension editor/test
 the test, so disabled compilation gates cannot produce a vacuous success. A static guard also
 rejects undeclared sibling asmdef dependencies and lost/changed original migration tests.
 
+Filtering references alone is insufficient when a declared third-party DLL was compiled with
+optional features enabled by another package. The compiler guard removes package version defines
+outside the consumer's dependency closure and adjusts the Input System symbol. It recompiles
+dependencies whose conditional sources or emitted assembly references change, then propagates
+those DLLs through the isolated graph. Unused auto-referenced DLLs do not force a dependency
+rebuild. Ordinary Unity engine modules remain implicit framework references; optional packages
+are required explicitly even when their source is bundled with the editor. Project/installer
+fixture assemblies are excluded from native package compilation.
+
+Controls plant an undeclared sibling DLL before the production filter and prove it was removed.
+The same Cinemachine `PlayerIndex` access must fail without Input System and compile when Input
+System is explicitly allowed. This covers conditional members hidden inside an otherwise declared
+DLL, as well as direct sibling references. Compiler responses, diagnostics and package/assembly
+ownership snapshots stay under `Library/ExtensionIsolation`; no extra Unity Editor is launched.
+
 Combined compilation exposed a real compatibility issue: Cinemachine 3.1.6 conditionally uses
 `InputAction.activeValueType`, added in Input System 1.8.0. The InputSystem module now requires
 1.8.2, preserving compatibility when installed together. Existing newer project pins stay intact.

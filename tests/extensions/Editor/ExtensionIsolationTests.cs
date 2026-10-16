@@ -99,14 +99,29 @@ namespace UnityMcp.Monorepo.Tests
             {
                 var definition = CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(assembly.name);
                 var package = string.IsNullOrEmpty(definition) ? null : PackageInfo.FindForAssetPath(definition);
+                if (package == null && !string.IsNullOrEmpty(definition))
+                    package = packages.Values.FirstOrDefault(p => IsInsidePackage(Resolve(definition, packages), p.resolvedPath));
                 if (package != null) owners[assembly.name] = package.name;
+                else if (assembly.sourceFiles.Any(path => IsInsidePackage(Resolve(path, packages), Application.dataPath)))
+                    owners[assembly.name] = "__project_assets__";
             }
+            var diagnostics = Path.Combine(project, "Library/ExtensionIsolation");
+            Directory.CreateDirectory(diagnostics);
+            File.WriteAllLines(Path.Combine(diagnostics, "packages.txt"), packages.Values.OrderBy(p => p.name)
+                .Select(p => p.name + "|" + p.source + "|" + string.Join(",", p.dependencies.Select(d => d.name))));
+            File.WriteAllLines(Path.Combine(diagnostics, "owners.txt"), owners.OrderBy(p => p.Key).Select(p => p.Key + "|" + p.Value));
+            var contexts = new Dictionary<string, IsolatedCompilation>();
             int compiled = 0;
             foreach (var extension in extensions)
             {
                 var allowed = Closure(extension.name, packages);
                 // Test Framework is provided by Unity's test consumer, not by a shipped runtime package.
                 allowed.UnionWith(Closure("com.unity.test-framework", packages));
+                // Engine modules are implicit references of ordinary Unity asmdefs.
+                allowed.UnionWith(packages.Values.Where(p => p.source == PackageSource.BuiltIn
+                    && p.name.StartsWith("com.unity.modules.", StringComparison.Ordinal)).Select(p => p.name));
+                var context = new IsolatedCompilation(this, extension.name, assemblies, owners, packages, allowed);
+                contexts[extension.name] = context;
                 var own = assemblies.Where(a => owners.TryGetValue(a.name, out var owner) && owner == extension.name).ToArray();
                 Assert.That(own.Any(a => a.name.EndsWith(".Editor", StringComparison.Ordinal)), Is.True,
                     extension.name + " editor assembly is missing (check compilation defines)");
@@ -114,9 +129,7 @@ namespace UnityMcp.Monorepo.Tests
                     extension.name + " original editor test assembly was not discovered");
                 foreach (var assembly in own.Where(a => a.sourceFiles.Length > 0))
                 {
-                    var references = References(assembly, allowed, owners, packages);
-                    var result = Compile(assembly, references, packages, "isolated");
-                    Assert.That(result.code, Is.Zero, extension.name + "/" + assembly.name + "\n" + result.output);
+                    context.Get(assembly);
                     compiled++;
                     TestContext.WriteLine("Isolated compilation passed: " + assembly.name);
                 }
@@ -126,17 +139,125 @@ namespace UnityMcp.Monorepo.Tests
             // Both sides of this control compile the SAME planted class. Only the sibling DLL differs.
             var animation = assemblies.Single(a => a.name == "com.IvanMurzak.Unity.MCP.Animation.Editor");
             var cinemachine = assemblies.Single(a => a.name == "com.IvanMurzak.Unity.MCP.Cinemachine.Editor");
-            var allowedAnimation = Closure(Prefix + "animation", packages);
-            var isolated = References(animation, allowedAnimation, owners, packages);
+            var animationContext = contexts[Prefix + "animation"];
+            var sibling = Resolve(cinemachine.outputPath, packages);
+            // Plant the undeclared reference BEFORE the production filter. Without the filter,
+            // this same source compiles, so the control tests exclusion rather than a missing input.
+            var planted = animation.allReferences.Append(sibling);
+            var filtered = References(animation, animationContext.Allowed, owners, packages, planted).ToArray();
+            Assert.That(filtered, Does.Not.Contain(sibling), "The producer's planted undeclared DLL was not excluded");
+            var isolated = animationContext.References(animation, filtered);
+            var fixture = assemblies.First(a => owners.TryGetValue(a.name, out var owner) && owner == "__project_assets__");
+            var fixturePath = Resolve(fixture.outputPath, packages);
+            Assert.That(References(animation, animationContext.Allowed, owners, packages, new[] { fixturePath }), Is.Empty,
+                "Project/installer fixture assemblies must not leak into native package compilation");
+            var fixtureControl = new HashSet<string>(animationContext.Allowed, StringComparer.Ordinal) { "__project_assets__" };
+            Assert.That(References(animation, fixtureControl, owners, packages, new[] { fixturePath }), Does.Contain(fixturePath));
             var canary = Path.Combine(project, "Library/ExtensionIsolation/SiblingCanary.cs");
             Directory.CreateDirectory(Path.GetDirectoryName(canary)!);
             File.WriteAllText(canary, "internal static class SiblingCanary { internal static System.Type Missing = typeof(com.IvanMurzak.Unity.MCP.Editor.Rql.Cinemachine.CinemachineModule); }");
             var negative = Compile(animation, isolated, packages, "negative", canary);
             Assert.That(negative.code, Is.Not.Zero, "Undeclared sibling unexpectedly compiled");
             Assert.That(negative.output, Does.Contain("CS0234").Or.Contain("CS0246"), negative.output);
-            var positive = Compile(animation, isolated.Append(Resolve(cinemachine.outputPath, packages)), packages, "positive", canary);
+            var positive = Compile(animation, isolated.Append(sibling), packages, "positive", canary);
             Assert.That(positive.code, Is.Zero, "Canary control failed for a reason other than sibling isolation\n" + positive.output);
             TestContext.WriteLine($"Compiled {compiled} native extension assemblies; sibling canary failed without and passed with the sibling DLL.");
+
+            // A declared DLL can expose members enabled only by another installed package.
+            // This int field needs no InputSystem type in its signature, so filtering DLLs alone misses it.
+            var cmContext = contexts[Prefix + "cinemachine"];
+            File.WriteAllText(canary, "internal static class OptionalCanary { internal static int Read(global::Unity.Cinemachine.CinemachineInputAxisController provider) => provider.PlayerIndex; }");
+            var optionalNegative = Compile(cinemachine, cmContext.References(cinemachine), packages,
+                "negative-optional", canary, cmContext.Defines(cinemachine));
+            Assert.That(optionalNegative.code, Is.Not.Zero, "A dependency's conditionally available member leaked into the isolated consumer");
+            Assert.That(optionalNegative.output, Does.Contain("CS1061"), optionalNegative.output);
+            var withInput = new HashSet<string>(cmContext.Allowed, StringComparer.Ordinal);
+            withInput.UnionWith(Closure("com.unity.inputsystem", packages));
+            var cmWithInput = new IsolatedCompilation(this, Prefix + "cinemachine", assemblies, owners, packages, withInput, "with-input");
+            var optionalPositive = Compile(cinemachine, cmWithInput.References(cinemachine), packages,
+                "positive-optional", canary, cmWithInput.Defines(cinemachine));
+            Assert.That(optionalPositive.code, Is.Zero, "Conditional-member control did not compile with its explicit dependency\n" + optionalPositive.output);
+        }
+
+        [Serializable] sealed class Definition { public VersionDefine[] versionDefines = Array.Empty<VersionDefine>(); }
+        [Serializable] sealed class VersionDefine { public string name = ""; public string define = ""; }
+
+        sealed class IsolatedCompilation
+        {
+            readonly ExtensionIsolationTests host;
+            readonly string component, variant;
+            readonly Dictionary<string, Assembly> assemblies;
+            readonly Dictionary<string, string> owners;
+            readonly Dictionary<string, PackageInfo> packages;
+            readonly Dictionary<string, string> outputs = new Dictionary<string, string>();
+            readonly HashSet<string> visiting = new HashSet<string>();
+            public HashSet<string> Allowed { get; }
+
+            public IsolatedCompilation(ExtensionIsolationTests host, string component, Assembly[] assemblies,
+                Dictionary<string, string> owners, Dictionary<string, PackageInfo> packages, HashSet<string> allowed,
+                string suffix = "")
+            {
+                this.host = host; this.component = component; this.owners = owners; this.packages = packages;
+                this.assemblies = assemblies.ToDictionary(a => a.name, StringComparer.OrdinalIgnoreCase);
+                Allowed = allowed;
+                variant = "isolated-" + component.Substring(Prefix.Length) + suffix;
+            }
+
+            public string[] Defines(Assembly assembly)
+            {
+                var removed = new HashSet<string>();
+                var path = CompilationPipeline.GetAssemblyDefinitionFilePathFromAssemblyName(assembly.name);
+                if (!string.IsNullOrEmpty(path))
+                {
+                    var definition = JsonUtility.FromJson<Definition>(File.ReadAllText(Resolve(path, packages)));
+                    foreach (var entry in definition.versionDefines ?? Array.Empty<VersionDefine>())
+                        if (packages.ContainsKey(entry.name) && !Allowed.Contains(entry.name)) removed.Add(entry.define);
+                }
+                if (!Allowed.Contains("com.unity.inputsystem")) removed.Add("ENABLE_INPUT_SYSTEM");
+                return assembly.defines.Where(d => !removed.Contains(d)).ToArray();
+            }
+
+            public string[] References(Assembly assembly, IEnumerable<string>? candidates = null) =>
+                ExtensionIsolationTests.References(assembly, Allowed, owners, packages, candidates)
+                    .Distinct(StringComparer.OrdinalIgnoreCase).Select(path =>
+                        assemblies.TryGetValue(Path.GetFileNameWithoutExtension(path), out var dependency)
+                            && dependency.name != assembly.name ? Get(dependency) : path).ToArray();
+
+            public string Get(Assembly assembly)
+            {
+                if (outputs.TryGetValue(assembly.name, out var cached)) return cached;
+                Assert.That(visiting.Add(assembly.name), Is.True, "Cyclic compiler references: " + assembly.name);
+                var original = assembly.allReferences.Select(p => Resolve(p, packages))
+                    .Where(p => Path.GetFileNameWithoutExtension(p) != assembly.name)
+                    .Distinct(StringComparer.OrdinalIgnoreCase).ToArray();
+                var references = References(assembly);
+                var defines = Defines(assembly);
+                var removed = assembly.defines.Except(defines).ToArray();
+                var changedCondition = removed.Length > 0 && assembly.sourceFiles.Any(path => {
+                    var text = File.ReadAllText(Resolve(path, packages));
+                    return removed.Any(symbol => System.Text.RegularExpressions.Regex.IsMatch(text,
+                        @"(?m)^\s*#(?:if|elif)\b[^\r\n]*\b" + System.Text.RegularExpressions.Regex.Escape(symbol) + @"\b"));
+                });
+                var own = owners.TryGetValue(assembly.name, out var owner) && owner == component;
+                var output = Resolve(assembly.outputPath, packages);
+                // allReferences includes auto-referenced DLLs that may not be used at all.
+                // Only a dependency's emitted assembly references can require rebuilding it.
+                var loaded = AppDomain.CurrentDomain.GetAssemblies().FirstOrDefault(a => a.GetName().Name == assembly.name);
+                var used = loaded == null ? null : new HashSet<string>(loaded.GetReferencedAssemblies()
+                    .Select(a => a.Name!), StringComparer.OrdinalIgnoreCase);
+                var changedReference = original.Except(references, StringComparer.OrdinalIgnoreCase)
+                    .Any(path => used == null || used.Contains(Path.GetFileNameWithoutExtension(path)));
+                if (assembly.sourceFiles.Length > 0 && (own || changedCondition || changedReference))
+                {
+                    var result = host.Compile(assembly, references, packages, variant, defines: defines);
+                    Assert.That(result.code, Is.Zero, component + "/" + assembly.name + " isolated dependency compilation\n"
+                        + "Removed references: " + string.Join(",", original.Except(references).Select(Path.GetFileName)) + "\n" + result.output);
+                    output = result.path;
+                    TestContext.WriteLine("Isolated source compilation: " + component + "/" + assembly.name);
+                }
+                visiting.Remove(assembly.name);
+                return outputs[assembly.name] = output;
+            }
         }
 
         static HashSet<string> Closure(string name, Dictionary<string, PackageInfo> packages)
@@ -164,12 +285,13 @@ namespace UnityMcp.Monorepo.Tests
         }
 
         static IEnumerable<string> References(Assembly assembly, HashSet<string> allowed,
-            Dictionary<string, string> owners, Dictionary<string, PackageInfo> packages)
+            Dictionary<string, string> owners, Dictionary<string, PackageInfo> packages, IEnumerable<string>? candidates = null)
         {
-            foreach (var reference in assembly.allReferences)
+            foreach (var reference in candidates ?? assembly.allReferences)
             {
                 var full = Resolve(reference, packages);
                 var name = Path.GetFileNameWithoutExtension(full);
+                if (name == assembly.name) continue;
                 if (owners.TryGetValue(name, out var owner) && !allowed.Contains(owner)) continue;
                 // Also exclude precompiled dependencies residing inside undeclared UPM packages.
                 var packageOwner = packages.Values.FirstOrDefault(p => IsInsidePackage(full, p.resolvedPath));
@@ -193,15 +315,15 @@ namespace UnityMcp.Monorepo.Tests
             Assert.That(IsInsidePackage(Path.Combine(package + ".other", "Plugins/Optional.dll"), package), Is.False);
         }
 
-        (int code, string output) Compile(Assembly assembly, IEnumerable<string> references,
-            Dictionary<string, PackageInfo> packages, string variant, string? extraSource = null)
+        (int code, string output, string path) Compile(Assembly assembly, IEnumerable<string> references,
+            Dictionary<string, PackageInfo> packages, string variant, string? extraSource = null, IEnumerable<string>? defines = null)
         {
             var folder = Path.Combine(project, "Library/ExtensionIsolation", assembly.name, variant);
             Directory.CreateDirectory(folder);
             string Quote(string value) => "\"" + value.Replace("\\", "/") + "\"";
             var arguments = new List<string> { "-nologo", "-target:library", "-nostdlib+", "-langversion:latest",
                 "-unsafe+", "-out:" + Quote(Path.Combine(folder, assembly.name + ".dll")) };
-            arguments.Add("-define:" + string.Join(";", assembly.defines));
+            arguments.Add("-define:" + string.Join(";", defines ?? assembly.defines));
             arguments.AddRange(references.Distinct().Select(p => "-reference:" + Quote(p)));
             arguments.AddRange(assembly.sourceFiles.Select(p => Quote(Resolve(p, packages))));
             if (extraSource != null) arguments.Add(Quote(extraSource));
@@ -235,7 +357,7 @@ namespace UnityMcp.Monorepo.Tests
             }
             var output = stdout.GetAwaiter().GetResult() + stderr.GetAwaiter().GetResult();
             File.WriteAllText(Path.Combine(folder, "compile.log"), output);
-            return (process.ExitCode, output);
+            return (process.ExitCode, output, Path.Combine(folder, assembly.name + ".dll"));
         }
     }
 }
