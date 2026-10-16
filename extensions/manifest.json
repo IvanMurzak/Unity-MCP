@@ -1,5 +1,6 @@
 {
   "schemaVersion": 1,
+  "testProjects": ["2022.3.62f3", "2023.2.22f1", "6000.3.1f1", "6000.6.3f1"],
   "extensions": [
     {
       "name": "Animation",

@@ -93,7 +93,37 @@ def validate(root=ROOT):
                 source = package.parents[1] / 'Installer/Assets' / name
                 if not source.is_file() or hashlib.sha256(source.read_bytes()).hexdigest() != digest:
                     raise ValueError(f'Original installer test changed or missing: {source}')
+    policy_path = root / 'Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/extensions.compatibility.json'
+    if policy_path.is_file():
+        validate_compatibility(root, rows)
     return rows
+
+
+def validate_compatibility(root=ROOT, rows=None):
+    rows = inventory(root) if rows is None else rows
+    policy = read(root / 'Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/extensions.compatibility.json')
+    if policy.get('schemaVersion') != 1 or policy.get('minimumUnityVersion') != '6000.6':
+        raise ValueError('Unsupported Unity compatibility policy')
+    editor = (root / 'Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Components/ExtensionPanel.cs').read_text()
+    for entry in policy['extensions']:
+        row = next(row for row in rows if row['packageId'] == entry['packageId'])
+        package = read(root / row['package'] / 'package.json')
+        installers = list((root / 'extensions' / row['name'] / 'Installer/Assets').rglob('Installer.cs'))
+        if len(installers) != 1:
+            raise ValueError('Missing self-contained installer compatibility policy')
+        installer = installers[0].read_text()
+        enabled = installer.split('#if !IVAN_MURZAK_INSTALLER_PROJECT', 1)[-1].split('#endif', 1)[0]
+        if 'EnsureUnityPackageCompatibility(ManifestPath, Application.unityVersion);' not in enabled:
+            raise ValueError('Installer does not apply compatibility before importing packages')
+        for dependency, version in entry['dependencies'].items():
+            if dependency not in package['dependencies']:
+                raise ValueError('Compatibility policy may only upgrade an existing native dependency')
+            pattern = (r'case "' + re.escape(row['packageId']) + r'":\s*return new Dictionary<string,\s*string>\s*'
+                       + r'\{\s*\["' + re.escape(dependency) + r'"\]\s*=\s*"' + re.escape(version) + r'"\s*\}')
+            if (not re.search(pattern, editor)
+                    or f'const string dependency = "{dependency}";' not in installer
+                    or f'const string required = "{version}";' not in installer):
+                raise ValueError('C#/installer compatibility mirror drift: ' + row['name'])
 
 
 def bump(name, version, root=ROOT):
@@ -136,6 +166,12 @@ def prepare(project: Path, root=ROOT):
     manifest = read(manifest_path)
     dependencies = manifest.setdefault('dependencies', {})
     tests = set(manifest.get('testables', []))
+    policy = read(root / 'Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/extensions.compatibility.json')
+    editor_text = (project / 'ProjectSettings/ProjectVersion.txt').read_text()
+    editor_match = re.search(r'(?m)^m_EditorVersion: (\d+)\.(\d+)', editor_text)
+    if not editor_match:
+        raise ValueError('Cannot read test project editor version')
+    editor = tuple(map(int, editor_match.groups()))
     for row in rows:
         package = root / row['package']
         dependencies[row['packageId']] = 'file:' + os.path.relpath(package, project / 'Packages').replace('\\', '/')
@@ -146,6 +182,11 @@ def prepare(project: Path, root=ROOT):
                 continue
             prior = dependencies.get(name)
             dependencies[name] = dependency_floor(prior, version)
+        if editor >= tuple(map(int, policy['minimumUnityVersion'].split('.'))):
+            for entry in policy['extensions']:
+                if entry['packageId'] == row['packageId']:
+                    for name, version in entry['dependencies'].items():
+                        dependencies[name] = dependency_floor(dependencies.get(name), version)
         installer = package.parents[1] / 'Installer/Assets/com.IvanMurzak'
         if installer.is_dir():
             for folder in installer.iterdir():
@@ -211,14 +252,49 @@ def collect_metas(project, root=ROOT):
     print(f'Collected {count} Unity-generated installer metadata files; existing GUIDs untouched')
 
 
+def sync_core(core_version, only='all', policy='patch', dry_run=False, root=ROOT):
+    if not re.fullmatch(r'\d+\.\d+\.\d+', core_version):
+        raise ValueError('Expected a stable core dependency version')
+    selector = only.removeprefix('Unity-AI-')
+    rows = [row for row in inventory(root) if selector in ('all', row['name'], row['packageId'])]
+    if not rows:
+        raise ValueError('Unknown extension selection: ' + only)
+    for row in rows:
+        path = root / row['package'] / 'package.json'
+        package = read(path)
+        previous = package['dependencies'][CORE]
+        if previous == core_version or dependency_floor(previous, core_version) != core_version:
+            print(row['name'] + ': core floor already current/newer; unchanged')
+            continue
+        major, minor, patch = map(int, package['version'].split('.'))
+        version = f'{major}.{minor + 1}.0' if policy == 'minor' else f'{major}.{minor}.{patch + 1}'
+        print(f'{row["name"]}: core {previous} -> {core_version}; component -> {version}')
+        if not dry_run:
+            package['dependencies'][CORE] = core_version
+            write(path, package)
+            bump(row['name'], version, root)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['validate', 'prepare', 'list', 'bump', 'collect-metas'])
+    parser.add_argument('command', choices=['validate', 'prepare', 'prepare-all', 'list', 'bump', 'collect-metas', 'sync-core'])
     parser.add_argument('--project', type=Path)
     parser.add_argument('--only', default='all')
     parser.add_argument('--version')
+    parser.add_argument('--core-version')
+    parser.add_argument('--bump-policy', choices=['patch', 'minor'], default='patch')
+    parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
-    if args.command == 'bump':
+    if args.command == 'sync-core':
+        if not args.core_version:
+            parser.error('sync-core requires --core-version')
+        sync_core(args.core_version, args.only, args.bump_policy, args.dry_run)
+    elif args.command == 'prepare-all':
+        for version in read(ROOT / 'extensions/manifest.json')['testProjects']:
+            if not re.fullmatch(r'\d+\.\d+\.\d+[abfp]\d+', version):
+                raise ValueError('Unsafe test project editor version')
+            prepare(ROOT / 'Unity-Tests' / version)
+    elif args.command == 'bump':
         if not args.version:
             parser.error('bump requires --version')
         bump(args.only, args.version)

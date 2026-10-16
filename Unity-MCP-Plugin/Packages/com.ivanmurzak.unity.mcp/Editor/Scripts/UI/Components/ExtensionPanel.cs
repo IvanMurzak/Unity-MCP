@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -217,7 +218,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <summary>
         /// Adds the OpenUPM scoped registry (if needed) and the package dependency to manifest.json.
         /// </summary>
-        internal static bool AddToManifest(string manifestPath, string packageId, string version)
+        internal static bool AddToManifest(string manifestPath, string packageId, string version, string? unityVersion = null)
         {
             if (!File.Exists(manifestPath))
             {
@@ -242,6 +243,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 manifest["dependencies"] = dependencies;
             }
             dependencies[packageId] = version;
+            foreach (var required in UnityCompatibilityDependencies(packageId, unityVersion ?? Application.unityVersion))
+            {
+                var current = dependencies[required.Key]?.GetValue<string>();
+                if (string.IsNullOrEmpty(current) || (System.Version.TryParse(current, out var prior)
+                    && System.Version.Parse(required.Value) > prior))
+                    dependencies[required.Key] = required.Value;
+            }
 
             var options = new JsonSerializerOptions
             {
@@ -250,6 +258,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             };
             File.WriteAllText(manifestPath, manifest.ToJsonString(options));
             return true;
+        }
+
+        // Mirror of extensions.compatibility.json; original package floors serve older editors.
+        internal static Dictionary<string, string> UnityCompatibilityDependencies(string packageId, string unityVersion)
+        {
+            var match = System.Text.RegularExpressions.Regex.Match(unityVersion, @"^(\d+)\.(\d+)");
+            if (!match.Success || int.Parse(match.Groups[1].Value) < 6000
+                || (int.Parse(match.Groups[1].Value) == 6000 && int.Parse(match.Groups[2].Value) < 6))
+                return new Dictionary<string, string>();
+            switch (packageId)
+            {
+                case "com.ivanmurzak.unity.mcp.navigation":
+                    return new Dictionary<string, string> { ["com.unity.ai.navigation"] = "2.0.10" };
+                case "com.ivanmurzak.unity.mcp.probuilder":
+                    return new Dictionary<string, string> { ["com.unity.probuilder"] = "6.1.3" };
+                case "com.ivanmurzak.unity.mcp.tilemap":
+                    return new Dictionary<string, string> { ["com.unity.2d.tilemap.extras"] = "7.0.1" };
+                default:
+                    return new Dictionary<string, string>();
+            }
         }
 
         private static void EnsureScopedRegistry(JsonObject manifest)

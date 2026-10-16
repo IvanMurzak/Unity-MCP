@@ -67,6 +67,22 @@ class PackageBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Duplicate Unity GUID'):
             extensions.validate(self.root)
 
+    def test_sync_core_is_selected_local_idempotent_and_dry_run_writes_nothing(self):
+        path = self.root / self.rows[0]['package'] / 'package.json'
+        untouched = self.root / self.rows[1]['package'] / 'package.json'
+        before, other = path.read_bytes(), untouched.read_bytes()
+        previous = extensions.read(path)['version']
+        extensions.sync_core('1.1.0', 'Unity-AI-Animation', dry_run=True, root=self.root)
+        self.assertEqual(before, path.read_bytes())
+        extensions.sync_core('1.1.0', 'Animation', root=self.root)
+        info = extensions.read(path)
+        self.assertEqual('1.1.0', info['dependencies'][extensions.CORE])
+        self.assertNotEqual(previous, info['version'])
+        self.assertEqual(other, untouched.read_bytes())
+        current = path.read_bytes()
+        extensions.sync_core('1.1.0', 'Animation', root=self.root)
+        self.assertEqual(current, path.read_bytes())
+
 
 class ReleaseArtifactTests(unittest.TestCase):
     def setUp(self):

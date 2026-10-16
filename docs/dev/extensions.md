@@ -57,6 +57,16 @@ rejects undeclared sibling asmdef dependencies and lost/changed original migrati
 Combined compilation exposed a real compatibility issue: Cinemachine 3.1.6 conditionally uses
 `InputAction.activeValueType`, added in Input System 1.8.0. The InputSystem module now requires
 1.8.2, preserving compatibility when installed together. Existing newer project pins stay intact.
+Unity 6.6 additionally requires Navigation 2.0.10, ProBuilder 6.1.3 and Tilemap Extras 7.0.1.
+The core's `extensions.compatibility.json` defines these conditional floors; CLI, editor installation,
+the three self-contained installers and test preparation select them before Unity imports packages.
+Older editors keep their native package floors, and newer/custom project pins are preserved.
+Use the current core/CLI when installing into Unity 6.6, or declare these floors in a manual UPM
+consumer manifest. Mirror guards and actual installer tests keep the install paths aligned.
+
+Unity 6.6 moved its compiler into `DotNetSdk/sdk/*/Roslyn/bincore`; the isolation runner uses the
+matching bundled SDK host. Windows console-clear tests also cover open shared readers for both
+plain and buffered log storage; clearing retains a writable empty file if Windows forbids deletion.
 
 ## Independent releases
 

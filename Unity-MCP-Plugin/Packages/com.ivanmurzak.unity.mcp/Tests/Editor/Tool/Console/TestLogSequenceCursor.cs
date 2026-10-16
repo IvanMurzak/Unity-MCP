@@ -79,6 +79,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             return storage;
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Clear_WithSharedQueryReader_RemovesEntriesAndRemainsWritable(bool buffered)
+        {
+            var directory = NewDirectory();
+            var storage = Open(directory, buffered);
+            var before = new LogEntry(LogType.Log, "before-clear");
+            storage.Append(before);
+            storage.Flush();
+            using var reader = new FileStream(Path.Combine(directory, LogFileName),
+                FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+            Assert.DoesNotThrow(storage.Clear);
+            Assert.That(storage.Query(), Is.Empty);
+
+            var after = new LogEntry(LogType.Log, "after-clear");
+            storage.Append(after);
+            storage.Flush();
+            var result = storage.Query();
+            Assert.That(result.Length, Is.EqualTo(1));
+            Assert.That(result[0].Message, Is.EqualTo("after-clear"));
+            Assert.That(after.Sequence, Is.GreaterThan(before.Sequence));
+        }
+
         /// <summary>Follows the cursor the way an agent does: next call starts at the highest sequence received.</summary>
         static List<LogEntry> ReadAllPages(FileLogStorage storage, int pageSize, LogType? filter, out int pages)
         {

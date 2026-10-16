@@ -21,6 +21,65 @@ using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace UnityMcp.Monorepo.Tests
 {
+    public sealed class ExtensionCompatibilityTests
+    {
+        static readonly object[][] Cases = {
+            new object[] { "Navigation", "com.unity.ai.navigation", "2.0.10" },
+            new object[] { "ProBuilder", "com.unity.probuilder", "6.1.3" },
+            new object[] { "Tilemap", "com.unity.2d.tilemap.extras", "7.0.1" }
+        };
+
+        static string Dependency(string file, string name) => System.Text.RegularExpressions.Regex.Match(
+            File.ReadAllText(file), "\"" + System.Text.RegularExpressions.Regex.Escape(name)
+            + "\"\\s*:\\s*\"([^\"]+)\"").Groups[1].Value;
+
+        [TestCaseSource(nameof(Cases))]
+        public void EditorAndSelfContainedInstallerSelectCompatibleDependencies(string feature, string dependency, string minimum)
+        {
+            var folder = Path.GetFullPath(Path.Combine(Application.dataPath, "../Temp/ExtensionCompatibility", Guid.NewGuid().ToString("N")));
+            Directory.CreateDirectory(folder);
+            var file = Path.Combine(folder, "manifest.json");
+            void Seed(string version) => File.WriteAllText(file, "{\"dependencies\":{\"" + dependency + "\":\"" + version + "\"}}");
+            var flags = System.Reflection.BindingFlags.Static | System.Reflection.BindingFlags.NonPublic;
+            try
+            {
+                var editor = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType(
+                    "com.IvanMurzak.Unity.MCP.Editor.UI.ExtensionPanel")).First(t => t != null)!;
+                var add = editor.GetMethod("AddToManifest", flags)!;
+                Seed("0.0.1");
+                add.Invoke(null, new object[] { file, "com.ivanmurzak.unity.mcp." + feature.ToLowerInvariant(), "2.0.1", "6000.5.0f1" });
+                Assert.That(Dependency(file, dependency), Is.EqualTo("0.0.1"));
+                add.Invoke(null, new object[] { file, "com.ivanmurzak.unity.mcp." + feature.ToLowerInvariant(), "2.0.1", "6000.6.3f1" });
+                Assert.That(Dependency(file, dependency), Is.EqualTo(minimum));
+                foreach (var preserved in new[] { "99.0.0", "https://example.invalid/custom.git#pinned" })
+                {
+                    Seed(preserved);
+                    add.Invoke(null, new object[] { file, "com.ivanmurzak.unity.mcp." + feature.ToLowerInvariant(), "2.0.1", "6000.6.3f1" });
+                    Assert.That(Dependency(file, dependency), Is.EqualTo(preserved));
+                }
+
+                var type = "com.IvanMurzak.Unity.MCP." + feature + ".Installer.Installer";
+                var installer = AppDomain.CurrentDomain.GetAssemblies().Select(a => a.GetType(type)).First(t => t != null)!;
+                var ensure = installer.GetMethod("EnsureUnityPackageCompatibility", flags)!;
+                Seed("0.0.1");
+                Assert.That(ensure.Invoke(null, new object[] { file, "6000.5.0f1" }), Is.False);
+                Assert.That(Dependency(file, dependency), Is.EqualTo("0.0.1"));
+                Assert.That(ensure.Invoke(null, new object[] { file, "6000.6.3f1" }), Is.True);
+                Assert.That(Dependency(file, dependency), Is.EqualTo(minimum));
+                var previous = File.ReadAllText(file);
+                Assert.That(ensure.Invoke(null, new object[] { file, "6000.6.3f1" }), Is.False);
+                Assert.That(File.ReadAllText(file), Is.EqualTo(previous));
+                foreach (var preserved in new[] { "99.0.0", "https://example.invalid/custom.git#pinned" })
+                {
+                    Seed(preserved);
+                    Assert.That(ensure.Invoke(null, new object[] { file, "6000.6.3f1" }), Is.False);
+                    Assert.That(Dependency(file, dependency), Is.EqualTo(preserved));
+                }
+            }
+            finally { Directory.Delete(folder, true); }
+        }
+    }
+
     /// <summary>Recompile native package assemblies with only their declared dependency closure.
     /// Uses Unity's bundled Roslyn/runtime, never starts another editor or edits imported sources.</summary>
     public sealed class ExtensionIsolationTests
@@ -137,6 +196,17 @@ namespace UnityMcp.Monorepo.Tests
             var data = EditorApplication.applicationContentsPath;
             var runtime = Path.Combine(data, "NetCoreRuntime", Application.platform == RuntimePlatform.WindowsEditor ? "dotnet.exe" : "dotnet");
             var compiler = Path.Combine(data, "DotNetSdkRoslyn/csc.dll");
+            if (!File.Exists(compiler))
+            {
+                // Unity 6.6 ships a full SDK instead of the older DotNetSdkRoslyn layout.
+                var sdk = Path.Combine(data, "DotNetSdk");
+                var versions = Path.Combine(sdk, "sdk");
+                var candidates = Directory.Exists(versions) ? Directory.GetDirectories(versions)
+                    .Select(p => Path.Combine(p, "Roslyn/bincore/csc.dll")).Where(File.Exists).ToArray() : Array.Empty<string>();
+                Assert.That(candidates.Length, Is.EqualTo(1), "Expected one bundled Unity SDK compiler");
+                compiler = candidates[0];
+                runtime = Path.Combine(sdk, Application.platform == RuntimePlatform.WindowsEditor ? "dotnet.exe" : "dotnet");
+            }
             Assert.That(File.Exists(runtime) && File.Exists(compiler), Is.True, "Unity bundled Roslyn/runtime are missing");
             using var process = Process.Start(new ProcessStartInfo(runtime, Quote(compiler) + " @" + Quote(rsp)) {
                 WorkingDirectory = project, UseShellExecute = false, CreateNoWindow = true,

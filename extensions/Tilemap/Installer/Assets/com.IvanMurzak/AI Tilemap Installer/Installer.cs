@@ -24,6 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Tilemap.Installer
         static Installer()
         {
 #if !IVAN_MURZAK_INSTALLER_PROJECT
+            EnsureUnityPackageCompatibility(ManifestPath, Application.unityVersion);
             if (AddScopedRegistryIfNeeded(ManifestPath))
                 DeleteSelf();
 #endif
@@ -64,6 +65,33 @@ namespace com.IvanMurzak.Unity.MCP.Tilemap.Installer
 
                 AssetDatabase.Refresh();
             };
+        }
+
+        // Conditional UPM dependencies are not expressible in package.json. Upgrade before
+        // the self-contained installer asks Unity to import packages; preserve newer/custom pins.
+        internal static bool EnsureUnityPackageCompatibility(string manifestPath, string unityVersion)
+        {
+            var editor = System.Text.RegularExpressions.Regex.Match(unityVersion, @"^(\d+)\.(\d+)");
+            if (!editor.Success || int.Parse(editor.Groups[1].Value) < 6000
+                || (int.Parse(editor.Groups[1].Value) == 6000 && int.Parse(editor.Groups[2].Value) < 6))
+                return false;
+            if (!System.IO.File.Exists(manifestPath)) return false;
+            var manifest = SimpleJSON.JSONNode.Parse(System.IO.File.ReadAllText(manifestPath)).AsObject;
+            if (manifest == null) throw new System.InvalidOperationException("Invalid Unity manifest");
+            var dependencies = manifest[Dependencies].AsObject;
+            if (dependencies == null)
+            {
+                dependencies = new SimpleJSON.JSONObject();
+                manifest[Dependencies] = dependencies;
+            }
+            const string dependency = "com.unity.2d.tilemap.extras";
+            const string required = "7.0.1";
+            var current = dependencies[dependency].Value;
+            if (!string.IsNullOrEmpty(current) && (!System.Version.TryParse(current, out var prior)
+                || System.Version.Parse(required) <= prior)) return false;
+            dependencies[dependency] = required;
+            System.IO.File.WriteAllText(manifestPath, manifest.ToString(2));
+            return true;
         }
     }
 }
