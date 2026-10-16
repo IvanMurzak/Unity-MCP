@@ -40,9 +40,8 @@ jobs:
         uses: actions/checkout@v6
         with:
           ref: ${{ inputs.ref }}
-          # When a ref was passed in, this tree is a pull request's code and may
-          # come from a fork: do not leave a usable token in its .git/config.
-          persist-credentials: ${{ inputs.ref == '' }}
+          # Nothing here uses git with the token, and the tree may be a fork's code.
+          persist-credentials: false
 
       # --- chain feed (chain_feed.py §C4): a no-op on an ordinary PR run ---------------------------------------
       - name: Setup .NET (chain feed)

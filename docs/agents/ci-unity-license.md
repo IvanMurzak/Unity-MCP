@@ -43,10 +43,10 @@ GitHub withholds repository secrets from a `pull_request` run whose head reposit
 of an unlicensed run.** The license, the secrets and the workflow are all fine; a fork simply
 cannot see them, and re-issuing the `.ulf` will not change it.
 
-Since PR #971, `test_unity_plugin.yml` starts with a `license` job. On a fork PR it passes, writes
-a job summary saying why, and the `test` job (game-ci) is **skipped**: nothing is compiled. On any
-other run an empty license fails the `license` job. The signal that the suite really ran is the
-`unity-tests-licensed` commit status (below), which is the required check.
+Since PR #971, `test_unity_plugin.yml` **skips** its `test` job (game-ci) on a fork PR: nothing
+is compiled, and the run's summary (the `save-event-file` job of `test_pull_request.yml`) says how
+to get the suite run. On any other run an empty license still fails game-ci, as before. The signal
+that the suite really ran is the `unity-tests-licensed` commit status (below), the required check.
 
 ### Runs from before #971: how to tell no-secrets from a real license failure
 
@@ -89,7 +89,7 @@ gh workflow run test_pull_request_manual.yml --repo IvanMurzak/Unity-MCP --ref f
   -f pr=<n> -f sha=<that head commit>
 ```
 
-The fork-PR job summary prints this command with both values filled in. The `resolve` job:
+The fork PR's `test-pull-request` run summary prints this command with both values filled in. The `resolve` job:
 
 - refuses any branch but `fork-tests`, and refuses `fork-tests` while its `.github/` differs from
   `main`'s (the error prints the one command that fast-forwards it);
@@ -118,9 +118,9 @@ One commit status on the PR head says whether the licensed suite ran on that exa
 set only through `.github/actions/unity-tests-licensed`:
 
 - same-repository PR: `publish_test_results.yml` sets it from the `test-pull-request` run;
-- fork PR: `publish_test_results.yml` sets it **pending** (never over a verdict already there),
-  and the manual run above sets it to `success`, `failure` or `error`. A new push is a new head
-  commit, so it is pending again.
+- fork PR: nothing sets it until the manual run above does (`pending`, then `success`, `failure`
+  or `error`). Until then GitHub shows it as *Expected — waiting for status*, which blocks the
+  merge. A new push is a new head commit, so it has no status again.
 
 It replaces the twelve `test-unity-* / …` contexts as the required check in the **"Required
 status checks (no bypass)"** ruleset, with GitHub Actions as its required source. The

@@ -76,20 +76,11 @@ jobs:
               echo "::error::sha is only meaningful together with pr."
               exit 1
             fi
-            echo "ref=" >> "$GITHUB_OUTPUT"
             echo "Testing \`$REF_NAME\` (no PR number given)." >> "$GITHUB_STEP_SUMMARY"
             exit 0
           fi
-          case "$PR" in
-            *[!0-9]*) echo "::error::pr must be a pull request number."; exit 1 ;;
-          esac
-          case "$EXPECTED" in
-            ''|*[!0-9a-f]*) echo "::error::With pr, sha must be the full lowercase 40-char head commit you reviewed."; exit 1 ;;
-          esac
-          if [ ${#EXPECTED} -ne 40 ]; then
-            echo "::error::With pr, sha must be the full lowercase 40-char head commit you reviewed."
-            exit 1
-          fi
+          [[ "$PR" =~ ^[0-9]+$ ]] || { echo "::error::pr must be a pull request number."; exit 1; }
+          [[ "$EXPECTED" =~ ^[0-9a-f]{40}$ ]] || { echo "::error::With pr, sha must be the full lowercase 40-char head commit you reviewed."; exit 1; }
 
           if [ "$REF_NAME" != "refs/heads/fork-tests" ]; then
             echo "::error::With pr, dispatch on the fork-tests branch (--ref fork-tests), not $REF_NAME: fork code must not run in a cache scope other runs restore."
@@ -132,8 +123,9 @@ jobs:
           ref="$head"
           kind="head commit"
           if [ "$mergeable" = "true" ] && [ -n "$merge" ]; then
-            read -r parent1 parent2 _ <<<"$(gh api "repos/$REPO/git/commits/$merge" --jq '[.parents[].sha] | join(" ")') " || true
-            if [ "${parent2:-}" = "$head" ]; then
+            parents=$(gh api "repos/$REPO/git/commits/$merge" --jq '[.parents[].sha] | join(" ")')
+            read -r parent1 parent2 _ <<<"$parents"
+            if [ "$parent2" = "$head" ]; then
               ref="$merge"
               kind="test merge into the base branch"
               if [ "$parent1" != "$base" ]; then
@@ -177,7 +169,6 @@ jobs:
           sha: ${{ steps.resolve.outputs.head }}
           state: pending
           description: Licensed suite running (test-pull-request-manual)
-          target-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           token: ${{ github.token }}
 
   test-cli:
@@ -310,9 +301,8 @@ jobs:
   # -------------------
 
   # This run is not attached to the PR (it ran on fork-tests, and a fork PR's own test-unity-* jobs
-  # are skipped). So the verdict is a commit status on the reviewed head commit, the same
-  # `unity-tests-licensed` context publish_test_results.yml leaves pending on every fork PR head.
-  # A later push gets a new head SHA, which starts pending again.
+  # are skipped). So the verdict is the required `unity-tests-licensed` commit status on the
+  # reviewed head commit. A later push is a new head SHA, which has no status until the next run.
   report:
     name: report to PR
     needs:
@@ -359,7 +349,6 @@ jobs:
           sha: ${{ needs.resolve.outputs.head }}
           state: ${{ steps.verdict.outputs.state }}
           description: ${{ steps.verdict.outputs.description }}
-          target-url: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
           token: ${{ github.token }}
 
       - uses: ./.github/actions/delete-ref-caches

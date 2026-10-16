@@ -34,11 +34,9 @@ on:
       # A pull request from a FORK receives none of these three: GitHub withholds
       # repository secrets from a `pull_request` run whose head repository differs
       # from the base, so the caller's `secrets: inherit` (test_pull_request.yml)
-      # passes empty strings. The `license` job (2-a0) then skips `test` instead of
-      # letting it fail; the licensed suite reaches a fork PR's code only
-      # through test_pull_request_manual.yml — see the "Fork pull requests get no secrets"
-      # section of docs/agents/ci-unity-license.md for how to run the licensed suite
-      # against a fork PR's code.
+      # passes empty strings, so `test` below is skipped. The licensed suite reaches
+      # a fork PR's code only through test_pull_request_manual.yml — see the "Fork
+      # pull requests get no secrets" section of docs/agents/ci-unity-license.md.
       UNITY_LICENSE: { required: false }
       UNITY_EMAIL: { required: false }
       UNITY_PASSWORD: { required: false }
@@ -47,70 +45,11 @@ on:
 # 2. Job
 ##############################################################################
 jobs:
-  # --------------------------------------------------------------------- #
-  # 2-a0. Is a Unity license reachable from this run?
-  #
-  # GitHub withholds repository secrets from pull_request runs raised by a
-  # fork, so on a fork PR every step of `test` would fail inside game-ci at
-  # license activation. Decide here instead, where the reason can be said out
-  # loud, and never print the secret itself. On a fork PR `test` is then
-  # skipped as a whole; the `unity-tests-licensed` commit status
-  # (publish_test_results.yml, test_pull_request_manual.yml) stays pending
-  # until a maintainer runs the licensed suite on that exact head commit.
-  # --------------------------------------------------------------------- #
-  license:
-    runs-on: ubuntu-latest
-    outputs:
-      available: ${{ steps.license.outputs.available }}
-    steps:
-      - name: Check Unity license availability
-        id: license
-        env:
-          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
-          EVENT_NAME: ${{ github.event_name }}
-          REPO: ${{ github.repository }}
-          HEAD_REPO: ${{ github.event.pull_request.head.repo.full_name }}
-          PR_NUMBER: ${{ github.event.pull_request.number }}
-          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
-        run: |
-          if [ -n "$UNITY_LICENSE" ]; then
-            echo "available=true" >> "$GITHUB_OUTPUT"
-            exit 0
-          fi
-          echo "available=false" >> "$GITHUB_OUTPUT"
-          # Not "head.repo.fork": that field says whether the head repository is
-          # itself a fork of anything, which is true for every PR raised inside a
-          # fork. The question is whether the head is a DIFFERENT repository from
-          # this one, because that is what makes GitHub withhold the secret. An
-          # empty head repo is a fork that was deleted while its PR stayed open:
-          # still not this repository, so still no secrets.
-          if [ "$EVENT_NAME" != "pull_request" ] || [ "$HEAD_REPO" = "$REPO" ]; then
-            echo "::error::UNITY_LICENSE is empty on a run that should have it. See docs/agents/ci-unity-license.md."
-            exit 1
-          fi
-          echo "::notice::Unity tests not run: UNITY_LICENSE is unavailable to a fork PR. See the job summary."
-          {
-            echo "### Unity tests not run: no license in a fork PR"
-            echo ""
-            echo "GitHub withholds repository secrets from \`pull_request\` runs raised by a fork,"
-            echo "so \`UNITY_LICENSE\` is empty here and game-ci cannot activate an editor."
-            echo "The Unity test jobs are skipped, so nothing was compiled. The \`unity-tests-licensed\`"
-            echo "commit status on this PR stays pending until the licensed suite has run on this commit."
-            echo ""
-            echo "Maintainer, after reviewing commit \`$HEAD_SHA\`:"
-            echo ""
-            echo '```bash'
-            echo "gh workflow run test_pull_request_manual.yml --repo $REPO --ref fork-tests -f pr=$PR_NUMBER -f sha=$HEAD_SHA"
-            echo '```'
-            echo ""
-            echo "Contributor: set your own \`UNITY_LICENSE\`, \`UNITY_EMAIL\` and \`UNITY_PASSWORD\` secrets"
-            echo "on your fork (see \`docs/agents/ci-unity-license.md\`) to run this suite on your fork's PRs."
-          } >> "$GITHUB_STEP_SUMMARY"
-        shell: bash
-
+  # A pull request from a fork gets no secrets, so the licensed suite cannot run on it: skip the
+  # job instead of letting game-ci fail at license activation. An empty head repository is a fork
+  # deleted while its PR stayed open. test_pull_request.yml tells the maintainer how to run it.
   test:
-    needs: license
-    if: needs.license.outputs.available == 'true'
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     strategy:
       fail-fast: false
       matrix:
@@ -134,9 +73,8 @@ jobs:
         with:
           lfs: false
           ref: ${{ inputs.ref }}
-          # When a ref was passed in, this tree is a pull request's code and may
-          # come from a fork: do not leave a usable token in its .git/config.
-          persist-credentials: ${{ inputs.ref == '' }}
+          # Nothing here uses git with the token, and the tree may be a fork's code.
+          persist-credentials: false
 
       # --------------------------------------------------------------------- #
       # 2-b. Free disk space
