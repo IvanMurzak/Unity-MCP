@@ -1,0 +1,29 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Tilemap.Editor",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Editor",
+        "com.IvanMurzak.Unity.MCP.Runtime",
+        "com.IvanMurzak.Unity.MCP.Tilemap.Runtime",
+        "Unity.2D.Tilemap.Extras",
+        "Unity.2D.Tilemap.Extras.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY"
+    ],
+    "versionDefines": [
+        {
+            "name": "com.unity.2d.tilemap.extras",
+            "expression": "3.0.0",
+            "define": "TILEMAP_EXTRAS_3_OR_NEWER"
+        }
+    ],
+    "noEngineReferences": false
+}

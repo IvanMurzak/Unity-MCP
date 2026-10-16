@@ -1,0 +1,44 @@
+{
+  "name": "com.ivanmurzak.unity.mcp.particlesystem",
+  "displayName": "AI Particle System",
+  "author": {
+    "name": "Ivan Murzak",
+    "url": "https://github.com/IvanMurzak"
+  },
+  "keywords": [
+    "unity",
+    "particlesystem",
+    "particle-system",
+    "particles",
+    "vfx",
+    "visual-effects",
+    "ai",
+    "mcp",
+    "natural-language",
+    "procedural",
+    "prototyping",
+    "emission",
+    "shape",
+    "velocity",
+    "gradient",
+    "renderer",
+    "editor-tooling"
+  ],
+  "version": "2.0.1",
+  "unity": "2022.3",
+  "description": "AI-powered tools for Unity ParticleSystem workflow. Inspect and modify ParticleSystem components via natural language commands\u2014configure emission, shape, velocity curves, color gradients, and all modules without manual inspector navigation. Ideal for rapid prototyping and procedural effects generation. Built on top of the AI Game Developer (Unity-MCP) platform.",
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "1.0.0",
+    "com.unity.modules.particlesystem": "1.0.0"
+  },
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "extensions.unity",
+        "com.ivanmurzak"
+      ]
+    }
+  ]
+}

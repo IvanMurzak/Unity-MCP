@@ -1,0 +1,93 @@
+name: Release extensions
+
+on:
+  workflow_dispatch:
+    inputs:
+      extensions:
+        description: all or comma-separated module names/package IDs
+        required: true
+        default: all
+        type: string
+      dry_run:
+        description: Test and sign packages without publishing
+        default: true
+        type: boolean
+      expected_sha:
+        description: Train source commit; refuse publication if main advanced
+        default: ""
+        type: string
+
+concurrency:
+  group: release
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Validate component selection and publication source
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SELECTION: ${{ inputs.extensions }}
+          DRY_RUN: ${{ inputs.dry_run }}
+          EXPECTED_SHA: ${{ inputs.expected_sha }}
+        run: |
+          if [ "$DRY_RUN" != true ] && [ "$GITHUB_REF" != refs/heads/main ]; then
+            echo '::error::Publish only from main'
+            exit 1
+          fi
+          if [ -n "$EXPECTED_SHA" ] && [ "$EXPECTED_SHA" != "$GITHUB_SHA" ]; then
+            echo '::error::Main advanced beyond the component plan'
+            exit 1
+          fi
+          python commands/extension_release.py plan --only "$SELECTION"
+          if [ "$DRY_RUN" != true ]; then
+            python commands/extension_release.py routes --only "$SELECTION"
+          fi
+
+  tests:
+    needs: validate
+    uses: ./.github/workflows/test_pull_request.yml
+    secrets: inherit
+
+  publish:
+    needs: [validate, tests]
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      contents: write
+    env:
+      GH_TOKEN: ${{ github.token }}
+      SELECTION: ${{ inputs.extensions }}
+      UPM_SERVICE_ACCOUNT_KEY_ID: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_ID }}
+      UPM_SERVICE_ACCOUNT_KEY_SECRET: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_SECRET }}
+      UPM_ORG_ID: ${{ secrets.UPM_ORG_ID }}
+    steps:
+      - uses: actions/checkout@v6
+      - uses: actions/setup-python@v6
+        with:
+          python-version: "3.12"
+      - name: Install existing Unity UPM signing CLI
+        run: |
+          curl -fsSL https://cdn.packages.unity.com/upm-cli/install.sh -o "$RUNNER_TEMP/install-upm.sh"
+          bash "$RUNNER_TEMP/install-upm.sh"
+          echo "$HOME/.upm/bin" >> "$GITHUB_PATH"
+      - name: Sign and verify only pending components
+        run: python commands/extension_release.py build --only "$SELECTION"
+      - name: Preserve verified component artifacts
+        uses: actions/upload-artifact@v6
+        with:
+          name: unity-extension-packages
+          path: .artifacts/extensions/
+          if-no-files-found: ignore
+          retention-days: 1
+      - name: Publish independent component releases
+        if: ${{ !inputs.dry_run }}
+        run: python commands/extension_release.py publish --only "$SELECTION"

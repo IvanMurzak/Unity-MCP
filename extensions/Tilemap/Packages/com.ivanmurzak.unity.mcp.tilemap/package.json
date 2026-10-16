@@ -1,0 +1,37 @@
+{
+  "name": "com.ivanmurzak.unity.mcp.tilemap",
+  "displayName": "AI Tilemap",
+  "author": {
+    "name": "Ivan Murzak",
+    "url": "https://github.com/IvanMurzak"
+  },
+  "keywords": [
+    "Tilemap",
+    "Tile",
+    "2D",
+    "RuleTile",
+    "Grid",
+    "AI",
+    "AI Integration",
+    "MCP",
+    "Unity MCP"
+  ],
+  "version": "2.0.1",
+  "unity": "2022.3",
+  "description": "MCP Tools for Tilemap - Enhance your Unity projects with AI-powered 2D Tilemap tools using the MCP framework. Create Grid + Tilemap hierarchies, paint and box-fill tiles, read/clear tiles, set tile color and transform flags, build Tile and RuleTile assets, and configure TilemapRenderer/orientation via natural language.",
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "1.0.0",
+    "com.unity.modules.tilemap": "1.0.0",
+    "com.unity.2d.tilemap.extras": "3.1.3"
+  },
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "extensions.unity",
+        "com.ivanmurzak"
+      ]
+    }
+  ]
+}

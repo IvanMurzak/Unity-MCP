@@ -4,3 +4,7 @@
 /tests/chain-fixtures/** text eol=lf
 /.github/scripts/chain_fixture.py text eol=lf
 /.github/scripts/chain_feed.py text eol=lf
+
+# Imported modules retain their original source/test/meta bytes on every host.
+/extensions/** -text whitespace=cr-at-eol
+/templates/** -text whitespace=cr-at-eol

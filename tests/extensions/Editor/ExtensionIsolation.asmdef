@@ -1,0 +1,7 @@
+{
+  "name": "UnityMcp.ExtensionIsolation.Tests",
+  "references": [],
+  "includePlatforms": ["Editor"],
+  "optionalUnityReferences": ["TestAssemblies"],
+  "autoReferenced": false
+}

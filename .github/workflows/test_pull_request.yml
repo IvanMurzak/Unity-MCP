@@ -19,6 +19,10 @@ name: test-pull-request
 # the chain steps change nothing there. A pull_request carrying a `train/` label is the exception: it
 # takes its lock from the PR body (chain_feed.py §C7), which is why the toolchain setup steps test it.
 on:
+  workflow_call:
+    inputs:
+      lock: { required: false, type: string, default: "" }
+      lock_hash8: { required: false, type: string, default: "" }
   workflow_dispatch:
     inputs:
       lock:
@@ -104,6 +108,10 @@ jobs:
           python-version: "3.x"
       - name: Check NuGet pins against the asmdef gate generation
         run: python .github/scripts/check_nuget_gate.py
+      - name: Validate extension package boundaries and release tooling
+        run: |
+          python commands/extensions.py validate
+          python -m unittest discover -s commands/tests -v
 
   # The plugin's only engine-free C# tests: a plain xUnit project that compiles a chosen set of the
   # real plugin sources (Unity-MCP-Plugin/Tests~/EngineFree). No Unity licence, no editor, no Docker —
@@ -244,39 +252,47 @@ jobs:
       lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
-  # --- PLAY MODE ---
+  # --- PLAY MODE (preserve the original extension matrix) ---
 
-  # test-unity-2022-3-62f3-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2022.3.62f3'
-  #     unityVersion: '2022.3.62f3'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-2022-3-62f3-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
-  # test-unity-2023-2-22f1-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2023.2.22f1'
-  #     unityVersion: '2023.2.22f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-2023-2-22f1-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2023.2.22f1"
+      unityVersion: "2023.2.22f1"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
-  # test-unity-6000-3-1f1-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.3.1f1'
-  #     unityVersion: '6000.3.1f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-3-1f1-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.3.1f1"
+      unityVersion: "6000.3.1f1"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
-  # test-unity-6000-6-3f1-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.6.3f1'
-  #     unityVersion: '6000.6.3f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-6-3f1-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
   # --- STANDALONE ---
 

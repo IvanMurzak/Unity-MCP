@@ -755,7 +755,7 @@ PlayerSettings:
     QNX: 
     Server: 
     Stadia: 
-    Standalone: 
+    Standalone: IVAN_MURZAK_INSTALLER_PROJECT;UNITY_MCP_DEPS_11;UNITY_MCP_READY
     VisionOS: 
     WebGL: 
     Windows Store Apps: 
@@ -868,7 +868,7 @@ PlayerSettings:
   hmiLogStartupTiming: 0
   hmiCpuConfiguration: 
   apiCompatibilityLevel: 6
-  activeInputHandler: 0
+  activeInputHandler: 2
   windowsGamepadBackendHint: 0
   cloudProjectId: 
   framebufferDepthMemorylessMode: 0

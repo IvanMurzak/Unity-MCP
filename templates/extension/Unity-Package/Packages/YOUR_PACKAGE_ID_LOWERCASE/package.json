@@ -1,0 +1,28 @@
+{
+    "name": "YOUR_PACKAGE_ID_LOWERCASE",
+    "displayName": "YOUR_PACKAGE_NAME",
+    "author": {
+        "name": "Your_Name",
+        "url": "https://github.com/Your_Name"
+    },
+    "keywords": [
+        "keyword1",
+        "keyword2"
+    ],
+    "version": "1.0.0",
+    "unity": "2022.3",
+    "description": "Some description",
+    "dependencies": {
+        "com.ivanmurzak.unity.mcp": "1.0.0"
+    },
+    "scopedRegistries": [
+        {
+            "name": "package.openupm.com",
+            "url": "https://package.openupm.com",
+            "scopes": [
+                "extensions.unity",
+                "com.ivanmurzak"
+            ]
+        }
+    ]
+}

@@ -106,16 +106,16 @@ unity-mcp-cli open ./MyUnityProject
 
 | افزونه | توضیح |
 | --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | مجموعه ابزارهای اضافی برای انیمیشن در Unity |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | ابزارهای MCP برای Cinemachine |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | ابزارهای MCP برای سیستم ورودی Unity |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | ابزارهای MCP برای ناوبری هوش مصنوعی (NavMesh، پخت محیط، عامل‌ها و لینک‌ها) |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | مجموعه ابزارهای اضافی برای سیستم ذرات Unity |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | مجموعه ابزارهای اضافی برای Unity ProBuilder |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | ابزارهای MCP برای Unity Splines |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | مجموعه ابزارهای اضافی برای Unity Terrain |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | ابزارهای MCP برای Tilemapهای دوبعدی Unity |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | ابزارهای MCP برای کات‌سین‌ها و توالی‌های Unity Timeline |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | مجموعه ابزارهای اضافی برای انیمیشن در Unity |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | ابزارهای MCP برای Cinemachine |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | ابزارهای MCP برای سیستم ورودی Unity |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | ابزارهای MCP برای ناوبری هوش مصنوعی (NavMesh، پخت محیط، عامل‌ها و لینک‌ها) |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | مجموعه ابزارهای اضافی برای سیستم ذرات Unity |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | مجموعه ابزارهای اضافی برای Unity ProBuilder |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | ابزارهای MCP برای Unity Splines |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | مجموعه ابزارهای اضافی برای Unity Terrain |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | ابزارهای MCP برای Tilemapهای دوبعدی Unity |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | ابزارهای MCP برای کات‌سین‌ها و توالی‌های Unity Timeline |
 
 ---
 

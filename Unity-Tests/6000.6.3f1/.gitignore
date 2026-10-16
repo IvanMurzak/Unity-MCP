@@ -67,3 +67,10 @@ UserSettings/
 
 # Claude
 .claude/
+
+# Materialized shared extension test fixtures.
+/Assets/ExtensionIsolation.meta
+/Assets/com.IvanMurzak.meta
+/ProjectSettings/Packages/com.unity.probuilder/
+/ProjectSettings/SceneTemplateSettings.json
+/ProjectSettings/ShaderGraphSettings.asset

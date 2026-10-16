@@ -152,6 +152,9 @@ jobs:
       # License: game-ci consumes the stored UNITY_LICENSE (.ulf) secret directly
       # (see the env block on the test-runner step below). No per-run web scraping.
       # --------------------------------------------------------------------- #
+      - name: Prepare all extension packages and installer tests in this version's project
+        run: ${{ env.CHAIN_PY }} commands/extensions.py prepare --project "${{ inputs.projectPath }}"
+
       - name: Generate cache key
         id: cache_key
         run: |
@@ -304,7 +307,7 @@ jobs:
           retention-days: 1
 
       # --------------------------------------------------------------------- #
-      # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (16 distinct names)
+      # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (24 distinct names)
       # --------------------------------------------------------------------- #
       - name: chain leg record
         id: chain_record

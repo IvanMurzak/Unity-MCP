@@ -1,0 +1,35 @@
+{
+  "name": "com.ivanmurzak.unity.mcp.splines",
+  "displayName": "AI Splines",
+  "author": {
+    "name": "Ivan Murzak",
+    "url": "https://github.com/IvanMurzak"
+  },
+  "keywords": [
+    "Splines",
+    "Spline",
+    "Knot",
+    "Tangent",
+    "AI",
+    "AI Integration",
+    "MCP",
+    "Unity MCP"
+  ],
+  "version": "2.0.1",
+  "unity": "2022.3",
+  "description": "MCP Tools for Unity Splines - Author and edit Splines with AI through the MCP framework. Create SplineContainers, add/insert/remove knots, set knot position/tangents/rotation and tangent modes, toggle closed loops, evaluate points/tangents along a spline, and read or modify any spline component via natural language.",
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "1.0.0",
+    "com.unity.splines": "2.8.4"
+  },
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "extensions.unity",
+        "com.ivanmurzak"
+      ]
+    }
+  ]
+}

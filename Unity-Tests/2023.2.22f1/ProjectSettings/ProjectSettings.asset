@@ -664,7 +664,7 @@ PlayerSettings:
     PS5: 
     QNX: 
     Server: 
-    Standalone: 
+    Standalone: IVAN_MURZAK_INSTALLER_PROJECT;UNITY_MCP_DEPS_11;UNITY_MCP_READY
     WebGL: 
     Windows Store Apps: 
     XboxOne: 
@@ -782,7 +782,7 @@ PlayerSettings:
   qnxGraphicConfPath: 
   apiCompatibilityLevel: 6
   captureStartupLogs: {}
-  activeInputHandler: 0
+  activeInputHandler: 2
   windowsGamepadBackendHint: 0
   cloudProjectId: 
   framebufferDepthMemorylessMode: 0

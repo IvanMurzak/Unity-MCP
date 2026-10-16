@@ -188,16 +188,16 @@ unity-mcp-cli open ./MyUnityProject
 
 | 扩展 | 描述 |
 | --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Unity 动画附加工具集 |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | 用于 Cinemachine 的 MCP 工具 |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | 用于 Unity 输入系统的 MCP 工具 |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | 用于 AI 导航的 MCP 工具（NavMesh 表面、烘焙、智能体与链接） |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Unity 粒子系统附加工具集 |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 附加工具集 |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | 用于 Unity Splines 的 MCP 工具 |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Unity 地形附加工具集 |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | 用于 Unity 2D 瓦片地图的 MCP 工具 |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | 用于 Unity Timeline 过场动画和序列的 MCP 工具 |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | Unity 动画附加工具集 |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | 用于 Cinemachine 的 MCP 工具 |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | 用于 Unity 输入系统的 MCP 工具 |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | 用于 AI 导航的 MCP 工具（NavMesh 表面、烘焙、智能体与链接） |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | Unity 粒子系统附加工具集 |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | Unity ProBuilder 附加工具集 |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | 用于 Unity Splines 的 MCP 工具 |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | Unity 地形附加工具集 |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | 用于 Unity 2D 瓦片地图的 MCP 工具 |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | 用于 Unity Timeline 过场动画和序列的 MCP 工具 |
 
 ![AI 游戏开发者 — Unity SKILLS 和 MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
