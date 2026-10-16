@@ -41,12 +41,16 @@ gh secret set UNITY_PASSWORD --repo IvanMurzak/Unity-MCP
 GitHub withholds repository secrets from a `pull_request` run whose head repository is a
 **fork**. `secrets: inherit` still resolves — to empty strings. So on a fork PR
 `game-ci/unity-test-runner` receives an empty `UNITY_LICENSE` and aborts before it pulls an
-image or contacts Unity, and **all 12 `test-unity-*` legs go red at once** (6 caller jobs in
-`test_pull_request.yml` × the 2-way `platform: [base, windows-mono]` matrix).
+image or contacts Unity. **This is the expected behaviour of an unlicensed run.** The license,
+the secrets and the workflow are all fine; a fork simply cannot see them, and re-issuing the
+`.ulf` will not change it.
 
-**This is the expected behaviour of an unlicensed run.** The license, the secrets and the
-workflow are all fine; a fork simply cannot see them. Nothing here needs fixing, and
-re-issuing the `.ulf` will not change it.
+Since PR #971, `test_unity_plugin.yml` checks for the license first. On a fork PR every
+`test-unity-*` leg then **passes in seconds without compiling anything** and says so in its job
+summary; on any other run an empty license still fails the leg. A green `test-unity-*` check on a
+fork PR therefore proves nothing. The signal that the suite really ran is the
+`unity-tests-licensed` commit status (next sections). Runs from before #971, and any re-run of
+them, still show the old shape: every leg red at once, described below.
 
 ### How to tell it apart from a real license failure
 
@@ -82,22 +86,38 @@ Approve the run first; the no-secrets shape above is what you should see once it
 
 ### How to run the licensed suite against a fork PR's code
 
-`test_pull_request_manual.yml` is `workflow_dispatch`-only, so it runs with full secrets:
+Review the PR, take its exact head commit, and dispatch `test_pull_request_manual.yml` (it runs
+with full secrets) from `main`:
 
 ```bash
-gh workflow run test_pull_request_manual.yml --repo IvanMurzak/Unity-MCP --ref main
+gh pr view <n> --repo IvanMurzak/Unity-MCP --json headRefOid --jq .headRefOid
+gh workflow run test_pull_request_manual.yml --repo IvanMurzak/Unity-MCP --ref main \
+  -f pr=<n> -f sha=<that head commit>
 ```
 
-Reviewing a fork PR's actual code this way needs a ref the maintainer picks — a fork PR's
-commits are fetchable from this repository as `refs/pull/<n>/head` (always) and
-`refs/pull/<n>/merge` (only while GitHub can compute a clean test-merge, so absent on a
-conflicting PR). Neither is fetched by default — `git fetch origin refs/pull/<n>/head` — and
-neither can be dispatched: `workflow_dispatch` takes only a branch or tag as its ref, so
-`--ref refs/pull/<n>/head` is rejected.
-Wiring that into the dispatch (and deciding whether a fork's Unity checks should be allowed to
-pass at all, given the required-status-check ruleset) is a **policy decision** — deliberately not
-settled by this document. It is open in **PR #971**; issue #543, which first asked for it, was
-closed as completed back in 2026-03, so follow the PR, not the issue.
+The fork-PR job summary prints this command with both values filled in. The `resolve` job:
+
+- fails without testing anything if the PR is closed or its head is no longer `sha`, so code
+  pushed after your review never runs with the secrets. Review the new commits and dispatch again;
+- tests GitHub's test merge only if that merge commit's second parent is `sha` (the merge ref is
+  rebuilt asynchronously and can lag the head), otherwise the head itself, with a warning. The run
+  summary shows the reviewed head and the commit tested;
+- pins that one SHA for every job, so a push during the run changes nothing.
+
+On this path the jobs get a read-only token, the checkout keeps no credentials, and the Unity
+`Library/` cache is restored but never saved, so a fork's Editor code cannot poison the cache that
+`release.yml` and later PR runs restore.
+
+### The `unity-tests-licensed` status
+
+One commit status on the PR head says whether the licensed suite ran on that exact commit:
+
+- same-repository PR: `publish_test_results.yml` sets it from the `test-pull-request` run;
+- fork PR: `publish_test_results.yml` sets it **pending**, and the manual run above sets it to
+  `success`, `failure` or `error`. A new push is a new head commit, so it is pending again.
+
+For it to block a merge it must be a required status check in the **"Required status checks (no
+bypass)"** ruleset. That is a repository setting, not something this workflow can turn on.
 
 ### Measured, 2026-09-03 (issue #973)
 

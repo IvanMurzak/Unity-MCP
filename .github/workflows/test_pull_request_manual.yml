@@ -10,10 +10,137 @@ name: test-pull-request-manual
 
 on:
   workflow_dispatch:
+    inputs:
+      pr:
+        description: "Pull request number to test (empty = test the branch this run was dispatched on)"
+        required: false
+        type: string
+      sha:
+        description: "With pr: the full 40-char head commit you reviewed. The run fails if the PR head is anything else."
+        required: false
+        type: string
+
+run-name: "${{ inputs.pr != '' && format('licensed suite for PR #{0} at {1}', inputs.pr, inputs.sha) || '' }}"
+
+# With pr set, every job below runs a pull request's code, which may come from a fork, and this
+# repository's default token is write-scoped. Nothing that runs that code needs more than read.
+# Job-level permissions REPLACE these, so only the two status jobs, which never check out code,
+# widen them.
+permissions:
+  contents: read
 
 jobs:
+  # Resolve what to test, ONCE. A fork PR's commits are fetchable from this repository
+  # (refs/pull/<n>/head and /merge), so naming the PR runs the licensed suite against a fork's code
+  # without granting that code the secrets on any other trigger.
+  #
+  # Two races are closed here:
+  # - review vs dispatch: `sha` is the head the maintainer reviewed. If the PR head is anything
+  #   else when this job runs, nothing is tested; a push after this job cannot reach the tests
+  #   either, because every job checks out the SHA pinned here, not a ref.
+  # - a stale test merge: refs/pull/<n>/merge is rebuilt asynchronously and a read does not rebuild
+  #   it, so it can lag the head. The merge commit is used only if its second parent IS the
+  #   reviewed head; otherwise the head itself is tested, and the summary says which.
+  resolve:
+    name: resolve ref
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pull-requests: read
+      statuses: write
+    outputs:
+      ref: ${{ steps.resolve.outputs.ref }}
+      head: ${{ steps.resolve.outputs.head }}
+    steps:
+      - id: resolve
+        env:
+          PR: ${{ inputs.pr }}
+          EXPECTED: ${{ inputs.sha }}
+          REPO: ${{ github.repository }}
+          REF_NAME: ${{ github.ref }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          if [ -z "$PR" ]; then
+            if [ -n "$EXPECTED" ]; then
+              echo "::error::sha is only meaningful together with pr."
+              exit 1
+            fi
+            echo "ref=" >> "$GITHUB_OUTPUT"
+            echo "Testing \`$REF_NAME\` (no PR number given)." >> "$GITHUB_STEP_SUMMARY"
+            exit 0
+          fi
+          case "$PR" in
+            *[!0-9]*) echo "::error::pr must be a pull request number."; exit 1 ;;
+          esac
+          case "$EXPECTED" in
+            ''|*[!0-9a-f]*) echo "::error::With pr, sha must be the full lowercase 40-char head commit you reviewed."; exit 1 ;;
+          esac
+          if [ ${#EXPECTED} -ne 40 ]; then
+            echo "::error::With pr, sha must be the full lowercase 40-char head commit you reviewed."
+            exit 1
+          fi
+
+          # `mergeable` and `merge_commit_sha` are computed asynchronously; a GET schedules the
+          # computation and returns null until it is done.
+          for _ in 1 2 3 4 5 6 7 8 9 10; do
+            pr_json=$(gh api "repos/$REPO/pulls/$PR")
+            mergeable=$(jq -r '.mergeable' <<<"$pr_json")
+            [ "$mergeable" != "null" ] && break
+            sleep 5
+          done
+          state=$(jq -r '.state' <<<"$pr_json")
+          head=$(jq -r '.head.sha' <<<"$pr_json")
+          base=$(jq -r '.base.sha' <<<"$pr_json")
+          merge=$(jq -r '.merge_commit_sha // ""' <<<"$pr_json")
+
+          if [ "$state" != "open" ]; then
+            echo "::error::PR #$PR is $state."
+            exit 1
+          fi
+          if [ "$head" != "$EXPECTED" ]; then
+            echo "::error::PR #$PR head is now $head, not the $EXPECTED you reviewed. Review the new commits and dispatch again with sha=$head."
+            exit 1
+          fi
+
+          ref="$head"
+          kind="head commit"
+          if [ "$mergeable" = "true" ] && [ -n "$merge" ]; then
+            read -r parent1 parent2 _ <<<"$(gh api "repos/$REPO/git/commits/$merge" --jq '[.parents[].sha] | join(" ")') " || true
+            if [ "${parent2:-}" = "$head" ]; then
+              ref="$merge"
+              kind="test merge into the base branch"
+              if [ "$parent1" != "$base" ]; then
+                echo "::warning::The test merge was built on base $parent1; the base branch is now at $base."
+              fi
+            else
+              echo "::warning::refs/pull/$PR/merge ($merge) is stale: its second parent is ${parent2:-missing}, not $head. Testing the head commit instead."
+            fi
+          elif [ "$mergeable" = "false" ]; then
+            echo "::warning::PR #$PR conflicts with its base branch. Testing its head commit instead of a merge."
+          else
+            echo "::warning::GitHub has not computed a test merge for PR #$PR yet. Testing its head commit instead."
+          fi
+
+          echo "ref=$ref" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+          {
+            echo "### Licensed suite for PR #$PR"
+            echo ""
+            echo "- reviewed head: \`$head\`"
+            echo "- tested: \`$ref\` ($kind)"
+          } >> "$GITHUB_STEP_SUMMARY"
+          gh api -X POST "repos/$REPO/statuses/$head" \
+            -f state=pending -f context=unity-tests-licensed -f target_url="$RUN_URL" \
+            -f description="Licensed suite running (test-pull-request-manual)" > /dev/null
+        shell: bash
+
   test-cli:
+    needs: resolve
     uses: ./.github/workflows/test_cli.yml
+    with:
+      ref: ${{ needs.resolve.outputs.ref }}
 
   # --- UNITY TESTS ---
   # -------------------
@@ -21,32 +148,40 @@ jobs:
   # --- EDIT MODE ---
 
   test-unity-2022-3-62f3-editmode:
+    needs: resolve
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "editmode"
     secrets: inherit
 
   test-unity-2023-2-22f1-editmode:
+    needs: resolve
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "editmode"
     secrets: inherit
 
   test-unity-6000-3-1f1-editmode:
+    needs: resolve
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "editmode"
     secrets: inherit
 
   test-unity-6000-6-3f1-editmode:
+    needs: resolve
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/6000.6.3f1"
       unityVersion: "6000.6.3f1"
       testMode: "editmode"
@@ -89,35 +224,86 @@ jobs:
   # --- STANDALONE ---
 
   test-unity-2022-3-62f3-standalone:
+    needs: resolve
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/2022.3.62f3"
       unityVersion: "2022.3.62f3"
       testMode: "standalone"
     secrets: inherit
 
   test-unity-2023-2-22f1-standalone:
+    needs: resolve
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/2023.2.22f1"
       unityVersion: "2023.2.22f1"
       testMode: "standalone"
     secrets: inherit
 
   test-unity-6000-3-1f1-standalone:
+    needs: resolve
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/6000.3.1f1"
       unityVersion: "6000.3.1f1"
       testMode: "standalone"
     secrets: inherit
 
   test-unity-6000-6-3f1-standalone:
+    needs: resolve
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
+      ref: ${{ needs.resolve.outputs.ref }}
       projectPath: "./Unity-Tests/6000.6.3f1"
       unityVersion: "6000.6.3f1"
       testMode: "standalone"
     secrets: inherit
 
   # -------------------
+
+  # The PR's own checks cannot carry this result: a fork PR's test-unity-* legs pass without
+  # compiling anything. So the verdict is a commit status on the reviewed head commit, the same
+  # `unity-tests-licensed` context publish_test_results.yml leaves pending on every fork PR head.
+  # A later push gets a new head SHA, which starts pending again.
+  report:
+    name: report to PR
+    needs:
+      - resolve
+      - test-cli
+      - test-unity-2022-3-62f3-editmode
+      - test-unity-2023-2-22f1-editmode
+      - test-unity-6000-3-1f1-editmode
+      - test-unity-6000-6-3f1-editmode
+      - test-unity-2022-3-62f3-standalone
+      - test-unity-2023-2-22f1-standalone
+      - test-unity-6000-3-1f1-standalone
+      - test-unity-6000-6-3f1-standalone
+    if: always() && needs.resolve.outputs.head != ''
+    runs-on: ubuntu-latest
+    permissions:
+      statuses: write
+    steps:
+      - env:
+          NEEDS: ${{ toJSON(needs) }}
+          HEAD_SHA: ${{ needs.resolve.outputs.head }}
+          TESTED: ${{ needs.resolve.outputs.ref }}
+          REPO: ${{ github.repository }}
+          RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          results=$(jq -r '[.[].result] | unique | join(",")' <<<"$NEEDS")
+          case "$results" in
+            success) state=success; desc="Licensed suite passed on ${TESTED:0:12}" ;;
+            *cancelled*) state=error; desc="Licensed suite cancelled ($results)" ;;
+            *) state=failure; desc="Licensed suite failed ($results)" ;;
+          esac
+          echo "$state: $desc"
+          gh api -X POST "repos/$REPO/statuses/$HEAD_SHA" \
+            -f state="$state" -f context=unity-tests-licensed -f target_url="$RUN_URL" \
+            -f description="$desc" > /dev/null
+        shell: bash
