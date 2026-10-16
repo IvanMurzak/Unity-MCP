@@ -1,0 +1,33 @@
+Unity-MCP-Plugin/Assets/root/Runtime/UnityMcpPlugin.Config.cs
+  731625b36182d461 83,106
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/AiAgentConfigurator.cs
+  731625b36182d461 428-429,432
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/CustomConfigurator.cs
+  731625b36182d461 123-124,127
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UnityMcpPluginEditor.Static.cs
+  731625b36182d461 203,205-206,208-214
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/Startup.cs
+  731625b36182d461 13,16,44-51
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.AiAgents.cs
+  731625b36182d461 149-150,154
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "021d7bc9af53d81a1c3d1d2bdb947372693e803b",
+  "prompts": {
+    "731625b36182d461": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f9cc00b2-9c49-4acd-9a7b-2f696d38968a",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 1304,
+      "total_deletions": 1292,
+      "accepted_lines": 416,
+      "overriden_lines": 0
+    }
+  }
+}

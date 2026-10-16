@@ -1,0 +1,25 @@
+.github/workflows/release.yml
+  s_0cb3ed9339f370::t_db679c05236e17 393-401,431-439,469-477,507-509,591-593
+.github/workflows/test_pull_request.yml
+  s_0cb3ed9339f370::t_bc7bbe2802ff43 210-219,246-253,286-295
+.github/workflows/test_pull_request_manual.yml
+  s_0cb3ed9339f370::t_daaef0e1948796 47-54,81-88,115-122
+.github/workflows/test_unity_plugin.yml
+  s_0cb3ed9339f370::t_5f1de8f2b0bab5 253
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "13fe1ff1b4a563d227a846fd56689d281ff8f34b",
+  "prompts": {},
+  "sessions": {
+    "s_0cb3ed9339f370": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a553607e042b4f07b",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

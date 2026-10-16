@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Assets.Refresh.cs
+  f75e988c30b9c102 58
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.19",
+  "base_commit_sha": "a23e79778240d200b75a322a6430e2072a23ccbc",
+  "prompts": {
+    "f75e988c30b9c102": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9f7b23ee-a32c-49a1-9dfb-40b277d8c21d",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 65,
+      "total_deletions": 65,
+      "accepted_lines": 65,
+      "overriden_lines": 0
+    }
+  }
+}

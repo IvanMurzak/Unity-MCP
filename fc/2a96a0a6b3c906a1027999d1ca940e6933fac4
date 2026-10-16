@@ -1,0 +1,25 @@
+Unity-MCP-Server/build-all.ps1
+  69e89334cd4e214e 7-8,11,27,37-50,57,70,95-98,100-101,104,106-107,109-110,112-113,115-116,118-120,122-127,129-130,134-138,146,153
+Unity-MCP-Server/build-all.sh
+  69e89334cd4e214e 7-11,19-52,57,66-77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.4",
+  "base_commit_sha": "fc2a96a0a6b3c906a1027999d1ca940e6933fac4",
+  "prompts": {
+    "69e89334cd4e214e": {
+      "agent_id": {
+        "tool": "gemini",
+        "id": "85d46bab-5a9f-43de-adf0-8cf84ee53868",
+        "model": "gemini-3-flash-preview"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 426,
+      "total_deletions": 385,
+      "accepted_lines": 150,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,59 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/UI/uss/MainWindow.uss
+  s_5a5c29238cf90b::t_2c70c818bd86c8 28-31
+  s_5a5c29238cf90b::t_8d49ec175ebe84 32-34
+  s_a451afb443531a::t_b92773b6503f8a 35-58
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/AiAgentConfiguratorView.cs
+  s_5a5c29238cf90b::t_b44d63d4dcaf4a 64-70,423,428,434,440,443,447,467,473
+  s_5a5c29238cf90b::t_06d8b2e63fce75 14
+  s_5a5c29238cf90b::t_dd5e114619584b 420-422
+  s_5a5c29238cf90b::t_7bc8e91a327705 424-427
+  s_5a5c29238cf90b::t_729a2cb4c6520a 429-433
+  s_5a5c29238cf90b::t_dc2eea2dcc916d 435-439
+  s_5a5c29238cf90b::t_b98fd08cc28668 441-442
+  s_5a5c29238cf90b::t_71e8044a239cf1 444-446
+  s_5a5c29238cf90b::t_6f891a6ea6aba0 448-450,464-466
+  s_5a5c29238cf90b::t_b33688d9b73f91 468-472
+  s_5a5c29238cf90b::t_74665cff5ca5b1 474-476
+  s_a451afb443531a::t_59664a23bd1d0b 173,296-304,418-419,451-463,477-506
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/UI/AiAgentConfiguratorViewLogicTests.cs
+  s_5a5c29238cf90b::t_3b81dfcaa8136d 1-75,80-108
+  s_5a5c29238cf90b::t_e62eb4c6ecd94d 76-79
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/UI/AiAgentConfiguratorViewLogicTests.cs.meta
+  s_cab240c8aceacf::t_147a688406e78b 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/AgentConfiguratorSettingsFactory.cs
+  s_a451afb443531a::t_d24c176fa91066 30-34,37-50,58
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/UI/uxml/agents/AiAgentTemplateConfig.uxml
+  s_a451afb443531a::t_fd7e16fdd3609a 14-15
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "416affe5024e07c64f180ce4cf51d3731b53fc08",
+  "prompts": {},
+  "sessions": {
+    "s_5a5c29238cf90b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4ab94a33-b2ae-484d-b99a-df54ead07e19",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_a451afb443531a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-ad17da5a3193ccb72",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_cab240c8aceacf": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5951306c-a54a-4122-9174-960b61f91798",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

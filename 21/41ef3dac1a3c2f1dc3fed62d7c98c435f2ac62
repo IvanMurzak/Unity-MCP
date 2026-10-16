@@ -1,0 +1,86 @@
+Unity-Tests/2022.3.62f3/Assets/EditorTests/EditorTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 24
+Unity-Tests/6000.6.0a2/ProjectSettings/ProjectSettings.asset
+  s_8d859c66569e2d::t_40ffb31ba6ce56 837-855
+Unity-Tests/2023.2.22f1/Assets/EditorTests/EditorTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 24
+Unity-Tests/6000.3.1f1/Assets/EditorTests/EditorTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/TestFiles/com.IvanMurzak.Unity.MCP.TestFiles.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 13
+Unity-Tests/6000.6.0a2/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 22
+Unity-Tests/6000.3.1f1/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 22
+Unity-Tests/6000.5.0b3/Assets/TestFiles/TestFiles.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/com.IvanMurzak.Unity.MCP.Editor.Tests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 34
+Unity-Tests/6000.6.0a2/Assets/EditorTests/EditorTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 24
+Unity-Tests/2023.2.22f1/ProjectSettings/ProjectSettings.asset
+  s_8d859c66569e2d::t_40ffb31ba6ce56 656-672
+Unity-Tests/2022.3.62f3/ProjectSettings/ProjectSettings.asset
+  s_8d859c66569e2d::t_40ffb31ba6ce56 747-764
+Unity-Tests/6000.5.0b3/ProjectSettings/ProjectSettings.asset
+  s_8d859c66569e2d::t_40ffb31ba6ce56 836-854
+Unity-Tests/2022.3.62f3/Assets/TestFiles/TestFiles.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 13
+Unity-Tests/2023.2.22f1/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 22
+Unity-MCP-Plugin/ProjectSettings/ProjectSettings.asset
+  s_8d859c66569e2d::t_40ffb31ba6ce56 770,772-774,776-777,779-790
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_8d859c66569e2d::t_cda58bb65e4c48 113-117
+  s_8d859c66569e2d::t_dd85c68ffa8bb9 68
+Unity-Tests/2023.2.22f1/Assets/TestFiles/TestFiles.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 13
+Unity-Tests/6000.3.1f1/ProjectSettings/ProjectSettings.asset
+  s_8d859c66569e2d::t_40ffb31ba6ce56 832-850
+Unity-Tests/2022.3.62f3/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/com.IvanMurzak.Unity.MCP.Editor.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 32
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/com.IvanMurzak.Unity.MCP.Runtime.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 26
+Unity-Tests/6000.3.1f1/Assets/TestFiles/TestFiles.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 13
+Unity-Tests/6000.5.0b3/Assets/EditorTests/EditorTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 24
+Unity-Tests/6000.5.0b3/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 22
+Unity-Tests/6000.6.0a2/Assets/TestFiles/TestFiles.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Runtime/com.IvanMurzak.Unity.MCP.Tests.asmdef
+  s_8d859c66569e2d::t_40ffb31ba6ce56 30
+.github/nuget-gate.lock
+  s_8d859c66569e2d::t_b92e1aa9f60376 3-4,19
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8d859c66569e2d::t_4c9f74f6a80680 4,10
+Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8d859c66569e2d::t_042caca43933b0 4,10
+Unity-Tests/2023.2.22f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8d859c66569e2d::t_61082defdb91ed 4,10
+Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8d859c66569e2d::t_c4d4fd2f21e5cf 4,10
+Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8d859c66569e2d::t_9bc5d71d04af57 4,10
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8d859c66569e2d::t_edf5856db682f0 4,10
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.24",
+  "base_commit_sha": "2141ef3dac1a3c2f1dc3fed62d7c98c435f2ac62",
+  "prompts": {},
+  "sessions": {
+    "s_8d859c66569e2d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0d33093a-57c1-4b45-b2ac-0ca6495e78eb",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

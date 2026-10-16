@@ -1,0 +1,21 @@
+.github/workflows/test_unity_plugin.yml
+  s_d3cd27dd45e300::t_cd8807e77e4aee 24-32
+docs/claude/ci-unity-license.md
+  s_d3cd27dd45e300::t_7aa34d682526c1 39-97
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "95d7805f6fd4d1288a6d160d2b4ead08639a3dc5",
+  "prompts": {},
+  "sessions": {
+    "s_d3cd27dd45e300": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "761519e4-ddc0-4406-bb0a-a2e5515622e0",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

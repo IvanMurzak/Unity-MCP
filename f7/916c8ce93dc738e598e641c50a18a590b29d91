@@ -1,0 +1,221 @@
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs"
+  s_eb45a20e683a61::t_a4e44569b06787 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs
+  s_eb45a20e683a61::t_788a9745e2b5ce 30
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json
+  s_eb45a20e683a61::t_94638687ca3f2c 18
+Unity-Tests/6000.6.3f1/.gitignore
+  s_eb45a20e683a61::t_d7ff097996dcd1 1-69
+Unity-Tests/6000.6.3f1/.vscode/.gitignore
+  s_eb45a20e683a61::t_224072d7b35647 1
+Unity-Tests/6000.6.3f1/.vscode/extensions.json
+  s_eb45a20e683a61::t_7cd641264e2ee7 1-5
+Unity-Tests/6000.6.3f1/.vscode/launch.json
+  s_eb45a20e683a61::t_affd5fcd9d9443 1-10
+Unity-Tests/6000.6.3f1/.vscode/settings.json
+  s_eb45a20e683a61::t_507e9aab71aa59 1-85
+Unity-Tests/6000.6.3f1/Assets/EditorTests.meta
+  s_eb45a20e683a61::t_b65256f76c8301 1-8
+Unity-Tests/6000.6.3f1/Assets/EditorTests/EditorTests.asmdef
+  s_eb45a20e683a61::t_d9beb3e77a9cf2 1-28
+Unity-Tests/6000.6.3f1/Assets/EditorTests/EditorTests.asmdef.meta
+  s_eb45a20e683a61::t_d16d5bd1311af8 1-7
+Unity-Tests/6000.6.3f1/Assets/EditorTests/NewTestScript.cs
+  s_eb45a20e683a61::t_6275d39f375006 1-27
+Unity-Tests/6000.6.3f1/Assets/EditorTests/NewTestScript.cs.meta
+  s_eb45a20e683a61::t_890ced471c7ecd 1-2
+Unity-Tests/6000.6.3f1/Assets/EditorTests/SerializeTest.cs
+  s_eb45a20e683a61::t_9dcb7670b444b9 1-224
+Unity-Tests/6000.6.3f1/Assets/EditorTests/SerializeTest.cs.meta
+  s_eb45a20e683a61::t_bb85f624a338c1 1-2
+Unity-Tests/6000.6.3f1/Assets/Plugins.meta
+  s_eb45a20e683a61::t_f0f5fcc722f252 1-8
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet.meta
+  s_eb45a20e683a61::t_bc57c74a81ec2d 1-8
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_eb45a20e683a61::t_8ca63181fa3454 1-260
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/McpPlugin.Common.dll.meta
+  s_eb45a20e683a61::t_0419cc4f331983 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/McpPlugin.dll.meta
+  s_eb45a20e683a61::t_bfbc425ce5bdb3 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.AspNetCore.Connections.Abstractions.dll.meta
+  s_eb45a20e683a61::t_eeaf6ce1dc0ac9 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.AspNetCore.Http.Connections.Client.dll.meta
+  s_eb45a20e683a61::t_5fcb6a52a784d6 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.AspNetCore.Http.Connections.Common.dll.meta
+  s_eb45a20e683a61::t_05ad93dfc6866a 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.AspNetCore.SignalR.Client.Core.dll.meta
+  s_eb45a20e683a61::t_8a8a002d1e36ff 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.AspNetCore.SignalR.Client.dll.meta
+  s_eb45a20e683a61::t_c828eca69fa463 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.AspNetCore.SignalR.Common.dll.meta
+  s_eb45a20e683a61::t_61f27360d60db3 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.AspNetCore.SignalR.Protocols.Json.dll.meta
+  s_eb45a20e683a61::t_adaaf75089b916 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Bcl.AsyncInterfaces.dll.meta
+  s_eb45a20e683a61::t_909f81aa4e4db2 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Bcl.Memory.dll.meta
+  s_eb45a20e683a61::t_7fff9837e60713 1-27
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Bcl.TimeProvider.dll.meta
+  s_eb45a20e683a61::t_18853bfd77811d 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.CodeAnalysis.CSharp.dll.meta
+  s_eb45a20e683a61::t_4f339ded0bd5e7 1-27
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.CodeAnalysis.dll.meta
+  s_eb45a20e683a61::t_fa7096e6b33601 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.Caching.Abstractions.dll.meta
+  s_eb45a20e683a61::t_37e9014700dcbf 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.Configuration.Abstractions.dll.meta
+  s_eb45a20e683a61::t_e021bd8de6a503 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.DependencyInjection.Abstractions.dll.meta
+  s_eb45a20e683a61::t_2f607c94383823 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.DependencyInjection.dll.meta
+  s_eb45a20e683a61::t_305bc0735b1dd3 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.Diagnostics.Abstractions.dll.meta
+  s_eb45a20e683a61::t_a661fe39eaa25b 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.Features.dll.meta
+  s_eb45a20e683a61::t_e56102e6ece887 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.FileProviders.Abstractions.dll.meta
+  s_eb45a20e683a61::t_8f79223700430d 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.Hosting.Abstractions.dll.meta
+  s_eb45a20e683a61::t_47a4d24a0f14f3 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.Logging.Abstractions.dll.meta
+  s_eb45a20e683a61::t_82ab9c68fa52dc 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.Logging.dll.meta
+  s_eb45a20e683a61::t_a96aa1268df0a6 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.Options.dll.meta
+  s_eb45a20e683a61::t_c0a8a98996d5e2 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/Microsoft.Extensions.Primitives.dll.meta
+  s_eb45a20e683a61::t_1788d86165a562 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/R3.dll.meta
+  s_eb45a20e683a61::t_e01c486fb8a076 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/ReflectorNet.dll.meta
+  s_eb45a20e683a61::t_f6129b4045eab7 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Buffers.dll.meta
+  s_eb45a20e683a61::t_c7e68bdb84e0be 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Collections.Immutable.dll.meta
+  s_eb45a20e683a61::t_36a1ab79fdbf77 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.ComponentModel.Annotations.dll.meta
+  s_eb45a20e683a61::t_a32b9d80f86e4e 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Diagnostics.DiagnosticSource.dll.meta
+  s_eb45a20e683a61::t_18e1bded04c999 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.IO.Pipelines.dll.meta
+  s_eb45a20e683a61::t_68eb7a0bfd796d 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Memory.dll.meta
+  s_eb45a20e683a61::t_a552ac422e110c 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Numerics.Vectors.dll.meta
+  s_eb45a20e683a61::t_5b9d551838394a 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Reflection.Metadata.dll.meta
+  s_eb45a20e683a61::t_7981f6a8b0bf4c 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Runtime.CompilerServices.Unsafe.dll.meta
+  s_eb45a20e683a61::t_77fe78248a9361 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Text.Encoding.CodePages.dll.meta
+  s_eb45a20e683a61::t_6171c496090075 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Text.Encodings.Web.dll.meta
+  s_eb45a20e683a61::t_04227b08dea2d6 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Text.Json.dll.meta
+  s_eb45a20e683a61::t_5135e734dd5af6 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Threading.Channels.dll.meta
+  s_eb45a20e683a61::t_552766dd04cd78 1-28
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/System.Threading.Tasks.Extensions.dll.meta
+  s_eb45a20e683a61::t_dd193c1f6da943 1-28
+Unity-Tests/6000.6.3f1/Assets/RuntimeTests.meta
+  s_eb45a20e683a61::t_b41befb586965b 1-8
+Unity-Tests/6000.6.3f1/Assets/RuntimeTests/NewTestScript.cs
+  s_eb45a20e683a61::t_57ae1dfc1c7fc7 1-25
+Unity-Tests/6000.6.3f1/Assets/RuntimeTests/NewTestScript.cs.meta
+  s_eb45a20e683a61::t_e057ce1c693881 1-2
+Unity-Tests/6000.6.3f1/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_eb45a20e683a61::t_2c8ea46dbcf81d 1-26
+Unity-Tests/6000.6.3f1/Assets/RuntimeTests/RuntimeTests.asmdef.meta
+  s_eb45a20e683a61::t_45e6b048cd677e 1-7
+Unity-Tests/6000.6.3f1/Assets/Scenes.meta
+  s_eb45a20e683a61::t_eafd26b67279e9 1-8
+Unity-Tests/6000.6.3f1/Assets/Scenes/SampleScene.unity
+  s_eb45a20e683a61::t_474e1002de9a74 1-316
+Unity-Tests/6000.6.3f1/Assets/Scenes/SampleScene.unity.meta
+  s_eb45a20e683a61::t_f07cec17231a08 1-7
+Unity-Tests/6000.6.3f1/Assets/TestFiles.meta
+  s_eb45a20e683a61::t_c80ff291d435bf 1-8
+Unity-Tests/6000.6.3f1/Assets/TestFiles/ColliderListTestScript.cs
+  s_eb45a20e683a61::t_3f85dba8d0ff41 1-20
+Unity-Tests/6000.6.3f1/Assets/TestFiles/ColliderListTestScript.cs.meta
+  s_eb45a20e683a61::t_679a057b16e053 1-2
+Unity-Tests/6000.6.3f1/Assets/TestFiles/TestFiles.asmdef
+  s_eb45a20e683a61::t_b1b57cd69eb353 1-17
+Unity-Tests/6000.6.3f1/Assets/TestFiles/TestFiles.asmdef.meta
+  s_eb45a20e683a61::t_62aefff53acfa5 1-7
+Unity-Tests/6000.6.3f1/Packages/manifest.json
+  s_eb45a20e683a61::t_dd187ed919beef 1-60
+Unity-Tests/6000.6.3f1/ProjectSettings/AudioManager.asset
+  s_eb45a20e683a61::t_9d2ee45af2d49d 1-23
+Unity-Tests/6000.6.3f1/ProjectSettings/ClusterInputManager.asset
+  s_eb45a20e683a61::t_23706f6761e421 1-6
+Unity-Tests/6000.6.3f1/ProjectSettings/DynamicsManager.asset
+  s_eb45a20e683a61::t_b4abc53c04c245 1-46
+Unity-Tests/6000.6.3f1/ProjectSettings/EditorBuildSettings.asset
+  s_eb45a20e683a61::t_495bf8e200a4d7 1-13
+Unity-Tests/6000.6.3f1/ProjectSettings/EditorSettings.asset
+  s_eb45a20e683a61::t_cd11494a68036d 1-53
+Unity-Tests/6000.6.3f1/ProjectSettings/GraphicsSettings.asset
+  s_eb45a20e683a61::t_33244a3358bfed 1-81
+Unity-Tests/6000.6.3f1/ProjectSettings/InputManager.asset
+  s_eb45a20e683a61::t_72075f06ddf02e 1-296
+Unity-Tests/6000.6.3f1/ProjectSettings/MemorySettings.asset
+  s_eb45a20e683a61::t_4ace28a954e9fa 1-37
+Unity-Tests/6000.6.3f1/ProjectSettings/MultiplayerManager.asset
+  s_eb45a20e683a61::t_13473d67354e38 1-7
+Unity-Tests/6000.6.3f1/ProjectSettings/NavMeshAreas.asset
+  s_eb45a20e683a61::t_8b3d8764e0b89e 1-93
+Unity-Tests/6000.6.3f1/ProjectSettings/PackageManagerSettings.asset
+  s_eb45a20e683a61::t_f2055ff930f7f2 1-57
+Unity-Tests/6000.6.3f1/ProjectSettings/Packages/com.unity.dedicated-server/ContentSelectionSettings.asset
+  s_eb45a20e683a61::t_692ac56937f57a 1-22
+Unity-Tests/6000.6.3f1/ProjectSettings/Packages/com.unity.dedicated-server/MultiplayerRolesSettings.asset
+  s_eb45a20e683a61::t_520b79abbd0127 1-17
+Unity-Tests/6000.6.3f1/ProjectSettings/Packages/com.unity.testtools.codecoverage/Settings.json
+  s_eb45a20e683a61::t_f6e5c4cb6f1574 1-5
+Unity-Tests/6000.6.3f1/ProjectSettings/Physics2DSettings.asset
+  s_eb45a20e683a61::t_a7e98aa1f41d9a 1-57
+Unity-Tests/6000.6.3f1/ProjectSettings/PhysicsCoreProjectSettings2D.asset
+  s_eb45a20e683a61::t_73ad67e01b473c 1-6
+Unity-Tests/6000.6.3f1/ProjectSettings/PresetManager.asset
+  s_eb45a20e683a61::t_71b31453d87d78 1-7
+Unity-Tests/6000.6.3f1/ProjectSettings/ProjectAuditorSettings.asset
+  s_eb45a20e683a61::t_bb8596b8854cd9 1-36
+Unity-Tests/6000.6.3f1/ProjectSettings/ProjectSettings.asset
+  s_eb45a20e683a61::t_b3a4c18d665f8e 1-727
+Unity-Tests/6000.6.3f1/ProjectSettings/ProjectVersion.txt
+  s_eb45a20e683a61::t_d5bab77681d74f 1-2
+Unity-Tests/6000.6.3f1/ProjectSettings/QualitySettings.asset
+  s_eb45a20e683a61::t_69cc5c20e22df4 1-347
+Unity-Tests/6000.6.3f1/ProjectSettings/TagManager.asset
+  s_eb45a20e683a61::t_9b037897afcd61 1-46
+Unity-Tests/6000.6.3f1/ProjectSettings/TimeManager.asset
+  s_eb45a20e683a61::t_d4832e89d0c49c 1-14
+Unity-Tests/6000.6.3f1/ProjectSettings/UnityConnectSettings.asset
+  s_eb45a20e683a61::t_6ba28b1f65b86f 1-42
+Unity-Tests/6000.6.3f1/ProjectSettings/VFXManager.asset
+  s_eb45a20e683a61::t_51f8ab5c661dc6 1-21
+Unity-Tests/6000.6.3f1/ProjectSettings/VersionControlSettings.asset
+  s_eb45a20e683a61::t_ebf59534ffb67b 1-7
+cli/package-lock.json
+  s_eb45a20e683a61::t_a37a187f00958b 3,9
+cli/package.json
+  s_eb45a20e683a61::t_7190c896a611ee 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f7916c8ce93dc738e598e641c50a18a590b29d91",
+  "prompts": {},
+  "sessions": {
+    "s_eb45a20e683a61": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_eb45a20e683a61",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

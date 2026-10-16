@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/UpdatePopupWindow.cs
+  ae16b8890f8f39f8 48-52,81-86,236-238,243
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "75b9de31b0ef575816c5de552e3927f1ed2530e3",
+  "prompts": {
+    "ae16b8890f8f39f8": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "89ed2d3d-bdac-4de2-ae40-0b2a85cd58fb",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 143026,
+      "total_deletions": 169,
+      "accepted_lines": 143027,
+      "overriden_lines": 0
+    }
+  }
+}

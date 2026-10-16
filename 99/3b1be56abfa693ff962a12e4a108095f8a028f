@@ -1,0 +1,31 @@
+cli/src/utils/unity-editor.ts
+  s_142531325653d2::t_c267839ef962cf 210-216,218-227,232-234,244,248,252
+cli/src/lib/open.ts
+  s_142531325653d2::t_15de1f92c87f43 1-346
+cli/src/lib/types.ts
+  s_142531325653d2::t_e1ca59ea7eba6a 22-34
+  s_142531325653d2::t_b53942d9dd4f9c 244-346
+cli/src/lib.ts
+  s_142531325653d2::t_70d66efc2ae6aa 23,54-60
+cli/src/commands/open.ts
+  s_142531325653d2::t_8b2c423dda2e08 3,6-11,13-19,32-34,36,39-41,43-47,49-78,106-111,118,124,140-145,147-148,151-156,158,161-163,165-228,230-231,233-239,241-253,255-256,258-264,267-269
+cli/tests/open-lib.test.ts
+  s_142531325653d2::t_ea71ad92618b0a 247-251,254,259-271,276-277,281-282,285,305,307,312-325
+  s_142531325653d2::t_9e1fa3cec677fe 1-246,252-253,255-258,272-275,278-280,283-284,286-304,306,308-311,326-427
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "993b1be56abfa693ff962a12e4a108095f8a028f",
+  "prompts": {},
+  "sessions": {
+    "s_142531325653d2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e8179220-c9ef-4f73-baf2-a1fc1b8d098b",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

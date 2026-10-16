@@ -1,0 +1,27 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs
+  s_96a889b2a9ec0f::t_2c0f5a73c4aa04 507-514,520-526
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetLegacyMigrationTests.cs
+  s_96a889b2a9ec0f::t_c8bfff711de327 192-244
+  s_96a889b2a9ec0f::t_01709315a13aa1 156-163,190
+  s_96a889b2a9ec0f::t_6675d20014ae5c 132-155
+  s_96a889b2a9ec0f::t_5ba1936f5f0aa3 13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetLongPathPreflightTests.cs
+  s_96a889b2a9ec0f::t_288eb6faad025c 84-90,104-140
+  s_96a889b2a9ec0f::t_47242c92e2de48 59-66,82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "94fa8316df5c7bb6fa901ec09e0e15aa7fb0d7de",
+  "prompts": {},
+  "sessions": {
+    "s_96a889b2a9ec0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f69faed4-0135-4243-87c8-981a7cb298cc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

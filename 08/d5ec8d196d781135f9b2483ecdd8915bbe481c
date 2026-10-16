@@ -1,0 +1,27 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.Connection.cs
+  cd12eb966858aa53 29,78,80
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.cs
+  cd12eb966858aa53 74
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Controls/SegmentedControl.cs
+  cd12eb966858aa53 129-131
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.17",
+  "base_commit_sha": "08d5ec8d196d781135f9b2483ecdd8915bbe481c",
+  "prompts": {
+    "cd12eb966858aa53": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b7c6a822-ef01-45bc-b7ec-ef1e52198fe7",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 803,
+      "total_deletions": 799,
+      "accepted_lines": 799,
+      "overriden_lines": 0
+    }
+  }
+}

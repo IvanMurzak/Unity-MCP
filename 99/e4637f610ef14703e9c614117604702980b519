@@ -1,0 +1,32 @@
+.github/workflows/test_cli.yml
+  s_de71e20c9d8602::t_e2ab27d739c61c 86-87,89
+  s_de71e20c9d8602::t_a594549ba6dca5 56
+  s_de71e20c9d8602::t_fc16019250281d 84
+.github/workflows/test_pull_request.yml
+  s_de71e20c9d8602::t_414c70e07af9d4 12-19
+  s_de71e20c9d8602::t_96dc1b288e4b3f 83-84
+  s_de71e20c9d8602::t_a49fbbfd0212f4 33
+  s_de71e20c9d8602::t_b9c2ba31f016cc 103-104,107
+  s_de71e20c9d8602::t_55712e3a510c82 116,118-119,121
+.github/workflows/test_unity_plugin.yml
+  s_de71e20c9d8602::t_c63853cdba3178 162,164-165,167
+  s_de71e20c9d8602::t_d45448628dee00 100-102,105
+.github/scripts/chain_feed.py
+  s_de71e20c9d8602::t_962db9609e629e 269-276,438-447,620,623-624,743,800-970,973,1016,1019,1053-1054,1777-1781,1903-1925,1946-1948,1951-1958,1962-1968,1971-1973,2037-2039,2053,2056,2061,2143-2166,2218-2223,2234-2236,2239-2241,2247-2260,2285-2288,2398,2406-2409,2411-2415,2578-2668,2689-2690,2730,2775-2806,2809-2822,2824-2828,2838,2840-2843,2846-2849,2853-2854,2856-2857,2897-2903,2914-2917
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "99e4637f610ef14703e9c614117604702980b519",
+  "prompts": {},
+  "sessions": {
+    "s_de71e20c9d8602": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b1fa7ae0-224c-4b0e-8499-22456e0d6a3f",
+        "model": "claude-opus-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

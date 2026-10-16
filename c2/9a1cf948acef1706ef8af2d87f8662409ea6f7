@@ -1,0 +1,28 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetResolverMenu.cs
+  s_a8c51bc9176e23::t_a0bfe1f221f9a6 35-39,41
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetDependencyResolver.cs
+  s_a8c51bc9176e23::t_1646beaa3472eb 272,280,285
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/ScriptAssembliesCache.cs
+  s_a8c51bc9176e23::t_9641026186cbab 14-16
+  s_a8c51bc9176e23::t_77056f90eca6e3 59-110
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_a8c51bc9176e23::t_702ee89ea74b52 24-30
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/UpdatePopupWindow.cs
+  s_a8c51bc9176e23::t_23ba04ca466d06 173-179,181
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "c29a1cf948acef1706ef8af2d87f8662409ea6f7",
+  "prompts": {},
+  "sessions": {
+    "s_a8c51bc9176e23": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43026932-e56b-4e7d-bd51-c3c0c7aff3c2",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/ProjectInstanceServiceTests.cs
+  s_0d7abdff4d3832::t_28f51847684f67 1-184
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/ProjectIdentityGoldenVectorTests.cs
+  s_0d7abdff4d3832::t_bbd65930bc262d 1-111
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/ProjectInstanceService.cs
+  s_0d7abdff4d3832::t_b005934088f597 1-159
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/ProjectInstanceService.cs.meta
+  s_0d7abdff4d3832::t_d07defd011501e 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UnityMcpPluginEditor.Build.cs
+  s_4a2878eb2bf26f::t_7f4e2f94b6e10f 43-49
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/ProjectIdentityGoldenVectorTests.cs.meta
+  s_0d7abdff4d3832::t_f5fe5e13a42f8a 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/ProjectInstanceServiceTests.cs.meta
+  s_0d7abdff4d3832::t_bd7f53b8edd384 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "440663b2b201017eeefbca37e92e2d591685b4ac",
+  "prompts": {},
+  "sessions": {
+    "s_0d7abdff4d3832": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "dd419e4d-9a05-4526-be7e-54d7d24c8753",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_4a2878eb2bf26f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "38e6d8a6-6a41-4cd1-8a9e-f4f0e5e89167",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
