@@ -74,6 +74,9 @@ LOCK_SHA_RE = re.compile(r"^[0-9a-f]{40}\Z")
 #: cmd.exe, path-separator or XML metacharacter, and no leading `-`.
 LOCK_WS_VERSION_RE = re.compile(r"^[0-9]+(?:\.[0-9]+){0,3}(?:-[0-9A-Za-z.-]+)?-ws\.g([0-9a-f]{8})\Z")
 LOCK_STATES = ("main", "released", "sha", "branch", "pr")
+#: A lock `nodes` key. Unknown ids are accepted (`validate_lock`), so the key's own shape is
+#: what keeps it out of a log line or a path.
+LOCK_NODE_ID_RE = re.compile(r"^[a-z][a-z0-9-]{0,63}\Z")
 LOCK_HASH_RE = re.compile(r"^sha256:[0-9a-f]{64}\Z")
 #: A ref as `lock.py` records it (`refs/heads/<branch>`, `refs/pull/<n>/head`, a sha). This file
 #: never reads it, so its shape is git's own ref grammar, the grammar `lock.parse_state` accepts,
@@ -779,8 +782,10 @@ def validate_lock(lock):
     the recipes or any writer reads a value — so a value that would change a shell command, a
     git argv, a feed path, `$GITHUB_ENV` or `$GITHUB_OUTPUT` never reaches one:
 
-    * `nodes` keys — the node ids this file knows (`RECIPES`, which `recipes-check` pins to the
-      manifest); `follows` names one of them too;
+    * `nodes` keys — a node-id shape (`LOCK_NODE_ID_RE`). A key this file has NO recipe for (a
+      node added to the manifest after this copy was vendored) is ACCEPTED and IGNORED: no
+      RECIPES edge can name it, so it is outside every leg's ancestor set and nothing here reads
+      it. Its scalars are still validated. `follows` names a recipe node or another lock key;
     * `sha` — exactly 40 lowercase hex (never an option-shaped `--upload-pack=...` git argv);
     * `ws_version` — `<version>-ws.g<8 hex>`, and those 8 hex are the node's own `sha[:8]`
       whenever the node carries a sha (`lock.ws_version_for`);
@@ -795,10 +800,8 @@ def validate_lock(lock):
             raise _lock_field_refusal("lock_hash", lock_hash, "sha256:<64 lowercase hex>")
     for node_id, entry in nodes.items():
         where = "nodes.%s" % (node_id,)
-        if node_id not in RECIPES:
-            raise _lock_field_refusal(
-                "nodes key", node_id, "a node id this file knows (%s)" % ", ".join(sorted(RECIPES))
-            )
+        if not (isinstance(node_id, str) and LOCK_NODE_ID_RE.match(node_id)):
+            raise _lock_field_refusal("nodes key", node_id, "a node id (lowercase letters, digits, `-`)")
         if not isinstance(entry, dict):
             raise _lock_field_refusal(where, entry, "an object")
         for key, value in entry.items():
@@ -831,7 +834,7 @@ def validate_lock(lock):
         if ref is not None and not (isinstance(ref, str) and LOCK_REF_RE.match(ref)):
             raise _lock_field_refusal(where + ".ref", ref, "a git ref name (no whitespace, ~^:?*[\\, `..` or leading -)")
         follows = entry.get("follows")
-        if follows is not None and follows not in RECIPES:
+        if follows is not None and follows not in RECIPES and follows not in nodes:
             raise _lock_field_refusal(where + ".follows", follows, "a node id this file knows")
     return lock
 
@@ -1010,6 +1013,26 @@ def observed_head_sha():
     if head and os.environ.get("GITHUB_EVENT_NAME") == "pull_request":
         return str(head)
     return os.environ.get("GITHUB_SHA") or ""
+
+
+def unknown_lock_nodes(lock):
+    """`[(node id, state)]` for every lock node this file has no recipe for, sorted."""
+    return sorted(
+        (nid, (entry or {}).get("state")) for nid, entry in (lock.get("nodes") or {}).items()
+        if nid not in RECIPES
+    )
+
+
+def unknown_node_warnings(ctx):
+    """One named caveat per MOVING lock node this copy cannot see. A released one restores from
+    its registry like any released node, so it needs none; a moving one is ignored here because
+    no recipe edge names it, which is only right while no node of this leg consumes it — the
+    warning keeps that assumption visible in the record (re-vendor if it stops holding)."""
+    return [
+        "lock node %r (state %r) has no recipe in this chain_feed.py v%s: ignored; re-vendor if %s "
+        "consumes it" % (nid, state, CHAIN_FEED_VERSION, ctx.node)
+        for nid, state in unknown_lock_nodes(ctx.lock) if state != "released"
+    ]
 
 
 def assert_head_sha(ctx):
@@ -1712,22 +1735,21 @@ def write_nuget_override(ctx, root, rows):
 # ----------------------------------------------------------------------
 
 
-def unity_dll_name(package_id):
-    if not package_id or not package_id.startswith(UNITY_PACKAGE_PREFIX):
-        raise Refusal(
-            "artifact id %r does not start with %r; cannot derive a flat-drop DLL filename"
-            % (package_id, UNITY_PACKAGE_PREFIX)
-        )
-    return package_id[len(UNITY_PACKAGE_PREFIX):] + ".dll"
-
-
-def unity_dll_names(body):
-    """Every flat-drop DLL a unity-dll artifact carries: its declared `dlls` (a package shipping
-    several assemblies, e.g. `com.IvanMurzak.Rql`), else the one `<Name>.dll` its id names."""
+def artifact_dll_names(body):
+    """Every assembly a nupkg artifact ships for itself — the flat DLLs a Unity drop carries for
+    it and the ones a root's own-pack proof reads: its declared `dlls` (one package, several
+    assemblies, e.g. `com.IvanMurzak.Rql`), else the one `<Name>.dll` its
+    `com.IvanMurzak.<Name>` id names."""
     declared = body.get("dlls")
     if declared:
         return [str(name) for name in declared]
-    return [unity_dll_name(body.get("id"))]
+    package_id = body.get("id")
+    if not package_id or not package_id.startswith(UNITY_PACKAGE_PREFIX):
+        raise Refusal(
+            "artifact id %r does not start with %r; cannot derive a DLL filename"
+            % (package_id, UNITY_PACKAGE_PREFIX)
+        )
+    return [package_id[len(UNITY_PACKAGE_PREFIX):] + ".dll"]
 
 
 def find_nupkg(feed, package_id, ws_version):
@@ -1763,7 +1785,7 @@ def apply_unity_dll(ctx, edges):
     dll_map = {}
     for edge in edges:
         body = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]
-        for dll_name in unity_dll_names(body):
+        for dll_name in artifact_dll_names(body):
             owner = dll_map.get(dll_name)
             if owner is not None and owner[1] != body["id"]:
                 raise Refusal("two different artifact ids map to the same DLL name %r: %r and %r"
@@ -2802,7 +2824,7 @@ def cmd_dry_run(args):
                         drops.append(drop)
             for edge in mode_edges:
                 body = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]
-                for dll_name in unity_dll_names(body):
+                for dll_name in artifact_dll_names(body):
                     log("chain:   unity   %s (%s)" % (dll_name, ctx.ws_version(edge["node"])))
             for drop in drops:
                 log("chain:   drop    %s (metas and %s untouched)" % (drop, UNITY_MANIFEST_NAME))
@@ -2856,7 +2878,7 @@ def cmd_record(args):
     for raw in getattr(args, "skip", None) or ():
         step, _, reason = str(raw).partition("=")
         skipped.append({"step": step, "reason": reason or "unspecified"})
-    warnings = list(state.get("warnings") or [])
+    warnings = list(state.get("warnings") or []) + unknown_node_warnings(ctx)
     # `--warn TEXT` (repeatable): a named caveat the job wants in the record (a pin drift, a
     # step it could not reach). Every non-blank value lands, in order, repeats included. A
     # warning NEVER changes `result`.
@@ -3084,7 +3106,7 @@ def _unity_proofs(ctx, edges):
                 package_id, None, ws_version, False,
             ))
             continue
-        for dll_name in unity_dll_names(body):
+        for dll_name in artifact_dll_names(body):
             expected_sha = sha256_bytes(extract_lib_dll(nupkg, dll_name))
             for drop in edge.get("drops") or ():
                 target = ctx.checkout / drop / dll_name
@@ -3223,17 +3245,6 @@ def _server_proofs(ctx, edges):
     return proofs
 
 
-def _own_dll_name(package_id):
-    """`com.IvanMurzak.McpPlugin.Common` -> `McpPlugin.Common.dll`: the assembly a nupkg ships for itself."""
-    return (package_id[len(UNITY_PACKAGE_PREFIX):] if package_id.startswith(UNITY_PACKAGE_PREFIX) else package_id) + ".dll"
-
-
-def _own_dll_names(body):
-    """The assemblies a nupkg ships for itself: the artifact's declared `dlls` (one package,
-    several assemblies), else the one `<Name>.dll` its id names."""
-    return [str(name) for name in body.get("dlls") or ()] or [_own_dll_name(body["id"])]
-
-
 def _own_nupkg_dll(archive, wanted):
     """One of the package's own assemblies (`wanted`, a DLL filename) inside its nupkg: under
     `lib/netstandard2.1/` first, then under any other `lib/<tfm>/`. `None` when no `lib/` entry
@@ -3312,7 +3323,7 @@ def _own_pack_proofs(ctx, artifacts):
                 observed, ws_version, observed == ws_version,
             ))
             continue
-        for wanted in _own_dll_names(body):
+        for wanted in artifact_dll_names(body):
             proofs.append(_own_dll_proof(ctx, found, package_id, wanted, ws_version))
     return proofs
 
