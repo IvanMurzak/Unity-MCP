@@ -1,4 +1,5 @@
 import io
+import json
 from pathlib import Path
 import shutil
 import sys
@@ -91,13 +92,19 @@ class ReleaseArtifactTests(unittest.TestCase):
         self.folder = Path(self.temp.name)
         self.row = release.selected('Animation')[0]
 
-    def archive(self, name='com.ivanmurzak.unity.mcp.animation', signed=True, extra=None):
+    def archive(self, name='com.ivanmurzak.unity.mcp.animation', signed=True, extra=None, metadata=None, omit=None):
         target = self.folder / 'native.tgz'
         package = extensions.ROOT / self.row['package']
         with tarfile.open(target, 'w:gz') as archive:
             for source in package.rglob('*'):
-                if source.is_file():
-                    archive.add(source, arcname='package/' + source.relative_to(package).as_posix())
+                if source.is_file() and source.name != '.gitignore' and source.relative_to(package).as_posix() != omit:
+                    if source.name == 'package.json' and metadata is not None:
+                        data = json.dumps(metadata).encode()
+                        info = tarfile.TarInfo('package/package.json')
+                        info.size = len(data)
+                        archive.addfile(info, io.BytesIO(data))
+                    else:
+                        archive.add(source, arcname='package/' + source.relative_to(package).as_posix())
             entries = {'package/.attestation.p7m': b'signature'} if signed else {}
             if extra:
                 entries.update(extra)
@@ -117,6 +124,28 @@ class ReleaseArtifactTests(unittest.TestCase):
             release.verify_archive(self.archive(extra={'package/Editor/Foreign.cs': b'foreign'}), self.row)
         with self.assertRaisesRegex(ValueError, 'Unsafe UPM'):
             release.verify_archive(self.archive(extra={'package/../escape.cs': b'escape'}), self.row)
+
+    def test_signer_generated_repository_is_bound_without_loosening_native_metadata(self):
+        original = extensions.read(extensions.ROOT / self.row['package'] / 'package.json')
+        sha = 'a' * 40
+        provenance = {'url': 'https://github.com/IvanMurzak/Unity-MCP', 'type': 'git', 'revision': sha}
+        metadata = {**original, 'repository': provenance}
+        with patch.object(release, 'checked', return_value=sha):
+            release.verify_archive(self.archive(metadata=metadata), self.row)
+            for field, value in [('url', 'https://github.com/Other/Repo'), ('revision', 'b' * 40),
+                                 ('directory', 'extensions/Other/Packages/foreign')]:
+                changed = {**metadata, 'repository': {**provenance, field: value}}
+                with self.assertRaisesRegex(ValueError, 'provenance differs'):
+                    release.verify_archive(self.archive(metadata=changed), self.row)
+            for field, value in [('version', '99.0.0'), ('dependencies', {})]:
+                with self.assertRaisesRegex(ValueError, 'manifest payload differs'):
+                    release.verify_archive(self.archive(metadata={**metadata, field: value}), self.row)
+
+    def test_native_source_file_may_not_be_omitted(self):
+        package = extensions.ROOT / self.row['package']
+        source = next((package / 'Editor').rglob('*.cs')).relative_to(package).as_posix()
+        with self.assertRaisesRegex(ValueError, 'omits native'):
+            release.verify_archive(self.archive(omit=source), self.row)
 
     def test_installer_is_reproducible_and_contains_original_guid_and_file_bytes(self):
         first, second = self.folder / 'a.unitypackage', self.folder / 'b.unitypackage'

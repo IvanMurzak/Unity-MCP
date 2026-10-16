@@ -95,7 +95,7 @@ def validate_routes(rows):
             raise ValueError('OpenUPM registration has not adopted component routing: ' + row['packageId'])
 
 
-def verify_archive(path, row):
+def verify_archive(path, row, *, source_slug=SLUG, source_sha=None):
     package = ROOT / row['package']
     with tarfile.open(path, 'r:gz') as archive:
         members = archive.getmembers()
@@ -107,17 +107,31 @@ def verify_archive(path, row):
             if (member.name.startswith('/') or '..' in parts or member.issym() or member.islnk()
                     or not parts or parts[0] != 'package'):
                 raise ValueError('Unsafe UPM entry: ' + member.name)
-            if member.isfile() and member.name != 'package/.attestation.p7m':
+            if member.isfile() and member.name not in ('package/.attestation.p7m', 'package/package.json'):
                 source = package.joinpath(*parts[1:])
                 if not source.is_file() or archive.extractfile(member).read() != source.read_bytes():
                     raise ValueError('UPM payload differs from this component: ' + member.name)
         if 'package/.attestation.p7m' not in names or archive.getmember('package/.attestation.p7m').size == 0:
             raise ValueError('Signed UPM attestation is missing')
         metadata = json.load(archive.extractfile('package/package.json'))
+        expected = read(package / 'package.json')
+        # Unity's real signing CLI injects VCS provenance and reserializes JSON.
+        # Bind that generated field to this source; every native manifest field must remain exact.
+        if 'repository' not in expected and 'repository' in metadata:
+            repository = metadata.pop('repository')
+            revision = source_sha or checked(['git', 'rev-parse', 'HEAD']).strip()
+            if (not isinstance(repository, dict) or repository.get('type') != 'git'
+                    or repository.get('url', '').removesuffix('.git').rstrip('/') != 'https://github.com/' + source_slug
+                    or not re.fullmatch(r'[a-f0-9]{40}', revision) or repository.get('revision') != revision
+                    or set(repository) - {'type', 'url', 'revision', 'directory'}
+                    or ('directory' in repository and repository['directory'] != row['package'])):
+                raise ValueError('UPM repository provenance differs from this source')
+        if metadata != expected:
+            raise ValueError('UPM manifest payload differs from this component')
         if metadata['name'] != row['packageId'] or metadata['version'] != row['version']:
             raise ValueError('UPM coordinates differ')
         required = [p.relative_to(package).as_posix() for folder in ('Editor', 'Runtime')
-                    for p in (package / folder).rglob('*') if p.is_file()]
+                    for p in (package / folder).rglob('*') if p.is_file() and p.name != '.gitignore']
         if not required or any('package/' + name not in names for name in required):
             raise ValueError('UPM archive omits native runtime/editor files')
 
