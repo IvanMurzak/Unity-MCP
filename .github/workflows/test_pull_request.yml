@@ -64,6 +64,33 @@ jobs:
           path: ${{ github.event_path }}
           retention-days: 1
 
+      # A fork PR gets no secrets, so test_unity_plugin.yml skips every Unity job and the required
+      # `unity-tests-licensed` status stays unreported. Say how to get it, once per run.
+      - name: Fork PR - how to run the Unity tests
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          echo "::notice::Unity tests skipped: a fork PR gets no UNITY_LICENSE. See this run's summary."
+          {
+            echo "### Unity tests not run: no license in a fork PR"
+            echo ""
+            echo "The \`test-unity-*\` jobs are skipped and the required \`unity-tests-licensed\` status"
+            echo "stays unreported until the licensed suite has run on this exact commit."
+            echo ""
+            echo "Maintainer, after reviewing commit \`$HEAD_SHA\`:"
+            echo ""
+            echo '```bash'
+            echo "gh workflow run test_pull_request_manual.yml --repo $REPO --ref fork-tests -f pr=$PR_NUMBER -f sha=$HEAD_SHA"
+            echo '```'
+            echo ""
+            echo "Contributor: set your own \`UNITY_LICENSE\`, \`UNITY_EMAIL\` and \`UNITY_PASSWORD\` secrets"
+            echo "on your fork (see \`docs/agents/ci-unity-license.md\`) to run this suite on your fork's PRs."
+          } >> "$GITHUB_STEP_SUMMARY"
+        shell: bash
+
   # Guards issue #957: a NuGet pin may not change without bumping the asmdef gate generation,
   # or consumers upgrading from the previous release compile the new sources against their old
   # DLLs and dead-lock in Safe Mode. Static + license-free, so it runs on every PR in seconds.
