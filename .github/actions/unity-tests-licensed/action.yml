@@ -1,0 +1,79 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
+name: "unity-tests-licensed status"
+description: "Set the commit status that says whether the licensed Unity suite ran on a commit"
+
+# The single owner of the `unity-tests-licensed` context. Callers: publish_test_results.yml (PR runs)
+# and test_pull_request_manual.yml (the licensed suite against a fork PR). Uses only `gh` and the
+# token passed in; run it from a trusted checkout, never from a pull request's tree.
+
+inputs:
+  sha:
+    description: "Commit to set the status on (a PR head)"
+    required: true
+  state:
+    description: "pending, success, failure or error"
+    required: true
+  description:
+    description: "Status description (GitHub truncates at 140 characters)"
+    required: true
+  target-url:
+    description: "Link shown on the status"
+    required: true
+  if-unset:
+    description: >-
+      "true": set the status only if the commit has none for this context yet, and if a final
+      status lands between that check and this post, restore it (statuses are latest-wins, so a
+      late pending would otherwise hide a finished manual run's verdict).
+    required: false
+    default: "false"
+  token:
+    description: "Token with statuses: write"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ github.repository }}
+        SHA: ${{ inputs.sha }}
+        STATE: ${{ inputs.state }}
+        DESCRIPTION: ${{ inputs.description }}
+        TARGET_URL: ${{ inputs.target-url }}
+        IF_UNSET: ${{ inputs.if-unset }}
+        CONTEXT: unity-tests-licensed
+      run: |
+        set -euo pipefail
+        # Newest first, as the API returns them: one "state<TAB>target_url<TAB>description" line each.
+        statuses() {
+          gh api "repos/$REPO/commits/$SHA/statuses?per_page=100" \
+            --jq ".[] | select(.context == \"$CONTEXT\") | [.state, .target_url, .description] | @tsv"
+        }
+        post() {
+          gh api -X POST "repos/$REPO/statuses/$SHA" -f context="$CONTEXT" \
+            -f state="$1" -f target_url="$2" -f description="$3" > /dev/null
+          echo "$CONTEXT on $SHA: $1 ($3)"
+        }
+        if [ "$IF_UNSET" != "true" ]; then
+          post "$STATE" "$TARGET_URL" "$DESCRIPTION"
+          exit 0
+        fi
+        if [ -n "$(statuses)" ]; then
+          echo "$CONTEXT is already set on $SHA; leaving it."
+          exit 0
+        fi
+        post "$STATE" "$TARGET_URL" "$DESCRIPTION"
+        final=$(statuses | awk -F '\t' '$1 != "pending" { print; exit }')
+        if [ -n "$final" ]; then
+          IFS=$'\t' read -r state url description <<<"$final"
+          echo "A $state status landed while this one was posted; restoring it."
+          post "$state" "$url" "$description"
+        fi

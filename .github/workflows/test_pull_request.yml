@@ -78,31 +78,6 @@ jobs:
       - name: Check NuGet pins against the asmdef gate generation
         run: python .github/scripts/check_nuget_gate.py
 
-  # test_unity_plugin.yml cannot skip its job on a fork PR (the ruleset matches the job's name), so
-  # every step after its `license` step is gated on that step's output instead. A step added without
-  # the gate runs on fork PRs with no checkout and no license. Static, so it runs on every PR.
-  check-workflow-guards:
-    name: workflow guards
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v6
-      - name: Every Unity step after the license check is gated on it
-        shell: bash
-        run: |
-          set -euo pipefail
-          missing=$(yq -o=json '.jobs.test.steps' .github/workflows/test_unity_plugin.yml | jq -r \
-            --arg gate "steps.license.outputs.available == 'true'" '
-              (map(.id) | index("license")) as $i
-              | if $i == null then "the step with id: license is missing"
-                else .[$i + 1:][] | select((.if // "") | contains($gate) | not) | (.name // .uses)
-                end')
-          if [ -n "$missing" ]; then
-            echo "::error file=.github/workflows/test_unity_plugin.yml::Steps not gated on steps.license.outputs.available == 'true':"
-            echo "$missing"
-            exit 1
-          fi
-          echo "All steps after the license check are gated."
-
   # The plugin's only engine-free C# tests: a plain xUnit project that compiles a chosen set of the
   # real plugin sources (Unity-MCP-Plugin/Tests~/EngineFree). No Unity licence, no editor, no Docker —
   # so unlike the game-ci legs below it also runs on fork PRs, in seconds. What it may and may not

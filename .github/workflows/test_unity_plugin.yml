@@ -34,8 +34,8 @@ on:
       # A pull request from a FORK receives none of these three: GitHub withholds
       # repository secrets from a `pull_request` run whose head repository differs
       # from the base, so the caller's `secrets: inherit` (test_pull_request.yml)
-      # passes empty strings. The license check (step 2-a0) then passes the leg
-      # without running anything; the licensed suite reaches a fork PR's code only
+      # passes empty strings. The `license` job (2-a0) then skips `test` instead of
+      # letting it fail; the licensed suite reaches a fork PR's code only
       # through test_pull_request_manual.yml — see the "Fork pull requests get no secrets"
       # section of docs/agents/ci-unity-license.md for how to run the licensed suite
       # against a fork PR's code.
@@ -47,40 +47,22 @@ on:
 # 2. Job
 ##############################################################################
 jobs:
-  test:
-    strategy:
-      fail-fast: false
-      matrix:
-        os: [ubuntu-latest]
-        platform: [base, windows-mono]
-
-    name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
-    runs-on: ${{ matrix.os }}
-    # Measured ~4-22 min per leg (standalone ~4-7, editmode ~10-16). Without a cap a hung leg ran to GitHub's 360-min default, which is
-    # where the ~4,500-min zombie runs in this workflow's history came from.
-    timeout-minutes: 45
-    env:
-      CHAIN_LOCK: ${{ inputs.lock }}
-      CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
-
+  # --------------------------------------------------------------------- #
+  # 2-a0. Is a Unity license reachable from this run?
+  #
+  # GitHub withholds repository secrets from pull_request runs raised by a
+  # fork, so on a fork PR every step of `test` would fail inside game-ci at
+  # license activation. Decide here instead, where the reason can be said out
+  # loud, and never print the secret itself. On a fork PR `test` is then
+  # skipped as a whole; the `unity-tests-licensed` commit status
+  # (publish_test_results.yml, test_pull_request_manual.yml) stays pending
+  # until a maintainer runs the licensed suite on that exact head commit.
+  # --------------------------------------------------------------------- #
+  license:
+    runs-on: ubuntu-latest
+    outputs:
+      available: ${{ steps.license.outputs.available }}
     steps:
-      # --------------------------------------------------------------------- #
-      # 2-a0. Is a Unity license reachable from this run?
-      #
-      # GitHub withholds repository secrets from pull_request runs raised by a
-      # fork, so on a fork PR every step below would fail inside game-ci at
-      # license activation. Decide here instead, where the reason can be said
-      # out loud, and never print the secret itself.
-      #
-      # This job keeps its name on that path (the required-status-check ruleset
-      # matches it), so it cannot be skipped as a whole: EVERY step after this
-      # one carries `if: ... steps.license.outputs.available == 'true' ...`.
-      # The `workflow guards` job in test_pull_request.yml fails a PR that adds
-      # a step without it. A fork PR passing here is not an approval: the
-      # `unity-tests-licensed` commit status (publish_test_results.yml,
-      # test_pull_request_manual.yml) stays pending until a maintainer runs the
-      # licensed suite on that exact head commit.
-      # --------------------------------------------------------------------- #
       - name: Check Unity license availability
         id: license
         env:
@@ -112,13 +94,13 @@ jobs:
             echo ""
             echo "GitHub withholds repository secrets from \`pull_request\` runs raised by a fork,"
             echo "so \`UNITY_LICENSE\` is empty here and game-ci cannot activate an editor."
-            echo "This check passing means nothing was compiled. The \`unity-tests-licensed\` commit"
-            echo "status on this PR stays pending until the licensed suite has run on this commit."
+            echo "The Unity test jobs are skipped, so nothing was compiled. The \`unity-tests-licensed\`"
+            echo "commit status on this PR stays pending until the licensed suite has run on this commit."
             echo ""
             echo "Maintainer, after reviewing commit \`$HEAD_SHA\`:"
             echo ""
             echo '```bash'
-            echo "gh workflow run test_pull_request_manual.yml --repo $REPO --ref main -f pr=$PR_NUMBER -f sha=$HEAD_SHA"
+            echo "gh workflow run test_pull_request_manual.yml --repo $REPO --ref fork-tests -f pr=$PR_NUMBER -f sha=$HEAD_SHA"
             echo '```'
             echo ""
             echo "Contributor: set your own \`UNITY_LICENSE\`, \`UNITY_EMAIL\` and \`UNITY_PASSWORD\` secrets"
@@ -126,11 +108,29 @@ jobs:
           } >> "$GITHUB_STEP_SUMMARY"
         shell: bash
 
+  test:
+    needs: license
+    if: needs.license.outputs.available == 'true'
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        platform: [base, windows-mono]
+
+    name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+    # Measured ~4-22 min per leg (standalone ~4-7, editmode ~10-16). Without a cap a hung leg ran to GitHub's 360-min default, which is
+    # where the ~4,500-min zombie runs in this workflow's history came from.
+    timeout-minutes: 45
+    env:
+      CHAIN_LOCK: ${{ inputs.lock }}
+      CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
+
+    steps:
       # --------------------------------------------------------------------- #
       # 2-a. Checkout repository
       # --------------------------------------------------------------------- #
       - uses: actions/checkout@v6
-        if: steps.license.outputs.available == 'true'
         with:
           lfs: false
           ref: ${{ inputs.ref }}
@@ -142,7 +142,6 @@ jobs:
       # 2-b. Free disk space
       # --------------------------------------------------------------------- #
       - name: Free disk space
-        if: steps.license.outputs.available == 'true'
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
           tool-cache: false
@@ -163,7 +162,7 @@ jobs:
       # which removes the runner's preinstalled .NET.
       # --------------------------------------------------------------------- #
       - name: Setup .NET (chain feed)
-        if: ${{ steps.license.outputs.available == 'true' && (inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/')) }}
+        if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
@@ -175,7 +174,7 @@ jobs:
       # Every chain step in this job runs on the ubuntu HOST, never inside the unityci/editor container
       # (see 2-b' above), so a host interpreter is the right one to resolve here.
       - name: chain python (posix)
-        if: steps.license.outputs.available == 'true' && runner.os != 'Windows' && env.CHAIN_PY == ''
+        if: runner.os != 'Windows' && env.CHAIN_PY == ''
         shell: bash
         run: |
           for c in python3 python; do
@@ -187,7 +186,7 @@ jobs:
           done
           echo 'chain: no Python 3.9+ on PATH that runs and reports an absolute, space-free sys.executable (tried python3, python)' >&2; exit 2
       - name: chain python (windows)
-        if: steps.license.outputs.available == 'true' && runner.os == 'Windows' && env.CHAIN_PY == ''
+        if: runner.os == 'Windows' && env.CHAIN_PY == ''
         shell: pwsh
         run: |
           foreach ($c in 'python', 'python3') {
@@ -207,7 +206,6 @@ jobs:
       # in the leg record's skipped[] instead of being proven.
       - name: chain feed
         id: chain
-        if: steps.license.outputs.available == 'true'
         run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll
 
       # --------------------------------------------------------------------- #
@@ -218,7 +216,6 @@ jobs:
       # --------------------------------------------------------------------- #
       - name: Generate cache key
         id: cache_key
-        if: steps.license.outputs.available == 'true'
         run: |
           # Sanitize projectPath: replace /, \, :, and spaces with underscores
           sanitized_path=$(echo "${{ inputs.projectPath }}" | sed 's/[\/\\: ]/_/g')
@@ -226,18 +223,12 @@ jobs:
         shell: bash
 
       # The key is static (no content hash), so whatever a run saves under it is what every later run
-      # restores, release.yml included. A run given a ref may be executing a fork's Editor scripts,
-      # which can write anything into Library/: it restores the cache but never saves it.
-      - uses: actions/cache@v5
-        if: steps.license.outputs.available == 'true' && inputs.ref == ''
-        with:
-          path: |
-            ${{ inputs.projectPath }}/Library
-            ~/.cache/unity3d
-          key: ${{ steps.cache_key.outputs.project_path_sanitized }}-${{ inputs.testMode }}-${{ matrix.platform }}
-
-      - uses: actions/cache/restore@v5
-        if: steps.license.outputs.available == 'true' && inputs.ref != ''
+      # restores, release.yml included. A run given a ref may be executing a fork's code, so only a run
+      # without one saves (step 2-e). test_pull_request_manual.yml runs fork code from the fork-tests
+      # branch, whose cache scope nothing else reads, and wipes that scope before and after.
+      - name: Restore Unity cache
+        id: cache
+        uses: actions/cache/restore@v5
         with:
           path: |
             ${{ inputs.projectPath }}/Library
@@ -249,7 +240,6 @@ jobs:
       # fresh container are reused - often by one of the new editor's own threads - so the editor kills
       # itself (exit 137). Those files are never valid in a new container: drop them after the restore.
       - name: Drop stale PID files from the restored Library
-        if: steps.license.outputs.available == 'true'
         shell: bash
         run: rm -fv "${{ inputs.projectPath }}"/Library/burst.pid "${{ inputs.projectPath }}"/Library/ilpp.pid
 
@@ -262,7 +252,6 @@ jobs:
       # Older editors do not need it, so their legs are left exactly as they were.
       # --------------------------------------------------------------------- #
       - name: Raise Docker default shm-size (Unity 6000.6+)
-        if: steps.license.outputs.available == 'true'
         shell: bash
         env:
           UNITY_VERSION: ${{ inputs.unityVersion }}
@@ -287,13 +276,11 @@ jobs:
       # --------------------------------------------------------------------- #
       - name: Generate custom image name
         id: custom_image
-        if: steps.license.outputs.available == 'true'
         run: echo "image=unityci/editor:ubuntu-${{ inputs.unityVersion }}-${{ matrix.platform }}-3" >> $GITHUB_OUTPUT
         shell: bash
 
       - uses: game-ci/unity-test-runner@08fd329f00a18efa297140b14ac28ebce742759e # node24 runtime (PR #304); revert to @v4 once game-ci moves the tag
         id: tests
-        if: steps.license.outputs.available == 'true'
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
           UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
@@ -316,7 +303,7 @@ jobs:
       # label): the chain verdict reads the JSON leg records below, never these, and the account's
       # artifact storage is capped, so only what a consumer reads is uploaded.
       - uses: actions/upload-artifact@v6
-        if: always() && steps.license.outputs.available == 'true' && env.CHAIN_LOCK == '' && !contains(join(github.event.pull_request.labels.*.name, ' '), 'train/')
+        if: always() && env.CHAIN_LOCK == '' && !contains(join(github.event.pull_request.labels.*.name, ' '), 'train/')
         with:
           name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
           path: ${{ steps.tests.outputs.artifactsPath }}
@@ -331,7 +318,7 @@ jobs:
       # A missing committed fixture FAILS (fixture-missing) — a leg can never go green without one.
       # --------------------------------------------------------------------- #
       - name: chain fixture diff
-        if: ${{ !cancelled() && steps.license.outputs.available == 'true' && matrix.platform == 'base' && inputs.testMode == 'editmode' }}
+        if: ${{ !cancelled() && matrix.platform == 'base' && inputs.testMode == 'editmode' }}
         shell: bash
         env:
           RAW: ${{ inputs.projectPath }}/chain-record/raw.json
@@ -369,7 +356,7 @@ jobs:
           esac
 
       - name: chain fixture artifact
-        if: ${{ always() && steps.license.outputs.available == 'true' && matrix.platform == 'base' && inputs.testMode == 'editmode' }}
+        if: ${{ always() && matrix.platform == 'base' && inputs.testMode == 'editmode' }}
         uses: actions/upload-artifact@v6
         with:
           name: chain-fixture-unity-${{ inputs.unityVersion }}
@@ -383,16 +370,28 @@ jobs:
       # --------------------------------------------------------------------- #
       - name: chain leg record
         id: chain_record
-        if: always() && steps.license.outputs.available == 'true'
+        if: always()
         run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll --engine unity --engine-version ${{ inputs.unityVersion }} --tier T3 --job-status "${{ job.status }}" --out chain-leg.json
 
       # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
       # so a failed apply's RED record still uploads.
       - name: chain leg artifact
-        if: always() && steps.license.outputs.available == 'true' && steps.chain_record.outputs.artifact_name != ''
+        if: always() && steps.chain_record.outputs.artifact_name != ''
         uses: actions/upload-artifact@v6
         with:
           name: ${{ steps.chain_record.outputs.artifact_name }}
           path: chain-leg.json
           retention-days: 1
 
+      # --------------------------------------------------------------------- #
+      # 2-e. Save the Unity cache: only on a miss, only from a successful job
+      # (what actions/cache did in its post step), and never from a run given a ref.
+      # --------------------------------------------------------------------- #
+      - name: Save Unity cache
+        if: success() && inputs.ref == '' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            ${{ inputs.projectPath }}/Library
+            ~/.cache/unity3d
+          key: ${{ steps.cache.outputs.cache-primary-key }}

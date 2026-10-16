@@ -20,7 +20,6 @@ permissions:
   actions: read
   checks: write
   pull-requests: write
-  statuses: write
 
 jobs:
   publish:
@@ -38,8 +37,10 @@ jobs:
           github-token: ${{ secrets.GITHUB_TOKEN }}
           path: artifacts
 
-      # A fork PR's Unity legs run nothing and upload no results (see test_unity_plugin.yml). Publishing
+      # A fork PR's Unity jobs are skipped and upload no results (see test_unity_plugin.yml). Publishing
       # then would post a passing "Test Results" check with 0 tests, a second false green on the PR.
+      # A same-repository run still publishes with no files, so a run whose legs all died before
+      # writing results keeps reporting that.
       - name: Find test result files
         id: results
         shell: bash
@@ -49,7 +50,7 @@ jobs:
           echo "found=$([ "$count" -gt 0 ] && echo true || echo false)" >> "$GITHUB_OUTPUT"
 
       - name: Publish Test Results
-        if: steps.results.outputs.found == 'true'
+        if: steps.results.outputs.found == 'true' || github.event.workflow_run.head_repository.full_name == github.repository
         uses: EnricoMi/publish-unit-test-result-action@v2
         with:
           commit: ${{ github.event.workflow_run.head_sha }}
@@ -69,44 +70,59 @@ jobs:
           compare_to_earlier_commit: false
 
   # `unity-tests-licensed` is the one status that says the Unity suite really ran with a license on
-  # this head commit. Require it in the ruleset: the test-unity-* checks alone pass on a fork PR
-  # without compiling anything.
+  # this head commit; it is the required check (on a fork PR the test-unity-* jobs are skipped).
   # - same-repository PR: the suite ran here with secrets, so the status mirrors this run.
   # - fork PR: nothing ran, so the status is pending until a maintainer reviews the head and runs
-  #   test_pull_request_manual.yml with pr + sha, which overwrites it. It is never posted over a
-  #   status that manual run already left, so the order of the two does not matter.
+  #   test_pull_request_manual.yml with pr + sha. `if-unset` keeps this pending from hiding a
+  #   verdict that manual run already left, whichever of the two finishes first.
   licensed-status:
     runs-on: ubuntu-latest
     if: github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.conclusion != 'cancelled'
+    permissions:
+      contents: read
+      statuses: write
     steps:
-      - env:
+      - id: verdict
+        env:
           REPO: ${{ github.repository }}
           HEAD_REPO: ${{ github.event.workflow_run.head_repository.full_name }}
           HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
           CONCLUSION: ${{ github.event.workflow_run.conclusion }}
           RUN_URL: ${{ github.event.workflow_run.html_url }}
           MANUAL_URL: ${{ github.server_url }}/${{ github.repository }}/actions/workflows/test_pull_request_manual.yml
-          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          post() {
-            gh api -X POST "repos/$REPO/statuses/$HEAD_SHA" -f context=unity-tests-licensed \
-              -f state="$1" -f target_url="$2" -f description="$3" > /dev/null
-            echo "unity-tests-licensed on $HEAD_SHA: $1 ($3)"
-          }
-          if [ "$HEAD_REPO" = "$REPO" ]; then
-            if [ "$CONCLUSION" = "success" ]; then
-              post success "$RUN_URL" "Licensed suite passed (test-pull-request)"
+          {
+            if [ "$HEAD_REPO" != "$REPO" ]; then
+              echo "state=pending"
+              echo "if_unset=true"
+              echo "url=$MANUAL_URL"
+              echo "description=Fork PR: maintainer must run test-pull-request-manual with pr and sha=${HEAD_SHA:0:12}"
+            elif [ "$CONCLUSION" = "success" ]; then
+              echo "state=success"
+              echo "if_unset=false"
+              echo "url=$RUN_URL"
+              echo "description=Licensed suite passed (test-pull-request)"
             else
-              post failure "$RUN_URL" "test-pull-request concluded $CONCLUSION"
+              echo "state=failure"
+              echo "if_unset=false"
+              echo "url=$RUN_URL"
+              echo "description=test-pull-request concluded $CONCLUSION"
             fi
-            exit 0
-          fi
-          existing=$(gh api "repos/$REPO/commits/$HEAD_SHA/statuses" --paginate \
-            --jq '[.[] | select(.context == "unity-tests-licensed")] | length' | awk '{n += $1} END {print n + 0}')
-          if [ "$existing" -gt 0 ]; then
-            echo "unity-tests-licensed already set on $HEAD_SHA; leaving it."
-            exit 0
-          fi
-          post pending "$MANUAL_URL" "Fork PR: maintainer must run test-pull-request-manual with pr and sha=${HEAD_SHA:0:12}"
+          } >> "$GITHUB_OUTPUT"
         shell: bash
+
+      # The default branch's own action (workflow_run always runs the default branch's workflow).
+      - uses: actions/checkout@v6
+        with:
+          sparse-checkout: .github/actions
+          persist-credentials: false
+
+      - uses: ./.github/actions/unity-tests-licensed
+        with:
+          sha: ${{ github.event.workflow_run.head_sha }}
+          state: ${{ steps.verdict.outputs.state }}
+          description: ${{ steps.verdict.outputs.description }}
+          target-url: ${{ steps.verdict.outputs.url }}
+          if-unset: ${{ steps.verdict.outputs.if_unset }}
+          token: ${{ github.token }}
