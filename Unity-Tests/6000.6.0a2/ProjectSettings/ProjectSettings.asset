@@ -834,25 +834,25 @@ PlayerSettings:
   webWasm2023: 0
   webEnableSubmoduleStrippingCompatibility: 0
   scriptingDefineSymbols:
-    Android: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    EmbeddedLinux: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    GameCoreScarlett: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    GameCoreXboxOne: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    Kepler: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    LinuxHeadlessSimulation: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    Nintendo Switch: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    Nintendo Switch 2: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    PS4: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    PS5: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    QNX: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    Server: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    Standalone: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    VisionOS: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    WebGL: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    Windows Store Apps: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    XboxOne: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    iPhone: UNITY_MCP_READY;UNITY_MCP_DEPS_10
-    tvOS: UNITY_MCP_READY;UNITY_MCP_DEPS_10
+    Android: 
+    EmbeddedLinux: 
+    GameCoreScarlett: 
+    GameCoreXboxOne: 
+    Kepler: 
+    LinuxHeadlessSimulation: 
+    Nintendo Switch: 
+    Nintendo Switch 2: 
+    PS4: 
+    PS5: 
+    QNX: 
+    Server: 
+    Standalone: 
+    VisionOS: 
+    WebGL: 
+    Windows Store Apps: 
+    XboxOne: 
+    iPhone: 
+    tvOS: 
   additionalCompilerArguments: {}
   platformArchitecture: {}
   scriptingBackend:
