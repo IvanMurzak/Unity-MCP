@@ -1,4 +1,4 @@
-<h1 align="center"><a href="https://github.com/IvanMurzak/Unity-AI-ProBuilder/?tab=readme-ov-file#unity-ai-probuilder">Unity AI ProBuilder</a></h1>
+<h1 align="center"><a href="https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md">Unity AI ProBuilder</a></h1>
 
 <div align="center" width="100%">
 
@@ -8,7 +8,7 @@
 [![r](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release_extensions.yml/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release_extensions.yml)</br>
 [![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
 [![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Stars')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
-[![License](https://img.shields.io/badge/License-MIT-green?labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/LICENSE)
+[![License](https://img.shields.io/badge/License-Apache--2.0-green?labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
 </div>

@@ -172,11 +172,25 @@ namespace UnityMcp.Monorepo.Tests
                 var name = Path.GetFileNameWithoutExtension(full);
                 if (owners.TryGetValue(name, out var owner) && !allowed.Contains(owner)) continue;
                 // Also exclude precompiled dependencies residing inside undeclared UPM packages.
-                var packageOwner = packages.Values.FirstOrDefault(p => full.StartsWith(
-                    p.resolvedPath + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase));
+                var packageOwner = packages.Values.FirstOrDefault(p => IsInsidePackage(full, p.resolvedPath));
                 if (packageOwner != null && !allowed.Contains(packageOwner.name)) continue;
                 yield return full;
             }
+        }
+
+        static bool IsInsidePackage(string file, string packagePath) => Path.GetFullPath(file).StartsWith(
+            Path.GetFullPath(packagePath).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
+            + Path.DirectorySeparatorChar, StringComparison.OrdinalIgnoreCase);
+
+        [Test]
+        public void PrecompiledPackageOwnershipNormalizesSeparatorsAndKeepsDirectoryBoundaries()
+        {
+            var package = Path.Combine(project, "Library/PackageCache/com.example.optional");
+            var dll = Path.Combine(package, "Plugins/Optional.dll");
+            Assert.That(IsInsidePackage(dll, package.Replace('\\', '/')), Is.True,
+                "Unity package paths may use forward slashes while resolved file paths use native separators");
+            Assert.That(IsInsidePackage(dll, package + Path.DirectorySeparatorChar), Is.True);
+            Assert.That(IsInsidePackage(Path.Combine(package + ".other", "Plugins/Optional.dll"), package), Is.False);
         }
 
         (int code, string output) Compile(Assembly assembly, IEnumerable<string> references,

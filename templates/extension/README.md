@@ -1,4 +1,10 @@
-<h1 align="center"><a href="https://github.com/IvanMurzak/Unity-AI-Tools-Template">Unity AI Tools Template</a></h1>
+> **First-party monorepo modules:** start with [the current authoring guide](../../docs/dev/extensions.md).
+> This directory preserves the original standalone scaffold and its historical instructions below.
+> Copy and register new first-party modules under `extensions/`; keep their tests in the shared
+> version-specific projects. Workflow files in this scaffold are inert `.yml-sample` examples.
+> Creating another first-party extension repository or activating its old release workflows is unnecessary.
+
+<h1 align="center"><a href="https://github.com/IvanMurzak/Unity-MCP/blob/main/templates/extension/README.md">Unity AI Tools Template</a></h1>
 
 <img width="100%" alt="Stats" src="https://github.com/IvanMurzak/Unity-AI-Tools-Template/raw/main/docs/img/ai-template-glitch.gif"/>
 
