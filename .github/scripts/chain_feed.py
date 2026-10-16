@@ -3323,7 +3323,14 @@ def _own_pack_proofs(ctx, artifacts):
                 observed, ws_version, observed == ws_version,
             ))
             continue
-        for wanted in artifact_dll_names(body):
+        try:
+            wanted_dlls = artifact_dll_names(body)
+        except Refusal as exc:
+            # An id this file cannot name an assembly for is a FAILING proof, never a crash of
+            # `record` (a leg must always upload its record, red or green).
+            proofs.append(_proof(ctx.node, "%s: %s" % (found.name, exc), package_id, None, ws_version, False))
+            continue
+        for wanted in wanted_dlls:
             proofs.append(_own_dll_proof(ctx, found, package_id, wanted, ws_version))
     return proofs
 
