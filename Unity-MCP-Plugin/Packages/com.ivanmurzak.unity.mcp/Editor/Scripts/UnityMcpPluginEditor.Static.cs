@@ -12,6 +12,7 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
@@ -206,21 +207,24 @@ namespace com.IvanMurzak.Unity.MCP
             set
             {
                 Instance.unityConnectionConfig.SkillsPath = NormalizeSkillsPath(value);
+                SyncCustomSkillsPath(Instance.unityConnectionConfig.SkillsPath);
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
 
         /// <summary>
-        /// Seeds the shared Custom agent's in-memory <see cref="CustomConfigurator.EditableSkillsPath"/>
-        /// from the persisted <see cref="SkillsPath"/>. The registry instance is recreated on every
-        /// domain reload with the <c>".claude/skills"</c> default, so without this any caller that
-        /// copies <c>configurator.SkillsPath</c> into <see cref="SkillsPath"/> would overwrite the
-        /// user's saved custom path (issue #1023). No-op for built-in agents.
+        /// Mirrors the persisted skills path onto the shared Custom agent's in-memory
+        /// <see cref="CustomConfigurator.EditableSkillsPath"/>. The registry instance is recreated on
+        /// every domain reload with the <c>".claude/skills"</c> default, so without this mirror any
+        /// reader of <c>configurator.SkillsPath</c> would overwrite the user's saved path (issue #1023).
+        /// Called from the singleton constructor and the <see cref="SkillsPath"/> setter.
         /// </summary>
-        public static void SyncCustomSkillsPath(AiAgentConfigurator? configurator)
+        static void SyncCustomSkillsPath(string? path)
         {
-            if (configurator is CustomConfigurator custom && !string.IsNullOrEmpty(SkillsPath))
-                custom.EditableSkillsPath = SkillsPath;
+            if (string.IsNullOrEmpty(path))
+                return;
+            foreach (var custom in AiAgentConfiguratorRegistry.All.OfType<CustomConfigurator>())
+                custom.EditableSkillsPath = path!;
         }
 
         /// <summary>

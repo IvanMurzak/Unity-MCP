@@ -19,6 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// Regression coverage for issue #1023: after a domain reload the shared
     /// <see cref="CustomConfigurator"/> is back to its <c>".claude/skills"</c> default, and
     /// Startup / the window copied that default over the user's saved custom skills path.
+    /// The persisted <see cref="UnityMcpPluginEditor.SkillsPath"/> is now mirrored onto it.
     /// </summary>
     [TestFixture]
     public class CustomSkillsPathSyncTests
@@ -49,41 +50,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
-        public void SyncCustomSkillsPath_SeedsCustomConfiguratorFromSavedPath()
+        public void SkillsPathSetter_MirrorsSavedPathOntoCustomConfigurator()
         {
-            UnityMcpPluginEditor.SkillsPath = CustomPath;
             _custom.EditableSkillsPath = DefaultPath; // state after a domain reload
 
-            UnityMcpPluginEditor.SyncCustomSkillsPath(_custom);
+            UnityMcpPluginEditor.SkillsPath = CustomPath;
 
+            // Startup / MainWindowEditor.LoadAgentUI copy configurator.SkillsPath back into the
+            // persisted value; for Custom that must now be the saved path, not the default.
             Assert.AreEqual(CustomPath, _custom.SkillsPath);
         }
 
         [Test]
-        public void SyncCustomSkillsPath_ThenApplyingAgentPath_KeepsSavedPath()
+        public void SkillsPathSetter_LeavesBuiltInAgentsUntouched()
         {
-            UnityMcpPluginEditor.SkillsPath = CustomPath;
-            _custom.EditableSkillsPath = DefaultPath;
-
-            // Mirrors Startup / MainWindowEditor.LoadAgentUI with auto-generate enabled.
-            UnityMcpPluginEditor.SyncCustomSkillsPath(_custom);
-            UnityMcpPluginEditor.SkillsPath = _custom.SkillsPath!;
-
-            Assert.AreEqual(CustomPath, UnityMcpPluginEditor.SkillsPath);
-        }
-
-        [Test]
-        public void SyncCustomSkillsPath_IgnoresBuiltInAgents()
-        {
-            UnityMcpPluginEditor.SkillsPath = CustomPath;
             var builtIn = AiAgentConfiguratorRegistry.GetByAgentId("claude-code");
             Assume.That(builtIn, Is.Not.Null.And.Not.InstanceOf<CustomConfigurator>());
             var builtInPath = builtIn!.SkillsPath;
 
-            UnityMcpPluginEditor.SyncCustomSkillsPath(builtIn);
+            UnityMcpPluginEditor.SkillsPath = CustomPath;
 
             Assert.AreEqual(builtInPath, builtIn.SkillsPath);
-            Assert.AreEqual(CustomPath, UnityMcpPluginEditor.SkillsPath);
         }
     }
 }

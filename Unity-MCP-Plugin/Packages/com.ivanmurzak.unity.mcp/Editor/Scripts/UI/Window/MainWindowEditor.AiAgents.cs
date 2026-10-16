@@ -137,7 +137,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
 
             var configurator = AiAgentConfiguratorRegistry.All[selectedIndex];
-            UnityMcpPluginEditor.SyncCustomSkillsPath(configurator);
             var view = new AiAgentConfiguratorView(configurator);
             currentAiAgentConfigurator = view;
 
