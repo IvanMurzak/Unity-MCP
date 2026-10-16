@@ -45,8 +45,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [TearDown]
         public void TearDown()
         {
-            _custom.EditableSkillsPath = _originalEditablePath;
+            // The setter mirrors onto the Custom configurator, so restore it first and the
+            // configurator's own value last, or the mirror clobbers the restore.
             UnityMcpPluginEditor.SkillsPath = _originalSkillsPath;
+            _custom.EditableSkillsPath = _originalEditablePath;
         }
 
         [Test]

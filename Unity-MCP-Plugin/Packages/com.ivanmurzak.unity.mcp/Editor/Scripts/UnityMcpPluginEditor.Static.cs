@@ -221,10 +221,11 @@ namespace com.IvanMurzak.Unity.MCP
         /// </summary>
         static void SyncCustomSkillsPath(string? path)
         {
-            if (string.IsNullOrEmpty(path))
+            // "" is a legitimate value (the project root, see NormalizeSkillsPath), so only null is skipped.
+            if (path == null)
                 return;
             foreach (var custom in AiAgentConfiguratorRegistry.All.OfType<CustomConfigurator>())
-                custom.EditableSkillsPath = path!;
+                custom.EditableSkillsPath = path;
         }
 
         /// <summary>
