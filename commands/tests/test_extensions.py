@@ -1,5 +1,6 @@
 import io
 import json
+import re
 from pathlib import Path
 import shutil
 import sys
@@ -189,6 +190,42 @@ class ReleaseArtifactTests(unittest.TestCase):
             core['gitTagIgnore'] = ''
             with self.assertRaisesRegex(ValueError, 'exclude extension tags'):
                 release.validate_routes([self.row])
+
+
+class WorkflowCoverageTests(unittest.TestCase):
+    def check_matrix(self, text, filename):
+        parts = re.split(r'(?m)^  ([a-z][a-z0-9-]*):\s*$', text)
+        jobs = dict(zip(parts[1::2], parts[2::2]))
+        versions = extensions.read(extensions.ROOT / 'extensions/manifest.json')['testProjects']
+        keys = []
+        for version in versions:
+            for mode in ('editmode', 'playmode', 'standalone'):
+                key = 'test-unity-' + version.replace('.', '-') + '-' + mode
+                self.assertIn(key, jobs, f'{filename} lost the original {version}/{mode} coverage')
+                body = jobs[key]
+                self.assertIn(f'./Unity-Tests/{version}', body)
+                self.assertRegex(body, r'testMode: [\'"]' + mode + r'[\'"]')
+                if filename == 'test_pull_request.yml':
+                    self.assertIn('lock: ${{ inputs.lock }}', body)
+                    self.assertIn('lock_hash8: ${{ inputs.lock_hash8 }}', body)
+                elif filename == 'test_pull_request_manual.yml':
+                    self.assertIn('needs: resolve', body)
+                    self.assertIn('ref: ${{ needs.resolve.outputs.ref }}', body)
+                keys.append(key)
+        if filename == 'release.yml':
+            for publisher in ('deploy-cli-to-npm', 'release-unity-plugin'):
+                active = '\n'.join(line.split('#', 1)[0] for line in jobs[publisher].splitlines())
+                barrier = active.split('needs: [', 1)[1].split(']', 1)[0]
+                for key in keys:
+                    self.assertIn(key + ',', barrier, f'{publisher} can publish without {key}')
+
+    def test_original_modes_remain_active_and_gate_every_publication(self):
+        for filename in ('test_pull_request.yml', 'test_pull_request_manual.yml', 'release.yml'):
+            text = (extensions.ROOT / '.github/workflows' / filename).read_text()
+            self.check_matrix(text, filename)
+            missing_playmode = text.replace('  test-unity-2022-3-62f3-playmode:', '  removed-playmode:')
+            with self.assertRaisesRegex(AssertionError, 'lost the original'):
+                self.check_matrix(missing_playmode, filename)
 
 
 if __name__ == '__main__':

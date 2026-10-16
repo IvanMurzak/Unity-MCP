@@ -41,10 +41,12 @@ installer self-installation in the test project, and materializes platform-speci
 newlines. It preserves newer Unity package versions already selected by a project. Graphics
 tests require a graphics context: do not pass `-nographics` for the full editor suite.
 
-The existing CI version/platform/EditMode/Standalone matrix stays intact. Each existing matrix
-leg launches one shared editor for core and all extensions, rather than another project/editor
-for each extension. Standalone legs retain their player build/runtime checks. There is no
-additional extension-project editor matrix. The four projects never share a Library directory.
+The four SDKs, both platform images and the original extension modes EditMode, PlayMode and
+Standalone remain covered. The core's 16 existing editor legs stay; eight shared PlayMode legs
+restore the coverage present in the old extension repositories. There are 24 editor legs for the
+entire monorepo, rather than 16 core legs plus 24 for each extension (256 total). Each leg launches
+one shared editor for core and every extension. Standalone retains player build/runtime checks.
+There is no per-extension editor matrix. The four projects never share a Library directory.
 
 The EditMode isolation test uses the running editor's actual compilation graph, resolved UPM
 package graph, source files, defines and bundled Roslyn compiler. It recompiles every extension

@@ -252,39 +252,47 @@ jobs:
       lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
-  # --- PLAY MODE ---
+  # --- PLAY MODE (preserve the original extension matrix) ---
 
-  # test-unity-2022-3-62f3-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2022.3.62f3'
-  #     unityVersion: '2022.3.62f3'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-2022-3-62f3-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
-  # test-unity-2023-2-22f1-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2023.2.22f1'
-  #     unityVersion: '2023.2.22f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-2023-2-22f1-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2023.2.22f1"
+      unityVersion: "2023.2.22f1"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
-  # test-unity-6000-3-1f1-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.3.1f1'
-  #     unityVersion: '6000.3.1f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-3-1f1-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.3.1f1"
+      unityVersion: "6000.3.1f1"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
-  # test-unity-6000-6-3f1-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.6.3f1'
-  #     unityVersion: '6000.6.3f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-6-3f1-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
   # --- STANDALONE ---
 

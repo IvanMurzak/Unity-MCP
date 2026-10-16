@@ -404,43 +404,43 @@ jobs:
       testMode: "editmode"
     secrets: inherit
 
-  # --- PLAY MODE ---
+  # --- PLAY MODE (preserve the original extension matrix) ---
 
-  # test-unity-2022-3-62f3-playmode:
-  #   needs: [build-unity-installer]
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2022.3.62f3'
-  #     unityVersion: '2022.3.62f3'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-2022-3-62f3-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "playmode"
+    secrets: inherit
 
-  # test-unity-2023-2-22f1-playmode:
-  #   needs: [build-unity-installer]
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2023.2.22f1'
-  #     unityVersion: '2023.2.22f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-2023-2-22f1-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2023.2.22f1"
+      unityVersion: "2023.2.22f1"
+      testMode: "playmode"
+    secrets: inherit
 
-  # test-unity-6000-3-1f1-playmode:
-  #   needs: [build-unity-installer]
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.3.1f1'
-  #     unityVersion: '6000.3.1f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-3-1f1-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.3.1f1"
+      unityVersion: "6000.3.1f1"
+      testMode: "playmode"
+    secrets: inherit
 
-  # test-unity-6000-6-3f1-playmode:
-  #   needs: [build-unity-installer]
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.6.3f1'
-  #     unityVersion: '6000.6.3f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-6-3f1-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
+      testMode: "playmode"
+    secrets: inherit
 
   # --- STANDALONE ---
 
@@ -501,16 +501,16 @@ jobs:
         build-unity-installer,
         build-signed-upm-package,
         test-unity-2022-3-62f3-editmode,
-        # test-unity-2022-3-62f3-playmode,
+        test-unity-2022-3-62f3-playmode,
         test-unity-2022-3-62f3-standalone,
         test-unity-2023-2-22f1-editmode,
-        # test-unity-2023-2-22f1-playmode,
+        test-unity-2023-2-22f1-playmode,
         test-unity-2023-2-22f1-standalone,
         test-unity-6000-3-1f1-editmode,
-        # test-unity-6000-3-1f1-playmode,
+        test-unity-6000-3-1f1-playmode,
         test-unity-6000-3-1f1-standalone,
         test-unity-6000-6-3f1-editmode,
-        # test-unity-6000-6-3f1-playmode,
+        test-unity-6000-6-3f1-playmode,
         test-unity-6000-6-3f1-standalone,
       ]
     if: inputs.dry_run != true
@@ -585,16 +585,16 @@ jobs:
         build-unity-installer,
         build-signed-upm-package,
         test-unity-2022-3-62f3-editmode,
-        # test-unity-2022-3-62f3-playmode,
+        test-unity-2022-3-62f3-playmode,
         test-unity-2022-3-62f3-standalone,
         test-unity-2023-2-22f1-editmode,
-        # test-unity-2023-2-22f1-playmode,
+        test-unity-2023-2-22f1-playmode,
         test-unity-2023-2-22f1-standalone,
         test-unity-6000-3-1f1-editmode,
-        # test-unity-6000-3-1f1-playmode,
+        test-unity-6000-3-1f1-playmode,
         test-unity-6000-3-1f1-standalone,
         test-unity-6000-6-3f1-editmode,
-        # test-unity-6000-6-3f1-playmode,
+        test-unity-6000-6-3f1-playmode,
         test-unity-6000-6-3f1-standalone,
         deploy-cli-to-npm,
       ]
