@@ -128,20 +128,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     ServerPathEnvVar,
                     serverPathOverride);
 
-            DownloadServerBinaryIfNeeded(unattended: true)
-                .ContinueWith(task =>
-                {
-                    if (task.IsFaulted || !task.Result)
-                        return; // Failed to download binaries, skip auto-start
+            // Poll the download from the main thread instead of subscribing from a ContinueWith
+            // (thread-pool) callback: EditorApplication.update is a plain delegate field, so a
+            // background `+=` races with main-thread subscribers and can drop one of them
+            // (e.g. the MainThread dispatch pump).
+            var download = DownloadServerBinaryIfNeeded(unattended: true);
+            void AutoStartAfterDownload()
+            {
+                if (!download.IsCompleted)
+                    return;
 
-                    if (!task.Result)
-                        return; // No binaries available (either in CI or failed to download), skip auto-start
+                EditorApplication.update -= AutoStartAfterDownload;
 
-                    if (EnvironmentUtils.IsCi())
-                        return; // Skip auto-start in CI environment
+                if (download.IsFaulted || download.IsCanceled || !download.Result)
+                    return; // No binaries available (either in CI or failed to download), skip auto-start
 
-                    EditorApplication.update += StartServerIfNeeded;
-                });
+                if (EnvironmentUtils.IsCi())
+                    return; // Skip auto-start in CI environment
+
+                StartServerIfNeeded();
+            }
+            EditorApplication.update += AutoStartAfterDownload;
         }
 
         #region Binary Metadata
