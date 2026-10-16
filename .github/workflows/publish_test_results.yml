@@ -30,6 +30,8 @@ jobs:
     # (chain mode keeps only the JSON leg records), so publishing would post a neutral "0 tests"
     # `Test Results` check that REPLACES the PR run's real report on the same head commit.
     if: github.event.workflow_run.conclusion != 'cancelled' && github.event.workflow_run.event != 'workflow_dispatch'
+    env:
+      SAME_REPO_PR: ${{ github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.head_repository.full_name == github.repository }}
 
     steps:
       - name: Download all test result artifacts
@@ -67,13 +69,13 @@ jobs:
       # suite ran here with secrets, so it mirrors this run. A fork PR's is left unreported (GitHub
       # then shows it as expected) until test_pull_request_manual.yml sets it.
       - uses: actions/checkout@v6
-        if: always() && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.head_repository.full_name == github.repository
+        if: always() && env.SAME_REPO_PR == 'true'
         with:
           sparse-checkout: .github/actions
           persist-credentials: false
 
       - uses: ./.github/actions/unity-tests-licensed
-        if: always() && github.event.workflow_run.event == 'pull_request' && github.event.workflow_run.head_repository.full_name == github.repository
+        if: always() && env.SAME_REPO_PR == 'true'
         with:
           sha: ${{ github.event.workflow_run.head_sha }}
           state: ${{ github.event.workflow_run.conclusion == 'success' && 'success' || 'failure' }}

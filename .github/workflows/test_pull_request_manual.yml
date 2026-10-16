@@ -31,6 +31,8 @@ permissions:
 
 # One run per branch at a time. On fork-tests that keeps each fork's run alone in the branch's cache
 # scope, which `resolve` and `report` empty around it.
+# GitHub keeps only ONE pending run per group: a third dispatch while one runs and one waits cancels
+# the waiting one before any job starts, so that PR gets no status at all. Dispatch it again.
 concurrency:
   group: ${{ github.workflow }}-${{ github.ref }}
   cancel-in-progress: false
@@ -87,7 +89,12 @@ jobs:
             exit 1
           fi
           github_tree() { gh api "repos/$REPO/git/trees/$1" --jq '.tree[] | select(.path == ".github") | .sha'; }
-          if [ "$(github_tree "$RUN_SHA")" != "$(github_tree main)" ]; then
+          # Plain assignments, so `set -e` aborts on an API error; inside `[ ]` two failed lookups
+          # would compare equal ("" = "") and pass the check.
+          run_tree=$(github_tree "$RUN_SHA")
+          main_tree=$(github_tree main)
+          [ -n "$run_tree" ] && [ -n "$main_tree" ] || { echo "::error::Could not read the .github/ tree of $RUN_SHA or main."; exit 1; }
+          if [ "$run_tree" != "$main_tree" ]; then
             echo "::error::.github/ on fork-tests differs from main. Bring the branch up to date, then dispatch again:"
             echo "gh api -X PATCH repos/$REPO/git/refs/heads/fork-tests -f sha=\$(gh api repos/$REPO/git/ref/heads/main --jq .object.sha)"
             exit 1
@@ -137,7 +144,7 @@ jobs:
           elif [ "$mergeable" = "false" ]; then
             echo "::warning::PR #$PR conflicts with its base branch. Testing its head commit instead of a merge."
           else
-            echo "::warning::GitHub has not computed a test merge for PR #$PR yet. Testing its head commit instead."
+            echo "::warning::GitHub reported no test merge for PR #$PR (mergeable=$mergeable). Testing its head commit instead."
           fi
 
           echo "ref=$ref" >> "$GITHUB_OUTPUT"
@@ -327,11 +334,12 @@ jobs:
         env:
           NEEDS: ${{ toJSON(needs) }}
           TESTED: ${{ needs.resolve.outputs.ref }}
+          HEAD_SHA: ${{ needs.resolve.outputs.head }}
         run: |
           set -euo pipefail
           results=$(jq -r '[.[].result] | unique | join(",")' <<<"$NEEDS")
           case "$results" in
-            success) state=success; desc="Licensed suite passed on ${TESTED:0:12}" ;;
+            success) state=success; desc="Licensed suite passed ($([ "$TESTED" = "$HEAD_SHA" ] && echo "this commit" || echo "test merge ${TESTED:0:12}"))" ;;
             *cancelled*) state=error; desc="Licensed suite cancelled ($results)" ;;
             *) state=failure; desc="Licensed suite failed ($results)" ;;
           esac
