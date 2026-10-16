@@ -1,0 +1,35 @@
+{
+  "name": "com.ivanmurzak.unity.mcp.timeline",
+  "displayName": "AI Timeline",
+  "author": {
+    "name": "Ivan Murzak",
+    "url": "https://github.com/IvanMurzak"
+  },
+  "keywords": [
+    "Timeline",
+    "Cutscene",
+    "Animation",
+    "Sequencer",
+    "AI",
+    "AI Integration",
+    "MCP",
+    "Unity MCP"
+  ],
+  "version": "2.0.1",
+  "unity": "2022.3",
+  "description": "MCP Tools for Unity Timeline - Author cutscenes and sequences with AI. Create TimelineAssets, add Animation/Activation/Audio/Signal/Control tracks, add and time clips, set blends, place markers, bind a PlayableDirector and its track bindings, and inspect or tweak any Timeline object via natural language.",
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "1.0.0",
+    "com.unity.timeline": "1.8.12"
+  },
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "extensions.unity",
+        "com.ivanmurzak"
+      ]
+    }
+  ]
+}

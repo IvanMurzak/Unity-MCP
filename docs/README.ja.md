@@ -188,16 +188,16 @@ unity-mcp-cli open ./MyUnityProject
 
 | 拡張機能 | 説明 |
 | --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Unity アニメーション用の追加ツールセット |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | Cinemachine 用の MCP ツール |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | Unity Input System 用の MCP ツール |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | AI ナビゲーション用の MCP ツール（NavMesh サーフェス、ベイク、エージェント、リンク） |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Unity パーティクルシステム用の追加ツールセット |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 用の追加ツールセット |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | Unity Splines 用の MCP ツール |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Unity Terrain 用の追加ツールセット |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | Unity 2D タイルマップ用の MCP ツール |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | Unity Timeline のカットシーンとシーケンス用の MCP ツール |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | Unity アニメーション用の追加ツールセット |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | Cinemachine 用の MCP ツール |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | Unity Input System 用の MCP ツール |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | AI ナビゲーション用の MCP ツール（NavMesh サーフェス、ベイク、エージェント、リンク） |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | Unity パーティクルシステム用の追加ツールセット |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | Unity ProBuilder 用の追加ツールセット |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | Unity Splines 用の MCP ツール |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | Unity Terrain 用の追加ツールセット |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | Unity 2D タイルマップ用の MCP ツール |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | Unity Timeline のカットシーンとシーケンス用の MCP ツール |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

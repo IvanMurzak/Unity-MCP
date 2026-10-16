@@ -188,16 +188,16 @@ Instala extensiones cuando necesites más herramientas o [crea tus propias herra
 
 | Extensión | Descripción |
 | --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Conjunto de herramientas adicionales para animaciones de Unity |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | Herramientas MCP para Cinemachine |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | Herramientas MCP para el Input System de Unity |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | Herramientas MCP para AI Navigation (superficies NavMesh, horneado, agentes y enlaces) |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Conjunto de herramientas adicionales para el sistema de partículas de Unity |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Conjunto de herramientas adicionales para Unity ProBuilder |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | Herramientas MCP para Unity Splines |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Conjunto de herramientas adicionales para el Terreno de Unity |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | Herramientas MCP para Tilemaps 2D de Unity |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | Herramientas MCP para escenas y secuencias de Unity Timeline |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | Conjunto de herramientas adicionales para animaciones de Unity |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | Herramientas MCP para Cinemachine |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | Herramientas MCP para el Input System de Unity |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | Herramientas MCP para AI Navigation (superficies NavMesh, horneado, agentes y enlaces) |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | Conjunto de herramientas adicionales para el sistema de partículas de Unity |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | Conjunto de herramientas adicionales para Unity ProBuilder |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | Herramientas MCP para Unity Splines |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | Conjunto de herramientas adicionales para el Terreno de Unity |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | Herramientas MCP para Tilemaps 2D de Unity |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | Herramientas MCP para escenas y secuencias de Unity Timeline |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

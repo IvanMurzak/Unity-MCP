@@ -31,3 +31,10 @@ Unity-MCP.wiki
 
 # Python bytecode (e.g. .github/scripts/ generates __pycache__/*.pyc when CI gates run locally).
 __pycache__/
+
+# Shared extension/installer fixtures, materialized by commands/extensions.py prepare.
+/Unity-Tests/*/Assets/ExtensionIsolation/
+/Unity-Tests/*/Assets/ExtensionIsolation.meta
+/Unity-Tests/*/Assets/com.IvanMurzak/
+/Unity-Tests/*/Assets/com.IvanMurzak.meta
+/.artifacts/
