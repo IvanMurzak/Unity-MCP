@@ -21,6 +21,11 @@ on:
       # ordinary pull_request run, where the chain feed steps below are no-ops.
       lock: { required: false, type: string, default: "" }
       lock_hash8: { required: false, type: string, default: "" }
+      # Optional commit to test. Empty (the default) checks out the ref the caller ran on.
+      # test_pull_request_manual.yml passes a 40-char SHA it resolved and verified ONCE, never
+      # refs/pull/<n>/merge: that ref is mutable, and each leg would resolve it independently.
+      # A non-empty ref means "this tree may be a fork's code": no saved cache, no persisted token.
+      ref: { required: false, type: string, default: "" }
     secrets:
       # Stored Unity Personal license (.ulf XML). Generated once via the
       # generate-unity-activation-file workflow + https://license.unity3d.com/manual
@@ -29,11 +34,9 @@ on:
       # A pull request from a FORK receives none of these three: GitHub withholds
       # repository secrets from a `pull_request` run whose head repository differs
       # from the base, so the caller's `secrets: inherit` (test_pull_request.yml)
-      # passes empty strings and the game-ci step below fails in under a second on
-      # every leg. That is the expected behaviour of an unlicensed run, not a broken
-      # license or a broken workflow — see the "Fork pull requests get no secrets"
-      # section of docs/agents/ci-unity-license.md for how to run the licensed suite
-      # against a fork PR's code.
+      # passes empty strings, so `test` below is skipped. The licensed suite reaches
+      # a fork PR's code only through test_pull_request_manual.yml — see the "Fork
+      # pull requests get no secrets" section of docs/agents/ci-unity-license.md.
       UNITY_LICENSE: { required: false }
       UNITY_EMAIL: { required: false }
       UNITY_PASSWORD: { required: false }
@@ -42,7 +45,11 @@ on:
 # 2. Job
 ##############################################################################
 jobs:
+  # A pull request from a fork gets no secrets, so the licensed suite cannot run on it: skip the
+  # job instead of letting game-ci fail at license activation. An empty head repository is a fork
+  # deleted while its PR stayed open. test_pull_request.yml tells the maintainer how to run it.
   test:
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
     strategy:
       fail-fast: false
       matrix:
@@ -65,6 +72,9 @@ jobs:
       - uses: actions/checkout@v6
         with:
           lfs: false
+          ref: ${{ inputs.ref }}
+          # Nothing here uses git with the token, and the tree may be a fork's code.
+          persist-credentials: false
 
       # --------------------------------------------------------------------- #
       # 2-b. Free disk space
@@ -150,7 +160,13 @@ jobs:
           echo "project_path_sanitized=$sanitized_path" >> $GITHUB_OUTPUT
         shell: bash
 
-      - uses: actions/cache@v5
+      # The key is static (no content hash), so whatever a run saves under it is what every later run
+      # restores, release.yml included. A run given a ref may be executing a fork's code, so only a run
+      # without one saves (step 2-e). test_pull_request_manual.yml runs fork code from the fork-tests
+      # branch, whose cache scope nothing else reads, and wipes that scope before and after.
+      - name: Restore Unity cache
+        id: cache
+        uses: actions/cache/restore@v5
         with:
           path: |
             ${{ inputs.projectPath }}/Library
@@ -305,3 +321,15 @@ jobs:
           path: chain-leg.json
           retention-days: 1
 
+      # --------------------------------------------------------------------- #
+      # 2-e. Save the Unity cache: only on a miss, only from a successful job
+      # (what actions/cache did in its post step), and never from a run given a ref.
+      # --------------------------------------------------------------------- #
+      - name: Save Unity cache
+        if: success() && inputs.ref == '' && steps.cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v5
+        with:
+          path: |
+            ${{ inputs.projectPath }}/Library
+            ~/.cache/unity3d
+          key: ${{ steps.cache.outputs.cache-primary-key }}

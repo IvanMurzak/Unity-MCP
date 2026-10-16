@@ -38,6 +38,7 @@ namespace com.IvanMurzak.Unity.MCP
             // are applied here as runtime overrides. The OverrideRecord captures the
             // disk-baseline values so Save() can persist them without leaking the overrides.
             RuntimeOverrides = EnvironmentUtils.ApplyEnvironmentOverrides(unityConnectionConfig);
+            SyncCustomSkillsPath(unityConnectionConfig.SkillsPath);
             if (wasCreated)
                 Save();
             IncrementSingletonCount();

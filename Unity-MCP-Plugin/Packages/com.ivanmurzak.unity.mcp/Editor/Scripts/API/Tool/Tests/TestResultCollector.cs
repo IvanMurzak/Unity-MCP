@@ -104,9 +104,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
 
             var duration = DateTime.Now - startTime;
-            _summary.Duration = DateTime.Now - startTime;
-            _summary.TotalTests = CountTests(result.Test);
-            if (_summary.FailedTests > 0)
+            _summary.Duration = duration;
+            // result.Test is the whole unfiltered tree (and so is RunStarted's before com.unity.test-framework 1.4): take every
+            // count from the run's root result, so the summary adds up (inconclusive tests are reported as skipped, like their rows).
+            _summary.PassedTests = result.PassCount;
+            _summary.FailedTests = result.FailCount;
+            _summary.SkippedTests = result.SkipCount + result.InconclusiveCount;
+            _summary.TotalTests = _summary.PassedTests + _summary.FailedTests + _summary.SkippedTests;
+            // A suite-level failure (OneTimeTearDown error, cancelled run) fails the root without failing any test.
+            if (_summary.FailedTests > 0 || result.TestStatus == TestStatus.Failed)
             {
                 _summary.Status = TestRunStatus.Failed;
             }
@@ -211,20 +217,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
                 UnityMcpPluginEditor.Instance.LogInfo("{emoji} Test finished ({counter}/{total}): {testName} - {testStatus}",
                     typeof(TestResultCollector), statusEmoji, _results.Count, _summary.TotalTests, result.Test.FullName, result.TestStatus);
-
-                // Update summary counts
-                switch (result.TestStatus)
-                {
-                    case TestStatus.Passed:
-                        _summary.PassedTests++;
-                        break;
-                    case TestStatus.Failed:
-                        _summary.FailedTests++;
-                        break;
-                    case TestStatus.Skipped:
-                        _summary.SkippedTests++;
-                        break;
-                }
 
                 // Update duration as tests complete
                 _summary.Duration = DateTime.Now - startTime;
