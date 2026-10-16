@@ -7,6 +7,11 @@ import {
   deriveProjectPin,
   normalizeProjectRoot,
 } from '../src/utils/port.js';
+import {
+  derivePort as deriveLegacyPort,
+  derivePin as deriveLegacyPin,
+  normalize as normalizeLegacyRoot,
+} from '@baizor/gamedev-cli-core';
 
 // ---------------------------------------------------------------------------
 // Golden-vector parity: C# ProjectIdentity <-> this TS port.
@@ -35,38 +40,62 @@ const GOLDEN_VECTORS: GoldenVector[] = [
   { path: '/srv/games/space sim', pin: '08c6cbb6', port: 27816 }, // path with a space
 ];
 
-describe('ProjectIdentity golden-vector parity (C# reference <-> TS port)', () => {
+describe('ProjectIdentity v1 golden-vector parity (C# reference <-> TS port)', () => {
   for (const v of GOLDEN_VECTORS) {
     it(`derives the canonical pin + port for ${JSON.stringify(v.path)}`, () => {
-      expect(deriveProjectPin(v.path)).toBe(v.pin);
-      expect(generatePortFromDirectory(v.path)).toBe(v.port);
+      expect(deriveLegacyPin(v.path)).toBe(v.pin);
+      expect(deriveLegacyPort(v.path)).toBe(v.port);
     });
   }
 
   it('uses ToLowerInvariant for U+0130 (NOT the naive JS toLowerCase value)', () => {
     // A naive toLowerCase() port would derive pin 77300275 / port 27751 (U+0130 -> "i" + combining
     // dot). The canonical C# ToLowerInvariant value is 672d80a7 / 25303 (U+0130 left unchanged).
-    expect(deriveProjectPin('/home/İstanbul/game')).toBe('672d80a7');
-    expect(deriveProjectPin('/home/İstanbul/game')).not.toBe('77300275');
-    expect(generatePortFromDirectory('/home/İstanbul/game')).not.toBe(27751);
+    expect(deriveLegacyPin('/home/İstanbul/game')).toBe('672d80a7');
+    expect(deriveLegacyPin('/home/İstanbul/game')).not.toBe('77300275');
+    expect(deriveLegacyPort('/home/İstanbul/game')).not.toBe(27751);
   });
 
   it('does NOT convert separators — backslash and forward-slash forms differ', () => {
-    expect(generatePortFromDirectory('C:\\Users\\user\\my-game')).not.toBe(
-      generatePortFromDirectory('C:/Users/user/my-game'),
+    expect(deriveLegacyPort('C:\\Users\\user\\my-game')).not.toBe(
+      deriveLegacyPort('C:/Users/user/my-game'),
     );
-    expect(deriveProjectPin('C:\\Users\\user\\my-game')).not.toBe(
-      deriveProjectPin('C:/Users/user/my-game'),
+    expect(deriveLegacyPin('C:\\Users\\user\\my-game')).not.toBe(
+      deriveLegacyPin('C:/Users/user/my-game'),
     );
   });
 
   it('normalizes trailing separators and case before hashing', () => {
-    expect(normalizeProjectRoot('/home/user/my-game/')).toBe('/home/user/my-game');
-    expect(normalizeProjectRoot('/home/user/my-game\\')).toBe('/home/user/my-game');
-    expect(normalizeProjectRoot('/home/USER/My-Game')).toBe('/home/user/my-game');
+    expect(normalizeLegacyRoot('/home/user/my-game/')).toBe('/home/user/my-game');
+    expect(normalizeLegacyRoot('/home/user/my-game\\')).toBe('/home/user/my-game');
+    expect(normalizeLegacyRoot('/home/USER/My-Game')).toBe('/home/user/my-game');
   });
 
   it('never trims a lone separator below length 1', () => {
-    expect(normalizeProjectRoot('/')).toBe('/');
+    expect(normalizeLegacyRoot('/')).toBe('/');
+  });
+});
+
+describe('CLI ProjectIdentity v2 parity with the Unity plugin', () => {
+  const pluginVectors = [
+    { path: 'C:\\Users\\user\\my-game', pin: '5a87324e', port: 24298 },
+    { path: 'C:\\Users\\user\\my-game\\', pin: '5a87324e', port: 24298 },
+    { path: 'C:/Users/user/my-game', pin: '5a87324e', port: 24298 },
+    { path: '/home/user/my-game', pin: '34ea75f2', port: 23940 },
+  ];
+
+  for (const v of pluginVectors) {
+    it('uses the plugin pin and port for ' + JSON.stringify(v.path), () => {
+      expect(deriveProjectPin(v.path)).toBe(v.pin);
+      expect(generatePortFromDirectory(v.path)).toBe(v.port);
+    });
+  }
+
+  it('normalizes Windows separators like the plugin', () => {
+    expect(normalizeProjectRoot('C:\\Users\\user\\my-game')).toBe('c:/users/user/my-game');
+  });
+
+  it('probes the reported Windows project at the plugin port', () => {
+    expect(generatePortFromDirectory('C:\\Users\\admin\\Documents\\GitHub\\LumberJack')).toBe(27244);
   });
 });

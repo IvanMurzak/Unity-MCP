@@ -3,18 +3,13 @@
 
 /**
  * Project-identity derivation (routing pin + deterministic local port) now lives in
- * `@baizor/gamedev-cli-core` (auth-fixes T3/T7): ONE port of the C# `ProjectIdentity`, gated by the
- * SAME golden vectors as the .NET reference. This module re-exports the **v1** algorithm under the
- * historical names the CLI has always used, so existing call sites (`utils/config.ts`,
- * `utils/connection.ts`) and the golden-vector parity tests keep matching byte-for-byte.
- *
- * The **v2** algorithm (the `\`→`/` normalization that fixes B5) is what the configurators emit —
- * `setup-mcp` / `enroll` derive their pins with `derivePinV2` inside cli-core; import `derivePinV2` /
- * `derivePortV2` directly from `@baizor/gamedev-cli-core` when the v2 pin is needed.
+ * `@baizor/gamedev-cli-core` is the shared port of the C# `ProjectIdentity`. The Unity plugin and
+ * `setup-mcp` use v2, which also normalizes Windows separators. Keep the CLI's historical names
+ * on that same version so status, wait-for-ready, and fallback connections probe the plugin's port.
  */
 
 export {
-  derivePin as deriveProjectPin,
-  derivePort as generatePortFromDirectory,
-  normalize as normalizeProjectRoot,
+  derivePinV2 as deriveProjectPin,
+  derivePortV2 as generatePortFromDirectory,
+  normalizeV2 as normalizeProjectRoot,
 } from '@baizor/gamedev-cli-core';
