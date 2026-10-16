@@ -2,7 +2,7 @@
 # VENDORED from ai-game-dev-software .scripts/chain/leg/chain_feed.py — edit there, re-vendor
 """The one contract every per-repo chain leg implements (`p2-chain-feed-script` §C1…§C9).
 
-ONE stdlib-only file, copied byte-identically into each of the nine node repos as
+ONE stdlib-only file, copied byte-identically into each of the ten node repos as
 `.github/scripts/chain_feed.py` (§C8, the `cascade_pr_flow.py` precedent). A leg is dispatched
 with the lock as its single input, self-builds its lower layers from the lock's SHAs into a
 LOCAL feed, applies the same override the P1 modules apply locally, asserts identity, and
@@ -24,7 +24,7 @@ ARTIFACT it was read from (`project.assets.json`, a DLL sha256, `chain-identity.
 an exit code.
 """
 
-CHAIN_FEED_VERSION = "6"
+CHAIN_FEED_VERSION = "7"
 
 import argparse
 import hashlib
@@ -159,6 +159,24 @@ RECIPES = {
         },
         "consumes": [],
     },
+    "rql": {
+        "path": "shared/RQL",
+        "slug": "IvanMurzak/RQL",
+        "ecosystem": "dotnet",
+        "kind": "repo",
+        "build": "dotnet build dotnet/Rql.Package/Rql.Package.csproj -c Release -p:Version={ws_version}",
+        "pack": [
+            "dotnet pack dotnet/Rql.Package/Rql.Package.csproj --configuration Release --output {feed} -p:Version={ws_version}",
+        ],
+        "artifacts": {
+            # ONE package, THREE assemblies: `dlls` names every flat DLL a Unity drop carries for it.
+            "nupkg": {
+                "kind": "nupkg", "id": "com.IvanMurzak.Rql",
+                "dlls": ["Rql.Contracts.dll", "Rql.Execution.dll", "Rql.Parser.dll"],
+            },
+        },
+        "consumes": [],
+    },
     "mcp-plugin-dotnet": {
         "path": "shared/MCP-Plugin-dotnet",
         "slug": "IvanMurzak/MCP-Plugin-dotnet",
@@ -286,6 +304,23 @@ RECIPES = {
             },
             {
                 "ref": "reflectornet/nupkg", "node": "reflectornet", "artifact": "nupkg",
+                "mode": "unity-dll",
+                "pins": [
+                    "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs",
+                    "Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json",
+                ],
+                "drops": [
+                    "Unity-MCP-Plugin/Assets/Plugins/NuGet",
+                    "Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet",
+                    "Unity-Tests/2023.2.22f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet",
+                ],
+            },
+            {
+                "ref": "rql/nupkg", "node": "rql", "artifact": "nupkg",
                 "mode": "unity-dll",
                 "pins": [
                     "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs",
@@ -1686,6 +1721,15 @@ def unity_dll_name(package_id):
     return package_id[len(UNITY_PACKAGE_PREFIX):] + ".dll"
 
 
+def unity_dll_names(body):
+    """Every flat-drop DLL a unity-dll artifact carries: its declared `dlls` (a package shipping
+    several assemblies, e.g. `com.IvanMurzak.Rql`), else the one `<Name>.dll` its id names."""
+    declared = body.get("dlls")
+    if declared:
+        return [str(name) for name in declared]
+    return [unity_dll_name(body.get("id"))]
+
+
 def find_nupkg(feed, package_id, ws_version):
     if not Path(feed).is_dir():
         return None
@@ -1718,8 +1762,13 @@ def apply_unity_dll(ctx, edges):
     """
     dll_map = {}
     for edge in edges:
-        package_id = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]["id"]
-        dll_map[unity_dll_name(package_id)] = (edge, package_id)
+        body = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]
+        for dll_name in unity_dll_names(body):
+            owner = dll_map.get(dll_name)
+            if owner is not None and owner[1] != body["id"]:
+                raise Refusal("two different artifact ids map to the same DLL name %r: %r and %r"
+                              % (dll_name, owner[1], body["id"]))
+            dll_map[dll_name] = (edge, body["id"])
     drops = []
     for edge in edges:
         for drop in edge.get("drops") or ():
@@ -2752,8 +2801,9 @@ def cmd_dry_run(args):
                     if drop not in drops:
                         drops.append(drop)
             for edge in mode_edges:
-                package_id = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]["id"]
-                log("chain:   unity   %s (%s)" % (unity_dll_name(package_id), ctx.ws_version(edge["node"])))
+                body = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]
+                for dll_name in unity_dll_names(body):
+                    log("chain:   unity   %s (%s)" % (dll_name, ctx.ws_version(edge["node"])))
             for drop in drops:
                 log("chain:   drop    %s (metas and %s untouched)" % (drop, UNITY_MANIFEST_NAME))
         elif mode == "pnpm":
@@ -3024,9 +3074,9 @@ def _unity_proofs(ctx, edges):
     """sha256(dropped DLL) == sha256 of the same DLL inside the ws nupkg (byte identity)."""
     proofs = []
     for edge in edges:
-        package_id = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]["id"]
+        body = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]
+        package_id = body["id"]
         ws_version = ctx.ws_version(edge["node"])
-        dll_name = unity_dll_name(package_id)
         nupkg = find_nupkg(ctx.feed_nuget, package_id, ws_version)
         if nupkg is None:
             proofs.append(_proof(
@@ -3034,20 +3084,21 @@ def _unity_proofs(ctx, edges):
                 package_id, None, ws_version, False,
             ))
             continue
-        expected_sha = sha256_bytes(extract_lib_dll(nupkg, dll_name))
-        for drop in edge.get("drops") or ():
-            target = ctx.checkout / drop / dll_name
-            if not target.is_file():
+        for dll_name in unity_dll_names(body):
+            expected_sha = sha256_bytes(extract_lib_dll(nupkg, dll_name))
+            for drop in edge.get("drops") or ():
+                target = ctx.checkout / drop / dll_name
+                if not target.is_file():
+                    proofs.append(_proof(
+                        "%s/%s" % (drop, dll_name), "missing on disk", package_id, None, expected_sha, False
+                    ))
+                    continue
+                observed = sha256_file(target)
                 proofs.append(_proof(
-                    "%s/%s" % (drop, dll_name), "missing on disk", package_id, None, expected_sha, False
+                    "%s/%s" % (drop, dll_name),
+                    "sha256 vs %s!%s" % (nupkg.name, UNITY_LIB_ENTRY.format(name=dll_name)),
+                    package_id, observed, expected_sha, observed == expected_sha,
                 ))
-                continue
-            observed = sha256_file(target)
-            proofs.append(_proof(
-                "%s/%s" % (drop, dll_name),
-                "sha256 vs %s!%s" % (nupkg.name, UNITY_LIB_ENTRY.format(name=dll_name)),
-                package_id, observed, expected_sha, observed == expected_sha,
-            ))
         # The manifest MUST stay at the CONSUMER'S pin (A2): a ws value there makes the
         # in-editor resolver re-download the released nupkg and delete these very DLLs. The
         # pin is read from the consumer's own NuGetConfig.cs, never derived from ws_version: a
@@ -3177,11 +3228,16 @@ def _own_dll_name(package_id):
     return (package_id[len(UNITY_PACKAGE_PREFIX):] if package_id.startswith(UNITY_PACKAGE_PREFIX) else package_id) + ".dll"
 
 
-def _own_nupkg_dll(archive, package_id):
-    """The package's own assembly inside its nupkg: `<Name>.dll` under `lib/netstandard2.1/`
-    first, then under any other `lib/<tfm>/`. `None` when no `lib/` entry carries that name —
-    another assembly's `ProductVersion` is never evidence for this package."""
-    wanted = _own_dll_name(package_id)
+def _own_dll_names(body):
+    """The assemblies a nupkg ships for itself: the artifact's declared `dlls` (one package,
+    several assemblies), else the one `<Name>.dll` its id names."""
+    return [str(name) for name in body.get("dlls") or ()] or [_own_dll_name(body["id"])]
+
+
+def _own_nupkg_dll(archive, wanted):
+    """One of the package's own assemblies (`wanted`, a DLL filename) inside its nupkg: under
+    `lib/netstandard2.1/` first, then under any other `lib/<tfm>/`. `None` when no `lib/` entry
+    carries that name — another assembly's `ProductVersion` is never evidence for this package."""
     by_name = sorted(
         n for n in archive.namelist()
         if n.startswith("lib/") and n.rsplit("/", 1)[-1].lower() == wanted.lower()
@@ -3191,6 +3247,34 @@ def _own_nupkg_dll(archive, package_id):
         if group:
             return group[0]
     return None
+
+
+def _own_dll_proof(ctx, found, package_id, wanted, ws_version):
+    """One own-pack proof: the `ProductVersion` the assembly `wanted` inside nupkg `found` was
+    actually built at, against this leg's ws version."""
+    try:
+        with zipfile.ZipFile(str(found)) as archive:
+            member = _own_nupkg_dll(archive, wanted)
+            data = archive.read(member) if member else None
+    except (OSError, zipfile.BadZipFile, KeyError) as exc:
+        return _proof(ctx.node, "%s unreadable: %s" % (found.name, exc), package_id, None, ws_version, False)
+    if data is None:
+        return _proof(
+            ctx.node, "%s has no lib/<tfm>/%s" % (found.name, wanted), package_id, None, ws_version, False,
+        )
+    try:
+        product = pe_version_strings_from_bytes(data).get("ProductVersion")
+    except (PeFormatError, struct.error, IndexError, ValueError) as exc:
+        return _proof(
+            ctx.node, "%s!%s ProductVersion unreadable: %s" % (found.name, member, exc),
+            package_id, None, ws_version, False,
+        )
+    # SourceLink appends `+<sha>`; the version half is what `-p:Version` stamped.
+    core = (product or "").split("+", 1)[0] or None
+    return _proof(
+        ctx.node, "%s!%s ProductVersion %r" % (found.name, member, product),
+        package_id, core, ws_version, core == ws_version,
+    )
 
 
 def _own_pack_proofs(ctx, artifacts):
@@ -3228,33 +3312,8 @@ def _own_pack_proofs(ctx, artifacts):
                 observed, ws_version, observed == ws_version,
             ))
             continue
-        try:
-            with zipfile.ZipFile(str(found)) as archive:
-                member = _own_nupkg_dll(archive, package_id)
-                data = archive.read(member) if member else None
-        except (OSError, zipfile.BadZipFile, KeyError) as exc:
-            proofs.append(_proof(ctx.node, "%s unreadable: %s" % (found.name, exc), package_id, None, ws_version, False))
-            continue
-        if data is None:
-            proofs.append(_proof(
-                ctx.node, "%s has no lib/<tfm>/%s" % (found.name, _own_dll_name(package_id)),
-                package_id, None, ws_version, False,
-            ))
-            continue
-        try:
-            product = pe_version_strings_from_bytes(data).get("ProductVersion")
-        except (PeFormatError, struct.error, IndexError, ValueError) as exc:
-            proofs.append(_proof(
-                ctx.node, "%s!%s ProductVersion unreadable: %s" % (found.name, member, exc),
-                package_id, None, ws_version, False,
-            ))
-            continue
-        # SourceLink appends `+<sha>`; the version half is what `-p:Version` stamped.
-        core = (product or "").split("+", 1)[0] or None
-        proofs.append(_proof(
-            ctx.node, "%s!%s ProductVersion %r" % (found.name, member, product),
-            package_id, core, ws_version, core == ws_version,
-        ))
+        for wanted in _own_dll_names(body):
+            proofs.append(_own_dll_proof(ctx, found, package_id, wanted, ws_version))
     return proofs
 
 
