@@ -16,6 +16,8 @@ using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.AgentConfig;
+using com.IvanMurzak.McpPlugin.AgentConfig.Impl;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -206,6 +208,19 @@ namespace com.IvanMurzak.Unity.MCP
                 Instance.unityConnectionConfig.SkillsPath = NormalizeSkillsPath(value);
                 NotifyChanged(Instance.unityConnectionConfig);
             }
+        }
+
+        /// <summary>
+        /// Seeds the shared Custom agent's in-memory <see cref="CustomConfigurator.EditableSkillsPath"/>
+        /// from the persisted <see cref="SkillsPath"/>. The registry instance is recreated on every
+        /// domain reload with the <c>".claude/skills"</c> default, so without this any caller that
+        /// copies <c>configurator.SkillsPath</c> into <see cref="SkillsPath"/> would overwrite the
+        /// user's saved custom path (issue #1023). No-op for built-in agents.
+        /// </summary>
+        public static void SyncCustomSkillsPath(AiAgentConfigurator? configurator)
+        {
+            if (configurator is CustomConfigurator custom && !string.IsNullOrEmpty(SkillsPath))
+                custom.EditableSkillsPath = SkillsPath;
         }
 
         /// <summary>

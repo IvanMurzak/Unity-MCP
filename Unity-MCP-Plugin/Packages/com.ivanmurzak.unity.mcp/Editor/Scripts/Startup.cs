@@ -42,6 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Auto-generate skill files for the selected agent if enabled
             var savedAgentId = MainWindowEditor.selectedAiAgentId.Value;
             var agent = AiAgentConfiguratorRegistry.GetByAgentId(savedAgentId);
+            UnityMcpPluginEditor.SyncCustomSkillsPath(agent);
             if (agent?.SupportsSkills == true && UnityMcpPluginEditor.IsAutoGenerateSkills(agent.AgentId))
             {
                 UnityMcpPluginEditor.SkillsPath = agent.SkillsPath!;
