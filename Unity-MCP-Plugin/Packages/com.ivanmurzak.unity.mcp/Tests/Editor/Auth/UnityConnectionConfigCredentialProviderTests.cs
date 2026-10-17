@@ -10,7 +10,7 @@
 
 #nullable enable
 using System.Threading.Tasks;
-using com.IvanMurzak.Unity.MCP.Runtime.Utils;
+using com.IvanMurzak.McpPlugin;
 using NUnit.Framework;
 using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
