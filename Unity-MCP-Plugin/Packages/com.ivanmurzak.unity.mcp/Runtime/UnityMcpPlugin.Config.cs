@@ -87,10 +87,6 @@ namespace com.IvanMurzak.Unity.MCP
             public const string DefaultConnectionErrorHint =
                 "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Developer</b> window.";
 
-            /// <inheritdoc/>
-            [JsonIgnore]
-            public override string? ConnectionErrorHint { get; set; } = DefaultConnectionErrorHint;
-
             /// <summary>
             /// Returns the active connection host based on <see cref="ConnectionMode"/>.
             /// In Cloud mode, returns <see cref="CloudServerUrl"/>.
@@ -231,6 +227,7 @@ namespace com.IvanMurzak.Unity.MCP
                 Resources = DefaultResources;
                 ToolFormat = ToolPresentationFormat.Rql;
                 ToolTextEscaping = com.IvanMurzak.McpPlugin.ToolTextEscaping.Minimal;
+                ConnectionErrorHint = DefaultConnectionErrorHint;
                 // Seed the LOCAL server token directly. `GenerateToken()` produces the local server secret;
                 // Cloud-mode credentials come from the shared machine store (T9), never from this config, so
                 // nothing cloud-related is seeded here. Seeding LocalToken up front keeps the generate-if-empty
