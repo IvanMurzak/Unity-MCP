@@ -66,11 +66,13 @@ def openupm_metadata(package_id):
     request = urllib.request.Request(url, headers={'User-Agent': 'Unity-MCP-component-release'})
     with urllib.request.urlopen(request, timeout=30) as response:
         text = response.read().decode('utf-8')
-    # The registry's routing fields are scalar strings. Do not require a YAML dependency.
+    # Read only routing scalars. Descriptions may use YAML-only escapes (e.g. \\x80)
+    # or multiline values; interpreting arbitrary metadata as JSON is incorrect.
+    routing_fields = {'repoUrl', 'trackingMode', 'gitTagPrefix', 'githubReleaseAssetName', 'gitTagIgnore'}
     values = {}
     for line in text.splitlines():
         match = re.fullmatch(r'([A-Za-z]+):\s*(.*?)\s*', line)
-        if match:
+        if match and match[1] in routing_fields:
             value = match[2]
             if value.startswith('"'):
                 value = json.loads(value)
