@@ -10,7 +10,9 @@
 
 #nullable enable
 using System.Threading.Tasks;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
+using static com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
@@ -83,6 +85,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => Task.FromResult<string?>("machine-jwt");
             var config = NewConfig(ConnectionMode.Custom, localToken: "local-tok");
             Assert.AreEqual("local-tok", Resolve(config));
+        }
+
+        static UnityMcpPlugin.UnityConnectionConfig CustomOAuth(string host, string? localToken)
+        {
+            var config = NewConfig(ConnectionMode.Custom, localToken);
+            config.AuthOption = AuthOption.oauth;
+            config.LocalHost = host;
+            return config;
+        }
+
+        [TestCase("http://localhost:5000")]
+        [TestCase("http://127.0.0.1:5000")]
+        [TestCase("http://[::1]:5000")]
+        public void CustomOAuth_Loopback_PresentsMachineJwt(string host)
+        {
+            UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => Task.FromResult<string?>("machine-jwt");
+            Assert.AreEqual("machine-jwt", Resolve(CustomOAuth(host, localToken: "local-tok")));
+        }
+
+        [Test]
+        public void CustomOAuth_Loopback_SignedOut_UsesLocalToken()
+        {
+            UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => Task.FromResult<string?>(null);
+            Assert.AreEqual("local-tok", Resolve(CustomOAuth("http://localhost:5000", localToken: "local-tok")));
+        }
+
+        [TestCase("https://my-server.example.com")]
+        [TestCase("http://localhost@evil.com")]
+        [TestCase("http://127.0.0.1.evil.com")]
+        public void CustomOAuth_Remote_NeverPresentsMachineJwt(string host)
+        {
+            var read = false;
+            UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => { read = true; return Task.FromResult<string?>("machine-jwt"); };
+            Assert.AreEqual("local-tok", Resolve(CustomOAuth(host, localToken: "local-tok")));
+            Assert.IsFalse(read);
+        }
+
+        [Test]
+        public void CustomOAuth_Remote_WithoutToken_Refuses()
+        {
+            UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => Task.FromResult<string?>("machine-jwt");
+            var ex = Assert.Throws<CredentialScopeException>(() => Resolve(CustomOAuth("https://my-server.example.com", localToken: null)));
+            Assert.AreEqual("Refusing to send your ai-game.dev account token to my-server.example.com; " +
+                            "set UNITY_MCP_TOKEN or use a localhost server.", ex!.Message);
         }
     }
 }
