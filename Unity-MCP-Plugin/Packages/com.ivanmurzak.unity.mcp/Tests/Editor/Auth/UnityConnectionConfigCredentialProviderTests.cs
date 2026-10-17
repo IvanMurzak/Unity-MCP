@@ -123,6 +123,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
+        public void CustomOAuth_ProviderKeepsItsDialHost_WhenHostLaterTurnsLoopback()
+        {
+            UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => Task.FromResult<string?>("machine-jwt");
+            var config = CustomOAuth("https://my-server.example.com", localToken: "local-tok");
+            var remoteLink = config.CredentialProvider!; // what the live remote HubConnection holds
+            config.LocalHost = "http://localhost:5000";
+            Assert.AreEqual("local-tok", remoteLink().GetAwaiter().GetResult());
+            Assert.AreEqual("machine-jwt", Resolve(config)); // a new link to localhost
+        }
+
+        [Test]
         public void CustomOAuth_Remote_WithoutToken_Refuses()
         {
             UnityMcpPlugin.UnityConnectionConfig.CloudCredentialProvider = () => Task.FromResult<string?>("machine-jwt");

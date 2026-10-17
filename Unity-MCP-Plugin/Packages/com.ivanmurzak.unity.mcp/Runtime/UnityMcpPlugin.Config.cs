@@ -140,26 +140,32 @@ namespace com.IvanMurzak.Unity.MCP
             [JsonIgnore]
             public override Func<Task<string?>>? CredentialProvider
             {
-                get => async () =>
+                // McpPlugin reads this once per HubConnection build: capture the host so a reconnect of an old
+                // link checks the host it actually dials, not one edited since.
+                get
                 {
-                    if (ConnectionMode == ConnectionMode.Cloud)
+                    var dialHost = Host;
+                    return async () =>
                     {
-                        // Cloud mode: the shared machine store is the ONLY credential source (T9 — the
-                        // legacy cloudToken UserSettings mirror was removed). A null/empty result yields an
-                        // anonymous connection; there is no persisted cloud-token fallback.
-                        var provider = CloudCredentialProvider;
-                        if (provider != null)
+                        if (ConnectionMode == ConnectionMode.Cloud)
                         {
-                            var token = await provider().ConfigureAwait(false);
-                            return string.IsNullOrEmpty(token) ? null : token;
+                            // Cloud mode: the shared machine store is the ONLY credential source (T9 — the
+                            // legacy cloudToken UserSettings mirror was removed). A null/empty result yields an
+                            // anonymous connection; there is no persisted cloud-token fallback.
+                            var provider = CloudCredentialProvider;
+                            if (provider != null)
+                            {
+                                var token = await provider().ConfigureAwait(false);
+                                return string.IsNullOrEmpty(token) ? null : token;
+                            }
+                            return null;
                         }
-                        return null;
-                    }
-                    if (AuthOption == AuthOption.oauth)
-                        return await LoopbackTokenScope.ResolveAsync(Host, CloudCredentialProvider, Token, EnvironmentUtils.EnvToken)
-                            .ConfigureAwait(false);
-                    return Token;
-                };
+                        if (AuthOption == AuthOption.oauth)
+                            return await LoopbackTokenScope.ResolveAsync(dialHost, CloudCredentialProvider, Token, EnvironmentUtils.EnvToken)
+                                .ConfigureAwait(false);
+                        return Token;
+                    };
+                }
                 set { /* Unity derives the credential from the machine store / Token; a host-set provider is intentionally ignored. */ }
             }
 
