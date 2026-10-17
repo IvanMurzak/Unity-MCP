@@ -87,6 +87,25 @@ class PackageBoundaryTests(unittest.TestCase):
 
 
 class ReleaseArtifactTests(unittest.TestCase):
+    def test_route_metadata_ignores_yaml_only_description_escapes(self):
+        # OpenUPM ParticleSystem has YAML \\x escapes, which are invalid JSON.
+        text = r'''description: "ParticleSystem commands\x80\x94configure emission"
+repoUrl: https://github.com/IvanMurzak/Unity-MCP
+trackingMode: "githubRelease"
+gitTagPrefix: 'com.ivanmurzak.unity.mcp.particlesystem/'
+githubReleaseAssetName: 'com.ivanmurzak.unity.mcp.particlesystem-'
+gitTagIgnore: ''
+'''
+        with patch.object(release.urllib.request, 'urlopen', return_value=io.BytesIO(text.encode())):
+            metadata = release.openupm_metadata('com.ivanmurzak.unity.mcp.particlesystem')
+        self.assertEqual(metadata, {
+            'repoUrl': 'https://github.com/IvanMurzak/Unity-MCP',
+            'trackingMode': 'githubRelease',
+            'gitTagPrefix': 'com.ivanmurzak.unity.mcp.particlesystem/',
+            'githubReleaseAssetName': 'com.ivanmurzak.unity.mcp.particlesystem-',
+            'gitTagIgnore': '',
+        })
+
     def setUp(self):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
