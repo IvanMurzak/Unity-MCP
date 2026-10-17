@@ -131,30 +131,41 @@ namespace com.IvanMurzak.Unity.MCP
             /// <see cref="CloudCredentialProvider"/> (proactively refreshed — design 06 / D12), which is the
             /// ONLY Cloud-mode credential source (T9 — the legacy <c>cloudToken</c> mirror was removed); a
             /// null/empty result yields an anonymous connection. In Local/Custom mode it returns the local
-            /// <see cref="Token"/>. Runtime-only; never serialized (<see cref="JsonIgnoreAttribute"/>). The
+            /// <see cref="Token"/>, except Custom + <c>oauth</c>: the machine-store account credential for a
+            /// loopback host only; another host gets the local <see cref="Token"/> or the connection fails
+            /// (<see cref="LoopbackTokenScope"/>). Runtime-only; never serialized (<see cref="JsonIgnoreAttribute"/>). The
             /// setter is intentionally a no-op: Unity derives the credential from the machine store /
             /// <see cref="Token"/> rather than from a host-injected provider.
             /// </summary>
             [JsonIgnore]
             public override Func<Task<string?>>? CredentialProvider
             {
-                get => async () =>
+                // McpPlugin reads this once per HubConnection build: capture the host so a reconnect of an old
+                // link checks the host it actually dials, not one edited since.
+                get
                 {
-                    if (ConnectionMode == ConnectionMode.Cloud)
+                    var dialHost = Host;
+                    return async () =>
                     {
-                        // Cloud mode: the shared machine store is the ONLY credential source (T9 — the
-                        // legacy cloudToken UserSettings mirror was removed). A null/empty result yields an
-                        // anonymous connection; there is no persisted cloud-token fallback.
-                        var provider = CloudCredentialProvider;
-                        if (provider != null)
+                        if (ConnectionMode == ConnectionMode.Cloud)
                         {
-                            var token = await provider().ConfigureAwait(false);
-                            return string.IsNullOrEmpty(token) ? null : token;
+                            // Cloud mode: the shared machine store is the ONLY credential source (T9 — the
+                            // legacy cloudToken UserSettings mirror was removed). A null/empty result yields an
+                            // anonymous connection; there is no persisted cloud-token fallback.
+                            var provider = CloudCredentialProvider;
+                            if (provider != null)
+                            {
+                                var token = await provider().ConfigureAwait(false);
+                                return string.IsNullOrEmpty(token) ? null : token;
+                            }
+                            return null;
                         }
-                        return null;
-                    }
-                    return Token;
-                };
+                        if (AuthOption == AuthOption.oauth)
+                            return await LoopbackTokenScope.ResolveAsync(dialHost, CloudCredentialProvider, Token, EnvironmentUtils.EnvToken)
+                                .ConfigureAwait(false);
+                        return Token;
+                    };
+                }
                 set { /* Unity derives the credential from the machine store / Token; a host-set provider is intentionally ignored. */ }
             }
 
