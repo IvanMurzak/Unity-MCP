@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/CLAUDE.md
+  2a69e58404cb72a9 16,238,241-243
+CLAUDE.md
+  2a69e58404cb72a9 57,64,73-74,77-79
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "c9efe97813546c1d34a750ff70c19732f1ac9699",
+  "prompts": {
+    "2a69e58404cb72a9": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "d6a2adc4-8cd9-4597-b4a0-019e06906a82",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 348,
+      "total_deletions": 343,
+      "accepted_lines": 122,
+      "overriden_lines": 0
+    }
+  }
+}

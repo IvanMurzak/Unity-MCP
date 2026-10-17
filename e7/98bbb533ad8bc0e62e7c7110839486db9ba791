@@ -1,0 +1,35 @@
+docs/README.zh-CN.md
+  b6498bf5342ab810 509
+Unity-MCP-Plugin/Assets/root/Runtime/Utils/EnvironmentUtils.cs
+  b6498bf5342ab810 25-28,55-58,103,106-110
+docs/README.ja.md
+  b6498bf5342ab810 509
+docs/README.es.md
+  b6498bf5342ab810 509
+README.md
+  b6498bf5342ab810 509
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UnityMcpPluginEditor.cs
+  b6498bf5342ab810 28
+Unity-MCP-Plugin/Assets/root/README.md
+  b6498bf5342ab810 509
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "e798bbb533ad8bc0e62e7c7110839486db9ba791",
+  "prompts": {
+    "b6498bf5342ab810": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "5370f386-5c3c-42c5-82cc-49f7af1f24c4",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 3990,
+      "total_deletions": 3981,
+      "accepted_lines": 1848,
+      "overriden_lines": 0
+    }
+  }
+}

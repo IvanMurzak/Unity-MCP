@@ -1,0 +1,27 @@
+.github/actions/setup-unity-mcp/action.yml
+  s_e19ebe83cb6110::t_3610434893736e 14,82
+.github/workflows/generate-unity-activation-file.yml
+  s_e19ebe83cb6110::t_7c4b9581fdd25b 19,84
+.github/workflows/test_unity_plugin.yml
+  s_e19ebe83cb6110::t_115ac235746a4f 27,35
+AGENTS.md
+  s_e19ebe83cb6110::t_f38f07edee523c 33,39-43
+Unity-MCP-Plugin/AGENTS.md
+  s_e19ebe83cb6110::t_94544f5befab98 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d3ecbabe9a16f57b2cf1f2b94d40bf6c42f9bc82",
+  "prompts": {},
+  "sessions": {
+    "s_e19ebe83cb6110": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "514df444-7709-4c0d-be94-41a9023e64ee",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

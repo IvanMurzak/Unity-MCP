@@ -1,0 +1,19 @@
+.github/CODEOWNERS
+  s_7f7a98df393c63::t_b0a1ebb0f3ce4f 1-6
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "affee33177609bf9b718ad203d1848736462b9aa",
+  "prompts": {},
+  "sessions": {
+    "s_7f7a98df393c63": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "20d3682b-fbcc-4884-8825-429eee143f13",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

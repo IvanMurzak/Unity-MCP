@@ -1,0 +1,33 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/ComponentRefConverter.cs
+  d73b5a9fcb246df7 46
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/GameObjectRefConverter.cs
+  d73b5a9fcb246df7 48
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/ObjectRefConverter.cs
+  d73b5a9fcb246df7 45
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/SceneRefConverter.cs
+  d73b5a9fcb246df7 46
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Structures/EntityIdConverter.cs
+  d73b5a9fcb246df7 41-62
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/AssetObjectRefConverter.cs
+  d73b5a9fcb246df7 48
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "51db6b91d6ee8b04ebed2318674c6328eb7d7d14",
+  "prompts": {
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 1104,
+      "total_deletions": 1083,
+      "accepted_lines": 7709,
+      "overriden_lines": 0
+    }
+  }
+}

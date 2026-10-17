@@ -1,0 +1,29 @@
+cli/tests/manifest.test.ts
+  s_81612db472b68b::t_05991893d17324 163-164
+cli/docs/README.es.md
+  s_81612db472b68b::t_7cd5cb153dae35 517
+cli/README.md
+  s_81612db472b68b::t_a70b3cdc581e10 596
+cli/docs/README.ja.md
+  s_81612db472b68b::t_f308cef891f183 517
+cli/docs/README.zh-CN.md
+  s_81612db472b68b::t_d222fe36aee608 517
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Components/ExtensionPanel.cs
+  s_81612db472b68b::t_c7561b29bff6a5 43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.6",
+  "base_commit_sha": "e4f7ba82c24821f3bc5a7f3efd319a1d8dbdd7fb",
+  "prompts": {},
+  "sessions": {
+    "s_81612db472b68b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9552c2b2-b147-40ea-b391-1ce7ded0d7d7",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <ivandmurzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,39 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.Editor.cs
+  s_cf7ef7d7435eeb::t_a46b96c3648e5c 47-51
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/DevControl/DevControlRouter.cs
+  s_cf7ef7d7435eeb::t_eca42e433528ba 1-202
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.Connection.cs
+  s_cf7ef7d7435eeb::t_2ec094f3f7e98f 108-112
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.DevControl.cs
+  s_cf7ef7d7435eeb::t_641fc09aa16773 1-313
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/DevControl/Startup.DevControl.cs
+  s_cf7ef7d7435eeb::t_50c30a9a8b018f 1-13,15-73
+  s_cf7ef7d7435eeb::t_1dfb0dc379932d 14
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/DevControl/DevControlEnv.cs
+  s_cf7ef7d7435eeb::t_d715da749d6898 1-135
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DevControl/DevControlRouterTests.cs
+  s_cf7ef7d7435eeb::t_1a22329953501c 1-136
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DevControl/DevControlEnvTests.cs
+  s_cf7ef7d7435eeb::t_aaaf2b11ee3294 1-127
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.cs
+  s_cf7ef7d7435eeb::t_bf5f133bc9161d 49-52
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/DevControl/DevControlServer.cs
+  s_cf7ef7d7435eeb::t_6539a8340eac41 1-326,329-354
+  s_cf7ef7d7435eeb::t_ff53b93684428b 327-328
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.7",
+  "base_commit_sha": "fbabc062efcae0cfca5ce26a53af5e17b97febb9",
+  "prompts": {},
+  "sessions": {
+    "s_cf7ef7d7435eeb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43e0612a-829b-4e33-b2f7-3d1fbe030ca4",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

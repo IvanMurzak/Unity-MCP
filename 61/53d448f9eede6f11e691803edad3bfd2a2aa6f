@@ -1,0 +1,33 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.CreateGUI.cs
+  4bf3ecc604a224b0 213,220,227
+Unity-MCP-Plugin/Assets/root/Tests/Editor/UI/MainWindowEditor.StatusLogicTests.cs
+  4bf3ecc604a224b0 1-325
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.McpFeatures.cs
+  4bf3ecc604a224b0 28-30,101-102
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.McpServer.cs
+  4bf3ecc604a224b0 130,138,147,152,161,169-171,214-215
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.Connection.cs
+  4bf3ecc604a224b0 68-70,73,159-175,262,278,291
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.cs
+  4bf3ecc604a224b0 71,73-74,76-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "6153d448f9eede6f11e691803edad3bfd2a2aa6f",
+  "prompts": {
+    "4bf3ecc604a224b0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "edb5d421-0283-4340-b6e1-fc0d1bb803b4",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 2027,
+      "total_deletions": 1685,
+      "accepted_lines": 596,
+      "overriden_lines": 0
+    }
+  }
+}

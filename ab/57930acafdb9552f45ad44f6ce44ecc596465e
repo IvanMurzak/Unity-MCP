@@ -1,0 +1,82 @@
+Unity-Tests/6000.6.3f1/.gitignore
+  s_eb8bcde0be96a2::t_a4ad62a7bb77f0 75-76
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Components/ExtensionPanel.cs
+  s_eb8bcde0be96a2::t_50c13fb7aa9f87 221,246-252,263-282
+  s_eb8bcde0be96a2::t_f632526a134785 13
+cli/tests/extension-compatibility.test.ts
+  s_eb8bcde0be96a2::t_57fc6920566540 1-47
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Unity/Logs/FileLogStorage.cs
+  s_eb8bcde0be96a2::t_550f05b6a0aa45 387,403-413,665
+commands/tests/test_extensions.py
+  s_eb8bcde0be96a2::t_a4ad62a7bb77f0 70-85
+cli/src/utils/extension-compatibility.ts
+  s_eb8bcde0be96a2::t_50c13fb7aa9f87 1-12
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Console/TestLogSequenceCursor.cs
+  s_eb8bcde0be96a2::t_f8a869bcf0819c 82-105
+extensions/manifest.json
+  s_eb8bcde0be96a2::t_f1b239c66ebc19 3
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Unity/Logs/BufferedFileLogStorage.cs
+  s_eb8bcde0be96a2::t_61f837d32fb92f 130,152
+cli/src/utils/manifest.ts
+  s_eb8bcde0be96a2::t_50c13fb7aa9f87 5,237-250
+commands/extensions.py
+  s_eb8bcde0be96a2::t_294c0b33570da3 96-98,102-126
+  s_eb8bcde0be96a2::t_f1b239c66ebc19 255-277,280,284-286,288-297
+  s_eb8bcde0be96a2::t_50c13fb7aa9f87 169-174,185-189
+  s_eb8bcde0be96a2::t_b37ba9634cd675 127-128
+docs/dev/extensions.md
+  s_eb8bcde0be96a2::t_a4ad62a7bb77f0 60-69
+tests/extensions/Editor/ExtensionIsolationTests.cs
+  s_eb8bcde0be96a2::t_57fc6920566540 24-82
+  s_eb8bcde0be96a2::t_550f05b6a0aa45 199-209
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/extensions.compatibility.json
+  s_eb8bcde0be96a2::t_50c13fb7aa9f87 1-18
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/README.md.meta
+  s_eb8bcde0be96a2::t_0d225f327c868e 1-7
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/extensions.compatibility.json.meta
+  s_eb8bcde0be96a2::t_398a6ac9be44eb 1-7
+Unity-Tests/6000.6.3f1/Packages/manifest.json
+  s_eb8bcde0be96a2::t_56bb773a067c6c 52,55,60
+extensions/Animation/README.md
+  s_eb8bcde0be96a2::t_274c06e4268423 11
+extensions/Cinemachine/README.md
+  s_eb8bcde0be96a2::t_9a30557f6629d7 11
+extensions/InputSystem/README.md
+  s_eb8bcde0be96a2::t_8e778c90c6cfa5 11
+"extensions/Navigation/Installer/Assets/com.IvanMurzak/AI Navigation Installer/Installer.cs"
+  s_eb8bcde0be96a2::t_b109e09ef632d9 27,69-95
+extensions/Navigation/README.md
+  s_eb8bcde0be96a2::t_eb7d71fe200577 11
+extensions/ParticleSystem/README.md
+  s_eb8bcde0be96a2::t_b0f6a711245a54 11
+"extensions/ProBuilder/Installer/Assets/com.IvanMurzak/AI ProBuilder Installer/Installer.cs"
+  s_eb8bcde0be96a2::t_353823dc4e7df3 27,69-95
+extensions/ProBuilder/README.md
+  s_eb8bcde0be96a2::t_1b858d99b832eb 11
+extensions/Splines/README.md
+  s_eb8bcde0be96a2::t_64b6062eff1382 11
+extensions/Terrain/README.md
+  s_eb8bcde0be96a2::t_1eb4b6386e412a 11
+"extensions/Tilemap/Installer/Assets/com.IvanMurzak/AI Tilemap Installer/Installer.cs"
+  s_eb8bcde0be96a2::t_673586342b832e 27,69-95
+extensions/Tilemap/README.md
+  s_eb8bcde0be96a2::t_1609e7faf079b0 11
+extensions/Timeline/README.md
+  s_eb8bcde0be96a2::t_445a5b6c426ba4 11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ab57930acafdb9552f45ad44f6ce44ecc596465e",
+  "prompts": {},
+  "sessions": {
+    "s_eb8bcde0be96a2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14267-6fec-7a30-97a7-931925a48014",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
