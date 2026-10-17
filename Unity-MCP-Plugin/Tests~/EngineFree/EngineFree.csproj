@@ -37,7 +37,7 @@
          if they drift from NuGetConfig.Packages, so a missed bump cannot silently leave this suite
          testing yesterday's DLLs. McpPlugin is what makes this project a NuGet-mode consumer of the
          framework, which is also what lets a workspace-source override chain reach it. -->
-    <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.8.0" />
+    <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.9.0" />
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="5.4.2" />
   </ItemGroup>
 
@@ -89,9 +89,6 @@
          connection config that is reachable engine-free (UnityMcpPlugin.Config.cs itself is not — see
          README.md). Pure enum + extension method. -->
     <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Runtime\Utils\LogLevel.cs" Link="Source\LogLevel.cs" />
-    <!-- Custom + oauth bearer scope (account token to loopback hosts only). Pure System.Uri / System.Net;
-         the config wiring that calls it (UnityMcpPlugin.Config.cs) stays covered by the EditMode suite. -->
-    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Runtime\Utils\LoopbackTokenScope.cs" Link="Source\LoopbackTokenScope.cs" />
 
     <!-- ── (c) Tool attribute plumbing ─────────────────────────────────────────────────────────────
          Tool_Ping is the ONLY [AiToolType] family in the plugin whose every partial is engine-free, so

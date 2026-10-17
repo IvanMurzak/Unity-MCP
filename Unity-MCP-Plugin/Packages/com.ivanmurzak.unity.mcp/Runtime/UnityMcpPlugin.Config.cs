@@ -81,6 +81,17 @@ namespace com.IvanMurzak.Unity.MCP
             public static string CloudServerUrl => CloudServerBaseUrl + "/mcp";
 
             /// <summary>
+            /// The line McpPlugin logs after every SignalR connection error: how to silence it from the
+            /// AI Game Developer window. McpPlugin is engine-agnostic and ships no hint of its own (8.9.0+).
+            /// </summary>
+            public const string DefaultConnectionErrorHint =
+                "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Developer</b> window.";
+
+            /// <inheritdoc/>
+            [JsonIgnore]
+            public override string? ConnectionErrorHint { get; set; } = DefaultConnectionErrorHint;
+
+            /// <summary>
             /// Returns the active connection host based on <see cref="ConnectionMode"/>.
             /// In Cloud mode, returns <see cref="CloudServerUrl"/>.
             /// In Local mode, returns <see cref="LocalHost"/>.
@@ -133,7 +144,7 @@ namespace com.IvanMurzak.Unity.MCP
             /// null/empty result yields an anonymous connection. In Local/Custom mode it returns the local
             /// <see cref="Token"/>, except Custom + <c>oauth</c>: the machine-store account credential for a
             /// loopback host only; another host gets the local <see cref="Token"/> or the connection fails
-            /// (<see cref="LoopbackTokenScope"/>). Runtime-only; never serialized (<see cref="JsonIgnoreAttribute"/>). The
+            /// (McpPlugin's <see cref="CustomOAuthCredentialPolicy"/>). Runtime-only; never serialized (<see cref="JsonIgnoreAttribute"/>). The
             /// setter is intentionally a no-op: Unity derives the credential from the machine store /
             /// <see cref="Token"/> rather than from a host-injected provider.
             /// </summary>
@@ -161,7 +172,7 @@ namespace com.IvanMurzak.Unity.MCP
                             return null;
                         }
                         if (AuthOption == AuthOption.oauth)
-                            return await LoopbackTokenScope.ResolveAsync(dialHost, CloudCredentialProvider, Token, EnvironmentUtils.EnvToken)
+                            return await CustomOAuthCredentialPolicy.ResolveAsync(dialHost, CloudCredentialProvider, Token, EnvironmentUtils.EnvToken)
                                 .ConfigureAwait(false);
                         return Token;
                     };
