@@ -193,6 +193,39 @@ class ReleaseArtifactTests(unittest.TestCase):
 
 
 class WorkflowCoverageTests(unittest.TestCase):
+    def test_pr_reporter_receives_xml_including_train_prs(self):
+        text = (extensions.ROOT / '.github/workflows/test_unity_plugin.yml').read_text()
+        steps = re.split(r'(?m)^      - ', text)
+        uploads = [s for s in steps if s.startswith('uses: actions/upload-artifact@')
+                   and 'name: Test results for ' in s]
+        self.assertEqual(1, len(uploads))
+        condition = re.search(r'(?m)^        if: (.+)$', uploads[0]).group(1)
+
+        def evaluate(expression, event, lock, labels):
+            values = {'github.event.pull_request.labels.*.name': labels,
+                      'github.event_name': event, 'env.CHAIN_LOCK': lock}
+            for name, value in values.items():
+                expression = expression.replace(name, repr(value))
+            expression = expression.replace('&&', ' and ').replace('||', ' or ')
+            expression = re.sub(r'!(?!=)', 'not ', expression)
+            return eval(expression, {'__builtins__': {}}, {
+                'always': lambda: True, 'contains': lambda values, value: value in values,
+                'join': lambda values, separator: separator.join(values)})
+
+        # The workflow_run reporter consumes XML for every same-repository PR.
+        # Dispatch collection consumes JSON only; retain that storage policy.
+        cases = [('pull_request', '', [], True),
+                 ('pull_request', '', ['train/example'], True),
+                 ('pull_request', '{"lock":true}', ['train/example'], True),
+                 ('workflow_dispatch', '{"lock":true}', [], False),
+                 ('workflow_dispatch', '', [], True)]
+        for event, lock, labels, expected in cases:
+            with self.subTest(event=event, lock=bool(lock), labels=labels):
+                self.assertEqual(expected, evaluate(condition, event, lock, labels))
+        old = "always() && env.CHAIN_LOCK == '' && !contains(join(github.event.pull_request.labels.*.name, ' '), 'train/')"
+        self.assertFalse(evaluate(old, 'pull_request', '', ['train/example']))
+        self.assertTrue(evaluate(old, 'pull_request', '', []))
+
     def check_matrix(self, text, filename):
         parts = re.split(r'(?m)^  ([a-z][a-z0-9-]*):\s*$', text)
         jobs = dict(zip(parts[1::2], parts[2::2]))
