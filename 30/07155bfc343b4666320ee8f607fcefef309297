@@ -1,0 +1,30 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.Config.cs
+  s_be319aa0129387::t_84101c1d252009 134-135
+  s_be319aa0129387::t_cfbc960b4b94f9 157-163
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/LoopbackTokenScope.cs
+  s_be319aa0129387::t_64f0c2249da098 1-84
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/LoopbackTokenScope.cs.meta
+  s_be319aa0129387::t_7ca040e34a0160 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/UnityConnectionConfigCredentialProviderTests.cs
+  s_be319aa0129387::t_aa6201498e520c 13,15,89-132
+Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj
+  s_be319aa0129387::t_95e2e74fed30a6 92-94
+Unity-MCP-Plugin/Tests~/EngineFree/LoopbackTokenScopeTests.cs
+  s_be319aa0129387::t_929c945466081a 1-92
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3007155bfc343b4666320ee8f607fcefef309297",
+  "prompts": {},
+  "sessions": {
+    "s_be319aa0129387": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4973661e-fb8b-4b77-ad37-428f038b740d",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
