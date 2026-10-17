@@ -132,7 +132,8 @@ namespace com.IvanMurzak.Unity.MCP
             /// ONLY Cloud-mode credential source (T9 — the legacy <c>cloudToken</c> mirror was removed); a
             /// null/empty result yields an anonymous connection. In Local/Custom mode it returns the local
             /// <see cref="Token"/>, except Custom + <c>oauth</c>: the machine-store account credential for a
-            /// loopback host only, else the local <see cref="Token"/> (<see cref="LoopbackTokenScope"/>). Runtime-only; never serialized (<see cref="JsonIgnoreAttribute"/>). The
+            /// loopback host only; another host gets the local <see cref="Token"/> or the connection fails
+            /// (<see cref="LoopbackTokenScope"/>). Runtime-only; never serialized (<see cref="JsonIgnoreAttribute"/>). The
             /// setter is intentionally a no-op: Unity derives the credential from the machine store /
             /// <see cref="Token"/> rather than from a host-injected provider.
             /// </summary>
@@ -155,12 +156,8 @@ namespace com.IvanMurzak.Unity.MCP
                         return null;
                     }
                     if (AuthOption == AuthOption.oauth)
-                    {
-                        // Custom + oauth: the account token reaches a loopback host only; any other host gets the
-                        // configured token, or LoopbackTokenScope throws and the connection attempt fails.
                         return await LoopbackTokenScope.ResolveAsync(Host, CloudCredentialProvider, Token, EnvironmentUtils.EnvToken)
                             .ConfigureAwait(false);
-                    }
                     return Token;
                 };
                 set { /* Unity derives the credential from the machine store / Token; a host-set provider is intentionally ignored. */ }
