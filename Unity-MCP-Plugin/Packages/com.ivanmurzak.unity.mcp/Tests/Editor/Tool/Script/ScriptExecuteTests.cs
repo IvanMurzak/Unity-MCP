@@ -467,12 +467,17 @@ public class Script
         [TestCase("public class Outer { public static class Script { public static void Main() { } } }", "Outer+Script")]
         [TestCase("var x = 1;\nx + 1", null)]
         [TestCase("class Helper { }\nnew Helper()", null)]
+        [TestCase("class Script { public int X; }\nnew Script().X", null)]
         public void Script_Execute_FullModeDetection(string code, string? expectedEntryType) =>
             Assert.AreEqual(expectedEntryType, Tool_Script.FullSourceEntryType(code, "Script", "Main"));
 
         [Test]
         public void Script_Execute_FullModeDetection_RejectsClassWithoutStaticMethod() =>
             Assert.Throws<System.Exception>(() => Tool_Script.FullSourceEntryType("public class Script { public void Main() { } }", "Script", "Main"));
+
+        [Test]
+        public void Script_Execute_FullModeDetection_RejectsDeclarationsWithoutEntryClass() =>
+            Assert.Throws<System.Exception>(() => Tool_Script.FullSourceEntryType("public class Foo { public static void Main() { } }", "Script", "Main"));
 
         [Test]
         public void Script_Execute_Snippet_LastExpressionIsResult()
@@ -496,6 +501,44 @@ public class Script
                 }}")
                 .AddChild(new ValidateValueReturnExecutor(42))
                 .Execute();
+        }
+
+        [Test]
+        public void Script_Execute_Snippet_UsingsAndAwait()
+        {
+            // usings: the namespace is given by the request, not by the code; await of a finished task stays synchronous.
+            new CallToolExecutor(
+                toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                json: $@"{{
+                    ""csharpCode"": {JsonEscape("var n = await Task.FromResult(20);\nnew StringBuilder().Append(n + 22).ToString().Length * 21")},
+                    ""usings"": [""System.Text""]
+                }}")
+                .AddChild(new ValidateValueReturnExecutor(42))
+                .Execute();
+        }
+
+        [Test]
+        public void Script_Execute_Snippet_IncludeFolder()
+        {
+            var folder = System.IO.Path.GetFullPath(System.IO.Path.Combine(".ai-game-dev", "snippets", "codeexec-test-" + Guid.NewGuid().ToString("N")));
+            System.IO.Directory.CreateDirectory(System.IO.Path.Combine(folder, "inner"));
+            try
+            {
+                System.IO.File.WriteAllText(System.IO.Path.Combine(folder, "inner", "Helper.cs"),
+                    "namespace CodeExecTestHelpers { public static class Helper { public static int Answer() => 42; } }");
+                new CallToolExecutor(
+                    toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                    json: $@"{{
+                        ""csharpCode"": {JsonEscape("CodeExecTestHelpers.Helper.Answer()")},
+                        ""include"": [{JsonEscape(System.IO.Path.GetFileName(folder))}]
+                    }}")
+                    .AddChild(new ValidateValueReturnExecutor(42))
+                    .Execute();
+            }
+            finally
+            {
+                System.IO.Directory.Delete(folder, recursive: true);
+            }
         }
 
         [Test]

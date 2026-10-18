@@ -105,7 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 Code = csharpCode,
                 Usings = usings ?? Array.Empty<string>(),
                 Include = include ?? Array.Empty<string>(),
-                Parameters = parameters?.Select((p, i) => new SnippetParameter(ParameterName(p, i), TypeUtils.GetType(p.typeName) ?? typeof(object), null)).ToList()
+                Parameters = parameters?.Select((p, i) => new SnippetParameter(ParameterName(p, i), ParameterType(p, i), null)).ToList()
                     ?? (IReadOnlyList<SnippetParameter>)Array.Empty<SnippetParameter>(),
                 TimeoutMs = 120_000,
             };
@@ -115,6 +115,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 request.EntryMethod = methodName;
             }
             var prepared = Runner.Value.Prepare(request);
+            if (!prepared.Succeeded)
+                throw new Exception(Describe(Runner.Value.Run(prepared))); // Run only returns the failure: no main-thread hop
 
             // Unity object references deserialize and the snippet runs on the main thread; awaits inside resume there.
             return await MainThread.Instance.RunAsync(() => RunOnMainThread(prepared, request, parameters)).Unwrap();
@@ -126,6 +128,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
             if (parameters != null)
             {
+                // `prepared` holds this same request: the values set here are the ones the snippet is invoked with.
                 request.Parameters = parameters.Select((p, i) =>
                 {
                     var value = reflector.Deserialize(data: p, logger: logger);
@@ -139,12 +142,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             if (result.Value is null)
             {
-                // Typed null keeps the reflector's type name; nothing returned is System.Void "Success".
+                // Typed null reports the result type (C# name from Code-Exec); nothing returned is System.Void "Success".
                 var isVoid = result.ReturnType == "System.Void";
                 var member = new SerializedMember
                 {
                     name = JsonSchema.Result,
-                    typeName = TypeUtils.GetType(result.ReturnType)?.FullName ?? result.ReturnType ?? JsonSchema.Object
+                    typeName = result.ReturnType ?? JsonSchema.Object
                 };
                 return member.SetJsonValue(isVoid ? "\"Success\"" : "\"null\"");
             }
@@ -158,6 +161,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         }
 
         static string ParameterName(SerializedMember parameter, int index) => parameter.name ?? $"param{index}";
+
+        /// <summary>An unknown type name fails here, by name, instead of surfacing as an untyped <c>object</c> variable.</summary>
+        static Type ParameterType(SerializedMember parameter, int index) =>
+            string.IsNullOrEmpty(parameter.typeName)
+                ? typeof(object)
+                : TypeUtils.GetType(parameter.typeName)
+                    ?? throw new Exception($"Parameter '{ParameterName(parameter, index)}': type '{parameter.typeName}' not found.");
 
         static string[] DefaultUsings()
         {
@@ -175,14 +185,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// <summary>
         /// Full mode when the code declares class <paramref name="className"/> (namespace-qualified or not) with a static
         /// method <paramref name="methodName"/>: returns its runtime type name. Null = run the code as a snippet.
+        /// Code with top-level statements is always a snippet (its own helper types may reuse the name); code with only
+        /// type declarations and none of them the entry point is an error, since as a snippet nothing would run.
         /// </summary>
         internal static string? FullSourceEntryType(string code, string className, string methodName)
         {
-            if (string.IsNullOrEmpty(className) || !code.Contains(className.Split('.', '+').Last()))
-                return null; // most snippets never mention the class: skip the parse
+            // Parsed as a script, the way the snippet writer reads it: anything but a type or namespace is snippet code.
+            var script = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code, ScriptParseOptions).GetRoot();
+            if (script.Members.Any(m => !(m is BaseNamespaceDeclarationSyntax || m is BaseTypeDeclarationSyntax || m is DelegateDeclarationSyntax)))
+                return null;
             var root = CSharpSyntaxTree.ParseText(code).GetRoot();
             var types = root.DescendantNodes(n => n is CompilationUnitSyntax || n is BaseNamespaceDeclarationSyntax || n is TypeDeclarationSyntax)
-                .OfType<TypeDeclarationSyntax>();
+                .OfType<TypeDeclarationSyntax>()
+                .ToList();
+            if (types.Count == 0)
+                return null;
             foreach (var type in types)
             {
                 var fullName = RuntimeName(type);
@@ -192,8 +209,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     return fullName;
                 throw new Exception($"Class '{className}' is declared, but it has no static method '{methodName}'.");
             }
-            return null;
+            throw new Exception($"'csharpCode' declares no class '{className}' and has no statements to run. " +
+                "Set 'className' / 'methodName' to the entry point, or write plain statements.");
         }
+
+        static readonly CSharpParseOptions ScriptParseOptions = new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.None, SourceCodeKind.Script);
 
         static string RuntimeName(TypeDeclarationSyntax type)
         {
