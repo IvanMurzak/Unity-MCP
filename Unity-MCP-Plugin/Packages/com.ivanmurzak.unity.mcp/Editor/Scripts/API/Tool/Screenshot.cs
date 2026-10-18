@@ -10,7 +10,9 @@
 
 #nullable enable
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -32,6 +34,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         // value: Claude's vision downsamples images to ~1568 px on the longest edge before the
         // model sees them, so extra resolution past ~4K only inflates the payload.
         private const int MaxScreenshotDimension = 3840;
+
+        // `-nographics` (no graphics device) renders nothing yet raises no error: every capture would come back as a
+        // blank gray image that looks like a valid screenshot. Fail loudly instead.
+        private static ResponseCallTool? NoGraphicsError() =>
+            SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
+                ? ResponseCallTool.Error("Screenshots need a graphics device, but the editor runs without one (-nographics). " +
+                    "Start it without -nographics (headless -batchmode keeps rendering).")
+                : null;
 
         // Scale (width, height) so the longest edge is at most MaxScreenshotDimension, preserving
         // aspect ratio. Returns the input unchanged when it is already within the limit.
