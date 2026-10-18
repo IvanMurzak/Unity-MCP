@@ -585,6 +585,7 @@ export interface OpenEnvInputs {
   transport?: OpenProjectOptions['transport'];
   startServer?: OpenProjectOptions['startServer'];
   idleTimeoutSeconds?: OpenProjectOptions['idleTimeoutSeconds'];
+  headless?: OpenProjectOptions['headless'];
 }
 
 // ---------------------------------------------------------------------------
@@ -782,6 +783,11 @@ export interface RunToolOptions {
    * consulted for an explicit `token` / `url` override.
    */
   refreshCloudToken?: () => Promise<string | undefined> | string | undefined;
+  /**
+   * Set when `url` + `token` were resolved by the caller from the shared machine store (Cloud mode): a 401 then
+   * refreshes that credential once, as when the lib resolves the connection itself.
+   */
+  tokenFromCloudStore?: boolean;
 }
 
 /** Successful `runTool` / `runSystemTool` outcome. Narrow with `kind === 'success'`. */

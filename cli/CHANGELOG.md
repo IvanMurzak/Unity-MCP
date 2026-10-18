@@ -17,7 +17,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **`open --headless` and `open --idle-timeout <seconds>`.** `--headless` launches with `-batchmode` (graphics stay
   on, so cameras render) and implies `--keep-connected`; `--idle-timeout` sets `UNITY_MCP_IDLE_TIMEOUT`, which the
   plugin uses to quit after that many idle seconds (it saves changed scenes and assets first).
-- **`waitForReady` library helper** (`src/lib/wait-for-ready.ts`) shared by `wait-for-ready` and `exec`.
+- **`execCode` and `waitForReady` library functions** (exported from the package root), the code behind `exec` and
+  `wait-for-ready`. `runTool` accepts `tokenFromCloudStore` so a caller-resolved machine-store Bearer is refreshed once
+  on 401, as when the library resolves the connection itself.
 
 - **`runTool` / `runSystemTool` library functions.** The HTTP-tool
   invocation paths previously available only as the `run-tool` /

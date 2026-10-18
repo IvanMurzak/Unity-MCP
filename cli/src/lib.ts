@@ -24,6 +24,10 @@ export { setupMcp, listAgentIds } from './lib/setup-mcp.js';
 export { openProject } from './lib/open.js';
 export { createProject } from './lib/create-project.js';
 export { runTool, runSystemTool } from './lib/run-tool.js';
+export { waitForReady } from './lib/wait-for-ready.js';
+export type { WaitForReadyOptions, WaitForReadyResult, WaitForReadySuccess, WaitForReadyFailure } from './lib/wait-for-ready.js';
+export { execCode, buildScriptExecuteInput, readToolResponse } from './lib/exec.js';
+export type { ExecCodeOptions, ExecCodeResult, ExecCodeSuccess, ExecCodeFailure } from './lib/exec.js';
 
 // The extension catalogue is part of the public library surface: a consumer that
 // renders an "install an extension" list (the desktop app) needs the same ten

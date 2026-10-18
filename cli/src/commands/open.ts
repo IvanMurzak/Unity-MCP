@@ -262,7 +262,7 @@ export const openCommand = new Command('open')
       transport: options.transport as OpenProjectTransport | undefined,
       startServer: startServerBool,
       headless: options.headless,
-      idleTimeoutSeconds: options.idleTimeout === undefined ? undefined : Number(options.idleTimeout),
+      idleTimeoutSeconds: options.idleTimeout === undefined ? undefined : parsePositiveIntFlag(options.idleTimeout, '--idle-timeout', 0),
       autoDismissLaunchErrors: options.autoDismissLaunchErrors !== false,
       launchDismissTimeoutMs,
       launchDismissPollIntervalMs,

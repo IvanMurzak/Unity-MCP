@@ -10,8 +10,8 @@
 
 #nullable enable
 using System;
-using System.Collections.Generic;
 using com.IvanMurzak.McpPlugin.Common.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -25,13 +25,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     /// </summary>
     public static partial class Startup
     {
-        public const string EnvIdleTimeout = "UNITY_MCP_IDLE_TIMEOUT";
-
         static IdleShutdownTimer? _idleTimer;
 
         static void StartIdleShutdownIfRequested()
         {
-            var seconds = ReadIdleTimeoutSeconds(ArgsUtils.ParseCommandLineArguments(), Environment.GetEnvironmentVariable);
+            var seconds = EnvironmentUtils.ReadIdleTimeoutSeconds(ArgsUtils.ParseCommandLineArguments(), Environment.GetEnvironmentVariable);
             if (seconds == null)
                 return;
 
@@ -39,15 +37,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             _idleTimer = new IdleShutdownTimer(TimeSpan.FromSeconds(seconds.Value), DateTime.UtcNow);
             EditorApplication.update += CheckIdleShutdown;
             _logger.LogInformation("Idle shutdown armed: the editor quits after {seconds}s without tool calls", seconds.Value);
-        }
-
-        /// <summary>Args beat env. Null when unset or not a positive whole number.</summary>
-        public static int? ReadIdleTimeoutSeconds(IReadOnlyDictionary<string, string> args, Func<string, string?> env)
-        {
-            var raw = args.TryGetValue(EnvIdleTimeout, out var fromArgs) && !string.IsNullOrWhiteSpace(fromArgs)
-                ? fromArgs
-                : env(EnvIdleTimeout);
-            return int.TryParse(raw?.Trim().Trim('"'), out var seconds) && seconds > 0 ? seconds : (int?)null;
         }
 
         static void CheckIdleShutdown()

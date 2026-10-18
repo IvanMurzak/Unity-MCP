@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
@@ -56,9 +57,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ReadIdleTimeout_ArgsBeatEnv()
         {
-            var args = new Dictionary<string, string> { [Startup.EnvIdleTimeout] = "60" };
-            Assert.AreEqual(60, Startup.ReadIdleTimeoutSeconds(args, _ => "300"));
-            Assert.AreEqual(300, Startup.ReadIdleTimeoutSeconds(new Dictionary<string, string>(), _ => "\"300\""));
+            var args = new Dictionary<string, string> { [EnvironmentUtils.EnvIdleTimeout] = "60" };
+            Assert.AreEqual(60, EnvironmentUtils.ReadIdleTimeoutSeconds(args, _ => "300"));
+            Assert.AreEqual(300, EnvironmentUtils.ReadIdleTimeoutSeconds(new Dictionary<string, string>(), _ => "\"300\""));
         }
 
         [TestCase(null)]
@@ -68,7 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [TestCase("abc")]
         public void ReadIdleTimeout_OffForMissingOrInvalid(string? value)
         {
-            Assert.IsNull(Startup.ReadIdleTimeoutSeconds(new Dictionary<string, string>(), _ => value));
+            Assert.IsNull(EnvironmentUtils.ReadIdleTimeoutSeconds(new Dictionary<string, string>(), _ => value));
         }
     }
 }

@@ -98,12 +98,16 @@ function extractEditorPathFromCommandLine(commandLine: string): string {
 export function buildOpenEnv(
   options: OpenEnvInputs,
 ): Record<string, string> | undefined {
-  if (options.noConnect === true) return undefined;
+  if (options.noConnect === true) {
+    if (options.headless) throw new Error('headless needs the MCP connection: drop noConnect');
+    return undefined;
+  }
 
   const env: Record<string, string> = {};
 
   if (options.url !== undefined) env['UNITY_MCP_HOST'] = options.url;
-  if (options.keepConnected) env['UNITY_MCP_KEEP_CONNECTED'] = 'true';
+  // Headless: no window to click "connect" in, so the plugin must connect on its own.
+  if (options.keepConnected || options.headless) env['UNITY_MCP_KEEP_CONNECTED'] = 'true';
   if (options.tools !== undefined) env['UNITY_MCP_TOOLS'] = options.tools;
   if (options.token !== undefined) env['UNITY_MCP_TOKEN'] = options.token;
 
@@ -182,8 +186,6 @@ export async function openProject(
     // a typo without first paying for editor-discovery I/O. The
     // returned env is recomputed below if cloud-mode auto-detect
     // flips keepConnected; otherwise we reuse this same map.
-    // Headless: no window to click "connect" in, so the plugin must connect on its own.
-    if (options.headless && !options.keepConnected) options = { ...options, keepConnected: true };
     let env = buildOpenEnv(options);
 
     // Already-running short-circuit. Same semantics as the CLI:

@@ -22,8 +22,8 @@ export const waitForReadyCommand = new Command('wait-for-ready')
   .option('--interval <ms>', 'Polling interval in milliseconds (default: 3000)', '3000')
   .action(async (positionalPath: string | undefined, options: WaitForReadyOptions) => {
     const projectPath = resolveAndValidateProjectPath(positionalPath, options);
-    const { token } = await resolveConnection(projectPath, options);
-    const probeUrls = await resolveProbeUrls(projectPath, options);
+    const { url, token } = await resolveConnection(projectPath, options);
+    const probeUrls = resolveProbeUrls(projectPath, url, options.url);
 
     const timeoutMs = parseInt(options.timeout ?? '120000', 10);
     const intervalMs = parseInt(options.interval ?? '3000', 10);
@@ -45,7 +45,7 @@ export const waitForReadyCommand = new Command('wait-for-ready')
     const spinner = ui.startSpinner('Waiting for Unity Editor and MCP server...');
     const result = await waitForReady({
       urls: probeUrls,
-      headers: token ? { Authorization: `Bearer ${token}` } : undefined,
+      token,
       timeoutMs,
       intervalMs,
       onTick: remainingMs => {
