@@ -119,22 +119,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 throw new Exception(Describe(Runner.Value.Run(prepared))); // Run only returns the failure: no main-thread hop
 
             // Unity object references deserialize and the snippet runs on the main thread; awaits inside resume there.
-            return await MainThread.Instance.RunAsync(() => RunOnMainThread(prepared, request, parameters)).Unwrap();
+            return await MainThread.Instance.RunAsync(() => RunOnMainThread(prepared, parameters)).Unwrap();
         }
 
-        static async Task<SerializedMember?> RunOnMainThread(PreparedSnippet prepared, ExecuteRequest request, SerializedMemberList? parameters)
+        static async Task<SerializedMember?> RunOnMainThread(PreparedSnippet prepared, SerializedMemberList? parameters)
         {
             var logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute");
             var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
             if (parameters != null)
-            {
-                // `prepared` holds this same request: the values set here are the ones the snippet is invoked with.
-                request.Parameters = parameters.Select((p, i) =>
-                {
-                    var value = reflector.Deserialize(data: p, logger: logger);
-                    return new SnippetParameter(ParameterName(p, i), request.Parameters[i].Type, value);
-                }).ToList();
-            }
+                prepared = prepared.WithValues(parameters.Select(p => reflector.Deserialize(data: p, logger: logger)).ToList());
 
             var result = await Runner.Value.RunAsync(prepared);
             if (!result.Success)

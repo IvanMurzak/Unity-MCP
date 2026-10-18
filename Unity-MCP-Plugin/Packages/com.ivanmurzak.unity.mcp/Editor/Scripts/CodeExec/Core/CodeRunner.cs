@@ -51,9 +51,11 @@ namespace com.IvanMurzak.CodeExec
     /// <summary>The compiled form of a request. Produced by <see cref="CodeRunner.Prepare"/> (any thread).</summary>
     public sealed class PreparedSnippet
     {
-        internal PreparedSnippet(ExecuteRequest request, ExecuteResult? failure, CodeRunner.CacheEntry? entry, bool cacheHit, long compileMs)
+        internal PreparedSnippet(ExecuteRequest request, ExecuteResult? failure, CodeRunner.CacheEntry? entry, bool cacheHit, long compileMs,
+            IReadOnlyList<SnippetParameter>? parameters = null)
         {
             Request = request;
+            Parameters = parameters ?? request.Parameters;
             Failure = failure;
             Entry = entry;
             CacheHit = cacheHit;
@@ -61,11 +63,40 @@ namespace com.IvanMurzak.CodeExec
         }
 
         internal ExecuteRequest Request { get; }
+
+        /// <summary>The arguments the snippet is invoked with: the request's, or those bound by <see cref="WithValues"/>.</summary>
+        internal IReadOnlyList<SnippetParameter> Parameters { get; }
         internal ExecuteResult? Failure { get; }
         internal CodeRunner.CacheEntry? Entry { get; }
         public bool Succeeded => Failure == null;
         public bool CacheHit { get; }
         public long CompileMs { get; }
+
+        /// <summary>
+        /// The same compiled snippet with the parameter values supplied now (same order as the request's parameters): a host
+        /// compiles off its main thread with the parameter TYPES and binds values (e.g. live engine objects) on the main
+        /// thread. A wrong count yields an InvalidRequest snippet; values convert as in Execute.
+        /// </summary>
+        public PreparedSnippet WithValues(IReadOnlyList<object?> values)
+        {
+            if (values == null)
+                throw new ArgumentNullException(nameof(values));
+            if (Failure != null)
+                return this;
+            var declared = Parameters;
+            if (values.Count != declared.Count)
+            {
+                // Only the count is checked here; values convert exactly as in Execute (reflection Invoke: null -> default,
+                // primitive widening), and a value that does not fit is a Runtime error on both paths.
+                var failure = ExecuteResult.Fail(ErrorKind.InvalidRequest, $"{values.Count} value(s) given for {declared.Count} parameter(s).");
+                failure.CompileMs = CompileMs;
+                failure.CacheHit = CacheHit;
+                return new PreparedSnippet(Request, failure, null, CacheHit, CompileMs);
+            }
+
+            var bound = declared.Select((p, i) => new SnippetParameter(p.Name, p.Type, values[i])).ToList();
+            return new PreparedSnippet(Request, null, Entry, CacheHit, CompileMs, bound);
+        }
     }
 
     /// <summary>
@@ -84,12 +115,14 @@ namespace com.IvanMurzak.CodeExec
         readonly IAssemblyHost _host;
         readonly IReferenceProvider _references;
         readonly object _cacheLock = new object();
-        readonly Dictionary<string, LinkedListNode<(string Key, CacheEntry Entry)>> _cache = new Dictionary<string, LinkedListNode<(string Key, CacheEntry Entry)>>(StringComparer.Ordinal);
-        readonly LinkedList<(string Key, CacheEntry Entry)> _lru = new LinkedList<(string Key, CacheEntry Entry)>();
 
-        // Mono cannot unload: an evicted entry whose assembly is already loaded would be loaded AGAIN on the next
-        // identical request. Such entries move here (without their image bytes) and are never dropped.
-        readonly Dictionary<string, CacheEntry> _pinned = new Dictionary<string, CacheEntry>(StringComparer.Ordinal);
+        // Compiled images, least recently used dropped first.
+        readonly Dictionary<string, LinkedListNode<CacheEntry>> _cache = new Dictionary<string, LinkedListNode<CacheEntry>>(StringComparer.Ordinal);
+        readonly LinkedList<CacheEntry> _lru = new LinkedList<CacheEntry>();
+
+        // Hosts that cannot unload (Mono): the one loaded entry per cache key, never dropped. A key is loaded at most once,
+        // whatever the order of Prepare / Run / eviction, so identical requests never load a second permanent assembly.
+        readonly Dictionary<string, CacheEntry> _loaded = new Dictionary<string, CacheEntry>(StringComparer.Ordinal);
 
         // The reference list instance is stable while nothing loads; hash it once per instance, not per request.
         IReadOnlyList<string>? _hashedReferences;
@@ -201,12 +234,15 @@ namespace com.IvanMurzak.CodeExec
                 return new PreparedSnippet(request, failure, null, false, failure.CompileMs);
             }
 
-            var entry = new CacheEntry(compileRequest.AssemblyName, compiled, autoImported);
-            ToCache(key, entry);
+            var entry = new CacheEntry(key, compileRequest.AssemblyName, compiled, autoImported);
+            ToCache(entry);
             return new PreparedSnippet(request, null, entry, false, stopwatch.ElapsedMilliseconds);
         }
 
-        /// <summary>Invokes a prepared snippet synchronously. An unfinished asynchronous result is a <see cref="ErrorKind.Timeout"/>: use <see cref="RunAsync"/>.</summary>
+        /// <summary>
+        /// Invokes a prepared snippet synchronously. An unfinished asynchronous result is a <see cref="ErrorKind.Timeout"/>:
+        /// use <see cref="RunAsync"/>. Values supplied at run time: <see cref="PreparedSnippet.WithValues"/>.
+        /// </summary>
         public ExecuteResult Run(PreparedSnippet prepared)
         {
             if (prepared.Failure != null)
@@ -247,30 +283,21 @@ namespace com.IvanMurzak.CodeExec
             var run = new Execution(this, prepared);
             try
             {
-                run.Loaded = entry.Loaded ?? _host.Load(entry.Image!, entry.Symbols, entry.AssemblyName);
-                if (!_host.SupportsUnload && entry.Loaded == null)
-                {
-                    // Mono cannot unload: keep it so identical requests reuse it; the bytes are no longer needed.
-                    entry.Loaded = run.Loaded;
-                    entry.Image = null;
-                    entry.Symbols = null;
-                    Interlocked.Increment(ref Stats.loadedAssemblies);
-                }
+                var parameters = prepared.Parameters;
+                run.Loaded = Load(entry);
 
-                var count = prepared.Request.Parameters.Count;
                 var type = run.Loaded.Assembly.GetType(entry.EntryType, throwOnError: false);
-                var method = type?.GetMethods(BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static)
-                    .FirstOrDefault(m => m.Name == entry.EntryMethod && m.GetParameters().Length == count);
+                var method = EntryMethod(type, entry.EntryMethod, parameters, out var problem);
                 if (method == null)
                 {
-                    run.Fail(ErrorKind.EntryPointNotFound, $"Static method '{entry.EntryType}.{entry.EntryMethod}' with {count} parameter(s) not found.");
+                    run.Fail(ErrorKind.EntryPointNotFound, $"Static method '{entry.EntryType}.{entry.EntryMethod}' with {parameters.Count} parameter(s) {problem}.");
                     return run;
                 }
 
                 var declared = new DeclaredResult(method.ReturnType);
                 run.ReturnType = entry.ResultType ?? declared.YieldsName; // the compiler knows a snippet's real result type
                 run.BeginCapture(_options.LogCaptures);
-                run.SetResult(declared, method.Invoke(null, prepared.Request.Parameters.Select(p => p.Value).ToArray()));
+                run.SetResult(declared, method.Invoke(null, parameters.Select(p => p.Value).ToArray()));
             }
             catch (Exception e)
             {
@@ -279,6 +306,71 @@ namespace com.IvanMurzak.CodeExec
                 run.Fail(ErrorKind.Runtime, FormatException(e, run.Loaded?.Assembly));
             }
             return run;
+        }
+
+        /// <summary>
+        /// Loads the entry's assembly. A host that cannot unload (Mono) keeps ONE loaded entry per cache key: it loads
+        /// outside the cache lock, publishes under it, and reuses whatever was published first. The image bytes are dropped
+        /// and the key leaves the LRU, which only holds images still to load.
+        /// </summary>
+        ILoadedAssembly Load(CacheEntry entry)
+        {
+            if (_host.SupportsUnload)
+                return _host.Load(entry.Image!, entry.Symbols, entry.AssemblyName);
+            byte[] image;
+            byte[]? symbols;
+            lock (_cacheLock)
+            {
+                if (_loaded.TryGetValue(entry.Key, out var published))
+                    return published.Loaded!;
+                image = entry.Image!; // non-null until published, and it is not published yet
+                symbols = entry.Symbols;
+            }
+
+            var loaded = _host.Load(image, symbols, entry.AssemblyName);
+            Interlocked.Increment(ref Stats.loadedAssemblies); // permanent, even when a concurrent run wins below
+            lock (_cacheLock)
+            {
+                if (_loaded.TryGetValue(entry.Key, out var published))
+                    return published.Loaded!; // a concurrent run of the same key won; ours stays loaded, unused
+                entry.Loaded = loaded;
+                entry.Image = null;
+                entry.Symbols = null;
+                _loaded[entry.Key] = entry;
+                if (_cache.TryGetValue(entry.Key, out var node))
+                {
+                    _lru.Remove(node);
+                    _cache.Remove(entry.Key);
+                }
+                return loaded;
+            }
+        }
+
+        /// <summary>
+        /// The static entry method: the .NET binder picks the most specific overload for the parameter types; with no exact
+        /// fit, the single method of that name and parameter count. Null with <paramref name="problem"/> otherwise.
+        /// </summary>
+        static MethodInfo? EntryMethod(Type? type, string name, IReadOnlyList<SnippetParameter> parameters, out string problem)
+        {
+            problem = "not found";
+            if (type == null)
+                return null;
+            const BindingFlags flags = BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.Static;
+            try
+            {
+                var exact = type.GetMethod(name, flags, null, parameters.Select(p => p.Type).ToArray(), null);
+                if (exact != null)
+                    return exact;
+            }
+            catch (AmbiguousMatchException)
+            {
+                problem = "is ambiguous for the given parameter types";
+                return null;
+            }
+            var byCount = type.GetMethods(flags).Where(m => m.Name == name && m.GetParameters().Length == parameters.Count).ToList();
+            if (byCount.Count > 1)
+                problem = "has several overloads and none fits the given parameter types";
+            return byCount.Count == 1 ? byCount[0] : null;
         }
 
         /// <summary>
@@ -387,40 +479,38 @@ namespace com.IvanMurzak.CodeExec
         {
             lock (_cacheLock)
             {
-                if (_pinned.TryGetValue(key, out var pinned))
-                    return pinned;
+                if (_loaded.TryGetValue(key, out var loaded))
+                    return loaded;
                 if (!_cache.TryGetValue(key, out var node))
                     return null;
                 _lru.Remove(node);
                 _lru.AddFirst(node);
-                return node.Value.Entry;
+                return node.Value;
             }
         }
 
-        void ToCache(string key, CacheEntry entry)
+        void ToCache(CacheEntry entry)
         {
             if (_options.CacheCapacity <= 0)
                 return;
             lock (_cacheLock)
             {
-                if (_cache.ContainsKey(key) || _pinned.ContainsKey(key))
+                if (_cache.ContainsKey(entry.Key) || _loaded.ContainsKey(entry.Key))
                     return;
-                _cache[key] = _lru.AddFirst((key, entry));
+                _cache[entry.Key] = _lru.AddFirst(entry);
                 while (_cache.Count > _options.CacheCapacity)
                 {
-                    var (lastKey, lastEntry) = _lru.Last!.Value;
+                    _cache.Remove(_lru.Last!.Value.Key);
                     _lru.RemoveLast();
-                    _cache.Remove(lastKey);
-                    if (lastEntry.Loaded != null)
-                        _pinned[lastKey] = lastEntry;
                 }
             }
         }
 
         internal sealed class CacheEntry
         {
-            public CacheEntry(string assemblyName, CompileResult compiled, IReadOnlyList<string> autoImported)
+            public CacheEntry(string key, string assemblyName, CompileResult compiled, IReadOnlyList<string> autoImported)
             {
+                Key = key;
                 AssemblyName = assemblyName;
                 Image = compiled.Image;
                 Symbols = compiled.Symbols;
@@ -430,6 +520,7 @@ namespace com.IvanMurzak.CodeExec
                 AutoImported = autoImported;
             }
 
+            public string Key { get; }
             public string AssemblyName { get; }
 
             /// <summary>Dropped once a non-unloadable host has loaded the assembly for good.</summary>
