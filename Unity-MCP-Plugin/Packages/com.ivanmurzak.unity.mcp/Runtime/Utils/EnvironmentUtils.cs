@@ -49,6 +49,8 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public const string EnvTransport = "UNITY_MCP_TRANSPORT";
         public const string EnvCloudUrl = "UNITY_MCP_CLOUD_URL";
         public const string EnvConnectionMode = "UNITY_MCP_CONNECTION_MODE";
+        /// <summary>Runtime-only (never a config field): an editor quits after this many seconds without tool calls.</summary>
+        public const string EnvIdleTimeout = "UNITY_MCP_IDLE_TIMEOUT";
 
         // Short flag aliases recognised by the in-plugin command-line parser.
         // The CLI tool already translates these to the equivalent env vars before
@@ -137,28 +139,8 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
             var record = new OverrideRecord();
 
-            // Resolve a value with priority: short-flag-alias (highest) > UNITY_MCP_* env-style flag > env var.
-            // Returns null if no source provided a non-empty value.
-            string? Resolve(string envKey, string? flagAlias)
-            {
-                if (!string.IsNullOrEmpty(flagAlias)
-                    && argReader.TryGetValue(flagAlias, out var flagValue)
-                    && !string.IsNullOrWhiteSpace(flagValue))
-                {
-                    return flagValue;
-                }
-                if (argReader.TryGetValue(envKey, out var envFlagValue)
-                    && !string.IsNullOrWhiteSpace(envFlagValue))
-                {
-                    return envFlagValue;
-                }
-                var envValue = envReader(envKey);
-                if (!string.IsNullOrWhiteSpace(envValue))
-                    return envValue;
-                return null;
-            }
-
-            string Sanitize(string raw) => raw.Trim().Trim('"');
+            string? Resolve(string envKey, string? flagAlias) => ResolveOverride(envKey, flagAlias, argReader, envReader);
+            string Sanitize(string raw) => SanitizeOverride(raw);
 
             // UNITY_MCP_HOST is the legacy alias for UNITY_MCP_CLOUD_URL.
             string? sanitizedHost = null;
@@ -271,6 +253,45 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             }
 
             return record;
+        }
+
+        /// <summary>
+        /// Raw override value with priority: short-flag-alias (highest) > UNITY_MCP_* env-style flag > env var.
+        /// Returns null if no source provided a non-empty value.
+        /// </summary>
+        public static string? ResolveOverride(
+            string envKey,
+            string? flagAlias,
+            IReadOnlyDictionary<string, string> argReader,
+            Func<string, string?> envReader)
+        {
+            if (!string.IsNullOrEmpty(flagAlias)
+                && argReader.TryGetValue(flagAlias, out var flagValue)
+                && !string.IsNullOrWhiteSpace(flagValue))
+            {
+                return flagValue;
+            }
+            if (argReader.TryGetValue(envKey, out var envFlagValue)
+                && !string.IsNullOrWhiteSpace(envFlagValue))
+            {
+                return envFlagValue;
+            }
+            var envValue = envReader(envKey);
+            if (!string.IsNullOrWhiteSpace(envValue))
+                return envValue;
+            return null;
+        }
+
+        /// <summary>Strips whitespace and surrounding quotes from a raw override value.</summary>
+        public static string SanitizeOverride(string raw) => raw.Trim().Trim('"');
+
+        /// <summary>
+        /// <see cref="EnvIdleTimeout"/> in seconds (args beat env). Null when unset or not a positive whole number.
+        /// </summary>
+        public static int? ReadIdleTimeoutSeconds(IReadOnlyDictionary<string, string> argReader, Func<string, string?> envReader)
+        {
+            var raw = ResolveOverride(EnvIdleTimeout, flagAlias: null, argReader, envReader);
+            return raw != null && int.TryParse(SanitizeOverride(raw), out var seconds) && seconds > 0 ? seconds : (int?)null;
         }
 
         /// <summary>

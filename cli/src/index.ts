@@ -3,6 +3,7 @@ import { createRequire } from 'module';
 import { bootstrapLocalCommand } from './commands/bootstrap-local.js';
 import { closeCommand } from './commands/close.js';
 import { createProjectCommand } from './commands/create-project.js';
+import { execCommand } from './commands/exec.js';
 import { installUnityCommand } from './commands/install-unity.js';
 import { openCommand } from './commands/open.js';
 import { installExtensionCommand } from './commands/install-extension.js';
@@ -37,6 +38,7 @@ const subcommands = [
   closeCommand,
   configureCommand,
   createProjectCommand,
+  execCommand,
   installExtensionCommand,
   installPluginCommand,
   installUnityCommand,

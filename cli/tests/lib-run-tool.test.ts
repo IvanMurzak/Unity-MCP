@@ -540,6 +540,49 @@ describe('runTool — Cloud mode auth', () => {
   });
 });
 
+describe('runTool — caller-resolved machine-store Bearer', () => {
+  it('refreshes once on 401 when url + token came from the machine store', async () => {
+    let refreshCalls = 0;
+    const spy = makeFetchSpy(async (_url, init) =>
+      (init?.headers as Record<string, string>)['Authorization'] === 'Bearer fresh'
+        ? jsonResponse({ status: 'success', content: [] })
+        : jsonResponse({ error: 'expired' }, 401, 'Unauthorized'));
+
+    const result = await runTool({
+      toolName: 'ping',
+      url: 'https://ai-game.dev/mcp',
+      token: 'stale',
+      tokenFromCloudStore: true,
+      refreshCloudToken: () => {
+        refreshCalls++;
+        return 'fresh';
+      },
+      fetchImpl: spy.fetch,
+    });
+
+    expect(result.kind).toBe('success');
+    expect(refreshCalls).toBe(1);
+    expect(spy.calls).toHaveLength(2);
+  });
+
+  it('does not refresh an explicit url + token', async () => {
+    let refreshCalls = 0;
+    const spy = makeFetchSpy(async () => jsonResponse({ error: 'nope' }, 401, 'Unauthorized'));
+    const result = await runTool({
+      toolName: 'ping',
+      url: 'https://ai-game.dev/mcp',
+      token: 'explicit',
+      refreshCloudToken: () => {
+        refreshCalls++;
+        return 'x';
+      },
+      fetchImpl: spy.fetch,
+    });
+    expect(result.kind).toBe('failure');
+    expect(refreshCalls).toBe(0);
+  });
+});
+
 // ---------------------------------------------------------------------------
 // Library hygiene
 // ---------------------------------------------------------------------------

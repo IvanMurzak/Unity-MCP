@@ -1,11 +1,8 @@
 import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
-import { generatePortFromDirectory } from '../utils/port.js';
-import { probe, type ProbeResult } from '../utils/probe.js';
-
-const MAX_PROBE_TIMEOUT_MS = 10_000;
+import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } from '../utils/connection.js';
+import { waitForReady } from '../lib/wait-for-ready.js';
 
 interface WaitForReadyOptions {
   path?: string;
@@ -13,31 +10,6 @@ interface WaitForReadyOptions {
   token?: string;
   timeout?: string;
   interval?: string;
-}
-
-/**
- * Build the list of base URLs to probe.
- * When --url is explicit, only that URL is probed.
- * Otherwise, probe both the config-resolved URL and the deterministic local port
- * (if they differ), succeeding on whichever responds first.
- */
-async function resolveProbeUrls(
-  projectPath: string,
-  options: WaitForReadyOptions,
-): Promise<string[]> {
-  const { url: configUrl } = await resolveConnection(projectPath, options);
-  const urls = [configUrl];
-
-  if (!options.url) {
-    const localPort = generatePortFromDirectory(projectPath);
-    const localUrl = `http://localhost:${localPort}`;
-    if (localUrl !== configUrl) {
-      urls.push(localUrl);
-      verbose(`Will probe both config URL (${configUrl}) and local URL (${localUrl})`);
-    }
-  }
-
-  return urls;
 }
 
 export const waitForReadyCommand = new Command('wait-for-ready')
@@ -50,8 +22,8 @@ export const waitForReadyCommand = new Command('wait-for-ready')
   .option('--interval <ms>', 'Polling interval in milliseconds (default: 3000)', '3000')
   .action(async (positionalPath: string | undefined, options: WaitForReadyOptions) => {
     const projectPath = resolveAndValidateProjectPath(positionalPath, options);
-    const { token } = await resolveConnection(projectPath, options);
-    const probeUrls = await resolveProbeUrls(projectPath, options);
+    const { url, token } = await resolveConnection(projectPath, options);
+    const probeUrls = resolveProbeUrls(projectPath, url, options.url);
 
     const timeoutMs = parseInt(options.timeout ?? '120000', 10);
     const intervalMs = parseInt(options.interval ?? '3000', 10);
@@ -65,52 +37,26 @@ export const waitForReadyCommand = new Command('wait-for-ready')
       process.exit(1);
     }
 
-    const headers: Record<string, string> = {
-      'Content-Type': 'application/json',
-    };
-    if (token) {
-      headers['Authorization'] = `Bearer ${token}`;
-    }
-
     for (const url of probeUrls) {
       verbose(`Probe target: ${url}`);
     }
     verbose(`Timeout: ${timeoutMs}ms, Interval: ${intervalMs}ms`);
 
     const spinner = ui.startSpinner('Waiting for Unity Editor and MCP server...');
-    const startTime = Date.now();
+    const result = await waitForReady({
+      urls: probeUrls,
+      token,
+      timeoutMs,
+      intervalMs,
+      onTick: remainingMs => {
+        spinner.text = `Waiting for Unity Editor and MCP server... (${Math.ceil(remainingMs / 1000)}s remaining)`;
+      },
+    });
 
-    while (true) {
-      const elapsed = Date.now() - startTime;
-      if (elapsed >= timeoutMs) {
-        spinner.error(`Timed out after ${(timeoutMs / 1000).toFixed(1)}s waiting for MCP server`);
-        process.exit(1);
-      }
-
-      const remaining = Math.ceil((timeoutMs - elapsed) / 1000);
-      spinner.text = `Waiting for Unity Editor and MCP server... (${remaining}s remaining)`;
-
-      const probeTimeout = Math.min(intervalMs, MAX_PROBE_TIMEOUT_MS);
-
-      // Race probes: resolve as soon as any succeeds, don't wait for slow ones
-      const ready = await new Promise<ProbeResult | null>(resolve => {
-        let pending = probeUrls.length;
-        for (const url of probeUrls) {
-          probe(url, headers, probeTimeout).then(result => {
-            if (result.ok) resolve(result);
-            else if (--pending === 0) resolve(null);
-          });
-        }
-      });
-
-      if (ready?.ok) {
-        const totalSeconds = ((Date.now() - startTime) / 1000).toFixed(1);
-        spinner.success(`MCP server is ready at ${ready.baseUrl} (connected in ${totalSeconds}s)`);
-        process.exit(0);
-      }
-
-      const remainingMs = timeoutMs - (Date.now() - startTime);
-      if (remainingMs <= 0) continue;
-      await new Promise(resolve => setTimeout(resolve, Math.min(intervalMs, remainingMs)));
+    if (result.kind === 'success') {
+      spinner.success(`MCP server is ready at ${result.baseUrl} (connected in ${(result.elapsedMs / 1000).toFixed(1)}s)`);
+      process.exit(0);
     }
+    spinner.error(`Timed out after ${(timeoutMs / 1000).toFixed(1)}s waiting for MCP server`);
+    process.exit(1);
   });

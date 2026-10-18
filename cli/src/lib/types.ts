@@ -454,6 +454,16 @@ export interface OpenProjectOptions {
    */
   startServer?: boolean;
   /**
+   * Launch the editor without a window (`-batchmode`, graphics kept so camera screenshots still render). Implies
+   * `keepConnected`, and skips the launch-errors dialog loop (there is no dialog in batchmode).
+   */
+  headless?: boolean;
+  /**
+   * Quit the editor after this many seconds without an MCP tool call — sets `UNITY_MCP_IDLE_TIMEOUT`. Meant for an
+   * editor the CLI starts for itself (e.g. `exec`); an editor opened by the user is never given one.
+   */
+  idleTimeoutSeconds?: number;
+  /**
    * If `true` (the default), poll for the Unity Editor's
    * "compile errors at launch" dialog after the editor process has
    * been spawned and click `Ignore` (or the platform-equivalent
@@ -574,6 +584,8 @@ export interface OpenEnvInputs {
   keepConnected?: OpenProjectOptions['keepConnected'];
   transport?: OpenProjectOptions['transport'];
   startServer?: OpenProjectOptions['startServer'];
+  idleTimeoutSeconds?: OpenProjectOptions['idleTimeoutSeconds'];
+  headless?: OpenProjectOptions['headless'];
 }
 
 // ---------------------------------------------------------------------------
@@ -771,6 +783,11 @@ export interface RunToolOptions {
    * consulted for an explicit `token` / `url` override.
    */
   refreshCloudToken?: () => Promise<string | undefined> | string | undefined;
+  /**
+   * Set when `url` + `token` were resolved by the caller from the shared machine store (Cloud mode): a 401 then
+   * refreshes that credential once, as when the lib resolves the connection itself.
+   */
+  tokenFromCloudStore?: boolean;
 }
 
 /** Successful `runTool` / `runSystemTool` outcome. Narrow with `kind === 'success'`. */

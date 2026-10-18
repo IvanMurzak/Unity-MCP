@@ -97,6 +97,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-unity`](#install-unity)
   - [`open`](#open)
   - [`run-tool`](#run-tool)
+  - [`exec`](#exec)
   - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
   - [`setup-skills`](#setup-skills)
@@ -250,6 +251,8 @@ unity-mcp-cli open ./MyGame
 | `--tools <names>` | `UNITY_MCP_TOOLS` | No | Lista de herramientas a activar, separadas por comas |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Metodo de transporte: `streamableHttp` o `stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Establece `true` o `false` para controlar el inicio automatico del servidor MCP |
+| `--headless` | — | No | Inicia el editor sin ventana (`-batchmode`; los gráficos siguen activos, así que las cámaras renderizan). Implica `--keep-connected`. |
+| `--idle-timeout <seconds>` | `UNITY_MCP_IDLE_TIMEOUT` | No | Cierra el editor tras estos segundos sin llamadas a herramientas (antes guarda escenas y assets modificados) |
 
 El proceso del editor se lanza en modo desacoplado — la CLI regresa inmediatamente.
 
@@ -324,6 +327,36 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `exec`
+
+Ejecuta C# en Unity Editor y muestra el resultado. Si el proyecto ya está abierto (con ventana o headless), `exec` usa ese editor y nunca lo cierra. Si no, inicia un editor headless que se mantiene caliente para las siguientes llamadas y se cierra solo tras `--idle` segundos sin llamadas.
+
+```bash
+# La última expresión es el resultado
+unity-mcp-cli exec 'GameObject.FindObjectsOfType<Camera>().Length'
+
+# Desde un archivo o stdin, con namespaces extra y archivos auxiliares
+unity-mcp-cli exec -f ./snippet.cs --using MyGame.Gameplay --include Helpers/
+echo 'Application.unityVersion' | unity-mcp-cli exec
+```
+
+| Opción | Requerido | Descripción |
+|---|---|---|
+| `[code]` | No | Fragmento C#: instrucciones simples, la última expresión es el resultado. También `-f` o stdin. |
+| `--path <path>` | No | Ruta del proyecto Unity (por defecto: directorio actual) |
+| `-f, --file <file>` | No | Lee el código de un archivo (`-` para stdin) |
+| `--using <namespace>` | No | Namespace adicional, repetible |
+| `--include <path>` | No | Archivo `.cs` o carpeta auxiliar (recursiva), relativa a `<Project>/.ai-game-dev/snippets`, repetible |
+| `--window` | No | Inicia el editor con ventana en lugar de headless (solo si aún no está abierto) |
+| `--idle <seconds>` | No | Cierra el editor iniciado por `exec` tras estos segundos de inactividad (por defecto: 300) |
+| `--ready-timeout <ms>` | No | Tiempo máximo de espera hasta que el editor esté listo (por defecto: 300000) |
+| `--timeout <ms>` | No | Tiempo límite de la llamada (por defecto: 180000) |
+| `--raw` | No | Muestra el JSON de respuesta sin formato |
+| `--url <url>` | No | URL del servidor; una URL local hace que el editor nuevo inicie ese servidor |
+| `--token <token>` | No | Token Bearer |
+
+`exec` llama a la herramienta `script-execute`, así que los fragmentos, `usings` e `include` requieren una versión del plugin con Code-Exec. Un error de compilación termina con código 1 y señala tus propias líneas.
 
 ## `wait-for-ready`
 

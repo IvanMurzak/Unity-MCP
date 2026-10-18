@@ -128,6 +128,8 @@ export const openCommand = new Command('open')
   .option('--keep-connected', 'Force keep connected (sets UNITY_MCP_KEEP_CONNECTED=true)')
   .option('--transport <method>', 'Transport method: streamableHttp or stdio (sets UNITY_MCP_TRANSPORT)')
   .option('--start-server <value>', 'Set to true/false to control server auto-start (sets UNITY_MCP_START_SERVER)', undefined)
+  .option('--headless', 'Run the editor without a window (-batchmode, graphics kept); implies --keep-connected')
+  .option('--idle-timeout <seconds>', 'Quit the editor after this many seconds without a tool call (sets UNITY_MCP_IDLE_TIMEOUT)')
   .option(
     '--no-auto-dismiss-launch-errors',
     'Disable auto-dismissal of the Unity Editor "compile errors at launch" dialog (default: enabled). On macOS, requires Accessibility permission for the terminal / unity-mcp-cli binary. On Linux/X11, requires `xdotool` on PATH (Wayland not supported).',
@@ -154,6 +156,8 @@ export const openCommand = new Command('open')
     keepConnected?: boolean;
     transport?: string;
     startServer?: string;
+    headless?: boolean;
+    idleTimeout?: string;
     autoDismissLaunchErrors?: boolean;
     launchDismissTimeoutMs?: string;
     launchDismissPollIntervalMs?: string;
@@ -257,6 +261,8 @@ export const openCommand = new Command('open')
       keepConnected: options.keepConnected,
       transport: options.transport as OpenProjectTransport | undefined,
       startServer: startServerBool,
+      headless: options.headless,
+      idleTimeoutSeconds: options.idleTimeout === undefined ? undefined : parsePositiveIntFlag(options.idleTimeout, '--idle-timeout', 0),
       autoDismissLaunchErrors: options.autoDismissLaunchErrors !== false,
       launchDismissTimeoutMs,
       launchDismissPollIntervalMs,

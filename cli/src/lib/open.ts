@@ -98,12 +98,16 @@ function extractEditorPathFromCommandLine(commandLine: string): string {
 export function buildOpenEnv(
   options: OpenEnvInputs,
 ): Record<string, string> | undefined {
-  if (options.noConnect === true) return undefined;
+  if (options.noConnect === true) {
+    if (options.headless) throw new Error('headless needs the MCP connection: drop noConnect');
+    return undefined;
+  }
 
   const env: Record<string, string> = {};
 
   if (options.url !== undefined) env['UNITY_MCP_HOST'] = options.url;
-  if (options.keepConnected) env['UNITY_MCP_KEEP_CONNECTED'] = 'true';
+  // Headless: no window to click "connect" in, so the plugin must connect on its own.
+  if (options.keepConnected || options.headless) env['UNITY_MCP_KEEP_CONNECTED'] = 'true';
   if (options.tools !== undefined) env['UNITY_MCP_TOOLS'] = options.tools;
   if (options.token !== undefined) env['UNITY_MCP_TOKEN'] = options.token;
 
@@ -123,6 +127,13 @@ export function buildOpenEnv(
 
   if (options.startServer !== undefined) {
     env['UNITY_MCP_START_SERVER'] = options.startServer ? 'true' : 'false';
+  }
+
+  if (options.idleTimeoutSeconds !== undefined) {
+    if (!Number.isInteger(options.idleTimeoutSeconds) || options.idleTimeoutSeconds <= 0) {
+      throw new Error('idle timeout must be a positive whole number of seconds');
+    }
+    env['UNITY_MCP_IDLE_TIMEOUT'] = String(options.idleTimeoutSeconds);
   }
 
   return Object.keys(env).length > 0 ? env : undefined;
@@ -337,7 +348,7 @@ export async function openProject(
         // handing back the same broken path.
         clearCachedEditorPath(version);
       },
-    });
+    }, options.headless ? ['-batchmode'] : []);
 
     // The `spawn` event fires asynchronously after `spawn(...)` returns.
     // We wait briefly so the PID gets surfaced in the result. The
@@ -356,7 +367,7 @@ export async function openProject(
     //
     // When `autoDismissLaunchErrors === false` the loop is skipped
     // entirely; behaviour is identical to the pre-feature baseline.
-    if (options.autoDismissLaunchErrors !== false) {
+    if (options.autoDismissLaunchErrors !== false && !options.headless) {
       await pollAndDismissLaunchErrors({
         timeoutMs: options.launchDismissTimeoutMs ?? 30000,
         intervalMs: options.launchDismissPollIntervalMs ?? 1500,
