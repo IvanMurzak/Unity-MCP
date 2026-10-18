@@ -38,7 +38,7 @@ interface CliOptions {
   timeout?: string;
 }
 
-interface FailureContext {
+export interface FailureContext {
   toolName: string;
   endpoint: string;
   raw: boolean | undefined;
@@ -97,35 +97,9 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
 
       const spinner = options.raw ? null : ui.startSpinner(`Calling ${toolName}...`);
 
-      // The CLI already resolved url/token, so passing them explicitly
-      // makes the lib's resolver a no-op rather than re-reading config.
-      const invokeOnce = (bearer: string | undefined): ReturnType<typeof cfg.invoke> =>
-        cfg.invoke({
-          toolName,
-          url: baseUrl,
-          ...(bearer ? { token: bearer } : {}),
-          input: body,
-          timeoutMs,
-        });
-
-      let result = await invokeOnce(token);
-
-      // Reactive refresh (unified-machine-auth 04 §3 rule 1): a 401 against a machine-store
-      // Bearer means revocation or clock skew the proactive check could not see — refresh the
-      // plugin family once under the cross-process lock and retry. Explicit --token/--url
-      // overrides are never refreshed.
-      if (
-        result.kind === 'failure' &&
-        result.reason === 'http-error' &&
-        result.httpStatus === 401 &&
-        tokenFromCloudStore
-      ) {
-        const fresh = await refreshCloudAccessToken();
-        if (fresh) {
-          verbose('Server answered 401; retrying once with a refreshed cloud credential.');
-          result = await invokeOnce(fresh);
-        }
-      }
+      const result = await invokeToolWithRefresh(cfg.invoke, {
+        toolName, baseUrl, token, input: body, timeoutMs, tokenFromCloudStore,
+      });
 
       if (result.kind === 'success') {
         spinner?.success(`${toolName} completed`);
@@ -151,13 +125,57 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
     });
 }
 
-function stringifyForRaw(data: unknown): string {
+export interface InvokeToolArgs {
+  toolName: string;
+  baseUrl: string;
+  token: string | undefined;
+  input: RunToolOptions['input'];
+  timeoutMs: number;
+  /** The Bearer came from the shared machine store: a 401 refreshes it once and retries. */
+  tokenFromCloudStore: boolean;
+}
+
+/**
+ * Call a tool with the already-resolved url/token. Reactive refresh (unified-machine-auth 04 §3 rule 1): a 401 against
+ * a machine-store Bearer means revocation or clock skew the proactive check could not see — refresh the plugin family
+ * once under the cross-process lock and retry. Explicit --token/--url overrides are never refreshed.
+ */
+export async function invokeToolWithRefresh(
+  invoke: (opts: RunToolOptions) => Promise<RunToolResult>,
+  args: InvokeToolArgs,
+): Promise<RunToolResult> {
+  const invokeOnce = (bearer: string | undefined): Promise<RunToolResult> =>
+    invoke({
+      toolName: args.toolName,
+      url: args.baseUrl,
+      ...(bearer ? { token: bearer } : {}),
+      input: args.input,
+      timeoutMs: args.timeoutMs,
+    });
+
+  let result = await invokeOnce(args.token);
+  if (
+    result.kind === 'failure' &&
+    result.reason === 'http-error' &&
+    result.httpStatus === 401 &&
+    args.tokenFromCloudStore
+  ) {
+    const fresh = await refreshCloudAccessToken();
+    if (fresh) {
+      verbose('Server answered 401; retrying once with a refreshed cloud credential.');
+      result = await invokeOnce(fresh);
+    }
+  }
+  return result;
+}
+
+export function stringifyForRaw(data: unknown): string {
   if (typeof data === 'string') return data;
   if (data === undefined) return '';
   return JSON.stringify(data);
 }
 
-function handleFailure(failure: RunToolFailure, ctx: FailureContext): never {
+export function handleFailure(failure: RunToolFailure, ctx: FailureContext): never {
   if (failure.reason === 'http-error') {
     if (ctx.raw) {
       process.stdout.write(stringifyForRaw(failure.data));

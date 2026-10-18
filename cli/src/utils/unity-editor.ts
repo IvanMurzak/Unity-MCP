@@ -426,8 +426,9 @@ export function launchEditor(
   projectPath: string,
   env?: Record<string, string>,
   callbacks?: LaunchEditorCallbacks,
+  extraArgs: readonly string[] = [],
 ): import('child_process').ChildProcess {
-  const args = ['-projectPath', path.resolve(projectPath)];
+  const args = ['-projectPath', path.resolve(projectPath), ...extraArgs];
 
   const child = spawn(editorPath, args, {
     detached: true,

@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`exec` command.** `unity-mcp-cli exec '<C#>'` runs a snippet through the `script-execute` tool and prints the
+  result. It reuses an editor that is already open for the project (window or headless) and never closes it;
+  otherwise it starts a headless editor (`--window` for a windowed one) that stays warm and quits by itself after
+  `--idle` seconds (default 300) without tool calls. Code comes from the argument, `-f <file>` or stdin;
+  `--using` and `--include` are repeatable.
+- **`open --headless` and `open --idle-timeout <seconds>`.** `--headless` launches with `-batchmode` (graphics stay
+  on, so cameras render) and implies `--keep-connected`; `--idle-timeout` sets `UNITY_MCP_IDLE_TIMEOUT`, which the
+  plugin uses to quit after that many idle seconds (it saves changed scenes and assets first).
+- **`waitForReady` library helper** (`src/lib/wait-for-ready.ts`) shared by `wait-for-ready` and `exec`.
+
 - **`runTool` / `runSystemTool` library functions.** The HTTP-tool
   invocation paths previously available only as the `run-tool` /
   `run-system-tool` CLI commands are now first-class library exports:

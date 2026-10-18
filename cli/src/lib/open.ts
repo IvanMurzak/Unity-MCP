@@ -125,6 +125,13 @@ export function buildOpenEnv(
     env['UNITY_MCP_START_SERVER'] = options.startServer ? 'true' : 'false';
   }
 
+  if (options.idleTimeoutSeconds !== undefined) {
+    if (!Number.isInteger(options.idleTimeoutSeconds) || options.idleTimeoutSeconds <= 0) {
+      throw new Error('idle timeout must be a positive whole number of seconds');
+    }
+    env['UNITY_MCP_IDLE_TIMEOUT'] = String(options.idleTimeoutSeconds);
+  }
+
   return Object.keys(env).length > 0 ? env : undefined;
 }
 
@@ -175,6 +182,8 @@ export async function openProject(
     // a typo without first paying for editor-discovery I/O. The
     // returned env is recomputed below if cloud-mode auto-detect
     // flips keepConnected; otherwise we reuse this same map.
+    // Headless: no window to click "connect" in, so the plugin must connect on its own.
+    if (options.headless && !options.keepConnected) options = { ...options, keepConnected: true };
     let env = buildOpenEnv(options);
 
     // Already-running short-circuit. Same semantics as the CLI:
@@ -337,7 +346,7 @@ export async function openProject(
         // handing back the same broken path.
         clearCachedEditorPath(version);
       },
-    });
+    }, options.headless ? ['-batchmode'] : []);
 
     // The `spawn` event fires asynchronously after `spawn(...)` returns.
     // We wait briefly so the PID gets surfaced in the result. The
@@ -356,7 +365,7 @@ export async function openProject(
     //
     // When `autoDismissLaunchErrors === false` the loop is skipped
     // entirely; behaviour is identical to the pre-feature baseline.
-    if (options.autoDismissLaunchErrors !== false) {
+    if (options.autoDismissLaunchErrors !== false && !options.headless) {
       await pollAndDismissLaunchErrors({
         timeoutMs: options.launchDismissTimeoutMs ?? 30000,
         intervalMs: options.launchDismissPollIntervalMs ?? 1500,

@@ -100,6 +100,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`open`](#open)
   - [`close`](#close)
   - [`run-tool`](#run-tool)
+  - [`exec`](#exec)
   - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
   - [`setup-skills`](#setup-skills)
@@ -356,6 +357,8 @@ cd ./MyGame && unity-mcp-cli open
 | `--tools <names>` | `UNITY_MCP_TOOLS` | No | Comma-separated list of tools to enable |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Transport method: `streamableHttp` or `stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Set to `true` or `false` to control MCP server auto-start |
+| `--headless` | — | No | Start the editor without a window (`-batchmode`; graphics stay on, so cameras still render). Implies `--keep-connected`. |
+| `--idle-timeout <seconds>` | `UNITY_MCP_IDLE_TIMEOUT` | No | Quit the editor after this many seconds without a tool call (saves changed scenes and assets first) |
 | `--no-auto-dismiss-launch-errors` | — | No | Disable auto-dismissal of the Unity Editor "compile errors at launch" dialog (default: enabled) |
 | `--launch-dismiss-timeout-ms <ms>` | — | No | Overall timeout (milliseconds) for the launch-errors auto-dismiss polling loop (default: `30000`) |
 | `--launch-dismiss-poll-interval-ms <ms>` | — | No | Polling tick interval (milliseconds) for the launch-errors auto-dismiss loop (default: `1500`) |
@@ -485,6 +488,36 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `exec`
+
+Run C# in the Unity Editor and print the result. If the project is already open (with a window or headless) `exec` uses that editor and never closes it. Otherwise it starts a headless editor that stays warm for the next calls and quits by itself after `--idle` seconds without tool calls.
+
+```bash
+# The last expression is the result
+unity-mcp-cli exec 'GameObject.FindObjectsOfType<Camera>().Length'
+
+# From a file or stdin, with extra namespaces and helper files
+unity-mcp-cli exec -f ./snippet.cs --using MyGame.Gameplay --include Helpers/
+echo 'Application.unityVersion' | unity-mcp-cli exec
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[code]` | No | C# snippet: plain statements, the last expression is the result. Alternatively `-f` or stdin. |
+| `--path <path>` | No | Unity project path (default: current directory) |
+| `-f, --file <file>` | No | Read the code from a file (`-` for stdin) |
+| `--using <namespace>` | No | Extra namespace, repeatable |
+| `--include <path>` | No | Helper `.cs` file or folder (recursive), relative to `<Project>/.ai-game-dev/snippets`, repeatable |
+| `--window` | No | Start the editor with a window instead of headless (only when it is not running yet) |
+| `--idle <seconds>` | No | Quit an editor started by `exec` after this many idle seconds (default: 300) |
+| `--ready-timeout <ms>` | No | How long to wait for the editor to become ready (default: 300000) |
+| `--timeout <ms>` | No | Tool call timeout (default: 180000) |
+| `--raw` | No | Print the raw tool response JSON |
+| `--url <url>` | No | Server URL override; a local URL also makes a newly started editor start that server |
+| `--token <token>` | No | Bearer token override |
+
+`exec` calls the `script-execute` tool, so snippets, `usings` and `include` need a plugin version with Code-Exec support. A compile error exits with code 1 and points at your own lines.
 
 ## `wait-for-ready`
 
