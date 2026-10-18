@@ -34,6 +34,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// Returns true if the given assembly name is already provided by Unity
         /// (either as a BCL assembly or from another installed package).
         /// </summary>
+        /// <summary>
+        /// True when <paramref name="assemblyName"/> can actually be loaded by the EDITOR runtime from somewhere
+        /// other than our NuGet install folder.
+        ///
+        /// <para>On Mono editors this always returns true, keeping the player-reference based decision of
+        /// <see cref="IsAlreadyImported"/> unchanged. On CoreCLR editors (Unity 7+, where
+        /// <c>RuntimeInformation.FrameworkDescription</c> starts with ".NET") the player-profile BCLExtensions
+        /// (<c>Editor/Data/BCLExtensions/runtime/netstandard2.1/*.dll</c>) that satisfy the player reference check
+        /// are not part of the editor's load context. Marking our copy "Exclude Editor" then leaves the editor
+        /// without the assembly at all: <c>Microsoft.Bcl.AsyncInterfaces, Version=8.0.0.0</c> (required by R3)
+        /// threw <c>FileNotFoundException</c> while constructing <c>McpPlugin</c> on Unity 7000.0.0a7.</para>
+        /// </summary>
+        public static bool IsResolvableInEditorRuntime(string assemblyName)
+        {
+            var framework = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription ?? string.Empty;
+            if (!framework.StartsWith(".NET", System.StringComparison.Ordinal))
+                return true; // Mono: original behaviour
+
+            try
+            {
+                var assembly = System.Reflection.Assembly.Load(new System.Reflection.AssemblyName(assemblyName));
+                var location = assembly?.Location;
+                if (string.IsNullOrEmpty(location))
+                    return assembly != null; // in-memory / platform assembly without a path: provided by the runtime
+
+                var installRoot = Path.GetFullPath(NuGetConfig.InstallPath)
+                    .TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar);
+                return !Path.GetFullPath(location).StartsWith(installRoot, System.StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                return false; // not loadable in the editor runtime: our copy must stay enabled for the Editor
+            }
+        }
+
         public static bool IsAlreadyImported(string assemblyName)
         {
             return GetUnityProvidedAssemblies().Contains(assemblyName);

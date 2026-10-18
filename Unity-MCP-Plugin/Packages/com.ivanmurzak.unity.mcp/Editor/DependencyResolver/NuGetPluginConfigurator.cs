@@ -94,7 +94,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 ? stem
                 : Path.GetFileNameWithoutExtension(assetPath);
 
-            var unityProvidesIt = UnityAssemblyResolver.IsAlreadyImported(assemblyName);
+            // A player-profile reference alone is not enough on CoreCLR editors (Unity 7+): the netstandard2.1
+            // BCLExtensions the player references are not in the editor's load context, so excluding our copy
+            // from the Editor would leave the assembly unresolvable there (FileNotFoundException for
+            // Microsoft.Bcl.AsyncInterfaces 8.0.0.0 from R3). Require that the editor runtime can load it too.
+            var unityProvidesIt = UnityAssemblyResolver.IsAlreadyImported(assemblyName)
+                                  && UnityAssemblyResolver.IsResolvableInEditorRuntime(assemblyName);
 
             bool anyPlatform;
             bool excludeEditor;
