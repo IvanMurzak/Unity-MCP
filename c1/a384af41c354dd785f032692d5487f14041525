@@ -1,0 +1,46 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/UnityAssemblyResolver.cs
+  03012d5ffb726c9e 24,55,72-76,79-80,82
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetDependencyResolver.cs
+  03012d5ffb726c9e 84,90
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs
+  03012d5ffb726c9e 30-33,37,41-46,52,60-62,64,67-69,71-72,75,80-82,84-91,94-95,97-106,109,120-131,133,136,138,150,153-154,156-158,160-163,166-172,174-177,179-181,184-185,187-192,196-201,203,206,208-209,211-213
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageRestorer.cs
+  03012d5ffb726c9e 47-49,53-57,60,73-76,83,91-100,102-104,106-110
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetExtractor.cs
+  03012d5ffb726c9e 169-171,179-183
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetAssetPostprocessor.cs
+  03012d5ffb726c9e 137-142,146
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "c1a384af41c354dd785f032692d5487f14041525",
+  "prompts": {
+    "03012d5ffb726c9e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "6fa7a303-3c7e-49be-9b96-a3ac98ad6cbe",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 888,
+      "overriden_lines": 54
+    },
+    "49d53a818dbb2c3d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4f8975c4-7518-4266-b175-022ab5d78b9f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 17,
+      "total_deletions": 17,
+      "accepted_lines": 427,
+      "overriden_lines": 0
+    }
+  }
+}

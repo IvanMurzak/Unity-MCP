@@ -1,0 +1,24 @@
+commands/extension_release.py
+  s_eb8bcde0be96a2::t_ca780a4ec998a1 98,110,117-130
+  s_eb8bcde0be96a2::t_b78a37f165b49f 134
+commands/tests/test_extensions.py
+  s_eb8bcde0be96a2::t_b78a37f165b49f 95,100,143-148
+  s_eb8bcde0be96a2::t_ca780a4ec998a1 2,101-107,128-142
+  s_eb8bcde0be96a2::t_f5c786dfbc8c96 149
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "0c00290ca83039b123ec821d0da46308c3f83332",
+  "prompts": {},
+  "sessions": {
+    "s_eb8bcde0be96a2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14267-6fec-7a30-97a7-931925a48014",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

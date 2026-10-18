@@ -1,0 +1,30 @@
+cli/tests/launch-error-dismiss.test.ts
+  s_96a889b2a9ec0f::t_682ab202350d4e 11-12
+  s_96a889b2a9ec0f::t_18736869c0b8ba 199-238
+cli/tests/open-lib.test.ts
+  s_96a889b2a9ec0f::t_13c569ef5fc3dc 614-693
+cli/src/lib/open.ts
+  s_96a889b2a9ec0f::t_b44b6c8adfb65c 475-479,517-526
+  s_96a889b2a9ec0f::t_f8c70c2f3c442b 13-14
+  s_96a889b2a9ec0f::t_26390c3bd955d9 445-449,452-453
+cli/src/utils/launch-error-dismiss.ts
+  s_96a889b2a9ec0f::t_40893eadb0cfb9 380
+  s_96a889b2a9ec0f::t_2896488072e119 109
+  s_96a889b2a9ec0f::t_96c8b10a0fbe7d 56-71
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "898e9859533776cc1374ea6faf67a219290205d3",
+  "prompts": {},
+  "sessions": {
+    "s_96a889b2a9ec0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f69faed4-0135-4243-87c8-981a7cb298cc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

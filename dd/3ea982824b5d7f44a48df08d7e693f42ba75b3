@@ -1,0 +1,25 @@
+docs/dev/extensions.md
+  s_eb8bcde0be96a2::t_f4fc37df40a20f 59-73
+tests/extensions/Editor/ExtensionIsolationTests.cs
+  s_eb8bcde0be96a2::t_38dc25eaef57e9 147-155
+  s_eb8bcde0be96a2::t_c9af11e5a46ddd 113,120,123-124,132,142-146,162,165,168,170-171,174-178,180-213,215-242,251-252,255-260,288,290,294,318-319,326,360
+  s_eb8bcde0be96a2::t_9a719c437b627d 121-122,214,243-250
+  s_eb8bcde0be96a2::t_12ef956487e567 166-167,169,172-173,179
+  s_eb8bcde0be96a2::t_63f13711deeb04 102-103,105-106,108-112,253-254
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dd3ea982824b5d7f44a48df08d7e693f42ba75b3",
+  "prompts": {},
+  "sessions": {
+    "s_eb8bcde0be96a2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14267-6fec-7a30-97a7-931925a48014",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

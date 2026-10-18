@@ -1,0 +1,30 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/UnityMcpUpdateProjectSettings.cs.meta
+  s_5b77098ca95a5f::t_07481cc54ae16f 2
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/UpdateChecker.cs
+  s_5b77098ca95a5f::t_cfafca2581dcad 64-74,76,78,81-99
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/UnityMcpProjectSettingsProvider.cs.meta
+  s_5b77098ca95a5f::t_100034b41e1801 2
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/UpdateCheckerTests.cs
+  s_5b77098ca95a5f::t_91f5472e64e0c7 12,21-52
+  s_5b77098ca95a5f::t_dd222a15aa23ac 60-65,67-68,76,78-79
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/UnityMcpProjectSettingsProvider.cs
+  s_5b77098ca95a5f::t_a215b1945ea497 47,49,58-61
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/UnityMcpUpdateProjectSettings.cs
+  s_5b77098ca95a5f::t_5d77fe66709d9f 35-40
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "97a4f1a431f4872127c1b5f1f4baff094225c88e",
+  "prompts": {},
+  "sessions": {
+    "s_5b77098ca95a5f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f10347d0-d71c-4d83-ba57-c18a3e759efa",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

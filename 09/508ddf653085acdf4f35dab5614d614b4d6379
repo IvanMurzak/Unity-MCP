@@ -1,0 +1,37 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.LoadData.cs
+  s_f6b66cedbacc57::t_4b73a9e14d294a 42,44-45,63-66
+  s_f6b66cedbacc57::t_8cc4b6d9f33a17 23-28
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.GetMemoryStats.cs
+  s_f6b66cedbacc57::t_57026b736f024c 47-48,51-59
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.Start.cs
+  s_f6b66cedbacc57::t_116588a9b8b5a7 16
+  s_f6b66cedbacc57::t_4fb2d1ecc71879 47-51
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.cs
+  s_f6b66cedbacc57::t_f0a40ba7ecb045 22-26,46-47,49,65,81-82
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.GetScriptStats.cs
+  s_f6b66cedbacc57::t_4d85708dabdb57 46,54-55
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.SaveData.cs
+  s_f6b66cedbacc57::t_52dc6acb0182e3 15,56-58,62-69
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Profiler/TestToolProfiler.cs
+  s_f6b66cedbacc57::t_8fa2e51e0fac83 12,21,27-29,38-44
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.CaptureFrame.cs
+  s_f6b66cedbacc57::t_870e42c0815261 42
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Profiler.GetStatus.cs
+  s_f6b66cedbacc57::t_b45ff92d91289c 44,49
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.0",
+  "base_commit_sha": "09508ddf653085acdf4f35dab5614d614b4d6379",
+  "prompts": {},
+  "sessions": {
+    "s_f6b66cedbacc57": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "214298cf-e9ac-4b12-b6be-19c13f3a4f93",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
