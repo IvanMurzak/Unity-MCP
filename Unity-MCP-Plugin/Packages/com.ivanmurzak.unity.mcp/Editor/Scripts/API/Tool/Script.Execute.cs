@@ -10,17 +10,20 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Reflection;
-using System.Text;
+using System.Threading.Tasks;
+using com.IvanMurzak.CodeExec;
+using com.IvanMurzak.CodeExec.Roslyn;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using Microsoft.CodeAnalysis;
 using Microsoft.CodeAnalysis.CSharp;
+using Microsoft.CodeAnalysis.CSharp.Syntax;
 using Microsoft.Extensions.Logging;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
@@ -28,317 +31,204 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     public static partial class Tool_Script
     {
         public const string ScriptExecuteToolId = "script-execute";
+
+        /// <summary>
+        /// Compiles and runs agent C# through the vendored Code-Exec runtime (Editor/Scripts/CodeExec). One runner per
+        /// domain: Mono cannot unload assemblies, so identical requests reuse the already-loaded one (its cache).
+        /// Built without Unity APIs, so it can compile off the main thread (the editor's working directory is the project).
+        /// </summary>
+        static readonly Lazy<CodeRunner> Runner = new Lazy<CodeRunner>(() => new CodeRunner(new RoslynCSharpCompiler(), new CodeRunnerOptions
+        {
+            DefaultUsings = DefaultUsings(),
+            IncludeRoot = Path.GetFullPath(Path.Combine(".ai-game-dev", "snippets")),
+            ValueConverter = value => value, // Mono keeps the assembly loaded: the reflector serializes the live value
+            LogCaptures = new List<ILogCapture>(), // Debug.Log stays in the Unity console
+        }));
+
         [AiTool
         (
             ScriptExecuteToolId,
             Title = "Script / Execute",
             OpenWorldHint = true
         )]
-        [AiSkillDescription("Compiles and executes C# code dynamically using Roslyn. " +
-            "Supports a full-code mode (default) and a body-only mode — see the skill body for the difference and for how to pass Unity object references as parameters.")]
+        [AiSkillDescription("Compiles and runs C# in the Unity Editor (Roslyn): plain statements with the last expression as the result, " +
+            "or a full class with a static method. See the skill body for the modes, usings/include and Unity object parameters.")]
         [AiSkillBody(
             "## Modes\n\n" +
-            "- **Full code mode** (default, `isMethodBody=false`): the `csharpCode` argument must define a complete class with a static method (no top-level statements).\n" +
-            "- **Body-only mode** (`isMethodBody=true`): provide only the method body statements. The tool auto-generates the usings, class, and method header.\n\n" +
+            "- **Snippet** (default): plain statements. The last expression is the result (`GameObject.Find(\"Player\").name`). " +
+            "Own `using` lines, local classes and functions are allowed; `await` works. Usings for System, LINQ, UnityEngine, " +
+            "UnityEditor and AIGD are already there; an unknown type name is imported automatically when exactly one namespace has it.\n" +
+            "- **Full code**: when `csharpCode` declares class `className` with a static method `methodName`, that method runs.\n" +
+            "- `isMethodBody=true` forces snippet mode.\n\n" +
+            "Compile errors point at your own lines (`snippet.cs(2,5)`).\n\n" +
+            "## usings / include\n\n" +
+            "- `usings`: extra namespaces, e.g. `[\"MyGame.Gameplay\"]`.\n" +
+            "- `include`: helper `.cs` files or folders (recursive), relative to `<Project>/.ai-game-dev/snippets`, compiled with the snippet.\n\n" +
             "## Passing Unity objects as parameters\n\n" +
-            "Unity objects (`GameObject`, `Component`, etc.) can be passed as parameters using their `Ref` types (`GameObjectRef`, `ComponentRef`, etc.) or directly by type:\n\n" +
+            "Parameters become the snippet's variables (or the method's arguments, in order):\n\n" +
             "- `UnityEngine.GameObject` — resolves an actual GameObject from value `{\"instanceID\": N}`, `{\"name\": \"...\"}`, or `{\"path\": \"...\"}`.\n" +
             "- `UnityEngine.Component` (or any component subtype) — resolves from `{\"instanceID\": N}`.\n" +
-            "- `AIGD.GameObjectRef` — passes a `GameObjectRef` POCO directly; the method body calls `goRef.FindGameObject()` to resolve it.\n" +
+            "- `AIGD.GameObjectRef` — passes a `GameObjectRef` POCO directly; call `goRef.FindGameObject()` to resolve it.\n" +
             "- `AIGD.ComponentRef` — passes a `ComponentRef` POCO.\n" +
             "- `AIGD.ObjectRef` — passes a base `ObjectRef` POCO.")]
-        [Description("Compiles and executes C# code dynamically using Roslyn. " +
-            "Supports two modes: full code mode (default) requires a complete class definition, " +
-            "while body-only mode (isMethodBody=true) auto-generates the boilerplate so you only " +
-            "provide the method body. Unity objects (GameObject, Component, etc.) can be passed as " +
-            "parameters using their Ref types (GameObjectRef, ComponentRef, etc.) or directly by type.")]
-        public static SerializedMember? Execute
+        [Description("Compiles and runs C# in the Unity Editor: plain statements with the last expression as the result " +
+            "(own usings, local classes, await allowed), or a declared class 'className' with static method 'methodName'.")]
+        public static async Task<SerializedMember?> Execute
         (
-            [Description("C# code to compile and execute. " +
-                "In full code mode (default, isMethodBody=false): must define a complete class with a static method. " +
-                "Example: 'using UnityEngine; public class Script { public static void Main() { Debug.Log(\"Hello\"); } }'. " +
-                "Do NOT use top-level statements. " +
-                "In body-only mode (isMethodBody=true): provide only the method body statements. " +
-                "The tool auto-generates usings, class, and method header. " +
-                "Example body: 'go.SetActive(false);'. " +
-                "Custom helper classes can still be defined inline in the body-only string after the main logic, " +
-                "but for complex additional class definitions use full code mode instead.")]
+            [Description("C# code. Snippet: 'var go = GameObject.Find(\"Player\");\\ngo.transform.position'. " +
+                "Full: 'public class Script { public static int Main() { return 42; } }'.")]
             string csharpCode,
-            [Description("The name of the class containing the method to execute. " +
-                "In body-only mode this becomes the generated class name.")]
+            [Description("Full mode: the class whose static method runs (namespace-qualified or not).")]
             string className = "Script",
-            [Description("The name of the method to execute. Must be a static method. " +
-                "In body-only mode this becomes the generated method name.")]
+            [Description("Full mode: the static method to run.")]
             string methodName = "Main",
-            [Description("Serialized parameters to pass to the method. Each entry must specify 'name' and 'typeName'. " +
-                "Supported parameter types include primitives, strings, and Unity object references: " +
-                "- 'UnityEngine.GameObject': resolves an actual GameObject from value '{\"instanceID\": N}', '{\"name\": \"...\"}', or '{\"path\": \"...\"}'. " +
-                "- 'UnityEngine.Component' (or any component subtype): resolves from '{\"instanceID\": N}'. " +
-                "- 'AIGD.GameObjectRef': passes a GameObjectRef POCO directly; " +
-                "  the method body calls goRef.FindGameObject() to resolve it. " +
-                "- 'AIGD.ComponentRef': passes a ComponentRef POCO. " +
-                "- 'AIGD.ObjectRef': passes a base ObjectRef POCO. " +
-                "If the method does not require parameters, leave this empty.")]
-            [Rql.ToolFormat.RqlArgument("Values for the method's parameters by name, e.g. {go: ref(\"GameObject#12\"), n: 6}. " +
-                "Leave empty if the method takes none.")]
+            [Description("Parameters, each with 'name' and 'typeName': the snippet's variables or the method's arguments in order. " +
+                "Unity object types and value formats: see the skill. Leave empty when none.")]
+            [Rql.ToolFormat.RqlArgument("Values for the snippet's / method's parameters by name, e.g. {go: ref(\"GameObject#12\"), n: 6}. " +
+                "Leave empty if there are none.")]
             SerializedMemberList? parameters = null,
-            [Description("When true, 'csharpCode' is treated as just the method body. " +
-                "The tool auto-generates standard using directives (System, UnityEngine, " +
-                "AIGD, com.IvanMurzak.Unity.MCP.Runtime.Extensions, UnityEditor), " +
-                "the class definition, and the method signature (returns object when the body returns a value, void otherwise). " +
-                "Parameters from the 'parameters' list are automatically added to the method signature using their typeName and name. " +
-                "When false (default), 'csharpCode' must be a complete C# compilation unit with class and method definitions.")]
-            bool isMethodBody = false
+            [Description("Force snippet mode even when the code declares 'className'.")]
+            bool isMethodBody = false,
+            [Description("Extra namespaces for snippet mode, e.g. [\"MyGame.Gameplay\"].")]
+            string[]? usings = null,
+            [Description("Helper .cs files or folders (recursive) compiled with the code, relative to <Project>/.ai-game-dev/snippets.")]
+            string[]? include = null
         )
         {
             if (string.IsNullOrEmpty(csharpCode))
                 throw new Exception($"'{nameof(csharpCode)}' is null or empty. Please provide valid C# code to execute.");
 
-            if (string.IsNullOrEmpty(className))
-                throw new Exception($"'{nameof(className)}' cannot be null or empty.");
-
-            if (string.IsNullOrEmpty(methodName))
-                throw new Exception($"'{nameof(methodName)}' cannot be null or empty.");
-
-            string codeToCompile;
-            if (isMethodBody)
+            // Compile on the calling thread (MCP calls arrive off the main thread): only the parameter TYPES are needed
+            // here. On the main thread (e.g. tests) everything simply runs inline, as before.
+            var request = new ExecuteRequest
             {
-                codeToCompile = GenerateFullCode(csharpCode, className, methodName, parameters);
+                Code = csharpCode,
+                Usings = usings ?? Array.Empty<string>(),
+                Include = include ?? Array.Empty<string>(),
+                Parameters = parameters?.Select((p, i) => new SnippetParameter(ParameterName(p, i), ParameterType(p, i), null)).ToList()
+                    ?? (IReadOnlyList<SnippetParameter>)Array.Empty<SnippetParameter>(),
+                TimeoutMs = 120_000,
+            };
+            if (!isMethodBody && FullSourceEntryType(csharpCode, className, methodName) is { } entryType)
+            {
+                request.EntryType = entryType;
+                request.EntryMethod = methodName;
             }
-            else
-            {
-                if (csharpCode.Contains(className) == false)
-                    throw new Exception($"'{nameof(csharpCode)}' does not contain class '{className}'. Please ensure the class is defined in the provided code.");
+            var prepared = Runner.Value.Prepare(request);
+            if (!prepared.Succeeded)
+                throw new Exception(Describe(Runner.Value.Run(prepared))); // Run only returns the failure: no main-thread hop
 
-                if (csharpCode.Contains(methodName) == false)
-                    throw new Exception($"'{nameof(csharpCode)}' does not contain method '{methodName}'. Please ensure the method is defined in the provided code.");
-
-                codeToCompile = csharpCode;
-            }
-
-            return MainThread.Instance.Run(() =>
-            {
-                var logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute");
-
-                // Compile C# code using Roslyn and execute it immediately
-                if (!ExecuteCSharpCode(
-                    className: className,
-                    methodName: methodName,
-                    code: codeToCompile,
-                    parameters: parameters,
-                    returnValue: out var result,
-                    returnType: out var returnType,
-                    error: out var error,
-                    logger: logger))
-                {
-                    throw new Exception(error);
-                }
-
-                if (result is null)
-                {
-                    if (returnType is null)
-                        return null;
-
-                    var isVoid = returnType == typeof(void);
-                    var ret = new SerializedMember
-                    {
-                        name = JsonSchema.Result,
-                        typeName = isVoid ? "System.Void" : (returnType.FullName ?? returnType.Name ?? JsonSchema.Object)
-                    };
-                    return ret.SetJsonValue(isVoid ? "\"Success\"" : "\"null\"");
-                }
-
-                if (result is SerializedMember serializedResult)
-                    return serializedResult;
-
-                var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
-
-                var serializedResultByReflector = reflector.Serialize(
-                    obj: result,
-                    logger: logger);
-                if (string.IsNullOrEmpty(serializedResultByReflector.name))
-                    serializedResultByReflector.name = JsonSchema.Result;
-                return serializedResultByReflector;
-            });
+            // Unity object references deserialize and the snippet runs on the main thread; awaits inside resume there.
+            return await MainThread.Instance.RunAsync(() => RunOnMainThread(prepared, parameters)).Unwrap();
         }
 
-        static string GenerateFullCode(
-            string methodBody,
-            string className,
-            string methodName,
-            SerializedMemberList? parameters)
+        static async Task<SerializedMember?> RunOnMainThread(PreparedSnippet prepared, SerializedMemberList? parameters)
         {
-            var sb = new StringBuilder();
-
-            // Standard using directives
-            sb.AppendLine("using System;");
-            sb.AppendLine("using System.Collections;");
-            sb.AppendLine("using System.Collections.Generic;");
-            sb.AppendLine("using System.Linq;");
-            sb.AppendLine("using UnityEngine;");
-            // UnityEngine.UI ships in com.unity.ugui — only emit the using when its assembly
-            // is loaded; otherwise Roslyn fails with CS0234 when the package isn't installed.
-            if (IsAssemblyLoaded("UnityEngine.UI"))
-                sb.AppendLine("using UnityEngine.UI;");
-            sb.AppendLine("using UnityEngine.SceneManagement;");
-            sb.AppendLine("using AIGD;");
-            sb.AppendLine("using com.IvanMurzak.Unity.MCP.Runtime.Extensions;");
-            sb.AppendLine("using UnityEditor;");
-            sb.AppendLine();
-
-            // Build method parameter list from the parameters SerializedMemberList
-            var methodParams = parameters != null && parameters.Count > 0
-                ? string.Join(", ", parameters.Select(p => $"{p.typeName ?? "object"} {p.name ?? "param"}"))
-                : "";
-
-            // A body that returns a value ("return go.name;") gets an object return type, so the value comes back instead
-            // of a compile error; a body with a bare "return;" (or none) keeps void.
-            var returnsValue = BodyReturnsValue(methodBody);
-
-            sb.AppendLine($"public class {className}");
-            sb.AppendLine("{");
-            sb.AppendLine($"    public static {(returnsValue ? "object" : "void")} {methodName}({methodParams})");
-            sb.AppendLine("    {");
-
-            // Indent each line of the method body
-            foreach (var line in methodBody.Split('\n'))
-                sb.AppendLine($"        {line.TrimEnd()}");
-            if (returnsValue)
-                sb.AppendLine("        return null;");
-
-            sb.AppendLine("    }");
-            sb.AppendLine("}");
-
-            return sb.ToString();
-        }
-
-        internal static bool BodyReturnsValue(string methodBody) =>
-            System.Text.RegularExpressions.Regex.IsMatch(methodBody, @"\breturn\s+[^;\s]")
-            && !System.Text.RegularExpressions.Regex.IsMatch(methodBody, @"\breturn\s*;");
-
-        static bool IsAssemblyLoaded(string assemblyName)
-            => AssemblyUtils.AllAssemblies.Any(a =>
-                string.Equals(a.GetName().Name, assemblyName, StringComparison.Ordinal));
-
-        static bool ExecuteCSharpCode(
-            string className,
-            string methodName,
-            string code,
-            SerializedMemberList? parameters,
-            out object? returnValue,
-            out Type? returnType,
-            out string? error,
-            ILogger? logger = null)
-        {
-            if (string.IsNullOrEmpty(className))
-            {
-                returnValue = null;
-                returnType = null;
-                error = $"'{nameof(className)}' cannot be null or empty.";
-                return false;
-            }
-            if (string.IsNullOrEmpty(methodName))
-            {
-                returnValue = null;
-                returnType = null;
-                error = $"'{nameof(methodName)}' cannot be null or empty.";
-                return false;
-            }
-
+            var logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute");
             var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+            if (parameters != null)
+                prepared = prepared.WithValues(parameters.Select(p => reflector.Deserialize(data: p, logger: logger)).ToList());
 
-            var parsedParameters = parameters
-                ?.Select(p => reflector.Deserialize(
-                    data: p,
-                    logger: logger))
-                ?.ToArray();
+            var result = await Runner.Value.RunAsync(prepared);
+            if (!result.Success)
+                throw new Exception(Describe(result));
 
-            var compilation = CSharpCompilation.Create(
-                assemblyName: "DynamicAssembly",
-                syntaxTrees: new[] { CSharpSyntaxTree.ParseText(code) },
-                references: AssemblyUtils.AllAssemblies
-                    .Where(a => !a.IsDynamic) // Exclude dynamic assemblies
-                    .Where(a => !string.IsNullOrEmpty(a.Location))
-                    .Select(a =>
-                    {
-                        try
-                        {
-                            return MetadataReference.CreateFromFile(a.Location);
-                        }
-                        catch (DirectoryNotFoundException ex)
-                        {
-                            logger?.LogWarning(ex, "Directory not found for assembly '{AssemblyName}' at '{Location}': {Error}",
-                                a.GetName().Name, a.Location, ex.Message);
-                            return null;
-                        }
-                        catch (FileNotFoundException ex)
-                        {
-                            logger?.LogWarning(ex, "File not found for assembly '{AssemblyName}' at '{Location}': {Error}",
-                                a.GetName().Name, a.Location, ex.Message);
-                            return null;
-                        }
-                        catch (Exception ex)
-                        {
-                            logger?.LogWarning(ex, "Failed to load metadata reference for assembly '{AssemblyName}' at '{Location}': {Error}",
-                                a.GetName().Name, a.Location, ex.Message);
-                            return null;
-                        }
-                    })
-                    .OfType<MetadataReference>()
-                    .ToArray(),
-                options: new CSharpCompilationOptions(OutputKind.DynamicallyLinkedLibrary)
-            );
-
-            using (var ms = new MemoryStream())
+            if (result.Value is null)
             {
-                var result = compilation.Emit(ms);
-                if (!result.Success)
+                // Typed null reports the result type (C# name from Code-Exec); nothing returned is System.Void "Success".
+                var isVoid = result.ReturnType == "System.Void";
+                var member = new SerializedMember
                 {
-                    error = $"Compilation failed:\n{string.Join("\n", result.Diagnostics.Select(d => d.ToString()))}";
-                    returnValue = null;
-                    returnType = null;
-                    return false;
-                }
-                ms.Seek(0, SeekOrigin.Begin);
-                var assembly = Assembly.Load(ms.ToArray());
-                var type = assembly.GetType(className);
-                if (type == null)
-                {
-                    error = $"Class '{className}' not found in the compiled assembly.";
-                    returnValue = null;
-                    returnType = null;
-                    return false;
-                }
-                var method = type.GetMethod(methodName);
-                if (method == null)
-                {
-                    error = $"Method '{methodName}' not found in class '{className}'.";
-                    returnValue = null;
-                    returnType = null;
-                    return false;
-                }
-                try
-                {
-                    returnValue = method.Invoke(null, parsedParameters);
-                    returnType = method.ReturnType;
-                    error = null;
-                    return true;
-                }
-                catch (TargetInvocationException ex)
-                {
-                    error = $"Execution failed. TargetInvocationException: {ex.InnerException?.Message ?? ex.Message}\n{ex.InnerException?.StackTrace ?? ex.StackTrace}";
-                    returnValue = null;
-                    returnType = null;
-                    return false;
-                }
-                catch (Exception ex)
-                {
-                    error = $"Execution failed: {ex.InnerException?.Message ?? ex.Message}\n{ex.InnerException?.StackTrace ?? ex.StackTrace}";
-                    returnValue = null;
-                    returnType = null;
-                    return false;
-                }
+                    name = JsonSchema.Result,
+                    typeName = result.ReturnType ?? JsonSchema.Object
+                };
+                return member.SetJsonValue(isVoid ? "\"Success\"" : "\"null\"");
             }
+            if (result.Value is SerializedMember serialized)
+                return serialized;
+
+            var serializedResult = reflector.Serialize(obj: result.Value, logger: logger);
+            if (string.IsNullOrEmpty(serializedResult.name))
+                serializedResult.name = JsonSchema.Result;
+            return serializedResult;
+        }
+
+        static string ParameterName(SerializedMember parameter, int index) => parameter.name ?? $"param{index}";
+
+        /// <summary>An unknown type name fails here, by name, instead of surfacing as an untyped <c>object</c> variable.</summary>
+        static Type ParameterType(SerializedMember parameter, int index) =>
+            string.IsNullOrEmpty(parameter.typeName)
+                ? typeof(object)
+                : TypeUtils.GetType(parameter.typeName)
+                    ?? throw new Exception($"Parameter '{ParameterName(parameter, index)}': type '{parameter.typeName}' not found.");
+
+        static string[] DefaultUsings()
+        {
+            var usings = new List<string>
+            {
+                "System", "System.Collections", "System.Collections.Generic", "System.Linq", "System.Threading.Tasks",
+                "UnityEngine", "UnityEngine.SceneManagement", "AIGD", "com.IvanMurzak.Unity.MCP.Runtime.Extensions", "UnityEditor",
+            };
+            // UnityEngine.UI ships in com.unity.ugui: only when its assembly is loaded, or Roslyn fails with CS0234.
+            if (AssemblyUtils.AllAssemblies.Any(a => string.Equals(a.GetName().Name, "UnityEngine.UI", StringComparison.Ordinal)))
+                usings.Add("UnityEngine.UI");
+            return usings.ToArray();
+        }
+
+        /// <summary>
+        /// Full mode when the code declares class <paramref name="className"/> (namespace-qualified or not) with a static
+        /// method <paramref name="methodName"/>: returns its runtime type name. Null = run the code as a snippet.
+        /// Code with top-level statements is always a snippet (its own helper types may reuse the name); code with only
+        /// type declarations and none of them the entry point is an error, since as a snippet nothing would run.
+        /// </summary>
+        internal static string? FullSourceEntryType(string code, string className, string methodName)
+        {
+            // Parsed as a script, the way the snippet writer reads it: anything but a type or namespace is snippet code.
+            var script = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code, ScriptParseOptions).GetRoot();
+            if (script.Members.Any(m => !(m is BaseNamespaceDeclarationSyntax || m is BaseTypeDeclarationSyntax || m is DelegateDeclarationSyntax)))
+                return null;
+            var root = CSharpSyntaxTree.ParseText(code).GetRoot();
+            var types = root.DescendantNodes(n => n is CompilationUnitSyntax || n is BaseNamespaceDeclarationSyntax || n is TypeDeclarationSyntax)
+                .OfType<TypeDeclarationSyntax>()
+                .ToList();
+            if (types.Count == 0)
+                return null;
+            foreach (var type in types)
+            {
+                var fullName = RuntimeName(type);
+                if (type.Identifier.Text != className && fullName != className)
+                    continue;
+                if (type.Members.OfType<MethodDeclarationSyntax>().Any(m => m.Identifier.Text == methodName && m.Modifiers.Any(SyntaxKind.StaticKeyword)))
+                    return fullName;
+                throw new Exception($"Class '{className}' is declared, but it has no static method '{methodName}'.");
+            }
+            throw new Exception($"'csharpCode' declares no class '{className}' and has no statements to run. " +
+                "Set 'className' / 'methodName' to the entry point, or write plain statements.");
+        }
+
+        static readonly CSharpParseOptions ScriptParseOptions = new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.None, SourceCodeKind.Script);
+
+        static string RuntimeName(TypeDeclarationSyntax type)
+        {
+            var name = type.Identifier.Text;
+            for (var parent = type.Parent; parent != null; parent = parent.Parent)
+            {
+                if (parent is TypeDeclarationSyntax outer)
+                    name = outer.Identifier.Text + "+" + name;
+                else if (parent is BaseNamespaceDeclarationSyntax ns)
+                    name = ns.Name + "." + name;
+            }
+            return name;
+        }
+
+        static string Describe(ExecuteResult result)
+        {
+            var text = result.ErrorKind == ErrorKind.Compile
+                ? "Compilation failed:\n" + string.Join("\n", result.Diagnostics.Select(d => d.ToString()))
+                : $"Execution failed ({result.ErrorKind}): {result.Error}";
+            if (result.AutoImported.Count > 0)
+                text += "\nAuto-imported: " + string.Join(", ", result.AutoImported);
+            return text;
         }
     }
 }
