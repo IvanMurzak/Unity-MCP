@@ -23,6 +23,7 @@ function deps(overrides: Partial<ExecDeps> = {}): ExecDeps {
     open: vi.fn(async () => OPENED),
     wait: vi.fn(async () => READY),
     invoke: vi.fn(async () => CALLED),
+    isAlive: vi.fn(() => true),
     ...overrides,
   };
 }
@@ -103,6 +104,19 @@ describe('execCode', () => {
     expect(d.invoke).not.toHaveBeenCalled();
   });
 
+  it('stops waiting when the editor it started has exited', async () => {
+    const d = coldDeps({
+      open: vi.fn(async (): Promise<OpenProjectResult> => ({ ...OPENED, editorPid: 4242 })),
+      wait: vi.fn().mockResolvedValueOnce(NOT_READY).mockImplementation(async (o: { stopReason?: () => string | undefined }) =>
+        ({ ...NOT_READY, error: new Error(o.stopReason?.() ?? 'timeout') })),
+      isAlive: vi.fn(() => false),
+    });
+    const result = await execCode(options(d));
+    expect(result).toMatchObject({ kind: 'failure', reason: 'not-ready' });
+    expect((result as { message: string }).message).toContain('PID 4242');
+    expect(d.isAlive).toHaveBeenCalledWith(4242);
+  });
+
   it('passes a failed tool call through', async () => {
     const failure: RunToolResult = { kind: 'failure', success: false, endpoint: 'e', reason: 'http-error', httpStatus: 500, message: 'boom' };
     const d = deps({ invoke: vi.fn(async () => failure) });
@@ -123,6 +137,12 @@ describe('readToolResponse', () => {
       .toEqual({ ok: true, text: 'a\nb' });
     expect(readToolResponse({ status: 'error', content: [{ type: 'text', text: 'boom' }] }))
       .toEqual({ ok: false, text: 'boom' });
+  });
+
+  it('prints the structured result of a value-returning tool', () => {
+    expect(readToolResponse({ status: 'success', structured: { result: { typeName: 'System.Int32', value: 3 } } }))
+      .toEqual({ ok: true, text: '{"typeName":"System.Int32","value":3}' });
+    expect(readToolResponse({ status: 'success', structured: { result: 'hi' } })).toEqual({ ok: true, text: 'hi' });
   });
 
   it('falls back to JSON when there is no text content', () => {
@@ -163,6 +183,18 @@ describe('waitForReady', () => {
     const result = await waitForReady({ urls: ['http://a', 'http://b'], token: 't', timeoutMs: 1000, intervalMs: 10, probeImpl });
     expect(result).toMatchObject({ kind: 'success', success: true, baseUrl: 'http://b' });
     expect((probeImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1]).toMatchObject({ Authorization: 'Bearer t' });
+  });
+
+  it('fails instead of polling forever on an invalid timeout or interval', async () => {
+    const probeImpl = vi.fn(async () => ({ ok: false as const })) as never;
+    expect(await waitForReady({ urls: ['http://a'], timeoutMs: NaN, intervalMs: 10, probeImpl })).toMatchObject({ kind: 'failure' });
+    expect(await waitForReady({ urls: ['http://a'], timeoutMs: 50, intervalMs: 0, probeImpl })).toMatchObject({ kind: 'failure' });
+  });
+
+  it('ends early with the stop reason', async () => {
+    const probeImpl = vi.fn(async () => ({ ok: false as const })) as never;
+    const result = await waitForReady({ urls: ['http://a'], timeoutMs: 60_000, intervalMs: 10, probeImpl, stopReason: () => 'gone' });
+    expect(result).toMatchObject({ kind: 'failure', error: new Error('gone') });
   });
 
   it('times out when nothing answers', async () => {

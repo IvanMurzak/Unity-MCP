@@ -5,6 +5,7 @@ import { isLoopbackHost } from '@baizor/gamedev-cli-core';
 import { openProject } from './open.js';
 import { runTool } from './run-tool.js';
 import { waitForReady } from './wait-for-ready.js';
+import { isProcessAlive } from '../utils/unity-shutdown.js';
 import type { OpenProjectOptions, OpenProjectResult, RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
 import type { WaitForReadyOptions, WaitForReadyResult } from './wait-for-ready.js';
 
@@ -21,6 +22,7 @@ export interface ExecDeps {
   open: (options: OpenProjectOptions) => Promise<OpenProjectResult>;
   wait: (options: WaitForReadyOptions) => Promise<WaitForReadyResult>;
   invoke: (options: RunToolOptions) => Promise<RunToolResult>;
+  isAlive: (pid: number) => boolean;
 }
 
 export interface ExecCodeOptions {
@@ -79,7 +81,9 @@ export type ExecCodeResult = ExecCodeSuccess | ExecCodeFailure;
  * stays warm.
  */
 export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult> {
-  const deps: ExecDeps = { open: openProject, wait: waitForReady, invoke: runTool, ...options.deps };
+  const deps: ExecDeps = {
+    open: openProject, wait: waitForReady, invoke: runTool, isAlive: pid => isProcessAlive(pid), ...options.deps,
+  };
   const status = options.onStatus ?? (() => {});
   const idleTimeoutSeconds = options.idleTimeoutSeconds ?? DEFAULT_IDLE_SECONDS;
 
@@ -108,11 +112,17 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
     if (!opened.alreadyRunning) status(`Editor started; it quits after ${idleTimeoutSeconds}s without tool calls.`);
 
     status('Waiting for the MCP server...');
+    // An editor that dies while starting (e.g. batchmode aborts on compile errors) would otherwise cost the whole
+    // ready timeout.
+    const launchedPid = opened.alreadyRunning ? undefined : opened.editorPid;
     const ready = await deps.wait({
       urls: options.probeUrls,
       token: options.token,
       timeoutMs: options.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS,
       intervalMs: 2000,
+      stopReason: () => launchedPid !== undefined && !deps.isAlive(launchedPid)
+        ? `The Unity Editor (PID ${launchedPid}) exited before its MCP server answered; see the Editor log`
+        : undefined,
     });
     if (ready.kind === 'failure') {
       return { kind: 'failure', success: false, reason: 'not-ready', message: ready.error.message, error: ready.error };
@@ -159,13 +169,28 @@ export function buildScriptExecuteInput(code: string, usings: string[], include:
   };
 }
 
-/** The tool's text output and whether it reported success. */
+/**
+ * The tool's text output and whether it reported success. A tool that returns a value (as `script-execute` does) is
+ * answered as `{ status, structured: { result } }`; the result alone is the output then.
+ */
 export function readToolResponse(data: unknown): { ok: boolean; text: string } {
   if (typeof data === 'string') return { ok: true, text: data };
-  const response = data as { status?: string; content?: Array<{ type?: string; text?: string }> } | null;
+  const response = data as {
+    status?: string;
+    content?: Array<{ type?: string; text?: string }>;
+    structured?: unknown;
+  } | null;
+  const ok = response?.status === undefined || response.status === 'success';
+  const structured = response?.structured;
+  if (structured !== undefined && structured !== null) {
+    const value = typeof structured === 'object' && 'result' in structured
+      ? (structured as { result: unknown }).result
+      : structured;
+    return { ok, text: typeof value === 'string' ? value : JSON.stringify(value) ?? '' };
+  }
   const texts = (response?.content ?? []).filter(c => c?.type === 'text' && typeof c.text === 'string').map(c => c.text!);
   return {
-    ok: response?.status === undefined || response.status === 'success',
+    ok,
     text: texts.length > 0 ? texts.join('\n') : data === undefined ? '' : JSON.stringify(data),
   };
 }

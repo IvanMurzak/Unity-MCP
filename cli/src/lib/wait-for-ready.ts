@@ -13,6 +13,8 @@ export interface WaitForReadyOptions {
   intervalMs: number;
   /** Called before every probe round with the time left. */
   onTick?: (remainingMs: number) => void;
+  /** Checked before every probe round: a returned message ends the wait as a failure (e.g. the editor exited). */
+  stopReason?: () => string | undefined;
   /** Injection point for tests. */
   probeImpl?: typeof defaultProbe;
 }
@@ -43,17 +45,19 @@ export async function waitForReady(options: WaitForReadyOptions): Promise<WaitFo
   const headers: Record<string, string> = { 'Content-Type': 'application/json' };
   if (options.token) headers['Authorization'] = `Bearer ${options.token}`;
   const startTime = Date.now();
+  const fail = (message: string): WaitForReadyFailure =>
+    ({ kind: 'failure', success: false, elapsedMs: Date.now() - startTime, error: new Error(message) });
+
+  // A NaN / missing value never satisfies `elapsed >= timeoutMs` and would poll forever.
+  if (!(options.timeoutMs >= 0) || !(options.intervalMs > 0)) {
+    return fail('timeoutMs must be a non-negative number and intervalMs a positive number');
+  }
 
   while (true) {
     const elapsed = Date.now() - startTime;
-    if (elapsed >= options.timeoutMs) {
-      return {
-        kind: 'failure',
-        success: false,
-        elapsedMs: elapsed,
-        error: new Error(`MCP server did not answer within ${options.timeoutMs} ms`),
-      };
-    }
+    if (elapsed >= options.timeoutMs) return fail(`MCP server did not answer within ${options.timeoutMs} ms`);
+    const stopped = options.stopReason?.();
+    if (stopped !== undefined) return fail(stopped);
     options.onTick?.(options.timeoutMs - elapsed);
 
     const probeTimeout = Math.min(options.intervalMs, MAX_PROBE_TIMEOUT_MS);
@@ -62,7 +66,7 @@ export async function waitForReady(options: WaitForReadyOptions): Promise<WaitFo
       let pending = options.urls.length;
       if (pending === 0) resolve(null);
       for (const url of options.urls) {
-        probe(url, headers, probeTimeout).then(result => {
+        probe(url, headers, probeTimeout).catch((): ProbeResult => ({ ok: false, reason: 'probe threw' })).then(result => {
           if (result.ok) resolve(result);
           else if (--pending === 0) resolve(null);
         });

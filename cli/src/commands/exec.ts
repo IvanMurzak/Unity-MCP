@@ -21,6 +21,16 @@ interface ExecCliOptions {
   token?: string;
 }
 
+/** `parsePositiveIntFlag` also accepts 0, which none of the exec timeouts can mean. */
+function parseNonZeroIntFlag(raw: string | undefined, flagName: string, fallback: number): number {
+  const value = parsePositiveIntFlag(raw, flagName, fallback);
+  if (value === 0) {
+    ui.error(`${flagName} must be greater than 0`);
+    process.exit(1);
+  }
+  return value;
+}
+
 function collect(value: string, previous: string[]): string[] {
   return [...previous, value];
 }
@@ -50,9 +60,9 @@ export const execCommand = new Command('exec')
   .option('--url <url>', 'Direct server URL override (bypasses config)')
   .option('--token <token>', 'Bearer token override (bypasses config)')
   .action(async (codeArg: string | undefined, options: ExecCliOptions) => {
-    const idleTimeoutSeconds = parsePositiveIntFlag(options.idle, '--idle', 300);
-    const readyTimeoutMs = parsePositiveIntFlag(options.readyTimeout, '--ready-timeout', 300_000);
-    const timeoutMs = parsePositiveIntFlag(options.timeout, '--timeout', 180_000);
+    const idleTimeoutSeconds = parseNonZeroIntFlag(options.idle, '--idle', 300);
+    const readyTimeoutMs = parseNonZeroIntFlag(options.readyTimeout, '--ready-timeout', 300_000);
+    const timeoutMs = parseNonZeroIntFlag(options.timeout, '--timeout', 180_000);
     let code: string;
     try {
       code = readCode(codeArg, options.file);

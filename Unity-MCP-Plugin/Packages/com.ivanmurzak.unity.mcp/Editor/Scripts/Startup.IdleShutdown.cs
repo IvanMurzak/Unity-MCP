@@ -29,12 +29,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static void StartIdleShutdownIfRequested()
         {
+            // Asset import workers inherit the editor's environment; only the main editor may quit itself.
+            if (AssetDatabase.IsAssetImportWorkerProcess())
+                return;
+
             var seconds = EnvironmentUtils.ReadIdleTimeoutSeconds(ArgsUtils.ParseCommandLineArguments(), Environment.GetEnvironmentVariable);
             if (seconds == null)
                 return;
 
             // A domain reload re-runs this: the timer starts over, which is fine — a reload means the editor was busy.
-            _idleTimer = new IdleShutdownTimer(TimeSpan.FromSeconds(seconds.Value), DateTime.UtcNow);
+            _idleTimer = new IdleShutdownTimer(TimeSpan.FromSeconds(seconds.Value), MonotonicNow());
             EditorApplication.update += CheckIdleShutdown;
             _logger.LogInformation("Idle shutdown armed: the editor quits after {seconds}s without tool calls", seconds.Value);
         }
@@ -47,8 +51,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var calls = UnityMcpPluginEditor.HasInstance
                 ? UnityMcpPluginEditor.Instance.McpPluginInstance?.ToolCallsCount ?? 0
                 : 0;
-            var busy = EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode;
-            if (!_idleTimer.ShouldQuit(DateTime.UtcNow, calls, busy))
+            // The call counter only moves when a call starts; a running test pass is the long call we can see.
+            var busy = EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode
+                || API.Tool_Tests.IsTestRunActive(out _);
+            if (!_idleTimer.ShouldQuit(MonotonicNow(), calls, busy))
                 return;
 
             EditorApplication.update -= CheckIdleShutdown;
@@ -57,6 +63,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             SaveForIdleShutdown();
             EditorApplication.Exit(0);
         }
+
+        /// <summary>Editor uptime as a timestamp: unlike the wall clock, a system clock change cannot fire or stall the timer.</summary>
+        static DateTime MonotonicNow() => DateTime.MinValue.AddSeconds(EditorApplication.timeSinceStartup);
 
         /// <summary>Saves changed assets and scenes that already have a file; an untitled scene has nowhere to go.</summary>
         static void SaveForIdleShutdown()
@@ -80,23 +89,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
     /// <summary>
     /// Idle bookkeeping without Unity APIs: any change of the tool-call counter (a new call, or a reset after a reload)
-    /// counts as activity, and so does a busy editor (compiling, importing, play mode).
+    /// counts as activity, and so does a busy editor (compiling, importing, play mode, a test run) and a stalled update
+    /// loop (the main thread was blocked, typically by a long tool call that only just returned).
     /// </summary>
     public sealed class IdleShutdownTimer
     {
+        /// <summary>A gap between two checks longer than this means the main thread was busy.</summary>
+        public static readonly TimeSpan StallThreshold = TimeSpan.FromSeconds(1);
+
         readonly TimeSpan _timeout;
         DateTime _lastActivity;
+        DateTime _lastCheck;
         ulong _lastCalls;
 
         public IdleShutdownTimer(TimeSpan timeout, DateTime now)
         {
             _timeout = timeout;
             _lastActivity = now;
+            _lastCheck = now;
         }
 
         public bool ShouldQuit(DateTime now, ulong toolCalls, bool busy)
         {
-            if (busy || toolCalls != _lastCalls)
+            var stalled = now - _lastCheck > StallThreshold;
+            _lastCheck = now;
+            if (busy || stalled || toolCalls != _lastCalls)
             {
                 _lastCalls = toolCalls;
                 _lastActivity = now;

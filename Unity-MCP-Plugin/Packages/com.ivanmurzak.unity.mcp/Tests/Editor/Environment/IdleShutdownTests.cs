@@ -20,38 +20,67 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         static readonly DateTime T0 = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
 
+        /// <summary>Editor update loop: checks every 0.1 s from <paramref name="now"/> up to <paramref name="until"/>.</summary>
+        static bool RunUntil(IdleShutdownTimer timer, ref DateTime now, double until, ulong calls = 0, bool busy = false)
+        {
+            var end = T0.AddSeconds(until);
+            var quit = false;
+            while (now < end && !quit)
+            {
+                now = now.AddSeconds(0.1);
+                quit = timer.ShouldQuit(now, calls, busy);
+            }
+            return quit;
+        }
+
         [Test]
         public void Quits_AfterTimeout_WithoutCalls()
         {
             var timer = new IdleShutdownTimer(TimeSpan.FromSeconds(300), T0);
-            Assert.IsFalse(timer.ShouldQuit(T0.AddSeconds(299), 0, busy: false));
-            Assert.IsTrue(timer.ShouldQuit(T0.AddSeconds(300), 0, busy: false));
+            var now = T0;
+            Assert.IsFalse(RunUntil(timer, ref now, 299));
+            Assert.IsTrue(RunUntil(timer, ref now, 301));
         }
 
         [Test]
         public void ToolCall_RestartsTheTimer()
         {
             var timer = new IdleShutdownTimer(TimeSpan.FromSeconds(300), T0);
-            Assert.IsFalse(timer.ShouldQuit(T0.AddSeconds(200), 1, busy: false));
-            Assert.IsFalse(timer.ShouldQuit(T0.AddSeconds(450), 1, busy: false));
-            Assert.IsTrue(timer.ShouldQuit(T0.AddSeconds(500), 1, busy: false));
+            var now = T0;
+            Assert.IsFalse(RunUntil(timer, ref now, 200));
+            Assert.IsFalse(RunUntil(timer, ref now, 450, calls: 1));
+            Assert.IsTrue(RunUntil(timer, ref now, 501, calls: 1));
         }
 
         [Test]
         public void CounterReset_CountsAsActivity()
         {
             var timer = new IdleShutdownTimer(TimeSpan.FromSeconds(300), T0);
-            Assert.IsFalse(timer.ShouldQuit(T0.AddSeconds(100), 5, busy: false));
-            Assert.IsFalse(timer.ShouldQuit(T0.AddSeconds(350), 0, busy: false));
-            Assert.IsTrue(timer.ShouldQuit(T0.AddSeconds(650), 0, busy: false));
+            var now = T0;
+            Assert.IsFalse(RunUntil(timer, ref now, 100, calls: 5));
+            Assert.IsFalse(RunUntil(timer, ref now, 350, calls: 0)); // reset at 100 s
+            Assert.IsTrue(RunUntil(timer, ref now, 401, calls: 0));
         }
 
         [Test]
         public void BusyEditor_NeverQuits()
         {
             var timer = new IdleShutdownTimer(TimeSpan.FromSeconds(300), T0);
-            Assert.IsFalse(timer.ShouldQuit(T0.AddSeconds(1000), 0, busy: true));
-            Assert.IsFalse(timer.ShouldQuit(T0.AddSeconds(1299), 0, busy: false));
+            var now = T0;
+            Assert.IsFalse(RunUntil(timer, ref now, 1000, busy: true));
+            Assert.IsFalse(RunUntil(timer, ref now, 1299));
+            Assert.IsTrue(RunUntil(timer, ref now, 1301));
+        }
+
+        [Test]
+        public void StalledUpdateLoop_CountsAsActivity()
+        {
+            // A long blocking tool call freezes the update loop; when it returns, the editor must not quit at once.
+            var timer = new IdleShutdownTimer(TimeSpan.FromSeconds(300), T0);
+            Assert.IsFalse(timer.ShouldQuit(T0.AddSeconds(600), 0, busy: false));
+            var now = T0.AddSeconds(600);
+            Assert.IsFalse(RunUntil(timer, ref now, 899));
+            Assert.IsTrue(RunUntil(timer, ref now, 901));
         }
 
         [Test]
