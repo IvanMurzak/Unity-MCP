@@ -462,13 +462,41 @@ public class Script
                 .Execute();
         }
 
-        [TestCase("return 42;", true)]
-        [TestCase("var go = GameObject.Find(\"A\");\nreturn go.name;", true)]
-        [TestCase("Debug.Log(1);", false)]
-        [TestCase("if (x) return;\nDebug.Log(1);", false)]
-        [TestCase("returnValue = 1;", false)]
-        public void Script_Execute_BodyOnly_ReturnTypeDetection(string body, bool returnsValue) =>
-            Assert.AreEqual(returnsValue, Tool_Script.BodyReturnsValue(body));
+        [TestCase("public class Script { public static int Main() => 1; }", "Script")]
+        [TestCase("namespace N { public static class Script { public static void Main() { } } }", "N.Script")]
+        [TestCase("public class Outer { public static class Script { public static void Main() { } } }", "Outer+Script")]
+        [TestCase("var x = 1;\nx + 1", null)]
+        [TestCase("class Helper { }\nnew Helper()", null)]
+        public void Script_Execute_FullModeDetection(string code, string? expectedEntryType) =>
+            Assert.AreEqual(expectedEntryType, Tool_Script.FullSourceEntryType(code, "Script", "Main"));
+
+        [Test]
+        public void Script_Execute_FullModeDetection_RejectsClassWithoutStaticMethod() =>
+            Assert.Throws<System.Exception>(() => Tool_Script.FullSourceEntryType("public class Script { public void Main() { } }", "Script", "Main"));
+
+        [Test]
+        public void Script_Execute_Snippet_LastExpressionIsResult()
+        {
+            new CallToolExecutor(
+                toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                json: $@"{{
+                    ""csharpCode"": {JsonEscape("var n = 6;\nn * 7")}
+                }}")
+                .AddChild(new ValidateValueReturnExecutor(42))
+                .Execute();
+        }
+
+        [Test]
+        public void Script_Execute_Snippet_OwnUsingsAndLocalFunction()
+        {
+            new CallToolExecutor(
+                toolMethod: typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute)),
+                json: $@"{{
+                    ""csharpCode"": {JsonEscape("using SB = System.Text.StringBuilder;\nint Twice(int v) => v * 2;\nnew SB().Append(Twice(21)).ToString().Length * 21")}
+                }}")
+                .AddChild(new ValidateValueReturnExecutor(42))
+                .Execute();
+        }
 
         [Test]
         public void Script_Execute_ReturnsNull_Success()
