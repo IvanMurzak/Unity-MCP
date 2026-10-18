@@ -18,7 +18,6 @@ using System.Threading.Tasks;
 using com.IvanMurzak.CodeExec;
 using com.IvanMurzak.CodeExec.Roslyn;
 using com.IvanMurzak.McpPlugin;
-using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -36,12 +35,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// <summary>
         /// Compiles and runs agent C# through the vendored Code-Exec runtime (Editor/Scripts/CodeExec). One runner per
         /// domain: Mono cannot unload assemblies, so identical requests reuse the already-loaded one (its cache).
+        /// Built without Unity APIs, so it can compile off the main thread (the editor's working directory is the project).
         /// </summary>
         static readonly Lazy<CodeRunner> Runner = new Lazy<CodeRunner>(() => new CodeRunner(new RoslynCSharpCompiler(), new CodeRunnerOptions
         {
             DefaultUsings = DefaultUsings(),
-            IncludeRoot = Path.Combine(UnityMcpPluginEditor.ProjectRootPath, ".ai-game-dev", "snippets"),
-            Host = new DefaultAssemblyHost(),
+            IncludeRoot = Path.GetFullPath(Path.Combine(".ai-game-dev", "snippets")),
             ValueConverter = value => value, // Mono keeps the assembly loaded: the reflector serializes the live value
             LogCaptures = new List<ILogCapture>(), // Debug.Log stays in the Unity console
         }));
@@ -72,10 +71,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `AIGD.GameObjectRef` — passes a `GameObjectRef` POCO directly; call `goRef.FindGameObject()` to resolve it.\n" +
             "- `AIGD.ComponentRef` — passes a `ComponentRef` POCO.\n" +
             "- `AIGD.ObjectRef` — passes a base `ObjectRef` POCO.")]
-        [Description("Compiles and runs C# in the Unity Editor. Snippet mode (default): plain statements, the last expression is " +
-            "the result, own usings / local classes / await allowed, errors point at snippet lines. Full mode: when the code " +
-            "declares class 'className' with static method 'methodName', that method runs. Unity objects can be passed as parameters.")]
-        public static Task<SerializedMember?> Execute
+        [Description("Compiles and runs C# in the Unity Editor: plain statements with the last expression as the result " +
+            "(own usings, local classes, await allowed), or a declared class 'className' with static method 'methodName'.")]
+        public static async Task<SerializedMember?> Execute
         (
             [Description("C# code. Snippet: 'var go = GameObject.Find(\"Player\");\\ngo.transform.position'. " +
                 "Full: 'public class Script { public static int Main() { return 42; } }'.")]
@@ -84,10 +82,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             string className = "Script",
             [Description("Full mode: the static method to run.")]
             string methodName = "Main",
-            [Description("Parameters, each with 'name' and 'typeName'; snippet variables or the method's arguments in order. " +
-                "Unity references: 'UnityEngine.GameObject' from '{\"instanceID\": N}', '{\"name\": \"...\"}' or '{\"path\": \"...\"}'; " +
-                "'UnityEngine.Component' (or a subtype) from '{\"instanceID\": N}'; 'AIGD.GameObjectRef' / 'AIGD.ComponentRef' / " +
-                "'AIGD.ObjectRef' as POCOs. Leave empty when none.")]
+            [Description("Parameters, each with 'name' and 'typeName': the snippet's variables or the method's arguments in order. " +
+                "Unity object types and value formats: see the skill. Leave empty when none.")]
             [Rql.ToolFormat.RqlArgument("Values for the snippet's / method's parameters by name, e.g. {go: ref(\"GameObject#12\"), n: 6}. " +
                 "Leave empty if there are none.")]
             SerializedMemberList? parameters = null,
@@ -101,46 +97,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             if (string.IsNullOrEmpty(csharpCode))
                 throw new Exception($"'{nameof(csharpCode)}' is null or empty. Please provide valid C# code to execute.");
-            if (string.IsNullOrEmpty(className))
-                throw new Exception($"'{nameof(className)}' cannot be null or empty.");
-            if (string.IsNullOrEmpty(methodName))
-                throw new Exception($"'{nameof(methodName)}' cannot be null or empty.");
 
-            // On the main thread the lambda runs inline; awaits inside resume on Unity's main-thread context.
-            return MainThread.Instance.RunAsync(() => ExecuteOnMainThread(csharpCode, className, methodName, parameters, isMethodBody, usings, include)).Unwrap();
-        }
-
-        static async Task<SerializedMember?> ExecuteOnMainThread(string csharpCode, string className, string methodName,
-            SerializedMemberList? parameters, bool isMethodBody, string[]? usings, string[]? include)
-        {
-            var logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute");
-            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
-
+            // Compile on the calling thread (MCP calls arrive off the main thread): only the parameter TYPES are needed
+            // here. On the main thread (e.g. tests) everything simply runs inline, as before.
             var request = new ExecuteRequest
             {
                 Code = csharpCode,
                 Usings = usings ?? Array.Empty<string>(),
                 Include = include ?? Array.Empty<string>(),
-                Parameters = ToSnippetParameters(parameters, reflector, logger),
+                Parameters = parameters?.Select((p, i) => new SnippetParameter(ParameterName(p, i), TypeUtils.GetType(p.typeName) ?? typeof(object), null)).ToList()
+                    ?? (IReadOnlyList<SnippetParameter>)Array.Empty<SnippetParameter>(),
                 TimeoutMs = 120_000,
             };
-            if (!isMethodBody)
+            if (!isMethodBody && FullSourceEntryType(csharpCode, className, methodName) is { } entryType)
             {
-                request.EntryType = FullSourceEntryType(csharpCode, className, methodName);
-                request.EntryMethod = request.EntryType == null ? null : methodName;
+                request.EntryType = entryType;
+                request.EntryMethod = methodName;
+            }
+            var prepared = Runner.Value.Prepare(request);
+
+            // Unity object references deserialize and the snippet runs on the main thread; awaits inside resume there.
+            return await MainThread.Instance.RunAsync(() => RunOnMainThread(prepared, request, parameters)).Unwrap();
+        }
+
+        static async Task<SerializedMember?> RunOnMainThread(PreparedSnippet prepared, ExecuteRequest request, SerializedMemberList? parameters)
+        {
+            var logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute");
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+            if (parameters != null)
+            {
+                request.Parameters = parameters.Select((p, i) =>
+                {
+                    var value = reflector.Deserialize(data: p, logger: logger);
+                    return new SnippetParameter(ParameterName(p, i), request.Parameters[i].Type, value);
+                }).ToList();
             }
 
-            var result = await Runner.Value.ExecuteAsync(request);
+            var result = await Runner.Value.RunAsync(prepared);
             if (!result.Success)
                 throw new Exception(Describe(result));
 
             if (result.Value is null)
             {
+                // Typed null keeps the reflector's type name; nothing returned is System.Void "Success".
                 var isVoid = result.ReturnType == "System.Void";
                 var member = new SerializedMember
                 {
                     name = JsonSchema.Result,
-                    typeName = isVoid ? "System.Void" : (result.ReturnType ?? JsonSchema.Object)
+                    typeName = TypeUtils.GetType(result.ReturnType)?.FullName ?? result.ReturnType ?? JsonSchema.Object
                 };
                 return member.SetJsonValue(isVoid ? "\"Success\"" : "\"null\"");
             }
@@ -152,6 +156,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 serializedResult.name = JsonSchema.Result;
             return serializedResult;
         }
+
+        static string ParameterName(SerializedMember parameter, int index) => parameter.name ?? $"param{index}";
 
         static string[] DefaultUsings()
         {
@@ -166,26 +172,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return usings.ToArray();
         }
 
-        static IReadOnlyList<SnippetParameter> ToSnippetParameters(SerializedMemberList? parameters, Reflector reflector, ILogger logger)
-        {
-            if (parameters == null || parameters.Count == 0)
-                return Array.Empty<SnippetParameter>();
-            return parameters.Select((p, i) =>
-            {
-                var value = reflector.Deserialize(data: p, logger: logger);
-                var type = TypeUtils.GetType(p.typeName) ?? value?.GetType() ?? typeof(object);
-                return new SnippetParameter(p.name ?? $"param{i}", type, value);
-            }).ToList();
-        }
-
         /// <summary>
         /// Full mode when the code declares class <paramref name="className"/> (namespace-qualified or not) with a static
         /// method <paramref name="methodName"/>: returns its runtime type name. Null = run the code as a snippet.
         /// </summary>
         internal static string? FullSourceEntryType(string code, string className, string methodName)
         {
+            if (string.IsNullOrEmpty(className) || !code.Contains(className.Split('.', '+').Last()))
+                return null; // most snippets never mention the class: skip the parse
             var root = CSharpSyntaxTree.ParseText(code).GetRoot();
-            foreach (var type in root.DescendantNodes().OfType<TypeDeclarationSyntax>())
+            var types = root.DescendantNodes(n => n is CompilationUnitSyntax || n is BaseNamespaceDeclarationSyntax || n is TypeDeclarationSyntax)
+                .OfType<TypeDeclarationSyntax>();
+            foreach (var type in types)
             {
                 var fullName = RuntimeName(type);
                 if (type.Identifier.Text != className && fullName != className)

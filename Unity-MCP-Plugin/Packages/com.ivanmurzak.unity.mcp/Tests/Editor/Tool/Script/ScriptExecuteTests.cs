@@ -540,18 +540,6 @@ public class Script
                 .Execute();
         }
 
-        [Test]
-        public void Script_Execute_BodyOnly_ReturnsValue_Fails()
-        {
-            Assert.Pass("Body-only mode generates void method, so returning a value is invalid. Skipping this test case.");
-        }
-
-        [Test]
-        public void Script_Execute_BodyOnly_ReturnsNull_Fails()
-        {
-            Assert.Pass("Body-only mode generates void method, so returning null is invalid. Skipping this test case.");
-        }
-
         [UnityTest]
         public IEnumerator Script_Execute_CompilationError_Fails()
         {
