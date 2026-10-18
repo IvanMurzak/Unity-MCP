@@ -21,30 +21,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     /// <summary>
     /// Under <c>-nographics</c> nothing renders and Unity raises no error, so a capture would be a blank gray image.
-    /// Every screenshot tool must report that instead. Only meaningful in an editor started with <c>-nographics</c>.
+    /// Every screenshot tool must report that instead.
     /// </summary>
     public class ScreenshotNoGraphicsTests : BaseTest
     {
-        static readonly (string name, Func<ResponseCallTool> capture)[] Tools =
+        static readonly Tool_Screenshot Tool = new Tool_Screenshot();
+
+        static readonly TestCaseData[] Captures =
         {
-            ("screenshot-camera", () => new Tool_Screenshot().ScreenshotCamera(width: 64, height: 64)),
-            ("screenshot-game-view", () => new Tool_Screenshot().ScreenshotGameView()),
-            ("screenshot-scene-view", () => new Tool_Screenshot().ScreenshotSceneView(width: 64, height: 64)),
-            ("screenshot-isolated", () => new Tool_Screenshot().ScreenshotIsolated(gameObjectRef: null)),
+            new TestCaseData((Func<ResponseCallTool>)(() => Tool.ScreenshotCamera(width: 64, height: 64))).SetName("ScreenshotCamera_WithoutGraphicsDevice_ReportsIt"),
+            new TestCaseData((Func<ResponseCallTool>)(() => Tool.ScreenshotGameView())).SetName("ScreenshotGameView_WithoutGraphicsDevice_ReportsIt"),
+            new TestCaseData((Func<ResponseCallTool>)(() => Tool.ScreenshotSceneView(width: 64, height: 64))).SetName("ScreenshotSceneView_WithoutGraphicsDevice_ReportsIt"),
+            new TestCaseData((Func<ResponseCallTool>)(() => Tool.ScreenshotIsolated(gameObjectRef: null))).SetName("ScreenshotIsolated_WithoutGraphicsDevice_ReportsIt"),
         };
 
-        [Test]
-        public void ScreenshotTools_WithoutGraphicsDevice_ReportIt()
+        [TestCaseSource(nameof(Captures))]
+        public void Capture_WithoutGraphicsDevice_ReportsIt(Func<ResponseCallTool> capture)
         {
             if (SystemInfo.graphicsDeviceType != GraphicsDeviceType.Null)
                 Assert.Ignore("The editor has a graphics device; run with -nographics to exercise this.");
 
-            foreach (var (name, capture) in Tools)
-            {
-                var result = capture();
-                Assert.AreEqual(ResponseStatus.Error, result.Status, name);
-                StringAssert.Contains("-nographics", string.Join("\n", result.Content.Select(c => c.Text)), name);
-            }
+            var result = capture();
+            Assert.AreEqual(ResponseStatus.Error, result.Status);
+            StringAssert.Contains("-nographics", string.Join("\n", result.Content.Select(c => c.Text)));
         }
     }
 }

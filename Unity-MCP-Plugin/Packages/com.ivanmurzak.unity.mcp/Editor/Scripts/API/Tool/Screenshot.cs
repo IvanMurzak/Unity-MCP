@@ -11,6 +11,7 @@
 #nullable enable
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
 
@@ -37,8 +38,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         // `-nographics` (no graphics device) renders nothing yet raises no error: every capture would come back as a
         // blank gray image that looks like a valid screenshot. Fail loudly instead.
+        // The device never changes during a session; read once on the main thread (tools may run off it).
+        private static bool _noGraphicsDevice;
+
+        [InitializeOnLoadMethod]
+        private static void ReadGraphicsDevice() => _noGraphicsDevice = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
+
         private static ResponseCallTool? NoGraphicsError() =>
-            SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null
+            _noGraphicsDevice
                 ? ResponseCallTool.Error("Screenshots need a graphics device, but the editor runs without one (-nographics). " +
                     "Start it without -nographics (headless -batchmode keeps rendering).")
                 : null;
