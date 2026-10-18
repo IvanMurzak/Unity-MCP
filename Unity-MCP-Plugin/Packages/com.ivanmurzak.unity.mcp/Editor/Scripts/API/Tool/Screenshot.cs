@@ -39,15 +39,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         // `-nographics` (no graphics device) renders nothing yet raises no error: every capture would come back as a
         // blank gray image that looks like a valid screenshot. Fail loudly instead.
         // The device never changes during a session; read once on the main thread (tools may run off it).
-        private static bool _noGraphicsDevice;
+        // volatile: written on the main thread, read on tool threads. internal: tests force it to cover the guard
+        // in editors that do have a device.
+        internal static volatile bool NoGraphicsDevice;
 
         [InitializeOnLoadMethod]
-        private static void ReadGraphicsDevice() => _noGraphicsDevice = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
+        private static void ReadGraphicsDevice() => NoGraphicsDevice = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
 
         private static ResponseCallTool? NoGraphicsError() =>
-            _noGraphicsDevice
-                ? ResponseCallTool.Error("Screenshots need a graphics device, but the editor runs without one (-nographics). " +
-                    "Start it without -nographics (headless -batchmode keeps rendering).")
+            NoGraphicsDevice
+                ? ResponseCallTool.Error("Screenshots need a graphics device, but the editor has none " +
+                    "(GraphicsDeviceType.Null, e.g. started with -nographics). " +
+                    "Start it with a graphics device: drop -nographics (headless -batchmode keeps rendering).")
                 : null;
 
         // Scale (width, height) so the longest edge is at most MaxScreenshotDimension, preserving
