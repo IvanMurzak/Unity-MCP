@@ -52,6 +52,15 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         /// <summary>Runtime-only (never a config field): an editor quits after this many seconds without tool calls.</summary>
         public const string EnvIdleTimeout = "UNITY_MCP_IDLE_TIMEOUT";
 
+        // Editor-session contract shared by every engine CLI (cli-core EditorSession): set on an editor a CLI started.
+        /// <summary>Seconds without a tool call after which a CLI-started editor quits (wins over <see cref="EnvIdleTimeout"/>).</summary>
+        public const string EnvSessionIdleSeconds = "AIGD_SESSION_IDLE_SECONDS";
+        /// <summary><see cref="SessionOwnerCli"/> when a CLI session started the editor (not the user).</summary>
+        public const string EnvSessionOwner = "AIGD_SESSION_OWNER";
+        /// <summary>The nonce of the CLI's session lease (<c>.ai-game-dev/session.json</c>).</summary>
+        public const string EnvSessionNonce = "AIGD_SESSION_NONCE";
+        public const string SessionOwnerCli = "cli";
+
         // Short flag aliases recognised by the in-plugin command-line parser.
         // The CLI tool already translates these to the equivalent env vars before
         // launching Unity, but the plugin still parses them directly so
@@ -286,12 +295,34 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         public static string SanitizeOverride(string raw) => raw.Trim().Trim('"');
 
         /// <summary>
-        /// <see cref="EnvIdleTimeout"/> in seconds (args beat env). Null when unset or not a positive whole number.
+        /// The idle timeout in seconds (args beat env): <see cref="EnvSessionIdleSeconds"/> of a CLI session (see
+        /// <see cref="IsCliSession"/>), else <see cref="EnvIdleTimeout"/>. Null when unset or not a positive whole number.
         /// </summary>
         public static int? ReadIdleTimeoutSeconds(IReadOnlyDictionary<string, string> argReader, Func<string, string?> envReader)
         {
-            var raw = ResolveOverride(EnvIdleTimeout, flagAlias: null, argReader, envReader);
-            return raw != null && int.TryParse(SanitizeOverride(raw), out var seconds) && seconds > 0 ? seconds : (int?)null;
+            int? Read(string key)
+            {
+                var raw = ResolveOverride(key, flagAlias: null, argReader, envReader);
+                return raw != null && int.TryParse(SanitizeOverride(raw), out var seconds) && seconds > 0 ? seconds : (int?)null;
+            }
+            return (IsCliSession(argReader, envReader) ? Read(EnvSessionIdleSeconds) : null) ?? Read(EnvIdleTimeout);
+        }
+
+        /// <summary>Whether a CLI session started this editor (<see cref="EnvSessionOwner"/> is <see cref="SessionOwnerCli"/>).</summary>
+        public static bool IsCliSession(IReadOnlyDictionary<string, string> argReader, Func<string, string?> envReader)
+        {
+            var owner = ResolveOverride(EnvSessionOwner, flagAlias: null, argReader, envReader);
+            return owner != null && string.Equals(SanitizeOverride(owner), SessionOwnerCli, StringComparison.OrdinalIgnoreCase);
+        }
+
+        /// <summary>The CLI session's lease nonce; null when this editor was not started by a CLI session.</summary>
+        public static string? ReadSessionNonce(IReadOnlyDictionary<string, string> argReader, Func<string, string?> envReader)
+        {
+            if (!IsCliSession(argReader, envReader))
+                return null;
+            var raw = ResolveOverride(EnvSessionNonce, flagAlias: null, argReader, envReader);
+            var nonce = raw == null ? null : SanitizeOverride(raw);
+            return string.IsNullOrEmpty(nonce) ? null : nonce;
         }
 
         /// <summary>

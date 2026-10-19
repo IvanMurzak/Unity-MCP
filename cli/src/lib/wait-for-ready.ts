@@ -1,4 +1,4 @@
-import { probe as defaultProbe, type ProbeResult } from '../utils/probe.js';
+import { mcpReadinessProbe, waitForReady as pollUntilReady } from '@baizor/gamedev-cli-core';
 
 const MAX_PROBE_TIMEOUT_MS = 10_000;
 
@@ -16,7 +16,7 @@ export interface WaitForReadyOptions {
   /** Checked before every probe round: a returned message ends the wait as a failure (e.g. the editor exited). */
   stopReason?: () => string | undefined;
   /** Injection point for tests. */
-  probeImpl?: typeof defaultProbe;
+  fetchImpl?: typeof fetch;
 }
 
 export interface WaitForReadySuccess {
@@ -37,44 +37,27 @@ export interface WaitForReadyFailure {
 export type WaitForReadyResult = WaitForReadySuccess | WaitForReadyFailure;
 
 /**
- * Poll the MCP server's ping endpoint on every URL until one answers or the timeout elapses. Library-safe: never
+ * Poll the MCP server's ping endpoint on every URL until one answers or the timeout elapses. An auth rejection
+ * (401/403) counts as an answer: the server is up, and the next call reports the auth problem. Library-safe: never
  * exits, never prints.
  */
 export async function waitForReady(options: WaitForReadyOptions): Promise<WaitForReadyResult> {
-  const probe = options.probeImpl ?? defaultProbe;
-  const headers: Record<string, string> = { 'Content-Type': 'application/json' };
-  if (options.token) headers['Authorization'] = `Bearer ${options.token}`;
   const startTime = Date.now();
-  const fail = (message: string): WaitForReadyFailure =>
-    ({ kind: 'failure', success: false, elapsedMs: Date.now() - startTime, error: new Error(message) });
-
-  // A NaN / missing value never satisfies `elapsed >= timeoutMs` and would poll forever.
-  if (!(options.timeoutMs >= 0) || !(options.intervalMs > 0)) {
-    return fail('timeoutMs must be a non-negative number and intervalMs a positive number');
-  }
-
-  while (true) {
-    const elapsed = Date.now() - startTime;
-    if (elapsed >= options.timeoutMs) return fail(`MCP server did not answer within ${options.timeoutMs} ms`);
-    const stopped = options.stopReason?.();
-    if (stopped !== undefined) return fail(stopped);
-    options.onTick?.(options.timeoutMs - elapsed);
-
-    const probeTimeout = Math.min(options.intervalMs, MAX_PROBE_TIMEOUT_MS);
-    // Race probes: resolve as soon as any succeeds, don't wait for slow ones.
-    const ready = await new Promise<ProbeResult | null>(resolve => {
-      let pending = options.urls.length;
-      if (pending === 0) resolve(null);
-      for (const url of options.urls) {
-        probe(url, headers, probeTimeout).catch((): ProbeResult => ({ ok: false, reason: 'probe threw' })).then(result => {
-          if (result.ok) resolve(result);
-          else if (--pending === 0) resolve(null);
-        });
-      }
-    });
-    if (ready?.ok) return { kind: 'success', success: true, baseUrl: ready.baseUrl, elapsedMs: Date.now() - startTime };
-
-    const remainingMs = options.timeoutMs - (Date.now() - startTime);
-    if (remainingMs > 0) await new Promise(resolve => setTimeout(resolve, Math.min(options.intervalMs, remainingMs)));
-  }
+  const probe = mcpReadinessProbe({
+    urls: options.urls,
+    token: options.token,
+    timeoutMs: Math.min(options.intervalMs, MAX_PROBE_TIMEOUT_MS),
+    ...(options.fetchImpl ? { fetchImpl: options.fetchImpl } : {}),
+  });
+  const result = await pollUntilReady({
+    probe: () => {
+      options.onTick?.(options.timeoutMs - (Date.now() - startTime));
+      return probe();
+    },
+    timeoutMs: options.timeoutMs,
+    intervalMs: options.intervalMs,
+    ...(options.stopReason ? { stopReason: options.stopReason } : {}),
+  });
+  if (result.kind === 'ready') return { kind: 'success', success: true, baseUrl: result.value, elapsedMs: result.elapsedMs };
+  return { kind: 'failure', success: false, elapsedMs: result.elapsedMs, error: new Error(result.message) };
 }

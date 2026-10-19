@@ -251,8 +251,8 @@ unity-mcp-cli open ./MyGame
 | `--tools <names>` | `UNITY_MCP_TOOLS` | 否 | 要启用的工具列表（逗号分隔） |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | 否 | 传输方式：`streamableHttp` 或 `stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | 否 | 设置为 `true` 或 `false` 以控制 MCP 服务器自动启动 |
-| `--headless` | — | 否 | 无窗口启动编辑器（`-batchmode`；图形保持开启，相机仍可渲染）。隐含 `--keep-connected`。 |
-| `--idle-timeout <seconds>` | `UNITY_MCP_IDLE_TIMEOUT` | 否 | 在这么多秒内没有工具调用时退出编辑器（先保存已修改的场景和资源） |
+| `--headless` | — | 否 | 无窗口启动编辑器（`-batchmode`；图形保持开启，相机仍可渲染），并等待其 MCP 服务器响应。隐含 `--keep-connected`。复用项目已运行的编辑器；在此启动的编辑器归 CLI 所有（`close --owned-only`），并行调用只启动一个。 |
+| `--idle-timeout <seconds>` | `AIGD_SESSION_IDLE_SECONDS`（headless）/ `UNITY_MCP_IDLE_TIMEOUT`（窗口） | 否 | 在这么多秒内没有工具调用时退出编辑器（先保存已修改的场景和资源） |
 
 编辑器进程以分离模式启动 — CLI 将立即返回。
 
@@ -330,7 +330,7 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 
 ## `exec`
 
-在 Unity Editor 中运行 C# 并输出结果。如果项目已打开（有窗口或 headless），`exec` 会使用该编辑器且绝不关闭它。否则它会启动一个 headless 编辑器，为后续调用保持预热，并在 `--idle` 秒内没有工具调用时自动退出。
+在 Unity Editor 中运行 C# 并输出结果。如果项目已打开（有窗口或 headless），`exec` 会使用该编辑器且绝不关闭它。否则它会启动一个 headless 编辑器，为后续调用保持预热，并在 `--idle` 秒内没有工具调用时自动退出（会保存已修改的场景和资源）。它启动的编辑器记录在项目的会话租约（`.ai-game-dev/session.json`）中，并在文件锁下启动，因此并行的 `exec` 调用共享一个编辑器；`close --owned-only` 会关闭它，`open`（带窗口）会在打开窗口前先关闭它。
 
 ```bash
 # 最后一个表达式即为结果
