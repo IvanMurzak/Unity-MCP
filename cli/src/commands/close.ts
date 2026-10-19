@@ -5,6 +5,7 @@ import { platform as nodePlatform } from 'os';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { findUnityProcess } from '../utils/unity-process.js';
+import { createProjectSession, hasSessionLease } from '../lib/editor-session.js';
 import {
   readLockfilePid,
   isProcessAlive,
@@ -17,6 +18,7 @@ import {
 export interface CloseOptions {
   timeout?: string;
   force?: boolean;
+  ownedOnly?: boolean;
 }
 
 const DEFAULT_TIMEOUT_SECONDS = 30;
@@ -129,11 +131,50 @@ export function resolveEditorPid(projectPath: string, platform: SupportedPlatfor
   return proc ? proc.pid : null;
 }
 
+/**
+ * Close the editor the project's session lease names, if it is live. Returns false (nothing done) when no editor of
+ * ours runs; otherwise reports the outcome and exits.
+ */
+async function closeOwnedEditor(projectPath: string, timeoutSeconds: number, force: boolean): Promise<boolean> {
+  if (!hasSessionLease(projectPath)) return false;
+  const session = await createProjectSession(projectPath, {});
+  const lease = await session.ownedSession();
+  if (lease === undefined) {
+    await session.closeOwned(); // removes a stale lease; never touches a process
+    return false;
+  }
+
+  ui.heading('Closing Unity Editor started by unity-mcp-cli');
+  ui.label('Project', projectPath);
+  ui.label('PID', String(lease.pid));
+  ui.label('Mode', lease.mode);
+  ui.label('Timeout', `${timeoutSeconds}s`);
+  ui.label('Force', force ? 'yes' : 'no');
+  ui.divider();
+
+  const spinner = ui.startSpinner(`Asking the Editor (PID ${lease.pid}) to save and quit...`);
+  const result = await session.closeOwned({ timeoutMs: timeoutSeconds * 1000, force });
+  if (result.kind === 'closed') {
+    spinner.success(`Unity Editor (PID ${result.pid}) ${result.forced ? 'force-killed' : 'exited cleanly'}`);
+    process.exit(0);
+  }
+  if (result.kind === 'still-running') {
+    spinner.error(
+      `Unity Editor (PID ${result.pid}) did not exit within ${timeoutSeconds}s.` +
+        (force ? '' : ' Re-run with --force to hard-kill.'),
+    );
+    process.exit(1);
+  }
+  spinner.stop(); // the editor exited by itself meanwhile
+  return false;
+}
+
 export const closeCommand = new Command('close')
   .description('Gracefully terminate the Unity Editor instance running for a given project path')
   .argument('[path]', 'Path to the Unity project (defaults to current directory)')
   .option('--timeout <seconds>', `Polite-quit timeout in seconds (default: ${DEFAULT_TIMEOUT_SECONDS})`, String(DEFAULT_TIMEOUT_SECONDS))
   .option('--force', 'Hard-kill the Editor if it does not exit within --timeout')
+  .option('--owned-only', 'Close only an Editor started by unity-mcp-cli (exec, open --headless); never one opened by the user')
   .action(async (positionalPath: string | undefined, options: CloseOptions) => {
     const projectPath = resolveCloseProjectPath(positionalPath, process.cwd());
     verbose(`close invoked for project: ${projectPath}`);
@@ -152,6 +193,14 @@ export const closeCommand = new Command('close')
     if (timeoutSeconds === null) {
       ui.error(`Invalid --timeout value: "${options.timeout}". Must be a positive integer (seconds).`);
       process.exit(1);
+    }
+
+    // An editor this CLI started (the session lease names it) is asked to quit through its plugin: it saves, and
+    // unlike WM_CLOSE this reaches a headless editor too.
+    if (await closeOwnedEditor(projectPath, timeoutSeconds, options.force === true)) return;
+    if (options.ownedOnly) {
+      ui.success(`no Editor started by unity-mcp-cli is running for project at ${projectPath}`);
+      process.exit(0);
     }
 
     const platform = nodePlatform() as SupportedPlatform;

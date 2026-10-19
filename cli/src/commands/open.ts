@@ -128,8 +128,9 @@ export const openCommand = new Command('open')
   .option('--keep-connected', 'Force keep connected (sets UNITY_MCP_KEEP_CONNECTED=true)')
   .option('--transport <method>', 'Transport method: streamableHttp or stdio (sets UNITY_MCP_TRANSPORT)')
   .option('--start-server <value>', 'Set to true/false to control server auto-start (sets UNITY_MCP_START_SERVER)', undefined)
-  .option('--headless', 'Run the editor without a window (-batchmode, graphics kept); implies --keep-connected')
-  .option('--idle-timeout <seconds>', 'Quit the editor after this many seconds without a tool call (sets UNITY_MCP_IDLE_TIMEOUT)')
+  .option('--headless', 'Run the editor without a window (-batchmode, graphics kept) and wait until it is ready; implies --keep-connected')
+  .option('--idle-timeout <seconds>', 'Quit the editor after this many seconds without a tool call')
+  .option('--ready-timeout <ms>', 'With --headless: how long to wait for the editor to become ready', '300000')
   .option(
     '--no-auto-dismiss-launch-errors',
     'Disable auto-dismissal of the Unity Editor "compile errors at launch" dialog (default: enabled). On macOS, requires Accessibility permission for the terminal / unity-mcp-cli binary. On Linux/X11, requires `xdotool` on PATH (Wayland not supported).',
@@ -158,6 +159,7 @@ export const openCommand = new Command('open')
     startServer?: string;
     headless?: boolean;
     idleTimeout?: string;
+    readyTimeout?: string;
     autoDismissLaunchErrors?: boolean;
     launchDismissTimeoutMs?: string;
     launchDismissPollIntervalMs?: string;
@@ -263,6 +265,7 @@ export const openCommand = new Command('open')
       startServer: startServerBool,
       headless: options.headless,
       idleTimeoutSeconds: options.idleTimeout === undefined ? undefined : parsePositiveIntFlag(options.idleTimeout, '--idle-timeout', 0),
+      readyTimeoutMs: parsePositiveIntFlag(options.readyTimeout, '--ready-timeout', 300_000),
       autoDismissLaunchErrors: options.autoDismissLaunchErrors !== false,
       launchDismissTimeoutMs,
       launchDismissPollIntervalMs,
@@ -295,7 +298,7 @@ export const openCommand = new Command('open')
             if (Object.keys(envVars).length > 0) {
               ui.heading('Connection Details');
               ui.label('Project', event.projectPath);
-              ui.label('Editor', event.editorPath);
+              if (event.editorPath) ui.label('Editor', event.editorPath);
               ui.heading('Environment Variables');
               for (const [key, value] of Object.entries(envVars)) {
                 const display = key === 'UNITY_MCP_TOKEN' ? '***' : value;
@@ -311,6 +314,14 @@ export const openCommand = new Command('open')
           case 'launching-editor': {
             ui.label('Project', event.projectPath);
             ui.label('Editor', event.editorPath);
+            break;
+          }
+          case 'session-status': {
+            if (spinner) {
+              spinner.stop();
+              spinner = undefined;
+            }
+            ui.info(event.message);
             break;
           }
           case 'editor-launched': {
@@ -365,6 +376,9 @@ export const openCommand = new Command('open')
       ui.info('Skipping launch. Use the running instance or close it first.');
       process.exit(0);
     }
+
+    for (const warning of result.warnings) verbose(warning);
+    if (result.baseUrl) ui.success(`MCP server is ready at ${result.baseUrl}`);
 
     // Path is normally absolute already; resolve defensively for
     // verbose log parity with the legacy CLI.

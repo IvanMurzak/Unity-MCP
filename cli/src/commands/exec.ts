@@ -112,6 +112,9 @@ export const execCommand = new Command('exec')
       }
       spinner?.error(result.reason === 'launch-failed' ? 'Could not start the Unity Editor' : 'The MCP server did not answer');
       ui.error(result.message);
+      if (result.reason === 'not-ready') {
+        ui.info('If the project is open in a Unity Editor, check that its AI Game Developer plugin is connected.');
+      }
       process.exit(1);
     }
 

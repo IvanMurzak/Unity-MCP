@@ -9,6 +9,8 @@ import {
 import { clearCachedEditorPath } from '../utils/editor-cache.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import { readConfig, isCloudMode, writeConfig } from '../utils/config.js';
+import type { EditorSession } from '@baizor/gamedev-cli-core';
+import { createProjectSession, hasSessionLease, validateEditorPath } from './editor-session.js';
 import {
   tryDismissLaunchErrorsDialog,
   LINUX_XDOTOOL_MISSING_PREFIX,
@@ -188,6 +190,22 @@ export async function openProject(
     // flips keepConnected; otherwise we reuse this same map.
     let env = buildOpenEnv(options);
 
+    if (options.headless) return await openHeadless(projectPath, options, warnings);
+
+    // Our headless editor holds the project: close it (it saves) so the window can open.
+    const prepared = await prepareWindowOpen(projectPath, options);
+    if (prepared.kind === 'still-running') {
+      throw new Error(
+        `The headless Unity Editor started by unity-mcp-cli (PID ${prepared.pid}) did not exit; ` +
+          'close it with `unity-mcp-cli close --owned-only --force` and retry.',
+      );
+    }
+    if (prepared.kind === 'proceed' && prepared.stoppedPid !== undefined) {
+      const message = `Closed the headless Unity Editor started by unity-mcp-cli (PID ${prepared.stoppedPid}).`;
+      warnings.push(message);
+      emitProgress(options.onProgress, { phase: 'session-status', message });
+    }
+
     // Already-running short-circuit. Same semantics as the CLI:
     // success, with the existing PID surfaced.
     const existingProcess = findUnityProcess(projectPath);
@@ -228,30 +246,8 @@ export async function openProject(
     // which can miss custom Windows install roots.
     let editorPath: string | null;
     if (options.editorPath !== undefined) {
-      // Validate the explicit value BEFORE `path.resolve` so an empty
-      // / whitespace-only string is rejected up-front. `path.resolve('')`
-      // returns `process.cwd()`, which would then pass `existsSync` and
-      // lead us to spawn the working directory as the editor binary.
-      const trimmedEditorPath =
-        typeof options.editorPath === 'string' ? options.editorPath.trim() : '';
-      if (trimmedEditorPath.length === 0) {
-        throw new Error('Explicit Unity Editor path is empty or whitespace-only.');
-      }
-      editorPath = path.resolve(trimmedEditorPath);
-      // Use `statSync` (not just `existsSync`) so directories and
-      // other non-file entries are rejected here, where the failure
-      // message is clear, rather than asynchronously inside
-      // `launchEditor` — where the spawn `error` event would surface
-      // AFTER `openProject` had already taken its happy path.
-      let editorStat: fs.Stats;
-      try {
-        editorStat = fs.statSync(editorPath);
-      } catch {
-        throw new Error(`Unity Editor path does not exist: ${editorPath}`);
-      }
-      if (!editorStat.isFile()) {
-        throw new Error(`Unity Editor path is not a file: ${editorPath}`);
-      }
+      // Directories and empty values are rejected here, where the message is clear, not later by the spawn.
+      editorPath = validateEditorPath(options.editorPath);
       emitProgress(options.onProgress, {
         phase: 'editors-located',
         message: 'Using explicit Unity Editor path',
@@ -291,24 +287,9 @@ export async function openProject(
     // claude-code skill auto-gen. Gated on the mode ALONE — the Cloud
     // credential lives in the machine store (~/.ai-game-dev), and the plugin
     // no longer reads (nor the App writes) a per-project `cloudToken`.
-    let effectiveOptions = options;
-    {
-      const config = readConfig(projectPath);
-      if (config && isCloudMode(config)) {
-        if (!effectiveOptions.keepConnected) {
-          effectiveOptions = { ...effectiveOptions, keepConnected: true };
-          warnings.push('Cloud mode detected — auto-enabling keep-connected.');
-          // keepConnected flipped — rebuild the env map so the editor
-          // receives UNITY_MCP_KEEP_CONNECTED=true.
-          env = buildOpenEnv(effectiveOptions);
-        }
-        const skillAutoGenerate = { ...(config.skillAutoGenerate ?? {}) } as Record<string, boolean>;
-        if (!skillAutoGenerate['claude-code']) {
-          skillAutoGenerate['claude-code'] = true;
-          writeConfig(projectPath, { ...config, skillAutoGenerate });
-        }
-      }
-    }
+    const effectiveOptions = applyCloudModeDefaults(projectPath, options, warnings);
+    // keepConnected flipped — rebuild the env map so the editor receives UNITY_MCP_KEEP_CONNECTED=true.
+    if (effectiveOptions !== options) env = buildOpenEnv(effectiveOptions);
 
     emitProgress(options.onProgress, {
       phase: 'connection-details',
@@ -348,7 +329,7 @@ export async function openProject(
         // handing back the same broken path.
         clearCachedEditorPath(version);
       },
-    }, options.headless ? ['-batchmode'] : []);
+    });
 
     // The `spawn` event fires asynchronously after `spawn(...)` returns.
     // We wait briefly so the PID gets surfaced in the result. The
@@ -367,7 +348,7 @@ export async function openProject(
     //
     // When `autoDismissLaunchErrors === false` the loop is skipped
     // entirely; behaviour is identical to the pre-feature baseline.
-    if (options.autoDismissLaunchErrors !== false && !options.headless) {
+    if (options.autoDismissLaunchErrors !== false) {
       await pollAndDismissLaunchErrors({
         timeoutMs: options.launchDismissTimeoutMs ?? 30000,
         intervalMs: options.launchDismissPollIntervalMs ?? 1500,
@@ -404,6 +385,85 @@ export async function openProject(
       error: errorObj,
     };
   }
+}
+
+/**
+ * Cloud mode: the plugin must connect on startup (keep-connected) and claude-code skills are auto-generated. Returns
+ * `options` itself when nothing changed.
+ */
+function applyCloudModeDefaults(
+  projectPath: string,
+  options: OpenProjectOptions,
+  warnings: string[],
+): OpenProjectOptions {
+  const config = readConfig(projectPath);
+  if (!config || !isCloudMode(config)) return options;
+  const skillAutoGenerate = { ...(config.skillAutoGenerate ?? {}) } as Record<string, boolean>;
+  if (!skillAutoGenerate['claude-code']) {
+    skillAutoGenerate['claude-code'] = true;
+    writeConfig(projectPath, { ...config, skillAutoGenerate });
+  }
+  if (options.keepConnected) return options;
+  warnings.push('Cloud mode detected — auto-enabling keep-connected.');
+  return { ...options, keepConnected: true };
+}
+
+/** Before a windowed launch: close our own headless editor of the project, if one runs. */
+async function prepareWindowOpen(
+  projectPath: string,
+  options: OpenProjectOptions,
+): ReturnType<EditorSession['prepareWindowOpen']> {
+  // No lease, nothing of ours: skip the connection lookup.
+  if (!hasSessionLease(projectPath)) return { kind: 'proceed' };
+  return (await createProjectSession(projectPath, options, {}, options.sessionFactory)).prepareWindowOpen();
+}
+
+/**
+ * `headless`: reuse a running editor of the project, otherwise start one under the project's session lease and
+ * start lock (so `close --owned-only` may close it) and wait until its MCP server answers.
+ */
+async function openHeadless(
+  projectPath: string,
+  options: OpenProjectOptions,
+  warnings: string[],
+): Promise<OpenProjectResult> {
+  // The idle timeout travels as AIGD_SESSION_IDLE_SECONDS (the session contract), not as UNITY_MCP_IDLE_TIMEOUT.
+  const env = buildOpenEnv({ ...applyCloudModeDefaults(projectPath, options, warnings), idleTimeoutSeconds: undefined });
+  emitProgress(options.onProgress, {
+    phase: 'connection-details',
+    message: 'MCP connection environment variables prepared',
+    projectPath,
+    editorPath: options.editorPath ?? '',
+    envVars: env ?? {},
+  });
+  const session = await createProjectSession(projectPath, options, {
+    ...(env ? { env } : {}),
+    editorPath: options.editorPath,
+    unityVersion: options.unityVersion,
+    idleSeconds: options.idleTimeoutSeconds ?? 0,
+    ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
+    onStatus: message => emitProgress(options.onProgress, { phase: 'session-status', message }),
+  }, options.sessionFactory);
+  const ensured = await session.ensure({ mode: 'headless' });
+  const started = ensured.source === 'started';
+  const editorPid = ensured.lease?.pid ?? findUnityProcess(projectPath)?.pid;
+  if (started) {
+    emitProgress(options.onProgress, { phase: 'editor-launched', message: `Launched Unity Editor (PID: ${editorPid})`, pid: editorPid });
+  } else {
+    warnings.push(`Unity is already running with this project${editorPid ? ` (PID: ${editorPid})` : ''}. Skipping launch.`);
+  }
+  emitProgress(options.onProgress, { phase: 'done', message: 'Editor ready.' });
+  return {
+    kind: 'success',
+    success: true,
+    editorPath: options.editorPath ?? '',
+    ...(editorPid !== undefined ? { editorPid } : {}),
+    unityVersion: options.unityVersion ?? getProjectEditorVersion(projectPath) ?? undefined,
+    projectPath,
+    warnings,
+    ...(started ? {} : { alreadyRunning: true }),
+    baseUrl: ensured.ready,
+  };
 }
 
 /**

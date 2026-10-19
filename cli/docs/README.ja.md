@@ -251,8 +251,8 @@ unity-mcp-cli open ./MyGame
 | `--tools <names>` | `UNITY_MCP_TOOLS` | いいえ | 有効にするツールのカンマ区切りリスト |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | いいえ | トランスポート方式：`streamableHttp`または`stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | いいえ | MCPサーバーの自動起動を制御（`true`または`false`） |
-| `--headless` | — | いいえ | ウィンドウなしでエディタを起動（`-batchmode`。グラフィックスは有効なのでカメラは描画されます）。`--keep-connected` を含みます。 |
-| `--idle-timeout <seconds>` | `UNITY_MCP_IDLE_TIMEOUT` | いいえ | ツール呼び出しがこの秒数ないとエディタを終了（変更されたシーンとアセットを先に保存） |
+| `--headless` | — | いいえ | ウィンドウなしでエディタを起動（`-batchmode`。グラフィックスは有効なのでカメラは描画されます）し、MCP サーバーが応答するまで待ちます。`--keep-connected` を含みます。プロジェクトのエディタが既に起動していればそれを使い、ここで起動したエディタは CLI のものになります（`close --owned-only`）。並列呼び出しでも起動は 1 つだけです。 |
+| `--idle-timeout <seconds>` | `AIGD_SESSION_IDLE_SECONDS`（headless）/ `UNITY_MCP_IDLE_TIMEOUT`（ウィンドウ） | いいえ | ツール呼び出しがこの秒数ないとエディタを終了（変更されたシーンとアセットを先に保存） |
 
 エディタープロセスはデタッチモードで起動されます — CLIは即座に制御を返します。
 
@@ -330,7 +330,7 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 
 ## `exec`
 
-Unity Editor で C# を実行し、結果を表示します。プロジェクトが既に開いている場合（ウィンドウ付きでも headless でも）、`exec` はそのエディタを使い、閉じることはありません。開いていない場合は headless エディタを起動し、次の呼び出しのために起動したまま保ち、`--idle` 秒間ツール呼び出しがなければ自動で終了します。
+Unity Editor で C# を実行し、結果を表示します。プロジェクトが既に開いている場合（ウィンドウ付きでも headless でも）、`exec` はそのエディタを使い、閉じることはありません。開いていない場合は headless エディタを起動し、次の呼び出しのために起動したまま保ち、`--idle` 秒間ツール呼び出しがなければ自動で終了します（変更されたシーンとアセットを保存）。起動したエディタはプロジェクトのセッションリース（`.ai-game-dev/session.json`）に記録され、ファイルロックの下で起動されるため、並列の `exec` 呼び出しは 1 つのエディタを共有します。`close --owned-only` で閉じることができ、`open`（ウィンドウ付き）はウィンドウを開く前にそれを閉じます。
 
 ```bash
 # 最後の式が結果になります

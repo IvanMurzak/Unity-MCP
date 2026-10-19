@@ -100,5 +100,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             Assert.IsNull(EnvironmentUtils.ReadIdleTimeoutSeconds(new Dictionary<string, string>(), _ => value));
         }
+
+        static Func<string, string?> Env(params (string key, string value)[] vars) => key =>
+        {
+            foreach (var (k, v) in vars)
+                if (k == key)
+                    return v;
+            return null;
+        };
+
+        static readonly Dictionary<string, string> NoArgs = new Dictionary<string, string>();
+
+        [Test]
+        public void ReadIdleTimeout_SessionSecondsWinForACliSession()
+        {
+            var env = Env(
+                (EnvironmentUtils.EnvSessionOwner, "cli"),
+                (EnvironmentUtils.EnvSessionIdleSeconds, "120"),
+                (EnvironmentUtils.EnvIdleTimeout, "300"));
+            Assert.AreEqual(120, EnvironmentUtils.ReadIdleTimeoutSeconds(NoArgs, env));
+        }
+
+        [Test]
+        public void ReadIdleTimeout_SessionSecondsNeedTheCliOwner()
+        {
+            var env = Env((EnvironmentUtils.EnvSessionIdleSeconds, "120"));
+            Assert.IsNull(EnvironmentUtils.ReadIdleTimeoutSeconds(NoArgs, env));
+            var user = Env((EnvironmentUtils.EnvSessionOwner, "user"), (EnvironmentUtils.EnvSessionIdleSeconds, "120"));
+            Assert.IsNull(EnvironmentUtils.ReadIdleTimeoutSeconds(NoArgs, user));
+        }
+
+        [Test]
+        public void ReadIdleTimeout_FallsBackToTheUnityVariable()
+        {
+            var invalid = Env(
+                (EnvironmentUtils.EnvSessionOwner, "cli"),
+                (EnvironmentUtils.EnvSessionIdleSeconds, "0"),
+                (EnvironmentUtils.EnvIdleTimeout, "300"));
+            Assert.AreEqual(300, EnvironmentUtils.ReadIdleTimeoutSeconds(NoArgs, invalid));
+            Assert.AreEqual(45, EnvironmentUtils.ReadIdleTimeoutSeconds(NoArgs, Env((EnvironmentUtils.EnvIdleTimeout, "45"))));
+        }
+
+        [Test]
+        public void ReadSessionNonce_OnlyForACliSession()
+        {
+            Assert.AreEqual("abc", EnvironmentUtils.ReadSessionNonce(NoArgs,
+                Env((EnvironmentUtils.EnvSessionOwner, "CLI"), (EnvironmentUtils.EnvSessionNonce, " abc "))));
+            Assert.IsNull(EnvironmentUtils.ReadSessionNonce(NoArgs, Env((EnvironmentUtils.EnvSessionNonce, "abc"))));
+            Assert.IsNull(EnvironmentUtils.ReadSessionNonce(NoArgs, Env((EnvironmentUtils.EnvSessionOwner, "cli"))));
+        }
     }
 }

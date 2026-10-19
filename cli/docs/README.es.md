@@ -251,8 +251,8 @@ unity-mcp-cli open ./MyGame
 | `--tools <names>` | `UNITY_MCP_TOOLS` | No | Lista de herramientas a activar, separadas por comas |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Metodo de transporte: `streamableHttp` o `stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Establece `true` o `false` para controlar el inicio automatico del servidor MCP |
-| `--headless` | — | No | Inicia el editor sin ventana (`-batchmode`; los gráficos siguen activos, así que las cámaras renderizan). Implica `--keep-connected`. |
-| `--idle-timeout <seconds>` | `UNITY_MCP_IDLE_TIMEOUT` | No | Cierra el editor tras estos segundos sin llamadas a herramientas (antes guarda escenas y assets modificados) |
+| `--headless` | — | No | Inicia el editor sin ventana (`-batchmode`; los gráficos siguen activos, así que las cámaras renderizan) y espera a que su servidor MCP responda. Implica `--keep-connected`. Reutiliza un editor ya abierto del proyecto; el que se inicia aquí pertenece a la CLI (`close --owned-only`), y las llamadas en paralelo inician solo uno. |
+| `--idle-timeout <seconds>` | `AIGD_SESSION_IDLE_SECONDS` (headless) / `UNITY_MCP_IDLE_TIMEOUT` (ventana) | No | Cierra el editor tras estos segundos sin llamadas a herramientas (antes guarda escenas y assets modificados) |
 
 El proceso del editor se lanza en modo desacoplado — la CLI regresa inmediatamente.
 
@@ -330,7 +330,7 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 
 ## `exec`
 
-Ejecuta C# en Unity Editor y muestra el resultado. Si el proyecto ya está abierto (con ventana o headless), `exec` usa ese editor y nunca lo cierra. Si no, inicia un editor headless que se mantiene caliente para las siguientes llamadas y se cierra solo tras `--idle` segundos sin llamadas.
+Ejecuta C# en Unity Editor y muestra el resultado. Si el proyecto ya está abierto (con ventana o headless), `exec` usa ese editor y nunca lo cierra. Si no, inicia un editor headless que se mantiene caliente para las siguientes llamadas y se cierra solo tras `--idle` segundos sin llamadas (guardando escenas y assets modificados). El editor que inicia queda registrado en el lease de sesión del proyecto (`.ai-game-dev/session.json`) y se inicia bajo un bloqueo de archivo, así que las llamadas `exec` en paralelo comparten un editor; `close --owned-only` lo cierra y `open` (con ventana) lo cierra antes de abrir la ventana.
 
 ```bash
 # La última expresión es el resultado
