@@ -36,7 +36,7 @@ const QUIT_CALL_TIMEOUT_MS = 15_000;
  * Default wait for an editor the CLI did not start (the user's GUI) to answer. Shorter than the start timeout: such an
  * editor may never answer here (plugin disconnected, or connected to the cloud), so the call fails with a clear hint.
  */
-export const DEFAULT_FOREIGN_READY_TIMEOUT_MS = 60_000;
+const DEFAULT_FOREIGN_READY_TIMEOUT_MS = 60_000;
 
 export interface UnitySessionDeps {
   /** The PID of a Unity Editor process that has the project open; undefined when none. */
@@ -126,11 +126,17 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
   const editor: EditorLaunchSpec = {
     ...unityAdapter.editor!,
     // The PID lets the session notice cheaply when the user's editor exits while it waits for it.
-    findRunningEditor: async root => deps.findEditorPid(root) ?? false,
+    findRunningEditor: async root => {
+      const pid = deps.findEditorPid(root);
+      editorSeen ||= pid !== undefined; // spares probeReady a second scan while the session waits for it
+      return pid ?? false;
+    },
     // `lease` is the verified lease naming `pid`: the plugin is asked at the server it was started against.
     requestClose: async (pid, _root, lease) => {
-      const url = lease ? lease.serverUrl ?? await probeReady() : undefined;
-      if (url !== undefined && await deps.quitViaPlugin(url, options.token, lease!.nonce)) return true;
+      if (lease) {
+        const url = lease.serverUrl ?? await probeReady();
+        if (url !== undefined && await deps.quitViaPlugin(url, options.token, lease.nonce)) return true;
+      }
       return deps.requestOsClose(pid);
     },
   };
@@ -182,8 +188,8 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
  * The message for a session failure. cli-core already explains an editor the CLI did not start that never answered;
  * in Cloud mode (`serverUrl` is the cloud) the CLI reaches that editor only through ai-game.dev, which gets a hint.
  */
-export function sessionErrorMessage(err: unknown, serverUrl: string | undefined): string {
-  const message = err instanceof Error ? err.message : String(err);
+export function sessionErrorMessage(err: Error, serverUrl: string | undefined): string {
+  const { message } = err;
   const foreignNotReady = err instanceof EditorSessionError && err.source === 'foreign' && err.reason === 'not-ready';
   if (!foreignNotReady || serverUrl !== CLOUD_SERVER_URL) return message;
   return `${message}. The project is in Cloud mode: the CLI reaches this editor only while its plugin is connected to ` +

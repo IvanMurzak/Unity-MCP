@@ -187,11 +187,14 @@ describe('createUnitySession', () => {
 
   it('never targets the server URL of a dead lease, even when that URL answers', async () => {
     const other = 'http://localhost:53888'; // now served by another project's editor
-    fs.mkdirSync(path.join(project, '.ai-game-dev'), { recursive: true });
-    fs.writeFileSync(path.join(project, '.ai-game-dev', 'session.json'), JSON.stringify({
-      pid: 999, nonce: 'dead', engine: 'unity', mode: 'headless', startedAt: '2026-10-18T00:00:00Z', ownedBy: 'cli',
-      hostId: os.hostname(), processStart: 'start-999', serverUrl: other,
-    }));
+    const writeDeadLease = () => {
+      fs.mkdirSync(path.join(project, '.ai-game-dev'), { recursive: true });
+      fs.writeFileSync(path.join(project, '.ai-game-dev', 'session.json'), JSON.stringify({
+        pid: 999, nonce: 'dead', engine: 'unity', mode: 'headless', startedAt: '2026-10-18T00:00:00Z', ownedBy: 'cli',
+        hostId: os.hostname(), processStart: 'start-999', serverUrl: other,
+      }));
+    };
+    writeDeadLease();
     const { world, deps } = fakeWorld();
     const probed: string[] = [];
     deps.fetchImpl = (async (input: string | URL | Request) => {
@@ -205,11 +208,7 @@ describe('createUnitySession', () => {
     expect(await session.closeOwned({ timeoutMs: 100 })).toEqual({ kind: 'not-owned', staleLeaseRemoved: true });
     expect(deps.quitViaPlugin).not.toHaveBeenCalled();
 
-    fs.mkdirSync(path.join(project, '.ai-game-dev'), { recursive: true });
-    fs.writeFileSync(path.join(project, '.ai-game-dev', 'session.json'), JSON.stringify({
-      pid: 999, nonce: 'dead', engine: 'unity', mode: 'headless', startedAt: '2026-10-18T00:00:00Z', ownedBy: 'cli',
-      hostId: os.hostname(), processStart: 'start-999', serverUrl: other,
-    }));
+    writeDeadLease();
     const result = await createUnitySession({ projectPath: project, urls: [LOCAL], deps }).ensure();
     expect(result).toMatchObject({ ready: LOCAL, source: 'started' });
     expect(probed.some(url => url.startsWith(other))).toBe(false);

@@ -34,7 +34,7 @@ export interface ExecCodeOptions {
   idleTimeoutSeconds?: number;
   /** Default 300000. */
   readyTimeoutMs?: number;
-  /** Wait for an editor exec did not start (the user's GUI) to answer. Default 60000 (at most `readyTimeoutMs`). */
+  /** Wait for an editor exec did not start (the user's GUI) to answer; see `UnitySessionOptions.foreignReadyTimeoutMs`. */
   foreignReadyTimeoutMs?: number;
   /** Tool call timeout. Default 180000. */
   timeoutMs?: number;
@@ -124,7 +124,7 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
       reason,
       ...(sessionReason ? { sessionReason } : {}),
       ...(sessionError?.source ? { editorSource: sessionError.source } : {}),
-      message: sessionErrorMessage(err, serverUrl),
+      message: sessionErrorMessage(error, serverUrl),
       error,
     };
   } finally {
