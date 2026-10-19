@@ -179,17 +179,15 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
 }
 
 /**
- * The message for a session failure. An editor the CLI did not start that never answered gets a hint: its plugin is
- * not connected, or (Cloud mode, `serverUrl` is the cloud) it is reachable only through the cloud.
+ * The message for a session failure. cli-core already explains an editor the CLI did not start that never answered;
+ * in Cloud mode (`serverUrl` is the cloud) the CLI reaches that editor only through ai-game.dev, which gets a hint.
  */
 export function sessionErrorMessage(err: unknown, serverUrl: string | undefined): string {
   const message = err instanceof Error ? err.message : String(err);
-  if (!(err instanceof EditorSessionError) || err.source !== 'foreign' || err.reason !== 'not-ready') return message;
-  const hint = serverUrl === CLOUD_SERVER_URL
-    ? 'The project is in Cloud mode, which the CLI cannot reach the editor through: switch the plugin connection to ' +
-      'Custom (a local server) in Window > AI Game Developer, or pass --url <server url>.'
-    : 'Check that its AI Game Developer plugin is connected (or close that editor so the CLI can start its own).';
-  return `The project is open in a Unity Editor that unity-mcp-cli did not start, and it did not answer: ${message} ${hint}`;
+  const foreignNotReady = err instanceof EditorSessionError && err.source === 'foreign' && err.reason === 'not-ready';
+  if (!foreignNotReady || serverUrl !== CLOUD_SERVER_URL) return message;
+  return `${message}. The project is in Cloud mode: the CLI reaches this editor only while its plugin is connected to ` +
+    'ai-game.dev. Connect it, switch its connection to Custom (a local server), or pass --url <server url>.';
 }
 
 /**

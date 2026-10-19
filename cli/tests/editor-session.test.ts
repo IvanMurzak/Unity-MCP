@@ -141,7 +141,7 @@ describe('createUnitySession', () => {
     expect(error).toMatchObject({ reason: 'not-ready', source: 'foreign' });
     expect(world.spawned).toHaveLength(0);
     expect(sessionErrorMessage(error, REMOTE)).toContain('Cloud mode');
-    expect(sessionErrorMessage(error, LOCAL)).toContain('plugin is connected');
+    expect(sessionErrorMessage(error, LOCAL)).toBe(error.message);
     expect(sessionErrorMessage(new Error('boom'), REMOTE)).toBe('boom');
   });
 
@@ -183,6 +183,36 @@ describe('createUnitySession', () => {
     const closing = createUnitySession({ projectPath: project, urls: [LOCAL], token: 'tk', deps });
     expect(await closing.closeOwned({ timeoutMs: 1000 })).toEqual({ kind: 'closed', pid: lease!.pid, forced: false });
     expect(deps.quitViaPlugin).toHaveBeenCalledWith(recorded, 'tk', lease!.nonce);
+  });
+
+  it('never targets the server URL of a dead lease, even when that URL answers', async () => {
+    const other = 'http://localhost:53888'; // now served by another project's editor
+    fs.mkdirSync(path.join(project, '.ai-game-dev'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.ai-game-dev', 'session.json'), JSON.stringify({
+      pid: 999, nonce: 'dead', engine: 'unity', mode: 'headless', startedAt: '2026-10-18T00:00:00Z', ownedBy: 'cli',
+      hostId: os.hostname(), processStart: 'start-999', serverUrl: other,
+    }));
+    const { world, deps } = fakeWorld();
+    const probed: string[] = [];
+    deps.fetchImpl = (async (input: string | URL | Request) => {
+      const url = String(input);
+      probed.push(url);
+      if (url.startsWith(other) || world.serverUp) return new Response('{}', { status: 200 });
+      throw new TypeError('fetch failed');
+    }) as typeof fetch;
+
+    const session = createUnitySession({ projectPath: project, urls: [LOCAL], token: 'tk', deps });
+    expect(await session.closeOwned({ timeoutMs: 100 })).toEqual({ kind: 'not-owned', staleLeaseRemoved: true });
+    expect(deps.quitViaPlugin).not.toHaveBeenCalled();
+
+    fs.mkdirSync(path.join(project, '.ai-game-dev'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.ai-game-dev', 'session.json'), JSON.stringify({
+      pid: 999, nonce: 'dead', engine: 'unity', mode: 'headless', startedAt: '2026-10-18T00:00:00Z', ownedBy: 'cli',
+      hostId: os.hostname(), processStart: 'start-999', serverUrl: other,
+    }));
+    const result = await createUnitySession({ projectPath: project, urls: [LOCAL], deps }).ensure();
+    expect(result).toMatchObject({ ready: LOCAL, source: 'started' });
+    expect(probed.some(url => url.startsWith(other))).toBe(false);
   });
 
   it('falls back to the OS polite quit when the plugin refuses', async () => {
