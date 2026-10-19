@@ -49,7 +49,7 @@ describe('execCode', () => {
 
   it('records an explicit url as the server of a started editor', async () => {
     const d = deps();
-    await execCode(options(d, { overrideUrl: 'http://127.0.0.1:5000', foreignReadyTimeoutMs: 1000 }));
+    await execCode(options(d, { overrideUrl: 'http://127.0.0.1:5000/', foreignReadyTimeoutMs: 1000 }));
     expect(sessionOptions(d)).toMatchObject({ serverUrl: 'http://127.0.0.1:5000', foreignReadyTimeoutMs: 1000 });
   });
 

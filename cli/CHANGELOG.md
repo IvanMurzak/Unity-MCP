@@ -20,7 +20,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   Windows polite quit (`WM_CLOSE`) never does; an editor opened by the user is never closed by `--owned-only`.
 - **`open` with a window closes the CLI's own headless editor first** (it saves), so the window can open.
 - **The lease records the server URL** the editor was started against (and its connection mode), so `close` asks
-  the plugin there without resolving the connection again. The session files are kept out of git by
+  the plugin there without resolving the connection again (then at whichever resolved URL answers; the call's token
+  is never sent to a remote server it was not resolved for). A lease whose editor has exited no longer hides the
+  user's editor from `open --headless`. The session files are kept out of git by
   `.ai-game-dev/.gitignore`.
 - **`exec` fails fast on an editor it did not start that never answers** (default 60 s instead of the full
   `--ready-timeout`): e.g. the user's editor whose plugin is disconnected or connected to the ai-game.dev cloud. The

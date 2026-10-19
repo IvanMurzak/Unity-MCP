@@ -3,12 +3,14 @@
 // start an editor per project, and only a leased editor is ever closed. Library-safe: no console output, no exit.
 
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import {
   EditorSession,
   EditorSessionError,
   DEFAULT_SESSION_READY_TIMEOUT_MS,
   defaultSessionProcessOps,
+  readSessionLease,
   isLoopbackHost,
   mcpReadinessProbe,
   unityAdapter,
@@ -131,11 +133,19 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
       editorSeen ||= pid !== undefined; // spares probeReady a second scan while the session waits for it
       return pid ?? false;
     },
-    // `lease` is the verified lease naming `pid`: the plugin is asked at the server it was started against.
+    // `lease` is the verified lease naming `pid` (cli-core never passes a dead one): the plugin is asked at the server it
+    // was started against, then at whichever of this call's URLs answers.
     requestClose: async (pid, _root, lease) => {
       if (lease) {
-        const url = lease.serverUrl ?? await probeReady();
-        if (url !== undefined && await deps.quitViaPlugin(url, options.token, lease.nonce)) return true;
+        const asked = new Set<string>();
+        const quit = async (url: string | undefined): Promise<boolean> => {
+          if (url === undefined || asked.has(url)) return false;
+          asked.add(url);
+          // The token was resolved for this call's URLs: never hand it to another remote server.
+          const token = options.urls.includes(url) || isLoopbackUrl(url) ? options.token : undefined;
+          return deps.quitViaPlugin(url, token, lease.nonce);
+        };
+        if (await quit(lease.serverUrl) || await quit(await probeReady())) return true;
       }
       return deps.requestOsClose(pid);
     },
@@ -182,6 +192,16 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
     ...(options.onStatus ? { onStatus: options.onStatus } : {}),
     processOps,
   });
+}
+
+/**
+ * Whether the project has a session lease whose editor process may still run. Cheap (no process start-time check): a
+ * dead lease, which an editor leaves behind when it exits, does not count; the session removes it.
+ */
+export function hasLiveSessionLease(projectPath: string, isAlive: (pid: number) => boolean = defaultSessionProcessOps.isAlive): boolean {
+  const lease = readSessionLease(projectPath);
+  // A lease of another machine (a shared folder) cannot be checked here: count it.
+  return lease !== undefined && (lease.hostId !== os.hostname() || isAlive(lease.pid));
 }
 
 /**

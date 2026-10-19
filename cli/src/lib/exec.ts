@@ -87,8 +87,9 @@ export type ExecCodeResult = ExecCodeSuccess | ExecCodeFailure;
 export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult> {
   const deps: ExecDeps = { session: createUnitySession, invoke: runTool, ...options.deps };
 
-  // The server a started editor connects to (recorded in its lease): the explicit URL, else the resolved one.
-  const serverUrl = options.overrideUrl ?? options.probeUrls[0];
+  // The server a started editor connects to (recorded in its lease): the explicit URL, normalized as the CLI resolves
+  // it (no trailing slash), else the resolved one.
+  const serverUrl = options.overrideUrl?.replace(/\/$/, '') ?? options.probeUrls[0];
   let baseUrl: string;
   // A windowed editor we start may stop on the "compile errors at launch" dialog; click it away until it is ready.
   const ready = new AbortController();

@@ -4,7 +4,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { EditorSessionError, SESSION_ENV, readSessionLease, type SessionProcessOps } from '@baizor/gamedev-cli-core';
 import {
-  createUnitySession, sessionErrorMessage, SESSION_QUIT_TOOL, type UnitySessionDeps,
+  createUnitySession, hasLiveSessionLease, sessionErrorMessage, SESSION_QUIT_TOOL, type UnitySessionDeps,
 } from '../src/lib/editor-session.js';
 
 const LOCAL = 'http://localhost:53101';
@@ -183,6 +183,33 @@ describe('createUnitySession', () => {
     const closing = createUnitySession({ projectPath: project, urls: [LOCAL], token: 'tk', deps });
     expect(await closing.closeOwned({ timeoutMs: 1000 })).toEqual({ kind: 'closed', pid: lease!.pid, forced: false });
     expect(deps.quitViaPlugin).toHaveBeenCalledWith(recorded, 'tk', lease!.nonce);
+  });
+
+  it('keeps the token from a remote server it was not resolved for, and falls back to the URL that answers', async () => {
+    const recorded = 'http://my-server:8080';
+    const { world, deps } = fakeWorld();
+    const { lease } = await createUnitySession({ projectPath: project, urls: [LOCAL], serverUrl: recorded, deps }).ensure();
+    deps.quitViaPlugin = vi.fn(async (url: string) => {
+      if (url !== LOCAL) return false; // the recorded server does not reach the editor (any more)
+      for (const pid of [...world.alive]) world.alive.delete(pid);
+      return true;
+    });
+    const closing = createUnitySession({ projectPath: project, urls: [LOCAL], token: 'tk', deps });
+    expect(await closing.closeOwned({ timeoutMs: 1000 })).toEqual({ kind: 'closed', pid: lease!.pid, forced: false });
+    expect(deps.quitViaPlugin).toHaveBeenNthCalledWith(1, recorded, undefined, lease!.nonce);
+    expect(deps.quitViaPlugin).toHaveBeenNthCalledWith(2, LOCAL, 'tk', lease!.nonce);
+    expect(deps.requestOsClose).not.toHaveBeenCalled();
+  });
+
+  it('counts only a lease whose editor may still run as live', async () => {
+    expect(hasLiveSessionLease(project)).toBe(false);
+    fs.mkdirSync(path.join(project, '.ai-game-dev'), { recursive: true });
+    fs.writeFileSync(path.join(project, '.ai-game-dev', 'session.json'), JSON.stringify({
+      pid: 999, nonce: 'n', engine: 'unity', mode: 'headless', startedAt: '2026-10-18T00:00:00Z', ownedBy: 'cli',
+      hostId: os.hostname(), processStart: 'start-999',
+    }));
+    expect(hasLiveSessionLease(project, () => false)).toBe(false); // its editor exited: stale
+    expect(hasLiveSessionLease(project, pid => pid === 999)).toBe(true);
   });
 
   it('never targets the server URL of a dead lease, even when that URL answers', async () => {
