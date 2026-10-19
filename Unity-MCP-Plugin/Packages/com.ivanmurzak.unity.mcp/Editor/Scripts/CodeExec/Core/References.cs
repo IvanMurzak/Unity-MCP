@@ -66,8 +66,34 @@ namespace com.IvanMurzak.CodeExec
                 if (location.Length > 0 && File.Exists(location))
                     byName[name] = location;
             }
+#if NET8_0_OR_GREATER
+            AddFrameworkFacades(byName);
+#endif
             return new List<string>(byName.Values);
         }
+
+#if NET8_0_OR_GREATER
+        /// <summary>
+        /// Framework assemblies a snippet may use before the host ever touched them: the default usings and
+        /// <c>Console</c>. Without System.Console, <c>Console</c> would not resolve, and auto-import must not reach for
+        /// CoreLib's public <c>Internal.Console</c>, whose output bypasses log capture.
+        /// </summary>
+        static readonly string[] FrameworkFacades = { "System.Runtime", "System.Console", "System.Collections", "System.Linq" };
+
+        void AddFrameworkFacades(Dictionary<string, string> byName)
+        {
+            // CoreLib itself, never the host resolver: that one maps in-memory HOST assemblies, not the runtime.
+            var directory = Path.GetDirectoryName(typeof(object).Assembly.Location) ?? "";
+            if (directory.Length == 0)
+                return; // single-file or in-memory runtime: nothing on disk to point at
+            foreach (var name in FrameworkFacades)
+            {
+                var path = Path.Combine(directory, name + ".dll");
+                if (!byName.ContainsKey(name) && File.Exists(path))
+                    byName[name] = path;
+            }
+        }
+#endif
 
         string LocationOf(Assembly assembly)
         {
