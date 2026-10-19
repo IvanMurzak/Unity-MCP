@@ -8,7 +8,7 @@ import {
   type EditorSessionErrorReason,
 } from '@baizor/gamedev-cli-core';
 import { createUnitySession, isLoopbackUrl, type UnitySessionOptions } from './editor-session.js';
-import { buildOpenEnv } from './open.js';
+import { buildOpenEnv, dismissLaunchErrorsUntil } from './open.js';
 import { runTool } from './run-tool.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
 
@@ -83,6 +83,9 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
   const deps: ExecDeps = { session: createUnitySession, invoke: runTool, ...options.deps };
 
   let baseUrl: string;
+  // A windowed editor we start may stop on the "compile errors at launch" dialog; click it away until it is ready.
+  const ready = new AbortController();
+  let dismissing: Promise<void> | undefined;
   try {
     const session = deps.session({
       projectPath: options.projectPath,
@@ -98,6 +101,7 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
       idleSeconds: options.idleTimeoutSeconds ?? DEFAULT_SESSION_IDLE_SECONDS,
       ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
       ...(options.onStatus ? { onStatus: options.onStatus } : {}),
+      ...(options.window ? { onLaunched: () => { dismissing = dismissLaunchErrorsUntil(ready.signal, []); } } : {}),
     });
     baseUrl = (await session.ensure({ mode: options.window ? 'window' : 'headless' })).ready;
   } catch (err) {
@@ -105,6 +109,9 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
     const sessionReason = err instanceof EditorSessionError ? err.reason : undefined;
     const reason = sessionReason === 'exited' || sessionReason === 'not-ready' ? 'not-ready' : 'launch-failed';
     return { kind: 'failure', success: false, reason, ...(sessionReason ? { sessionReason } : {}), message: error.message, error };
+  } finally {
+    ready.abort();
+    await dismissing;
   }
 
   options.onStatus?.('Running...');

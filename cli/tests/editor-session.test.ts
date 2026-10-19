@@ -181,6 +181,21 @@ describe('createUnitySession', () => {
     expect(deps.findEditor).toHaveBeenCalledWith('2022.3.62f3');
   });
 
+  it('forgets a discovered editor path that fails to start, but never an explicit one', async () => {
+    const { deps } = fakeWorld();
+    deps.processOps = { ...deps.processOps, spawnDetached: async () => { throw new Error('EACCES'); } };
+    deps.forgetEditor = vi.fn();
+    const error = await createUnitySession({ projectPath: project, urls: [LOCAL], deps }).ensure().catch(e => e);
+    expect(error).toMatchObject({ reason: 'launch-failed' });
+    expect(deps.forgetEditor).toHaveBeenCalledWith('2022.3.62f3');
+
+    const explicit = path.join(project, 'Unity');
+    fs.writeFileSync(explicit, '');
+    deps.forgetEditor = vi.fn();
+    await createUnitySession({ projectPath: project, urls: [LOCAL], editorPath: explicit, deps }).ensure().catch(() => {});
+    expect(deps.forgetEditor).not.toHaveBeenCalled();
+  });
+
   it('exposes the quit tool name the plugin registers', () => {
     expect(SESSION_QUIT_TOOL).toBe('editor-session-quit');
   });

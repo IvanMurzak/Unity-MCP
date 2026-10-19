@@ -295,6 +295,11 @@ export const openCommand = new Command('open')
             break;
           }
           case 'connection-details': {
+            // Headless emits no `editor-resolved` first: stop the spinner before printing below it.
+            if (spinner) {
+              spinner.stop();
+              spinner = undefined;
+            }
             const envVars = event.envVars;
             if (Object.keys(envVars).length > 0) {
               ui.heading('Connection Details');

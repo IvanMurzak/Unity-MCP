@@ -445,6 +445,22 @@ async function openHeadless(
     ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
     onStatus: message => emitProgress(options.onProgress, { phase: 'session-status', message }),
   }, options.sessionFactory);
+  // An editor we did not start (e.g. the user's GUI, maybe not connected) is reported at once, as before.
+  const running = hasSessionLease(projectPath) ? undefined : findUnityProcess(projectPath);
+  if (running) {
+    warnings.push(`Unity is already running with this project (PID: ${running.pid}). Skipping launch.`);
+    emitProgress(options.onProgress, { phase: 'done', message: 'Unity is already running for this project — launch skipped.' });
+    return {
+      kind: 'success',
+      success: true,
+      editorPath: extractEditorPathFromCommandLine(running.commandLine),
+      editorPid: running.pid,
+      unityVersion: options.unityVersion ?? getProjectEditorVersion(projectPath) ?? undefined,
+      projectPath,
+      warnings,
+      alreadyRunning: true,
+    };
+  }
   const ensured = await session.ensure({ mode: 'headless' });
   const started = ensured.source === 'started';
   const editorPid = ensured.lease?.pid ?? findUnityProcess(projectPath)?.pid;
@@ -465,6 +481,16 @@ async function openHeadless(
     ...(started ? {} : { alreadyRunning: true }),
     baseUrl: ensured.ready,
   };
+}
+
+/**
+ * Click away Unity's "compile errors at launch" dialog of a windowed editor that was just started, until `signal`
+ * fires (the editor is ready) or 30 s pass. Never throws; platform problems land in `warnings`.
+ */
+export function dismissLaunchErrorsUntil(signal: AbortSignal, warnings: string[]): Promise<void> {
+  return pollAndDismissLaunchErrors({
+    timeoutMs: 30000, intervalMs: 1500, onProgress: undefined, warnings, abortSignal: signal,
+  });
 }
 
 /**

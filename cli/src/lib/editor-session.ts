@@ -6,6 +6,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import {
   EditorSession,
+  defaultSessionProcessOps,
   SESSION_DIR_NAME,
   SESSION_LEASE_FILE_NAME,
   isLoopbackHost,
@@ -15,10 +16,12 @@ import {
   type SessionProcessOps,
 } from '@baizor/gamedev-cli-core';
 import { findEditorPath, getProjectEditorVersion } from '../utils/unity-editor.js';
+import { clearCachedEditorPath } from '../utils/editor-cache.js';
 import { resolveConnection, resolveProbeUrls } from '../utils/connection.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import { sendGracefulShutdown } from '../utils/unity-shutdown.js';
 import { runSystemTool } from './run-tool.js';
+import { readToolResponse } from './exec.js';
 
 /**
  * Plugin system tool that quits an editor started by a CLI session: it checks the lease nonce, saves like the idle
@@ -36,6 +39,8 @@ export interface UnitySessionDeps {
   /** The OS polite quit; true when delivered. */
   requestOsClose: (pid: number) => boolean;
   findEditor: (version: string | undefined) => Promise<string | null>;
+  /** Drop the cached editor path of `version` (it failed to start), so the next call resolves it again. */
+  forgetEditor: (version: string | undefined) => void;
   processOps?: Partial<SessionProcessOps>;
   fetchImpl?: typeof fetch;
 }
@@ -57,6 +62,8 @@ export interface UnitySessionOptions {
   idleSeconds?: number;
   readyTimeoutMs?: number;
   onStatus?: (message: string) => void;
+  /** Called once this session has started an editor process (not when it reuses one). */
+  onLaunched?: (pid: number) => void;
   deps?: Partial<UnitySessionDeps>;
 }
 
@@ -70,10 +77,11 @@ const defaultDeps: UnitySessionDeps = {
       input: { nonce },
       timeoutMs: QUIT_CALL_TIMEOUT_MS,
     });
-    return result.kind === 'success' && (result.data as { status?: string } | null)?.status !== 'error';
+    return result.kind === 'success' && readToolResponse(result.data).ok;
   },
   requestOsClose: pid => sendGracefulShutdown(pid),
   findEditor: version => findEditorPath(version),
+  forgetEditor: version => clearCachedEditorPath(version),
 };
 
 export function isLoopbackUrl(url: string): boolean {
@@ -112,6 +120,24 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
     },
   };
 
+  // Set when the binary came from discovery (and so maybe from the editor-path cache), not from `editorPath`.
+  let discovered: { version: string | undefined } | undefined;
+  const spawnDetached = deps.processOps?.spawnDetached ?? defaultSessionProcessOps.spawnDetached;
+  const processOps: Partial<SessionProcessOps> = {
+    ...deps.processOps,
+    // A discovered binary that fails to start (corrupt, wrong arch, permissions) leaves the cache, as `open` does.
+    spawnDetached: async (command, args, spawnOptions) => {
+      try {
+        const pid = await spawnDetached(command, args, spawnOptions);
+        options.onLaunched?.(pid);
+        return pid;
+      } catch (err) {
+        if (discovered) deps.forgetEditor(discovered.version);
+        throw err;
+      }
+    },
+  };
+
   const session: EditorSession<string> = new EditorSession<string>({
     adapter: { ...unityAdapter, editor },
     projectRoot: projectPath,
@@ -121,13 +147,14 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
       const version = options.unityVersion ?? getProjectEditorVersion(projectPath) ?? undefined;
       const found = await deps.findEditor(version);
       if (!found) throw new Error(version ? `Unity Editor ${version} is not installed.` : 'No Unity Editor found.');
+      discovered = { version };
       return found;
     },
     ...(options.env ? { env: options.env } : {}),
     ...(options.idleSeconds !== undefined ? { idleSeconds: options.idleSeconds } : {}),
     ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
     ...(options.onStatus ? { onStatus: options.onStatus } : {}),
-    ...(deps.processOps ? { processOps: deps.processOps } : {}),
+    processOps,
   });
   return session;
 }
