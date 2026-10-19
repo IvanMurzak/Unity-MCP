@@ -40,8 +40,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "passed to the editor as `AIGD_SESSION_NONCE`.\n\n" +
             "## Behavior\n\n" +
             "Refuses unless this editor was started by a CLI session (`AIGD_SESSION_OWNER=cli`) with the same nonce. " +
-            "Otherwise answers right away, then saves changed scenes that have a file and changed assets, removes the " +
-            "lease and exits — as the idle shutdown does. Unlike the OS polite-quit signal it also reaches a headless " +
+            "Otherwise answers right away, then saves changed scenes that have a file and changed assets and " +
+            "exits — as the idle shutdown does. Unlike the OS polite-quit signal it also reaches a headless " +
             "(`-batchmode`) editor. Prefer `unity-mcp-cli close --owned-only` over calling it directly.")]
         [Description("Save and quit this editor if a CLI session started it and the nonce matches its session lease.")]
         public string Quit

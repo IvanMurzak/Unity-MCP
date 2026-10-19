@@ -6,8 +6,9 @@ import {
   EditorSessionError,
   type EditorSession,
   type EditorSessionErrorReason,
+  type WaitedEditorSource,
 } from '@baizor/gamedev-cli-core';
-import { createUnitySession, isLoopbackUrl, type UnitySessionOptions } from './editor-session.js';
+import { createUnitySession, isLoopbackUrl, sessionErrorMessage, type UnitySessionOptions } from './editor-session.js';
 import { buildOpenEnv, dismissLaunchErrorsUntil } from './open.js';
 import { runTool } from './run-tool.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
@@ -33,6 +34,8 @@ export interface ExecCodeOptions {
   idleTimeoutSeconds?: number;
   /** Default 300000. */
   readyTimeoutMs?: number;
+  /** Wait for an editor exec did not start (the user's GUI) to answer. Default 60000 (at most `readyTimeoutMs`). */
+  foreignReadyTimeoutMs?: number;
   /** Tool call timeout. Default 180000. */
   timeoutMs?: number;
   /** Server URLs to try, first answer wins (the CLI passes the config URL plus the project's local port). */
@@ -64,6 +67,8 @@ export interface ExecCodeFailure {
   reason: 'launch-failed' | 'not-ready' | 'tool-failed';
   /** The editor-session failure behind `launch-failed` / `not-ready`. */
   sessionReason?: EditorSessionErrorReason;
+  /** `not-ready`: the editor that never answered — `foreign` is one exec did not start (e.g. the user's GUI). */
+  editorSource?: WaitedEditorSource;
   /** The server that was called (`tool-failed` only). */
   baseUrl?: string;
   /** The underlying call failure (`tool-failed` only). */
@@ -82,6 +87,8 @@ export type ExecCodeResult = ExecCodeSuccess | ExecCodeFailure;
 export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult> {
   const deps: ExecDeps = { session: createUnitySession, invoke: runTool, ...options.deps };
 
+  // The server a started editor connects to (recorded in its lease): the explicit URL, else the resolved one.
+  const serverUrl = options.overrideUrl ?? options.probeUrls[0];
   let baseUrl: string;
   // A windowed editor we start may stop on the "compile errors at launch" dialog; click it away until it is ready.
   const ready = new AbortController();
@@ -91,6 +98,7 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
       projectPath: options.projectPath,
       urls: options.probeUrls,
       token: options.token,
+      ...(serverUrl !== undefined ? { serverUrl } : {}),
       env: buildOpenEnv({
         keepConnected: true,
         url: options.overrideUrl,
@@ -100,15 +108,25 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
       }),
       idleSeconds: options.idleTimeoutSeconds ?? DEFAULT_SESSION_IDLE_SECONDS,
       ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
+      ...(options.foreignReadyTimeoutMs !== undefined ? { foreignReadyTimeoutMs: options.foreignReadyTimeoutMs } : {}),
       ...(options.onStatus ? { onStatus: options.onStatus } : {}),
       ...(options.window ? { onLaunched: () => { dismissing = dismissLaunchErrorsUntil(ready.signal, []); } } : {}),
     });
     baseUrl = (await session.ensure({ mode: options.window ? 'window' : 'headless' })).ready;
   } catch (err) {
     const error = err instanceof Error ? err : new Error(String(err));
-    const sessionReason = err instanceof EditorSessionError ? err.reason : undefined;
+    const sessionError = err instanceof EditorSessionError ? err : undefined;
+    const sessionReason = sessionError?.reason;
     const reason = sessionReason === 'exited' || sessionReason === 'not-ready' ? 'not-ready' : 'launch-failed';
-    return { kind: 'failure', success: false, reason, ...(sessionReason ? { sessionReason } : {}), message: error.message, error };
+    return {
+      kind: 'failure',
+      success: false,
+      reason,
+      ...(sessionReason ? { sessionReason } : {}),
+      ...(sessionError?.source ? { editorSource: sessionError.source } : {}),
+      message: sessionErrorMessage(err, serverUrl),
+      error,
+    };
   } finally {
     ready.abort();
     await dismissing;

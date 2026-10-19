@@ -15,7 +15,7 @@ Save and quit an editor that a CLI session started.
 
 ## Behavior
 
-Refuses unless this editor was started by a CLI session (`AIGD_SESSION_OWNER=cli`) with the same nonce. Otherwise answers right away, then saves changed scenes that have a file and changed assets, removes the lease and exits — as the idle shutdown does. Unlike the OS polite-quit signal it also reaches a headless (`-batchmode`) editor. Prefer `unity-mcp-cli close --owned-only` over calling it directly.
+Refuses unless this editor was started by a CLI session (`AIGD_SESSION_OWNER=cli`) with the same nonce. Otherwise answers right away, then saves changed scenes that have a file and changed assets and exits — as the idle shutdown does. Unlike the OS polite-quit signal it also reaches a headless (`-batchmode`) editor. Prefer `unity-mcp-cli close --owned-only` over calling it directly.
 
 ## How to Call
 

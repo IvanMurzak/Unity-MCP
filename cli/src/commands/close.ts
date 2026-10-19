@@ -5,8 +5,8 @@ import { platform as nodePlatform } from 'os';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { findUnityProcess } from '../utils/unity-process.js';
-import type { CloseOwnedResult } from '@baizor/gamedev-cli-core';
-import { createProjectSession, hasSessionLease } from '../lib/editor-session.js';
+import { readSessionLease, type CloseOwnedResult } from '@baizor/gamedev-cli-core';
+import { createProjectSession } from '../lib/editor-session.js';
 import {
   readLockfilePid,
   isProcessAlive,
@@ -143,7 +143,7 @@ async function closeOwnedEditor(
   force: boolean,
   ownedOnly: boolean,
 ): Promise<'none' | 'unverified'> {
-  if (!hasSessionLease(projectPath)) return 'none';
+  if (!readSessionLease(projectPath)) return 'none';
   const spinner = ui.startSpinner('Asking the Unity Editor started by unity-mcp-cli to save and quit...');
   let result: CloseOwnedResult;
   try {
@@ -172,7 +172,7 @@ async function closeOwnedEditor(
     process.exit(1);
   }
   spinner.stop();
-  return hasSessionLease(projectPath) ? 'unverified' : 'none';
+  return readSessionLease(projectPath) ? 'unverified' : 'none';
 }
 
 export const closeCommand = new Command('close')

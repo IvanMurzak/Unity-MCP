@@ -2,8 +2,10 @@ import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { EditorSessionError, SESSION_ENV, type SessionProcessOps } from '@baizor/gamedev-cli-core';
-import { createUnitySession, hasSessionLease, SESSION_QUIT_TOOL, type UnitySessionDeps } from '../src/lib/editor-session.js';
+import { EditorSessionError, SESSION_ENV, readSessionLease, type SessionProcessOps } from '@baizor/gamedev-cli-core';
+import {
+  createUnitySession, sessionErrorMessage, SESSION_QUIT_TOOL, type UnitySessionDeps,
+} from '../src/lib/editor-session.js';
 
 const LOCAL = 'http://localhost:53101';
 const REMOTE = 'https://ai-game.dev/mcp';
@@ -14,8 +16,8 @@ function fakeWorld() {
   const world = {
     alive,
     serverUp: false,
-    /** A Unity process has the project open (ours or the user's). */
-    editorRunning: false,
+    /** The PID of a Unity process that has the project open (ours or the user's). */
+    editorPid: undefined as number | undefined,
     nextPid: 4242,
     quitAccepted: true,
     spawned: [] as Array<{ command: string; args: readonly string[]; env: NodeJS.ProcessEnv; hideWindow: boolean }>,
@@ -25,7 +27,7 @@ function fakeWorld() {
       world.spawned.push({ command, args, env: options.env, hideWindow: options.hideWindow });
       const pid = world.nextPid++;
       alive.add(pid);
-      world.editorRunning = true;
+      world.editorPid = pid;
       world.serverUp = true;
       return pid;
     },
@@ -39,9 +41,11 @@ function fakeWorld() {
     if (!world.serverUp) throw new TypeError('fetch failed');
     return new Response(JSON.stringify({ status: 'success', url: String(input) }), { status: 200 });
   }) as unknown as typeof fetch;
-  const exit = (pid: number) => { alive.delete(pid); world.editorRunning = false; world.serverUp = false; };
+  const exit = (pid: number) => { alive.delete(pid); world.editorPid = undefined; world.serverUp = false; };
+  /** The user's editor (not started by a session) opens the project. */
+  const userEditor = (pid = 1111) => { alive.add(pid); world.editorPid = pid; };
   const deps: Partial<UnitySessionDeps> = {
-    isEditorRunning: () => world.editorRunning,
+    findEditorPid: () => world.editorPid,
     quitViaPlugin: vi.fn(async (_url: string, _token: string | undefined, _nonce: string) => {
       if (!world.quitAccepted) return false;
       for (const pid of [...alive]) exit(pid);
@@ -52,11 +56,12 @@ function fakeWorld() {
     processOps,
     fetchImpl,
   };
-  return { world, deps, exit };
+  return { world, deps, exit, userEditor };
 }
 
 describe('createUnitySession', () => {
   let project: string;
+  const hasLease = () => fs.existsSync(path.join(project, '.ai-game-dev', 'session.json'));
 
   beforeEach(() => {
     project = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-session-'));
@@ -69,9 +74,9 @@ describe('createUnitySession', () => {
   });
 
   it('reuses an editor whose local server already answers, starting nothing', async () => {
-    const { world, deps } = fakeWorld();
+    const { world, deps, userEditor } = fakeWorld();
     world.serverUp = true;
-    world.editorRunning = true;
+    userEditor();
     const session = createUnitySession({ projectPath: project, urls: [LOCAL], deps });
     expect(await session.ensure()).toEqual({ ready: LOCAL, source: 'running' });
     expect(world.spawned).toHaveLength(0);
@@ -100,7 +105,15 @@ describe('createUnitySession', () => {
       [SESSION_ENV.owner]: 'cli',
     });
     expect(spawned.env[SESSION_ENV.nonce]).toMatch(/^[0-9a-f]{32}$/);
-    expect(hasSessionLease(project)).toBe(true);
+    expect(hasLease()).toBe(true);
+    // The session files stay out of git.
+    expect(fs.readFileSync(path.join(project, '.ai-game-dev', '.gitignore'), 'utf-8')).toContain('session.json');
+  });
+
+  it('records the server URL and connection mode in the lease', async () => {
+    const { deps } = fakeWorld();
+    await createUnitySession({ projectPath: project, urls: [LOCAL], serverUrl: LOCAL, deps }).ensure();
+    expect(readSessionLease(project)).toMatchObject({ serverUrl: LOCAL, connectionMode: 'Custom' });
   });
 
   it('opens a window without -batchmode in window mode', async () => {
@@ -111,12 +124,34 @@ describe('createUnitySession', () => {
   });
 
   it('waits for a running editor that is not ready yet instead of starting a second one', async () => {
-    const { world, deps } = fakeWorld();
-    world.editorRunning = true; // the user's editor, still loading
+    const { world, deps, userEditor } = fakeWorld();
+    userEditor(); // still loading
     setTimeout(() => { world.serverUp = true; }, 20);
     const result = await createUnitySession({ projectPath: project, urls: [LOCAL], deps }).ensure();
     expect(result.source).toBe('foreign');
     expect(world.spawned).toHaveLength(0);
+  });
+
+  it('fails fast with a hint when the user editor never answers', async () => {
+    const { world, deps, userEditor } = fakeWorld();
+    userEditor(); // e.g. its plugin is connected to the cloud only
+    const error = await createUnitySession({ projectPath: project, urls: [LOCAL], foreignReadyTimeoutMs: 30, deps })
+      .ensure().catch(e => e);
+    expect(error).toBeInstanceOf(EditorSessionError);
+    expect(error).toMatchObject({ reason: 'not-ready', source: 'foreign' });
+    expect(world.spawned).toHaveLength(0);
+    expect(sessionErrorMessage(error, REMOTE)).toContain('Cloud mode');
+    expect(sessionErrorMessage(error, LOCAL)).toContain('plugin is connected');
+    expect(sessionErrorMessage(new Error('boom'), REMOTE)).toBe('boom');
+  });
+
+  it('starts its own editor when the user editor exits while it waits', async () => {
+    const { world, deps, userEditor, exit } = fakeWorld();
+    userEditor();
+    setTimeout(() => exit(1111), 20);
+    const result = await createUnitySession({ projectPath: project, urls: [LOCAL], deps }).ensure();
+    expect(result.source).toBe('started');
+    expect(world.spawned).toHaveLength(1);
   });
 
   it('counts a remote server only while a Unity process has the project open', async () => {
@@ -131,12 +166,23 @@ describe('createUnitySession', () => {
     const { world, deps } = fakeWorld();
     const session = createUnitySession({ projectPath: project, urls: [LOCAL], token: 'tk', deps });
     const { lease } = await session.ensure();
+    expect(lease!.serverUrl).toBeUndefined(); // no recorded URL: the plugin is asked where the probe answers
 
     expect(await session.closeOwned({ timeoutMs: 1000 })).toEqual({ kind: 'closed', pid: lease!.pid, forced: false });
     expect(deps.quitViaPlugin).toHaveBeenCalledWith(LOCAL, 'tk', lease!.nonce);
     expect(deps.requestOsClose).not.toHaveBeenCalled();
-    expect(hasSessionLease(project)).toBe(false);
+    expect(hasLease()).toBe(false);
     expect(world.alive.size).toBe(0);
+  });
+
+  it('asks the plugin at the server URL recorded in the lease', async () => {
+    const recorded = 'http://localhost:53999';
+    const { deps } = fakeWorld();
+    const { lease } = await createUnitySession({ projectPath: project, urls: [LOCAL], serverUrl: recorded, deps }).ensure();
+    // A later call (e.g. `close`) that resolved other URLs still reaches the editor where it was started.
+    const closing = createUnitySession({ projectPath: project, urls: [LOCAL], token: 'tk', deps });
+    expect(await closing.closeOwned({ timeoutMs: 1000 })).toEqual({ kind: 'closed', pid: lease!.pid, forced: false });
+    expect(deps.quitViaPlugin).toHaveBeenCalledWith(recorded, 'tk', lease!.nonce);
   });
 
   it('falls back to the OS polite quit when the plugin refuses', async () => {
@@ -147,14 +193,13 @@ describe('createUnitySession', () => {
 
     expect(await session.closeOwned({ timeoutMs: 50 })).toEqual({ kind: 'still-running', pid: lease!.pid });
     expect(deps.requestOsClose).toHaveBeenCalledWith(lease!.pid);
-    expect(hasSessionLease(project)).toBe(true);
+    expect(hasLease()).toBe(true);
   });
 
   it('never closes an editor it did not start', async () => {
-    const { world, deps } = fakeWorld();
+    const { world, deps, userEditor } = fakeWorld();
     world.serverUp = true;
-    world.editorRunning = true;
-    world.alive.add(1111);
+    userEditor();
     const session = createUnitySession({ projectPath: project, urls: [LOCAL], deps });
     await session.ensure();
 
