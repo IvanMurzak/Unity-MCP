@@ -184,13 +184,14 @@ export async function openProject(
       message: `Opening Unity project at ${projectPath}`,
     });
 
+    // Headless validates auth/transport through its own buildOpenEnv call.
+    if (options.headless) return await openHeadless(projectPath, options, warnings);
+
     // Validate auth/transport BEFORE work begins so callers learn of
     // a typo without first paying for editor-discovery I/O. The
     // returned env is recomputed below if cloud-mode auto-detect
     // flips keepConnected; otherwise we reuse this same map.
     let env = buildOpenEnv(options);
-
-    if (options.headless) return await openHeadless(projectPath, options, warnings);
 
     // Our headless editor holds the project: close it (it saves) so the window can open.
     const prepared = await prepareWindowOpen(projectPath, options);

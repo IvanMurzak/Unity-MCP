@@ -26,39 +26,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         public static string PathFor(string projectRoot) => Path.Combine(projectRoot, DirectoryName, FileName);
 
-        /// <summary>Whether the lease at <paramref name="leasePath"/> carries <paramref name="nonce"/>.</summary>
-        public static bool IsOwn(string leasePath, string nonce)
-        {
-            try
-            {
-                if (!File.Exists(leasePath))
-                    return false;
-                using var document = JsonDocument.Parse(File.ReadAllText(leasePath));
-                return document.RootElement.ValueKind == JsonValueKind.Object
-                    && document.RootElement.TryGetProperty("nonce", out var value)
-                    && value.ValueKind == JsonValueKind.String
-                    && string.Equals(value.GetString(), nonce, StringComparison.Ordinal);
-            }
-            catch (Exception)
-            {
-                return false; // unreadable or malformed: not provably ours
-            }
-        }
-
-        /// <summary>Compare-and-delete: removes the lease only while it carries <paramref name="nonce"/>. True when removed.</summary>
+        /// <summary>
+        /// Compare-and-delete: removes the lease only while it carries <paramref name="nonce"/>. False when there is no
+        /// lease, it is malformed, or it names another session; I/O errors while deleting propagate.
+        /// </summary>
         public static bool TryDeleteOwn(string leasePath, string nonce)
         {
-            if (!IsOwn(leasePath, nonce))
+            if (!File.Exists(leasePath))
                 return false;
             try
             {
-                File.Delete(leasePath);
-                return true;
+                using var document = JsonDocument.Parse(File.ReadAllText(leasePath));
+                if (document.RootElement.ValueKind != JsonValueKind.Object
+                    || !document.RootElement.TryGetProperty("nonce", out var value)
+                    || value.ValueKind != JsonValueKind.String
+                    || !string.Equals(value.GetString(), nonce, StringComparison.Ordinal))
+                    return false;
             }
-            catch (Exception)
+            catch (JsonException)
             {
-                return false;
+                return false; // malformed: not provably ours
             }
+            File.Delete(leasePath);
+            return true;
         }
     }
 }

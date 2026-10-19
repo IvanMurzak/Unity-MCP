@@ -1,4 +1,5 @@
 import { Command } from 'commander';
+import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as path from 'path';
 import { findUnityHub, listInstalledEditors } from '../utils/unity-hub.js';
 import { findUnityProcess } from '../utils/unity-process.js';
@@ -130,7 +131,7 @@ export const openCommand = new Command('open')
   .option('--start-server <value>', 'Set to true/false to control server auto-start (sets UNITY_MCP_START_SERVER)', undefined)
   .option('--headless', 'Run the editor without a window (-batchmode, graphics kept) and wait until it is ready; implies --keep-connected')
   .option('--idle-timeout <seconds>', 'Quit the editor after this many seconds without a tool call')
-  .option('--ready-timeout <ms>', 'With --headless: how long to wait for the editor to become ready', '300000')
+  .option('--ready-timeout <ms>', 'With --headless: how long to wait for the editor to become ready', String(DEFAULT_SESSION_READY_TIMEOUT_MS))
   .option(
     '--no-auto-dismiss-launch-errors',
     'Disable auto-dismissal of the Unity Editor "compile errors at launch" dialog (default: enabled). On macOS, requires Accessibility permission for the terminal / unity-mcp-cli binary. On Linux/X11, requires `xdotool` on PATH (Wayland not supported).',
@@ -265,7 +266,7 @@ export const openCommand = new Command('open')
       startServer: startServerBool,
       headless: options.headless,
       idleTimeoutSeconds: options.idleTimeout === undefined ? undefined : parsePositiveIntFlag(options.idleTimeout, '--idle-timeout', 0),
-      readyTimeoutMs: parsePositiveIntFlag(options.readyTimeout, '--ready-timeout', 300_000),
+      readyTimeoutMs: parsePositiveIntFlag(options.readyTimeout, '--ready-timeout', DEFAULT_SESSION_READY_TIMEOUT_MS),
       autoDismissLaunchErrors: options.autoDismissLaunchErrors !== false,
       launchDismissTimeoutMs,
       launchDismissPollIntervalMs,

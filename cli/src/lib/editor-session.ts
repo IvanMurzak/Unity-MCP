@@ -95,8 +95,11 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
   const probeLocal = probe(options.urls.filter(isLoopbackUrl));
   const remoteUrls = options.urls.filter(url => !isLoopbackUrl(url));
   const probeRemote = probe(remoteUrls);
+  // The process scan is slow (PowerShell on Windows): once an editor was seen, polling does not rescan.
+  let editorSeen = false;
+  const editorRunning = () => (editorSeen ||= deps.isEditorRunning(projectPath));
   const probeReady = async (): Promise<string | undefined> =>
-    (await probeLocal()) ?? (remoteUrls.length > 0 && deps.isEditorRunning(projectPath) ? probeRemote() : undefined);
+    (await probeLocal()) ?? (remoteUrls.length > 0 && editorRunning() ? probeRemote() : undefined);
 
   const editor: EditorLaunchSpec = {
     ...unityAdapter.editor!,

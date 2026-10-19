@@ -1,7 +1,12 @@
 // Library-safe `execCode`: run C# in a project's Unity Editor through `script-execute`, starting a warm
 // headless editor when none is running. No console output, no `process.exit`.
 
-import { EditorSessionError, type EditorSession, type EditorSessionErrorReason } from '@baizor/gamedev-cli-core';
+import {
+  DEFAULT_SESSION_IDLE_SECONDS,
+  EditorSessionError,
+  type EditorSession,
+  type EditorSessionErrorReason,
+} from '@baizor/gamedev-cli-core';
 import { createUnitySession, isLoopbackUrl, type UnitySessionOptions } from './editor-session.js';
 import { buildOpenEnv } from './open.js';
 import { runTool } from './run-tool.js';
@@ -9,7 +14,6 @@ import type { RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
 
 export const SCRIPT_EXECUTE_TOOL = 'script-execute';
 
-const DEFAULT_IDLE_SECONDS = 300;
 const DEFAULT_TIMEOUT_MS = 180_000;
 
 /** Injection points for tests. */
@@ -91,7 +95,7 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
         // A local server is only reachable if someone starts it; the plugin does when asked.
         ...(options.overrideUrl && isLoopbackUrl(options.overrideUrl) ? { startServer: true } : {}),
       }),
-      idleSeconds: options.idleTimeoutSeconds ?? DEFAULT_IDLE_SECONDS,
+      idleSeconds: options.idleTimeoutSeconds ?? DEFAULT_SESSION_IDLE_SECONDS,
       ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
       ...(options.onStatus ? { onStatus: options.onStatus } : {}),
     });
