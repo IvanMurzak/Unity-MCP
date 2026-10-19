@@ -1,7 +1,7 @@
 # Vendored: Code-Exec (C#)
 
 `Core/` and `Roslyn/` are copied verbatim from [IvanMurzak/Code-Exec](https://github.com/IvanMurzak/Code-Exec) release
-**0.2.1** (commit `79f5281`): `dotnet/CodeExec/*.cs` and `dotnet/CodeExec.Roslyn/src/*.cs`. Source, not the NuGet DLL:
+**0.2.1** (tag `nuget-v0.2.1`, commit `79f5281`): `dotnet/CodeExec/*.cs` and `dotnet/CodeExec.Roslyn/src/*.cs`. Source, not the NuGet DLL:
 the adapter compiles against the Roslyn 4.8 this package already installs, and no NuGet pin / DLL changes are needed in
 the test projects. Do not edit them here: change Code-Exec, then copy the files again and update this note and the
 hashes below (`sha256sum Core/*.cs Roslyn/*.cs`).
