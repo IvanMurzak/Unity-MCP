@@ -1,0 +1,83 @@
+cli/tests/open-session.test.ts
+  s_5f9a753ce320b5::t_1968a8bb6faac3 1-90
+cli/src/lib/editor-session.ts
+  s_5f9a753ce320b5::t_128de9d314038c 1-167
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/CliSessionLease.cs
+  s_5f9a753ce320b5::t_461d0ffc412f69 1-64
+cli/tests/editor-session.test.ts
+  s_5f9a753ce320b5::t_aa266ea701b6be 1-87,91-187
+  s_5f9a753ce320b5::t_37018ebdc0b3d4 88-90
+cli/src/lib/wait-for-ready.ts
+  s_5f9a753ce320b5::t_127fa23a0256ad 1,19,40-41,46-62
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/SystemTool/EditorSession.Quit.cs
+  s_5f9a753ce320b5::t_eb51883f5ef0a9 1-74
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Environment/CliSessionLeaseTests.cs
+  s_5f9a753ce320b5::t_3644eaefa0985d 1-80
+cli/src/lib/open.ts
+  s_5f9a753ce320b5::t_0b352f51b1a278 193-206
+  s_5f9a753ce320b5::t_86dc4c48e7b715 12-13,207-208,249-250,291-292,332,351,468
+  s_5f9a753ce320b5::t_7b60c6fc8b3bc4 290
+  s_5f9a753ce320b5::t_b2fe6b17ab5937 390-467
+Unity-MCP-Plugin/.claude/skills/editor-session-quit/SKILL.md
+  s_5f9a753ce320b5::t_9d5670687c6ca1 1-85
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_5f9a753ce320b5::t_97c6db369ee30d 7-15
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.IdleShutdown.cs
+  s_5f9a753ce320b5::t_49adb4f1a29375 14,19,25-27,33-36,42-47,71-80,83-85,89-104,109,123
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.cs
+  s_5f9a753ce320b5::t_3508e7e52bc8ad 54
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Utils/EnvironmentUtils.cs
+  s_5f9a753ce320b5::t_4be9d4bdb44a0f 55-63,298-299,303-325
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Environment/IdleShutdownTests.cs
+  s_5f9a753ce320b5::t_be560c1e08ebc3 103-151
+cli/CHANGELOG.md
+  s_5f9a753ce320b5::t_ca5382a57fe39e 12-31
+cli/README.md
+  s_5f9a753ce320b5::t_8ce0ded57ad30c 360-362,367-368,420,424,432,499
+cli/docs/README.es.md
+  s_5f9a753ce320b5::t_fcc2e8e1580378 254-255,333
+cli/docs/README.ja.md
+  s_5f9a753ce320b5::t_cc58cb4ed5e739 254-255,333
+cli/docs/README.zh-CN.md
+  s_5f9a753ce320b5::t_0f41b8111547ad 254-255,333
+cli/package-lock.json
+  s_5f9a753ce320b5::t_326a4ae3e2fa79 12,30-32
+cli/package.json
+  s_5f9a753ce320b5::t_92927f2badd190 65
+cli/src/commands/close.ts
+  s_5f9a753ce320b5::t_31c3763f45577b 8,21,134-171,177,198-205
+cli/src/commands/exec.ts
+  s_5f9a753ce320b5::t_30ed85c2cde4a2 115-117
+cli/src/commands/open.ts
+  s_5f9a753ce320b5::t_984587803e6362 131-133,162,268,301,319-326,380-382
+cli/src/lib/exec.ts
+  s_5f9a753ce320b5::t_da22812ecd9053 4-6,8,17,28,61-62,75-76,79,81-83,87-96,98-103,106
+cli/src/lib/types.ts
+  s_5f9a753ce320b5::t_538a57383a77ff 12,14,64-65,461-467,471-473,476-479,560-561
+cli/src/utils/unity-editor.ts
+  s_5f9a753ce320b5::t_1af39c82add799 430
+cli/tests/exec.test.ts
+  s_5f9a753ce320b5::t_7f702d733c18d0 2,10,14,19-22,29-32,34,37,41-47,50,52-53,57,59,63,65-67,71,73,77,88-96,102-103,160-168,171-172,174-179,183-185,189,193-195,197-198
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/SystemTool/EditorSession.Quit.cs.meta
+  s_5f9a753ce320b5::t_9248a58b54827f 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/CliSessionLease.cs.meta
+  s_5f9a753ce320b5::t_2e34412eba56eb 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Environment/CliSessionLeaseTests.cs.meta
+  s_5f9a753ce320b5::t_0e81292c056f7b 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "edc9a0fe452b251d31c52323358c5d605ccf4bd5",
+  "prompts": {},
+  "sessions": {
+    "s_5f9a753ce320b5": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7ee65e8c-aca3-452e-9397-46e1aceea5e9",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
