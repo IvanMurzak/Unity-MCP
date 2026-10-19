@@ -589,6 +589,7 @@ Independientemente de la opción de ejecución que elijas, todas soportan config
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`             | Puerto de conexión **Client** -> **Server** <- **Plugin** (por defecto: 8080)       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | Tiempo de espera de conexión **Plugin** -> **Server** (ms) (por defecto: 10000)            |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`     | Tiempo que el **Server** espera una llamada a herramienta (ms). La llamada se envía al **Plugin** una sola vez, sin reenvíos (por defecto: 300000, o `--plugin-timeout` si es mayor; servidores basados en McpPlugin 8.11.0+) |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | Tipo de transporte **Client** -> **Server**: `stdio` o `streamableHttp` (por defecto: `streamableHttp`) |
 | `MCP_AUTHORIZATION`           | `--authorization`        | Modo de autenticación para conexiones entrantes del **Client**: `none` o `required` (por defecto: `none`) |
 | `MCP_PLUGIN_TOKEN`            | `--token`                | Token Bearer requerido del **Client** cuando `--authorization=required` (por defecto: sin definir) |

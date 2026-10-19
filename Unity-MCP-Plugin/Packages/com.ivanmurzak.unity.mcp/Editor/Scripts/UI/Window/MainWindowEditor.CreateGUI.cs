@@ -338,7 +338,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var inputTimeoutMs = root.Q<IntegerField>("inputTimeoutMs");
             inputTimeoutMs.value = UnityMcpPluginEditor.TimeoutMs;
-            inputTimeoutMs.tooltip = $"Timeout for MCP tool execution in milliseconds.\n\nMost tools only need a few seconds.\n\nSet this higher than your longest test execution time.\n\nImportant: Also update the '{Args.PluginTimeout}' argument in your AI agent configuration to match this value so your AI agent doesn't timeout before the tool completes.";
+            inputTimeoutMs.tooltip = $"Connection timeout in milliseconds: the MCP server's '{Args.PluginTimeout}'.\n\nThe server waits this long for the plugin to list tools, prompts and resources. Tool calls use 'Tool timeout' instead (servers built on McpPlugin 8.11.0 or later; an older server also waits this long per tool-call attempt).";
             inputTimeoutMs.RegisterCallback<FocusOutEvent>(evt =>
             {
                 var newValue = Mathf.Max(1000, inputTimeoutMs.value);
@@ -350,11 +350,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
                 UnityMcpPluginEditor.TimeoutMs = newValue;
 
-                var rawJsonField = root.Q<TextField>("rawJsonConfigurationStdio");
-                rawJsonField.value = McpServerManager.RawJsonConfigurationStdio(UnityMcpPluginEditor.Port, "mcpServers", UnityMcpPluginEditor.TimeoutMs).ToString();
-
                 SaveChanges($"[AI Game Developer] Timeout Changed: {newValue} ms");
                 UnityBuildAndConnect();
+            });
+
+            var inputToolTimeoutMs = root.Q<IntegerField>("inputToolTimeoutMs");
+            inputToolTimeoutMs.value = UnityMcpPluginEditor.ToolTimeoutMs;
+            inputToolTimeoutMs.tooltip = $"How long the MCP server waits for one tool call, in milliseconds: the server's '{Args.ToolTimeout}' (default {McpPlugin.Common.Consts.Hub.DefaultToolTimeoutMs}).\n\nSet it higher than your longest tool run, e.g. a long test run. A value below 'Timeout' is raised to it.\n\nThe local server picks up a change when it restarts. AI agent configs that start the server themselves (stdio) use the server's default unless you add '{Args.ToolTimeout}=<ms>' to their arguments.";
+            inputToolTimeoutMs.RegisterCallback<FocusOutEvent>(evt =>
+            {
+                var newValue = Mathf.Max(1000, inputToolTimeoutMs.value);
+                if (newValue == UnityMcpPluginEditor.ToolTimeoutMs)
+                    return;
+
+                if (newValue != inputToolTimeoutMs.value)
+                    inputToolTimeoutMs.SetValueWithoutNotify(newValue);
+
+                UnityMcpPluginEditor.ToolTimeoutMs = newValue;
+                SaveChanges($"[AI Game Developer] Tool Timeout Changed: {newValue} ms");
             });
 
             root.Q<TextField>("currentVersion").value = UnityMcpPlugin.Version;

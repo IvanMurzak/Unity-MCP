@@ -71,6 +71,7 @@ All arguments can be provided as CLI flags or equivalent environment variables:
 | `MCP_PLUGIN_PORT`             | `--port`             | Port for both the AI Client (HTTP) and Unity Plugin (SignalR) connections.                        | `8080`           |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | Protocol for AI Client connection: `streamableHttp` or `stdio`.                                   | `streamableHttp` |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | Timeout in ms for plugin responses.                                                               | `10000`          |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`     | How long the server waits for one tool call, in ms. A tool call is sent once and never re-sent; when unset, `--plugin-timeout` if larger. The editor passes its **Tool timeout** setting. Servers built on McpPlugin 8.11.0+. | `300000`         |
 | `MCP_AUTHORIZATION`           | `--authorization`    | Authentication mode for incoming Client connections: `none` or `required`.                        | `none`           |
 | `MCP_PLUGIN_TOKEN`            | `--token`            | Bearer token required from the Client when `--authorization=required`. Ignored when `none`.       | *(unset)*        |
 | `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | Shut the server down after this many seconds with no active connections.                  | `600`            |

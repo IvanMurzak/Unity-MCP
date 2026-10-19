@@ -15,7 +15,11 @@ import type { RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
 
 export const SCRIPT_EXECUTE_TOOL = 'script-execute';
 
-const DEFAULT_TIMEOUT_MS = 180_000;
+/**
+ * Default `exec` call timeout: the MCP server's default `tool-timeout` (300 s, McpPlugin 8.11.0+, which the Unity plugin
+ * launches its server with) plus 10 s, so the CLI never gives up before the server answers with its own timeout error.
+ */
+export const DEFAULT_EXEC_TIMEOUT_MS = 310_000;
 
 /** Injection points for tests. */
 export interface ExecDeps {
@@ -36,7 +40,7 @@ export interface ExecCodeOptions {
   readyTimeoutMs?: number;
   /** Wait for an editor exec did not start (the user's GUI) to answer; see `UnitySessionOptions.foreignReadyTimeoutMs`. */
   foreignReadyTimeoutMs?: number;
-  /** Tool call timeout. Default 180000. */
+  /** Tool call timeout. Default `DEFAULT_EXEC_TIMEOUT_MS` (310000). */
   timeoutMs?: number;
   /** Server URLs to try, first answer wins (the CLI passes the config URL plus the project's local port). */
   probeUrls: string[];
@@ -140,7 +144,7 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
     ...(options.token ? { token: options.token } : {}),
     tokenFromCloudStore: options.tokenFromCloudStore,
     input: buildScriptExecuteInput(options.code, options.usings ?? [], options.include ?? []),
-    timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    timeoutMs: options.timeoutMs ?? DEFAULT_EXEC_TIMEOUT_MS,
   });
   if (result.kind === 'failure') {
     return {

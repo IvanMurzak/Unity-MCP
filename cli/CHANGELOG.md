@@ -35,6 +35,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `exec` waits 310000 ms by default (was 180000; `--timeout` and `ExecCodeOptions.timeoutMs`; exported as
+  `DEFAULT_EXEC_TIMEOUT_MS`): longer than the MCP server's default `tool-timeout` (300000, McpPlugin 8.11.0+), so
+  the CLI never gives up on a call the server is still waiting for.
+
 - `wait-for-ready` / `waitForReady` use cli-core's readiness probe: a 401/403 now counts as a server that is up (the
   next call reports the auth problem). `WaitForReadyOptions.probeImpl` is replaced by `fetchImpl`.
 - `execCode`'s test seam `deps` is now `{ session, invoke }`; failures carry `sessionReason`.
