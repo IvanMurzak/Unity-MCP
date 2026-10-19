@@ -6,9 +6,9 @@
 
 - **Editor-session contract shared by the engine CLIs.** An editor started by a CLI session
   (`AIGD_SESSION_OWNER=cli`) quits after `AIGD_SESSION_IDLE_SECONDS` without tool calls
-  (`UNITY_MCP_IDLE_TIMEOUT` still works and is the fallback), saving changed scenes and assets first, and
-  removes the CLI's session lease `<project>/.ai-game-dev/session.json` when it exits — only while the lease
-  still carries its own `AIGD_SESSION_NONCE`.
+  (`UNITY_MCP_IDLE_TIMEOUT` still works and is the fallback), saving changed scenes and assets first. The
+  editor leaves the CLI's session lease `<project>/.ai-game-dev/session.json` to the CLI, which removes it once
+  the editor's process is gone: removed earlier, the still-exiting editor looked like one the CLI did not start.
 - **`editor-session-quit` system tool.** Saves and quits an editor a CLI session started, when the caller
   passes the lease nonce; any other editor refuses. `unity-mcp-cli close` uses it, because the Windows
   polite quit (`WM_CLOSE`) never reaches a headless (`-batchmode`) editor.

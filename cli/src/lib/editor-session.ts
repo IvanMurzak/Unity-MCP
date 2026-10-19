@@ -3,12 +3,14 @@
 // start an editor per project, and only a leased editor is ever closed. Library-safe: no console output, no exit.
 
 import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import {
   EditorSession,
+  EditorSessionError,
+  DEFAULT_SESSION_READY_TIMEOUT_MS,
   defaultSessionProcessOps,
-  SESSION_DIR_NAME,
-  SESSION_LEASE_FILE_NAME,
+  readSessionLease,
   isLoopbackHost,
   mcpReadinessProbe,
   unityAdapter,
@@ -18,6 +20,7 @@ import {
 import { findEditorPath, getProjectEditorVersion } from '../utils/unity-editor.js';
 import { clearCachedEditorPath } from '../utils/editor-cache.js';
 import { resolveConnection, resolveProbeUrls } from '../utils/connection.js';
+import { CLOUD_SERVER_URL } from '../utils/config.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import { sendGracefulShutdown } from '../utils/unity-shutdown.js';
 import { runSystemTool } from './run-tool.js';
@@ -31,9 +34,15 @@ export const SESSION_QUIT_TOOL = 'editor-session-quit';
 
 const QUIT_CALL_TIMEOUT_MS = 15_000;
 
+/**
+ * Default wait for an editor the CLI did not start (the user's GUI) to answer. Shorter than the start timeout: such an
+ * editor may never answer here (plugin disconnected, or connected to the cloud), so the call fails with a clear hint.
+ */
+const DEFAULT_FOREIGN_READY_TIMEOUT_MS = 60_000;
+
 export interface UnitySessionDeps {
-  /** Whether a Unity Editor process has the project open. */
-  isEditorRunning: (projectPath: string) => boolean;
+  /** The PID of a Unity Editor process that has the project open; undefined when none. */
+  findEditorPid: (projectPath: string) => number | undefined;
   /** Ask the plugin at `url` to quit (`SESSION_QUIT_TOOL`); true when it accepted. */
   quitViaPlugin: (url: string, token: string | undefined, nonce: string) => Promise<boolean>;
   /** The OS polite quit; true when delivered. */
@@ -53,6 +62,11 @@ export interface UnitySessionOptions {
    */
   urls: string[];
   token?: string;
+  /**
+   * The server URL a started editor connects to; recorded in the session lease, so `close` reaches the editor's plugin
+   * there without resolving the connection again.
+   */
+  serverUrl?: string;
   /** Extra environment for a started editor (`UNITY_MCP_*` connection settings). */
   env?: Record<string, string>;
   /** Explicit editor executable; default: the installed editor of the project's (or `unityVersion`) version. */
@@ -61,6 +75,8 @@ export interface UnitySessionOptions {
   /** A started editor quits after this many seconds without tool calls; 0 = never. Default 300. */
   idleSeconds?: number;
   readyTimeoutMs?: number;
+  /** Wait for an editor the CLI did not start. Default `DEFAULT_FOREIGN_READY_TIMEOUT_MS` (at most `readyTimeoutMs`). */
+  foreignReadyTimeoutMs?: number;
   onStatus?: (message: string) => void;
   /** Called once this session has started an editor process (not when it reuses one). */
   onLaunched?: (pid: number) => void;
@@ -68,7 +84,7 @@ export interface UnitySessionOptions {
 }
 
 const defaultDeps: UnitySessionDeps = {
-  isEditorRunning: projectPath => findUnityProcess(projectPath) !== null,
+  findEditorPid: projectPath => findUnityProcess(projectPath)?.pid,
   quitViaPlugin: async (url, token, nonce) => {
     const result = await runSystemTool({
       toolName: SESSION_QUIT_TOOL,
@@ -105,17 +121,32 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
   const probeRemote = probe(remoteUrls);
   // The process scan is slow (PowerShell on Windows): once an editor was seen, polling does not rescan.
   let editorSeen = false;
-  const editorRunning = () => (editorSeen ||= deps.isEditorRunning(projectPath));
+  const editorRunning = () => (editorSeen ||= deps.findEditorPid(projectPath) !== undefined);
   const probeReady = async (): Promise<string | undefined> =>
     (await probeLocal()) ?? (remoteUrls.length > 0 && editorRunning() ? probeRemote() : undefined);
 
   const editor: EditorLaunchSpec = {
     ...unityAdapter.editor!,
-    findRunningEditor: async root => deps.isEditorRunning(root),
-    requestClose: async pid => {
-      const lease = session.readLease();
-      const url = lease?.pid === pid ? await probeReady() : undefined;
-      if (url !== undefined && await deps.quitViaPlugin(url, options.token, lease!.nonce)) return true;
+    // The PID lets the session notice cheaply when the user's editor exits while it waits for it.
+    findRunningEditor: async root => {
+      const pid = deps.findEditorPid(root);
+      editorSeen ||= pid !== undefined; // spares probeReady a second scan while the session waits for it
+      return pid ?? false;
+    },
+    // `lease` is the verified lease naming `pid` (cli-core never passes a dead one): the plugin is asked at the server it
+    // was started against, then at whichever of this call's URLs answers.
+    requestClose: async (pid, _root, lease) => {
+      if (lease) {
+        const asked = new Set<string>();
+        const quit = async (url: string | undefined): Promise<boolean> => {
+          if (url === undefined || asked.has(url)) return false;
+          asked.add(url);
+          // The token was resolved for this call's URLs: never hand it to another remote server.
+          const token = options.urls.includes(url) || isLoopbackUrl(url) ? options.token : undefined;
+          return deps.quitViaPlugin(url, token, lease.nonce);
+        };
+        if (await quit(lease.serverUrl) || await quit(await probeReady())) return true;
+      }
       return deps.requestOsClose(pid);
     },
   };
@@ -138,7 +169,8 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
     },
   };
 
-  const session: EditorSession<string> = new EditorSession<string>({
+  const readyTimeoutMs = options.readyTimeoutMs ?? DEFAULT_SESSION_READY_TIMEOUT_MS;
+  return new EditorSession<string>({
     adapter: { ...unityAdapter, editor },
     projectRoot: projectPath,
     probeReady,
@@ -151,12 +183,37 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
       return found;
     },
     ...(options.env ? { env: options.env } : {}),
+    ...(options.serverUrl !== undefined
+      ? { serverUrl: options.serverUrl, connectionMode: options.serverUrl === CLOUD_SERVER_URL ? 'Cloud' : 'Custom' }
+      : {}),
     ...(options.idleSeconds !== undefined ? { idleSeconds: options.idleSeconds } : {}),
-    ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
+    readyTimeoutMs,
+    foreignReadyTimeoutMs: options.foreignReadyTimeoutMs ?? Math.min(DEFAULT_FOREIGN_READY_TIMEOUT_MS, readyTimeoutMs),
     ...(options.onStatus ? { onStatus: options.onStatus } : {}),
     processOps,
   });
-  return session;
+}
+
+/**
+ * Whether the project has a session lease whose editor process may still run. Cheap (no process start-time check): a
+ * dead lease, which an editor leaves behind when it exits, does not count; the session removes it.
+ */
+export function hasLiveSessionLease(projectPath: string, isAlive: (pid: number) => boolean = defaultSessionProcessOps.isAlive): boolean {
+  const lease = readSessionLease(projectPath);
+  // A lease of another machine (a shared folder) cannot be checked here: count it.
+  return lease !== undefined && (lease.hostId !== os.hostname() || isAlive(lease.pid));
+}
+
+/**
+ * The message for a session failure. cli-core already explains an editor the CLI did not start that never answered;
+ * in Cloud mode (`serverUrl` is the cloud) the CLI reaches that editor only through ai-game.dev, which gets a hint.
+ */
+export function sessionErrorMessage(err: Error, serverUrl: string | undefined): string {
+  const { message } = err;
+  const foreignNotReady = err instanceof EditorSessionError && err.source === 'foreign' && err.reason === 'not-ready';
+  if (!foreignNotReady || serverUrl !== CLOUD_SERVER_URL) return message;
+  return `${message}. The project is in Cloud mode: the CLI reaches this editor only while its plugin is connected to ` +
+    'ai-game.dev. Connect it, switch its connection to Custom (a local server), or pass --url <server url>.';
 }
 
 /**
@@ -170,12 +227,7 @@ export async function createProjectSession(
   factory: (options: UnitySessionOptions) => EditorSession<string> = createUnitySession,
 ): Promise<EditorSession<string>> {
   const { url, token } = await resolveConnection(projectPath, connection);
-  return factory({ projectPath, urls: resolveProbeUrls(projectPath, url, connection.url), token, ...extra });
-}
-
-/** Whether the project has a session lease file at all (valid or not): cheap, no process checks. */
-export function hasSessionLease(projectPath: string): boolean {
-  return fs.existsSync(path.join(projectPath, SESSION_DIR_NAME, SESSION_LEASE_FILE_NAME));
+  return factory({ projectPath, urls: resolveProbeUrls(projectPath, url, connection.url), token, serverUrl: url, ...extra });
 }
 
 /**

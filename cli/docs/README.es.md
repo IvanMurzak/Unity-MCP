@@ -330,7 +330,7 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 
 ## `exec`
 
-Ejecuta C# en Unity Editor y muestra el resultado. Si el proyecto ya está abierto (con ventana o headless), `exec` usa ese editor y nunca lo cierra. Si no, inicia un editor headless que se mantiene caliente para las siguientes llamadas y se cierra solo tras `--idle` segundos sin llamadas (guardando escenas y assets modificados). El editor que inicia queda registrado en el lease de sesión del proyecto (`.ai-game-dev/session.json`) y se inicia bajo un bloqueo de archivo, así que las llamadas `exec` en paralelo comparten un editor; `close --owned-only` lo cierra y `open` (con ventana) lo cierra antes de abrir la ventana.
+Ejecuta C# en Unity Editor y muestra el resultado. Si el proyecto ya está abierto (con ventana o headless), `exec` usa ese editor y nunca lo cierra. Si no, inicia un editor headless que se mantiene caliente para las siguientes llamadas y se cierra solo tras `--idle` segundos sin llamadas (guardando escenas y assets modificados). El editor que inicia queda registrado en el lease de sesión del proyecto (`.ai-game-dev/session.json`) y se inicia bajo un bloqueo de archivo, así que las llamadas `exec` en paralelo comparten un editor; `close --owned-only` lo cierra y `open` (con ventana) lo cierra antes de abrir la ventana. Estos archivos de sesión son locales de la máquina: `.ai-game-dev/.gitignore` los excluye de git. Si el proyecto está abierto en un editor que la CLI no inició y su plugin no responde en 60 s (desconectado o conectado a la nube de ai-game.dev), `exec` se detiene con una indicación en lugar de esperar: conecta el plugin, cambia su conexión a Custom (un servidor local) o pasa `--url`.
 
 ```bash
 # La última expresión es el resultado

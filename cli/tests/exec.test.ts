@@ -42,9 +42,23 @@ describe('execCode', () => {
     const d = deps();
     await execCode(options(d, { token: 'tk', readyTimeoutMs: 5000 }));
     expect(sessionOptions(d)).toMatchObject({
-      projectPath: '/proj', urls: [LOCAL], token: 'tk', idleSeconds: 300, readyTimeoutMs: 5000,
+      projectPath: '/proj', urls: [LOCAL], token: 'tk', serverUrl: LOCAL, idleSeconds: 300, readyTimeoutMs: 5000,
       env: { UNITY_MCP_KEEP_CONNECTED: 'true' },
     });
+  });
+
+  it('records an explicit url as the server of a started editor', async () => {
+    const d = deps();
+    await execCode(options(d, { overrideUrl: 'http://127.0.0.1:5000/', foreignReadyTimeoutMs: 1000 }));
+    expect(sessionOptions(d)).toMatchObject({ serverUrl: 'http://127.0.0.1:5000', foreignReadyTimeoutMs: 1000 });
+  });
+
+  it('explains a user editor that never answered', async () => {
+    const d = deps(async () => { throw new EditorSessionError('not-ready', 'no answer in 60s', { source: 'foreign' }); });
+    const result = await execCode(options(d, { probeUrls: ['https://ai-game.dev/mcp', LOCAL] }));
+    expect(result).toMatchObject({ kind: 'failure', reason: 'not-ready', sessionReason: 'not-ready', editorSource: 'foreign' });
+    expect(result.kind === 'failure' && result.message).toContain('Cloud mode');
+    expect(d.invoke).not.toHaveBeenCalled();
   });
 
   it('passes an idle timeout of 0 through (never quit)', async () => {

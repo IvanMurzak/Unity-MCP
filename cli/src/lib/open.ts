@@ -10,7 +10,7 @@ import { clearCachedEditorPath } from '../utils/editor-cache.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import { readConfig, isCloudMode, writeConfig } from '../utils/config.js';
 import type { EditorSession } from '@baizor/gamedev-cli-core';
-import { createProjectSession, hasSessionLease, validateEditorPath } from './editor-session.js';
+import { createProjectSession, hasLiveSessionLease, validateEditorPath } from './editor-session.js';
 import {
   tryDismissLaunchErrorsDialog,
   LINUX_XDOTOOL_MISSING_PREFIX,
@@ -414,8 +414,8 @@ async function prepareWindowOpen(
   projectPath: string,
   options: OpenProjectOptions,
 ): ReturnType<EditorSession['prepareWindowOpen']> {
-  // No lease, nothing of ours: skip the connection lookup.
-  if (!hasSessionLease(projectPath)) return { kind: 'proceed' };
+  // No live lease, nothing of ours: skip the connection lookup.
+  if (!hasLiveSessionLease(projectPath)) return { kind: 'proceed' };
   return (await createProjectSession(projectPath, options, {}, options.sessionFactory)).prepareWindowOpen();
 }
 
@@ -446,7 +446,8 @@ async function openHeadless(
     onStatus: message => emitProgress(options.onProgress, { phase: 'session-status', message }),
   }, options.sessionFactory);
   // An editor we did not start (e.g. the user's GUI, maybe not connected) is reported at once, as before.
-  const running = hasSessionLease(projectPath) ? undefined : findUnityProcess(projectPath);
+  // A dead lease (its editor exited) does not hide the user's editor.
+  const running = hasLiveSessionLease(projectPath) ? undefined : findUnityProcess(projectPath);
   if (running) {
     warnings.push(`Unity is already running with this project (PID: ${running.pid}). Skipping launch.`);
     emitProgress(options.onProgress, { phase: 'done', message: 'Unity is already running for this project — launch skipped.' });

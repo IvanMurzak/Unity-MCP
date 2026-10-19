@@ -421,7 +421,7 @@ unity-mcp-cli close ./MyGame
 
 **How it works:**
 
-0. An Editor the CLI started is recorded in the project's session lease (`.ai-game-dev/session.json`: PID, process start time, nonce). If the lease names a live Editor, `close` asks its plugin to save and quit (the `editor-session-quit` system tool, checked against the lease nonce) — this also reaches a headless Editor, which `WM_CLOSE` cannot — and skips the steps below. With `--owned-only` it stops here: no lease, nothing is closed.
+0. An Editor the CLI started is recorded in the project's session lease (`.ai-game-dev/session.json`: PID, process start time, nonce). If the lease names a live Editor, `close` asks its plugin to save and quit (the `editor-session-quit` system tool, checked against the lease nonce, at the server URL the lease recorded when the Editor was started) — this also reaches a headless Editor, which `WM_CLOSE` cannot — and skips the steps below. With `--owned-only` it stops here: no lease, nothing is closed.
 1. Resolves the running Editor's PID by reading `<project>/Temp/UnityLockfile` (4-byte little-endian uint32) and cross-checking against process enumeration to handle stale lock files.
 2. Sends a polite-quit signal — `SIGTERM` on Linux/macOS, `taskkill` (no `/F`) on Windows — letting Unity finish autosave / asset-import.
 3. Polls every 250ms until the process exits or `--timeout` elapses.
@@ -496,7 +496,7 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 
 ## `exec`
 
-Run C# in the Unity Editor and print the result. If the project is already open (with a window or headless) `exec` uses that editor and never closes it. Otherwise it starts a headless editor that stays warm for the next calls and quits by itself after `--idle` seconds without tool calls (saving changed scenes and assets). The editor it starts is recorded in the project's session lease (`.ai-game-dev/session.json`) and started under a file lock, so parallel `exec` calls share one editor; `close --owned-only` closes it, and `open` (with a window) closes it before opening the window.
+Run C# in the Unity Editor and print the result. If the project is already open (with a window or headless) `exec` uses that editor and never closes it. Otherwise it starts a headless editor that stays warm for the next calls and quits by itself after `--idle` seconds without tool calls (saving changed scenes and assets). The editor it starts is recorded in the project's session lease (`.ai-game-dev/session.json`) and started under a file lock, so parallel `exec` calls share one editor; `close --owned-only` closes it, and `open` (with a window) closes it before opening the window. These session files are machine-local: `.ai-game-dev/.gitignore` keeps them out of git. If the project is open in an editor the CLI did not start and its plugin does not answer within 60 s (disconnected, or connected to the ai-game.dev cloud), `exec` stops with a hint instead of waiting: connect the plugin, switch its connection to Custom (a local server), or pass `--url`.
 
 ```bash
 # The last expression is the result
