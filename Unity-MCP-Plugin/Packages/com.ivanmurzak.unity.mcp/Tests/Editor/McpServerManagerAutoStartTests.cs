@@ -113,6 +113,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             StringAssert.Contains("\"tool-timeout=450000\"", json);
         }
 
+        [TestCase(0, 10_000, 300_000)]        // unset: the server default
+        [TestCase(0, 900_000, 900_000)]       // never below a raised plugin-timeout (the server does not floor an explicit tool-timeout)
+        [TestCase(5_000, 10_000, 10_000)]
+        public void StdioConfig_ToolTimeout_FollowsTheEffectiveRule(int toolTimeoutMs, int timeoutMs, int expected)
+        {
+            var json = McpServerManager.RawJsonConfigurationStdio(8080, "mcpServers", timeoutMs, toolTimeoutMs: toolTimeoutMs).ToJsonString();
+
+            StringAssert.Contains($"\"tool-timeout={expected}\"", json);
+        }
+
         [Test]
         public void DockerCommand_CarriesTheToolTimeoutEnv()
         {

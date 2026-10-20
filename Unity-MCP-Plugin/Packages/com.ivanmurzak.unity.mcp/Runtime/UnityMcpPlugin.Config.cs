@@ -197,8 +197,14 @@ namespace com.IvanMurzak.Unity.MCP
             /// rule when <c>tool-timeout</c> is unset.
             /// </summary>
             [JsonIgnore]
-            public int EffectiveToolTimeoutMs
-                => Math.Max(ToolTimeoutMs > 0 ? ToolTimeoutMs : Consts.Hub.DefaultToolTimeoutMs, TimeoutMs);
+            public int EffectiveToolTimeoutMs => ResolveToolTimeoutMs(ToolTimeoutMs, TimeoutMs);
+
+            /// <summary>
+            /// <paramref name="toolTimeoutMs"/> (the default when it is not positive), never below
+            /// <paramref name="timeoutMs"/>: the rule behind <see cref="EffectiveToolTimeoutMs"/>.
+            /// </summary>
+            public static int ResolveToolTimeoutMs(int toolTimeoutMs, int timeoutMs)
+                => Math.Max(toolTimeoutMs > 0 ? toolTimeoutMs : Consts.Hub.DefaultToolTimeoutMs, timeoutMs);
 
             public List<McpFeature> Tools { get; set; } = new();
             public List<McpFeature> Prompts { get; set; } = new();

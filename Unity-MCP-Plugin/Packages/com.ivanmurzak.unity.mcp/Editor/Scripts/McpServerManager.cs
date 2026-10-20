@@ -1091,7 +1091,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             string bodyPath = "mcpServers",
             int timeoutMs = Consts.Hub.DefaultTimeoutMs,
             string? type = null,
-            int toolTimeoutMs = Consts.Hub.DefaultToolTimeoutMs)
+            int toolTimeoutMs = 0)
         {
             var pathSegments = BodyPathSegments(bodyPath);
 
@@ -1110,7 +1110,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 $"{Args.Port}={port}",
                 $"{Args.PluginTimeout}={timeoutMs}",
-                $"{Args.ToolTimeout}={toolTimeoutMs}",
+                // Floored like EffectiveToolTimeoutMs: the server does not floor an explicit tool-timeout, so a
+                // raised plugin-timeout must not be undercut by the default (toolTimeoutMs 0) here.
+                $"{Args.ToolTimeout}={UnityMcpPlugin.UnityConnectionConfig.ResolveToolTimeoutMs(toolTimeoutMs, timeoutMs)}",
                 $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
             };
 
