@@ -1080,7 +1080,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         ///     "Unity ProjectName": {
         ///       "type": "...",    // optional, only if provided
         ///       "command": "path/to/gamedev-mcp-server",
-        ///       "args": ["port=...", "plugin-timeout=...", "client-transport=stdio"]
+        ///       "args": ["port=...", "plugin-timeout=...", "tool-timeout=...", "client-transport=stdio"]
         ///     }
         ///   }
         /// }
@@ -1090,7 +1090,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             int port,
             string bodyPath = "mcpServers",
             int timeoutMs = Consts.Hub.DefaultTimeoutMs,
-            string? type = null)
+            string? type = null,
+            int toolTimeoutMs = 0)
         {
             var pathSegments = BodyPathSegments(bodyPath);
 
@@ -1109,6 +1110,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             {
                 $"{Args.Port}={port}",
                 $"{Args.PluginTimeout}={timeoutMs}",
+                // Floored like EffectiveToolTimeoutMs: the server does not floor an explicit tool-timeout, so a
+                // raised plugin-timeout must not be undercut by the default (toolTimeoutMs 0) here.
+                $"{Args.ToolTimeout}={UnityMcpPlugin.UnityConnectionConfig.ResolveToolTimeoutMs(toolTimeoutMs, timeoutMs)}",
                 $"{Args.ClientTransportMethod}={TransportMethod.stdio}"
             };
 
@@ -1187,7 +1191,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var dockerEnvVars =
                 $"-e {Env.ClientTransportMethod}={TransportMethod.streamableHttp} " +
                 $"-e {Env.Port}={UnityMcpPluginEditor.Port} " +
-                $"-e {Env.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs}";
+                $"-e {Env.PluginTimeout}={UnityMcpPluginEditor.TimeoutMs} " +
+                $"-e {Env.ToolTimeout}={UnityMcpPluginEditor.EffectiveToolTimeoutMs}";
 
             var dockerContainer = $"--name {ExecutableName}-{UnityMcpPluginEditor.Port}";
             // The shared GameDev-MCP-Server Docker image, tagged by the pinned ServerVersion
@@ -1732,7 +1737,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             return -1;
         }
 
-        static string BuildArguments()
+        /// <summary>
+        /// The local server's launch arguments: the shared <see cref="ServerLaunchArguments"/> shape plus
+        /// <c>tool-timeout</c> (<see cref="WithToolTimeout"/>).
+        /// </summary>
+        internal static string BuildArguments()
+            => WithToolTimeout(BuildSharedArguments(), UnityMcpPluginEditor.EffectiveToolTimeoutMs);
+
+        /// <summary>
+        /// Appends <c>tool-timeout=&lt;ms&gt;</c>: how long the server waits for one tool call (McpPlugin 8.11.0+
+        /// servers send a tool call once). <c>plugin-timeout</c> keeps the connection timeout
+        /// (<see cref="UnityMcpPluginEditor.TimeoutMs"/>), unchanged, so an older server, which ignores unknown
+        /// arguments and still waits <c>plugin-timeout</c> per attempt, behaves exactly as before.
+        /// </summary>
+        internal static string WithToolTimeout(string arguments, int toolTimeoutMs)
+            => $"{arguments} {Args.ToolTimeout}={toolTimeoutMs}";
+
+        static string BuildSharedArguments()
         {
             var port = UnityMcpPluginEditor.Port;
             var timeout = UnityMcpPluginEditor.TimeoutMs;

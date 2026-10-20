@@ -517,7 +517,7 @@ echo 'Application.unityVersion' | unity-mcp-cli exec
 | `--window` | No | Start the editor with a window instead of headless (only when it is not running yet) |
 | `--idle <seconds>` | No | Quit an editor started by `exec` after this many idle seconds (default: 300) |
 | `--ready-timeout <ms>` | No | How long to wait for the editor to become ready (default: 300000) |
-| `--timeout <ms>` | No | Tool call timeout (default: 180000) |
+| `--timeout <ms>` | No | Tool call timeout (default: 310000) |
 | `--raw` | No | Print the raw tool response JSON |
 | `--url <url>` | No | Server URL override; a local URL also makes a newly started editor start that server |
 | `--token <token>` | No | Bearer token override |

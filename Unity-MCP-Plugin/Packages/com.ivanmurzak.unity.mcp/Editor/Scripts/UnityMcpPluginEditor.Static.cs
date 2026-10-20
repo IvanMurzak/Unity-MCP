@@ -149,6 +149,18 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
+        /// <summary>The configured server tool timeout; launch args use <see cref="EffectiveToolTimeoutMs"/>.</summary>
+        public static int ToolTimeoutMs
+        {
+            get => Instance.unityConnectionConfig.ToolTimeoutMs;
+            set
+            {
+                Instance.unityConnectionConfig.ToolTimeoutMs = value;
+                NotifyChanged(Instance.unityConnectionConfig);
+            }
+        }
+        /// <summary>The server's <c>tool-timeout</c>: see <see cref="UnityMcpPlugin.UnityConnectionConfig.EffectiveToolTimeoutMs"/>.</summary>
+        public static int EffectiveToolTimeoutMs => Instance.unityConnectionConfig.EffectiveToolTimeoutMs;
         public static int Port
         {
             get

@@ -351,7 +351,7 @@ echo 'Application.unityVersion' | unity-mcp-cli exec
 | `--window` | No | Inicia el editor con ventana en lugar de headless (solo si aún no está abierto) |
 | `--idle <seconds>` | No | Cierra el editor iniciado por `exec` tras estos segundos de inactividad (por defecto: 300) |
 | `--ready-timeout <ms>` | No | Tiempo máximo de espera hasta que el editor esté listo (por defecto: 300000) |
-| `--timeout <ms>` | No | Tiempo límite de la llamada (por defecto: 180000) |
+| `--timeout <ms>` | No | Tiempo límite de la llamada (por defecto: 310000) |
 | `--raw` | No | Muestra el JSON de respuesta sin formato |
 | `--url <url>` | No | URL del servidor; una URL local hace que el editor nuevo inicie ese servidor |
 | `--token <token>` | No | Token Bearer |

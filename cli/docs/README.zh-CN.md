@@ -351,7 +351,7 @@ echo 'Application.unityVersion' | unity-mcp-cli exec
 | `--window` | 否 | 以窗口方式而非 headless 启动编辑器（仅在尚未运行时） |
 | `--idle <seconds>` | 否 | 由 `exec` 启动的编辑器空闲这么多秒后退出（默认：300） |
 | `--ready-timeout <ms>` | 否 | 等待编辑器就绪的最长时间（默认：300000） |
-| `--timeout <ms>` | 否 | 工具调用超时（默认：180000） |
+| `--timeout <ms>` | 否 | 工具调用超时（默认：310000） |
 | `--raw` | 否 | 输出原始工具响应 JSON |
 | `--url <url>` | 否 | 服务器 URL 覆盖；本地 URL 会让新启动的编辑器启动该服务器 |
 | `--token <token>` | 否 | Bearer 令牌覆盖 |

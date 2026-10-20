@@ -2,6 +2,7 @@ import { describe, it, expect, vi } from 'vitest';
 import { EditorSessionError, type EnsureResult } from '@baizor/gamedev-cli-core';
 import {
   buildScriptExecuteInput,
+  DEFAULT_EXEC_TIMEOUT_MS,
   execCode,
   readToolResponse,
   type ExecCodeOptions,
@@ -109,6 +110,18 @@ describe('execCode', () => {
     const d = deps(async () => { throw new EditorSessionError(sessionReason, 'boom'); });
     expect(await execCode(options(d))).toMatchObject({ kind: 'failure', reason, sessionReason, message: 'boom' });
     expect(d.invoke).not.toHaveBeenCalled();
+  });
+
+  it('waits longer than the server tool-timeout by default, and honours an explicit timeout', async () => {
+    // The server gives a tool call `tool-timeout` (default 300000, McpPlugin 8.11.0+); the CLI must not give up first.
+    expect(DEFAULT_EXEC_TIMEOUT_MS).toBeGreaterThan(300_000);
+    const d = deps();
+    await execCode(options(d));
+    expect(d.invoke).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: DEFAULT_EXEC_TIMEOUT_MS }));
+
+    const explicit = deps();
+    await execCode(options(explicit, { timeoutMs: 5_000 }));
+    expect(explicit.invoke).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: 5_000 }));
   });
 
   it('passes a failed tool call through', async () => {

@@ -333,6 +333,7 @@ Unity MCP ابزارهای پیشرفته‌ای دارد که کمک می‌ک�
 | --- | --- | --- |
 | `MCP_PLUGIN_PORT` | `--port` | پورت اتصال **Client** ← **Server** ← **Plugin** (پیش‌فرض: ۸۰۸۰) |
 | `MCP_PLUGIN_CLIENT_TIMEOUT` | `--plugin-timeout` | تایم‌اوت اتصال **Plugin** به **Server** (میلی‌ثانیه) (پیش‌فرض: ۱۰۰۰۰) |
+| `MCP_PLUGIN_TOOL_TIMEOUT` | `--tool-timeout` | مدت انتظار **Server** برای یک فراخوانی ابزار (میلی‌ثانیه). فراخوانی ابزار فقط یک بار به **Plugin** ارسال می‌شود و دوباره ارسال نمی‌شود (پیش‌فرض: ۳۰۰۰۰۰، یا `--plugin-timeout` اگر بزرگ‌تر باشد؛ سرورهای مبتنی بر McpPlugin 8.11.0 به بعد) |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | نوع انتقال **Client** به **Server**‏: `stdio` یا `streamableHttp` (پیش‌فرض: `streamableHttp`) |
 | `MCP_AUTHORIZATION` | `--authorization` | حالت احراز هویت برای اتصالات **Client** ورودی: `none` یا `required` (پیش‌فرض: `none`) |
 | `MCP_PLUGIN_TOKEN` | `--token` | توکن Bearer مورد نیاز از **Client** هنگامی که `--authorization=required` تنظیم شده (پیش‌فرض: تنظیم‌نشده) |

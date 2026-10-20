@@ -589,6 +589,7 @@ public static class ChessGameAI
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`             | **Client** -> **Server** <- **Plugin** 接続ポート（デフォルト: 8080）       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **Plugin** -> **Server** 接続タイムアウト（ミリ秒）（デフォルト: 10000）            |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`     | **Server** が1回のツール呼び出しを待つ時間（ミリ秒）。ツール呼び出しは **Plugin** に1回だけ送信され、再送されません（デフォルト: 300000、`--plugin-timeout` の方が大きい場合はその値。McpPlugin 8.11.0 以降のサーバー） |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **Client** -> **Server** トランスポートタイプ: `stdio` または `streamableHttp`（デフォルト: `streamableHttp`） |
 | `MCP_AUTHORIZATION`           | `--authorization`        | 受信する **Client** 接続の認証モード: `none` または `required`（デフォルト: `none`） |
 | `MCP_PLUGIN_TOKEN`            | `--token`                | `--authorization=required` の場合に **Client** から要求される Bearer トークン（デフォルト: 未設定） |
