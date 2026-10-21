@@ -4,6 +4,11 @@
 
 ### Added
 
+- **`staticFlags` on GameObject (RQL).** The per-flag Static Editor Flags behind `isStatic`
+  (ContributeGI, OccluderStatic, OccludeeStatic, BatchingStatic, ReflectionProbeStatic): filter with
+  `where staticFlags contains "ContributeGI"`, assign a list (`set staticFlags = ["ContributeGI"]`);
+  validated all-or-nothing and undoable; obsolete flags a GameObject still carries are kept.
+
 - **Lighting RQL module.** The `lighting` source reads and edits the active scene's environment (ambient,
   fog, skybox, sun, default reflections; undoable) and its Lighting Settings asset (`CreateSettings`,
   `UseSettings`; undoable) and drives the bake (`Bake` in the background or blocking, `isBaking` /

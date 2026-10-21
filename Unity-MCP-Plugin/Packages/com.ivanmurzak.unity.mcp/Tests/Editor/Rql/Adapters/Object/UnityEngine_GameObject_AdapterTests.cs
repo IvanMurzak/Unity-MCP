@@ -38,6 +38,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         }
 
         [Test]
+        public void StaticFlagsAreReadFilteredAndWrittenPerFlag()
+        {
+            var ground = new GameObject("Ground");
+            new GameObject("Prop");
+            AssertOk(M("objects | where name == \"Ground\" | set staticFlags = [\"ContributeGI\", \"BatchingStatic\"]"));
+            Assert.AreEqual(StaticEditorFlags.ContributeGI | StaticEditorFlags.BatchingStatic, GameObjectUtility.GetStaticEditorFlags(ground));
+            Assert.AreEqual(1, Count("objects | where staticFlags contains \"ContributeGI\" | count"));
+            Assert.AreEqual("Ground", Cell(Q("objects | where staticFlags contains \"BatchingStatic\" | select name")));
+            // StaticEditorFlags.LightmapStatic is an obsolete alias of ContributeGI: the current name is printed.
+            var printed = Table(Q("objects | where name == \"Ground\" | select staticFlags"));
+            StringAssert.Contains("ContributeGI", printed);
+            StringAssert.DoesNotContain("LightmapStatic", printed);
+
+            AssertOk(M("objects | where name == \"Ground\" | set staticFlags = []"));
+            Assert.AreEqual((StaticEditorFlags)0, GameObjectUtility.GetStaticEditorFlags(ground));
+            Assert.AreEqual(0, Count("objects | where staticFlags contains \"ContributeGI\" | count"));
+        }
+
+        [Test]
+        public void StaticFlagsWritesAreUndoable()
+        {
+            var ground = new GameObject("Ground");
+            GameObjectUtility.SetStaticEditorFlags(ground, StaticEditorFlags.OccluderStatic);
+            AssertOk(M("objects | where name == \"Ground\" | set staticFlags = [\"ContributeGI\"]"));
+            Assert.AreEqual(StaticEditorFlags.ContributeGI, GameObjectUtility.GetStaticEditorFlags(ground));
+            Undo.PerformUndo();
+            Assert.AreEqual(StaticEditorFlags.OccluderStatic, GameObjectUtility.GetStaticEditorFlags(ground));
+        }
+
+        [Test]
+        public void UnknownStaticFlagsChangeNothing()
+        {
+            var ground = new GameObject("Ground");
+            GameObjectUtility.SetStaticEditorFlags(ground, StaticEditorFlags.OccluderStatic);
+            var r = M("objects | where name == \"Ground\" | set staticFlags = [\"ContributeGI\", \"NoSuchFlag\"]");
+            Assert.IsFalse(r.Ok, Table(r));
+            Assert.IsFalse(M("objects | where name == \"Ground\" | set staticFlags = [\"ContributeGI\", \"1024\"]").Ok);
+            Assert.IsFalse(M("objects | where name == \"Ground\" | set staticFlags = [\"LightmapStatic\"]").Ok, "obsolete names are rejected");
+            Assert.AreEqual(StaticEditorFlags.OccluderStatic, GameObjectUtility.GetStaticEditorFlags(ground));
+            StringAssert.Contains("staticFlags", Schema("GameObject"));
+        }
+
+        [Test]
         public void AddComponentByNameReturnsTheComponentAndIsUndoable()
         {
             var go = new GameObject("Crate");
