@@ -1,86 +1,95 @@
 import { describe, it, expect, vi } from 'vitest';
+import { EditorSessionError, type EnsureResult } from '@baizor/gamedev-cli-core';
 import {
   buildScriptExecuteInput,
+  DEFAULT_EXEC_TIMEOUT_MS,
   execCode,
   readToolResponse,
   type ExecCodeOptions,
 } from '../src/lib.js';
 import type { ExecDeps } from '../src/lib/exec.js';
+import type { UnitySessionOptions } from '../src/lib/editor-session.js';
 import { buildOpenEnv } from '../src/lib/open.js';
 import { waitForReady } from '../src/lib/wait-for-ready.js';
 import { resolveProbeUrls } from '../src/utils/connection.js';
-import type { OpenProjectResult, RunToolResult } from '../src/lib/types.js';
-import type { WaitForReadyResult } from '../src/lib/wait-for-ready.js';
+import type { RunToolResult } from '../src/lib/types.js';
 
 const LOCAL = 'http://localhost:1';
-const OPENED: OpenProjectResult = { kind: 'success', success: true, editorPath: 'Unity', projectPath: '/proj', warnings: [] };
 const CALLED: RunToolResult = { kind: 'success', success: true, endpoint: `${LOCAL}/api/tools/script-execute`, httpStatus: 200, data: { status: 'success', content: [] } };
-const READY: WaitForReadyResult = { kind: 'success', success: true, baseUrl: LOCAL, elapsedMs: 1 };
-const NOT_READY: WaitForReadyResult = { kind: 'failure', success: false, elapsedMs: 1, error: new Error('no answer') };
 
-function deps(overrides: Partial<ExecDeps> = {}): ExecDeps {
-  return {
-    open: vi.fn(async () => OPENED),
-    wait: vi.fn(async () => READY),
-    invoke: vi.fn(async () => CALLED),
-    isAlive: vi.fn(() => true),
-    ...overrides,
-  };
-}
-
-/** The warm probe fails (no editor yet), the readiness wait after launch succeeds. */
-function coldDeps(overrides: Partial<ExecDeps> = {}): ExecDeps {
-  return deps({ wait: vi.fn().mockResolvedValueOnce(NOT_READY).mockResolvedValue(READY), ...overrides });
+function deps(ensure: () => Promise<EnsureResult<string>> = async () => ({ ready: LOCAL, source: 'running' })) {
+  const ensureMock = vi.fn(ensure);
+  const session = vi.fn((_: UnitySessionOptions) => ({ ensure: ensureMock }));
+  return { session, invoke: vi.fn(async (): Promise<RunToolResult> => CALLED), ensure: ensureMock };
 }
 
 function options(d: ExecDeps, extra: Partial<ExecCodeOptions> = {}): ExecCodeOptions {
   return { projectPath: '/proj', code: '1 + 2', probeUrls: [LOCAL], deps: d, ...extra };
 }
 
+function sessionOptions(d: ReturnType<typeof deps>): UnitySessionOptions {
+  return d.session.mock.calls[0][0];
+}
+
 describe('execCode', () => {
-  it('calls straight away when the local server already answers (no launch)', async () => {
+  it('runs on the editor the session provides', async () => {
     const d = deps();
     const result = await execCode(options(d));
-    expect(d.open).not.toHaveBeenCalled();
-    expect(d.wait).toHaveBeenCalledTimes(1);
+    expect(d.ensure).toHaveBeenCalledWith({ mode: 'headless' });
     expect(result).toEqual({ kind: 'success', success: true, baseUrl: LOCAL, data: CALLED.data });
   });
 
-  it('starts a headless editor with the idle timeout when nothing answers', async () => {
-    const d = coldDeps();
-    await execCode(options(d));
-    expect(d.open).toHaveBeenCalledWith(expect.objectContaining({
-      projectPath: '/proj', headless: true, keepConnected: true, idleTimeoutSeconds: 300,
-    }));
-    expect(d.invoke).toHaveBeenCalledTimes(1);
+  it('hands the session the probe URLs, token, idle timeout and a connected-plugin env', async () => {
+    const d = deps();
+    await execCode(options(d, { token: 'tk', readyTimeoutMs: 5000 }));
+    expect(sessionOptions(d)).toMatchObject({
+      projectPath: '/proj', urls: [LOCAL], token: 'tk', serverUrl: LOCAL, idleSeconds: 300, readyTimeoutMs: 5000,
+      env: { UNITY_MCP_KEEP_CONNECTED: 'true' },
+    });
   });
 
-  it('never treats a remote URL as a warm editor', async () => {
+  it('records an explicit url as the server of a started editor', async () => {
     const d = deps();
-    await execCode(options(d, { probeUrls: ['https://ai-game.dev/mcp'] }));
-    expect(d.open).toHaveBeenCalledTimes(1);
+    await execCode(options(d, { overrideUrl: 'http://127.0.0.1:5000/', foreignReadyTimeoutMs: 1000 }));
+    expect(sessionOptions(d)).toMatchObject({ serverUrl: 'http://127.0.0.1:5000', foreignReadyTimeoutMs: 1000 });
+  });
+
+  it('explains a user editor that never answered', async () => {
+    const d = deps(async () => { throw new EditorSessionError('not-ready', 'no answer in 60s', { source: 'foreign' }); });
+    const result = await execCode(options(d, { probeUrls: ['https://ai-game.dev/mcp', LOCAL] }));
+    expect(result).toMatchObject({ kind: 'failure', reason: 'not-ready', sessionReason: 'not-ready', editorSource: 'foreign' });
+    expect(result.kind === 'failure' && result.message).toContain('Cloud mode');
+    expect(d.invoke).not.toHaveBeenCalled();
+  });
+
+  it('passes an idle timeout of 0 through (never quit)', async () => {
+    const d = deps();
+    await execCode(options(d, { idleTimeoutSeconds: 0 }));
+    expect(sessionOptions(d).idleSeconds).toBe(0);
   });
 
   it('starts a windowed editor with window: true', async () => {
-    const d = coldDeps();
+    const d = deps();
     await execCode(options(d, { window: true }));
-    expect(d.open).toHaveBeenCalledWith(expect.objectContaining({ headless: false }));
+    expect(d.ensure).toHaveBeenCalledWith({ mode: 'window' });
   });
 
   it('hands an explicit local url to the new editor and asks it to start the server', async () => {
-    const d = coldDeps();
+    const d = deps();
     await execCode(options(d, { overrideUrl: 'http://127.0.0.1:5000', overrideToken: 't' }));
-    expect(d.open).toHaveBeenCalledWith(expect.objectContaining({ url: 'http://127.0.0.1:5000', token: 't', startServer: true }));
+    expect(sessionOptions(d).env).toMatchObject({
+      UNITY_MCP_HOST: 'http://127.0.0.1:5000', UNITY_MCP_TOKEN: 't', UNITY_MCP_START_SERVER: 'true',
+    });
   });
 
   it('does not start a server for a remote url', async () => {
-    const d = coldDeps();
+    const d = deps();
     await execCode(options(d, { overrideUrl: 'https://example.com' }));
-    expect(d.open).toHaveBeenCalledWith(expect.not.objectContaining({ startServer: true }));
+    expect(sessionOptions(d).env).not.toHaveProperty('UNITY_MCP_START_SERVER');
   });
 
   it('calls script-execute on the URL that answered, with the cloud-store flag', async () => {
-    const d = coldDeps({ wait: vi.fn().mockResolvedValueOnce(NOT_READY).mockResolvedValue({ ...READY, baseUrl: 'http://other:2' }) });
+    const d = deps(async () => ({ ready: 'http://other:2', source: 'started' }));
     await execCode(options(d, { usings: ['MyGame'], token: 'tk', tokenFromCloudStore: true }));
     expect(d.invoke).toHaveBeenCalledWith(expect.objectContaining({
       toolName: 'script-execute',
@@ -91,35 +100,34 @@ describe('execCode', () => {
     }));
   });
 
-  it('reports a launch failure without waiting for the server', async () => {
-    const error = new Error('no editor');
-    const d = coldDeps({ open: vi.fn(async (): Promise<OpenProjectResult> => ({ kind: 'failure', success: false, warnings: [], errorMessage: 'no editor', error })) });
-    expect(await execCode(options(d))).toMatchObject({ kind: 'failure', reason: 'launch-failed', message: 'no editor' });
-    expect(d.wait).toHaveBeenCalledTimes(1); // only the warm probe
-  });
-
-  it('reports a server that never became ready without calling the tool', async () => {
-    const d = deps({ wait: vi.fn(async () => NOT_READY) });
-    expect(await execCode(options(d))).toMatchObject({ kind: 'failure', reason: 'not-ready' });
+  it.each([
+    ['no-editor-binary', 'launch-failed'],
+    ['launch-failed', 'launch-failed'],
+    ['lock-busy', 'launch-failed'],
+    ['exited', 'not-ready'],
+    ['not-ready', 'not-ready'],
+  ] as const)('maps a %s session failure to %s without calling the tool', async (sessionReason, reason) => {
+    const d = deps(async () => { throw new EditorSessionError(sessionReason, 'boom'); });
+    expect(await execCode(options(d))).toMatchObject({ kind: 'failure', reason, sessionReason, message: 'boom' });
     expect(d.invoke).not.toHaveBeenCalled();
   });
 
-  it('stops waiting when the editor it started has exited', async () => {
-    const d = coldDeps({
-      open: vi.fn(async (): Promise<OpenProjectResult> => ({ ...OPENED, editorPid: 4242 })),
-      wait: vi.fn().mockResolvedValueOnce(NOT_READY).mockImplementation(async (o: { stopReason?: () => string | undefined }) =>
-        ({ ...NOT_READY, error: new Error(o.stopReason?.() ?? 'timeout') })),
-      isAlive: vi.fn(() => false),
-    });
-    const result = await execCode(options(d));
-    expect(result).toMatchObject({ kind: 'failure', reason: 'not-ready' });
-    expect((result as { message: string }).message).toContain('PID 4242');
-    expect(d.isAlive).toHaveBeenCalledWith(4242);
+  it('waits longer than the server tool-timeout by default, and honours an explicit timeout', async () => {
+    // The server gives a tool call `tool-timeout` (default 300000, McpPlugin 8.11.0+); the CLI must not give up first.
+    expect(DEFAULT_EXEC_TIMEOUT_MS).toBeGreaterThan(300_000);
+    const d = deps();
+    await execCode(options(d));
+    expect(d.invoke).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: DEFAULT_EXEC_TIMEOUT_MS }));
+
+    const explicit = deps();
+    await execCode(options(explicit, { timeoutMs: 5_000 }));
+    expect(explicit.invoke).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: 5_000 }));
   });
 
   it('passes a failed tool call through', async () => {
     const failure: RunToolResult = { kind: 'failure', success: false, endpoint: 'e', reason: 'http-error', httpStatus: 500, message: 'boom' };
-    const d = deps({ invoke: vi.fn(async () => failure) });
+    const d = deps();
+    d.invoke.mockResolvedValue(failure);
     expect(await execCode(options(d))).toMatchObject({ kind: 'failure', reason: 'tool-failed', toolFailure: failure });
   });
 });
@@ -176,30 +184,44 @@ describe('resolveProbeUrls', () => {
   });
 });
 
+/** A fetch that answers with `status` for the URLs in `up` and refuses the rest. */
+function fetchFor(up: string[], status = 200) {
+  return vi.fn(async (input: string | URL | Request) => {
+    const url = String(input);
+    if (!up.some(base => url.startsWith(base))) throw new TypeError('fetch failed');
+    return new Response('{"status":"success"}', { status });
+  });
+}
+
 describe('waitForReady', () => {
   it('returns the first URL that answers, sending the Bearer', async () => {
-    const probeImpl = vi.fn(async (url: string) =>
-      url === 'http://b' ? { ok: true as const, baseUrl: url } : { ok: false as const }) as never;
-    const result = await waitForReady({ urls: ['http://a', 'http://b'], token: 't', timeoutMs: 1000, intervalMs: 10, probeImpl });
+    const fetchImpl = fetchFor(['http://b']);
+    const result = await waitForReady({ urls: ['http://a', 'http://b'], token: 't', timeoutMs: 1000, intervalMs: 10, fetchImpl });
     expect(result).toMatchObject({ kind: 'success', success: true, baseUrl: 'http://b' });
-    expect((probeImpl as unknown as ReturnType<typeof vi.fn>).mock.calls[0][1]).toMatchObject({ Authorization: 'Bearer t' });
+    expect((fetchImpl.mock.calls[0] as unknown[])[1]).toMatchObject({ headers: { Authorization: 'Bearer t' } });
+  });
+
+  it('counts an auth rejection as a server that is up', async () => {
+    const result = await waitForReady({ urls: ['http://a'], timeoutMs: 1000, intervalMs: 10, fetchImpl: fetchFor(['http://a'], 401) });
+    expect(result).toMatchObject({ kind: 'success', baseUrl: 'http://a' });
   });
 
   it('fails instead of polling forever on an invalid timeout or interval', async () => {
-    const probeImpl = vi.fn(async () => ({ ok: false as const })) as never;
-    expect(await waitForReady({ urls: ['http://a'], timeoutMs: NaN, intervalMs: 10, probeImpl })).toMatchObject({ kind: 'failure' });
-    expect(await waitForReady({ urls: ['http://a'], timeoutMs: 50, intervalMs: 0, probeImpl })).toMatchObject({ kind: 'failure' });
+    const fetchImpl = fetchFor([]);
+    expect(await waitForReady({ urls: ['http://a'], timeoutMs: NaN, intervalMs: 10, fetchImpl })).toMatchObject({ kind: 'failure' });
+    expect(await waitForReady({ urls: ['http://a'], timeoutMs: 50, intervalMs: 0, fetchImpl })).toMatchObject({ kind: 'failure' });
   });
 
   it('ends early with the stop reason', async () => {
-    const probeImpl = vi.fn(async () => ({ ok: false as const })) as never;
-    const result = await waitForReady({ urls: ['http://a'], timeoutMs: 60_000, intervalMs: 10, probeImpl, stopReason: () => 'gone' });
+    const result = await waitForReady({ urls: ['http://a'], timeoutMs: 60_000, intervalMs: 10, fetchImpl: fetchFor([]), stopReason: () => 'gone' });
     expect(result).toMatchObject({ kind: 'failure', error: new Error('gone') });
   });
 
-  it('times out when nothing answers', async () => {
-    const probeImpl = vi.fn(async () => ({ ok: false as const })) as never;
-    const result = await waitForReady({ urls: ['http://a'], timeoutMs: 50, intervalMs: 10, probeImpl });
+  it('times out when nothing answers, ticking with the time left', async () => {
+    const onTick = vi.fn();
+    const result = await waitForReady({ urls: ['http://a'], timeoutMs: 50, intervalMs: 10, fetchImpl: fetchFor([]), onTick });
     expect(result).toMatchObject({ kind: 'failure', success: false });
+    expect(onTick).toHaveBeenCalled();
+    expect(onTick.mock.calls[0][0]).toBeLessThanOrEqual(50);
   });
 });

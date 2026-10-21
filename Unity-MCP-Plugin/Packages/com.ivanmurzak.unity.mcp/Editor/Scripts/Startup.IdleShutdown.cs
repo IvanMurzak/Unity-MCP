@@ -20,20 +20,30 @@ using UnityEngine.SceneManagement;
 namespace com.IvanMurzak.Unity.MCP.Editor
 {
     /// <summary>
-    /// Quits an editor started by <c>unity-mcp-cli exec</c> after <c>UNITY_MCP_IDLE_TIMEOUT</c> seconds without tool
-    /// calls, so a warm editor does not live forever. Off unless the variable (or the same-named flag) is set.
+    /// An editor a CLI session started (<c>AIGD_SESSION_OWNER=cli</c>, e.g. by <c>unity-mcp-cli exec</c>): it quits after
+    /// <c>AIGD_SESSION_IDLE_SECONDS</c> (or the older <c>UNITY_MCP_IDLE_TIMEOUT</c>) seconds without tool calls, so a warm
+    /// editor does not live forever. Off unless a variable is set. The CLI's session lease is left to the CLI: removing it
+    /// here would leave a window, between the removal and the process exit, in which this editor still holds the project
+    /// but looks like one the CLI did not start. A lease that outlives the editor is stale (its PID is gone) and the CLI
+    /// removes it.
     /// </summary>
     public static partial class Startup
     {
         static IdleShutdownTimer? _idleTimer;
 
-        static void StartIdleShutdownIfRequested()
+        /// <summary>This editor's CLI session lease nonce; null when the user (not a CLI session) started it.</summary>
+        internal static string? CliSessionNonce { get; private set; }
+
+        static void StartCliSessionIfRequested()
         {
             // Asset import workers inherit the editor's environment; only the main editor may quit itself.
             if (AssetDatabase.IsAssetImportWorkerProcess())
                 return;
 
-            var seconds = EnvironmentUtils.ReadIdleTimeoutSeconds(ArgsUtils.ParseCommandLineArguments(), Environment.GetEnvironmentVariable);
+            var args = ArgsUtils.ParseCommandLineArguments();
+            CliSessionNonce = EnvironmentUtils.ReadSessionNonce(args, Environment.GetEnvironmentVariable);
+
+            var seconds = EnvironmentUtils.ReadIdleTimeoutSeconds(args, Environment.GetEnvironmentVariable);
             if (seconds == null)
                 return;
 
@@ -57,10 +67,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (!_idleTimer.ShouldQuit(MonotonicNow(), calls, busy))
                 return;
 
+            _logger.LogInformation("Idle shutdown: no tool calls for a while, saving and quitting");
+            SaveAndQuit();
+        }
+
+        /// <summary>
+        /// Saves changed scenes and assets and exits. Main thread only. Used by the idle
+        /// shutdown and by the CLI's close request (<see cref="API.Tool_EditorSession"/>).
+        /// </summary>
+        internal static void SaveAndQuit()
+        {
             EditorApplication.update -= CheckIdleShutdown;
             _idleTimer = null;
-            _logger.LogInformation("Idle shutdown: no tool calls for a while, saving and quitting");
-            SaveForIdleShutdown();
+            SaveForQuit();
             EditorApplication.Exit(0);
         }
 
@@ -68,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         static DateTime MonotonicNow() => DateTime.MinValue.AddSeconds(EditorApplication.timeSinceStartup);
 
         /// <summary>Saves changed assets and scenes that already have a file; an untitled scene has nowhere to go.</summary>
-        static void SaveForIdleShutdown()
+        static void SaveForQuit()
         {
             try
             {
@@ -82,7 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
             catch (Exception e)
             {
-                _logger.LogError(e, "Idle shutdown: saving failed, quitting anyway");
+                _logger.LogError(e, "Saving before quit failed, quitting anyway");
             }
         }
     }

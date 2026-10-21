@@ -9,6 +9,40 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Editor sessions (lease + start lock) for `exec` and `open --headless`**, on `@baizor/gamedev-cli-core`'s
+  `EditorSession` (dependency bumped to `^0.7.1`). An editor the CLI starts is recorded in
+  `<project>/.ai-game-dev/session.json` (PID, process start time, nonce) under the file lock
+  `.ai-game-dev/session.lock`, so parallel cold `exec` calls start exactly one editor and share it. A running editor
+  of the project (the user's GUI included) is still reused and never closed. The started editor gets the shared
+  session env `AIGD_SESSION_IDLE_SECONDS` / `AIGD_SESSION_OWNER=cli` / `AIGD_SESSION_NONCE`.
+- **`close --owned-only`**, and `close` asks an editor the CLI started to save and quit through its plugin (the new
+  `editor-session-quit` system tool, checked against the lease nonce). This reaches a headless editor, which the
+  Windows polite quit (`WM_CLOSE`) never does; an editor opened by the user is never closed by `--owned-only`.
+- **`open` with a window closes the CLI's own headless editor first** (it saves), so the window can open.
+- **The lease records the server URL** the editor was started against (and its connection mode), so `close` asks
+  the plugin there without resolving the connection again (then at whichever resolved URL answers; the call's token
+  is never sent to a remote server it was not resolved for). A lease whose editor has exited no longer hides the
+  user's editor from `open --headless`. The session files are kept out of git by
+  `.ai-game-dev/.gitignore`.
+- **`exec` fails fast on an editor it did not start that never answers** (default 60 s instead of the full
+  `--ready-timeout`): e.g. the user's editor whose plugin is disconnected or connected to the ai-game.dev cloud. The
+  message says what to do (connect the plugin, switch it to Custom, or pass `--url`); `ExecCodeFailure.editorSource`
+  is `foreign` then, and `ExecCodeOptions.foreignReadyTimeoutMs` sets the wait. If that editor exits while `exec`
+  waits, `exec` starts its own.
+- **`open --headless` waits until the editor's MCP server answers** (`--ready-timeout`, default 300000 ms) and
+  reports the URL; its `--idle-timeout` is sent as `AIGD_SESSION_IDLE_SECONDS`. A windowed `open --idle-timeout`
+  still sets `UNITY_MCP_IDLE_TIMEOUT`.
+
+### Changed
+
+- `exec` waits 310000 ms by default (was 180000; `--timeout` and `ExecCodeOptions.timeoutMs`; exported as
+  `DEFAULT_EXEC_TIMEOUT_MS`): longer than the MCP server's default `tool-timeout` (300000, McpPlugin 8.11.0+), so
+  the CLI never gives up on a call the server is still waiting for.
+
+- `wait-for-ready` / `waitForReady` use cli-core's readiness probe: a 401/403 now counts as a server that is up (the
+  next call reports the auth problem). `WaitForReadyOptions.probeImpl` is replaced by `fetchImpl`.
+- `execCode`'s test seam `deps` is now `{ session, invoke }`; failures carry `sessionReason`.
+
 - **`exec` command.** `unity-mcp-cli exec '<C#>'` runs a snippet through the `script-execute` tool and prints the
   result. It reuses an editor that is already open for the project (window or headless) and never closes it;
   otherwise it starts a headless editor (`--window` for a windowed one) that stays warm and quits by itself after

@@ -3,7 +3,7 @@ import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } from '../utils/connection.js';
-import { execCode, readToolResponse, SCRIPT_EXECUTE_TOOL } from '../lib/exec.js';
+import { DEFAULT_EXEC_TIMEOUT_MS, execCode, readToolResponse, SCRIPT_EXECUTE_TOOL } from '../lib/exec.js';
 import { parsePositiveIntFlag } from './open.js';
 import { handleFailure, stringifyForRaw } from './run-tool-builder.js';
 
@@ -53,16 +53,16 @@ export const execCommand = new Command('exec')
   .option('--using <namespace>', 'Extra namespace (repeatable)', collect, [])
   .option('--include <path>', 'Helper .cs file or folder, relative to the project snippets folder (repeatable)', collect, [])
   .option('--window', 'Start the editor with a window instead of headless (only when it is not running yet)')
-  .option('--idle <seconds>', 'Quit an editor started by exec after this many idle seconds', '300')
+  .option('--idle <seconds>', 'Quit an editor started by exec after this many idle seconds (0: never)', '300')
   .option('--ready-timeout <ms>', 'How long to wait for the editor to become ready', '300000')
-  .option('--timeout <ms>', 'Tool call timeout in milliseconds', '180000')
+  .option('--timeout <ms>', 'Tool call timeout in milliseconds', String(DEFAULT_EXEC_TIMEOUT_MS))
   .option('--raw', 'Print the raw tool response JSON')
   .option('--url <url>', 'Direct server URL override (bypasses config)')
   .option('--token <token>', 'Bearer token override (bypasses config)')
   .action(async (codeArg: string | undefined, options: ExecCliOptions) => {
-    const idleTimeoutSeconds = parseNonZeroIntFlag(options.idle, '--idle', 300);
+    const idleTimeoutSeconds = parsePositiveIntFlag(options.idle, '--idle', 300); // 0: never quit
     const readyTimeoutMs = parseNonZeroIntFlag(options.readyTimeout, '--ready-timeout', 300_000);
-    const timeoutMs = parseNonZeroIntFlag(options.timeout, '--timeout', 180_000);
+    const timeoutMs = parseNonZeroIntFlag(options.timeout, '--timeout', DEFAULT_EXEC_TIMEOUT_MS);
     let code: string;
     try {
       code = readCode(codeArg, options.file);
@@ -112,6 +112,9 @@ export const execCommand = new Command('exec')
       }
       spinner?.error(result.reason === 'launch-failed' ? 'Could not start the Unity Editor' : 'The MCP server did not answer');
       ui.error(result.message);
+      if (result.reason === 'not-ready' && result.editorSource !== 'foreign') {
+        ui.info('If the project is open in a Unity Editor, check that its AI Game Developer plugin is connected.');
+      }
       process.exit(1);
     }
 

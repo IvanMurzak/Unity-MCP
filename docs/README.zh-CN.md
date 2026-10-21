@@ -589,6 +589,7 @@ public static class ChessGameAI
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`             | **客户端** -> **服务器** <- **插件** 连接端口（默认：8080）       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **插件** -> **服务器** 连接超时（毫秒）（默认：10000）            |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`     | **服务器** 等待单次工具调用的时间（毫秒）。工具调用只发送给 **插件** 一次，不会重发（默认：300000，若 `--plugin-timeout` 更大则取其值；基于 McpPlugin 8.11.0+ 的服务器） |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **客户端** -> **服务器** 传输类型：`stdio` 或 `streamableHttp`（默认：`streamableHttp`） |
 | `MCP_AUTHORIZATION`           | `--authorization`        | 传入**客户端**连接的认证模式：`none` 或 `required`（默认：`none`） |
 | `MCP_PLUGIN_TOKEN`            | `--token`                | 当 `--authorization=required` 时，**客户端**需提供的 Bearer 令牌（默认：未设置） |

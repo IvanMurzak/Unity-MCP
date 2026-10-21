@@ -108,7 +108,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             get
             {
-                var configuredTimeout = TimeSpan.FromMilliseconds(Math.Max(1000, UnityMcpPluginEditor.TimeoutMs));
+                var configuredTimeout = TimeSpan.FromMilliseconds(Math.Max(1000, UnityMcpPluginEditor.EffectiveToolTimeoutMs));
                 var staleAfter = configuredTimeout + ActiveTestRunTimeoutGrace;
                 return staleAfter < MinimumActiveTestRunLease ? MinimumActiveTestRunLease : staleAfter;
             }

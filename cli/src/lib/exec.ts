@@ -1,28 +1,30 @@
 // Library-safe `execCode`: run C# in a project's Unity Editor through `script-execute`, starting a warm
 // headless editor when none is running. No console output, no `process.exit`.
 
-import { isLoopbackHost } from '@baizor/gamedev-cli-core';
-import { openProject } from './open.js';
+import {
+  DEFAULT_SESSION_IDLE_SECONDS,
+  EditorSessionError,
+  type EditorSession,
+  type EditorSessionErrorReason,
+  type WaitedEditorSource,
+} from '@baizor/gamedev-cli-core';
+import { createUnitySession, isLoopbackUrl, sessionErrorMessage, type UnitySessionOptions } from './editor-session.js';
+import { buildOpenEnv, dismissLaunchErrorsUntil } from './open.js';
 import { runTool } from './run-tool.js';
-import { waitForReady } from './wait-for-ready.js';
-import { isProcessAlive } from '../utils/unity-shutdown.js';
-import type { OpenProjectOptions, OpenProjectResult, RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
-import type { WaitForReadyOptions, WaitForReadyResult } from './wait-for-ready.js';
+import type { RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
 
 export const SCRIPT_EXECUTE_TOOL = 'script-execute';
 
-const DEFAULT_IDLE_SECONDS = 300;
-const DEFAULT_READY_TIMEOUT_MS = 300_000;
-const DEFAULT_TIMEOUT_MS = 180_000;
-/** One quick ping round: a running editor with a local server answers within this. */
-const WARM_PROBE_MS = 500;
+/**
+ * Default `exec` call timeout: the MCP server's default `tool-timeout` (300 s, McpPlugin 8.11.0+, which the Unity plugin
+ * launches its server with) plus 10 s, so the CLI never gives up before the server answers with its own timeout error.
+ */
+export const DEFAULT_EXEC_TIMEOUT_MS = 310_000;
 
 /** Injection points for tests. */
 export interface ExecDeps {
-  open: (options: OpenProjectOptions) => Promise<OpenProjectResult>;
-  wait: (options: WaitForReadyOptions) => Promise<WaitForReadyResult>;
+  session: (options: UnitySessionOptions) => Pick<EditorSession<string>, 'ensure'>;
   invoke: (options: RunToolOptions) => Promise<RunToolResult>;
-  isAlive: (pid: number) => boolean;
 }
 
 export interface ExecCodeOptions {
@@ -32,11 +34,13 @@ export interface ExecCodeOptions {
   include?: string[];
   /** Start the editor with a window instead of headless (only when it is not running yet). */
   window?: boolean;
-  /** An editor started here quits after this many seconds without tool calls. Default 300. */
+  /** An editor started here quits after this many seconds without tool calls (0 = never). Default 300. */
   idleTimeoutSeconds?: number;
   /** Default 300000. */
   readyTimeoutMs?: number;
-  /** Tool call timeout. Default 180000. */
+  /** Wait for an editor exec did not start (the user's GUI) to answer; see `UnitySessionOptions.foreignReadyTimeoutMs`. */
+  foreignReadyTimeoutMs?: number;
+  /** Tool call timeout. Default `DEFAULT_EXEC_TIMEOUT_MS` (310000). */
   timeoutMs?: number;
   /** Server URLs to try, first answer wins (the CLI passes the config URL plus the project's local port). */
   probeUrls: string[];
@@ -65,6 +69,10 @@ export interface ExecCodeFailure {
   success: false;
   /** `launch-failed`: no editor could be started; `not-ready`: its server never answered; `tool-failed`: the call failed. */
   reason: 'launch-failed' | 'not-ready' | 'tool-failed';
+  /** The editor-session failure behind `launch-failed` / `not-ready`. */
+  sessionReason?: EditorSessionErrorReason;
+  /** `not-ready`: the editor that never answered — `foreign` is one exec did not start (e.g. the user's GUI). */
+  editorSource?: WaitedEditorSource;
   /** The server that was called (`tool-failed` only). */
   baseUrl?: string;
   /** The underlying call failure (`tool-failed` only). */
@@ -77,67 +85,66 @@ export type ExecCodeResult = ExecCodeSuccess | ExecCodeFailure;
 
 /**
  * Run C# in the project's editor. A running editor (GUI or headless) is reused and never closed; otherwise one is
- * started headless (or windowed) that quits by itself after `idleTimeoutSeconds` without tool calls, so the next call
- * stays warm.
+ * started headless (or windowed) under the project's session lease and start lock, so parallel calls share one
+ * editor. It quits by itself after `idleTimeoutSeconds` without tool calls, so the next call stays warm.
  */
 export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult> {
-  const deps: ExecDeps = {
-    open: openProject, wait: waitForReady, invoke: runTool, isAlive: pid => isProcessAlive(pid), ...options.deps,
-  };
-  const status = options.onStatus ?? (() => {});
-  const idleTimeoutSeconds = options.idleTimeoutSeconds ?? DEFAULT_IDLE_SECONDS;
+  const deps: ExecDeps = { session: createUnitySession, invoke: runTool, ...options.deps };
 
-  // Warm path: a local server that answers right away means an editor is up; skip the process scan and launch.
-  // A remote (cloud) URL answers whether or not this editor runs, so it never counts here.
-  const localUrls = options.probeUrls.filter(isLoopbackUrl);
-  let baseUrl = localUrls.length > 0
-    ? readyUrl(await deps.wait({ urls: localUrls, token: options.token, timeoutMs: 1, intervalMs: WARM_PROBE_MS }))
-    : undefined;
-
-  if (baseUrl === undefined) {
-    status(options.window ? 'Starting Unity Editor...' : 'Starting Unity Editor (headless)...');
-    const opened = await deps.open({
+  // The server a started editor connects to (recorded in its lease): the explicit URL, normalized as the CLI resolves
+  // it (no trailing slash), else the resolved one.
+  const serverUrl = options.overrideUrl?.replace(/\/$/, '') ?? options.probeUrls[0];
+  let baseUrl: string;
+  // A windowed editor we start may stop on the "compile errors at launch" dialog; click it away until it is ready.
+  const ready = new AbortController();
+  let dismissing: Promise<void> | undefined;
+  try {
+    const session = deps.session({
       projectPath: options.projectPath,
-      headless: !options.window,
-      keepConnected: true,
-      idleTimeoutSeconds,
-      url: options.overrideUrl,
-      token: options.overrideToken,
-      // A local server is only reachable if someone starts it; the plugin does when asked.
-      ...(options.overrideUrl && isLoopbackUrl(options.overrideUrl) ? { startServer: true } : {}),
-    });
-    if (opened.kind === 'failure') {
-      return { kind: 'failure', success: false, reason: 'launch-failed', message: opened.errorMessage, error: opened.error };
-    }
-    if (!opened.alreadyRunning) status(`Editor started; it quits after ${idleTimeoutSeconds}s without tool calls.`);
-
-    status('Waiting for the MCP server...');
-    // An editor that dies while starting (e.g. batchmode aborts on compile errors) would otherwise cost the whole
-    // ready timeout.
-    const launchedPid = opened.alreadyRunning ? undefined : opened.editorPid;
-    const ready = await deps.wait({
       urls: options.probeUrls,
       token: options.token,
-      timeoutMs: options.readyTimeoutMs ?? DEFAULT_READY_TIMEOUT_MS,
-      intervalMs: 2000,
-      stopReason: () => launchedPid !== undefined && !deps.isAlive(launchedPid)
-        ? `The Unity Editor (PID ${launchedPid}) exited before its MCP server answered; see the Editor log`
-        : undefined,
+      ...(serverUrl !== undefined ? { serverUrl } : {}),
+      env: buildOpenEnv({
+        keepConnected: true,
+        url: options.overrideUrl,
+        token: options.overrideToken,
+        // A local server is only reachable if someone starts it; the plugin does when asked.
+        ...(options.overrideUrl && isLoopbackUrl(options.overrideUrl) ? { startServer: true } : {}),
+      }),
+      idleSeconds: options.idleTimeoutSeconds ?? DEFAULT_SESSION_IDLE_SECONDS,
+      ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
+      ...(options.foreignReadyTimeoutMs !== undefined ? { foreignReadyTimeoutMs: options.foreignReadyTimeoutMs } : {}),
+      ...(options.onStatus ? { onStatus: options.onStatus } : {}),
+      ...(options.window ? { onLaunched: () => { dismissing = dismissLaunchErrorsUntil(ready.signal, []); } } : {}),
     });
-    if (ready.kind === 'failure') {
-      return { kind: 'failure', success: false, reason: 'not-ready', message: ready.error.message, error: ready.error };
-    }
-    baseUrl = ready.baseUrl;
+    baseUrl = (await session.ensure({ mode: options.window ? 'window' : 'headless' })).ready;
+  } catch (err) {
+    const error = err instanceof Error ? err : new Error(String(err));
+    const sessionError = err instanceof EditorSessionError ? err : undefined;
+    const sessionReason = sessionError?.reason;
+    const reason = sessionReason === 'exited' || sessionReason === 'not-ready' ? 'not-ready' : 'launch-failed';
+    return {
+      kind: 'failure',
+      success: false,
+      reason,
+      ...(sessionReason ? { sessionReason } : {}),
+      ...(sessionError?.source ? { editorSource: sessionError.source } : {}),
+      message: sessionErrorMessage(error, serverUrl),
+      error,
+    };
+  } finally {
+    ready.abort();
+    await dismissing;
   }
 
-  status('Running...');
+  options.onStatus?.('Running...');
   const result = await deps.invoke({
     toolName: SCRIPT_EXECUTE_TOOL,
     url: baseUrl,
     ...(options.token ? { token: options.token } : {}),
     tokenFromCloudStore: options.tokenFromCloudStore,
     input: buildScriptExecuteInput(options.code, options.usings ?? [], options.include ?? []),
-    timeoutMs: options.timeoutMs ?? DEFAULT_TIMEOUT_MS,
+    timeoutMs: options.timeoutMs ?? DEFAULT_EXEC_TIMEOUT_MS,
   });
   if (result.kind === 'failure') {
     return {
@@ -145,19 +152,6 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
     };
   }
   return { kind: 'success', success: true, baseUrl, data: result.data };
-}
-
-function readyUrl(result: WaitForReadyResult): string | undefined {
-  return result.kind === 'success' ? result.baseUrl : undefined;
-}
-
-function isLoopbackUrl(url: string): boolean {
-  try {
-    const host = new URL(url).hostname;
-    return host === 'localhost' || isLoopbackHost(host);
-  } catch {
-    return false;
-  }
 }
 
 /** Request body for `script-execute`; empty lists are left out so older plugins without them still accept it. */

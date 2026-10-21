@@ -9,7 +9,9 @@
 // and cannot introduce a side effect. `ExtensionDescriptor` is the catalogue entry
 // shape, needed by `InstallExtensionOptions.catalog`.
 import type { ExtensionDescriptor } from '../utils/extensions-catalog.js';
+import type { UnitySessionOptions } from './editor-session.js';
 import type {
+  EditorSession,
   ProjectKeyResolver,
   SetupMcpCredential,
   SetupMcpResult as CoreSetupMcpResult,
@@ -59,6 +61,8 @@ export type ProgressEvent =
       /** Platform on which the dismiss was performed (`win32` | `darwin` | `linux`). */
       platform: string;
     }
+  // openProject `headless`: editor-session progress ("Starting the editor (headless)...").
+  | { phase: 'session-status'; message: string }
   | { phase: 'done'; message: string };
 
 export type ProgressCallback = (event: ProgressEvent) => void;
@@ -454,15 +458,25 @@ export interface OpenProjectOptions {
    */
   startServer?: boolean;
   /**
-   * Launch the editor without a window (`-batchmode`, graphics kept so camera screenshots still render). Implies
-   * `keepConnected`, and skips the launch-errors dialog loop (there is no dialog in batchmode).
+   * Launch the editor without a window (`-batchmode`, graphics kept so camera screenshots still render) and wait
+   * until its MCP server answers. Implies `keepConnected`. A running editor of the project is reused; one started
+   * here is recorded in the project's session lease (`.ai-game-dev/session.json`), so `close --owned-only` may close
+   * it, and parallel calls start only one editor.
+   *
+   * Without `headless`, a headless editor this CLI started for the project is closed first (it saves), so the
+   * window can open.
    */
   headless?: boolean;
   /**
-   * Quit the editor after this many seconds without an MCP tool call — sets `UNITY_MCP_IDLE_TIMEOUT`. Meant for an
-   * editor the CLI starts for itself (e.g. `exec`); an editor opened by the user is never given one.
+   * Quit the editor after this many seconds without an MCP tool call. Headless: sent as
+   * `AIGD_SESSION_IDLE_SECONDS`; with a window: as `UNITY_MCP_IDLE_TIMEOUT`. Meant for an editor the CLI starts for
+   * itself (e.g. `exec`); an editor opened by the user is never given one.
    */
   idleTimeoutSeconds?: number;
+  /** `headless` only: how long to wait for the MCP server. Default 300000. */
+  readyTimeoutMs?: number;
+  /** Test seam: builds the project's editor session (default `createUnitySession`). */
+  sessionFactory?: (options: UnitySessionOptions) => EditorSession<string>;
   /**
    * If `true` (the default), poll for the Unity Editor's
    * "compile errors at launch" dialog after the editor process has
@@ -543,6 +557,8 @@ export interface OpenProjectSuccess {
    * `editorPid` will be the existing process's PID in that case.
    */
   alreadyRunning?: boolean;
+  /** `headless` only: the server URL that answered. */
+  baseUrl?: string;
 }
 
 /** Failed `openProject` outcome. Narrow with `kind === 'failure'`. */
