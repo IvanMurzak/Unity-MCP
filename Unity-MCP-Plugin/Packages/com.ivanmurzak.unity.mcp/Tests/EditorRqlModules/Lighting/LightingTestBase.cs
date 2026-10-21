@@ -42,8 +42,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         public void TearDownScene()
         {
             if (Lightmapping.isRunning) Lightmapping.Cancel();
-            // Leave the saved test scene before deleting it and its baked lighting.
-            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            // Leave a saved test scene before deleting it and its baked lighting. Only then: a new scene costs seconds on CI,
+            // and the next SetUp makes one anyway.
+            if (!string.IsNullOrEmpty(SceneManager.GetActiveScene().path))
+                EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
             if (AssetDatabase.IsValidFolder(TestFolder)) AssetDatabase.DeleteAsset(TestFolder);
         }
 
