@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         public void ARealtimeProbeReRenders()
         {
             _probe.mode = ReflectionProbeMode.Realtime;
-            Assert.AreEqual("", Cell(M(Probes + " | call Bake()")));
+            Assert.AreEqual("", CallResult(M(Probes + " | call Bake()")));
         }
 
         [Test]
@@ -48,11 +48,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         {
             _probe.mode = ReflectionProbeMode.Baked;
             SaveScene();
-            var path = Cell(M(Probes + " | call Bake()"));
+            var path = CallResult(M(Probes + " | call Bake()"));
             Assert.AreEqual(TestFolder + "/LightingTest/ReflectionProbe-Mirror.exr", path);
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture>(path));
             Assert.AreEqual(path, AssetDatabase.GetAssetPath(_probe.bakedTexture), "the probe shows its bake");
-            Assert.AreEqual(path, Cell(M(Probes + " | call Bake()")), "a second bake replaces the first texture");
+            Assert.AreEqual(path, CallResult(M(Probes + " | call Bake()")), "a second bake replaces the first texture");
         }
 
         [Test]
@@ -61,11 +61,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             _probe.mode = ReflectionProbeMode.Custom;
             _probe.hdr = false;
             SaveScene();
-            var first = Cell(M(Probes + " | call Bake()"));
+            var first = CallResult(M(Probes + " | call Bake()"));
             Assert.AreEqual(TestFolder + "/LightingTest/ReflectionProbe-Mirror.png", first);
             Assert.AreEqual(first, AssetDatabase.GetAssetPath(_probe.customBakedTexture));
 
-            Assert.AreEqual(first, Cell(M(Probes + " | call Bake()")), "a second bake replaces the first texture");
+            Assert.AreEqual(first, CallResult(M(Probes + " | call Bake()")), "a second bake replaces the first texture");
         }
     }
 }

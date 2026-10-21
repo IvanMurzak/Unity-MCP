@@ -46,8 +46,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
                 ?? throw new InvalidOperationException(
                     $"reflection probe '{probe.name}' is in an unsaved scene: a baked probe is stored next to its scene. Save it first, e.g. " +
                     "scenes | where path == \"\" | call SaveAs(\"Assets/Scenes/Level.unity\")");
-            var path = TexturePath(probe, folder);
+            // The folder first: GenerateUniqueAssetPath returns "" for a folder that does not exist yet.
             RqlEditorApi.Instance.CreateFolder(folder);
+            var path = TexturePath(probe, folder);
+            if (string.IsNullOrEmpty(path))
+                throw new InvalidOperationException($"no asset path for reflection probe '{probe.name}' in '{folder}'");
             if (!Lightmapping.BakeReflectionProbe(probe, path))
                 throw new InvalidOperationException($"Unity could not bake reflection probe '{probe.name}' to '{path}'");
 

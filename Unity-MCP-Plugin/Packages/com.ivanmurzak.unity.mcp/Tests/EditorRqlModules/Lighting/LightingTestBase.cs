@@ -87,7 +87,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             Ok(r);
             Assert.IsNotEmpty(r.Rows!, Table(r));
             var node = r.Rows![0][0];
-            return node == null ? "null" : node.ToJsonString().Trim('"');
+            return Text(node);
         }
+
+        /// <summary>
+        /// What a <c>call</c> returned, as text: a call's receipt row starts with the item it was called on, and the method's
+        /// return value is in its "result" column.
+        /// </summary>
+        protected static string CallResult(QueryResult r)
+        {
+            Ok(r);
+            Assert.IsNotEmpty(r.Rows!, Table(r));
+            var column = r.Columns?.FindIndex(c => string.Equals(c, "result", System.StringComparison.OrdinalIgnoreCase)) ?? -1;
+            Assert.GreaterOrEqual(column, 0, "no \"result\" column in the receipt:\n" + Table(r));
+            return Text(r.Rows![0][column]);
+        }
+
+        private static string Text(System.Text.Json.Nodes.JsonNode? node) => node == null ? "null" : node.ToJsonString().Trim('"');
     }
 }

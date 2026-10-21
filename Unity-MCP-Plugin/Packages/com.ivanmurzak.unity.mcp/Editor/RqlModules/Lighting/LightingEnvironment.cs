@@ -10,19 +10,17 @@
 
 #nullable enable
 using System;
-using System.Reflection;
 using Rql;
 using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
-using Object = UnityEngine.Object;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 {
     /// <summary>
     /// The active scene's environment lighting (Window > Rendering > Lighting > Environment), <c>lighting | get environment</c>.
-    /// RenderSettings is static, so this handle reads and writes it; each write is recorded for Undo on the scene's
-    /// RenderSettings object and marks the scene modified, like an edit in the Lighting window.
+    /// RenderSettings is static, so this handle reads and writes it; each write is recorded for Undo on the RenderSettings
+    /// objects and marks the scene modified, like an edit in the Lighting window.
     /// </summary>
     [RqlDescription("the active scene's environment lighting: ambient, fog, skybox, sun, default reflections (writable, undoable)")]
     public sealed class LightingEnvironment
@@ -133,19 +131,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 
         private static void Write(Action assign)
         {
-            var settings = SceneRenderSettings();
-            if (settings != null) Undo.RecordObject(settings, "RQL lighting environment");
+            // RenderSettings exposes its values only as static properties; the objects behind them (one per loaded scene,
+            // the active scene's is the one written) are found publicly and all recorded, which also covers the active one.
+            var settings = Resources.FindObjectsOfTypeAll<RenderSettings>();
+            if (settings.Length > 0) Undo.RecordObjects(settings, "RQL lighting environment");
             assign();
-            if (settings != null) EditorUtility.SetDirty(settings);
+            foreach (var s in settings) EditorUtility.SetDirty(s);
             LightingScenes.MarkActiveSceneDirty();
         }
-
-        // The active scene's RenderSettings object, the one the Lighting window edits. Unity exposes the values only as static
-        // properties, and the object only through an internal accessor; without it the writes still work, just without Undo.
-        private static readonly MethodInfo? GetRenderSettings =
-            typeof(RenderSettings).GetMethod("GetRenderSettings", BindingFlags.Static | BindingFlags.NonPublic, null, Type.EmptyTypes, null);
-
-        internal static Object? SceneRenderSettings() => GetRenderSettings?.Invoke(null, null) as Object;
 
         // Validated before Write, so a rejected value records nothing for Undo.
         private static void Require<T>(T value, bool ok, string range)

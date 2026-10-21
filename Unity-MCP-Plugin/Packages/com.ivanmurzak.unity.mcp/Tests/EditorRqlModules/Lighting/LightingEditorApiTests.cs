@@ -118,7 +118,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         [Test]
         public void CancelBakeWhenIdleReturnsFalse()
         {
-            Assert.AreEqual("false", Cell(M("lighting | call CancelBake()")));
+            Assert.AreEqual("false", CallResult(M("lighting | call CancelBake()")));
             Assert.AreEqual("false", Cell(Q("lighting | select isBaking")));
             Assert.AreEqual(0.0, double.Parse(Cell(Q("lighting | select bakeProgress")), System.Globalization.CultureInfo.InvariantCulture));
         }
@@ -136,12 +136,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
                  "lightmapMaxSize = 32, directSampleCount = 1, indirectSampleCount = 8, environmentSampleCount = 8"));
             UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
 
-            Assert.AreEqual("true", Cell(M("lighting | call Bake(true)")));
+            Assert.AreEqual("true", CallResult(M("lighting | call Bake(true)")));
             Assert.IsFalse(Lightmapping.isRunning);
             Assert.AreEqual("true", Cell(Q("lighting | select hasBakedData")));
             Assert.Greater(LightmapSettings.lightmaps.Length, 0, "the static plane gets a lightmap");
 
-            Assert.AreEqual("true", Cell(M("lighting | call ClearBakedData()")));
+            Assert.AreEqual("true", CallResult(M("lighting | call ClearBakedData()")));
             Assert.IsNull(Lightmapping.lightingDataAsset);
             Assert.AreEqual(0, LightmapSettings.lightmaps.Length);
         }
@@ -158,7 +158,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             off.gameObject.SetActive(false);
             SaveScene();
 
-            Assert.AreEqual("2", Cell(M("lighting | call BakeReflectionProbes()")));
+            Assert.AreEqual("2", CallResult(M("lighting | call BakeReflectionProbes()")));
             Assert.IsNotNull(baked.customBakedTexture);
             StringAssert.StartsWith(TestFolder + "/LightingTest/ReflectionProbe-Mirror", AssetDatabase.GetAssetPath(baked.customBakedTexture));
             Assert.IsNull(off.customBakedTexture, "inactive probes are skipped");
