@@ -72,7 +72,6 @@ Probes light dynamic objects (light probes) and reflections (reflection probes):
 ```
 editor | call CreateGameObject(""Probes"")
 objects | where name == ""Probes"" | call AddComponent(""LightProbeGroup"")
-objects | get components | where $ is LightProbeGroup | call PlaceGrid(""(10, 4, 10)"", 2)   a probe every 2 m in a 10 x 4 x 10 m box around it; returns the count
 " + SourceName + @" | get probeGroups | select gameObject.name probeCount
 editor | call CreateGameObject(""Mirror"")
 objects | where name == ""Mirror"" | call AddComponent(""ReflectionProbe"")
