@@ -296,7 +296,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     // manifest name, not the on-disk versioned filename.
                     if (!NuGetInstallManifest.TryParseInstalledDllName(dll, out var stem, out _) || stem == null)
                         stem = Path.GetFileNameWithoutExtension(dll);
-                    return UnityAssemblyResolver.IsAlreadyImported(stem!);
+                    // Same rule as NuGetPluginConfigurator.ConfigureDll: on CoreCLR editors a player-profile
+                    // reference alone does not mean the editor can load the assembly without our copy.
+                    return UnityAssemblyResolver.IsAlreadyImported(stem!)
+                        && UnityAssemblyResolver.IsResolvableInEditorRuntime(stem!, Path.Combine(installPath, dll));
                 });
                 if (!allProvidedByUnity)
                     continue;

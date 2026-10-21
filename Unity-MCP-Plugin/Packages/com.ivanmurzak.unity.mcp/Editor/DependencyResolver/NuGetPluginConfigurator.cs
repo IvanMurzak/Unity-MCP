@@ -97,7 +97,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // A player-profile reference alone is not enough on CoreCLR editors (Unity 7+): the editor runtime
             // must be able to load it too, otherwise excluding our copy from the Editor breaks it there.
             var unityProvidesIt = UnityAssemblyResolver.IsAlreadyImported(assemblyName)
-                                  && UnityAssemblyResolver.IsResolvableInEditorRuntime(assemblyName);
+                                  && UnityAssemblyResolver.IsResolvableInEditorRuntime(assemblyName, assetPath);
 
             bool anyPlatform;
             bool excludeEditor;

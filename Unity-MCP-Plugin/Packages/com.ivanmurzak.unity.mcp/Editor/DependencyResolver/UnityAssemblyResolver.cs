@@ -45,15 +45,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// are not part of the editor's load context. Marking our copy "Exclude Editor" then leaves the editor
         /// without the assembly at all: <c>Microsoft.Bcl.AsyncInterfaces, Version=8.0.0.0</c> (required by R3)
         /// threw <c>FileNotFoundException</c> while constructing <c>McpPlugin</c> on Unity 7000.0.0a7.</para>
+        ///
+        /// <para>When <paramref name="dllPath"/> is given, the probe asks for at least the assembly version of that
+        /// DLL: a lower-versioned runtime copy cannot satisfy references compiled against ours.</para>
         /// </summary>
-        public static bool IsResolvableInEditorRuntime(string assemblyName)
+        public static bool IsResolvableInEditorRuntime(string assemblyName, string? dllPath = null)
         {
             if (!isCoreClrEditor)
                 return true; // Mono: original behaviour
 
             try
             {
-                var location = System.Reflection.Assembly.Load(new System.Reflection.AssemblyName(assemblyName)).Location;
+                var requested = new System.Reflection.AssemblyName(assemblyName);
+                if (dllPath != null && File.Exists(dllPath))
+                {
+                    try { requested.Version = System.Reflection.AssemblyName.GetAssemblyName(Path.GetFullPath(dllPath)).Version; }
+                    catch { /* unreadable metadata: fall back to a name-only probe */ }
+                }
+
+                var location = System.Reflection.Assembly.Load(requested).Location;
                 if (string.IsNullOrEmpty(location))
                     return true; // in-memory / platform assembly without a path: provided by the runtime
 
