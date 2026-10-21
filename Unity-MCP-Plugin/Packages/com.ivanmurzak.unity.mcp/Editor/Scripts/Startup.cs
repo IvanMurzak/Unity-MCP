@@ -28,11 +28,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         {
             // Install the Unity main-thread implementation BEFORE building the plugin. Building reflects over
             // every [AiSkill] member, and Skill_Rql.Markdown runs its renderer through MainThread.Instance.Run.
-            // On Unity 7000.0.0a7 (CoreCLR) this static constructor runs before MainThreadInstaller.Init's
-            // [InitializeOnLoadMethod], so MainThread.Instance was still the default implementation; Run()
-            // then dispatched the work to the main thread, which is blocked right here in the constructor,
-            // and the editor hung forever in "Running managed callbacks... Initializing InitializeOnLoad
-            // Types". With the Unity implementation installed, Run() on the main thread executes inline.
+            // [InitializeOnLoad] static constructors always run before [InitializeOnLoadMethod], so here
+            // MainThread.Instance is still ReflectorNet's default, which treats only ManagedThreadId == 1 as the
+            // main thread. That holds on Mono, but on the Unity 7 CoreCLR editor on Windows the main thread's id
+            // is 2: Run() then dispatched the work to the main thread, which is blocked right here in the
+            // constructor, and the editor hung forever in "Initializing InitializeOnLoad Types". With the Unity
+            // implementation installed, Run() on the main thread executes inline.
             // Idempotent: InstallPump re-subscribes safely and Init runs again from its own attribute.
             com.IvanMurzak.Unity.MCP.Runtime.Utils.MainThreadInstaller.Init();
 

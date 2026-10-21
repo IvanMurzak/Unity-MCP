@@ -31,10 +31,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         static HashSet<string>? cachedUnityAssemblies;
 
         /// <summary>
-        /// Returns true if the given assembly name is already provided by Unity
-        /// (either as a BCL assembly or from another installed package).
-        /// </summary>
-        /// <summary>
         /// True when <paramref name="assemblyName"/> can actually be loaded by the EDITOR runtime from somewhere
         /// other than our NuGet install folder.
         ///
@@ -69,6 +65,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
         }
 
+        /// <summary>
+        /// Returns true if the given assembly name is already provided by Unity
+        /// (either as a BCL assembly or from another installed package).
+        /// </summary>
         public static bool IsAlreadyImported(string assemblyName)
         {
             return GetUnityProvidedAssemblies().Contains(assemblyName);
