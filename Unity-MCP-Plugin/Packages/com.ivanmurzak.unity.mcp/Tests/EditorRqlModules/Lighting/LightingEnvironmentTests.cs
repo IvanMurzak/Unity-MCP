@@ -35,9 +35,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         [Test]
         public void WritesTheEnvironment()
         {
-            Ok(M(Env + " | set ambientMode = \"Flat\", ambientLight = \"#ff0000\", ambientIntensity = 1.5"));
-            Ok(M(Env + " | set fog = true, fogMode = \"Linear\", fogStartDistance = 5, fogEndDistance = 50, fogColor = \"#808080\""));
-            Ok(M(Env + " | set reflectionIntensity = 0.25, reflectionBounces = 2, defaultReflectionResolution = 256"));
+            AssertOk(M(Env + " | set ambientMode = \"Flat\", ambientLight = \"#ff0000\", ambientIntensity = 1.5"));
+            AssertOk(M(Env + " | set fog = true, fogMode = \"Linear\", fogStartDistance = 5, fogEndDistance = 50, fogColor = \"#808080\""));
+            AssertOk(M(Env + " | set reflectionIntensity = 0.25, reflectionBounces = 2, defaultReflectionResolution = 256"));
 
             Assert.AreEqual(AmbientMode.Flat, RenderSettings.ambientMode);
             Assert.AreEqual(Color.red, RenderSettings.ambientLight);
@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         {
             RenderSettings.fog = false;
             RenderSettings.fogDensity = 0.01f;
-            Ok(M(Env + " | set fog = true, fogDensity = 0.3"));
+            AssertOk(M(Env + " | set fog = true, fogDensity = 0.3"));
             Assert.IsTrue(RenderSettings.fog);
 
             Undo.PerformUndo();
@@ -81,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         public void TheSunTakesAGameObject()
         {
             var sun = CreateLight("Sun", LightType.Directional);
-            Ok(M(Env + " | set sun = unity.find(\"Sun\")"));
+            AssertOk(M(Env + " | set sun = unity.find(\"Sun\")"));
             Assert.AreEqual(sun, RenderSettings.sun);
             Assert.AreEqual("Sun", Cell(Q(Env + " | select sun.gameObject.name")));
         }
@@ -92,7 +92,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             EnsureTestFolder();
             var sky = new Material(Shader.Find("Skybox/Procedural"));
             AssetDatabase.CreateAsset(sky, TestFolder + "/Sky.mat");
-            Ok(M(Env + " | set skybox = \"" + TestFolder + "/Sky.mat\""));
+            AssertOk(M(Env + " | set skybox = \"" + TestFolder + "/Sky.mat\""));
             Assert.AreEqual(sky, RenderSettings.skybox);
         }
 
@@ -101,7 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         {
             var scene = SaveScene();
             Assert.IsFalse(scene.isDirty);
-            Ok(M(Env + " | set fog = true"));
+            AssertOk(M(Env + " | set fog = true"));
             Assert.IsTrue(SceneManager.GetActiveScene().isDirty);
         }
     }

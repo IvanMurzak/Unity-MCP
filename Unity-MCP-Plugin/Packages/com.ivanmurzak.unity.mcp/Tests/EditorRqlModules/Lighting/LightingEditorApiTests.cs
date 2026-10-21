@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         public void CreateSettingsMakesAnAssetAndAssignsIt()
         {
             var path = TestFolder + "/Night/Night.lighting";   // missing folders are created
-            Ok(M($"lighting | call CreateSettings(\"{path}\")"));
+            AssertOk(M($"lighting | call CreateSettings(\"{path}\")"));
             var asset = AssetDatabase.LoadAssetAtPath<LightingSettings>(path);
             Assert.IsNotNull(asset);
             Assert.AreEqual(asset, Lightmapping.lightingSettings);
@@ -44,15 +44,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         {
             Fails(M("lighting | call CreateSettings(\"Night.lighting\")"), "Assets/");
             Fails(M("lighting | call CreateSettings(\"Assets/Night.asset\")"), ".lighting");
-            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Day.lighting\")"));
+            AssertOk(M($"lighting | call CreateSettings(\"{TestFolder}/Day.lighting\")"));
             Fails(M($"lighting | call CreateSettings(\"{TestFolder}/Day.lighting\")"), "UseSettings");
         }
 
         [Test]
         public void SettingsAreWritableAndStayOnTheAsset()
         {
-            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Bake.lighting\")"));
-            Ok(M("lighting | get settings | set lightmapper = \"ProgressiveCPU\", lightmapResolution = 7, lightmapMaxSize = 256, bakedGI = true"));
+            AssertOk(M($"lighting | call CreateSettings(\"{TestFolder}/Bake.lighting\")"));
+            AssertOk(M("lighting | get settings | set lightmapper = \"ProgressiveCPU\", lightmapResolution = 7, lightmapMaxSize = 256, bakedGI = true"));
             var asset = AssetDatabase.LoadAssetAtPath<LightingSettings>(TestFolder + "/Bake.lighting");
             if (CpuLightmapperSupported()) Assert.AreEqual(LightingSettings.Lightmapper.ProgressiveCPU, asset.lightmapper);
             Assert.AreEqual(7f, asset.lightmapResolution, 1e-4f);
@@ -66,7 +66,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             EnsureTestFolder();
             var asset = new LightingSettings { lightmapResolution = 3 };
             AssetDatabase.CreateAsset(asset, TestFolder + "/Existing.lighting");
-            Ok(M($"lighting | call UseSettings(\"{TestFolder}/Existing.lighting\")"));
+            AssertOk(M($"lighting | call UseSettings(\"{TestFolder}/Existing.lighting\")"));
             Assert.AreEqual(asset, Lightmapping.lightingSettings);
             Assert.AreEqual(3.0, double.Parse(Cell(Q("lighting | select settings.lightmapResolution")), System.Globalization.CultureInfo.InvariantCulture), 1e-4);
         }
@@ -74,9 +74,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         [Test]
         public void AssigningSettingsIsUndoable()
         {
-            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/First.lighting\")"));
+            AssertOk(M($"lighting | call CreateSettings(\"{TestFolder}/First.lighting\")"));
             var first = Lightmapping.lightingSettings;
-            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Second.lighting\")"));
+            AssertOk(M($"lighting | call CreateSettings(\"{TestFolder}/Second.lighting\")"));
             Assert.AreNotEqual(first, Lightmapping.lightingSettings);
             Undo.PerformUndo();
             Assert.AreEqual(first, LightingEditorApi.Instance.settings);
@@ -102,8 +102,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         {
             if (HasGraphicsDevice) Assert.Ignore("needs an Editor without a graphics device (-nographics)");
             SaveScene();
-            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Gpu.lighting\")"));
-            Ok(M("lighting | get settings | set lightmapper = \"ProgressiveGPU\""));
+            AssertOk(M($"lighting | call CreateSettings(\"{TestFolder}/Gpu.lighting\")"));
+            AssertOk(M("lighting | get settings | set lightmapper = \"ProgressiveGPU\""));
             Fails(M("lighting | call Bake()"), "ProgressiveCPU");
             Assert.IsFalse(Lightmapping.isRunning);
         }
@@ -118,8 +118,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             CreateLight("Sun", LightType.Directional, LightmapBakeType.Baked);
             SaveScene();
             // The smallest bake that still produces a lightmap: CPU, tiny maps, few samples.
-            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Tiny.lighting\")"));
-            Ok(M("lighting | get settings | set lightmapper = \"ProgressiveCPU\", bakedGI = true, realtimeGI = false, lightmapResolution = 1, " +
+            AssertOk(M($"lighting | call CreateSettings(\"{TestFolder}/Tiny.lighting\")"));
+            AssertOk(M("lighting | get settings | set lightmapper = \"ProgressiveCPU\", bakedGI = true, realtimeGI = false, lightmapResolution = 1, " +
                  "lightmapMaxSize = 32, directSampleCount = 1, indirectSampleCount = 8, environmentSampleCount = 8"));
             UnityEditor.SceneManagement.EditorSceneManager.SaveOpenScenes();
 

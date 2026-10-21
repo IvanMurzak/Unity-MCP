@@ -15,10 +15,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 {
     /// <summary>
     /// Lighting: the <c>lighting</c> source (the active scene's environment, its Lighting Settings asset and the bake), plus
-    /// LightProbeGroup grid placement and ReflectionProbe baking. Lights are built into Unity, so this module ships with the
-    /// core package in its own assembly, like Physics. It adds no guide to the unity-rql skill: the skill lists the source in
-    /// one line and agents read the members and calls on demand with <c>rql-schema "lighting"</c> (as for <c>editor</c> and
-    /// <c>profiler</c>), so projects that never touch lighting pay no tokens for it.
+    /// LightProbeGroup grid placement and ReflectionProbe baking; in core like Physics, since lights are built into Unity.
+    /// No guide: the skill lists the source in one line and agents read it with <c>rql-schema "lighting"</c>.
     /// </summary>
     public sealed class LightingModule : IRqlModule
     {

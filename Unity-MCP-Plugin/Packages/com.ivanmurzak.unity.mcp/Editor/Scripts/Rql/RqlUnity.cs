@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("RQL mutation");
                 _undoGroup = Undo.GetCurrentGroup();
-                var owners = Owners(records);
+                var owners = Owners(records, out _);
                 if (owners.Count > 0) Undo.RecordObjects(owners.ToArray(), "RQL mutation");
             };
             // Committed gets exactly the applied records: every set after all writes succeeded, the completed calls when a
@@ -62,12 +62,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 if (records.Any(ChangesProjectState)) _wrote = true; // Mutate saves only after writes that change project state
                 CloseUndoGroup();
                 var scenes = new HashSet<Scene>();
-                foreach (var o in Owners(records))
+                var owners = Owners(records, out var sceneSettings);
+                foreach (var o in owners)
                 {
                     EditorUtility.SetDirty(o);
                     var scene = o is GameObject go ? go.scene : o is Component c ? c.gameObject.scene : default;
                     if (scene.IsValid() && scenes.Add(scene) && !EditorApplication.isPlaying) EditorSceneManager.MarkSceneDirty(scene);
                 }
+                // Scene-level settings (IRqlUndoOwners) belong to the active scene.
+                var active = SceneManager.GetActiveScene();
+                if (sceneSettings && active.IsValid() && scenes.Add(active) && !EditorApplication.isPlaying) EditorSceneManager.MarkSceneDirty(active);
             };
 
             // Everything else — sources, adapters, exclusions — comes from modules: the core module in this package plus any
@@ -129,19 +133,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<(Type type, string? member, bool isCall), bool> NoAutoSave =
             new System.Collections.Concurrent.ConcurrentDictionary<(Type, string?, bool), bool>();
 
-        private static List<Object> Owners(IReadOnlyList<MutationRecord> records)
+        /// <param name="sceneSettings">true when a change landed on scene-level settings (an <see cref="IRqlUndoOwners"/>).</param>
+        private static List<Object> Owners(IReadOnlyList<MutationRecord> records, out bool sceneSettings)
         {
             var owners = new List<Object>();
             var seen = new HashSet<Object>();
+            HashSet<IRqlUndoOwners>? views = null;
+            sceneSettings = false;
             // The nearest Unity object enclosing each change: a write into a plain view object (e.g. a spline knot view) is
-            // recorded on the component or asset that holds it.
+            // recorded on the component or asset that holds it, a write into an IRqlUndoOwners on the objects it names.
             foreach (var r in records)
                 foreach (var candidate in r.Owners)
+                {
                     if (candidate is Object o)
                     {
                         if (o != null && seen.Add(o)) owners.Add(o);
                         break;
                     }
+                    if (candidate is IRqlUndoOwners settings)
+                    {
+                        // Once per view object, not per written member: naming the objects may scan (FindObjectsOfTypeAll).
+                        if ((views ??= new HashSet<IRqlUndoOwners>()).Add(settings))
+                            foreach (var s in settings.UndoOwners)
+                                if (s != null && seen.Add(s)) owners.Add(s);
+                        sceneSettings = true;
+                        break;
+                    }
+                }
             return owners;
         }
 

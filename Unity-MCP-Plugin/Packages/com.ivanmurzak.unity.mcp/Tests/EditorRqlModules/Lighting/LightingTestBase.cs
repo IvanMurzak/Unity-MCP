@@ -9,10 +9,9 @@
 */
 
 #nullable enable
-using com.IvanMurzak.Unity.MCP.Editor.Rql;
+using com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters;
 using NUnit.Framework;
 using Rql;
-using Rql.Execution;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
@@ -21,21 +20,18 @@ using UnityEngine.SceneManagement;
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
 {
     /// <summary>
-    /// A fresh untitled scene per test (its own RenderSettings, no Lighting Settings asset). Tests that need a saved scene
-    /// call <see cref="SaveScene"/>; everything written under <see cref="TestFolder"/> is deleted afterwards.
+    /// A fresh untitled scene and engine per test (<see cref="AdapterTestBase"/>: its own RenderSettings, no Lighting Settings
+    /// asset). Tests that need a saved scene call <see cref="SaveScene"/>; everything under <see cref="TestFolder"/> is deleted.
     /// </summary>
-    public abstract class LightingTestBase
+    public abstract class LightingTestBase : AdapterTestBase
     {
         protected const string TestFolder = "Assets/RqlLightingTests";
-        protected const string Lights = "objects | get components | where $ is Light";
 
+        // After the base SetUp's new scene: a run the Editor did not finish (a crash, a killed process) leaves its assets behind.
         [SetUp]
-        public void SetUpScene()
+        public void DeleteLeftovers()
         {
-            EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
-            // A run the Editor did not finish (a crash, a killed process) leaves its assets behind.
             if (AssetDatabase.IsValidFolder(TestFolder)) AssetDatabase.DeleteAsset(TestFolder);
-            RqlUnity.Reset();
         }
 
         [TearDown]
@@ -84,27 +80,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             return light;
         }
 
-        protected static QueryResult Q(string rql) => RqlUnity.Engine.Execute(rql);
-
-        protected static QueryResult M(string rql) => RqlUnity.Engine.Execute(rql, null, new QueryOptions { AllowMutation = true });
-
-        protected static void Ok(QueryResult r) => Assert.IsTrue(r.Ok, Table(r));
-
+        /// <summary>The query failed and its output mentions <paramref name="expected"/>.</summary>
         protected static void Fails(QueryResult r, string expected)
         {
             Assert.IsFalse(r.Ok, "expected the query to fail:\n" + Table(r));
             StringAssert.Contains(expected, Table(r));
-        }
-
-        protected static string Table(QueryResult r) => AgentFormat.Render(r, OutputFormat.Table);
-
-        /// <summary>The first cell of a successful result as text (strings unquoted, "null" for null).</summary>
-        protected static string Cell(QueryResult r)
-        {
-            Ok(r);
-            Assert.IsNotEmpty(r.Rows!, Table(r));
-            var node = r.Rows![0][0];
-            return Text(node);
         }
 
         /// <summary>
@@ -113,13 +93,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         /// </summary>
         protected static string CallResult(QueryResult r)
         {
-            Ok(r);
-            Assert.IsNotEmpty(r.Rows!, Table(r));
+            AssertOk(r);
             var column = r.Columns?.FindIndex(c => string.Equals(c, "result", System.StringComparison.OrdinalIgnoreCase)) ?? -1;
             Assert.GreaterOrEqual(column, 0, "no \"result\" column in the receipt:\n" + Table(r));
-            return Text(r.Rows![0][column]);
+            return Cell(r, 0, column);
         }
-
-        private static string Text(System.Text.Json.Nodes.JsonNode? node) => node == null ? "null" : node.ToJsonString().Trim('"');
     }
 }

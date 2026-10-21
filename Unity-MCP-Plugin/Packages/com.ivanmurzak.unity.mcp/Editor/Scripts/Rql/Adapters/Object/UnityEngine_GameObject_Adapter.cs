@@ -92,10 +92,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         private static string StaticFlagList => string.Join(", ", StaticFlagNames.Select(f => f.Name));
 
+        // Read per GameObject by `where staticFlags contains …` over the whole scene: a plain loop, no LINQ.
         private static List<string> StaticFlags(GameObject g)
         {
             var set = GameObjectUtility.GetStaticEditorFlags(g);
-            return StaticFlagNames.Where(f => (set & f.Flag) != 0).Select(f => f.Name).ToList();
+            var names = new List<string>(StaticFlagNames.Length);
+            foreach (var f in StaticFlagNames)
+                if ((set & f.Flag) != 0) names.Add(f.Name);
+            return names;
         }
 
         private static StaticEditorFlags? StaticFlag(string? name)

@@ -25,7 +25,8 @@ Kept as tools: `script-*`, `tests-run`, `screenshot-*`, `package-*`, `unity-tool
 ## Code
 
 - RQL itself is the NuGet package `com.IvanMurzak.Rql` (pinned in `Editor/DependencyResolver/NuGetConfig.cs`, Editor-only), installed by the NuGet Dependency Manager like McpPlugin / ReflectorNet.
-- `Editor/Scripts/Rql/` — engine (`RqlUnity`: Undo group per mutation, dirty marking; `RqlUnity.Mutate` saves assets,
+- `Editor/Scripts/Rql/` — engine (`RqlUnity`: Undo group per mutation, dirty marking; a plain view object over scene-level
+  settings with no owner component implements `IRqlUndoOwners` to name the objects to record, e.g. `LightingEnvironment`; `RqlUnity.Mutate` saves assets,
   scenes and the open prefab after every `rql-mutate`, modules flush deferred file writes on `RqlUnity.Saving`), `RqlEditorApi` (the `editor`
   source), `RqlProfiler` (the `profiler` source), `RqlTests` (`tests` / `testResults`), schema, type index, guide texts, `Modules/UnityCoreModule.cs`, one adapter per file in `Adapters/`.
 - `Editor/Scripts/API/Tool/Rql*.cs` — the tools; `Editor/Scripts/Skills/Skill_Rql.cs` — the `unity-rql` skill.

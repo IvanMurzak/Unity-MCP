@@ -34,8 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         /// <summary>Bake one probe; returns the texture's asset path, or "" for a Realtime probe.</summary>
         public static string Bake(ReflectionProbe probe)
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
-                throw new InvalidOperationException("reflection probes are baked in Edit Mode (editor | set isPlaying = false)");
+            LightingScenes.RequireEditMode("baking a reflection probe");
             if (probe.mode == ReflectionProbeMode.Realtime)
             {
                 probe.RenderProbe();
@@ -44,8 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 
             var folder = LightingScenes.Folder(probe.gameObject.scene)
                 ?? throw new InvalidOperationException(
-                    $"reflection probe '{probe.name}' is in an unsaved scene: a baked probe is stored next to its scene. Save it first, e.g. " +
-                    "scenes | where path == \"\" | call SaveAs(\"Assets/Scenes/Level.unity\")");
+                    $"reflection probe '{probe.name}' is in an unsaved scene: a baked probe is stored next to its scene. " + LightingScenes.SaveSceneHint);
             // The folder first: GenerateUniqueAssetPath returns "" for a folder that does not exist yet.
             RqlEditorApi.Instance.CreateFolder(folder);
             var path = TexturePath(probe, folder);
@@ -54,9 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
             if (!Lightmapping.BakeReflectionProbe(probe, path))
                 throw new InvalidOperationException($"Unity could not bake reflection probe '{probe.name}' to '{path}'");
 
-            // The probe shows the new texture right away (a Custom probe only ever shows what is assigned to it, as the
-            // Inspector's Bake does; a Baked one until the next full lighting bake replaces it), and the next Bake() of this
-            // probe finds and overwrites the same file.
+            // Show the new texture now, as the Inspector's Bake does; the next Bake() of this probe overwrites the same file.
             var texture = AssetDatabase.LoadAssetAtPath<Texture>(path);
             if (probe.mode == ReflectionProbeMode.Custom) probe.customBakedTexture = texture;
             else probe.bakedTexture = texture;

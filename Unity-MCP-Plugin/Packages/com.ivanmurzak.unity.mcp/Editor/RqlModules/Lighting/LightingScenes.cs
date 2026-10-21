@@ -31,16 +31,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
             return (Path.GetDirectoryName(scene.path) + "/" + Path.GetFileNameWithoutExtension(scene.path)).Replace('\\', '/');
         }
 
-        /// <summary>Throws with a fix-it hint when a loaded scene has no path yet (or the Editor is in Play Mode).</summary>
-        public static void RequireSaved(string what)
+        /// <summary>How to save an untitled scene, for error messages.</summary>
+        public const string SaveSceneHint = "Save it first, e.g. scenes | where path == \"\" | call SaveAs(\"Assets/Scenes/Level.unity\")";
+
+        /// <summary>Throws with a fix-it hint in Play Mode (or while entering it).</summary>
+        public static void RequireEditMode(string what)
         {
             if (EditorApplication.isPlayingOrWillChangePlaymode)
                 throw new InvalidOperationException($"{what} is not possible in Play Mode (editor | set isPlaying = false)");
-            var untitled = RqlUnity.Scenes().Where(s => string.IsNullOrEmpty(s.path)).ToList();
-            if (untitled.Count > 0)
+        }
+
+        /// <summary>Throws with a fix-it hint when a loaded scene has no path yet (or the Editor is in Play Mode).</summary>
+        public static void RequireSaved(string what)
+        {
+            RequireEditMode(what);
+            if (RqlUnity.Scenes().Any(s => string.IsNullOrEmpty(s.path)))
                 throw new InvalidOperationException(
-                    $"{what} needs saved scenes: Unity stores baked lighting in a folder next to the scene. Save it first, e.g. " +
-                    "scenes | where path == \"\" | call SaveAs(\"Assets/Scenes/Level.unity\")");
+                    $"{what} needs saved scenes: Unity stores baked lighting in a folder next to the scene. " + SaveSceneHint);
         }
 
         /// <summary>The active scene marked modified, so the next save writes the change (no-op in Play Mode).</summary>

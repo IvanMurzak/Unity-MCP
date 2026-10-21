@@ -9,9 +9,7 @@
 */
 
 #nullable enable
-using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting;
@@ -21,7 +19,8 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
 {
-    public class LightingModuleTests : LightingTestBase
+    /// <summary>Registration, schema and skill: nothing here touches a scene, so no per-test scene (seconds each on CI).</summary>
+    public class LightingModuleRegistrationTests
     {
         [Test]
         public void TheModuleIsDiscovered()
@@ -57,15 +56,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             StringAssert.Contains("PlaceGrid(", RqlUnitySchema.Render(RqlUnity.Engine, "LightProbeGroup"));
             StringAssert.Contains("Bake(", RqlUnitySchema.Render(RqlUnity.Engine, "ReflectionProbe"));
         }
+    }
 
+    public class LightingModuleTests : LightingTestBase
+    {
         [Test]
         public void ReadingEverythingWholeDoesNotFail()
         {
             CreateLight("Sun", LightType.Directional);
             EnsureTestFolder();
-            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Read.lighting\")"));
+            AssertOk(M($"lighting | call CreateSettings(\"{TestFolder}/Read.lighting\")"));
             foreach (var q in new[] { "lighting", "lighting | get environment", "lighting | get settings" })
-                Ok(Q(q));
+                AssertOk(Q(q));
         }
 
         /// <summary>
@@ -84,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             {
                 "editor | call CreateGameObject(\"Lamp\")",
                 "objects | where name == \"Lamp\" | call AddComponent(\"Light\")",
-                Lights + " | where gameObject.name == \"Lamp\" | set type = \"Spot\", intensity = 2, range = 15, spotAngle = 60, color = \"#ffd8a8\", shadows = \"Soft\", lightmapBakeType = \"Baked\"",
+                "objects | get components | where $ is Light | where gameObject.name == \"Lamp\" | set type = \"Spot\", intensity = 2, range = 15, spotAngle = 60, color = \"#ffd8a8\", shadows = \"Soft\", lightmapBakeType = \"Baked\"",
                 "lighting | get environment | select ambientMode ambientIntensity fog fogMode skybox sun",
                 "lighting | get environment | set ambientMode = \"Trilight\", ambientSkyColor = \"#9ab8e0\", ambientEquatorColor = \"#6b7a8a\", ambientGroundColor = \"#3a3228\"",
                 "lighting | get environment | set fog = true, fogMode = \"ExponentialSquared\", fogColor = \"#8090a0\", fogDensity = 0.02",
@@ -101,8 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
                 "objects | get components | where $ is LightProbeGroup | call PlaceGrid(\"(10, 4, 10)\", 2)",
                 "editor | call CreateGameObject(\"Mirror\")",
                 "objects | where name == \"Mirror\" | call AddComponent(\"ReflectionProbe\")",
-                "objects | get components | where $ is ReflectionProbe | set mode = \"Baked\", size = \"(10, 5, 10)\", resolution = 128",
-                "objects | get components | where $ is ReflectionProbe | call Bake()",
+                "objects | get components | where $ is ReflectionProbe | set mode = \"Baked\", size = \"(10, 5, 10)\", resolution = 16",
                 "lighting | call BakeReflectionProbes()",
             };
             try
@@ -137,12 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         [Test]
         public void RqlMutateReachesTheModuleThroughTheMcpPipeline()
         {
-            UnityMcpPluginEditor.InitSingletonIfNeeded();
-            var args = new Dictionary<string, JsonElement>
-            {
-                ["query"] = JsonDocument.Parse(JsonSerializer.Serialize("lighting | get environment | set fog = true, fogDensity = 0.04")).RootElement.Clone(),
-            };
-            var response = UnityMcpPluginEditor.Instance.Tools!.RunCallTool(new RequestCallTool("rql-mutate", args)).Result;
+            var response = CallThroughMcpPlugin("rql-mutate", "{\"query\": \"lighting | get environment | set fog = true, fogDensity = 0.04\"}");
             Assert.AreEqual(ResponseStatus.Success, response.Value!.Status, response.Value.ToString());
             Assert.IsTrue(RenderSettings.fog);
             Assert.AreEqual(0.04f, RenderSettings.fogDensity, 1e-5f);

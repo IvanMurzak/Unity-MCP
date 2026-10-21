@@ -72,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         public void PlaceGridIsUndoable()
         {
             var before = _group.probePositions;
-            Ok(M(Groups + " | call PlaceGrid(\"(2, 2, 2)\", 1)"));
+            AssertOk(M(Groups + " | call PlaceGrid(\"(2, 2, 2)\", 1)"));
             Assert.AreEqual(27, _group.probePositions.Length);
             Undo.PerformUndo();
             CollectionAssert.AreEqual(before, _group.probePositions);

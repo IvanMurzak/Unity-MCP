@@ -57,8 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
                      "scene; returns it")]
         public LightingSettings CreateSettings(string path)
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
-                throw new InvalidOperationException("Lighting Settings cannot be assigned in Play Mode (editor | set isPlaying = false)");
+            LightingScenes.RequireEditMode("assigning Lighting Settings");
             path = (path ?? "").Replace('\\', '/').Trim();
             if (!path.StartsWith("Assets/", StringComparison.Ordinal) || !path.EndsWith(".lighting", StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException($"'{path}' must be an asset path under Assets/ ending in .lighting, e.g. \"Assets/Lighting/Outdoor.lighting\"");
@@ -77,8 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         public LightingSettings UseSettings(LightingSettings asset)
         {
             if (asset == null) throw new ArgumentException("a Lighting Settings asset is required, e.g. \"Assets/Lighting/Outdoor.lighting\"");
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
-                throw new InvalidOperationException("Lighting Settings cannot be assigned in Play Mode (editor | set isPlaying = false)");
+            LightingScenes.RequireEditMode("assigning Lighting Settings");
             Assign(asset);
             return asset;
         }
@@ -132,8 +130,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
                      "Lighting window's Clear Baked Data does; returns whether there was any")]
         public bool ClearBakedData()
         {
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
-                throw new InvalidOperationException("baked data cannot be cleared in Play Mode (editor | set isPlaying = false)");
+            LightingScenes.RequireEditMode("clearing baked data");
             if (Lightmapping.isRunning) Lightmapping.Cancel();
             var had = Lightmapping.lightingDataAsset != null || LightmapSettings.lightmaps.Length > 0;
             Lightmapping.Clear();
