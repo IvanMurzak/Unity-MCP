@@ -1,0 +1,32 @@
+{
+  "name": "com.ivanmurzak.unity.mcp.probuilder",
+  "displayName": "AI ProBuilder",
+  "author": {
+    "name": "Ivan Murzak",
+    "url": "https://github.com/IvanMurzak"
+  },
+  "keywords": [
+    "ProBuilder",
+    "AI",
+    "AI Integration",
+    "MCP",
+    "Unity MCP"
+  ],
+  "version": "2.0.1",
+  "unity": "2022.3",
+  "description": "MCP Tools for ProBuilder - Enhance your Unity projects with AI-powered ProBuilder tools using the MCP framework.",
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "1.0.0",
+    "com.unity.probuilder": "5.2.4"
+  },
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "extensions.unity",
+        "com.ivanmurzak"
+      ]
+    }
+  ]
+}

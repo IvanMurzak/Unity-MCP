@@ -53,8 +53,8 @@ describe('CLI integration', () => {
       const { stdout, exitCode } = runCli(['--help']);
       expect(exitCode).toBe(0);
       // Extract command names from help output
-      const commandNames = ['configure', 'create-project', 'install-plugin', 'install-unity', 'open', 'remove-plugin', 'run-tool'];
-      const positions = commandNames.map(name => stdout.indexOf(name));
+      const commandNames = ['configure', 'create-project', 'exec', 'install-plugin', 'install-unity', 'open', 'remove-plugin', 'run-tool'];
+      const positions = commandNames.map(name => stdout.search(new RegExp(`^\\s+${name}\\s`, 'm')));
       // Verify each command appears after the previous one (alphabetical order)
       for (let i = 1; i < positions.length; i++) {
         expect(positions[i]).toBeGreaterThan(positions[i - 1]);

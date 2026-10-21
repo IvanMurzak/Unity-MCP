@@ -49,6 +49,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Returns the image directly for visual inspection by the LLM.")]
         public ResponseCallTool ScreenshotGameView(string? nothing = null)
         {
+            if (NoGraphicsError() is { } noGraphics)
+                return noGraphics;
+
             return MainThread.Instance.Run(() =>
             {
                 var gameViewType = Type.GetType("UnityEditor.GameView,UnityEditor");

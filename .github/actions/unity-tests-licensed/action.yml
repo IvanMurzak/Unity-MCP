@@ -1,0 +1,48 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
+name: "unity-tests-licensed status"
+description: "Set the commit status that says whether the licensed Unity suite ran on a commit"
+
+# The single owner of the `unity-tests-licensed` context, the required check for the Unity suite.
+# Callers: publish_test_results.yml (same-repository PRs) and test_pull_request_manual.yml (the
+# licensed suite against a fork PR). Run it from a trusted checkout, never from a pull request's tree.
+
+inputs:
+  sha:
+    description: "Commit to set the status on (a PR head)"
+    required: true
+  state:
+    description: "pending, success, failure or error"
+    required: true
+  description:
+    description: "Status description (GitHub truncates at 140 characters)"
+    required: true
+  target-url:
+    description: "Link shown on the status"
+    required: false
+    default: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+  token:
+    description: "Token with statuses: write"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ github.repository }}
+        SHA: ${{ inputs.sha }}
+        STATE: ${{ inputs.state }}
+        DESCRIPTION: ${{ inputs.description }}
+        TARGET_URL: ${{ inputs.target-url }}
+      run: |
+        gh api -X POST "repos/$REPO/statuses/$SHA" -f context=unity-tests-licensed \
+          -f state="$STATE" -f target_url="$TARGET_URL" -f description="$DESCRIPTION" > /dev/null
+        echo "unity-tests-licensed on $SHA: $STATE ($DESCRIPTION)"

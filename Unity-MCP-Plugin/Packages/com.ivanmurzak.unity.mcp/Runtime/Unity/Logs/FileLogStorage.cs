@@ -384,7 +384,7 @@ namespace com.IvanMurzak.Unity.MCP
         }
 
         /// <summary>
-        /// Closes and disposes the current file stream if open. Clears the log cache file.
+        /// Closes the writer and clears the cache. Readers may keep the file open on Windows.
         /// </summary>
         public virtual void Clear()
         {
@@ -400,7 +400,17 @@ namespace com.IvanMurzak.Unity.MCP
                 fileWriteStream = null;
 
                 if (File.Exists(filePath))
-                    File.Delete(filePath);
+                {
+                    try { File.Delete(filePath); }
+                    catch (IOException exception) when ((exception.HResult & 0xffff) == 32 || (exception.HResult & 0xffff) == 33)
+                    {
+                        // Query readers share read/write access, but not deletion. CoreCLR enforces
+                        // that Windows restriction: truncate without closing someone else's reader.
+                        using var clear = new FileStream(filePath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+                        clear.SetLength(0);
+                        return;
+                    }
+                }
 
                 if (File.Exists(filePath))
                     _logger.LogError("Failed to delete cache file: {file}", filePath);

@@ -58,6 +58,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             int height = 1080
         )
         {
+            if (NoGraphicsError() is { } noGraphics)
+                return noGraphics;
+
             if (width <= 0 || height <= 0)
                 return ResponseCallTool.Error($"Width and height must be greater than 0. Got {width}x{height}.");
             if (width > MaxDimension || height > MaxDimension)

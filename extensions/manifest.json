@@ -1,0 +1,66 @@
+{
+  "schemaVersion": 1,
+  "testProjects": ["2022.3.62f3", "2023.2.22f1", "6000.3.1f1", "6000.6.3f1"],
+  "extensions": [
+    {
+      "name": "Animation",
+      "packageId": "com.ivanmurzak.unity.mcp.animation",
+      "package": "extensions/Animation/Packages/com.ivanmurzak.unity.mcp.animation",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.animation/"
+    },
+    {
+      "name": "Cinemachine",
+      "packageId": "com.ivanmurzak.unity.mcp.cinemachine",
+      "package": "extensions/Cinemachine/Packages/com.ivanmurzak.unity.mcp.cinemachine",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.cinemachine/"
+    },
+    {
+      "name": "InputSystem",
+      "packageId": "com.ivanmurzak.unity.mcp.inputsystem",
+      "package": "extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.inputsystem/"
+    },
+    {
+      "name": "Navigation",
+      "packageId": "com.ivanmurzak.unity.mcp.navigation",
+      "package": "extensions/Navigation/Packages/com.ivanmurzak.unity.mcp.navigation",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.navigation/"
+    },
+    {
+      "name": "ParticleSystem",
+      "packageId": "com.ivanmurzak.unity.mcp.particlesystem",
+      "package": "extensions/ParticleSystem/Packages/com.ivanmurzak.unity.mcp.particlesystem",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.particlesystem/"
+    },
+    {
+      "name": "ProBuilder",
+      "packageId": "com.ivanmurzak.unity.mcp.probuilder",
+      "package": "extensions/ProBuilder/Packages/com.ivanmurzak.unity.mcp.probuilder",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.probuilder/"
+    },
+    {
+      "name": "Splines",
+      "packageId": "com.ivanmurzak.unity.mcp.splines",
+      "package": "extensions/Splines/Packages/com.ivanmurzak.unity.mcp.splines",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.splines/"
+    },
+    {
+      "name": "Terrain",
+      "packageId": "com.ivanmurzak.unity.mcp.terrain",
+      "package": "extensions/Terrain/Packages/com.ivanmurzak.unity.mcp.terrain",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.terrain/"
+    },
+    {
+      "name": "Tilemap",
+      "packageId": "com.ivanmurzak.unity.mcp.tilemap",
+      "package": "extensions/Tilemap/Packages/com.ivanmurzak.unity.mcp.tilemap",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.tilemap/"
+    },
+    {
+      "name": "Timeline",
+      "packageId": "com.ivanmurzak.unity.mcp.timeline",
+      "package": "extensions/Timeline/Packages/com.ivanmurzak.unity.mcp.timeline",
+      "tagPrefix": "com.ivanmurzak.unity.mcp.timeline/"
+    }
+  ]
+}

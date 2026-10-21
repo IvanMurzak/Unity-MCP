@@ -1,0 +1,18 @@
+{
+  "schemaVersion": 1,
+  "minimumUnityVersion": "6000.6",
+  "extensions": [
+    {
+      "packageId": "com.ivanmurzak.unity.mcp.navigation",
+      "dependencies": { "com.unity.ai.navigation": "2.0.10" }
+    },
+    {
+      "packageId": "com.ivanmurzak.unity.mcp.probuilder",
+      "dependencies": { "com.unity.probuilder": "6.1.3" }
+    },
+    {
+      "packageId": "com.ivanmurzak.unity.mcp.tilemap",
+      "dependencies": { "com.unity.2d.tilemap.extras": "7.0.1" }
+    }
+  ]
+}

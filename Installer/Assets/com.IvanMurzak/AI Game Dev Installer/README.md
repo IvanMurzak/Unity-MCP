@@ -25,7 +25,7 @@
     <a href="https://code.visualstudio.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/vs-code-64.png" alt="VS Code" title="VS Code" height="36"></a>&nbsp;&nbsp;
     <a href="https://www.jetbrains.com/rider/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/rider-64.png" alt="Rider" title="Rider" height="36"></a>&nbsp;&nbsp;
     <a href="https://visualstudio.microsoft.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/visual-studio-64.png" alt="Visual Studio" title="Visual Studio" height="36"></a>&nbsp;&nbsp;
-    <a href="https://github.com/anthropics/claude-code"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
+    <a href="https://opencode.ai/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
     <a href="https://github.com/cline/cline"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/cline-64.png" alt="Cline" title="Cline" height="36"></a>&nbsp;&nbsp;
     <a href="https://github.com/Kilo-Org/kilocode"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
   </p>
@@ -188,16 +188,16 @@ Install extensions when need more tools or [create your own tools](#add-custom-t
 
 | Extension | Description |
 | --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Set of additional tools for Unity Animations |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | MCP Tools for Cinemachine |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | MCP Tools for the Unity Input System |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | MCP Tools for AI Navigation (NavMesh surfaces, baking, agents, links) |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Set of additional tools for Unity Particle System |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Set of additional tools for Unity ProBuilder |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | MCP Tools for Unity Splines |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Set of additional tools for Unity Terrain |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | MCP Tools for Unity 2D Tilemaps |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | MCP Tools for Unity Timeline cutscenes and sequences |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | Set of additional tools for Unity Animations |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | MCP Tools for Cinemachine |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | MCP Tools for the Unity Input System |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | MCP Tools for AI Navigation (NavMesh surfaces, baking, agents, links) |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | Set of additional tools for Unity Particle System |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | Set of additional tools for Unity ProBuilder |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | MCP Tools for Unity Splines |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | Set of additional tools for Unity Terrain |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | MCP Tools for Unity 2D Tilemaps |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | MCP Tools for Unity Timeline cutscenes and sequences |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -591,6 +591,7 @@ Doesn't matter what launch option you choose, all of them support custom configu
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`             | `--port`                 | **Client** -> **Server** <- **Plugin** connection port (default: 8080)       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`       | **Plugin** -> **Server** connection timeout (ms) (default: 10000)            |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`         | How long the **Server** waits for one tool call (ms). A tool call is sent to the **Plugin** once, never re-sent (default: 300000, or `--plugin-timeout` if larger; servers built on McpPlugin 8.11.0+) |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport`     | **Client** -> **Server** transport type: `stdio` or `streamableHttp` (default: `streamableHttp`) |
 | `MCP_AUTHORIZATION`           | `--authorization`        | Authentication mode for incoming **Client** connections: `none`, `oauth`, or `token` (default: `none`; the legacy `required` mode was removed) |
 | `MCP_PLUGIN_TOKEN`            | `--token`                | Bearer token required from the **Client** when authorization is `token` (default: unset) |

@@ -12,10 +12,13 @@
 using System;
 using System.Diagnostics.CodeAnalysis;
 using System.IO;
+using System.Linq;
 using System.Runtime.InteropServices;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.AgentConfig;
+using com.IvanMurzak.McpPlugin.AgentConfig.Impl;
 using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Utils;
@@ -146,6 +149,18 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
+        /// <summary>The configured server tool timeout; launch args use <see cref="EffectiveToolTimeoutMs"/>.</summary>
+        public static int ToolTimeoutMs
+        {
+            get => Instance.unityConnectionConfig.ToolTimeoutMs;
+            set
+            {
+                Instance.unityConnectionConfig.ToolTimeoutMs = value;
+                NotifyChanged(Instance.unityConnectionConfig);
+            }
+        }
+        /// <summary>The server's <c>tool-timeout</c>: see <see cref="UnityMcpPlugin.UnityConnectionConfig.EffectiveToolTimeoutMs"/>.</summary>
+        public static int EffectiveToolTimeoutMs => Instance.unityConnectionConfig.EffectiveToolTimeoutMs;
         public static int Port
         {
             get
@@ -204,8 +219,25 @@ namespace com.IvanMurzak.Unity.MCP
             set
             {
                 Instance.unityConnectionConfig.SkillsPath = NormalizeSkillsPath(value);
+                SyncCustomSkillsPath(Instance.unityConnectionConfig.SkillsPath);
                 NotifyChanged(Instance.unityConnectionConfig);
             }
+        }
+
+        /// <summary>
+        /// Mirrors the persisted skills path onto the shared Custom agent's in-memory
+        /// <see cref="CustomConfigurator.EditableSkillsPath"/>. The registry instance is recreated on
+        /// every domain reload with the <c>".claude/skills"</c> default, so without this mirror any
+        /// reader of <c>configurator.SkillsPath</c> would overwrite the user's saved path (issue #1023).
+        /// Called from the singleton constructor and the <see cref="SkillsPath"/> setter.
+        /// </summary>
+        static void SyncCustomSkillsPath(string? path)
+        {
+            // "" is a legitimate value (the project root, see NormalizeSkillsPath), so only null is skipped.
+            if (path == null)
+                return;
+            foreach (var custom in AiAgentConfiguratorRegistry.All.OfType<CustomConfigurator>())
+                custom.EditableSkillsPath = path;
         }
 
         /// <summary>

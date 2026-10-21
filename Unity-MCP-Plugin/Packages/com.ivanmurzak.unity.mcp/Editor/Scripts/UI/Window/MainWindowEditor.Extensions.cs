@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "Animation",
                 description: "AI-driven animation control and playback tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.animation",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Animation.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md",
                 tools: new[]
                 {
                     ("animation-create",   "Create AnimationClip assets with keyframes"),
@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "Cinemachine",
                 description: "AI-assisted Cinemachine camera setup and configuration tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.cinemachine",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Cinemachine.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md",
                 tools: new[]
                 {
                     ("cinemachine-camera-create", "Create a CinemachineCamera in the scene"),
@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "InputSystem",
                 description: "AI-assisted Unity Input System authoring: InputActionAssets, maps, actions, bindings, and control schemes.",
                 packageId:   "com.ivanmurzak.unity.mcp.inputsystem",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-InputSystem.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md",
                 tools: new[]
                 {
                     ("inputsystem-asset-create",          "Create a new .inputactions InputActionAsset"),
@@ -72,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "Navigation",
                 description: "AI-driven NavMesh navigation: surfaces, baking, agents, and links.",
                 packageId:   "com.ivanmurzak.unity.mcp.navigation",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Navigation.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md",
                 tools: new[]
                 {
                     ("navigation-surface-add",          "Add and configure a NavMeshSurface"),
@@ -92,7 +92,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "ParticleSystem",
                 description: "AI-powered particle system creation and control tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.particlesystem",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-ParticleSystem.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md",
                 tools: new[]
                 {
                     ("particle-system-get",    "Inspect ParticleSystem modules and settings"),
@@ -103,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "ProBuilder",
                 description: "AI-assisted ProBuilder geometry modeling tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.probuilder",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-ProBuilder.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md",
                 tools: new[]
                 {
                     ("probuilder-create-shape",     "Create editable 3D primitives in the scene"),
@@ -117,7 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "Splines",
                 description: "AI-assisted Spline authoring: containers, knots, tangents, and evaluation.",
                 packageId:   "com.ivanmurzak.unity.mcp.splines",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Splines.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md",
                 tools: new[]
                 {
                     ("splines-container-create", "Create a SplineContainer in the scene"),
@@ -132,7 +132,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "Terrain",
                 description: "AI-powered Unity Terrain authoring tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.terrain",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Terrain.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md",
                 tools: new[]
                 {
                     ("terrain-create",       "Create a Terrain GameObject backed by new TerrainData"),
@@ -146,7 +146,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "Tilemap",
                 description: "AI-assisted 2D Tilemap creation, painting, and tile/RuleTile asset tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.tilemap",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Tilemap.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md",
                 tools: new[]
                 {
                     ("tilemap-create",            "Create a Grid + Tilemap + TilemapRenderer"),
@@ -160,7 +160,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 name:        "Timeline",
                 description: "AI-assisted Timeline cutscene and sequence authoring tools.",
                 packageId:   "com.ivanmurzak.unity.mcp.timeline",
-                gitUrl:      "https://github.com/IvanMurzak/Unity-AI-Timeline.git",
+                gitUrl:      "https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md",
                 tools: new[]
                 {
                     ("timeline-create",         "Create a TimelineAsset (.playable)"),

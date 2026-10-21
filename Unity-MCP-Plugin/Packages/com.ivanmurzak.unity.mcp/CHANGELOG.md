@@ -4,6 +4,15 @@
 
 ### Added
 
+- **Editor-session contract shared by the engine CLIs.** An editor started by a CLI session
+  (`AIGD_SESSION_OWNER=cli`) quits after `AIGD_SESSION_IDLE_SECONDS` without tool calls
+  (`UNITY_MCP_IDLE_TIMEOUT` still works and is the fallback), saving changed scenes and assets first. The
+  editor leaves the CLI's session lease `<project>/.ai-game-dev/session.json` to the CLI, which removes it once
+  the editor's process is gone: removed earlier, the still-exiting editor looked like one the CLI did not start.
+- **`editor-session-quit` system tool.** Saves and quits an editor a CLI session started, when the caller
+  passes the lease nonce; any other editor refuses. `unity-mcp-cli close` uses it, because the Windows
+  polite quit (`WM_CLOSE`) never reaches a headless (`-batchmode`) editor.
+
 - **`UNITY_MCP_SERVER_PATH` — dev/CI override for the launched MCP server binary.** When the
   variable resolves to a file that exists, the Editor launches that binary instead of the
   `GameDev-MCP-Server` release pinned by `McpServerManager.ServerVersion`, and skips both the
@@ -14,7 +23,20 @@
   `Tools/AI Game Developer/Server/Download Binaries` still downloads into `Library/mcp-server/<rid>/`
   regardless of the override. See `docs/mcp-server.md`.
 
+- **Tool timeout for the MCP server (McpPlugin 8.11.0).** McpPlugin 8.11.0 servers send a tool call to the
+  plugin once (older servers re-sent it up to 10 times, one per `plugin-timeout`, which could run a long tool
+  such as `script-execute` or `tests-run` several times) and wait `tool-timeout` for it. The new **Tool timeout
+  (ms)** setting in the AI Game Developer window (`ToolTimeoutMs` in the config, default 300000) is passed as
+  `tool-timeout=<ms>` when the editor starts the local server, in the Docker command
+  (`MCP_PLUGIN_TOOL_TIMEOUT`) and in `McpServerManager.RawJsonConfigurationStdio`; it is never below **Timeout**,
+  so a Timeout raised for long tools before this setting existed still applies. **Timeout (ms)** stays
+  `plugin-timeout`, the connection timeout, and is passed unchanged, so an older server (which ignores
+  `tool-timeout`) behaves as before. The `tests-run` stale-run lease now follows the tool timeout.
+
 ### Fixed
+
+- **Changing Timeout in the AI Game Developer window threw a `NullReferenceException`** before saving: it
+  refreshed a stdio-config text field the window no longer has.
 
 - **`EntityId` wire format moved from JSON number to JSON string of decimal digits**
   (Unity 6.5+ paths only). Closes #759, resolves #754. JS-based MCP clients
@@ -30,6 +52,12 @@
   `AssetObjectRefConverter`, `ComponentRefConverter`, `SceneRefConverter`,
   and the `Tool_Assets.Modify` `instanceID` injection. Pre-Unity-6.5 paths
   (legacy `int InstanceID`, safely inside the JS-safe range) are untouched.
+
+### Changed
+
+- **McpPlugin 8.9.0 -> 8.11.0** (`com.IvanMurzak.McpPlugin` / `.Common`; ReflectorNet stays 5.4.2). The NuGet
+  gate generation moves to `UNITY_MCP_DEPS_13`. The local server pin (`McpServerManager.ServerVersion`) is
+  unchanged until a GameDev-MCP-Server release built on McpPlugin.Server 8.11.0 exists.
 
 ### Changed (BREAKING)
 

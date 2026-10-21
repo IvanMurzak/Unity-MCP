@@ -188,16 +188,16 @@ Instala extensiones cuando necesites más herramientas o [crea tus propias herra
 
 | Extensión | Descripción |
 | --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Conjunto de herramientas adicionales para animaciones de Unity |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | Herramientas MCP para Cinemachine |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | Herramientas MCP para el Input System de Unity |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | Herramientas MCP para AI Navigation (superficies NavMesh, horneado, agentes y enlaces) |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Conjunto de herramientas adicionales para el sistema de partículas de Unity |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Conjunto de herramientas adicionales para Unity ProBuilder |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | Herramientas MCP para Unity Splines |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Conjunto de herramientas adicionales para el Terreno de Unity |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | Herramientas MCP para Tilemaps 2D de Unity |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | Herramientas MCP para escenas y secuencias de Unity Timeline |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | Conjunto de herramientas adicionales para animaciones de Unity |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | Herramientas MCP para Cinemachine |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | Herramientas MCP para el Input System de Unity |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | Herramientas MCP para AI Navigation (superficies NavMesh, horneado, agentes y enlaces) |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | Conjunto de herramientas adicionales para el sistema de partículas de Unity |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | Conjunto de herramientas adicionales para Unity ProBuilder |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | Herramientas MCP para Unity Splines |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | Conjunto de herramientas adicionales para el Terreno de Unity |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | Herramientas MCP para Tilemaps 2D de Unity |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | Herramientas MCP para escenas y secuencias de Unity Timeline |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -589,6 +589,7 @@ Independientemente de la opción de ejecución que elijas, todas soportan config
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`             | Puerto de conexión **Client** -> **Server** <- **Plugin** (por defecto: 8080)       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | Tiempo de espera de conexión **Plugin** -> **Server** (ms) (por defecto: 10000)            |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`     | Tiempo que el **Server** espera una llamada a herramienta (ms). La llamada se envía al **Plugin** una sola vez, sin reenvíos (por defecto: 300000, o `--plugin-timeout` si es mayor; servidores basados en McpPlugin 8.11.0+) |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | Tipo de transporte **Client** -> **Server**: `stdio` o `streamableHttp` (por defecto: `streamableHttp`) |
 | `MCP_AUTHORIZATION`           | `--authorization`        | Modo de autenticación para conexiones entrantes del **Client**: `none` o `required` (por defecto: `none`) |
 | `MCP_PLUGIN_TOKEN`            | `--token`                | Token Bearer requerido del **Client** cuando `--authorization=required` (por defecto: sin definir) |

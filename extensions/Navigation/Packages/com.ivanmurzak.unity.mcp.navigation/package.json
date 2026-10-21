@@ -1,0 +1,35 @@
+{
+  "name": "com.ivanmurzak.unity.mcp.navigation",
+  "displayName": "AI Navigation",
+  "author": {
+    "name": "Ivan Murzak",
+    "url": "https://github.com/IvanMurzak"
+  },
+  "keywords": [
+    "Navigation",
+    "NavMesh",
+    "AI Navigation",
+    "Pathfinding",
+    "AI",
+    "AI Integration",
+    "MCP",
+    "Unity MCP"
+  ],
+  "version": "2.0.1",
+  "unity": "2022.3",
+  "description": "MCP Tools for AI Navigation - Enhance your Unity projects with AI-powered NavMesh tools using the MCP framework. Add and bake NavMeshSurface, configure bake settings, add NavMeshModifier / NavMeshLink, and create and drive NavMeshAgents via natural language.",
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "1.0.0",
+    "com.unity.ai.navigation": "1.1.7"
+  },
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "extensions.unity",
+        "com.ivanmurzak"
+      ]
+    }
+  ]
+}

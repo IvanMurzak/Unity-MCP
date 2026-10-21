@@ -1,0 +1,17 @@
+{
+    "name": "YOUR_PACKAGE_ID.Runtime",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

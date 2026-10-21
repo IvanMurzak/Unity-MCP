@@ -1,0 +1,20 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.ParticleSystem.Runtime",
+    "rootNamespace": "",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Runtime"
+    ],
+    "includePlatforms": [],
+    "excludePlatforms": [
+        "Editor"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

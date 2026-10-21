@@ -1,0 +1,22 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Timeline.Installer.Tests",
+    "rootNamespace": "com.IvanMurzak.Unity.MCP.Timeline.Installer.Tests",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Timeline.Installer"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

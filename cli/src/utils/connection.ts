@@ -124,3 +124,19 @@ export async function resolveConnection(
 
   return { url, token, cloudAuthMissing, tokenFromCloudStore };
 }
+
+/**
+ * Base URLs to probe for readiness. With an explicit --url only that URL; otherwise the config-resolved URL and the
+ * deterministic local port (when they differ), so whichever answers first wins.
+ */
+export function resolveProbeUrls(projectPath: string, resolvedUrl: string, explicitUrl: string | undefined): string[] {
+  const urls = [resolvedUrl];
+  if (!explicitUrl) {
+    const localUrl = `http://localhost:${generatePortFromDirectory(projectPath)}`;
+    if (localUrl !== resolvedUrl) {
+      urls.push(localUrl);
+      verbose(`Will probe both config URL (${resolvedUrl}) and local URL (${localUrl})`);
+    }
+  }
+  return urls;
+}

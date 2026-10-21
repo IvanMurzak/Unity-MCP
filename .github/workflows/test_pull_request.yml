@@ -19,6 +19,10 @@ name: test-pull-request
 # the chain steps change nothing there. A pull_request carrying a `train/` label is the exception: it
 # takes its lock from the PR body (chain_feed.py §C7), which is why the toolchain setup steps test it.
 on:
+  workflow_call:
+    inputs:
+      lock: { required: false, type: string, default: "" }
+      lock_hash8: { required: false, type: string, default: "" }
   workflow_dispatch:
     inputs:
       lock:
@@ -64,6 +68,33 @@ jobs:
           path: ${{ github.event_path }}
           retention-days: 1
 
+      # A fork PR gets no secrets, so test_unity_plugin.yml skips every Unity job and the required
+      # `unity-tests-licensed` status stays unreported. Say how to get it, once per run.
+      - name: Fork PR - how to run the Unity tests
+        if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name != github.repository
+        env:
+          REPO: ${{ github.repository }}
+          PR_NUMBER: ${{ github.event.pull_request.number }}
+          HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          echo "::notice::Unity tests skipped: a fork PR gets no UNITY_LICENSE. See this run's summary."
+          {
+            echo "### Unity tests not run: no license in a fork PR"
+            echo ""
+            echo "The \`test-unity-*\` jobs are skipped and the required \`unity-tests-licensed\` status"
+            echo "stays unreported until the licensed suite has run on this exact commit."
+            echo ""
+            echo "Maintainer, after reviewing commit \`$HEAD_SHA\`:"
+            echo ""
+            echo '```bash'
+            echo "gh workflow run test_pull_request_manual.yml --repo $REPO --ref fork-tests -f pr=$PR_NUMBER -f sha=$HEAD_SHA"
+            echo '```'
+            echo ""
+            echo "Contributor: set your own \`UNITY_LICENSE\`, \`UNITY_EMAIL\` and \`UNITY_PASSWORD\` secrets"
+            echo "on your fork (see \`docs/agents/ci-unity-license.md\`) to run this suite on your fork's PRs."
+          } >> "$GITHUB_STEP_SUMMARY"
+        shell: bash
+
   # Guards issue #957: a NuGet pin may not change without bumping the asmdef gate generation,
   # or consumers upgrading from the previous release compile the new sources against their old
   # DLLs and dead-lock in Safe Mode. Static + license-free, so it runs on every PR in seconds.
@@ -77,6 +108,10 @@ jobs:
           python-version: "3.x"
       - name: Check NuGet pins against the asmdef gate generation
         run: python .github/scripts/check_nuget_gate.py
+      - name: Validate extension package boundaries and release tooling
+        run: |
+          python commands/extensions.py validate
+          python -m unittest discover -s commands/tests -v
 
   # The plugin's only engine-free C# tests: a plain xUnit project that compiles a chosen set of the
   # real plugin sources (Unity-MCP-Plugin/Tests~/EngineFree). No Unity licence, no editor, no Docker —
@@ -217,39 +252,47 @@ jobs:
       lock_hash8: ${{ inputs.lock_hash8 }}
     secrets: inherit
 
-  # --- PLAY MODE ---
+  # --- PLAY MODE (preserve the original extension matrix) ---
 
-  # test-unity-2022-3-62f3-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2022.3.62f3'
-  #     unityVersion: '2022.3.62f3'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-2022-3-62f3-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
-  # test-unity-2023-2-22f1-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2023.2.22f1'
-  #     unityVersion: '2023.2.22f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-2023-2-22f1-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2023.2.22f1"
+      unityVersion: "2023.2.22f1"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
-  # test-unity-6000-3-1f1-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.3.1f1'
-  #     unityVersion: '6000.3.1f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-3-1f1-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.3.1f1"
+      unityVersion: "6000.3.1f1"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
-  # test-unity-6000-6-3f1-playmode:
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.6.3f1'
-  #     unityVersion: '6000.6.3f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-6-3f1-playmode:
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.3f1"
+      unityVersion: "6000.6.3f1"
+      testMode: "playmode"
+      lock: ${{ inputs.lock }}
+      lock_hash8: ${{ inputs.lock_hash8 }}
+    secrets: inherit
 
   # --- STANDALONE ---
 

@@ -1,6 +1,6 @@
 ---
 name: script-execute
-description: Compiles and executes C# code dynamically using Roslyn. Supports a full-code mode (default) and a body-only mode — see the skill body for the difference and for how to pass Unity object references as parameters.
+description: "Compiles and runs C# in the Unity Editor (Roslyn): plain statements with the last expression as the result, or a full class with a static method. See the skill body for the modes, usings/include and Unity object parameters."
 metadata:
   generated-by: mcp-plugin-dotnet
 ---
@@ -9,16 +9,24 @@ metadata:
 
 ## Modes
 
-- **Full code mode** (default, `isMethodBody=false`): the `csharpCode` argument must define a complete class with a static method (no top-level statements).
-- **Body-only mode** (`isMethodBody=true`): provide only the method body statements. The tool auto-generates the usings, class, and method header.
+- **Snippet** (default): plain statements. The last expression is the result (`GameObject.Find("Player").name`). Own `using` lines, local classes and functions are allowed; `await` works. Usings for System, LINQ, UnityEngine, UnityEditor and AIGD are already there; an unknown type name is imported automatically when exactly one namespace has it.
+- **Full code**: when `csharpCode` declares class `className` with a static method `methodName`, that method runs.
+- `isMethodBody=true` forces snippet mode.
+
+Compile errors point at your own lines (`snippet.cs(2,5)`).
+
+## usings / include
+
+- `usings`: extra namespaces, e.g. `["MyGame.Gameplay"]`.
+- `include`: helper `.cs` files or folders (recursive), relative to `<Project>/.ai-game-dev/snippets`, compiled with the snippet.
 
 ## Passing Unity objects as parameters
 
-Unity objects (`GameObject`, `Component`, etc.) can be passed as parameters using their `Ref` types (`GameObjectRef`, `ComponentRef`, etc.) or directly by type:
+Parameters become the snippet's variables (or the method's arguments, in order):
 
 - `UnityEngine.GameObject` — resolves an actual GameObject from value `{"instanceID": N}`, `{"name": "..."}`, or `{"path": "..."}`.
 - `UnityEngine.Component` (or any component subtype) — resolves from `{"instanceID": N}`.
-- `AIGD.GameObjectRef` — passes a `GameObjectRef` POCO directly; the method body calls `goRef.FindGameObject()` to resolve it.
+- `AIGD.GameObjectRef` — passes a `GameObjectRef` POCO directly; call `goRef.FindGameObject()` to resolve it.
 - `AIGD.ComponentRef` — passes a `ComponentRef` POCO.
 - `AIGD.ObjectRef` — passes a base `ObjectRef` POCO.
 
@@ -30,7 +38,9 @@ unity-mcp-cli run-tool script-execute --input '{
   "className": "string_value",
   "methodName": "string_value",
   "parameters": "string_value",
-  "isMethodBody": false
+  "isMethodBody": false,
+  "usings": "string_value",
+  "include": "string_value"
 }'
 ```
 
@@ -56,11 +66,13 @@ Read the /unity-initial-setup skill for detailed installation instructions.
 
 | Name | Type | Required | Description |
 |------|------|----------|-------------|
-| `csharpCode` | `string` | Yes | C# code to compile and execute. In full code mode (default, isMethodBody=false): must define a complete class with a static method. Example: 'using UnityEngine; public class Script { public static void Main() { Debug.Log("Hello"); } }'. Do NOT use top-level statements. In body-only mode (isMethodBody=true): provide only the method body statements. The tool auto-generates usings, class, and method header. Example body: 'go.SetActive(false);'. Custom helper classes can still be defined inline in the body-only string after the main logic, but for complex additional class definitions use full code mode instead. |
-| `className` | `string` | No | The name of the class containing the method to execute. In body-only mode this becomes the generated class name. |
-| `methodName` | `string` | No | The name of the method to execute. Must be a static method. In body-only mode this becomes the generated method name. |
-| `parameters` | `any` | No | Serialized parameters to pass to the method. Each entry must specify 'name' and 'typeName'. Supported parameter types include primitives, strings, and Unity object references: - 'UnityEngine.GameObject': resolves an actual GameObject from value '{"instanceID": N}', '{"name": "..."}', or '{"path": "..."}'. - 'UnityEngine.Component' (or any component subtype): resolves from '{"instanceID": N}'. - 'AIGD.GameObjectRef': passes a GameObjectRef POCO directly;   the method body calls goRef.FindGameObject() to resolve it. - 'AIGD.ComponentRef': passes a ComponentRef POCO. - 'AIGD.ObjectRef': passes a base ObjectRef POCO. If the method does not require parameters, leave this empty. |
-| `isMethodBody` | `boolean` | No | When true, 'csharpCode' is treated as just the method body. The tool auto-generates standard using directives (System, UnityEngine, AIGD, com.IvanMurzak.Unity.MCP.Runtime.Extensions, UnityEditor), the class definition, and the method signature (returns object when the body returns a value, void otherwise). Parameters from the 'parameters' list are automatically added to the method signature using their typeName and name. When false (default), 'csharpCode' must be a complete C# compilation unit with class and method definitions. |
+| `csharpCode` | `string` | Yes | C# code. Snippet: 'var go = GameObject.Find("Player");\ngo.transform.position'. Full: 'public class Script { public static int Main() { return 42; } }'. |
+| `className` | `string` | No | Full mode: the class whose static method runs (namespace-qualified or not). |
+| `methodName` | `string` | No | Full mode: the static method to run. |
+| `parameters` | `any` | No | Parameters, each with 'name' and 'typeName': the snippet's variables or the method's arguments in order. Unity object types and value formats: see the skill. Leave empty when none. |
+| `isMethodBody` | `boolean` | No | Force snippet mode even when the code declares 'className'. |
+| `usings` | `any` | No | Extra namespaces for snippet mode, e.g. ["MyGame.Gameplay"]. |
+| `include` | `any` | No | Helper .cs files or folders (recursive) compiled with the code, relative to <Project>/.ai-game-dev/snippets. |
 
 ### Input JSON Schema
 
@@ -82,6 +94,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
     },
     "isMethodBody": {
       "type": "boolean"
+    },
+    "usings": {
+      "$ref": "#/$defs/System.String-1"
+    },
+    "include": {
+      "$ref": "#/$defs/System.String-1"
     }
   },
   "$defs": {
@@ -126,6 +144,12 @@ Read the /unity-initial-setup skill for detailed installation instructions.
         "typeName"
       ],
       "additionalProperties": false
+    },
+    "System.String-1": {
+      "type": "array",
+      "items": {
+        "type": "string"
+      }
     }
   },
   "required": [

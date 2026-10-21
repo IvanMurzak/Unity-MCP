@@ -1,0 +1,30 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.ProBuilder.Editor",
+    "rootNamespace": "",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Editor",
+        "com.IvanMurzak.Unity.MCP.Runtime",
+        "com.IvanMurzak.Unity.MCP.ProBuilder.Runtime",
+        "Unity.ProBuilder.Editor",
+        "Unity.ProBuilder",
+        "Unity.ProBuilder.Poly2Tri",
+        "Unity.ProBuilder.Csg",
+        "Unity.ProBuilder.Stl",
+        "Unity.ProBuilder.KdTree",
+        "Unity.ProBuilder.AddOns.Editor",
+        "Unity.ProBuilder.AssetIdRemapUtility"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

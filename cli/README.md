@@ -100,6 +100,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`open`](#open)
   - [`close`](#close)
   - [`run-tool`](#run-tool)
+  - [`exec`](#exec)
   - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
   - [`setup-skills`](#setup-skills)
@@ -356,9 +357,14 @@ cd ./MyGame && unity-mcp-cli open
 | `--tools <names>` | `UNITY_MCP_TOOLS` | No | Comma-separated list of tools to enable |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | No | Transport method: `streamableHttp` or `stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | No | Set to `true` or `false` to control MCP server auto-start |
+| `--headless` | — | No | Start the editor without a window (`-batchmode`; graphics stay on, so cameras still render) and wait until its MCP server answers. Implies `--keep-connected`. A running editor of the project is reused; one started here is the CLI's own (see [`close --owned-only`](#close)), and parallel calls start only one. |
+| `--idle-timeout <seconds>` | `AIGD_SESSION_IDLE_SECONDS` (headless) / `UNITY_MCP_IDLE_TIMEOUT` (window) | No | Quit the editor after this many seconds without a tool call (saves changed scenes and assets first) |
+| `--ready-timeout <ms>` | — | No | With `--headless`: how long to wait for the editor to become ready (default: `300000`) |
 | `--no-auto-dismiss-launch-errors` | — | No | Disable auto-dismissal of the Unity Editor "compile errors at launch" dialog (default: enabled) |
 | `--launch-dismiss-timeout-ms <ms>` | — | No | Overall timeout (milliseconds) for the launch-errors auto-dismiss polling loop (default: `30000`) |
 | `--launch-dismiss-poll-interval-ms <ms>` | — | No | Polling tick interval (milliseconds) for the launch-errors auto-dismiss loop (default: `1500`) |
+
+Without `--headless`, a headless editor that the CLI started for the project (`exec`, `open --headless`) is asked to save and quit first, so the window can open.
 
 The editor process is spawned in detached mode. By default, after spawning the editor, `open` polls for Unity's "compile errors at launch" dialog (`"Enter Safe Mode?"` on Unity 2020.2+, `"Hold On" / "Compiler Errors"` on older releases) and clicks `Ignore` so the editor finishes initialising — without this, any in-Editor automation that needs to run after a state where Unity itself can't compile (e.g. the NuGet dependency resolver) cannot self-heal. The dialog is surfaced after Unity has booted, connected to Package Manager, and started compiling — empirically ~6s on a fast machine and longer on a slow one — so the polling loop has a grace window after which it exits early if no dialog has been seen. The grace window has to cover Unity's full startup phase or the loop bails out before the dialog ever appears (issue #737); it never runs the full `--launch-dismiss-timeout-ms` in the no-dialog case. If the dialog is observed (and successfully dismissed), polling continues until the overall timeout so a re-appearing dialog (resolver fixes one error → dialog re-surfaces with the next) is dismissed again. Library-mode callers can supply an `AbortSignal` (`launchDismissAbortSignal` on `OpenProjectOptions`) to abort the loop the instant their own readiness signal fires.
 
@@ -411,9 +417,11 @@ unity-mcp-cli close ./MyGame
 | `[path]` | No | Path to the Unity project (positional, defaults to current directory) |
 | `--timeout <seconds>` | No | Polite-quit timeout in seconds (default: 30) |
 | `--force` | No | Hard-kill the Editor if it does not exit within `--timeout` |
+| `--owned-only` | No | Close only an Editor that the CLI started (`exec`, `open --headless`); an Editor opened by the user is never touched |
 
 **How it works:**
 
+0. An Editor the CLI started is recorded in the project's session lease (`.ai-game-dev/session.json`: PID, process start time, nonce). If the lease names a live Editor, `close` asks its plugin to save and quit (the `editor-session-quit` system tool, checked against the lease nonce, at the server URL the lease recorded when the Editor was started) — this also reaches a headless Editor, which `WM_CLOSE` cannot — and skips the steps below. With `--owned-only` it stops here: no lease, nothing is closed.
 1. Resolves the running Editor's PID by reading `<project>/Temp/UnityLockfile` (4-byte little-endian uint32) and cross-checking against process enumeration to handle stale lock files.
 2. Sends a polite-quit signal — `SIGTERM` on Linux/macOS, `taskkill` (no `/F`) on Windows — letting Unity finish autosave / asset-import.
 3. Polls every 250ms until the process exits or `--timeout` elapses.
@@ -421,7 +429,7 @@ unity-mcp-cli close ./MyGame
 5. Idempotent — closing an already-closed Editor (or a project whose Editor was never running) exits 0 with `no running Editor for project at <path>`.
 6. Refuses to act on any path that is not a Unity project root (`ProjectSettings/ProjectVersion.txt` must exist) — protects against accidental kill-all-Unity-on-host invocations.
 
-> **Windows headless caveat:** the polite-quit step uses `taskkill` (no `/F`), which delivers `WM_CLOSE`. That message only reaches processes owning a top-level window on the **same desktop/session** as the CLI. If Unity was launched by a Windows service in session 0 (or any other non-interactive desktop), the polite-quit will be silently dropped, the `--timeout` will elapse, and `--force` becomes the only path that brings the Editor down. Plan accordingly in headless CI runners.
+> **Windows headless caveat:** the polite-quit step uses `taskkill` (no `/F`), which delivers `WM_CLOSE`. That message only reaches processes owning a top-level window on the **same desktop/session** as the CLI. If Unity was launched by a Windows service in session 0 (or any other non-interactive desktop), the polite-quit will be silently dropped, the `--timeout` will elapse, and `--force` becomes the only path that brings the Editor down. Plan accordingly in headless CI runners. An Editor started by the CLI (step 0) is not affected: it quits through its plugin.
 
 **Example — close, fall back to force after 60s:**
 
@@ -485,6 +493,36 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `exec`
+
+Run C# in the Unity Editor and print the result. If the project is already open (with a window or headless) `exec` uses that editor and never closes it. Otherwise it starts a headless editor that stays warm for the next calls and quits by itself after `--idle` seconds without tool calls (saving changed scenes and assets). The editor it starts is recorded in the project's session lease (`.ai-game-dev/session.json`) and started under a file lock, so parallel `exec` calls share one editor; `close --owned-only` closes it, and `open` (with a window) closes it before opening the window. These session files are machine-local: `.ai-game-dev/.gitignore` keeps them out of git. If the project is open in an editor the CLI did not start and its plugin does not answer within 60 s (disconnected, or connected to the ai-game.dev cloud), `exec` stops with a hint instead of waiting: connect the plugin, switch its connection to Custom (a local server), or pass `--url`.
+
+```bash
+# The last expression is the result
+unity-mcp-cli exec 'GameObject.FindObjectsOfType<Camera>().Length'
+
+# From a file or stdin, with extra namespaces and helper files
+unity-mcp-cli exec -f ./snippet.cs --using MyGame.Gameplay --include Helpers/
+echo 'Application.unityVersion' | unity-mcp-cli exec
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[code]` | No | C# snippet: plain statements, the last expression is the result. Alternatively `-f` or stdin. |
+| `--path <path>` | No | Unity project path (default: current directory) |
+| `-f, --file <file>` | No | Read the code from a file (`-` for stdin) |
+| `--using <namespace>` | No | Extra namespace, repeatable |
+| `--include <path>` | No | Helper `.cs` file or folder (recursive), relative to `<Project>/.ai-game-dev/snippets`, repeatable |
+| `--window` | No | Start the editor with a window instead of headless (only when it is not running yet) |
+| `--idle <seconds>` | No | Quit an editor started by `exec` after this many idle seconds (default: 300) |
+| `--ready-timeout <ms>` | No | How long to wait for the editor to become ready (default: 300000) |
+| `--timeout <ms>` | No | Tool call timeout (default: 310000) |
+| `--raw` | No | Print the raw tool response JSON |
+| `--url <url>` | No | Server URL override; a local URL also makes a newly started editor start that server |
+| `--token <token>` | No | Bearer token override |
+
+`exec` calls the `script-execute` tool, so snippets, `usings` and `include` need a plugin version with Code-Exec support. A compile error exits with code 1 and points at your own lines.
 
 ## `wait-for-ready`
 

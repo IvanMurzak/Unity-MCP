@@ -97,6 +97,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-unity`](#install-unity)
   - [`open`](#open)
   - [`run-tool`](#run-tool)
+  - [`exec`](#exec)
   - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
   - [`setup-skills`](#setup-skills)
@@ -250,6 +251,8 @@ unity-mcp-cli open ./MyGame
 | `--tools <names>` | `UNITY_MCP_TOOLS` | いいえ | 有効にするツールのカンマ区切りリスト |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | いいえ | トランスポート方式：`streamableHttp`または`stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | いいえ | MCPサーバーの自動起動を制御（`true`または`false`） |
+| `--headless` | — | いいえ | ウィンドウなしでエディタを起動（`-batchmode`。グラフィックスは有効なのでカメラは描画されます）し、MCP サーバーが応答するまで待ちます。`--keep-connected` を含みます。プロジェクトのエディタが既に起動していればそれを使い、ここで起動したエディタは CLI のものになります（`close --owned-only`）。並列呼び出しでも起動は 1 つだけです。 |
+| `--idle-timeout <seconds>` | `AIGD_SESSION_IDLE_SECONDS`（headless）/ `UNITY_MCP_IDLE_TIMEOUT`（ウィンドウ） | いいえ | ツール呼び出しがこの秒数ないとエディタを終了（変更されたシーンとアセットを先に保存） |
 
 エディタープロセスはデタッチモードで起動されます — CLIは即座に制御を返します。
 
@@ -324,6 +327,36 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `exec`
+
+Unity Editor で C# を実行し、結果を表示します。プロジェクトが既に開いている場合（ウィンドウ付きでも headless でも）、`exec` はそのエディタを使い、閉じることはありません。開いていない場合は headless エディタを起動し、次の呼び出しのために起動したまま保ち、`--idle` 秒間ツール呼び出しがなければ自動で終了します（変更されたシーンとアセットを保存）。起動したエディタはプロジェクトのセッションリース（`.ai-game-dev/session.json`）に記録され、ファイルロックの下で起動されるため、並列の `exec` 呼び出しは 1 つのエディタを共有します。`close --owned-only` で閉じることができ、`open`（ウィンドウ付き）はウィンドウを開く前にそれを閉じます。これらのセッションファイルはマシン固有のもので、`.ai-game-dev/.gitignore` によって git から除外されます。CLI が起動していないエディタでプロジェクトが開かれていて、そのプラグインが 60 秒以内に応答しない場合（未接続、または ai-game.dev クラウドに接続中）、`exec` は待ち続けずにヒントを表示して終了します。プラグインを接続するか、接続を Custom（ローカルサーバー）に切り替えるか、`--url` を指定してください。
+
+```bash
+# 最後の式が結果になります
+unity-mcp-cli exec 'GameObject.FindObjectsOfType<Camera>().Length'
+
+# ファイルまたは stdin から、追加の名前空間とヘルパーファイル付きで
+unity-mcp-cli exec -f ./snippet.cs --using MyGame.Gameplay --include Helpers/
+echo 'Application.unityVersion' | unity-mcp-cli exec
+```
+
+| オプション | 必須 | 説明 |
+|---|---|---|
+| `[code]` | いいえ | C# スニペット：通常の文で、最後の式が結果。`-f` または stdin も可。 |
+| `--path <path>` | いいえ | Unity プロジェクトのパス（デフォルト：カレントディレクトリ） |
+| `-f, --file <file>` | いいえ | ファイルからコードを読み込む（`-` で stdin） |
+| `--using <namespace>` | いいえ | 追加の名前空間（複数指定可） |
+| `--include <path>` | いいえ | ヘルパーの `.cs` ファイルまたはフォルダ（再帰）、`<Project>/.ai-game-dev/snippets` からの相対パス（複数指定可） |
+| `--window` | いいえ | headless ではなくウィンドウ付きでエディタを起動（まだ起動していない場合のみ） |
+| `--idle <seconds>` | いいえ | `exec` が起動したエディタをこの秒数アイドルで終了（デフォルト：300） |
+| `--ready-timeout <ms>` | いいえ | エディタの準備完了を待つ最大時間（デフォルト：300000） |
+| `--timeout <ms>` | いいえ | ツール呼び出しのタイムアウト（デフォルト：310000） |
+| `--raw` | いいえ | ツール応答の生の JSON を出力 |
+| `--url <url>` | いいえ | サーバー URL の上書き。ローカル URL の場合、新しく起動したエディタがそのサーバーを起動します |
+| `--token <token>` | いいえ | Bearer トークンの上書き |
+
+`exec` は `script-execute` ツールを呼び出すため、スニペット、`usings`、`include` には Code-Exec 対応のプラグインが必要です。コンパイルエラーは終了コード 1 で、あなたのコードの行を指します。
 
 ## `wait-for-ready`
 

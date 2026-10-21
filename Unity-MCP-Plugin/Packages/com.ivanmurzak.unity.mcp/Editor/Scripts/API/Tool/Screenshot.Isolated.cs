@@ -165,6 +165,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             int? resolution = 512
         )
         {
+            if (NoGraphicsError() is { } noGraphics)
+                return noGraphics;
+
             var resolvedResolution = resolution ?? 512;
             if (resolvedResolution < MinResolution || resolvedResolution > MaxResolution)
                 return ResponseCallTool.Error(

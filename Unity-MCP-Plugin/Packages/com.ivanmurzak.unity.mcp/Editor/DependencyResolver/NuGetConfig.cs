@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "11";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "13";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -114,7 +114,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // SignInRequiredReason surface ("server configuration error" class for invalid_target),
             // and the ConnectionCredentialCoordinator stop-on-dead-credential / resume-on-SignedIn-edge
             // behavior the AssistedReauthService (02 §C4, D4 ladder) renders and relies on.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                              "8.8.0", includeInBuild: true),
+            // 8.9.0 adds the shared Custom+oauth loopback rule (CustomOAuthCredentialPolicy / HostScope)
+            // and the consumer-supplied ConnectionConfig.ConnectionErrorHint, both used by UnityConnectionConfig.
+            // 8.11.0 sends a tool call to the plugin once (no re-send per plugin-timeout), adds the
+            // server's `tool-timeout` arg (Consts.MCP.Server.Args/Env.ToolTimeout, DefaultToolTimeoutMs)
+            // that McpServerManager passes, and the plugin-side duplicate-request guard.
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.11.0", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised

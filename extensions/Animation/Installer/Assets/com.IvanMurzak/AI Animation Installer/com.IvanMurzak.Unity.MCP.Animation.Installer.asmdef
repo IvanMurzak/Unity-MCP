@@ -1,0 +1,16 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Animation.Installer",
+    "rootNamespace": "com.IvanMurzak.Unity.MCP.Animation.Installer",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}
