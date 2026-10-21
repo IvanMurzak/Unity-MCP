@@ -11,6 +11,7 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -35,7 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // constructor, and the editor hung forever in "Initializing InitializeOnLoad Types". With the Unity
             // implementation installed, Run() on the main thread executes inline.
             // Idempotent: InstallPump re-subscribes safely and Init runs again from its own attribute.
-            com.IvanMurzak.Unity.MCP.Runtime.Utils.MainThreadInstaller.Init();
+            MainThreadInstaller.Init();
 
             UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
