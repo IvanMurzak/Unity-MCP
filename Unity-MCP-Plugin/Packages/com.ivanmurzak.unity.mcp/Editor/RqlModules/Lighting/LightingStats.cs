@@ -28,8 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         internal static LightingStats Capture()
         {
             var lights = LightingEditorApi.Lights();
-            var gameObjects = RqlUnity.AllGameObjects();
-            var renderers = gameObjects.SelectMany(g => g.GetComponents<MeshRenderer>()).Where(r => r != null).ToList();
+            var renderers = LightingEditorApi.InLoadedScenes<MeshRenderer>();
             var probeGroups = LightingEditorApi.ProbeGroups();
             var reflectionProbes = LightingEditorApi.ReflectionProbes();
             return new LightingStats

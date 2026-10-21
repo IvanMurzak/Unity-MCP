@@ -73,6 +73,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         [Test]
         public void EveryGuideExampleRuns()
         {
+            // The guide bakes; without a graphics device only the CPU lightmapper can (Bake refuses the GPU one).
+            if (!HasGraphicsDevice && !CpuLightmapperSupported()) Assert.Ignore("the CPU lightmapper is not supported here and there is no graphics device");
             var sun = CreateLight("Sun", LightType.Directional);
             SaveScene();
             var queries = Regex.Matches(Guide(), "```\\n(.*?)```", RegexOptions.Singleline)

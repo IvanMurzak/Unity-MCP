@@ -102,8 +102,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         public bool Bake(bool wait = false)
         {
             LightingScenes.RequireSaved("baking");
+            RequireBakeableDevice();
             if (Lightmapping.isRunning) return false;
             return wait ? Lightmapping.Bake() : Lightmapping.BakeAsync();
+        }
+
+        /// <summary>
+        /// The GPU lightmapper crashes the Editor natively when there is no graphics device (-nographics). Unity also runs
+        /// the GPU one when ProgressiveCPU is set but not supported (e.g. Apple silicon in Unity 2022.3): the settings asset
+        /// then reads back ProgressiveGPU.
+        /// </summary>
+        private static void RequireBakeableDevice()
+        {
+            if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null) return;
+            if (EffectiveLightmapper() == LightingSettings.Lightmapper.ProgressiveCPU) return;
+            throw new InvalidOperationException(
+                "this Editor has no graphics device (-nographics), and the GPU lightmapper cannot bake without one. Set the CPU " +
+                "lightmapper (lighting | get settings | set lightmapper = \"ProgressiveCPU\") or start the Editor with graphics");
+        }
+
+        private static LightingSettings.Lightmapper EffectiveLightmapper()
+        {
+            if (Lightmapping.TryGetLightingSettings(out var assigned)) return assigned.lightmapper;
+            // No asset assigned: the bake uses Unity's defaults, which a new LightingSettings has.
+            var defaults = new LightingSettings();
+            try { return defaults.lightmapper; }
+            finally { UnityEngine.Object.DestroyImmediate(defaults); }
         }
 
         [RqlCallable("stop the running bake (its partial results are discarded); returns whether one was running")]
@@ -153,6 +177,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 
         private static void Assign(LightingSettings asset)
         {
+            // The assignment lives on the scene's LightmapSettings object (one per loaded scene); recording them all makes it
+            // part of the mutation's Undo step, like the environment writes.
+            var owners = Resources.FindObjectsOfTypeAll<LightmapSettings>();
+            if (owners.Length > 0) Undo.RecordObjects(owners, "RQL lighting settings");
             Lightmapping.lightingSettings = asset;
             LightingScenes.MarkActiveSceneDirty();
         }
@@ -164,7 +192,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         internal static List<ReflectionProbe> ReflectionProbes() => InLoadedScenes<ReflectionProbe>();
 
         // One native call per root, inactive objects included (like the objects source).
-        private static List<T> InLoadedScenes<T>() where T : Component =>
+        internal static List<T> InLoadedScenes<T>() where T : Component =>
             RqlUnity.RootGameObjects().SelectMany(r => r.GetComponentsInChildren<T>(true)).Where(c => c != null).ToList();
     }
 }

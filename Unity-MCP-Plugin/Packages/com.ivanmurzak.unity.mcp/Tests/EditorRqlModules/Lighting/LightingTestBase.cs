@@ -33,6 +33,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         public void SetUpScene()
         {
             EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+            // A run the Editor did not finish (a crash, a killed process) leaves its assets behind.
+            if (AssetDatabase.IsValidFolder(TestFolder)) AssetDatabase.DeleteAsset(TestFolder);
             RqlUnity.Reset();
         }
 
@@ -58,6 +60,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         {
             if (!AssetDatabase.IsValidFolder(TestFolder)) AssetDatabase.CreateFolder("Assets", "RqlLightingTests");
         }
+
+        /// <summary>
+        /// False where Unity runs the GPU lightmapper instead of ProgressiveCPU (e.g. Apple silicon in Unity 2022.3): the
+        /// setting then reads back ProgressiveGPU.
+        /// </summary>
+        protected static bool CpuLightmapperSupported()
+        {
+            var settings = new LightingSettings { lightmapper = LightingSettings.Lightmapper.ProgressiveCPU };
+            try { return settings.lightmapper == LightingSettings.Lightmapper.ProgressiveCPU; }
+            finally { Object.DestroyImmediate(settings); }
+        }
+
+        protected static bool HasGraphicsDevice => SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null;
 
         protected static Light CreateLight(string name, LightType type, LightmapBakeType bakeType = LightmapBakeType.Realtime)
         {

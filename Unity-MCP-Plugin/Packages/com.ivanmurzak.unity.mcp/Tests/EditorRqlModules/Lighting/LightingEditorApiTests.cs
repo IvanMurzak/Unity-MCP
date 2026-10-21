@@ -91,7 +91,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Bake.lighting\")"));
             Ok(M("lighting | get settings | set lightmapper = \"ProgressiveCPU\", lightmapResolution = 7, lightmapMaxSize = 256, bakedGI = true"));
             var asset = AssetDatabase.LoadAssetAtPath<LightingSettings>(TestFolder + "/Bake.lighting");
-            Assert.AreEqual(LightingSettings.Lightmapper.ProgressiveCPU, asset.lightmapper);
+            if (CpuLightmapperSupported()) Assert.AreEqual(LightingSettings.Lightmapper.ProgressiveCPU, asset.lightmapper);
             Assert.AreEqual(7f, asset.lightmapResolution, 1e-4f);
             Assert.AreEqual(256, asset.lightmapMaxSize);
             Assert.IsTrue(asset.bakedGI);
@@ -106,6 +106,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             Ok(M($"lighting | call UseSettings(\"{TestFolder}/Existing.lighting\")"));
             Assert.AreEqual(asset, Lightmapping.lightingSettings);
             Assert.AreEqual(3.0, double.Parse(Cell(Q("lighting | select settings.lightmapResolution")), System.Globalization.CultureInfo.InvariantCulture), 1e-4);
+        }
+
+        [Test]
+        public void AssigningSettingsIsUndoable()
+        {
+            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/First.lighting\")"));
+            var first = Lightmapping.lightingSettings;
+            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Second.lighting\")"));
+            Assert.AreNotEqual(first, Lightmapping.lightingSettings);
+            Undo.PerformUndo();
+            Assert.AreEqual(first, LightingEditorApi.Instance.settings);
         }
 
         [Test]
@@ -124,8 +135,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         }
 
         [Test]
+        public void BakeRefusesTheGpuLightmapperWithoutAGraphicsDevice()
+        {
+            if (HasGraphicsDevice) Assert.Ignore("needs an Editor without a graphics device (-nographics)");
+            SaveScene();
+            Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Gpu.lighting\")"));
+            Ok(M("lighting | get settings | set lightmapper = \"ProgressiveGPU\""));
+            Fails(M("lighting | call Bake()"), "ProgressiveCPU");
+            Assert.IsFalse(Lightmapping.isRunning);
+        }
+
+        [Test]
         public void ABlockingBakeProducesLightingDataAndClearRemovesIt()
         {
+            // Without a graphics device only the CPU lightmapper bakes (Bake refuses the GPU one, see above).
+            if (!HasGraphicsDevice && !CpuLightmapperSupported()) Assert.Ignore("the CPU lightmapper is not supported here and there is no graphics device");
             var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
             GameObjectUtility.SetStaticEditorFlags(ground, StaticEditorFlags.ContributeGI);
             CreateLight("Sun", LightType.Directional, LightmapBakeType.Baked);
