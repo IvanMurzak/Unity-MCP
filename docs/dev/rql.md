@@ -31,7 +31,8 @@ Kept as tools: `script-*`, `tests-run`, `screenshot-*`, `package-*`, `unity-tool
 - `Editor/Scripts/API/Tool/Rql*.cs` — the tools; `Editor/Scripts/Skills/Skill_Rql.cs` — the `unity-rql` skill.
 - `Editor/RqlModules/<Feature>/` — optional modules in their own asmdef, compiled only when the Unity module exists
   (`versionDefines` + `defineConstraints`): Physics. Lighting (built into every Unity version, so not gated) has its own
-  module and asmdef there too: the `lighting` source, LightProbeGroup / ReflectionProbe adapters. Feature modules live in the extensions (e.g. the Particle System
+  module and asmdef there too: the `lighting` source, LightProbeGroup / ReflectionProbe adapters, and no guide (agents
+  read it with `rql-schema "lighting"`, like `editor` and `profiler`). Feature modules live in the extensions (e.g. the Particle System
   module and its playback methods are in `Unity-AI-ParticleSystem`).
 
 ## Extensions

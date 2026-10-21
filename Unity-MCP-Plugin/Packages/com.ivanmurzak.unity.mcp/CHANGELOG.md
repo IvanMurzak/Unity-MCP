@@ -6,11 +6,11 @@
 
 - **Lighting RQL module.** The `lighting` source reads and edits the active scene's environment (ambient,
   fog, skybox, sun, default reflections; undoable) and its Lighting Settings asset (`CreateSettings`,
-  `UseSettings`), lists every light and probe, reports `stats` (lights per bake type, real-time shadow
-  casters, GI contributors, probes) and drives the bake (`Bake` in the background or blocking, `isBaking` /
-  `bakeProgress`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`). `LightProbeGroup` gains
-  `PlaceGrid(size, spacing)` / `ClearProbes()` / `probeCount`, `ReflectionProbe` gains `Bake()`. Its guide is
-  rendered into the `unity-rql` skill.
+  `UseSettings`; undoable) and drives the bake (`Bake` in the background or blocking, `isBaking` /
+  `bakeProgress`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`; refused without a graphics device
+  unless the CPU lightmapper is set, instead of crashing the Editor). `LightProbeGroup` gains
+  `PlaceGrid(size, spacing)`, `ReflectionProbe` gains `Bake()`. The `unity-rql` skill lists the source in one
+  line; members and calls are read on demand with `rql-schema "lighting"`.
 
 - **Editor-session contract shared by the engine CLIs.** An editor started by a CLI session
   (`AIGD_SESSION_OWNER=cli`) quits after `AIGD_SESSION_IDLE_SECONDS` without tool calls

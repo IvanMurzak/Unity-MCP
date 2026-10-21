@@ -9,11 +9,9 @@
 */
 
 #nullable enable
-using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
-using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting;
@@ -25,9 +23,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
 {
     public class LightingModuleTests : LightingTestBase
     {
-        // Assets the guide examples create outside the test folder.
-        private const string GuideSettingsPath = "Assets/Lighting/Outdoor.lighting";
-
         [Test]
         public void TheModuleIsDiscovered()
         {
@@ -35,14 +30,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             Assert.IsTrue(RqlUnity.Engine.Modules.All(m => m.Ok), string.Join("\n", RqlUnity.Engine.Modules));
         }
 
+        /// <summary>
+        /// The unity-rql skill pays one line for lighting: the source row pointing at rql-schema. Members, calls and adapter
+        /// methods are read on demand.
+        /// </summary>
         [Test]
-        public void TheGuideIsPartOfTheRqlSkill()
+        public void TheSkillListsTheSourceInOneLineAndAddsNoGuide()
         {
-            var guide = Guide();
-            StringAssert.Contains(LightingModule.SourceName + " | get environment", guide);
-            StringAssert.Contains(LightingModule.SourceName + " | call Bake()", guide);
-            // Adapter methods such as PlaceGrid are found through rql-schema, so the skill does not spend tokens on them.
-            StringAssert.DoesNotContain("PlaceGrid", guide);
+            var skill = global::com.IvanMurzak.Unity.MCP.Editor.API.Skill_Rql.Render().Replace("\r\n", "\n");
+            var rows = skill.Split('\n').Where(l => l.Contains("`" + LightingModule.SourceName + "`")).ToList();
+            Assert.AreEqual(1, rows.Count, string.Join("\n", rows));
+            StringAssert.Contains("rql-schema \"lighting\"", rows[0]);
+            StringAssert.DoesNotContain("## Lighting", skill);
+            foreach (var member in new[] { "CreateSettings", "PlaceGrid", "BakeReflectionProbes" })
+                StringAssert.DoesNotContain(member, skill);
         }
 
         [Test]
@@ -50,8 +51,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         {
             StringAssert.Contains(LightingModule.SourceName, RqlUnitySchema.Render(RqlUnity.Engine, null));
             var api = RqlUnitySchema.Render(RqlUnity.Engine, LightingModule.SourceName);
-            foreach (var member in new[] { "environment", "settings", "stats", "isBaking", "CreateSettings(", "UseSettings(", "Bake(",
-                                           "CancelBake(", "ClearBakedData(", "BakeReflectionProbes(" })
+            foreach (var member in new[] { "environment", "settings", "isBaking", "bakeProgress", "hasBakedData", "lightmapCount",
+                                           "CreateSettings(", "UseSettings(", "Bake(", "CancelBake(", "ClearBakedData(", "BakeReflectionProbes(" })
                 StringAssert.Contains(member, api);
             StringAssert.Contains("PlaceGrid(", RqlUnitySchema.Render(RqlUnity.Engine, "LightProbeGroup"));
             StringAssert.Contains("Bake(", RqlUnitySchema.Render(RqlUnity.Engine, "ReflectionProbe"));
@@ -61,30 +62,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         public void ReadingEverythingWholeDoesNotFail()
         {
             CreateLight("Sun", LightType.Directional);
-            new GameObject("Probes").AddComponent<LightProbeGroup>();
-            new GameObject("Mirror").AddComponent<ReflectionProbe>();
             EnsureTestFolder();
             Ok(M($"lighting | call CreateSettings(\"{TestFolder}/Read.lighting\")"));
-            foreach (var q in new[] { "lighting", "lighting | get environment", "lighting | get settings", "lighting | select stats",
-                                      "lighting | get lights", "lighting | get probeGroups", "lighting | get reflectionProbes" })
+            foreach (var q in new[] { "lighting", "lighting | get environment", "lighting | get settings" })
                 Ok(Q(q));
         }
 
-        /// <summary>Every example query of the guide runs, in order, in a saved scene that has one directional light, "Sun".</summary>
+        /// <summary>
+        /// A whole lighting setup through RQL, in a saved scene with one directional light "Sun": lights, environment, settings,
+        /// a background bake that is cancelled, light probes and reflection probes.
+        /// </summary>
         [Test]
-        public void EveryGuideExampleRuns()
+        public void AWholeLightingSetupRunsThroughRql()
         {
-            // The guide bakes; without a graphics device only the CPU lightmapper can (Bake refuses the GPU one).
+            // The setup bakes; without a graphics device only the CPU lightmapper can (Bake refuses the GPU one).
             if (!HasGraphicsDevice && !CpuLightmapperSupported()) Assert.Ignore("the CPU lightmapper is not supported here and there is no graphics device");
             var sun = CreateLight("Sun", LightType.Directional);
             SaveScene();
-            var queries = Regex.Matches(Guide(), "```\\n(.*?)```", RegexOptions.Singleline)
-                .Cast<Match>()
-                .SelectMany(b => b.Groups[1].Value.Split('\n'))
-                .Select(l => Regex.Split(l, "\\s{3,}")[0].Trim())   // drop the trailing comment (3+ spaces)
-                .Where(l => l.Length > 0)
-                .ToList();
-            Assert.GreaterOrEqual(queries.Count, 20);
+            var settingsPath = TestFolder + "/Outdoor.lighting";
+            var queries = new[]
+            {
+                "editor | call CreateGameObject(\"Lamp\")",
+                "objects | where name == \"Lamp\" | call AddComponent(\"Light\")",
+                Lights + " | where gameObject.name == \"Lamp\" | set type = \"Spot\", intensity = 2, range = 15, spotAngle = 60, color = \"#ffd8a8\", shadows = \"Soft\", lightmapBakeType = \"Baked\"",
+                "lighting | get environment | select ambientMode ambientIntensity fog fogMode skybox sun",
+                "lighting | get environment | set ambientMode = \"Trilight\", ambientSkyColor = \"#9ab8e0\", ambientEquatorColor = \"#6b7a8a\", ambientGroundColor = \"#3a3228\"",
+                "lighting | get environment | set fog = true, fogMode = \"ExponentialSquared\", fogColor = \"#8090a0\", fogDensity = 0.02",
+                "lighting | get environment | set sun = unity.find(\"Sun\"), reflectionIntensity = 0.8",
+                $"lighting | call CreateSettings(\"{settingsPath}\")",
+                $"lighting | call UseSettings(\"{settingsPath}\")",
+                "lighting | get settings | set lightmapper = \"ProgressiveCPU\", lightmapResolution = 10, lightmapMaxSize = 512, ao = true",
+                "lighting | call Bake()",
+                "lighting | select isBaking bakeProgress hasBakedData lightmapCount",
+                "lighting | call CancelBake()",
+                "lighting | call ClearBakedData()",
+                "editor | call CreateGameObject(\"Probes\")",
+                "objects | where name == \"Probes\" | call AddComponent(\"LightProbeGroup\")",
+                "objects | get components | where $ is LightProbeGroup | call PlaceGrid(\"(10, 4, 10)\", 2)",
+                "editor | call CreateGameObject(\"Mirror\")",
+                "objects | where name == \"Mirror\" | call AddComponent(\"ReflectionProbe\")",
+                "objects | get components | where $ is ReflectionProbe | set mode = \"Baked\", size = \"(10, 5, 10)\", resolution = 128",
+                "objects | get components | where $ is ReflectionProbe | call Bake()",
+                "lighting | call BakeReflectionProbes()",
+            };
             try
             {
                 foreach (var q in queries)
@@ -101,19 +121,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
                 Assert.IsTrue(RenderSettings.fog);
                 Assert.AreEqual(FogMode.ExponentialSquared, RenderSettings.fogMode);
                 Assert.AreEqual(sun, RenderSettings.sun);
-                var settings = AssetDatabase.LoadAssetAtPath<LightingSettings>(GuideSettingsPath);
+                var settings = AssetDatabase.LoadAssetAtPath<LightingSettings>(settingsPath);
                 Assert.IsNotNull(settings);
                 Assert.AreEqual(settings, Lightmapping.lightingSettings);
                 Assert.AreEqual(10f, settings.lightmapResolution, 1e-4f);
-                Assert.IsNotNull(GameObject.Find("Probes").GetComponent<LightProbeGroup>());
-                Assert.IsFalse(Lightmapping.isRunning, "CancelBake() must stop the bake the guide started");
+                Assert.AreEqual(108, GameObject.Find("Probes").GetComponent<LightProbeGroup>().probePositions.Length);
+                Assert.IsFalse(Lightmapping.isRunning, "CancelBake() must stop the bake started above");
             }
             finally
             {
                 if (Lightmapping.isRunning) Lightmapping.Cancel();
-                AssetDatabase.DeleteAsset(GuideSettingsPath);
-                if (AssetDatabase.IsValidFolder("Assets/Lighting") && AssetDatabase.FindAssets("", new[] { "Assets/Lighting" }).Length == 0)
-                    AssetDatabase.DeleteAsset("Assets/Lighting");
             }
         }
 
@@ -129,16 +146,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             Assert.AreEqual(ResponseStatus.Success, response.Value!.Status, response.Value.ToString());
             Assert.IsTrue(RenderSettings.fog);
             Assert.AreEqual(0.04f, RenderSettings.fogDensity, 1e-5f);
-        }
-
-        /// <summary>This module's section of the rendered unity-rql skill.</summary>
-        private static string Guide()
-        {
-            var skill = global::com.IvanMurzak.Unity.MCP.Editor.API.Skill_Rql.Render().Replace("\r\n", "\n");
-            var start = skill.IndexOf("## " + LightingModule.GuideTopic, StringComparison.Ordinal);
-            Assert.GreaterOrEqual(start, 0, "the Lighting guide is missing from the unity-rql skill");
-            var end = skill.IndexOf("\n## ", start + 3, StringComparison.Ordinal);
-            return end < 0 ? skill.Substring(start) : skill.Substring(start, end - start);
         }
     }
 }

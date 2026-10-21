@@ -18,8 +18,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 {
     /// <summary>
     /// LightProbeGroup: <c>PlaceGrid(size, spacing)</c> fills a box with evenly spaced probes (the usual first layout, which
-    /// the Inspector can only do by hand), <c>ClearProbes()</c>, and <c>probeCount</c>. <c>probePositions</c> (local space)
-    /// is a copy, so element writes are assigned back.
+    /// the Inspector can only do by hand). <c>probePositions</c> (local space) is a copy, so element writes are assigned back.
     /// </summary>
     public sealed class UnityEngine_LightProbeGroup_Adapter : RqlTypeAdapter<LightProbeGroup>
     {
@@ -27,14 +26,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         public const int MaxGridProbes = 10000;
 
         public override string Description =>
-            "LightProbeGroup: call PlaceGrid(\"(x, y, z)\", spacing) to fill a box around the group with probes, ClearProbes(); probeCount";
+            "LightProbeGroup: call PlaceGrid(\"(x, y, z)\", spacing) to fill a box around the group with probes";
 
         protected override void Members(MemberTable<LightProbeGroup> m) => m
-            .Add<int>("probeCount", g => g.probePositions.Length, description: "number of probes in the group")
             .CopyOnRead("probePositions")
             .Function<Vector3, float, int>("PlaceGrid", (g, size, spacing) => PlaceGrid(g, size, spacing), "size", "spacing",
-                "replace the probes with a grid filling a box of this size (meters, centered on the group) every `spacing` meters; returns the count")
-            .Method("ClearProbes", g => g.probePositions = Array.Empty<Vector3>(), "remove every probe of the group");
+                "replace the probes with a grid filling a box of this size (meters, centered on the group) every `spacing` meters; returns the count");
 
         /// <summary>
         /// Probes every <paramref name="spacing"/> meters inside a box of <paramref name="size"/> centered on the group, in the

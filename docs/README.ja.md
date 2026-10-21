@@ -185,7 +185,7 @@ unity-mcp-cli open ./MyUnityProject
 <details>
   <summary>ライティング</summary>
 
-- RQLソース `lighting`（`rql-query` / `rql-mutate` 経由）- アクティブシーンの環境（アンビエント、フォグ、スカイボックス、太陽、反射。元に戻せる）、Lighting Settings アセット、すべてのライトとプローブ、`stats`（ベイクタイプ別のライト数、リアルタイムシャドウを落とすライト、GI コントリビューター、プローブ）。`CreateSettings`、`UseSettings`、`Bake`、`CancelBake`、`ClearBakedData`、`BakeReflectionProbes`
+- RQLソース `lighting`（`rql-query` / `rql-mutate` 経由）- アクティブシーンの環境（アンビエント、フォグ、スカイボックス、太陽、反射。元に戻せる）、Lighting Settings アセットとベイク：`CreateSettings`、`UseSettings`、`Bake`、`CancelBake`、`ClearBakedData`、`BakeReflectionProbes`
 - `LightProbeGroup.PlaceGrid(size, spacing)` - ボックス内に等間隔でライトプローブを配置。`ReflectionProbe.Bake()` - プローブをシーンの横にベイク
 
 </details>

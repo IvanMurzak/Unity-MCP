@@ -38,7 +38,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             Assert.AreEqual(new Vector3(-5, -2, -5), new Vector3(p.Min(v => v.x), p.Min(v => v.y), p.Min(v => v.z)));
             Assert.AreEqual(new Vector3(5, 2, 5), new Vector3(p.Max(v => v.x), p.Max(v => v.y), p.Max(v => v.z)));
             Assert.AreEqual(108, p.Distinct().Count());
-            Assert.AreEqual("108", Cell(Q(Groups + " | select probeCount")));
         }
 
         [Test]
@@ -77,15 +76,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             Assert.AreEqual(27, _group.probePositions.Length);
             Undo.PerformUndo();
             CollectionAssert.AreEqual(before, _group.probePositions);
-        }
-
-        [Test]
-        public void ClearProbesEmptiesTheGroup()
-        {
-            Ok(M(Groups + " | call PlaceGrid(\"(2, 2, 2)\", 2)"));
-            Ok(M(Groups + " | call ClearProbes()"));
-            Assert.AreEqual(0, _group.probePositions.Length);
-            Assert.AreEqual("0", Cell(Q(Groups + " | select probeCount")));
         }
     }
 }

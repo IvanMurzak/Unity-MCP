@@ -185,7 +185,7 @@ unity-mcp-cli open ./MyUnityProject
 <details>
   <summary>光照</summary>
 
-- RQL 数据源 `lighting`（通过 `rql-query` / `rql-mutate`）— 活动场景的环境（环境光、雾、天空盒、太阳、反射；可撤销）、其 Lighting Settings 资源、所有灯光与探针、`stats`（按烘焙类型统计的灯光、实时阴影投射灯光、GI 贡献物体、探针）；`CreateSettings`、`UseSettings`、`Bake`、`CancelBake`、`ClearBakedData`、`BakeReflectionProbes`
+- RQL 数据源 `lighting`（通过 `rql-query` / `rql-mutate`）— 活动场景的环境（环境光、雾、天空盒、太阳、反射；可撤销）、其 Lighting Settings 资源与烘焙：`CreateSettings`、`UseSettings`、`Bake`、`CancelBake`、`ClearBakedData`、`BakeReflectionProbes`
 - `LightProbeGroup.PlaceGrid(size, spacing)` — 在盒形区域内均匀放置光照探针；`ReflectionProbe.Bake()` — 将单个反射探针烘焙到其场景旁
 
 </details>

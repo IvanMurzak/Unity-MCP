@@ -18,46 +18,9 @@ using UnityEngine.Rendering;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
 {
-    /// <summary>The lighting source: lists, stats, Lighting Settings assets, baking.</summary>
+    /// <summary>The lighting source: Lighting Settings assets, baking.</summary>
     public class LightingEditorApiTests : LightingTestBase
     {
-        [Test]
-        public void ListsEveryLightAndProbeIncludingInactiveOnes()
-        {
-            CreateLight("Sun", LightType.Directional);
-            CreateLight("Lamp", LightType.Point).gameObject.SetActive(false);
-            new GameObject("Probes").AddComponent<LightProbeGroup>();
-            new GameObject("Mirror").AddComponent<ReflectionProbe>();
-
-            var r = Q("lighting | get lights | select gameObject.name");
-            Ok(r);
-            CollectionAssert.AreEquivalent(new[] { "Sun", "Lamp" }, r.Rows!.Select(row => row[0]!.GetValue<string>()).ToList());
-            Assert.AreEqual("Probes", Cell(Q("lighting | get probeGroups | select gameObject.name")));
-            Assert.AreEqual("Mirror", Cell(Q("lighting | get reflectionProbes | select gameObject.name")));
-        }
-
-        [Test]
-        public void StatsCountWhatTheLightingCosts()
-        {
-            CreateLight("Sun", LightType.Directional, LightmapBakeType.Mixed).shadows = LightShadows.Soft;
-            CreateLight("Fill", LightType.Point).shadows = LightShadows.Hard;
-            CreateLight("Glow", LightType.Point, LightmapBakeType.Baked).shadows = LightShadows.Soft;   // baked: no real-time shadows
-            CreateLight("Off", LightType.Spot).gameObject.SetActive(false);
-            var ground = GameObject.CreatePrimitive(PrimitiveType.Plane);
-            GameObjectUtility.SetStaticEditorFlags(ground, StaticEditorFlags.ContributeGI);
-            GameObject.CreatePrimitive(PrimitiveType.Cube);
-            var probes = new GameObject("Probes").AddComponent<LightProbeGroup>();
-            probes.probePositions = new Vector3[5];
-            new GameObject("Baked").AddComponent<ReflectionProbe>().mode = ReflectionProbeMode.Baked;
-            new GameObject("Live").AddComponent<ReflectionProbe>().mode = ReflectionProbeMode.Realtime;
-
-            var r = Q("lighting | select stats.lights stats.realtimeLights stats.mixedLights stats.bakedLights stats.realtimeShadowCasters " +
-                      "stats.meshRenderers stats.giContributors stats.lightProbes stats.reflectionProbes stats.bakedReflectionProbes");
-            Ok(r);
-            var row = r.Rows![0].Select(n => n!.GetValue<long>()).ToArray();
-            CollectionAssert.AreEqual(new long[] { 4, 2, 1, 1, 2, 2, 1, 5, 2, 1 }, row, Table(r));
-        }
-
         [Test]
         public void SettingsIsNullUntilAnAssetIsAssigned()
         {

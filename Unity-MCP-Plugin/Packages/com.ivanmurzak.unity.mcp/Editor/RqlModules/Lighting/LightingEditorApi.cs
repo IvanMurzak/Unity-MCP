@@ -21,8 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 {
     /// <summary>
     /// The <c>lighting</c> source: lighting state that has no owner component — the active scene's environment and Lighting
-    /// Settings asset, the bake — and every light and probe of the loaded scenes, e.g. <c>lighting | select stats</c>,
-    /// <c>lighting | get environment | set fog = true</c>, <c>lighting | call Bake()</c>.
+    /// Settings asset, the bake — e.g. <c>lighting | get environment | set fog = true</c>, <c>lighting | call Bake()</c>. Lights
+    /// and probes are components: <c>objects | get components | where $ is Light</c>.
     /// </summary>
     public sealed class LightingEditorApi
     {
@@ -38,18 +38,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         [RqlDescription("the active scene's Lighting Settings asset (lightmapper, lightmapResolution, lightmapMaxSize, bakedGI, realtimeGI, " +
                         "mixedBakeMode, ao …; writable, saved with the asset); null until one is assigned (call CreateSettings)")]
         public LightingSettings? settings => Lightmapping.TryGetLightingSettings(out var s) ? s : null;
-
-        [RqlDescription("every Light in the loaded scenes, inactive ones included")]
-        public List<Light> lights => Lights();
-
-        [RqlDescription("every LightProbeGroup in the loaded scenes")]
-        public List<LightProbeGroup> probeGroups => ProbeGroups();
-
-        [RqlDescription("every ReflectionProbe in the loaded scenes")]
-        public List<ReflectionProbe> reflectionProbes => ReflectionProbes();
-
-        [RqlDescription("counts: lights per bake type, real-time shadow casters, GI contributors, probes, lightmaps")]
-        public LightingStats stats => LightingStats.Capture();
 
         [RqlDescription("a bake is running (started by Bake() or the Lighting window)")]
         public bool isBaking => Lightmapping.isRunning;
@@ -96,6 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         }
 
         [RqlCallable("bake the lighting of the loaded scenes (lightmaps, light probes, baked reflection probes; the scenes must be saved). " +
+                     "Only Baked / Mixed lights bake, and only into Contribute GI static geometry and light probes. " +
                      "By default it runs in the background: poll isBaking / bakeProgress. wait = true blocks the Editor until it is done " +
                      "(small scenes only). Returns false when a bake could not start (one is already running)")]
         [RqlNoAutoSave] // a bake writes its own assets; the call itself changes no scene state
@@ -185,14 +174,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
             LightingScenes.MarkActiveSceneDirty();
         }
 
-        internal static List<Light> Lights() => InLoadedScenes<Light>();
-
-        internal static List<LightProbeGroup> ProbeGroups() => InLoadedScenes<LightProbeGroup>();
-
-        internal static List<ReflectionProbe> ReflectionProbes() => InLoadedScenes<ReflectionProbe>();
-
-        // One native call per root, inactive objects included (like the objects source).
-        internal static List<T> InLoadedScenes<T>() where T : Component =>
-            RqlUnity.RootGameObjects().SelectMany(r => r.GetComponentsInChildren<T>(true)).Where(c => c != null).ToList();
+        // Every reflection probe of the loaded scenes, inactive ones included: one native call per root (like the objects source).
+        private static List<ReflectionProbe> ReflectionProbes() =>
+            RqlUnity.RootGameObjects().SelectMany(r => r.GetComponentsInChildren<ReflectionProbe>(true)).Where(c => c != null).ToList();
     }
 }
