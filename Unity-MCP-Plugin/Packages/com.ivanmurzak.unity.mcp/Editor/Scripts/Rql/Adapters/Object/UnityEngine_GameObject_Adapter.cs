@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
     /// </summary>
     public sealed class UnityEngine_GameObject_Adapter : RqlTypeAdapter<GameObject>
     {
-        public override string Description => "GameObject: navigate with components / children; write active (SetActive), name, tag, layer";
+        public override string Description => "GameObject: navigate with components / children; write active (SetActive), name, tag, layer, staticFlags";
 
         protected override void Members(MemberTable<GameObject> m)
         {
@@ -105,7 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         private static StaticEditorFlags? StaticFlag(string? name)
         {
             foreach (var f in StaticFlagNames)
-                if (string.Equals(f.Name, name, StringComparison.OrdinalIgnoreCase)) return f.Flag;
+                if (string.Equals(f.Name, name, StringComparison.Ordinal)) return f.Flag; // reads print these exact names
             return null;
         }
 

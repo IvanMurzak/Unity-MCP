@@ -37,22 +37,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         }
 
         [Test]
-        public void ABakedProbeNeedsASavedScene()
+        public void ACustomProbeNeedsASavedScene()
         {
-            _probe.mode = ReflectionProbeMode.Baked;
+            _probe.mode = ReflectionProbeMode.Custom;
             Fails(M(Probes + " | call Bake()"), "SaveAs");
         }
 
+        /// <summary>A Baked probe's texture lives in the Lighting Data asset: one assigned here would be lost on scene reload.</summary>
         [Test]
-        public void ABakedProbeIsStoredNextToTheScene()
+        public void ABakedProbeIsLeftToTheLightingBake()
         {
             _probe.mode = ReflectionProbeMode.Baked;
+            SaveScene();
+            Fails(M(Probes + " | call Bake()"), "lighting | call Bake()");
+            Assert.IsFalse(AssetDatabase.IsValidFolder(TestFolder + "/LightingTest"), "nothing is written");
+        }
+
+        [Test]
+        public void AnHdrCustomProbeBakesToExrNextToTheScene()
+        {
+            _probe.mode = ReflectionProbeMode.Custom;
+            _probe.hdr = true;
             SaveScene();
             var path = CallResult(M(Probes + " | call Bake()"));
             Assert.AreEqual(TestFolder + "/LightingTest/ReflectionProbe-Mirror.exr", path);
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Texture>(path));
-            Assert.AreEqual(path, AssetDatabase.GetAssetPath(_probe.bakedTexture), "the probe shows its bake");
-            Assert.AreEqual(path, CallResult(M(Probes + " | call Bake()")), "a second bake replaces the first texture");
         }
 
         [Test]

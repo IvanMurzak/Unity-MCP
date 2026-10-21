@@ -186,7 +186,7 @@ El plugin incluye más de 70 herramientas integradas en cuatro categorías. Cada
   <summary>Iluminación</summary>
 
 - Fuente RQL `lighting` (con `rql-query` / `rql-mutate`) - el entorno de la escena activa (ambiente, niebla, skybox, sol, reflejos; se puede deshacer), su asset Lighting Settings y el bake: `CreateSettings`, `UseSettings`, `Bake`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`
-- `LightProbeGroup.PlaceGrid(size, spacing)` - llena una caja con sondas de luz espaciadas uniformemente; `ReflectionProbe.Bake()` - hace el bake de una sonda junto a su escena
+- `LightProbeGroup.PlaceGrid(size, spacing)` - llena una caja con sondas de luz espaciadas uniformemente; `ReflectionProbe.Bake()` - hace el bake de una sonda Custom junto a su escena
 
 </details>
 

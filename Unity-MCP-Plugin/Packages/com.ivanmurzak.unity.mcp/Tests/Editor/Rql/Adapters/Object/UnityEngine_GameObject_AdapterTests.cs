@@ -76,6 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.IsFalse(r.Ok, Table(r));
             Assert.IsFalse(M("objects | where name == \"Ground\" | set staticFlags = [\"ContributeGI\", \"1024\"]").Ok);
             Assert.IsFalse(M("objects | where name == \"Ground\" | set staticFlags = [\"LightmapStatic\"]").Ok, "obsolete names are rejected");
+            Assert.IsFalse(M("objects | where name == \"Ground\" | set staticFlags = [\"contributegi\"]").Ok, "names are exact, as reads print them");
             Assert.AreEqual(StaticEditorFlags.OccluderStatic, GameObjectUtility.GetStaticEditorFlags(ground));
             StringAssert.Contains("staticFlags", Schema("GameObject"));
         }

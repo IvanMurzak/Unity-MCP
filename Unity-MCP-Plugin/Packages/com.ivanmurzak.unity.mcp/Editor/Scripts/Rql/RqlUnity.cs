@@ -65,13 +65,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 var owners = Owners(records, out var sceneSettings);
                 foreach (var o in owners)
                 {
+                    if (sceneSettings != null && sceneSettings.Contains(o)) continue; // written through the active scene below
                     EditorUtility.SetDirty(o);
                     var scene = o is GameObject go ? go.scene : o is Component c ? c.gameObject.scene : default;
                     if (scene.IsValid() && scenes.Add(scene) && !EditorApplication.isPlaying) EditorSceneManager.MarkSceneDirty(scene);
                 }
-                // Scene-level settings (IRqlUndoOwners) belong to the active scene.
+                // Scene-level settings (IRqlUndoOwners) are written on the active scene only; the other loaded scenes' objects are
+                // recorded for Undo but not dirtied, so their scenes are not saved for nothing.
                 var active = SceneManager.GetActiveScene();
-                if (sceneSettings && active.IsValid() && scenes.Add(active) && !EditorApplication.isPlaying) EditorSceneManager.MarkSceneDirty(active);
+                if (sceneSettings != null && active.IsValid() && scenes.Add(active) && !EditorApplication.isPlaying) EditorSceneManager.MarkSceneDirty(active);
             };
 
             // Everything else — sources, adapters, exclusions — comes from modules: the core module in this package plus any
@@ -133,13 +135,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<(Type type, string? member, bool isCall), bool> NoAutoSave =
             new System.Collections.Concurrent.ConcurrentDictionary<(Type, string?, bool), bool>();
 
-        /// <param name="sceneSettings">true when a change landed on scene-level settings (an <see cref="IRqlUndoOwners"/>).</param>
-        private static List<Object> Owners(IReadOnlyList<MutationRecord> records, out bool sceneSettings)
+        /// <param name="sceneSettings">The owners named by an <see cref="IRqlUndoOwners"/> (scene-level settings), or null.</param>
+        private static List<Object> Owners(IReadOnlyList<MutationRecord> records, out HashSet<Object>? sceneSettings)
         {
             var owners = new List<Object>();
             var seen = new HashSet<Object>();
             HashSet<IRqlUndoOwners>? views = null;
-            sceneSettings = false;
+            sceneSettings = null;
             // The nearest Unity object enclosing each change: a write into a plain view object (e.g. a spline knot view) is
             // recorded on the component or asset that holds it, a write into an IRqlUndoOwners on the objects it names.
             foreach (var r in records)
@@ -153,10 +155,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                     if (candidate is IRqlUndoOwners settings)
                     {
                         // Once per view object, not per written member: naming the objects may scan (FindObjectsOfTypeAll).
+                        sceneSettings ??= new HashSet<Object>();
                         if ((views ??= new HashSet<IRqlUndoOwners>()).Add(settings))
                             foreach (var s in settings.UndoOwners)
-                                if (s != null && seen.Add(s)) owners.Add(s);
-                        sceneSettings = true;
+                                if (s != null && seen.Add(s)) { owners.Add(s); sceneSettings.Add(s); }
                         break;
                     }
                 }

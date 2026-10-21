@@ -103,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
                 "objects | get components | where $ is LightProbeGroup | call PlaceGrid(\"(10, 4, 10)\", 2)",
                 "editor | call CreateGameObject(\"Mirror\")",
                 "objects | where name == \"Mirror\" | call AddComponent(\"ReflectionProbe\")",
-                "objects | get components | where $ is ReflectionProbe | set mode = \"Baked\", size = \"(10, 5, 10)\", resolution = 16",
+                "objects | get components | where $ is ReflectionProbe | set mode = \"Custom\", size = \"(10, 5, 10)\", resolution = 16",
                 "lighting | call BakeReflectionProbes()",
             };
             try

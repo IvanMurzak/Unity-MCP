@@ -143,6 +143,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             var off = new GameObject("Off").AddComponent<ReflectionProbe>();
             off.mode = ReflectionProbeMode.Custom;
             off.gameObject.SetActive(false);
+            new GameObject("Lit").AddComponent<ReflectionProbe>().mode = ReflectionProbeMode.Baked;   // baked with the lighting
             SaveScene();
 
             Assert.AreEqual("2", CallResult(M("lighting | call BakeReflectionProbes()")));

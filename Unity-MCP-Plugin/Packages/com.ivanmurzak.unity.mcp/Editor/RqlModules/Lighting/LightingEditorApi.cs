@@ -15,7 +15,9 @@ using System.IO;
 using System.Linq;
 using Rql;
 using UnityEditor;
+using UnityEditor.SceneManagement;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 {
@@ -139,21 +141,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
             return had;
         }
 
-        [RqlCallable("bake every reflection probe of the loaded scenes now: Baked / Custom ones into textures next to their scene " +
-                     "(the scenes must be saved), Realtime ones re-render; returns how many")]
+        [RqlCallable("bake every active Custom reflection probe of the loaded scenes into a texture next to its scene (those scenes " +
+                     "must be saved) and re-render the Realtime ones; returns how many. Baked probes bake with Bake()")]
         public int BakeReflectionProbes()
         {
-            var probes = ReflectionProbes().Where(p => p.isActiveAndEnabled).ToList();
-            if (probes.Any(p => p.mode != UnityEngine.Rendering.ReflectionProbeMode.Realtime))
-                LightingScenes.RequireSaved("baking reflection probes");
-            foreach (var probe in probes)
+            LightingScenes.RequireEditMode("baking reflection probes");
+            var probes = ReflectionProbes().Where(p => p.isActiveAndEnabled && p.mode != ReflectionProbeMode.Baked).ToList();
+            var custom = probes.Where(p => p.mode == ReflectionProbeMode.Custom).ToList();
+            // Checked up front: calls are not rolled back, so a later unsaved scene must not leave half the probes baked.
+            var unsaved = custom.FirstOrDefault(p => LightingScenes.Folder(p.gameObject.scene) == null);
+            if (unsaved != null)
+                throw new InvalidOperationException(
+                    $"reflection probe '{unsaved.name}' is in an unsaved scene: a baked probe is stored next to its scene. " + LightingScenes.SaveSceneHint);
+            // The call is recorded against this API object, so each Custom probe (its texture changes) is recorded here.
+            if (custom.Count > 0) Undo.RecordObjects(custom.ToArray(), "RQL bake reflection probes");
+            foreach (var probe in probes) UnityEngine_ReflectionProbe_Adapter.Bake(probe);
+            foreach (var probe in custom)
             {
-                // The call is recorded against this API object, so each probe is recorded for Undo and marked dirty here.
-                Undo.RecordObject(probe, "RQL bake reflection probe");
-                UnityEngine_ReflectionProbe_Adapter.Bake(probe);
                 EditorUtility.SetDirty(probe);
+                EditorSceneManager.MarkSceneDirty(probe.gameObject.scene);
             }
-            if (probes.Count > 0) LightingScenes.MarkActiveSceneDirty();
             return probes.Count;
         }
 
@@ -173,6 +180,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 
         // Every reflection probe of the loaded scenes, inactive ones included: one native call per root (like the objects source).
         private static List<ReflectionProbe> ReflectionProbes() =>
-            RqlUnity.RootGameObjects().SelectMany(r => r.GetComponentsInChildren<ReflectionProbe>(true)).Where(c => c != null).ToList();
+            RqlUnity.RootGameObjects().SelectMany(r => r.GetComponentsInChildren<ReflectionProbe>(true)).ToList();
     }
 }
