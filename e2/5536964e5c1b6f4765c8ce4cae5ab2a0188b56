@@ -1,0 +1,30 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/JsonConverters/GameObjectRefConverterTests.cs
+  s_7d1fb4e8f28b5b::t_168d4844907d83 253-254
+  s_7d1fb4e8f28b5b::t_2ac1648a4f619d 255
+  s_7d1fb4e8f28b5b::t_b53eab0aa6d876 256-293
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/GameObjectRefConverter.cs
+  s_7d1fb4e8f28b5b::t_3af1655fa1844a 93
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Structures/EntityIdConverter.cs
+  s_7d1fb4e8f28b5b::t_b1a4ab7c32396b 57,63-67
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Modify.cs
+  s_7d1fb4e8f28b5b::t_f28af14a69de69 16
+  s_7d1fb4e8f28b5b::t_a1ed6b8816bdea 127
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/ComponentRefConverter.cs
+  s_7d1fb4e8f28b5b::t_73ad3bda8f5dc7 82
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "e25536964e5c1b6f4765c8ce4cae5ab2a0188b56",
+  "prompts": {},
+  "sessions": {
+    "s_7d1fb4e8f28b5b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee55318c-21bc-4ab7-9ec1-82c4f6f48645",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

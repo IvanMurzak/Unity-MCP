@@ -1,0 +1,20 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/DeviceAuthFlowTests.cs
+  s_bc9a1eddc7910e::t_8559b5c2dd1b3f 20
+  s_bc9a1eddc7910e::t_8805297e1facf8 204-208
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "7eb7d05ae9d2d4982d0fd3bb15ffd4f7897079b0",
+  "prompts": {},
+  "sessions": {
+    "s_bc9a1eddc7910e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "07a60c67-96b4-4c41-bbe1-fc86881e3b71",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
