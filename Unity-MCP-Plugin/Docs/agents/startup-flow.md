@@ -1,6 +1,9 @@
 # Startup Flow
 
-Triggered by `[InitializeOnLoad]` static constructor in `Startup.cs`:
+Triggered by `[InitializeOnLoad]` static constructor in `Startup.cs`. An asset import worker
+(`AssetDatabase.IsAssetImportWorkerProcess()`) skips all of it, and `McpServerManager` likewise: workers
+load the editor assemblies too, and a worker connecting replaced the editor's connection on a no-auth
+server (#1050).
 
 1. Build `IMcpPlugin` instance (scan assemblies for tools/prompts/resources)
 2. Add `BufferedFileLogStorage` log collector for early log capture

@@ -48,6 +48,11 @@
 
 ### Fixed
 
+- **Asset import workers disconnected the Editor from MCP** (#1050). Every `AssetImportWorker` process
+  (model and texture imports, Entities SubScene baking) ran the plugin's startup and connected to the same
+  server; with no-auth, which keeps one plugin connection, a worker could replace the Editor's connection.
+  Workers now skip the plugin startup and the server manager; headless CLI/CI editors are unaffected.
+
 - **Changing Timeout in the AI Game Developer window threw a `NullReferenceException`** before saving: it
   refreshed a stdio-config text field the window no longer has.
 

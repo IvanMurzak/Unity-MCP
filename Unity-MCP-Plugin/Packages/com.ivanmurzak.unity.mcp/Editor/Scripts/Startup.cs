@@ -27,6 +27,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static Startup()
         {
+            // An asset import worker (the batch-mode process Unity starts to import or bake assets, e.g. Entities
+            // SubScenes) loads these editor assemblies too, and inherits the editor's environment. It must not build
+            // the plugin, connect, or quit itself: a no-auth server keeps one plugin connection, so a worker that
+            // connected replaced the editor's connection (#1050). Only the main editor and headless CLI/CI editors,
+            // which are not workers, go on.
+            if (AssetDatabase.IsAssetImportWorkerProcess())
+                return;
+
             // Install the Unity main-thread implementation BEFORE building the plugin. Building reflects over
             // every [AiSkill] member, and Skill_Rql.Markdown runs its renderer through MainThread.Instance.Run.
             // [InitializeOnLoad] static constructors always run before [InitializeOnLoadMethod], so here
