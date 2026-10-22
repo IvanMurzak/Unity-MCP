@@ -56,10 +56,11 @@
 ### Changed
 
 - **McpPlugin 8.9.0 -> 8.11.1** (`com.IvanMurzak.McpPlugin` / `.Common`), **ReflectorNet 5.4.2 -> 5.5.0**, local
-  MCP server pin (`McpServerManager.ServerVersion`) **9.2.14**. ReflectorNet 5.5.0 recognizes the main thread by
-  its `SynchronizationContext` instead of managed thread id 1: Unity 7 (CoreCLR) on Windows runs the main thread
-  with id 2, and main-thread calls hung there. McpPlugin 8.11.1 and GameDev-MCP-Server 9.2.14 are rebuilds on it.
-  The NuGet gate generation moves to `UNITY_MCP_DEPS_14`.
+  MCP server pin (`McpServerManager.ServerVersion`) **9.2.14**. ReflectorNet 5.5.0's default `MainThread`
+  recognizes the main thread by its `SynchronizationContext` instead of managed thread id 1 (Unity 7 CoreCLR on
+  Windows runs the main thread with id 2); the plugin keeps its own `UnityMainThread`, so editor behavior does not
+  change. McpPlugin 8.11.1 and GameDev-MCP-Server 9.2.14 are rebuilds on it. The NuGet gate generation moves to
+  `UNITY_MCP_DEPS_14`.
 
 ### Changed (BREAKING)
 
