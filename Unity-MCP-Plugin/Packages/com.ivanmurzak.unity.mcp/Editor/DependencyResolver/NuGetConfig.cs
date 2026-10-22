@@ -119,7 +119,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 8.11.0 sends a tool call to the plugin once (no re-send per plugin-timeout), adds the
             // server's `tool-timeout` arg (Consts.MCP.Server.Args/Env.ToolTimeout, DefaultToolTimeoutMs)
             // that McpServerManager passes, and the plugin-side duplicate-request guard.
-            // 8.11.1 is a rebuild on ReflectorNet 5.5.0, no API change.
             new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.11.1", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,

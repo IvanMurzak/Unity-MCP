@@ -55,14 +55,11 @@
 
 ### Changed
 
-- **McpPlugin 8.9.0 -> 8.11.0** (`com.IvanMurzak.McpPlugin` / `.Common`; ReflectorNet stays 5.4.2). The NuGet
-  gate generation moves to `UNITY_MCP_DEPS_13`. The local server pin (`McpServerManager.ServerVersion`) is
-  unchanged until a GameDev-MCP-Server release built on McpPlugin.Server 8.11.0 exists.
-- **ReflectorNet 5.4.2 -> 5.5.0, McpPlugin 8.11.0 -> 8.11.1, local MCP server 9.2.13 -> 9.2.14.** ReflectorNet
-  5.5.0 recognizes the main thread by its `SynchronizationContext` instead of managed thread id 1: Unity 7
-  (CoreCLR) on Windows runs the main thread with id 2, and main-thread calls hung there. McpPlugin 8.11.1 and
-  GameDev-MCP-Server 9.2.14 are rebuilds on it with no other change. The bundled DLLs are the published
-  netstandard2.1 builds; the NuGet gate generation moves to `UNITY_MCP_DEPS_14`.
+- **McpPlugin 8.9.0 -> 8.11.1** (`com.IvanMurzak.McpPlugin` / `.Common`), **ReflectorNet 5.4.2 -> 5.5.0**, local
+  MCP server pin (`McpServerManager.ServerVersion`) **9.2.14**. ReflectorNet 5.5.0 recognizes the main thread by
+  its `SynchronizationContext` instead of managed thread id 1: Unity 7 (CoreCLR) on Windows runs the main thread
+  with id 2, and main-thread calls hung there. McpPlugin 8.11.1 and GameDev-MCP-Server 9.2.14 are rebuilds on it.
+  The NuGet gate generation moves to `UNITY_MCP_DEPS_14`.
 
 ### Changed (BREAKING)
 
