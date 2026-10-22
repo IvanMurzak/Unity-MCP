@@ -1,0 +1,29 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Assets/AssetsPrefabCreateTests.cs
+  s_0cb3ed9339f370::t_8ebbd914a32bee 54,71,88,105,124,148,155,179,207,224,241,258,291,307
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.Find.cs
+  s_0cb3ed9339f370::t_80557710fa04e5 189,211,390,405,420
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.GetComponents.cs
+  s_0cb3ed9339f370::t_d2eed3188537fe 38
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/GameObject/TestToolGameObject.ModifyComponent.cs
+  s_0cb3ed9339f370::t_1fca183c508879 144,180,232,268,304,340,449,462
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotCameraTests.cs
+  s_0cb3ed9339f370::t_93b4b8b150479f 129,146
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/ToolThreadSafetyTests.cs
+  s_0cb3ed9339f370::t_56c16b23399cbc 156,164,168,176,180,189,193,201,205,215,225,231,241,251,263,271,283,389,393,403,420,430,438,445
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "316478ae223b84a0736f9a2bc0729b2d5dc3d227",
+  "prompts": {},
+  "sessions": {
+    "s_0cb3ed9339f370": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a553607e042b4f07b",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

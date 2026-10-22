@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/.claude/skills/unity-skill-generate/SKILL.md
+  5e332338a3d9cc23 18
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "a274844cc3c117bfa59f28bd057879e039cbbdff",
+  "prompts": {
+    "5e332338a3d9cc23": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c243313f-aaee-4622-b846-5cc7ecb34626",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 623,
+      "total_deletions": 630,
+      "accepted_lines": 101,
+      "overriden_lines": 0
+    }
+  }
+}

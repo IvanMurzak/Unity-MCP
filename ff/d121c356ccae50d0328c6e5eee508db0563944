@@ -1,0 +1,94 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/DeviceAuthFlowTests.cs
+  s_fbd98eba7c9706::t_003beef5ce2a06 1-209
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/MachineCredentialTests.cs
+  s_fbd98eba7c9706::t_76a6ecff406282 1-179
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/DeviceAuthService.cs
+  s_fbd98eba7c9706::t_daece60bdb06d1 34,37-54,60-62
+  s_fbd98eba7c9706::t_08d3cca466f08a 31-33
+  s_fbd98eba7c9706::t_795fc0c78f5083 35-36
+  s_fbd98eba7c9706::t_b577110a100ebe 55-59
+  s_fbd98eba7c9706::t_5a150f43d1fcf4 63-65
+  s_6c58920fcb5e4b::t_af0ae02db02fe5 13,22-27,29-30,66-85,90-93,95-96,98-103,106,108-109,112,115,117-120,122,124-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/UnityConnectionConfigCredentialProviderTests.cs
+  s_fbd98eba7c9706::t_3262cb35213a12 1-85
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AccountCredentialService.cs
+  s_fbd98eba7c9706::t_9a63cce0c47d21 1-132
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/UnityTokenRefresherTests.cs
+  s_fbd98eba7c9706::t_59e01087064584 1-91
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/DeviceAuthFlow.cs
+  s_fbd98eba7c9706::t_3d550a80388a62 15,34-42,47-52,61-80,90,95-99,103-106,111,113,115,117-126,131,133-143
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/DeviceAuthServiceTests.cs
+  s_fbd98eba7c9706::t_0ff4381304fcf2 1-114
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/UnityTokenRefresher.cs
+  s_fbd98eba7c9706::t_7c4409dde9bef6 1-111
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/UnityTokenRefresher.cs.meta
+  s_a8c9458399d776::t_98ac344e866aef 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.Connection.cs
+  s_a8c9458399d776::t_1005fa2743f75b 92-97,359-371,414
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UnityMcpPluginEditor.Build.cs
+  s_f6b26e96017eda::t_7989a2c76b5d1f 12,61-66
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth.meta
+  s_6c1fd1e2a229e0::t_2500f550c62472 1-8
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/DeviceAuthFlowTests.cs.meta
+  s_6c1fd1e2a229e0::t_04930da84480a6 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/DeviceAuthServiceTests.cs.meta
+  s_6c1fd1e2a229e0::t_acee4cc329f70d 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/MachineCredentialTests.cs.meta
+  s_6c1fd1e2a229e0::t_cc5e0c6ee3873a 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/UnityConnectionConfigCredentialProviderTests.cs.meta
+  s_6c1fd1e2a229e0::t_54d8cba02255f3 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/UnityTokenRefresherTests.cs.meta
+  s_6c1fd1e2a229e0::t_185263b4bb2e3b 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AccountCredentialService.cs.meta
+  s_6c58920fcb5e4b::t_dcb80ff894ead9 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.Config.cs
+  s_6c58920fcb5e4b::t_800c5abd7bc857 123-134,137-145,150-164
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "ffd121c356ccae50d0328c6e5eee508db0563944",
+  "prompts": {},
+  "sessions": {
+    "s_6c1fd1e2a229e0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cb097e35-266f-4c1f-9b7c-de20affb6c8b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_6c58920fcb5e4b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a0eba2a992a9ac4bb",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_a8c9458399d776": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "b119af13-fc80-4059-ad25-5149834e798d",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_f6b26e96017eda": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "df97bed0-a81a-4172-94c6-b2e89d0c9541",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_fbd98eba7c9706": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f1381f8e-6442-4685-b66f-474732a0fb32",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

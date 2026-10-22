@@ -1,0 +1,38 @@
+Unity-MCP-Plugin/Assets/root/Tests/Editor/Tool/Assets/AssetsPrefabCreateTests.cs
+  39ce660a0113894c 274-280,287,303,317,322,331,336,345,350
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Assets.Prefab.Create.cs
+  39ce660a0113894c 64-67,69-77,126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "aac54c0a9ababd61e3227939a2a8e5c6d7675a5c",
+  "prompts": {
+    "39ce660a0113894c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bb1982f3-0a6e-41e6-a1f1-76418b796147",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 9515,
+      "total_deletions": 149,
+      "accepted_lines": 131,
+      "overriden_lines": 0
+    },
+    "abe60fa860234cf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ea288b12-a57f-449b-8d41-3fbbd3651131",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 109,
+      "total_deletions": 0,
+      "accepted_lines": 0,
+      "overriden_lines": 0
+    }
+  }
+}
