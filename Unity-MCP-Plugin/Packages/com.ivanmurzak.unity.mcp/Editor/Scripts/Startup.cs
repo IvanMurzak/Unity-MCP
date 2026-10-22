@@ -27,6 +27,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static Startup()
         {
+            // Asset import workers load these editor assemblies too; they must not build, connect or quit: a no-auth
+            // server keeps one plugin connection, so a worker's replaced the editor's (#1050). Not isBatchMode:
+            // headless CLI/CI editors still need MCP.
+            if (AssetDatabase.IsAssetImportWorkerProcess())
+                return;
+
             // Install the Unity main-thread implementation BEFORE building the plugin. Building reflects over
             // every [AiSkill] member, and Skill_Rql.Markdown runs its renderer through MainThread.Instance.Run.
             // [InitializeOnLoad] static constructors always run before [InitializeOnLoadMethod], so here
