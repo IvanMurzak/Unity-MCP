@@ -112,6 +112,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static McpServerManager()
         {
+            // The server belongs to the main editor; an asset import worker must not download, adopt or stop it (#1050).
+            if (AssetDatabase.IsAssetImportWorkerProcess())
+                return;
+
             // Register for editor quit to clean up the server process
             EditorApplication.quitting += OnEditorQuitting;
 

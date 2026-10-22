@@ -36,10 +36,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static void StartCliSessionIfRequested()
         {
-            // Asset import workers inherit the editor's environment; only the main editor may quit itself.
-            if (AssetDatabase.IsAssetImportWorkerProcess())
-                return;
-
             var args = ArgsUtils.ParseCommandLineArguments();
             CliSessionNonce = EnvironmentUtils.ReadSessionNonce(args, Environment.GetEnvironmentVariable);
 
