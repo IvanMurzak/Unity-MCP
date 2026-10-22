@@ -58,9 +58,10 @@ jobs:
 
     name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
-    # Measured ~4-22 min per leg (standalone ~4-7, editmode ~10-16). Without a cap a hung leg ran to GitHub's 360-min default, which is
+    # Measured ~4-22 min per leg (standalone ~4-7, editmode ~10-16) until the RQL Lighting module (#1053): 6000.6.3f1 editmode now
+    # takes 27-44 min, so 45 cancelled about half its runs. Without a cap a hung leg ran to GitHub's 360-min default, which is
     # where the ~4,500-min zombie runs in this workflow's history came from.
-    timeout-minutes: 45
+    timeout-minutes: 60
     env:
       CHAIN_LOCK: ${{ inputs.lock }}
       CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
