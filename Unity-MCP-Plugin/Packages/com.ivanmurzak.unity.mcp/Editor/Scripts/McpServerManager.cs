@@ -112,6 +112,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static McpServerManager()
         {
+            // The server belongs to the main editor; an asset import worker must not download, adopt or stop it (#1050).
+            if (AssetDatabase.IsAssetImportWorkerProcess())
+                return;
+
             // Register for editor quit to clean up the server process
             EditorApplication.quitting += OnEditorQuitting;
 
@@ -163,7 +167,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// <c>v&lt;ServerVersion&gt;</c> release with all 7 RID zips exists on GameDev-MCP-Server
         /// BEFORE cutting a plugin release that pins it — otherwise the download 404s).
         /// </summary>
-        public const string ServerVersion = "9.2.14";
+        public const string ServerVersion = "9.2.15";
 
         public const string ExecutableName = "gamedev-mcp-server";
 
