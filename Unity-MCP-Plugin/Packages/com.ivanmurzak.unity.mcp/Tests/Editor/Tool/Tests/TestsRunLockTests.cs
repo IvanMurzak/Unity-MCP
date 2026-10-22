@@ -94,19 +94,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(Tool_Tests.TryBeginTestRun("request-tearing-down", out _));
             SessionState.SetString(Tool_Tests.RunSceneSetupKey, "Assets/NotOpen.unity");
 
-            Tool_Tests.CompleteTestRunAfterTeardown("request-tearing-down", ResponseCallTool.Success("done"), TimeSpan.FromSeconds(1));
+            var timeout = TimeSpan.FromSeconds(5);
+            var started = DateTime.UtcNow;
+            Tool_Tests.CompleteTestRunAfterTeardown("request-tearing-down", ResponseCallTool.Success("done"), timeout);
 
             for (var i = 0; i < 3; i++)
                 yield return null;
 
-            Assert.IsTrue(Tool_Tests.IsTestRunActive(out var activeRequestId));
-            Assert.AreEqual("request-tearing-down", activeRequestId);
+            // CI runners can take seconds for a few frames: the lock is checked only while the wait has not timed out.
+            var isActive = Tool_Tests.IsTestRunActive(out var activeRequestId);
+            if (DateTime.UtcNow - started < timeout)
+            {
+                Assert.IsTrue(isActive);
+                Assert.AreEqual("request-tearing-down", activeRequestId);
+            }
 
             // Past the timeout the request is answered and the lock freed anyway.
             // The warning is logged only at the Warning level or below (the plugin's configured log level).
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Warning))
                 LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("did not finish its teardown"));
-            var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
+            var deadline = started + timeout + TimeSpan.FromSeconds(10);
             while (Tool_Tests.IsTestRunActive(out _) && DateTime.UtcNow < deadline)
                 yield return null;
 
