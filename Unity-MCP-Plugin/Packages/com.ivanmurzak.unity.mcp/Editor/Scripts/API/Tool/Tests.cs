@@ -43,14 +43,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         const string PendingTestClassKey = "MCP_PendingTestRun_TestClass";
         const string PendingTestMethodKey = "MCP_PendingTestRun_TestMethod";
         const string PendingTestQueryKey = "MCP_PendingTestRun_TestQuery";
-        const string ActiveTestRunStartedUtcTicksKey = "Unity_MCP_TestRunner_ActiveStartedUtcTicks";
+        internal const string ActiveTestRunStartedUtcTicksKey = "Unity_MCP_TestRunner_ActiveStartedUtcTicks";
         internal const string RunSceneSetupKey = "Unity_MCP_TestRunner_RunSceneSetup";
 
         static readonly TimeSpan ActiveTestRunTimeoutGrace = TimeSpan.FromMinutes(1);
         static readonly TimeSpan MinimumActiveTestRunLease = TimeSpan.FromMinutes(10);
         internal static readonly TimeSpan TeardownTimeout = TimeSpan.FromSeconds(60);
 
-        static EditorApplication.CallbackFunction? _waitForTeardown;
+        // The request CompleteTestRunAfterTeardown is waiting to answer.
+        static string? _waitingRequestId;
 
         static Tool_Tests()
         {
@@ -164,7 +165,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SessionState.SetString(RunSceneSetupKey, OpenScenePaths());
             var testRunnerApi = TestRunnerApi; // creates the collector if needed
             _resultCollector?.StartLogCapture();
-            testRunnerApi.Execute(new ExecutionSettings(filter));
+            try
+            {
+                testRunnerApi.Execute(new ExecutionSettings(filter));
+            }
+            catch
+            {
+                // No run, so no RunFinished / OnError to stop the capture: it would collect every Editor log until the next run.
+                _resultCollector?.StopLogCapture();
+                throw;
+            }
         }
 
         internal static string OpenScenePaths()
@@ -186,8 +196,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         internal static void CompleteTestRunAfterTeardown(string requestId, ResponseCallTool response, TimeSpan? timeout = null)
         {
             // OnError can follow RunFinished (a teardown task failing): the request is answered once.
-            if (_waitForTeardown != null)
+            if (_waitingRequestId == requestId)
                 return;
+            _waitingRequestId = requestId;
 
             var runScenePaths = SessionState.GetString(RunSceneSetupKey, string.Empty);
             if (string.IsNullOrEmpty(runScenePaths))
@@ -195,22 +206,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var waitFor = timeout ?? TeardownTimeout;
             var deadline = DateTime.UtcNow + waitFor;
 
-            _waitForTeardown = () =>
+            void WaitForTeardown()
             {
                 var complete = IsTestRunTeardownComplete(EditorApplication.isPlayingOrWillChangePlaymode, OpenScenePaths, runScenePaths);
                 if (!complete && DateTime.UtcNow < deadline)
                     return;
 
-                EditorApplication.update -= _waitForTeardown;
-                _waitForTeardown = null;
+                EditorApplication.update -= WaitForTeardown;
+                if (_waitingRequestId == requestId)
+                    _waitingRequestId = null;
                 if (!complete)
                     UnityMcpPluginEditor.Instance.LogWarn("Unity's test run did not finish its teardown within {timeout} s; answering anyway.",
                         typeof(Tool_Tests), waitFor.TotalSeconds);
 
                 SessionState.EraseString(RunSceneSetupKey);
                 CompleteTestRun(requestId, response);
-            };
-            EditorApplication.update += _waitForTeardown;
+            }
+
+            EditorApplication.update += WaitForTeardown;
         }
 
         /// <summary>Frees the test-run lock and delivers <paramref name="response"/> to <paramref name="requestId"/>.</summary>

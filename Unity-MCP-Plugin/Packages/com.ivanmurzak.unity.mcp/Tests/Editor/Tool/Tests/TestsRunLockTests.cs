@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
@@ -28,24 +29,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// </summary>
     public class TestsRunLockTests
     {
-        // The scene setup of the run executing these tests, when it was started by tests-run.
+        // The lock and scene setup of the run executing these tests, when it was started by tests-run: restored after each
+        // test, or that run would finish without a request to answer.
+        string _runRequestId = string.Empty;
+        string _runStartedUtcTicks = string.Empty;
         string _runSceneSetup = string.Empty;
 
         [SetUp]
         public void SetUp()
         {
-            Tool_Tests.ClearActiveTestRun();
+            _runRequestId = TestResultCollector.TestCallRequestID.Value;
+            _runStartedUtcTicks = SessionState.GetString(Tool_Tests.ActiveTestRunStartedUtcTicksKey, string.Empty);
             _runSceneSetup = SessionState.GetString(Tool_Tests.RunSceneSetupKey, string.Empty);
+            Tool_Tests.ClearActiveTestRun();
         }
 
         [TearDown]
         public void TearDown()
         {
             Tool_Tests.ClearActiveTestRun();
-            if (string.IsNullOrEmpty(_runSceneSetup))
-                SessionState.EraseString(Tool_Tests.RunSceneSetupKey);
+            TestResultCollector.TestCallRequestID.Value = _runRequestId;
+            RestoreSessionString(Tool_Tests.ActiveTestRunStartedUtcTicksKey, _runStartedUtcTicks);
+            RestoreSessionString(Tool_Tests.RunSceneSetupKey, _runSceneSetup);
+        }
+
+        static void RestoreSessionString(string key, string value)
+        {
+            if (string.IsNullOrEmpty(value))
+                SessionState.EraseString(key);
             else
-                SessionState.SetString(Tool_Tests.RunSceneSetupKey, _runSceneSetup);
+                SessionState.SetString(key, value);
         }
 
         [Test]
@@ -90,7 +103,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("request-tearing-down", activeRequestId);
 
             // Past the timeout the request is answered and the lock freed anyway.
-            LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("did not finish its teardown"));
+            // The warning is logged only at the Warning level or below (the plugin's configured log level).
+            if (UnityMcpPlugin.IsLogEnabled(LogLevel.Warning))
+                LogAssert.Expect(LogType.Warning, new System.Text.RegularExpressions.Regex("did not finish its teardown"));
             var deadline = DateTime.UtcNow + TimeSpan.FromSeconds(5);
             while (Tool_Tests.IsTestRunActive(out _) && DateTime.UtcNow < deadline)
                 yield return null;

@@ -110,12 +110,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             Application.logMessageReceivedThreaded += OnLogMessageReceived;
         }
 
+        internal void StopLogCapture()
+            => Application.logMessageReceivedThreaded -= OnLogMessageReceived;
+
         public void RunFinished(ITestResultAdaptor result)
         {
             UnityMcpPluginEditor.Instance.LogInfo("RunFinished", typeof(TestResultCollector));
 
-            // Unsubscribe from log messages
-            Application.logMessageReceivedThreaded -= OnLogMessageReceived;
+            StopLogCapture();
 
             var duration = DateTime.Now - startTime;
             _summary.Duration = duration;
@@ -162,24 +164,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             {
                 var mcpPlugin = UnityMcpPluginEditor.Instance.McpPluginInstance;
                 ResponseCallTool response;
-                if (string.IsNullOrWhiteSpace(resultQuery) == false)
+                try
                 {
-                    // tests-run declares a TestRunResponse output schema: the summary stays structured, the text is the projection.
-                    var summaryOnly = new TestRunResponse { Summary = _summary };
-                    response = ProjectedResponse(_summary, resultQuery!,
-                        mcpPlugin?.McpManager.Reflector.JsonSerializer.SerializeToNode(summaryOnly));
+                    if (string.IsNullOrWhiteSpace(resultQuery) == false)
+                    {
+                        // tests-run declares a TestRunResponse output schema: the summary stays structured, the text is the projection.
+                        var summaryOnly = new TestRunResponse { Summary = _summary };
+                        response = ProjectedResponse(_summary, resultQuery!,
+                            mcpPlugin?.McpManager.Reflector.JsonSerializer.SerializeToNode(summaryOnly));
+                    }
+                    else
+                    {
+                        var structuredResponse = CreateStructuredResponse(
+                            includePassingTests: IncludePassingTests.Value,
+                            includeMessage: IncludeMessage.Value,
+                            includeLogs: IncludeLogs.Value,
+                            includeMessageStacktrace: IncludeMessageStacktrace.Value,
+                            includeLogsStacktrace: IncludeLogsStacktrace.Value);
+                        if (mcpPlugin == null) throw new InvalidOperationException("MCP Plugin instance is not available.");
+                        response = ResponseCallValueTool<TestRunResponse>
+                            .SuccessStructured(mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(structuredResponse));
+                    }
                 }
-                else
+                catch (Exception ex)
                 {
-                    var structuredResponse = CreateStructuredResponse(
-                        includePassingTests: IncludePassingTests.Value,
-                        includeMessage: IncludeMessage.Value,
-                        includeLogs: IncludeLogs.Value,
-                        includeMessageStacktrace: IncludeMessageStacktrace.Value,
-                        includeLogsStacktrace: IncludeLogsStacktrace.Value);
-                    if (mcpPlugin == null) throw new InvalidOperationException("MCP Plugin instance is not available.");
-                    response = ResponseCallValueTool<TestRunResponse>
-                        .SuccessStructured(mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(structuredResponse));
+                    // Still answer and free the lock: otherwise both wait for the whole lease.
+                    UnityMcpPluginEditor.Instance.LogError("Building the test run response failed: {message}",
+                        typeof(TestResultCollector), ex.Message);
+                    response = ResponseCallValueTool<TestRunResponse>.Error($"Test run finished, but building its response failed: {ex.Message}");
                 }
 
                 Tool_Tests.CompleteTestRunAfterTeardown(requestId, response);
@@ -199,9 +211,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         /// </summary>
         public void OnError(string message)
         {
+            // Stop capturing first: this method's own error log must not be listed among the run's errors.
+            StopLogCapture();
             UnityMcpPluginEditor.Instance.LogError("Test run failed: {message}", typeof(TestResultCollector), message);
-
-            Application.logMessageReceivedThreaded -= OnLogMessageReceived;
 
             var requestId = TestCallRequestID.Value;
             if (string.IsNullOrEmpty(requestId))
