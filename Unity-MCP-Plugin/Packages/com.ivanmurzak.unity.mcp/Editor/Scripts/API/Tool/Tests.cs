@@ -50,7 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         static readonly TimeSpan MinimumActiveTestRunLease = TimeSpan.FromMinutes(10);
         internal static readonly TimeSpan TeardownTimeout = TimeSpan.FromSeconds(60);
 
-        static string? _completingRequestId;
+        static EditorApplication.CallbackFunction? _waitForTeardown;
 
         static Tool_Tests()
         {
@@ -174,8 +174,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// Unity's run is over once the Editor has left Play Mode and the scenes open when the run started are open again
         /// (Unity's RestoreSceneSetupTask, near the end of its teardown). The test runner's own "run active" flag is internal.
         /// </summary>
-        internal static bool IsTestRunTeardownComplete(bool isPlayingOrWillChangePlaymode, string openScenePaths, string runScenePaths)
-            => !isPlayingOrWillChangePlaymode && openScenePaths == runScenePaths;
+        internal static bool IsTestRunTeardownComplete(bool isPlayingOrWillChangePlaymode, Func<string> openScenePaths, string runScenePaths)
+            => !isPlayingOrWillChangePlaymode && openScenePaths() == runScenePaths;
 
         /// <summary>
         /// Delivers <paramref name="response"/> to <paramref name="requestId"/> and frees the test-run lock once Unity's run
@@ -186,36 +186,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         internal static void CompleteTestRunAfterTeardown(string requestId, ResponseCallTool response, TimeSpan? timeout = null)
         {
             // OnError can follow RunFinished (a teardown task failing): the request is answered once.
-            if (_completingRequestId == requestId)
+            if (_waitForTeardown != null)
                 return;
-            _completingRequestId = requestId;
 
-            var runScenePaths = SessionState.GetString(RunSceneSetupKey, OpenScenePaths());
+            var runScenePaths = SessionState.GetString(RunSceneSetupKey, string.Empty);
+            if (string.IsNullOrEmpty(runScenePaths))
+                runScenePaths = OpenScenePaths();
             var waitFor = timeout ?? TeardownTimeout;
             var deadline = DateTime.UtcNow + waitFor;
 
-            void WaitForTeardown()
+            _waitForTeardown = () =>
             {
-                var complete = IsTestRunTeardownComplete(EditorApplication.isPlayingOrWillChangePlaymode, OpenScenePaths(), runScenePaths);
+                var complete = IsTestRunTeardownComplete(EditorApplication.isPlayingOrWillChangePlaymode, OpenScenePaths, runScenePaths);
                 if (!complete && DateTime.UtcNow < deadline)
                     return;
 
-                EditorApplication.update -= WaitForTeardown;
+                EditorApplication.update -= _waitForTeardown;
+                _waitForTeardown = null;
                 if (!complete)
                     UnityMcpPluginEditor.Instance.LogWarn("Unity's test run did not finish its teardown within {timeout} s; answering anyway.",
                         typeof(Tool_Tests), waitFor.TotalSeconds);
 
-                _completingRequestId = null;
                 SessionState.EraseString(RunSceneSetupKey);
-                ClearActiveTestRun(requestId);
-                _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
-                {
-                    RequestId = requestId,
-                    Result = response.SetRequestID(requestId)
-                });
-            }
+                CompleteTestRun(requestId, response);
+            };
+            EditorApplication.update += _waitForTeardown;
+        }
 
-            EditorApplication.update += WaitForTeardown;
+        /// <summary>Frees the test-run lock and delivers <paramref name="response"/> to <paramref name="requestId"/>.</summary>
+        static void CompleteTestRun(string requestId, ResponseCallTool response)
+        {
+            ClearActiveTestRun(requestId);
+            _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
+            {
+                RequestId = requestId,
+                Result = response.SetRequestID(requestId)
+            });
         }
 
         internal static void SetActiveTestRunStartedUtc(DateTime utcStarted)
@@ -354,11 +360,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return;
             }
 
-            _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
-            {
-                RequestId = requestId,
-                Result = ResponseCallValueTool<TestRunResponse>.Error(message).SetRequestID(requestId)
-            });
+            CompleteTestRun(requestId, ResponseCallValueTool<TestRunResponse>.Error(message));
         }
 
         /// <summary>

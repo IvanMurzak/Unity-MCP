@@ -80,7 +80,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             startTime = DateTime.Now;
             var testCount = CountTests(testsToRun);
 
-            StartLogCapture();
+            // tests-run captures from before Unity's run (Tool_Tests.ExecuteTestRun): keep the prebuild setup's logs. Subscribe
+            // again all the same: entering Play Mode reloads the domain.
+            StartLogCapture(clearLogs: string.IsNullOrEmpty(TestCallRequestID.Value));
             _results.Clear();
             _summary.Clear();
             _summary.TotalTests = testCount;
@@ -90,14 +92,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         }
 
         /// <summary>
-        /// Clears the captured logs and captures the new ones. Also called before Unity starts the run: a run can fail
+        /// Clears the captured logs and captures the new ones. tests-run calls it before Unity starts the run: a run can fail
         /// before <see cref="RunStarted"/> (a throwing IPrebuildSetup), and <see cref="OnError"/> reports this run's errors.
         /// </summary>
-        internal void StartLogCapture()
+        internal void StartLogCapture(bool clearLogs = true)
         {
-            lock (_logsMutex)
+            if (clearLogs)
             {
-                _logs.Clear();
+                lock (_logsMutex)
+                {
+                    _logs.Clear();
+                }
             }
 
             // Subscribe to log messages (using threaded version to catch logs from all threads)
@@ -211,7 +216,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         {
             const int maxErrors = 10;
             var errors = logs
-                .Where(log => log.Type == LogType.Error || log.Type == LogType.Exception || log.Type == LogType.Assert)
+                .Where(log => log.LogLevel >= TestLogEntry.ToLogLevel(LogType.Assert))
                 .Select(log => log.Condition)
                 .Where(condition => condition != message)
                 .ToList();

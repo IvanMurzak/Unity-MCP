@@ -55,23 +55,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(typeof(IErrorCallbacks).IsAssignableFrom(typeof(TestResultCollector)));
         }
 
-        [Test]
-        public void IsTestRunTeardownComplete_WhileInPlayMode_IsFalse()
-        {
-            Assert.IsFalse(Tool_Tests.IsTestRunTeardownComplete(true, "Assets/Main.unity", "Assets/Main.unity"));
-        }
-
-        [Test]
-        public void IsTestRunTeardownComplete_WhileTheRunSceneIsOpen_IsFalse()
-        {
-            Assert.IsFalse(Tool_Tests.IsTestRunTeardownComplete(false, "Assets/InitTestScene0.unity", "Assets/Main.unity"));
-        }
-
-        [Test]
-        public void IsTestRunTeardownComplete_WhenScenesAreRestoredOutOfPlayMode_IsTrue()
-        {
-            Assert.IsTrue(Tool_Tests.IsTestRunTeardownComplete(false, "Assets/Main.unity", "Assets/Main.unity"));
-        }
+        [TestCase(true, "Assets/Main.unity", ExpectedResult = false, TestName = "IsTestRunTeardownComplete_WhileInPlayMode_IsFalse")]
+        [TestCase(false, "Assets/InitTestScene0.unity", ExpectedResult = false, TestName = "IsTestRunTeardownComplete_WhileTheRunSceneIsOpen_IsFalse")]
+        [TestCase(false, "Assets/Main.unity", ExpectedResult = true, TestName = "IsTestRunTeardownComplete_WhenScenesAreRestoredOutOfPlayMode_IsTrue")]
+        public bool IsTestRunTeardownComplete(bool isPlaying, string openScenePaths)
+            => Tool_Tests.IsTestRunTeardownComplete(isPlaying, () => openScenePaths, "Assets/Main.unity");
 
         [UnityTest]
         public IEnumerator CompleteTestRunAfterTeardown_WhenScenesAreRestored_FreesTheLock()
