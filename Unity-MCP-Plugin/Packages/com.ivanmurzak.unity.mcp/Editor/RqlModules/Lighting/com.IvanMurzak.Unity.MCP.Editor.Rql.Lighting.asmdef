@@ -1,0 +1,26 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting",
+    "rootNamespace": "",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "System.Text.Json.dll",
+        "Rql.Contracts.dll",
+        "Rql.Parser.dll",
+        "Rql.Execution.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY",
+        "UNITY_MCP_DEPS_13"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

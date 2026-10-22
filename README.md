@@ -182,6 +182,14 @@ The plugin ships with 70+ built-in tools across four categories. Each tool bring
 
 </details>
 
+<details>
+  <summary>Lighting</summary>
+
+- RQL source `lighting` (via `rql-query` / `rql-mutate`) - the active scene's environment (ambient, fog, skybox, sun, reflections; undoable), its Lighting Settings asset and the bake: `CreateSettings`, `UseSettings`, `Bake`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`
+- `LightProbeGroup.PlaceGrid(size, spacing)` - fill a box with evenly spaced light probes; `ReflectionProbe.Bake()` - bake a Custom probe next to its scene
+
+</details>
+
 ## Install Additional Skills and Tools
 
 Install extensions when need more tools or [create your own tools](#add-custom-tool).

@@ -1,0 +1,33 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting.Tests",
+    "rootNamespace": "",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Editor",
+        "com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting",
+        "com.IvanMurzak.Unity.MCP.Editor.Tests"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "System.Text.Json.dll",
+        "McpPlugin.Common.dll",
+        "Rql.Contracts.dll",
+        "Rql.Parser.dll",
+        "Rql.Execution.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY",
+        "UNITY_MCP_DEPS_13"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -4,6 +4,19 @@
 
 ### Added
 
+- **`staticFlags` on GameObject (RQL).** The per-flag Static Editor Flags behind `isStatic`
+  (ContributeGI, OccluderStatic, OccludeeStatic, BatchingStatic, ReflectionProbeStatic): filter with
+  `where staticFlags contains "ContributeGI"`, assign a list (`set staticFlags = ["ContributeGI"]`);
+  validated all-or-nothing and undoable; obsolete flags a GameObject still carries are kept.
+
+- **Lighting RQL module.** The `lighting` source reads and edits the active scene's environment (ambient,
+  fog, skybox, sun, default reflections; undoable) and its Lighting Settings asset (`CreateSettings`,
+  `UseSettings`; undoable) and drives the bake (`Bake` in the background or blocking, `isBaking` /
+  `bakeProgress`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`; refused without a graphics device
+  unless the CPU lightmapper is set, instead of crashing the Editor). `LightProbeGroup` gains
+  `PlaceGrid(size, spacing)`, `ReflectionProbe` gains `Bake()` (Custom probes; Baked ones bake with the lighting). The `unity-rql` skill lists the source in one
+  line; members and calls are read on demand with `rql-schema "lighting"`.
+
 - **Editor-session contract shared by the engine CLIs.** An editor started by a CLI session
   (`AIGD_SESSION_OWNER=cli`) quits after `AIGD_SESSION_IDLE_SECONDS` without tool calls
   (`UNITY_MCP_IDLE_TIMEOUT` still works and is the fallback), saving changed scenes and assets first. The

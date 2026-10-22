@@ -25,12 +25,15 @@ Kept as tools: `script-*`, `tests-run`, `screenshot-*`, `package-*`, `unity-tool
 ## Code
 
 - RQL itself is the NuGet package `com.IvanMurzak.Rql` (pinned in `Editor/DependencyResolver/NuGetConfig.cs`, Editor-only), installed by the NuGet Dependency Manager like McpPlugin / ReflectorNet.
-- `Editor/Scripts/Rql/` — engine (`RqlUnity`: Undo group per mutation, dirty marking; `RqlUnity.Mutate` saves assets,
+- `Editor/Scripts/Rql/` — engine (`RqlUnity`: Undo group per mutation, dirty marking; a plain view object over scene-level
+  settings with no owner component implements `IRqlUndoOwners` to name the objects to record, e.g. `LightingEnvironment`; `RqlUnity.Mutate` saves assets,
   scenes and the open prefab after every `rql-mutate`, modules flush deferred file writes on `RqlUnity.Saving`), `RqlEditorApi` (the `editor`
   source), `RqlProfiler` (the `profiler` source), `RqlTests` (`tests` / `testResults`), schema, type index, guide texts, `Modules/UnityCoreModule.cs`, one adapter per file in `Adapters/`.
 - `Editor/Scripts/API/Tool/Rql*.cs` — the tools; `Editor/Scripts/Skills/Skill_Rql.cs` — the `unity-rql` skill.
 - `Editor/RqlModules/<Feature>/` — optional modules in their own asmdef, compiled only when the Unity module exists
-  (`versionDefines` + `defineConstraints`): Physics. Feature modules live in the extensions (e.g. the Particle System
+  (`versionDefines` + `defineConstraints`): Physics. Lighting (built into every Unity version, so not gated) has its own
+  module and asmdef there too: the `lighting` source, LightProbeGroup / ReflectionProbe adapters, and no guide (agents
+  read it with `rql-schema "lighting"`, like `editor` and `profiler`). Feature modules live in the extensions (e.g. the Particle System
   module and its playback methods are in `Unity-AI-ParticleSystem`).
 
 ## Extensions
