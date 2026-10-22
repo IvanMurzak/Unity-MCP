@@ -27,11 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static Startup()
         {
-            // An asset import worker (the batch-mode process Unity starts to import or bake assets, e.g. Entities
-            // SubScenes) loads these editor assemblies too, and inherits the editor's environment. It must not build
-            // the plugin, connect, or quit itself: a no-auth server keeps one plugin connection, so a worker that
-            // connected replaced the editor's connection (#1050). Only the main editor and headless CLI/CI editors,
-            // which are not workers, go on.
+            // Asset import workers load these editor assemblies too; they must not build, connect or quit: a no-auth
+            // server keeps one plugin connection, so a worker's replaced the editor's (#1050). Not isBatchMode:
+            // headless CLI/CI editors still need MCP.
             if (AssetDatabase.IsAssetImportWorkerProcess())
                 return;
 
