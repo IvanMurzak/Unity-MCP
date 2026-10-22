@@ -35,6 +35,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `install-plugin --with-server` fetches GameDev-MCP-Server 9.2.14 by default (`DEFAULT_SERVER_VERSION`, was
+  9.2.13), in lockstep with the plugin's `ServerVersion`: a rebuild on ReflectorNet 5.5.0.
+
 - `exec` waits 310000 ms by default (was 180000; `--timeout` and `ExecCodeOptions.timeoutMs`; exported as
   `DEFAULT_EXEC_TIMEOUT_MS`): longer than the MCP server's default `tool-timeout` (300000, McpPlugin 8.11.0+), so
   the CLI never gives up on a call the server is still waiting for.

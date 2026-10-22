@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "13";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "14";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -119,14 +119,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 8.11.0 sends a tool call to the plugin once (no re-send per plugin-timeout), adds the
             // server's `tool-timeout` arg (Consts.MCP.Server.Args/Env.ToolTimeout, DefaultToolTimeoutMs)
             // that McpServerManager passes, and the plugin-side duplicate-request guard.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.11.0", includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.11.1", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised
             // by the EditMode tests under Tests/Editor/AtomicApi/, which
             // compile-fail against 5.0.0. 5.1.1 adds defensive try/catch around
             // reflection so the documented no-throw contract on Try* methods holds.
-            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.4.2",  includeInBuild: true),
+            // 5.5.0 (McpPlugin 8.11.1 depends on it) makes ReflectorNet's default MainThread recognize the
+            // main thread by its SynchronizationContext, not managed thread id 1. The plugin replaces
+            // MainThread.Instance with UnityMainThread (MainThreadDispatcher.MainThreadId), so Unity's
+            // main-thread detection, including Unity 7 CoreCLR's id-2 main thread, does not rely on it.
+            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.5.0",  includeInBuild: true),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
