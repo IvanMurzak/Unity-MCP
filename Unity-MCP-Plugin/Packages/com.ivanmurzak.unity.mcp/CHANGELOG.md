@@ -48,6 +48,12 @@
 
 ### Fixed
 
+- **`tests-run` answered before Unity's run was over, and never when the run failed** (#1049). The answer and
+  the run lock now wait until Unity has left Play Mode and restored the scenes, so the next `tests-run` cannot
+  start on top of the previous run; `tests-run` also refuses to start while the Editor is in Play Mode. A run
+  Unity aborts with an error (a throwing `IPrebuildSetup`, a failing test-runner task) is answered with the
+  error and the errors logged during the run, and frees the lock, instead of holding it for the whole lease.
+
 - **Changing Timeout in the AI Game Developer window threw a `NullReferenceException`** before saving: it
   refreshed a stdio-config text field the window no longer has.
 

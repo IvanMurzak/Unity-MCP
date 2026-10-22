@@ -20,7 +20,7 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 {
-    public class TestResultCollector : ICallbacks
+    public class TestResultCollector : ICallbacks, IErrorCallbacks
     {
         static volatile int counter = 0;
 
@@ -80,20 +80,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             startTime = DateTime.Now;
             var testCount = CountTests(testsToRun);
 
-            lock (_logsMutex)
-            {
-                _logs.Clear();
-            }
+            StartLogCapture();
             _results.Clear();
             _summary.Clear();
             _summary.TotalTests = testCount;
 
+            UnityMcpPluginEditor.Instance.LogInfo("Run {testMode} started: {testCount} tests.",
+                typeof(TestResultCollector), TestModeAsString, testCount);
+        }
+
+        /// <summary>
+        /// Clears the captured logs and captures the new ones. Also called before Unity starts the run: a run can fail
+        /// before <see cref="RunStarted"/> (a throwing IPrebuildSetup), and <see cref="OnError"/> reports this run's errors.
+        /// </summary>
+        internal void StartLogCapture()
+        {
+            lock (_logsMutex)
+            {
+                _logs.Clear();
+            }
+
             // Subscribe to log messages (using threaded version to catch logs from all threads)
             Application.logMessageReceivedThreaded -= OnLogMessageReceived;
             Application.logMessageReceivedThreaded += OnLogMessageReceived;
-
-            UnityMcpPluginEditor.Instance.LogInfo("Run {testMode} started: {testCount} tests.",
-                typeof(TestResultCollector), TestModeAsString, testCount);
         }
 
         public void RunFinished(ITestResultAdaptor result)
@@ -130,10 +139,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             UnityMcpPluginEditor.Instance.LogInfo("Final duration: {duration:mm\\:ss\\.fff}. Completed: {completed}/{total}",
                 typeof(TestResultCollector), duration, _results.Count, _summary.TotalTests);
 
-            UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
-
-            if (!EnvironmentUtils.IsCi())
-                UnityMcpPluginEditor.ConnectIfNeeded();
+            EnsureMcpConnection();
 
             // The testResults RQL source: this run's results, also after the request is answered.
             Rql.RqlTests.SetLastResults(_results.Select(r => new Rql.RqlTestResult
@@ -146,7 +152,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             }));
 
             var requestId = TestCallRequestID.Value;
-            Tool_Tests.ClearActiveTestRun(requestId);
             var resultQuery = ResultQuery.Value;
             if (string.IsNullOrEmpty(requestId) == false)
             {
@@ -172,18 +177,56 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                         .SuccessStructured(mcpPlugin.McpManager.Reflector.JsonSerializer.SerializeToNode(structuredResponse));
                 }
 
-                _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
-                {
-                    RequestId = requestId,
-                    Result = response.SetRequestID(requestId)
-                });
+                Tool_Tests.CompleteTestRunAfterTeardown(requestId, response);
             }
             else
             {
+                Tool_Tests.ClearActiveTestRun(requestId);
                 UnityMcpPluginEditor.Instance.LogTrace(
                     "Test run finished without a pending MCP request ID (likely a manual test run from the Unity Editor). No results will be delivered over MCP.",
                     typeof(TestResultCollector));
             }
+        }
+
+        /// <summary>
+        /// Unity reports a run that fails with an error (a throwing IPrebuildSetup, an exception in one of its own tasks) here
+        /// and never calls <see cref="RunFinished"/> for it: answer the request with the error and free the lock.
+        /// </summary>
+        public void OnError(string message)
+        {
+            UnityMcpPluginEditor.Instance.LogError("Test run failed: {message}", typeof(TestResultCollector), message);
+
+            Application.logMessageReceivedThreaded -= OnLogMessageReceived;
+
+            var requestId = TestCallRequestID.Value;
+            if (string.IsNullOrEmpty(requestId))
+                return;
+
+            EnsureMcpConnection();
+            Tool_Tests.CompleteTestRunAfterTeardown(requestId, ResponseCallValueTool<TestRunResponse>.Error(RunErrorMessage(message, GetLogs())));
+        }
+
+        /// <summary><paramref name="message"/> plus the last errors logged during the run: Unity's message alone names no cause.</summary>
+        internal static string RunErrorMessage(string message, IReadOnlyList<TestLogEntry> logs)
+        {
+            const int maxErrors = 10;
+            var errors = logs
+                .Where(log => log.Type == LogType.Error || log.Type == LogType.Exception || log.Type == LogType.Assert)
+                .Select(log => log.Condition)
+                .Where(condition => condition != message)
+                .ToList();
+            var text = $"Test run failed: {message}";
+            if (errors.Count > 0)
+                text += "\n\nErrors logged during the run:\n- " + string.Join("\n- ", errors.Skip(Math.Max(0, errors.Count - maxErrors)));
+            return text;
+        }
+
+        static void EnsureMcpConnection()
+        {
+            UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
+
+            if (!EnvironmentUtils.IsCi())
+                UnityMcpPluginEditor.ConnectIfNeeded();
         }
 
         public void TestStarted(ITestAdaptor test)
