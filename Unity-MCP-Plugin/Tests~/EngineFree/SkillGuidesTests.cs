@@ -34,8 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             Assert.Contains(windows ? "npm.cmd install -g unity-mcp-cli" : "npm install -g unity-mcp-cli", guide);
             Assert.Contains("run-tool rql-schema --input '{}'", guide);
             Assert.DoesNotContain("<tool-name>", guide);
-            Assert.DoesNotContain("@SHELL@", guide);
-            Assert.DoesNotContain("@unity-mcp-cli@", guide);
+            Assert.DoesNotMatch("@[A-Z_]+@", guide);
             Assert.DoesNotContain("<<'EOF'", guide);
         }
 
