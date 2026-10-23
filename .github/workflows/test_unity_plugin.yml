@@ -257,9 +257,12 @@ jobs:
         env:
           RESULTS: ${{ steps.tests.outputs.artifactsPath }}
         run: |
-          passed="$(grep -ho '<test-run [^>]*' "$RESULTS"/*.xml | grep -o 'passed="[0-9]*"' | grep -o '[0-9]*' | head -1)"
+          # A fixture tagged at class level must have run too, not only the method-level tags.
+          passed="$(cat "$RESULTS"/*.xml 2>/dev/null | grep -o '<test-run [^>]*' | grep -o 'passed="[0-9]*"' | grep -o '[0-9]*' | head -1 || true)"
           echo "Graphics tests passed: ${passed:-none}"
-          [ "${passed:-0}" -gt 0 ] || { echo "::error title=graphics leg::no Graphics test ran (-testCategory Graphics matched nothing?)"; exit 1; }
+          if [ "${passed:-0}" -gt 0 ] && cat "$RESULTS"/*.xml | grep -q 'name="ScreenshotSceneViewTests"[^>]*result="Passed"'; then exit 0; fi
+          echo "::error title=graphics leg::the Graphics tests did not run (-testCategory Graphics matched nothing, or ScreenshotSceneViewTests did not pass)"
+          exit 1
 
       # --------------------------------------------------------------------- #
       # Test results. Read ONLY by publish_test_results.yml, which runs minutes after this workflow
