@@ -58,17 +58,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <inheritdoc/>
+        protected virtual bool UsePowerShell => Skill_Cli.IsWindows;
+
         protected override void BuildToolCommand(StringBuilder sb, IRunTool tool, string host, string inputExample)
         {
-            var command = tool.ToolType == McpToolType.System
-                ? "run-system-tool"
-                : "run-tool";
-            sb.AppendLine("```bash");
-            sb.AppendLine($"unity-mcp-cli {command} {tool.Name} --input '{inputExample}'");
-            sb.AppendLine("```");
-            sb.AppendLine();
+            var command = tool.ToolType == McpToolType.System ? "run-system-tool" : "run-tool";
+            sb.AppendLine(Skill_Cli.ToolCommand(command, tool.Name, inputExample, UsePowerShell));
             AppendInputFileHint(sb, tool, host, inputExample);
-            sb.AppendLine();
             AppendSkillReferences(sb);
         }
 
@@ -92,24 +88,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <inheritdoc/>
         protected override void AppendInputFileHint(StringBuilder sb, IRunTool tool, string host, string inputExample)
         {
-            if (inputExample == "{}")
-                return;
-            var command = tool.ToolType == McpToolType.System
-                ? "run-system-tool"
-                : "run-tool";
-
-            sb.AppendLine($"> For complex input (multi-line strings, code), save the JSON to a file and use:");
-            sb.AppendLine("> ```bash");
-            sb.AppendLine($"> unity-mcp-cli {command} {tool.Name} --input-file args.json");
-            sb.AppendLine("> ```");
-            sb.AppendLine(">");
-            sb.AppendLine("> Or pipe via stdin (recommended):");
-            sb.AppendLine("> ```bash");
-            sb.AppendLine($"> unity-mcp-cli {command} {tool.Name} --input-file - <<'EOF'");
-            sb.AppendLine("> {\"param\": \"value\"}");
-            sb.AppendLine("> EOF");
-            sb.AppendLine("> ```");
+            if (UsePowerShell || inputExample == "{}") return;
+            var command = tool.ToolType == McpToolType.System ? "run-system-tool" : "run-tool";
+            sb.AppendLine("For complex input, create a JSON file instead:");
+            sb.AppendLine("```bash");
+            sb.AppendLine(Skill_Cli.JsonFile(inputExample, false));
+            sb.AppendLine($"unity-mcp-cli {command} {tool.Name} --input-file args.json");
+            sb.AppendLine("```");
             sb.AppendLine();
         }
+
     }
 }
