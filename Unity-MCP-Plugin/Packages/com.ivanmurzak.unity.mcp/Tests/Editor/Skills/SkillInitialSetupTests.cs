@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void Markdown_ShouldContain_NodejsInstallInstructions()
         {
-            var markdown = Skill_InitialSetup.Markdown;
+            var markdown = Skill_Cli.Markdown;
 
             Assert.That(markdown, Does.Contain("Node.js"));
             Assert.That(markdown, Does.Contain("npm install -g unity-mcp-cli"));
@@ -56,31 +56,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void Markdown_ShouldContain_VersionRequirement()
         {
-            var markdown = Skill_InitialSetup.Markdown;
+            var markdown = Skill_Cli.Markdown;
 
             Assert.That(markdown, Does.Contain("20.19.0"));
             Assert.That(markdown, Does.Contain("22.12.0"));
         }
 
         [Test]
-        public void Markdown_ShouldContain_ExactlyOnePlatformInstallInstructions()
+        public void CliGuide_IsSelfContained_AndInitialSetupLinksToIt()
         {
-            var markdown = Skill_InitialSetup.Markdown;
-
-            // Should contain exactly one of these platform-specific instructions
-            var hasWinget = markdown.Contains("winget install");
-            var hasBrew = markdown.Contains("brew install");
-            var hasAptGet = markdown.Contains("apt-get install");
-
-            var platformCount = (hasWinget ? 1 : 0) + (hasBrew ? 1 : 0) + (hasAptGet ? 1 : 0);
-            Assert.AreEqual(1, platformCount,
-                $"Expected exactly one platform-specific instruction. winget={hasWinget}, brew={hasBrew}, apt-get={hasAptGet}");
+            Assert.That(Skill_Cli.Markdown, Does.Contain("https://nodejs.org/"));
+            Assert.That(Skill_Cli.Markdown, Does.Contain("npx unity-mcp-cli"));
+            Assert.That(Skill_Cli.Markdown, Does.Contain("--input-file args.json"));
+            Assert.That(Skill_InitialSetup.Markdown, Does.Contain("unity-cli"));
+            Assert.That(Skill_InitialSetup.Markdown, Does.Not.Contain("npm install"));
         }
 
         [Test]
         public void Markdown_ShouldContain_TroubleshootingSection()
         {
-            var markdown = Skill_InitialSetup.Markdown;
+            var markdown = Skill_Cli.Markdown;
 
             Assert.That(markdown, Does.Contain("Troubleshooting"));
             Assert.That(markdown, Does.Contain("npm"));

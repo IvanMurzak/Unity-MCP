@@ -37,7 +37,7 @@
          if they drift from NuGetConfig.Packages, so a missed bump cannot silently leave this suite
          testing yesterday's DLLs. McpPlugin is what makes this project a NuGet-mode consumer of the
          framework, which is also what lets a workspace-source override chain reach it. -->
-    <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.12.0" />
+    <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.13.0" />
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="5.5.0" />
   </ItemGroup>
 
@@ -99,6 +99,8 @@
          Uses McpPlugin's [AiTool]/[AiToolType]/[AiSkill*] attributes and McpToolType — pure-managed,
          which is what lets ToolAttributeTests drive the REAL McpPluginBuilder registration path. -->
     <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\Scripts\API\SystemTool\Ping.cs" Link="Source\Tool_Ping.cs" />
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\Scripts\Skills\Skill_InitialSetup.cs" Link="Source\Skill_Guides.cs" />
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\Scripts\Utils\UnitySkillFileGenerator.cs" Link="Source\UnitySkillFileGenerator.cs" />
   </ItemGroup>
 
 </Project>

@@ -54,6 +54,11 @@ namespace com.IvanMurzak.Unity.MCP
                 loggerProvider: loggerProvider,
                 configure: builder =>
                 {
+                    builder.WithConfig(config =>
+                    {
+                        config.SkillMetadata["generated-by"] = "unity-mcp";
+                        config.SkillMetadata["ai-game-dev"] = "exclude";
+                    });
                     builder.WithSkillFileGenerator(new UnitySkillFileGenerator(loggerProvider?.CreateLogger(nameof(UnitySkillFileGenerator))));
                 }
             ));
