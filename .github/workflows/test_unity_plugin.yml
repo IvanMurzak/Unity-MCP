@@ -55,14 +55,24 @@ jobs:
       matrix:
         os: [ubuntu-latest]
         platform: [base, windows-mono]
+        # EditMode runs without a graphics device (-nographics): on these runners the editor renders on the CPU
+        # (llvmpipe), where every new scene repaints the editor for 0.5-3.5 s, and most EditMode tests make one.
+        # The tests that render ([RequiresGraphicsDevice], category Graphics) are ignored there and run in one more
+        # EditMode leg per Unity version, on base, with the renderer.
+        graphics: ${{ fromJSON(inputs.testMode == 'editmode' && '[false, true]' || '[false]') }}
+        exclude:
+          - platform: windows-mono
+            graphics: true
 
-    name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
+    name: ${{ inputs.unityVersion }} ${{ inputs.testMode }}${{ matrix.graphics && ' graphics' || '' }} on ${{ matrix.platform }}
     runs-on: ${{ matrix.os }}
-    # Typical legs take ~4-22 min (standalone ~4-7, editmode ~10-16); since the RQL Lighting module (#1053), 6000.6.3f1 editmode
-    # takes 27-44 min, so the 45-min cap cancelled about half its runs. Without a cap a hung leg ran to GitHub's 360-min default, which is
-    # where the ~4,500-min zombie runs in this workflow's history came from.
+    # Typical legs take ~5-17 min (standalone ~5-10, editmode ~10-17 without a graphics device); with the renderer, 6000.6.3f1
+    # editmode took 27-44 min, so a 45-min cap cancelled about half its runs. Without a cap a hung leg ran to GitHub's 360-min default,
+    # which is where the ~4,500-min zombie runs in this workflow's history came from.
     timeout-minutes: 60
     env:
+      # The leg's name in job ids and artifact names: the test mode, plus "-graphics" for the EditMode leg with the renderer.
+      LEG: ${{ inputs.testMode }}${{ matrix.graphics && '-graphics' || '' }}
       CHAIN_LOCK: ${{ inputs.lock }}
       CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
 
@@ -145,7 +155,7 @@ jobs:
       # in the leg record's skipped[] instead of being proven.
       - name: chain feed
         id: chain
-        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ env.LEG }}-${{ matrix.platform }} --edges unity-dll
 
       # --------------------------------------------------------------------- #
       # 2-c. Cache & run the Unity test-runner
@@ -233,11 +243,26 @@ jobs:
           unityVersion: ${{ inputs.unityVersion }}
           testMode: ${{ inputs.testMode }}
           customImage: ${{ steps.custom_image.outputs.image }}
-          artifactsPath: artifacts-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
+          artifactsPath: artifacts-${{ inputs.unityVersion }}-${{ env.LEG }}-${{ matrix.platform }}
+          # EditMode: -nographics, or only the Graphics category with the renderer (`graphics` in the matrix).
           # The base/editmode leg also runs the T2 chain recorder (Tests/Editor/Chain/ChainRecordTests.cs).
           # Both paths are RELATIVE TO THE UNITY PROJECT ROOT (the recorder resolves them there), so they
           # mean the same files inside the game-ci container and on the host, and contain no spaces.
-          customParameters: -CI true -GITHUB_ACTIONS true${{ (matrix.platform == 'base' && inputs.testMode == 'editmode') && ' -CHAIN_RECORD_OUT chain-record/raw.json -CHAIN_BATTERY ../../tests/chain-fixtures/battery.json' || '' }}
+          customParameters: -CI true -GITHUB_ACTIONS true${{ inputs.testMode == 'editmode' && (matrix.graphics && ' -testCategory Graphics' || ' -nographics') || '' }}${{ (matrix.platform == 'base' && inputs.testMode == 'editmode' && !matrix.graphics) && ' -CHAIN_RECORD_OUT chain-record/raw.json -CHAIN_BATTERY ../../tests/chain-fixtures/battery.json' || '' }}
+
+      # A category filter that matches nothing (a renamed category, a dropped attribute) runs no test and passes.
+      - name: Graphics leg ran its tests
+        if: ${{ !cancelled() && matrix.graphics }}
+        shell: bash
+        env:
+          RESULTS: ${{ steps.tests.outputs.artifactsPath }}
+        run: |
+          # A fixture tagged at class level must have run too, not only the method-level tags.
+          passed="$(cat "$RESULTS"/*.xml 2>/dev/null | grep -o '<test-run [^>]*' | grep -o 'passed="[0-9]*"' | grep -o '[0-9]*' | head -1 || true)"
+          echo "Graphics tests passed: ${passed:-none}"
+          if [ "${passed:-0}" -gt 0 ] && cat "$RESULTS"/*.xml | grep -q 'name="ScreenshotSceneViewTests"[^>]*result="Passed"'; then exit 0; fi
+          echo "::error title=graphics leg::the Graphics tests did not run (-testCategory Graphics matched nothing, or ScreenshotSceneViewTests did not pass)"
+          exit 1
 
       # --------------------------------------------------------------------- #
       # Test results. Read ONLY by publish_test_results.yml, which runs minutes after this workflow
@@ -247,7 +272,7 @@ jobs:
       - uses: actions/upload-artifact@v6
         if: always() && (env.CHAIN_LOCK == '' || github.event_name == 'pull_request')
         with:
-          name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
+          name: Test results for ${{ inputs.unityVersion }} ${{ env.LEG }} on ${{ matrix.platform }}
           path: ${{ steps.tests.outputs.artifactsPath }}
           retention-days: 1
 
@@ -260,7 +285,7 @@ jobs:
       # A missing committed fixture FAILS (fixture-missing) — a leg can never go green without one.
       # --------------------------------------------------------------------- #
       - name: chain fixture diff
-        if: ${{ !cancelled() && matrix.platform == 'base' && inputs.testMode == 'editmode' }}
+        if: ${{ !cancelled() && matrix.platform == 'base' && inputs.testMode == 'editmode' && !matrix.graphics }}
         shell: bash
         env:
           RAW: ${{ inputs.projectPath }}/chain-record/raw.json
@@ -298,7 +323,7 @@ jobs:
           esac
 
       - name: chain fixture artifact
-        if: ${{ always() && matrix.platform == 'base' && inputs.testMode == 'editmode' }}
+        if: ${{ always() && matrix.platform == 'base' && inputs.testMode == 'editmode' && !matrix.graphics }}
         uses: actions/upload-artifact@v6
         with:
           name: chain-fixture-unity-${{ inputs.unityVersion }}
@@ -308,12 +333,14 @@ jobs:
           retention-days: 1
 
       # --------------------------------------------------------------------- #
-      # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (24 distinct names)
+      # 2-d. Chain leg record (chain_feed.py §C5) — one artifact per job (24 distinct names). The EditMode
+      # graphics legs write none: the chain manifest counts 24 Unity legs (legs_per_run), and their tests
+      # still gate this workflow's conclusion.
       # --------------------------------------------------------------------- #
       - name: chain leg record
         id: chain_record
-        if: always()
-        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll --engine unity --engine-version ${{ inputs.unityVersion }} --tier T3 --job-status "${{ job.status }}" --out chain-leg.json
+        if: always() && !matrix.graphics
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ env.LEG }}-${{ matrix.platform }} --edges unity-dll --engine unity --engine-version ${{ inputs.unityVersion }} --tier T3 --job-status "${{ job.status }}" --out chain-leg.json
 
       # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
       # so a failed apply's RED record still uploads.
@@ -330,7 +357,7 @@ jobs:
       # (what actions/cache did in its post step), and never from a run given a ref.
       # --------------------------------------------------------------------- #
       - name: Save Unity cache
-        if: success() && inputs.ref == '' && steps.cache.outputs.cache-hit != 'true'
+        if: success() && inputs.ref == '' && steps.cache.outputs.cache-hit != 'true' && !matrix.graphics
         uses: actions/cache/save@v5
         with:
           path: |

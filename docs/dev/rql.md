@@ -52,5 +52,5 @@ U=/Applications/Unity/Hub/Editor/6000.6.4f1/Unity.app/Contents/MacOS/Unity
 "$U" -batchmode -nographics -projectPath Unity-Tests/6000.6.3f1 -runTests -testPlatform EditMode -testResults results.xml
 ```
 
-`-nographics` fails 16 existing screenshot / overlay / profiler tests (no graphics device); they pass with graphics.
+With `-nographics` the tests that render (`[RequiresGraphicsDevice]`, category `Graphics`) are ignored; drop it to run them.
 Chain fixtures (`tests/chain-fixtures/`) are not re-recorded in this branch (they record the tool list per Unity version).

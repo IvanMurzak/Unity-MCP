@@ -38,14 +38,17 @@ python commands/extensions.py prepare --project Unity-Tests/2022.3.62f3
 This adds local UPM packages, their `testables` entries and the original installer test assets.
 It sets the current NuGet assembly gate after checking the bundled DLLs exist, disables
 installer self-installation in the test project, and materializes platform-specific fixture
-newlines. It preserves newer Unity package versions already selected by a project. Graphics
-tests require a graphics context: do not pass `-nographics` for the full editor suite.
+newlines. It preserves newer Unity package versions already selected by a project. Tests that render
+(screenshots, editor views) are marked `[RequiresGraphicsDevice]` (category `Graphics`): with
+`-nographics` they are ignored, so run the suite without it to cover them.
 
 The four SDKs, both platform images and the original extension modes EditMode, PlayMode and
 Standalone remain covered. The core's 16 existing editor legs stay; eight shared PlayMode legs
 restore the coverage present in the old extension repositories. There are 24 editor legs for the
 entire monorepo, rather than 16 core legs plus 24 for each extension (256 total). Each leg launches
-one shared editor for core and every extension. Standalone retains player build/runtime checks.
+one shared editor for core and every extension. EditMode legs run with `-nographics`: the runners
+render on the CPU, where each new scene costs seconds. One more EditMode leg per Unity version (on
+`base`) runs only the `Graphics` category with the renderer. Standalone retains player build/runtime checks.
 There is no per-extension editor matrix. The four projects never share a Library directory.
 
 The EditMode isolation test uses the running editor's actual compilation graph, resolved UPM

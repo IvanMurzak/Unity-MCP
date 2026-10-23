@@ -19,6 +19,7 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
+    [RequiresGraphicsDevice]
     public class ScreenshotIsolatedTests : BaseTest
     {
         static GameObject CreateTargetCube(string name = "IsolatedTarget")
