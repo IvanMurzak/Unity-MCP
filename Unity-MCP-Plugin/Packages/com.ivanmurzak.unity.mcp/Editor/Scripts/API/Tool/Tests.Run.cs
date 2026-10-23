@@ -118,6 +118,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         .Error(Error.TestsAlreadyRunning(activeRequestId))
                         .SetRequestID(requestId);
 
+                // Also covers a run not started by this tool (the Test Runner window): Unity's own window refuses to start
+                // one in Play Mode too.
+                if (UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
+                    return ResponseCallValueTool<TestRunResponse>
+                        .Error(Error.EditorInPlayMode)
+                        .SetRequestID(requestId);
+
                 // Abort before any state mutation if any open scene has unsaved changes.
                 // Running tests against a dirty scene is unsafe: Unity may reload the scene on
                 // play-mode entry, silently discarding edits and producing non-reproducible
