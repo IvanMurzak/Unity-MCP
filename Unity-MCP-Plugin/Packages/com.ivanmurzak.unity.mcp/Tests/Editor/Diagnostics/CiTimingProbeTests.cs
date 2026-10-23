@@ -9,77 +9,74 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
 using System.Text;
-using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
-using Rql;
+using Unity.Profiling;
+using Unity.Profiling.LowLevel.Unsafe;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
-using UnityEngine.Rendering;
 using Debug = UnityEngine.Debug;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Diagnostics
 {
-    // TEMPORARY CI timing experiment: where a typical 3.6 s RQL adapter test spends its time on CI. Not for merge.
+    // TEMPORARY CI timing experiment: what makes EditorSceneManager.NewScene cost seconds on the CI runners. Not for merge.
     public class CiTimingProbeTests
     {
+        static readonly StringBuilder Sb = new StringBuilder();
+
+        static double Ms(Action a)
+        {
+            var sw = Stopwatch.StartNew();
+            a();
+            return sw.Elapsed.TotalMilliseconds;
+        }
+
+        static void NewEmpty() => EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single);
+
         [Test]
         public void Probe()
         {
-            var sb = new StringBuilder();
-            sb.AppendLine($"gfx={SystemInfo.graphicsDeviceType} '{SystemInfo.graphicsDeviceName}' batch={Application.isBatchMode}");
-            void T(string name, Action a)
+            Sb.Clear();
+            Sb.AppendLine($"gfx={SystemInfo.graphicsDeviceType} '{SystemInfo.graphicsDeviceName}' unity={Application.unityVersion}");
+            Sb.AppendLine($"NewScene baseline: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
+
+#if UNITY_6000_0_OR_NEWER
+            var bake = Lightmapping.bakeOnSceneLoad;
+            Sb.AppendLine($"bakeOnSceneLoad={bake}");
+            try
             {
-                var sw = Stopwatch.StartNew();
-                a();
-                sb.AppendLine($"{name}: {sw.Elapsed.TotalMilliseconds:F0} ms");
+                Lightmapping.bakeOnSceneLoad = Lightmapping.BakeOnSceneLoadMode.Never;
+                Sb.AppendLine($"NewScene bakeOnSceneLoad=Never: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
             }
+            finally { Lightmapping.bakeOnSceneLoad = bake; }
+#endif
 
-            for (var i = 0; i < 3; i++)
-                T($"NewScene Empty Single #{i}", () => EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single));
-            T("NewScene Default Single", () => EditorSceneManager.NewScene(NewSceneSetup.DefaultGameObjects, NewSceneMode.Single));
-            T("NewScene Empty Single after Default", () => EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single));
 
-            // The same with the environment lighting switched off on the active scene first.
-            RenderSettings.skybox = null;
-            RenderSettings.ambientMode = AmbientMode.Flat;
-            RenderSettings.defaultReflectionMode = DefaultReflectionMode.Custom;
-            T("NewScene Empty Single after flat env", () => EditorSceneManager.NewScene(NewSceneSetup.EmptyScene, NewSceneMode.Single));
-
-            T("UnloadUnusedAssetsImmediate", () => EditorUtility.UnloadUnusedAssetsImmediate());
-            T("GC.Collect", () => GC.Collect());
-            T("RqlUnity.Reset + Engine", () => { RqlUnity.Reset(); _ = RqlUnity.Engine; });
-            var go = new GameObject("Toggle");
-            T("query", () => RqlUnity.Engine.Execute("objects | where name == \"Toggle\" | select active"));
-            T("mutation", () => RqlUnity.Engine.Execute("objects | where name == \"Toggle\" | set active = false", null, new QueryOptions { AllowMutation = true }));
-            T("Undo.PerformUndo", () => Undo.PerformUndo());
-            T("new GameObject x100", () => { for (var i = 0; i < 100; i++) new GameObject("g" + i); });
-            T("Object.Destroy roots", () =>
+            // Which profiler markers run inside one NewScene, by time.
+            var handles = new List<ProfilerRecorderHandle>();
+            ProfilerRecorderHandle.GetAvailable(handles);
+            var recorders = new List<(string name, ProfilerRecorder rec)>();
+            foreach (var h in handles)
             {
-                foreach (var root in EditorSceneManager.GetActiveScene().GetRootGameObjects())
-                    UnityEngine.Object.DestroyImmediate(root);
-            });
+                var d = ProfilerRecorderHandle.GetDescription(h);
+                if (d.UnitType != ProfilerMarkerDataUnit.TimeNanoseconds) continue;
+                recorders.Add((d.Name, ProfilerRecorder.StartNew(d.Category, d.Name, 1, ProfilerRecorderOptions.Default | ProfilerRecorderOptions.SumAllSamplesInFrame)));
+            }
+            var before = recorders.Select(r => r.rec.CurrentValue).ToArray();
+            var total = Ms(NewEmpty);
+            var top = recorders.Select((r, i) => (r.name, ms: (r.rec.CurrentValue - before[i]) / 1e6))
+                .Where(x => x.ms > 20 && x.ms <= total + 50).OrderByDescending(x => x.ms).Take(40).ToList();
+            foreach (var r in recorders) r.rec.Dispose();
+            Sb.AppendLine($"profiled NewScene: {total:F0} ms over {recorders.Count} markers; top:");
+            foreach (var (name, ms) in top) Sb.AppendLine($"  {ms,8:F0} ms  {name}");
 
-            var text = sb.ToString();
+            var text = Sb.ToString();
             Debug.Log("[CiTimingProbe]\n" + text);
             Assert.Pass(text);
-        }
-
-        // Mirrors AdapterTestBase: is the per-test cost in SetUp (NewScene + Reset) or somewhere around the test?
-        public class SetUpOnly : Rql.Adapters.AdapterTestBase
-        {
-            [Test] public void Empty1() { }
-            [Test] public void Empty2() { }
-            [Test] public void Empty3() { }
-        }
-
-        public class NoSetUp
-        {
-            [Test] public void Empty1() { }
-            [Test] public void Empty2() { }
-            [Test] public void Empty3() { }
         }
     }
 }
