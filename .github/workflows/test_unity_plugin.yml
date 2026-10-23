@@ -237,7 +237,7 @@ jobs:
           # The base/editmode leg also runs the T2 chain recorder (Tests/Editor/Chain/ChainRecordTests.cs).
           # Both paths are RELATIVE TO THE UNITY PROJECT ROOT (the recorder resolves them there), so they
           # mean the same files inside the game-ci container and on the host, and contain no spaces.
-          customParameters: -CI true -GITHUB_ACTIONS true${{ (matrix.platform == 'base' && inputs.testMode == 'editmode') && ' -CHAIN_RECORD_OUT chain-record/raw.json -CHAIN_BATTERY ../../tests/chain-fixtures/battery.json' || '' }}
+          customParameters: -CI true -GITHUB_ACTIONS true${{ inputs.testMode == 'editmode' && ' -nographics' || '' }}${{ (matrix.platform == 'base' && inputs.testMode == 'editmode') && ' -CHAIN_RECORD_OUT chain-record/raw.json -CHAIN_BATTERY ../../tests/chain-fixtures/battery.json' || '' }}
 
       # --------------------------------------------------------------------- #
       # Test results. Read ONLY by publish_test_results.yml, which runs minutes after this workflow
