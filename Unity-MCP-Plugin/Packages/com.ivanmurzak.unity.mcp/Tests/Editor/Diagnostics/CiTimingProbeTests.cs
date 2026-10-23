@@ -44,17 +44,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Diagnostics
             Sb.AppendLine($"gfx={SystemInfo.graphicsDeviceType} '{SystemInfo.graphicsDeviceName}' unity={Application.unityVersion}");
             Sb.AppendLine($"NewScene baseline: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
 
-#if UNITY_6000_0_OR_NEWER
-            var bake = Lightmapping.bakeOnSceneLoad;
-            Sb.AppendLine($"bakeOnSceneLoad={bake}");
-            try
-            {
-                Lightmapping.bakeOnSceneLoad = Lightmapping.BakeOnSceneLoadMode.Never;
-                Sb.AppendLine($"NewScene bakeOnSceneLoad=Never: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
-            }
-            finally { Lightmapping.bakeOnSceneLoad = bake; }
-#endif
+            var windows = Resources.FindObjectsOfTypeAll<EditorWindow>();
+            Sb.AppendLine($"windows ({windows.Length}): " + string.Join(", ", windows.Select(w => w.GetType().Name)));
 
+            foreach (var w in windows.Where(w => w is SceneView || w.GetType().Name == "GameView")) w.Close();
+            Sb.AppendLine($"NewScene without Scene/Game views: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
+
+            foreach (var w in Resources.FindObjectsOfTypeAll<EditorWindow>()) w.Close();
+            Sb.AppendLine($"windows left: {Resources.FindObjectsOfTypeAll<EditorWindow>().Length}");
+            Sb.AppendLine($"NewScene without any window: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
 
             // Which profiler markers run inside one NewScene, by time.
             var handles = new List<ProfilerRecorderHandle>();
