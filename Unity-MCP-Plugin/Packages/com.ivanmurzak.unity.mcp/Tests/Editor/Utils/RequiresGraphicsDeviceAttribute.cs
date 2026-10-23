@@ -19,10 +19,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     /// <summary>
     /// A test that renders (screenshots, editor views): in the <see cref="Category"/> category, and ignored in an editor without a
-    /// graphics device (<c>-nographics</c>). CI runs the EditMode suite with <c>-nographics</c>, where a new scene costs milliseconds
-    /// instead of seconds of software rendering, and these tests in a separate leg with a graphics device.
+    /// graphics device. CI runs EditMode with <c>-nographics</c> and this category in a leg with the renderer (test_unity_plugin.yml).
+    /// This attribute is the only thing that sends a test there: an untagged test that renders without a device may read a blank image.
     /// </summary>
-    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method, AllowMultiple = false, Inherited = true)]
+    [AttributeUsage(AttributeTargets.Class | AttributeTargets.Method)]
     public sealed class RequiresGraphicsDeviceAttribute : NUnitAttribute, IApplyToTest
     {
         public const string Category = "Graphics";

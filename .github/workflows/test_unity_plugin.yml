@@ -244,11 +244,22 @@ jobs:
           testMode: ${{ inputs.testMode }}
           customImage: ${{ steps.custom_image.outputs.image }}
           artifactsPath: artifacts-${{ inputs.unityVersion }}-${{ env.LEG }}-${{ matrix.platform }}
-          # EditMode: -nographics, or only the Graphics category with the renderer (see `graphics` in the matrix).
+          # EditMode: -nographics, or only the Graphics category with the renderer (`graphics` in the matrix).
           # The base/editmode leg also runs the T2 chain recorder (Tests/Editor/Chain/ChainRecordTests.cs).
           # Both paths are RELATIVE TO THE UNITY PROJECT ROOT (the recorder resolves them there), so they
           # mean the same files inside the game-ci container and on the host, and contain no spaces.
-          customParameters: -CI true -GITHUB_ACTIONS true${{ env.LEG == 'editmode' && ' -nographics' || '' }}${{ env.LEG == 'editmode-graphics' && ' -testCategory Graphics' || '' }}${{ (matrix.platform == 'base' && env.LEG == 'editmode') && ' -CHAIN_RECORD_OUT chain-record/raw.json -CHAIN_BATTERY ../../tests/chain-fixtures/battery.json' || '' }}
+          customParameters: -CI true -GITHUB_ACTIONS true${{ inputs.testMode == 'editmode' && (matrix.graphics && ' -testCategory Graphics' || ' -nographics') || '' }}${{ (matrix.platform == 'base' && inputs.testMode == 'editmode' && !matrix.graphics) && ' -CHAIN_RECORD_OUT chain-record/raw.json -CHAIN_BATTERY ../../tests/chain-fixtures/battery.json' || '' }}
+
+      # A category filter that matches nothing (a renamed category, a dropped attribute) runs no test and passes.
+      - name: Graphics leg ran its tests
+        if: ${{ !cancelled() && matrix.graphics }}
+        shell: bash
+        env:
+          RESULTS: ${{ steps.tests.outputs.artifactsPath }}
+        run: |
+          passed="$(grep -ho '<test-run [^>]*' "$RESULTS"/*.xml | grep -o 'passed="[0-9]*"' | grep -o '[0-9]*' | head -1)"
+          echo "Graphics tests passed: ${passed:-none}"
+          [ "${passed:-0}" -gt 0 ] || { echo "::error title=graphics leg::no Graphics test ran (-testCategory Graphics matched nothing?)"; exit 1; }
 
       # --------------------------------------------------------------------- #
       # Test results. Read ONLY by publish_test_results.yml, which runs minutes after this workflow
@@ -271,7 +282,7 @@ jobs:
       # A missing committed fixture FAILS (fixture-missing) — a leg can never go green without one.
       # --------------------------------------------------------------------- #
       - name: chain fixture diff
-        if: ${{ !cancelled() && matrix.platform == 'base' && env.LEG == 'editmode' }}
+        if: ${{ !cancelled() && matrix.platform == 'base' && inputs.testMode == 'editmode' && !matrix.graphics }}
         shell: bash
         env:
           RAW: ${{ inputs.projectPath }}/chain-record/raw.json
@@ -309,7 +320,7 @@ jobs:
           esac
 
       - name: chain fixture artifact
-        if: ${{ always() && matrix.platform == 'base' && env.LEG == 'editmode' }}
+        if: ${{ always() && matrix.platform == 'base' && inputs.testMode == 'editmode' && !matrix.graphics }}
         uses: actions/upload-artifact@v6
         with:
           name: chain-fixture-unity-${{ inputs.unityVersion }}
@@ -326,7 +337,7 @@ jobs:
       - name: chain leg record
         id: chain_record
         if: always() && !matrix.graphics
-        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }} --edges unity-dll --engine unity --engine-version ${{ inputs.unityVersion }} --tier T3 --job-status "${{ job.status }}" --out chain-leg.json
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ env.LEG }}-${{ matrix.platform }} --edges unity-dll --engine unity --engine-version ${{ inputs.unityVersion }} --tier T3 --job-status "${{ job.status }}" --out chain-leg.json
 
       # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
       # so a failed apply's RED record still uploads.
