@@ -1,0 +1,19 @@
+commands/run-act-test.ps1
+  s_abf699d2c08cdb::t_03063f74cc9e47 23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "56a8305e36d10c36df2f5cb6c63bd0f2c93f290f",
+  "prompts": {},
+  "sessions": {
+    "s_abf699d2c08cdb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_abf699d2c08cdb",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
