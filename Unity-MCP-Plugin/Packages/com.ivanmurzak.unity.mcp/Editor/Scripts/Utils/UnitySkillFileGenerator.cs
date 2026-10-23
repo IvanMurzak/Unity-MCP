@@ -69,10 +69,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             sb.AppendLine();
             AppendInputFileHint(sb, tool, host, inputExample);
             sb.AppendLine();
-            sb.AppendLine("### Troubleshooting");
-            sb.AppendLine();
-            sb.AppendLine("If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.");
-            sb.AppendLine($"Read the /{Skill_InitialSetup.SkillId} skill for detailed installation instructions.");
+            AppendSkillReferences(sb);
+        }
+
+        protected override string BuildSkillContentMarkdown(ISkillContent skill, string skillName)
+        {
+            var markdown = base.BuildSkillContentMarkdown(skill, skillName);
+            if (skill.Name == Skill_Cli.SkillId || skill.Name == Skill_App.SkillId)
+                return markdown;
+            var sb = new StringBuilder(markdown).AppendLine().AppendLine();
+            AppendSkillReferences(sb);
+            return sb.ToString();
+        }
+
+        private static void AppendSkillReferences(StringBuilder sb)
+        {
+            sb.AppendLine($"> CLI installation and usage: see the `{Skill_Cli.SkillId}` skill.");
+            sb.AppendLine($"> If this task needs unavailable asset-generation or Blender tools, consult `{Skill_App.SkillId}` for an optional integrated workflow.");
             sb.AppendLine();
         }
 
