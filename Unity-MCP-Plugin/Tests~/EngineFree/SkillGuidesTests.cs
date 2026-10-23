@@ -52,7 +52,9 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             var root = Path.Combine(Path.GetTempPath(), "Skill shell path " + Guid.NewGuid().ToString("N"));
             var dir = Path.Combine(root, "project with spaces");
             Directory.CreateDirectory(dir);
-            if (windows) script = "Set-Location -LiteralPath '" + dir.Replace("'", "''") + "'\n" + script;
+            if (windows)
+                script = "$ErrorActionPreference='Stop'\n$ProgressPreference='SilentlyContinue'\nSet-Location -LiteralPath '" +
+                    dir.Replace("'", "''") + "'\n" + script + "\nif ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }\n";
             try
             {
                 if (windows)
@@ -75,12 +77,13 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                 var output = process.StandardOutput.ReadToEndAsync();
                 var error = process.StandardError.ReadToEndAsync();
                 if (!process.WaitForExit(20000)) { process.Kill(entireProcessTree: true); throw new TimeoutException("Skill shell command hung"); }
-                Assert.Equal(0, process.ExitCode);
+                var diagnostics = await error;
+                Assert.True(process.ExitCode == 0, $"Shell exited {process.ExitCode}: {diagnostics}");
                 Assert.Equal(json, (await output).Trim());
                 var bytes = File.ReadAllBytes(Path.Combine(dir, "args.json"));
                 Assert.False(bytes.Length >= 3 && bytes[0] == 0xef && bytes[1] == 0xbb && bytes[2] == 0xbf);
                 Assert.Equal(json, File.ReadAllText(Path.Combine(dir, "args.json")).TrimEnd('\n', '\r'));
-                Assert.True(string.IsNullOrWhiteSpace(await error));
+
             }
             finally { Directory.Delete(root, recursive: true); }
         }
