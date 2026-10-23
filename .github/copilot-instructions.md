@@ -36,7 +36,7 @@ Before performing any code review, you **MUST** read the project constitution: [
     - Tests: `Packages/com.ivanmurzak.unity.mcp/Tests`.
 - **MCP Server**: lives in the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repo (binary `gamedev-mcp-server`); the plugin downloads the release pinned by `McpServerManager.ServerVersion`.
 - **Installer**: [Installer/](Installer/) wraps the package installation.
-- **Unity-Tests**: [Unity-Tests/](Unity-Tests/) contains projects for different Unity versions (2022, 2023, 6000) linking locally to the Plugin.
+- **Unity-Tests**: [Unity-Tests/](Unity-Tests/) contains projects for different Unity versions (2022.3, 6000.0, 6000.3, 6000.6) linking locally to the Plugin.
 
 ## Build and Test
 - **Plugin**:

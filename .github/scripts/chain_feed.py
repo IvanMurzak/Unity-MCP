@@ -24,7 +24,7 @@ ARTIFACT it was read from (`project.assets.json`, a DLL sha256, `chain-identity.
 an exit code.
 """
 
-CHAIN_FEED_VERSION = "7"
+CHAIN_FEED_VERSION = "8"
 
 import argparse
 import hashlib
@@ -284,11 +284,11 @@ RECIPES = {
                 "drops": [
                     "Unity-MCP-Plugin/Assets/Plugins/NuGet",
                     "Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet",
-                    "Unity-Tests/2023.2.22f1/Assets/Plugins/NuGet",
-                    "Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.0.85f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.3.27f1/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet",
-                    "Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.6.7f1/Assets/Plugins/NuGet",
                 ],
             },
             {
@@ -298,11 +298,11 @@ RECIPES = {
                 "drops": [
                     "Unity-MCP-Plugin/Assets/Plugins/NuGet",
                     "Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet",
-                    "Unity-Tests/2023.2.22f1/Assets/Plugins/NuGet",
-                    "Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.0.85f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.3.27f1/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet",
-                    "Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.6.7f1/Assets/Plugins/NuGet",
                 ],
             },
             {
@@ -315,11 +315,11 @@ RECIPES = {
                 "drops": [
                     "Unity-MCP-Plugin/Assets/Plugins/NuGet",
                     "Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet",
-                    "Unity-Tests/2023.2.22f1/Assets/Plugins/NuGet",
-                    "Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.0.85f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.3.27f1/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet",
-                    "Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.6.7f1/Assets/Plugins/NuGet",
                 ],
             },
             {
@@ -332,11 +332,11 @@ RECIPES = {
                 "drops": [
                     "Unity-MCP-Plugin/Assets/Plugins/NuGet",
                     "Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet",
-                    "Unity-Tests/2023.2.22f1/Assets/Plugins/NuGet",
-                    "Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.0.85f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.3.27f1/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet",
                     "Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet",
-                    "Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet",
+                    "Unity-Tests/6000.6.7f1/Assets/Plugins/NuGet",
                 ],
             },
             {

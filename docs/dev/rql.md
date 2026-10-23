@@ -45,11 +45,11 @@ sources and literals as soon as it is installed.
 ## Tests
 
 `Tests/Editor/Rql/` (adapters one file each, Editor API, skill), `Tests/EditorRqlModules/<Feature>/`. Local run
-(macOS, Unity 6000.6.4f1, project `Unity-Tests/6000.6.3f1`):
+(macOS, Unity 6000.6.4f1, project `Unity-Tests/6000.6.7f1`):
 
 ```bash
 U=/Applications/Unity/Hub/Editor/6000.6.4f1/Unity.app/Contents/MacOS/Unity
-"$U" -batchmode -nographics -projectPath Unity-Tests/6000.6.3f1 -runTests -testPlatform EditMode -testResults results.xml
+"$U" -batchmode -nographics -projectPath Unity-Tests/6000.6.7f1 -runTests -testPlatform EditMode -testResults results.xml
 ```
 
 With `-nographics` the tests that render (`[RequiresGraphicsDevice]`, category `Graphics`) are ignored; drop it to run them.

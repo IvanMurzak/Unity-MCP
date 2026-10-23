@@ -22,9 +22,9 @@ Unity-MCP/
 ├── tests/extensions/Editor/                          isolated compiler + sibling canary
 └── Unity-Tests/
     ├── 2022.3.62f3/                                  shared core + all extensions
-    ├── 2023.2.22f1/                                  separate project/Library
-    ├── 6000.3.1f1/                                   separate project/Library
-    └── 6000.6.3f1/                                   separate project/Library
+    ├── 6000.0.85f1/                                  separate project/Library
+    ├── 6000.3.27f1/                                   separate project/Library
+    └── 6000.6.7f1/                                   separate project/Library
 ```
 
 ## Tests and isolation

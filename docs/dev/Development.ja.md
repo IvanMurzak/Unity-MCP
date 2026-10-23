@@ -79,7 +79,7 @@ AI はゲーム開発において重要な役割を果たしている（もし�
 
 | ツール | バージョン | 用途 |
 | ---- | ------- | ------- |
-| [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 2023.2+ / 6000.3+ | プラグインの実行とテスト |
+| [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 6000.0+ | プラグインの実行とテスト |
 | [.NET SDK](https://dotnet.microsoft.com/download) | 9.0+ | MCP Server のビルドと実行 |
 | [Node.js](https://nodejs.org/) | 18+ | デバッグ用 MCP Inspector の実行 |
 | PowerShell | 7+ | ビルドおよびユーティリティスクリプトの実行 |
@@ -484,7 +484,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 # テストの実行
 
-テストは3つの Unity バージョン（2022、2023、6000）と2つの OS（Windows、Ubuntu）の組み合わせで3つのモードをカバーし、合計18の組み合わせがあります。
+テストは4つの Unity バージョン（2022.3、6000.0、6000.3、6000.6）と2つの OS（Windows、Ubuntu）の組み合わせで3つのモードをカバーし、合計24の組み合わせがあります。
 
 ## ローカルでの実行
 
@@ -497,7 +497,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 **PowerShell スクリプト（コマンドライン）**
 ```powershell
 # 特定の Unity バージョンとモードのテストを実行
-.\commands\run-unity-tests.ps1 -unityVersion "6000.3.1f1" -testMode "editmode"
+.\commands\run-unity-tests.ps1 -unityVersion "6000.3.27f1" -testMode "editmode"
 ```
 
 ## テストモード
@@ -529,7 +529,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 ## CI 結果の解釈
 
-各 CI ジョブは `test-unity-{version}-{mode}` という名前です（例: `test-unity-6000-3-1f1-editmode`）。ジョブが失敗した場合:
+各 CI ジョブは `test-unity-{version}-{mode}` という名前です（例: `test-unity-6000-3-27f1-editmode`）。ジョブが失敗した場合:
 1. GitHub Actions で失敗したジョブを開く
 2. **Unity Test Runner** ステップを展開してインライン出力を確認
 3. 完全な XML レポートのために **test-results** アーティファクトをダウンロード
@@ -572,7 +572,7 @@ gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                  
 1. **バージョンチェック** - [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json) からバージョンを抽出。本番実行は `main` 以外、またはリリースタグが既に存在する場合に失敗し、ドライランは警告して続行
 2. **Unity Installer のビルド** - Unity パッケージインストーラーをテストしてエクスポート（`AI-Game-Dev-Installer.unitypackage`）
 4. **Unity プラグインテスト** - 以下の組み合わせで包括的なテストを実行:
-   - 3種類の Unity バージョン: `2022.3.62f3`、`2023.2.22f1`、`6000.3.1f1`
+   - 4種類の Unity バージョン: `2022.3.62f3`、`6000.0.85f1`、`6000.3.27f1`、`6000.6.7f1`
    - 3種類のテストモード: `editmode`、`playmode`、`standalone`
    - 2種類の OS: `windows-latest`、`ubuntu-latest`
    - 合計: **18のテストマトリックスの組み合わせ**

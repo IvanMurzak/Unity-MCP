@@ -79,7 +79,7 @@ Before contributing, ensure the following tools are installed:
 
 | Tool | Version | Purpose |
 | ---- | ------- | ------- |
-| [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 2023.2+ / 6000.3+ | Run and test the plugin |
+| [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 6000.0+ | Run and test the plugin |
 | [.NET SDK](https://dotnet.microsoft.com/download) | 9.0+ | Build and run the MCP Server |
 | [Node.js](https://nodejs.org/) | 18+ | Run MCP Inspector for debugging |
 | PowerShell | 7+ | Execute build and utility scripts |
@@ -492,7 +492,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 # Running Tests
 
-Tests cover three modes across three Unity versions (2022, 2023, 6000) and two OSes (Windows, Ubuntu) — 18 combinations total.
+Tests cover three modes across four Unity versions (2022.3, 6000.0, 6000.3, 6000.6) and two OSes (Windows, Ubuntu) — 24 combinations total.
 
 ## Running locally
 
@@ -505,7 +505,7 @@ Tests cover three modes across three Unity versions (2022, 2023, 6000) and two O
 **PowerShell script (command line)**
 ```powershell
 # Run tests for a specific Unity version and mode
-.\commands\run-unity-tests.ps1 -unityVersion "6000.3.1f1" -testMode "editmode"
+.\commands\run-unity-tests.ps1 -unityVersion "6000.3.27f1" -testMode "editmode"
 ```
 
 ## Test modes
@@ -537,7 +537,7 @@ See [Unity: Add tests to your package](https://docs.unity3d.com/Manual/cus-tests
 
 ## Interpreting CI results
 
-Each CI job is named `test-unity-{version}-{mode}` (e.g., `test-unity-6000-3-1f1-editmode`). When a job fails:
+Each CI job is named `test-unity-{version}-{mode}` (e.g., `test-unity-6000-3-27f1-editmode`). When a job fails:
 1. Open the failing job in GitHub Actions
 2. Expand the **Unity Test Runner** step for inline output
 3. Download the **test-results** artifact for the full XML report
@@ -580,7 +580,7 @@ gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                  
 1. **Version Check** - Extracts version from [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json). A real run fails if it is not on `main` or if the release tag already exists; a dry run warns and continues
 2. **Build Unity Installer** - Tests and exports Unity package installer (`AI-Game-Dev-Installer.unitypackage`)
 3. **Unity Plugin Testing** - Runs comprehensive tests across:
-   - 3 Unity versions: `2022.3.62f3`, `2023.2.22f1`, `6000.3.1f1`
+   - 4 Unity versions: `2022.3.62f3`, `6000.0.85f1`, `6000.3.27f1`, `6000.6.7f1`
    - 3 test modes: `editmode`, `playmode`, `standalone`
    - 2 operating systems: `windows-latest`, `ubuntu-latest`
    - Total: **18 test matrix combinations**

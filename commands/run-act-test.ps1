@@ -20,7 +20,7 @@
     Enable GitHub Actions step debugging (ACTIONS_STEP_DEBUG=true)
 .EXAMPLE
     .\run-act-test.ps1
-    .\run-act-test.ps1 -JobName test-unity-2023-2-22f1-editmode
+    .\run-act-test.ps1 -JobName test-unity-6000-3-27f1-editmode
     .\run-act-test.ps1 -Verbose -StepDebug
     .\run-act-test.ps1 -DryRun
     .\run-act-test.ps1 -LogFile "./act-logs.txt"
