@@ -24,7 +24,7 @@ ARTIFACT it was read from (`project.assets.json`, a DLL sha256, `chain-identity.
 an exit code.
 """
 
-CHAIN_FEED_VERSION = "7"
+CHAIN_FEED_VERSION = "8"
 
 import argparse
 import hashlib
