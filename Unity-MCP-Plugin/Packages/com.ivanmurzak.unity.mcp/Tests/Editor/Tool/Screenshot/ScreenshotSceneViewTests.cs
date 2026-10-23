@@ -19,6 +19,7 @@ using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
+    [RequiresGraphicsDevice]
     public class ScreenshotSceneViewTests : BaseTest
     {
         // -----------------------------------------------------------------------

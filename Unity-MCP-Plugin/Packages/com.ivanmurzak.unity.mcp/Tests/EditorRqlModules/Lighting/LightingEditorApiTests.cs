@@ -133,7 +133,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             Assert.AreEqual(0, LightmapSettings.lightmaps.Length);
         }
 
-        [Test]
+        [Test, RequiresGraphicsDevice]
         public void BakeReflectionProbesBakesEveryActiveProbe()
         {
             var baked = new GameObject("Mirror").AddComponent<ReflectionProbe>();
