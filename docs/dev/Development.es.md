@@ -79,7 +79,7 @@ Antes de contribuir, asegúrate de tener instaladas las siguientes herramientas:
 
 | Herramienta | Versión | Propósito |
 | ---- | ------- | ------- |
-| [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 2023.2+ / 6000.3+ | Ejecutar y probar el plugin |
+| [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 6000.0+ | Ejecutar y probar el plugin |
 | [.NET SDK](https://dotnet.microsoft.com/download) | 9.0+ | Compilar y ejecutar el servidor MCP |
 | [Node.js](https://nodejs.org/) | 18+ | Ejecutar MCP Inspector para depuración |
 | PowerShell | 7+ | Ejecutar scripts de compilación y utilidades |
@@ -484,7 +484,7 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 
 # Ejecutar pruebas
 
-Las pruebas cubren tres modos en tres versiones de Unity (2022, 2023, 6000) y dos sistemas operativos (Windows, Ubuntu) — 18 combinaciones en total.
+Las pruebas cubren tres modos en cuatro versiones de Unity (2022.3, 6000.0, 6000.3, 6000.6) y dos sistemas operativos (Windows, Ubuntu) — 24 combinaciones en total.
 
 ## Ejecución local
 
@@ -497,7 +497,7 @@ Las pruebas cubren tres modos en tres versiones de Unity (2022, 2023, 6000) y do
 **Script de PowerShell (línea de comandos)**
 ```powershell
 # Ejecutar pruebas para una versión de Unity y modo específicos
-.\commands\run-unity-tests.ps1 -unityVersion "6000.3.1f1" -testMode "editmode"
+.\commands\run-unity-tests.ps1 -unityVersion "6000.3.27f1" -testMode "editmode"
 ```
 
 ## Modos de prueba
@@ -529,7 +529,7 @@ Consulta [Unity: Añadir tests a tu paquete](https://docs.unity3d.com/Manual/cus
 
 ## Interpretación de resultados de CI
 
-Cada trabajo de CI se llama `test-unity-{version}-{mode}` (por ej., `test-unity-6000-3-1f1-editmode`). Cuando falla un trabajo:
+Cada trabajo de CI se llama `test-unity-{version}-{mode}` (por ej., `test-unity-6000-3-27f1-editmode`). Cuando falla un trabajo:
 1. Abre el trabajo fallido en GitHub Actions
 2. Expande el paso **Unity Test Runner** para ver la salida en línea
 3. Descarga el artefacto **test-results** para el informe XML completo
@@ -572,7 +572,7 @@ gh workflow run release.yml -R IvanMurzak/Unity-MCP --ref main                  
 1. **Verificación de versión** - Extrae la versión de [package.json](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json). Una ejecución real falla si no es sobre `main` o si el tag de release ya existe; un dry run avisa y continúa
 2. **Compilación del Installer de Unity** - Prueba y exporta el instalador del paquete Unity (`AI-Game-Dev-Installer.unitypackage`)
 4. **Pruebas del Plugin de Unity** - Ejecuta pruebas completas en:
-   - 3 versiones de Unity: `2022.3.62f3`, `2023.2.22f1`, `6000.3.1f1`
+   - 4 versiones de Unity: `2022.3.62f3`, `6000.0.85f1`, `6000.3.27f1`, `6000.6.7f1`
    - 3 modos de prueba: `editmode`, `playmode`, `standalone`
    - 2 sistemas operativos: `windows-latest`, `ubuntu-latest`
    - Total: **18 combinaciones en la matriz de pruebas**
