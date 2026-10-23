@@ -216,18 +216,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // SCREENSHOTS — not guaranteed to have a camera/view in batchmode.
         // ================================================================
 
-        [UnityTest]
+        [UnityTest, RequiresGraphicsDevice]
         public IEnumerator ScreenshotCamera_BothThreads()
         {
             new GameObject("TestCamera").AddComponent<Camera>();
             yield return RunToolBothThreads(Tool_Screenshot.ScreenshotCameraToolId, @"{""width"":64,""height"":64}");
         }
 
-        [UnityTest]
+        [UnityTest, RequiresGraphicsDevice]
         public IEnumerator ScreenshotGameView_ThreadSafetyOnly()
             => RunToolExpectNoThreadViolation(Tool_Screenshot.ScreenshotGameViewToolId, "{}");
 
-        [UnityTest]
+        [UnityTest, RequiresGraphicsDevice]
         public IEnumerator ScreenshotSceneView_ThreadSafetyOnly()
             => RunToolExpectNoThreadViolation(Tool_Screenshot.ScreenshotSceneViewToolId, @"{""width"":64,""height"":64}");
 
