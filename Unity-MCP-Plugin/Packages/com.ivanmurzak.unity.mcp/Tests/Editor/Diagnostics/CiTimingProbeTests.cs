@@ -44,15 +44,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Diagnostics
             Sb.AppendLine($"gfx={SystemInfo.graphicsDeviceType} '{SystemInfo.graphicsDeviceName}' unity={Application.unityVersion}");
             Sb.AppendLine($"NewScene baseline: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
 
-            var windows = Resources.FindObjectsOfTypeAll<EditorWindow>();
-            Sb.AppendLine($"windows ({windows.Length}): " + string.Join(", ", windows.Select(w => w.GetType().Name)));
-
-            foreach (var w in windows.Where(w => w is SceneView || w.GetType().Name == "GameView")) w.Close();
-            Sb.AppendLine($"NewScene without Scene/Game views: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
-
-            foreach (var w in Resources.FindObjectsOfTypeAll<EditorWindow>()) w.Close();
-            Sb.AppendLine($"windows left: {Resources.FindObjectsOfTypeAll<EditorWindow>().Length}");
-            Sb.AppendLine($"NewScene without any window: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
+            var main = EditorGUIUtility.GetMainWindowPosition();
+            Sb.AppendLine($"main window: {main} screen: {Screen.currentResolution}");
+            try
+            {
+                EditorGUIUtility.SetMainWindowPosition(new Rect(main.x, main.y, 320, 240));
+                Sb.AppendLine($"main window now: {EditorGUIUtility.GetMainWindowPosition()}");
+                Sb.AppendLine($"NewScene with a 320x240 main window: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
+                EditorGUIUtility.SetMainWindowPosition(new Rect(main.x, main.y, 64, 64));
+                Sb.AppendLine($"main window now: {EditorGUIUtility.GetMainWindowPosition()}");
+                Sb.AppendLine($"NewScene with a 64x64 main window: {Ms(NewEmpty):F0} / {Ms(NewEmpty):F0} ms");
+            }
+            catch (Exception e) { Sb.AppendLine("resize failed: " + e.Message); }
 
             // Which profiler markers run inside one NewScene, by time.
             var handles = new List<ProfilerRecorderHandle>();
