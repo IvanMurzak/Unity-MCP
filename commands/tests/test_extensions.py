@@ -72,6 +72,10 @@ class PackageBoundaryTests(unittest.TestCase):
     def test_sync_core_is_selected_local_idempotent_and_dry_run_writes_nothing(self):
         path = self.root / self.rows[0]['package'] / 'package.json'
         untouched = self.root / self.rows[1]['package'] / 'package.json'
+        # Exercise an upgrade independently of the live package's current core floor.
+        fixture = extensions.read(path)
+        fixture['dependencies'][extensions.CORE] = '1.0.0'
+        extensions.write(path, fixture)
         before, other = path.read_bytes(), untouched.read_bytes()
         previous = extensions.read(path)['version']
         extensions.sync_core('1.1.0', 'Unity-AI-Animation', dry_run=True, root=self.root)
@@ -83,6 +87,8 @@ class PackageBoundaryTests(unittest.TestCase):
         self.assertEqual(other, untouched.read_bytes())
         current = path.read_bytes()
         extensions.sync_core('1.1.0', 'Animation', root=self.root)
+        self.assertEqual(current, path.read_bytes())
+        extensions.sync_core('1.0.0', 'Animation', root=self.root)
         self.assertEqual(current, path.read_bytes())
 
 

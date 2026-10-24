@@ -37,7 +37,7 @@
          if they drift from NuGetConfig.Packages, so a missed bump cannot silently leave this suite
          testing yesterday's DLLs. McpPlugin is what makes this project a NuGet-mode consumer of the
          framework, which is also what lets a workspace-source override chain reach it. -->
-    <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.13.0" />
+    <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.13.1" />
     <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="5.5.0" />
   </ItemGroup>
 
@@ -52,7 +52,7 @@
        suite both ways. That is deliberate — the guard is about what the release train must bump, and
        a transient override must not turn it red.
 
-       This project must stay override-COMPATIBLE: no UseWorkspaceSources property, no
+       This project must stay override-COMPATIBLE: no workspace-source property override, no
        packages.lock.json, no RestorePackagesPath, no nuget.config of its own. -->
   <ItemGroup>
     <AssemblyMetadata Include="Pin.com.IvanMurzak.McpPlugin"

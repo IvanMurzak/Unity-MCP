@@ -23,7 +23,7 @@ AI-powered tools for the Unity [Terrain](https://docs.unity3d.com/Manual/script-
 - [Video Tutorial for Visual Studio Code](https://www.youtube.com/watch?v=ZhP7Ju91mOE)
 - [Video Tutorial for Visual Studio](https://www.youtube.com/watch?v=RGdak4T69mc)
 
-[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.terrain%2F2.0.1/AI-Terrain-Installer.unitypackage)
+[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.terrain%2F2.0.2/AI-Terrain-Installer.unitypackage)
 
 ### Stability status
 
@@ -56,7 +56,7 @@ On the RQL branch of Unity-MCP this package adds no MCP tools: it contributes an
 
 ### Option 1 - Installer
 
-- **[Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.terrain%2F2.0.1/AI-Terrain-Installer.unitypackage)**
+- **[Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.terrain%2F2.0.2/AI-Terrain-Installer.unitypackage)**
 - **Import installer into Unity project**
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file
