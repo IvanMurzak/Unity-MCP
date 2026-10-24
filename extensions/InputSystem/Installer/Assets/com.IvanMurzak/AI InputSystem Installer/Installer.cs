@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.InputSystem.Installer
     public static partial class Installer
     {
         public const string PackageId = "com.ivanmurzak.unity.mcp.inputsystem";
-        public const string Version = "2.0.1";
+        public const string Version = "2.0.2";
 
         static Installer()
         {
