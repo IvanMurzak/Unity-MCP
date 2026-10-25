@@ -455,6 +455,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }
         }
 
+        /// <summary>
+        /// Whether a test passes the filters the way Unity applies them: Filter.assemblyNames, Filter.groupNames (namespace,
+        /// class and RQL patterns, any of them) and Filter.testNames are ANDed, each field being satisfied by any of its values.
+        /// </summary>
+        internal static bool Matches(string uniqueName, string fullName, TestFilterParameters filterParams)
+        {
+            // Assembly filter: UniqueName contains the assembly information
+            if (!string.IsNullOrEmpty(filterParams.TestAssembly))
+            {
+                var dllIndex = uniqueName.ToLowerInvariant().IndexOf(".dll");
+                if (dllIndex <= 0 || !uniqueName[..dllIndex].Equals(filterParams.TestAssembly, StringComparison.OrdinalIgnoreCase))
+                    return false;
+            }
+
+            // groupNames: namespace, class and the RQL selection share one field, so any of them is enough
+            var hasNamespace = !string.IsNullOrEmpty(filterParams.TestNamespace);
+            var hasClass = !string.IsNullOrEmpty(filterParams.TestClass);
+            if (hasNamespace || hasClass || filterParams.HasGroups)
+            {
+                var inGroup = (hasNamespace && Regex.IsMatch(fullName, CreateNamespaceRegexPattern(filterParams.TestNamespace!)))
+                    || (hasClass && Regex.IsMatch(fullName, CreateClassRegexPattern(filterParams.TestClass!)))
+                    || (filterParams.HasGroups && filterParams.Groups!.Any(pattern => Regex.IsMatch(fullName, pattern)));
+                if (!inGroup)
+                    return false;
+            }
+
+            // Method filter (FixtureName.TestName format, same as Filter.testNames)
+            return string.IsNullOrEmpty(filterParams.TestMethod)
+                || fullName.Equals(filterParams.TestMethod, StringComparison.OrdinalIgnoreCase);
+        }
+
         static int CountFilteredTests(ITestAdaptor test, TestFilterParameters filterParams)
         {
             // If no filters are specified, count all tests
@@ -466,48 +497,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // Check if this test matches the filters
             if (!test.IsSuite)
             {
-                var matches = false;
-
-                // Check assembly filter using UniqueName which contains assembly information
-                if (!string.IsNullOrEmpty(filterParams.TestAssembly))
-                {
-                    var dllIndex = test.UniqueName.ToLowerInvariant().IndexOf(".dll");
-                    if (dllIndex > 0)
-                    {
-                        var assemblyName = test.UniqueName[..dllIndex];
-                        if (assemblyName.Equals(filterParams.TestAssembly, StringComparison.OrdinalIgnoreCase))
-                            matches = true;
-                    }
-                }
-
-                // Check namespace filter using same regex pattern as Filter.groupNames (ensures sync with Unity's execution)
-                if (!matches && !string.IsNullOrEmpty(filterParams.TestNamespace))
-                {
-                    var namespacePattern = CreateNamespaceRegexPattern(filterParams.TestNamespace!);
-                    if (Regex.IsMatch(test.FullName, namespacePattern))
-                        matches = true;
-                }
-
-                // Check class filter using same regex pattern as Filter.groupNames (ensures sync with Unity's execution)
-                if (!matches && !string.IsNullOrEmpty(filterParams.TestClass))
-                {
-                    var classPattern = CreateClassRegexPattern(filterParams.TestClass!);
-                    if (Regex.IsMatch(test.FullName, classPattern))
-                        matches = true;
-                }
-
-                // Check the RQL selection with the same pattern Unity receives as Filter.groupNames
-                if (!matches && filterParams.HasGroups)
-                    matches = filterParams.Groups!.Any(pattern => Regex.IsMatch(test.FullName, pattern));
-
-                // Check method filter (FixtureName.TestName format, same as Filter.testNames)
-                if (!matches && !string.IsNullOrEmpty(filterParams.TestMethod))
-                {
-                    if (test.FullName.Equals(filterParams.TestMethod, StringComparison.OrdinalIgnoreCase))
-                        matches = true;
-                }
-
-                if (matches)
+                if (Matches(test.UniqueName, test.FullName, filterParams))
                     count = 1;
             }
 
