@@ -57,6 +57,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             return text;
         }
 
+        /// <summary>A call that must fail; the failure is logged, which is expected here.</summary>
+        private static string Fails(string tool, object args)
+        {
+            LogAssert.ignoreFailingMessages = true;
+            var (r, text) = Call(tool, args);
+            Assert.AreEqual(ResponseStatus.Error, r.Status, text);
+            return text;
+        }
+
+        // The skill text quotes the limits as literals (an attribute cannot format constants): keep them in step.
+        [Test]
+        public void TheSkillQuotesTheLimitsInForce()
+        {
+            var body = typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute))!
+                .GetCustomAttributes(typeof(AiSkillBodyAttribute), false).Cast<AiSkillBodyAttribute>().Single().Body;
+            foreach (var limit in new[] { OutputLimits.DefaultValueChars, OutputLimits.DefaultErrorChars, OutputLimits.MaxDiagnostics,
+                         Tool_Script.ResultValue.MaxItems, Tool_Script.ResultValue.MaxSerializedChars })
+                StringAssert.Contains(limit.ToString(System.Globalization.CultureInfo.InvariantCulture), body);
+        }
+
         [Test]
         public void ATypedNullIsNullNotTheStringNull() =>
             Assert.AreEqual("System.String: null", Run("(string)null"));
@@ -136,8 +156,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         public void AGraphTooLargeToSerializeWholeReturnsItsBeginning()
         {
             var text = Run("Enumerable.Range(0, 900).Select(i => new { a = i, b = new string('y', 300) }).ToList()");
-            StringAssert.Contains("too large to return whole", text);
-            Assert.Less(text.Length, Tool_Script.ResultValue.MaxSerializedChars); // 270 000+ characters as JSON
+            StringAssert.Contains($"[truncated: {OutputLimits.DefaultValueChars} of ", text); // 270 000+ characters as JSON
+            Assert.Less(text.Length, OutputLimits.DefaultValueChars + 2000); // + the quotes the JSON string escapes
         }
 
         [Test]
@@ -154,10 +174,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         [Test]
         public void CompileErrorsAreCapped()
         {
-            LogAssert.ignoreFailingMessages = true; // the failed call is logged
             var code = string.Join("\n", Enumerable.Range(0, 40).Select(i => $"var v{i} = missing{i};"));
-            var (r, text) = Call(Tool_Script.ScriptExecuteToolId, new { csharpCode = code });
-            Assert.AreEqual(ResponseStatus.Error, r.Status, text);
+            var text = Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = code });
             StringAssert.Contains("CE0002", text); // Code-Exec: 20 diagnostics, then a count of the rest
             StringAssert.DoesNotContain("missing39", text);
         }
@@ -165,9 +183,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         [Test]
         public void ALongErrorIsClippedAndSaysSo()
         {
-            LogAssert.ignoreFailingMessages = true;
-            var (r, text) = Call(Tool_Script.ScriptExecuteToolId, new { csharpCode = "throw new System.Exception(new string('e', 30000));" });
-            Assert.AreEqual(ResponseStatus.Error, r.Status, text);
+            var text = Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = "throw new System.Exception(new string('e', 30000));" });
             StringAssert.Contains("Truncated: error", text);
             Assert.Less(text.Length, OutputLimits.DefaultErrorChars + 2000);
         }
@@ -183,9 +199,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         [Test]
         public void IncludesStayInsideTheSnippetsFolder()
         {
-            LogAssert.ignoreFailingMessages = true;
-            var (r, text) = Call(Tool_Script.ScriptExecuteToolId, new { csharpCode = "1", include = new[] { "../../ProjectSettings/ProjectSettings.asset" } });
-            Assert.AreEqual(ResponseStatus.Error, r.Status, text);
+            var text = Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = "1", include = new[] { "../../ProjectSettings/ProjectSettings.asset" } });
             StringAssert.Contains("InvalidRequest", text);
             StringAssert.DoesNotContain("CS1525", text); // the asset is never compiled
         }
@@ -193,10 +207,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         [Test]
         public void SchemaOfAnUnknownTypeIsAnError()
         {
-            LogAssert.ignoreFailingMessages = true;
-            var (r, text) = Call(Tool_Rql.SchemaToolId, new { type = "NoSuchTypeAtAll" });
-            Assert.AreEqual(ResponseStatus.Error, r.Status, text);
-            StringAssert.Contains("unknown-type", text);
+            StringAssert.Contains("unknown-type", Fails(Tool_Rql.SchemaToolId, new { type = "NoSuchTypeAtAll" }));
             var (ok, light) = Call(Tool_Rql.SchemaToolId, new { type = "Light" });
             Assert.AreEqual(ResponseStatus.Success, ok.Status, light);
         }

@@ -64,9 +64,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `isMethodBody=true` forces snippet mode.\n\n" +
             "Compile errors point at your own lines (`snippet.cs(2,5)`).\n\n" +
             "## Result and output\n\n" +
-            "- The result is bounded: a string to 20000 characters, a collection to 1000 items, the serialized result to " +
-            "131072 characters; errors to 20000 characters and 20 compile errors (a note says what was cut). Return a " +
-            "selection or a summary instead of everything.\n" +
+            "- The result is bounded: a string to 20000 characters, a collection to 1000 items; a result over 131072 " +
+            "characters as JSON comes back as the first 20000 characters of that JSON; errors to 20000 characters and 20 " +
+            "compile errors (a note says what was cut). Return a selection or a summary instead of everything.\n" +
             "- `Debug.Log` / `Console.WriteLine` output is not part of the result: `Debug.Log` goes to the Unity Console " +
             "(read it with rql-query `console | sort sequence desc | first 10 | select logType message`).\n" +
             "- Code runs on the main thread and is not aborted: an endless loop freezes the Editor. An `await` gets at most 120 s.\n" +
@@ -162,15 +162,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (string.IsNullOrEmpty(serializedResult.name))
                 serializedResult.name = JsonSchema.Result;
 
-            // Code-Exec clips only a text value (result.Truncated, the marker is in the string itself); Unity's converter passes
-            // the live object through, so its serialized form is bounded here: a big object graph never reaches the agent's
-            // context whole. Measured once, as compact JSON; the bound leaves room for a shaped result's JSON overhead.
+            // Code-Exec clips only text values; the live object Unity's converter passes through is bounded here, as JSON.
             var json = System.Text.Json.JsonSerializer.Serialize(serializedResult, Compact(reflector.JsonSerializerOptions));
             return json.Length <= ResultValue.MaxSerializedChars
                 ? serializedResult
                 : Scalar(serializedResult.typeName ?? JsonSchema.Object, System.Text.Json.JsonSerializer.Serialize(
-                    "The result is too large to return whole (" + json.Length + " characters as JSON); its beginning:\n" +
-                    OutputLimits.Clip(json, OutputLimits.DefaultValueChars, "return a slice or a summary")));
+                    OutputLimits.Clip(json, OutputLimits.DefaultValueChars, OutputLimits.ValueHint)));
         }
 
         // The reflector's options without indentation, built once per options instance (System.Text.Json caches its
