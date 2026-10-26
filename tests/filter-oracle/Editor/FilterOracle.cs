@@ -25,7 +25,8 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
     /// The oracle for tests-run's filter check: for every scenario Unity runs the tool's own <see cref="Filter"/>, and the
     /// tests it reports are compared with the tool's count of them (<see cref="TestFilterMatch"/>). Started with
     /// <c>-batchmode -nographics -executeMethod com.IvanMurzak.Unity.MCP.FilterOracle.FilterOracle.Run [-filterOracleOut file]</c>
-    /// (no <c>-quit</c>); exits 0 when every count matches, 1 on a mismatch, 2 when a scenario gave no result.
+    /// (no <c>-quit</c>); exits 0 when every count matches, 3 on a mismatch, 2 when it stopped early (Unity's own
+    /// failures, such as a compile error, exit 1).
     /// </summary>
     public static class FilterOracle
     {
@@ -87,28 +88,28 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
             S("parameterized method", method: PlayNs + ".OraclePlay.Param", mode: TestMode.PlayMode),
         };
 
-        // The fixture tests take milliseconds: a run that reports nothing for this long is retried once.
+        // The fixture tests take milliseconds: a run silent for this long, or a teardown or a test tree that takes longer
+        // than tests-run itself allows, stops the oracle (exit 2) rather than letting a late result land on another run.
         const double ScenarioTimeoutSeconds = 45;
         const int IdleTicksBeforeRun = 3;
-        const string NoResult = "no result";
 
         // State survives a domain reload (SessionState); a reload drops the statics below. Results holds one entry per
         // finished scenario, so its length is the next scenario's index.
         const string Key = "FilterOracle.";
+        static readonly SessionStateBool Started = new SessionStateBool(Key + "started");
         static readonly SessionStateString Predicted = new SessionStateString(Key + "predicted");
         static readonly SessionStateString Results = new SessionStateString(Key + "results");
         static readonly SessionStateString OutPath = new SessionStateString(Key + "out");
         static readonly SessionStateString Scenes = new SessionStateString(Key + "scenes");
         static readonly SessionStateBool Running = new SessionStateBool(Key + "running");
-        static readonly SessionStateBool Retried = new SessionStateBool(Key + "retried");
         static readonly SessionStateInt Ran = new SessionStateInt(Key + "ran");
         static readonly SessionStateInt BootstrapScenesAtStart = new SessionStateInt(Key + "bootstrapScenes");
+        static readonly SessionStateBool PlayModeOptionsSaved = new SessionStateBool(Key + "optionsSaved");
         static readonly SessionStateBool PlayModeOptionsEnabled = new SessionStateBool(Key + "optionsEnabled");
         static readonly SessionStateInt PlayModeOptions = new SessionStateInt(Key + "options");
 
-        static bool Active => Predicted.Value.Length > 0;
+        static bool Predicting => Predicted.Value.Length == 0;
         static List<string> ResultList => Results.Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
-        static string Header => $"## tests-run filter oracle: Unity {Application.unityVersion}";
 
         static TestRunnerApi? api;
         static double lastProgress;
@@ -120,72 +121,87 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
             {
                 var args = Environment.GetCommandLineArgs();
                 var outIndex = Array.IndexOf(args, "-filterOracleOut");
-                OutPath.Value = Path.GetFullPath(outIndex >= 0 && outIndex + 1 < args.Length ? args[outIndex + 1] : "filter-oracle-results.md");
+                OutPath.Value = Path.GetFullPath(outIndex >= 0 && outIndex + 1 < args.Length ? args[outIndex + 1] : "Logs/filter-oracle.md");
+                Predicted.Value = "";
                 Results.Value = "";
                 Running.Value = false;
-                Retried.Value = false;
                 Scenes.Value = Tool_Tests.OpenScenePaths();
                 BootstrapScenesAtStart.Value = BootstrapScenes();
                 DisablePlayModeReload();
-                var testRunner = Attach();
-                testRunner.RetrieveTestList(TestMode.EditMode, edit => testRunner.RetrieveTestList(TestMode.PlayMode, play =>
-                {
-                    try
-                    {
-                        if (!Leaves(edit).Any(t => t.FullName.StartsWith(Ns + ".")) || !Leaves(play).Any(t => t.FullName.StartsWith(PlayNs + ".")))
-                            throw new InvalidOperationException("the oracle's fixture tests are not in Unity's test tree");
-                        Predicted.Value = string.Join(",", Scenarios.Select(s =>
-                            TestFilterMatch.Count(s.Mode == TestMode.PlayMode ? play : edit, CreateFilter(s))));
-                    }
-                    catch (Exception e) { Fail(e); }
-                }));
+                Started.Value = true;
+                Attach();
+                RetrievePredictions();
             }
-            catch (Exception e) { Fail(e); }
+            catch (Exception e) { Stop("the oracle failed: " + e.Message, e); }
         }
 
         [InitializeOnLoadMethod]
         static void ResumeAfterDomainReload()
         {
-            if (Active)
-                Attach();
+            if (!Started.Value)
+                return;
+            Attach();
+            if (Predicting)
+                RetrievePredictions(); // the reload dropped the pending callback
         }
 
-        static TestRunnerApi Attach()
+        static void Attach()
         {
-            var testRunner = ScriptableObject.CreateInstance<TestRunnerApi>();
-            testRunner.RegisterCallbacks(new Callbacks());
-            api = testRunner;
+            api = ScriptableObject.CreateInstance<TestRunnerApi>();
+            api.RegisterCallbacks(new Callbacks());
             lastProgress = EditorApplication.timeSinceStartup;
             EditorApplication.update -= Tick;
             EditorApplication.update += Tick;
-            return testRunner;
+        }
+
+        static void RetrievePredictions()
+        {
+            var testRunner = api!;
+            testRunner.RetrieveTestList(TestMode.EditMode, edit => testRunner.RetrieveTestList(TestMode.PlayMode, play =>
+            {
+                try
+                {
+                    if (!Leaves(edit).Any(t => t.FullName.StartsWith(Ns + ".")) || !Leaves(play).Any(t => t.FullName.StartsWith(PlayNs + ".")))
+                        throw new InvalidOperationException("the oracle's fixture tests are not in Unity's test tree");
+                    Predicted.Value = string.Join(",", Scenarios.Select(s =>
+                        TestFilterMatch.Count(s.Mode == TestMode.PlayMode ? play : edit, CreateFilter(s))));
+                }
+                catch (Exception e) { Stop("the oracle failed: " + e.Message, e); }
+            }));
         }
 
         // One loop: start the next run only once Unity has fully left the previous one.
         static void Tick()
         {
-            if (!Active)
+            if (!Started.Value)
                 return;
+            var silentFor = EditorApplication.timeSinceStartup - lastProgress;
+            if (Predicting)
+            {
+                if (silentFor > Tool_Tests.TestListTimeout.TotalSeconds)
+                    Stop($"Unity's test tree was not retrieved in {Tool_Tests.TestListTimeout.TotalSeconds:0} s");
+                return;
+            }
+            var index = ResultList.Count;
             if (Running.Value)
             {
-                if (EditorApplication.timeSinceStartup - lastProgress > ScenarioTimeoutSeconds)
-                    GiveUpOnRun();
+                if (silentFor > ScenarioTimeoutSeconds)
+                    Stop($"{Scenarios[index].Mode} {Scenarios[index].Name}: Unity reported nothing for {ScenarioTimeoutSeconds:0} s");
                 return;
             }
             if (!IsIdle())
             {
                 idleTicks = 0;
-                if (EditorApplication.timeSinceStartup - lastProgress < Tool_Tests.TeardownTimeout.TotalSeconds)
-                    return;
-                Debug.LogWarning($"[FilterOracle] Unity's previous run did not finish its teardown in {Tool_Tests.TeardownTimeout.TotalSeconds:0} s; going on");
+                if (silentFor > Tool_Tests.TeardownTimeout.TotalSeconds)
+                    Stop($"Unity did not finish a run's teardown in {Tool_Tests.TeardownTimeout.TotalSeconds:0} s");
+                return;
             }
-            else if (++idleTicks < IdleTicksBeforeRun)
+            if (++idleTicks < IdleTicksBeforeRun)
                 return;
             idleTicks = 0;
-            var index = ResultList.Count;
             if (index >= Scenarios.Length)
             {
-                Finish();
+                Finish(null);
                 return;
             }
             Ran.Value = 0;
@@ -227,60 +243,64 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
 
             public void RunFinished(ITestResultAdaptor result)
             {
-                if (Running.Value)
-                    Record(Ran.Value.ToString());
+                if (!Running.Value)
+                    return;
+                Running.Value = false;
+                lastProgress = EditorApplication.timeSinceStartup;
+                var index = ResultList.Count;
+                Results.Value += Ran.Value + ",";
+                Debug.Log($"[FilterOracle] {Scenarios[index].Mode} {Scenarios[index].Name}: Unity ran {Ran.Value}, tests-run counted {Predicted.Value.Split(',')[index]}");
             }
         }
 
-        static void GiveUpOnRun()
+        static void Stop(string reason, Exception? error = null)
         {
-            Running.Value = false;
-            if (!Retried.Value)
-            {
-                Retried.Value = true;
-                Debug.LogWarning($"[FilterOracle] {Scenarios[ResultList.Count].Name}: no result in {ScenarioTimeoutSeconds:0} s, retrying");
-                return;
-            }
-            Record(NoResult);
+            Debug.LogError("[FilterOracle] " + (error?.ToString() ?? reason));
+            Finish(reason);
         }
 
-        static void Record(string ran)
+        // Writes the report and exits: 0 when every count matches, 3 on a mismatch, 2 when the oracle stopped early.
+        static void Finish(string? stopped)
         {
-            Running.Value = false;
-            Retried.Value = false;
-            var index = ResultList.Count;
-            Results.Value += ran + ",";
-            Debug.Log($"[FilterOracle] {Scenarios[index].Mode} {Scenarios[index].Name}: Unity ran {ran}, tests-run counted {Predicted.Value.Split(',')[index]}");
-        }
-
-        static void Finish()
-        {
-            var predicted = Predicted.Value.Split(',');
-            var ran = ResultList;
-            Predicted.Value = "";
-            EditorApplication.update -= Tick;
-            RestorePlayModeReload();
-            var matched = Enumerable.Range(0, ran.Count).Count(i => ran[i] == predicted[i]);
-            var lost = ran.Count(r => r == NoResult);
-            var mismatched = ran.Count - matched - lost;
-            var lines = new List<string>
+            var exitCode = 2;
+            try
             {
-                Header,
-                "",
-                $"{matched} of {ran.Count} scenarios: tests-run counts exactly the tests Unity runs" +
-                    (mismatched > 0 ? $"; **{mismatched} mismatched**" : "") + (lost > 0 ? $"; **{lost} gave no result**" : "") + ".",
-                "",
-                "| Scenario | Filter | Unity ran | tests-run counted | |",
-                "|---|---|---|---|---|",
-            };
-            for (var i = 0; i < ran.Count; i++)
-            {
-                var s = Scenarios[i];
-                lines.Add($"| {s.Mode} {s.Name} | {Describe(s)} | {ran[i]} | {predicted[i]} | {(ran[i] == predicted[i] ? "ok" : "**MISMATCH**")} |");
+                Started.Value = false;
+                EditorApplication.update -= Tick;
+                RestorePlayModeReload();
+                var predicted = Predicted.Value.Split(',');
+                var ran = ResultList;
+                var matched = Enumerable.Range(0, ran.Count).Count(i => ran[i] == predicted[i]);
+                var lines = new List<string>
+                {
+                    $"## tests-run filter oracle: Unity {Application.unityVersion}",
+                    "",
+                    $"{matched} of {Scenarios.Length} scenarios: tests-run counts exactly the tests Unity runs" +
+                        (ran.Count > matched ? $"; **{ran.Count - matched} mismatched**" : "") + ".",
+                };
+                if (stopped != null)
+                    lines.Add($"**Stopped after {ran.Count} scenarios:** {stopped}");
+                lines.Add("");
+                lines.Add("| Scenario | Filter | Unity ran | tests-run counted | |");
+                lines.Add("|---|---|---|---|---|");
+                for (var i = 0; i < ran.Count; i++)
+                {
+                    var s = Scenarios[i];
+                    lines.Add($"| {s.Mode} {s.Name} | {Describe(s)} | {ran[i]} | {predicted[i]} | {(ran[i] == predicted[i] ? "ok" : "**MISMATCH**")} |");
+                }
+                File.WriteAllLines(OutPath.Value, lines);
+                Debug.Log($"[FilterOracle] {matched}/{Scenarios.Length} match{(stopped != null ? ", stopped: " + stopped : "")}; report: {OutPath.Value}");
+                exitCode = stopped != null ? 2 : ran.Count > matched ? 3 : 0;
             }
-            File.WriteAllLines(OutPath.Value, lines);
-            Debug.Log($"[FilterOracle] {matched}/{ran.Count} match; report: {OutPath.Value}");
-            EditorApplication.Exit(lost > 0 ? 2 : mismatched > 0 ? 1 : 0);
+            catch (Exception e)
+            {
+                Debug.LogError("[FilterOracle] the report was not written: " + e);
+            }
+            finally
+            {
+                Predicted.Value = "";
+                EditorApplication.Exit(exitCode);
+            }
         }
 
         static string Describe(Scenario s)
@@ -299,34 +319,23 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
         {
             PlayModeOptionsEnabled.Value = EditorSettings.enterPlayModeOptionsEnabled;
             PlayModeOptions.Value = (int)EditorSettings.enterPlayModeOptions;
+            PlayModeOptionsSaved.Value = true;
             EditorSettings.enterPlayModeOptionsEnabled = true;
             EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload | EnterPlayModeOptions.DisableSceneReload;
         }
 
         static void RestorePlayModeReload()
         {
+            if (!PlayModeOptionsSaved.Value)
+                return;
             EditorSettings.enterPlayModeOptionsEnabled = PlayModeOptionsEnabled.Value;
             EditorSettings.enterPlayModeOptions = (EnterPlayModeOptions)PlayModeOptions.Value;
+            PlayModeOptionsSaved.Value = false;
         }
 
         static IEnumerable<ITestAdaptor> Leaves(ITestAdaptor node)
             => !node.IsSuite ? new[] { node }
                 : node.HasChildren ? node.Children.SelectMany(Leaves)
                 : Enumerable.Empty<ITestAdaptor>();
-
-        static void Fail(Exception e)
-        {
-            Predicted.Value = "";
-            Debug.LogError("[FilterOracle] " + e);
-            try
-            {
-                RestorePlayModeReload();
-                File.WriteAllText(OutPath.Value, $"{Header}\n\nThe oracle failed: `{e.Message}`\n");
-            }
-            finally
-            {
-                EditorApplication.Exit(2);
-            }
-        }
     }
 }

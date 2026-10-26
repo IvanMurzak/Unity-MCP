@@ -422,7 +422,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return await tcs.Task;
         }
 
-        static readonly TimeSpan TestListTimeout = TimeSpan.FromSeconds(60);
+        internal static readonly TimeSpan TestListTimeout = TimeSpan.FromSeconds(60);
 
         internal static List<string> UnmatchedNames(ITestAdaptor root, IReadOnlyList<string> names)
         {

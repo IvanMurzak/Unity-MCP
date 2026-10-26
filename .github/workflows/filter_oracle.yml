@@ -47,8 +47,8 @@ jobs:
         unityVersion: [2022.3.62f3, 6000.0.85f1, 6000.3.27f1, 6000.6.7f1]
     name: ${{ matrix.unityVersion }}
     runs-on: ubuntu-latest
-    # A healthy leg takes minutes; the cap only bounds a hung editor.
-    timeout-minutes: 15
+    # A warm leg takes minutes; a new Unity version has no cached Library yet and imports cold.
+    timeout-minutes: 25
     env:
       PROJECT: ./Unity-Tests/${{ matrix.unityVersion }}
       UNITY_VERSION: ${{ matrix.unityVersion }}
@@ -102,34 +102,38 @@ jobs:
           shm="$(docker run --rm --entrypoint df "unityci/editor:ubuntu-${UNITY_VERSION}-base-3" -m /dev/shm | awk 'NR==2 {print $2}')"
           [ "$shm" -ge 1025 ] || { echo "::error::default-shm-size did not take effect (/dev/shm = ${shm} MiB)"; exit 1; }
 
+      # The stored Personal license is mounted where the editor reads it, as .github/actions/setup-unity-mcp does,
+      # so one editor launch does it all. The oracle exits by itself (no -quit; exit codes: tests/filter-oracle/AGENTS.md).
       - name: Run the oracle
+        timeout-minutes: 20
         env:
           UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
         run: |
           license_dir="$RUNNER_TEMP/unity-license"
           mkdir -p "$license_dir"
           printf '%s\n' "$UNITY_LICENSE" > "$license_dir/Unity_lic.ulf"
-          # One container: activate the stored Personal license (as game-ci does), then run the oracle, which exits by
-          # itself (no -quit; exit codes in tests/filter-oracle/AGENTS.md).
           set +e
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/github/workspace" -w /github/workspace \
-            -v "$license_dir:/license:ro" \
+            -v "$license_dir:/root/.local/share/unity3d/Unity/" \
             "unityci/editor:ubuntu-${UNITY_VERSION}-base-3" \
-            bash -c 'unity-editor -batchmode -nographics -quit -logFile /dev/stdout -manualLicenseFile /license/Unity_lic.ulf > /dev/null 2>&1
-                     unity-editor -batchmode -nographics -logFile /dev/stdout -projectPath "$0" \
-                       -executeMethod com.IvanMurzak.Unity.MCP.FilterOracle.FilterOracle.Run -filterOracleOut /github/workspace/filter-oracle.md' \
-            "$PROJECT" > "$RUNNER_TEMP/unity.log" 2>&1
+            unity-editor -batchmode -nographics -logFile /dev/stdout -projectPath "$PROJECT" \
+              -executeMethod com.IvanMurzak.Unity.MCP.FilterOracle.FilterOracle.Run -filterOracleOut /github/workspace/filter-oracle.md \
+            > "$RUNNER_TEMP/unity.log" 2>&1
           status=$?
-          grep -E '\[FilterOracle\]|error CS' "$RUNNER_TEMP/unity.log"
           rm -rf "$license_dir"
+          grep -E '\[FilterOracle\]|error CS|[Ll]icens' "$RUNNER_TEMP/unity.log" | grep -vi serial
           if [ -f filter-oracle.md ]; then cat filter-oracle.md >> "$GITHUB_STEP_SUMMARY"; else echo "::error::the oracle wrote no report (editor exit $status)"; fi
           exit "$status"
 
-      - name: Editor log (on failure)
-        if: failure()
+      # Also after the step timeout. Lines naming the license serial stay out of the artifact (a public repo's
+      # artifacts are not masked).
+      - name: Editor log
+        if: failure() || cancelled()
+        run: grep -vi serial "$RUNNER_TEMP/unity.log" > "$RUNNER_TEMP/editor.log" || true
+      - if: failure() || cancelled()
         uses: actions/upload-artifact@v6
         with:
           name: filter-oracle-${{ matrix.unityVersion }}-editor-log
-          path: ${{ runner.temp }}/unity.log
+          path: ${{ runner.temp }}/editor.log
           retention-days: 3
