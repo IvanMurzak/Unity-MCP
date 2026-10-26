@@ -390,17 +390,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             testRunnerApi.RetrieveTestList(testMode, (testRoot) =>
             {
-                var testCount = testRoot != null
-                    ? TestFilterMatch.Count(testRoot, filter)
-                    : 0;
-                var unmatched = filterParams.SelectedNames == null ? new List<string>()
-                    : testRoot == null ? filterParams.SelectedNames.ToList()
-                    : UnmatchedNames(testRoot, filterParams.SelectedNames);
+                try
+                {
+                    var testCount = testRoot != null
+                        ? TestFilterMatch.Count(testRoot, filter)
+                        : 0;
+                    var unmatched = filterParams.SelectedNames == null ? new List<string>()
+                        : testRoot == null ? filterParams.SelectedNames.ToList()
+                        : UnmatchedNames(testRoot, filterParams.SelectedNames);
 
-                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                    Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
+                        Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
 
-                tcs.SetResult((testCount, unmatched));
+                    tcs.TrySetResult((testCount, unmatched));
+                }
+                catch (Exception ex)
+                {
+                    // Unity re-invokes a throwing callback every frame: settle the task instead.
+                    tcs.TrySetException(ex);
+                }
             });
 
             // The first retrieval after the Editor starts builds the whole test tree, which can take well over a few

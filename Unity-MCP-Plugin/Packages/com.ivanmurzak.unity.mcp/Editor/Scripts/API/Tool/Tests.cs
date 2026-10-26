@@ -328,17 +328,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     FailDeferredTestRun(requestId, Error.TestExecutionFailed(ex.Message));
                     return;
                 }
+                _ = ValidateAndExecuteTestRun(requestId, testMode, filterParams);
+                return;
             }
 
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log($"[TestRunner] Resuming test run after recompilation. Mode: {testMode}, Filters: {filterParams}");
 
-            _ = ValidateAndExecuteTestRun(requestId, testMode, filterParams);
+            // Started in this tick, before anything can reload the domain again; an empty run is answered as an error.
+            ExecuteTestRun(CreateTestFilter(testMode, filterParams));
         }
 
         /// <summary>
         /// Validates the filters against Unity's test tree (never a silent subset or an empty run), then starts the run;
-        /// a failure is delivered through <paramref name="requestId"/>. Used by the immediate path and the run resumed after a recompile.
+        /// a failure is delivered through <paramref name="requestId"/>. Used by the immediate path and a deferred RQL selection.
         /// </summary>
         static async Task ValidateAndExecuteTestRun(string requestId, TestMode testMode, TestFilterParameters filterParams)
         {

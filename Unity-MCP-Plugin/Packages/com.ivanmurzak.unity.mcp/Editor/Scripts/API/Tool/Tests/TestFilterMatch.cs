@@ -29,11 +29,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
         {
             var fields = new[]
             {
-                Field.Of(filter.testNames, name => node => node.FullName == name),
+                Field.Of(filter.testNames, name => node => FilterName(node) == name),
                 Field.Of(filter.groupNames, pattern =>
                 {
                     var regex = new Regex(pattern);
-                    return node => regex.IsMatch(node.FullName ?? string.Empty);
+                    return node => regex.IsMatch(FilterName(node));
                 }),
                 Field.Of(filter.assemblyNames, assembly => node => string.Equals(AssemblyName(node), assembly, StringComparison.OrdinalIgnoreCase)),
             }.OfType<Field>().ToArray();
@@ -73,6 +73,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
 
             public bool Includes(ITestAdaptor node) => include.Count == 0 || include.Any(matches => matches(node));
             public bool Excludes(ITestAdaptor node) => exclude.Any(matches => matches(node));
+        }
+
+        // The name Unity's FullNameFilter matches (TestExtensions.GetFullNameWithoutDllPath): empty for the root, the file
+        // name for an assembly, otherwise NUnit's full name, which the adaptor extends with " GeneratedTestCase<n>" for a
+        // duplicate case name.
+        static string FilterName(ITestAdaptor node)
+        {
+            if (node.Parent == null)
+                return string.Empty;
+            if (node.Parent.Parent == null && (node.TypeInfo ?? node.Parent.TypeInfo) == null)
+                return node.Name ?? string.Empty;
+            var fullName = node.FullName ?? string.Empty;
+            if (node.ChildIndex < 0)
+                return fullName;
+            var suffix = " GeneratedTestCase" + node.ChildIndex;
+            var at = fullName.LastIndexOf(suffix, StringComparison.Ordinal);
+            return at < 0 ? fullName : fullName.Remove(at, suffix.Length);
         }
 
         // Unity's AssemblyNameFilter reads TypeInfo; a tree without it still names the assembly in "Asm.dll/..." unique names.

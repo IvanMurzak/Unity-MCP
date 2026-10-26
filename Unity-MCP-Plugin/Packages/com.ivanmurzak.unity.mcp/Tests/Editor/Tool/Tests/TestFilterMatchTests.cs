@@ -67,6 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(1, Count(root, cls: "FilterWidget"), "the class pattern also matches a namespace segment");
             Assert.AreEqual(4, Count(root, ns: Ns, method: "!" + Other), "'!' excludes");
             Assert.AreEqual(3, Count(root, query: new[] { Param, Other }), "RQL selection");
+            Assert.AreEqual(Count(root, Asm), Count(root, Asm, Asm), "a namespace pattern also matches the assembly's file name");
         });
 
         [Test]
