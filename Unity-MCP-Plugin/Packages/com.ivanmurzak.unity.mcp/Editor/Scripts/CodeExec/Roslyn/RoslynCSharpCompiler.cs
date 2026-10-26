@@ -26,6 +26,7 @@ namespace com.IvanMurzak.CodeExec.Roslyn
     {
         internal const string SnippetFile = "snippet.cs";
         internal const string GeneratedFile = "<generated>";
+        internal const string UsingsFile = "<usings>";
 
         static readonly CSharpParseOptions ParseOptions = new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.None, SourceCodeKind.Regular);
         static readonly ConcurrentDictionary<string, (DateTime Stamp, MetadataReference Reference)> ReferenceCache =
@@ -88,7 +89,7 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             }
 
             // Auto-import can only add usings to the generated snippet: full-source code and includes are compiled verbatim.
-            var result = Emit(compilation, snippet != null ? trees[0] : null);
+            var result = Emit(compilation, snippet != null ? trees[0] : null, request.Usings);
             result.EntryType = entryType;
             result.EntryMethod = entryMethod;
             result.ResultType = resultType;
@@ -110,7 +111,7 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             return expression == null ? null : compilation.GetSemanticModel(tree).GetTypeInfo(expression).Type;
         }
 
-        static CompileResult Emit(CSharpCompilation compilation, SyntaxTree? importable)
+        static CompileResult Emit(CSharpCompilation compilation, SyntaxTree? importable, IReadOnlyList<string> usings)
         {
             using (var image = new MemoryStream())
             using (var symbols = new MemoryStream())
@@ -122,9 +123,10 @@ namespace com.IvanMurzak.CodeExec.Roslyn
                     Success = emit.Success,
                     Image = emit.Success ? image.ToArray() : null,
                     Symbols = emit.Success ? symbols.ToArray() : null,
-                    Diagnostics = errors.Select(ToDiagnostic).ToList(),
+                    Diagnostics = errors.Select(d => ToDiagnostic(d, usings)).ToList(),
                     UnresolvedNames = errors
-                        .Where(d => (d.Id == "CS0246" || d.Id == "CS0103") && importable != null && d.Location.SourceTree == importable)
+                        .Where(d => (d.Id == "CS0246" || d.Id == "CS0103") && importable != null && d.Location.SourceTree == importable
+                            && d.Location.GetMappedLineSpan().Path != UsingsFile) // a bad using is no type to import
                         .Select(d => importable!.GetRoot().FindNode(d.Location.SourceSpan, getInnermostNodeForTie: true))
                         .Select(n => n as SimpleNameSyntax ?? n.DescendantNodesAndSelf().OfType<SimpleNameSyntax>().FirstOrDefault())
                         .Where(n => n != null)
@@ -135,18 +137,28 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             }
         }
 
-        static CodeDiagnostic ToDiagnostic(Diagnostic d)
+        static CodeDiagnostic ToDiagnostic(Diagnostic d, IReadOnlyList<string> usings)
         {
             var span = d.Location.GetMappedLineSpan();
             var file = span.IsValid ? span.Path ?? "" : "";
+            var line = span.IsValid ? span.StartLinePosition.Line + 1 : 0;
+            var column = span.IsValid ? span.StartLinePosition.Character + 1 : 0;
+            var message = d.GetMessage();
+            if (file == UsingsFile && line >= 1 && line <= usings.Count)
+            {
+                // Not the agent's code: name the using (`usings` = the host's defaults plus the request's own).
+                message = $"using '{usings[line - 1]}': {message}";
+                file = "usings";
+                line = column = 0;
+            }
             return new CodeDiagnostic
             {
                 Id = d.Id,
                 Severity = d.Severity.ToString().ToLowerInvariant(),
                 File = file == GeneratedFile ? "" : file,
-                Line = span.IsValid ? span.StartLinePosition.Line + 1 : 0,
-                Column = span.IsValid ? span.StartLinePosition.Character + 1 : 0,
-                Message = d.GetMessage(),
+                Line = line,
+                Column = column,
+                Message = message,
             };
         }
 

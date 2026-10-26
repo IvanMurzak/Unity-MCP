@@ -12,6 +12,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Text.Json;
+using com.IvanMurzak.CodeExec;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -118,9 +119,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         [Test]
         public void LargeResultsAreBounded()
         {
+            // Code-Exec clips a text value (MaxValueChars).
             var text = Run("new string('x', 200000)");
-            Assert.Less(text.Length, Tool_Script.ResultValue.MaxChars + 1000);
-            StringAssert.Contains($"truncated: {Tool_Script.ResultValue.MaxChars} of 200000 characters", text);
+            Assert.Less(text.Length, OutputLimits.DefaultValueChars + 1000);
+            StringAssert.Contains($"truncated: {OutputLimits.DefaultValueChars} of 200000 characters shown", text);
 
             var list = Run("Enumerable.Range(0, 5000).ToList()");
             StringAssert.Contains($"{5000 - Tool_Script.ResultValue.MaxItems} more items", list);
@@ -156,8 +158,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             var code = string.Join("\n", Enumerable.Range(0, 40).Select(i => $"var v{i} = missing{i};"));
             var (r, text) = Call(Tool_Script.ScriptExecuteToolId, new { csharpCode = code });
             Assert.AreEqual(ResponseStatus.Error, r.Status, text);
-            StringAssert.Contains("more errors", text);
+            StringAssert.Contains("CE0002", text); // Code-Exec: 20 diagnostics, then a count of the rest
             StringAssert.DoesNotContain("missing39", text);
+        }
+
+        [Test]
+        public void ALongErrorIsClippedAndSaysSo()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            var (r, text) = Call(Tool_Script.ScriptExecuteToolId, new { csharpCode = "throw new System.Exception(new string('e', 30000));" });
+            Assert.AreEqual(ResponseStatus.Error, r.Status, text);
+            StringAssert.Contains("Truncated: error", text);
+            Assert.Less(text.Length, OutputLimits.DefaultErrorChars + 2000);
+        }
+
+        [Test]
+        public void EveryRunStartsWithFreshStatics()
+        {
+            const string code = "public static class Counter { public static int N; }\n++Counter.N";
+            StringAssert.Contains(": 1", Run(code));
+            StringAssert.Contains(": 1", Run(code));
+        }
+
+        [Test]
+        public void IncludesStayInsideTheSnippetsFolder()
+        {
+            LogAssert.ignoreFailingMessages = true;
+            var (r, text) = Call(Tool_Script.ScriptExecuteToolId, new { csharpCode = "1", include = new[] { "../../ProjectSettings/ProjectSettings.asset" } });
+            Assert.AreEqual(ResponseStatus.Error, r.Status, text);
+            StringAssert.Contains("InvalidRequest", text);
+            StringAssert.DoesNotContain("CS1525", text); // the asset is never compiled
         }
 
         [Test]

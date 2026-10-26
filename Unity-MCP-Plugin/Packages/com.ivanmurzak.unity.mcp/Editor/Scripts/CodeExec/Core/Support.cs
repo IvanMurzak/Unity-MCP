@@ -63,38 +63,85 @@ namespace com.IvanMurzak.CodeExec
             ns.StartsWith("Internal", StringComparison.Ordinal) && (ns.Length == 8 || ns[8] == '.');
     }
 
+    /// <summary>
+    /// Includes (spec §1): inside the include root unless the host allows otherwise; files must be <c>.cs</c>; folders
+    /// contribute their <c>*.cs</c> recursively. Paths are reported relative to the root.
+    /// </summary>
     static class IncludeResolver
     {
-        public static List<SourceFile> Read(IReadOnlyList<string> include, string root)
+        public static List<SourceFile> Read(IReadOnlyList<string> include, string root, bool allowOutsideRoot)
         {
             var files = new List<SourceFile>();
-            var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            if (include.Count == 0)
+                return files; // the root is not even needed (a host may leave it empty)
+            var seen = new HashSet<string>(PathComparer);
+            var prefix = WithSeparator(Path.GetFullPath(root));
             foreach (var entry in include)
             {
                 if (string.IsNullOrWhiteSpace(entry))
                     throw new ArgumentException("include entry is empty");
                 var full = Path.GetFullPath(Path.IsPathRooted(entry) ? entry : Path.Combine(root, entry));
+                if (!allowOutsideRoot && !IsUnder(prefix, WithSeparator(full))) // the root itself counts
+                    throw new ArgumentException("include is outside the include root: " + entry);
                 IEnumerable<string> paths;
                 if (Directory.Exists(full))
                     paths = Directory.GetFiles(full, "*.cs", SearchOption.AllDirectories).OrderBy(p => p, StringComparer.Ordinal);
                 else if (File.Exists(full))
+                {
+                    if (!full.EndsWith(".cs", StringComparison.OrdinalIgnoreCase))
+                        throw new ArgumentException("include is not a .cs file: " + entry);
                     paths = new[] { full };
+                }
                 else
                     throw new FileNotFoundException("include not found: " + entry);
                 foreach (var path in paths)
                 {
                     if (seen.Add(path))
-                        files.Add(new SourceFile(Relative(root, path), File.ReadAllText(path)));
+                        files.Add(new SourceFile(Relative(prefix, path), File.ReadAllText(path)));
                 }
             }
             return files;
         }
 
-        static string Relative(string root, string path)
+        // Windows paths are case-insensitive; elsewhere a differently cased path may be another folder.
+        static readonly StringComparison PathComparison = Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+        static readonly StringComparer PathComparer = Path.DirectorySeparatorChar == '\\' ? StringComparer.OrdinalIgnoreCase : StringComparer.Ordinal;
+
+        static string WithSeparator(string path) =>
+            path.EndsWith(Path.DirectorySeparatorChar.ToString(), StringComparison.Ordinal) || path.EndsWith(Path.AltDirectorySeparatorChar.ToString(), StringComparison.Ordinal)
+                ? path
+                : path + Path.DirectorySeparatorChar;
+
+        static bool IsUnder(string prefix, string path) => path.StartsWith(prefix, PathComparison);
+
+        static string Relative(string prefix, string path) => (IsUnder(prefix, path) ? path.Substring(prefix.Length) : path).Replace('\\', '/');
+    }
+
+    /// <summary>
+    /// Whether a snippet assembly keeps state between runs if it is reused: a static field (an auto-property's or an
+    /// event's backing field included) declared by one of the agent's own types. The compiler's own types (lambda caches,
+    /// array-initializer data) are stateless for this purpose.
+    /// </summary>
+    static class StaticState
+    {
+        public static bool Has(Assembly assembly)
         {
-            var prefix = Path.GetFullPath(root).TrimEnd('\\', '/') + Path.DirectorySeparatorChar;
-            var relative = path.StartsWith(prefix, StringComparison.OrdinalIgnoreCase) ? path.Substring(prefix.Length) : path;
-            return relative.Replace('\\', '/');
+            const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
+            try
+            {
+                foreach (var type in assembly.GetTypes())
+                {
+                    if (type.IsDefined(typeof(CompilerGeneratedAttribute), false))
+                        continue;
+                    if (type.GetFields(flags).Any(f => !f.IsLiteral))
+                        return true;
+                }
+                return false;
+            }
+            catch (Exception) // a type or attribute that cannot load: cannot tell, so be safe and load fresh copies
+            {
+                return true;
+            }
         }
     }
 

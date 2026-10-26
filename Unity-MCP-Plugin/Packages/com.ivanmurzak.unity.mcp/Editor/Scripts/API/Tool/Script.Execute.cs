@@ -64,15 +64,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `isMethodBody=true` forces snippet mode.\n\n" +
             "Compile errors point at your own lines (`snippet.cs(2,5)`).\n\n" +
             "## Result and output\n\n" +
-            "- The result is bounded: strings and the serialized result to 65536 characters, collections to 1000 items " +
-            "(a note says what was cut). Return a selection or a summary instead of everything.\n" +
+            "- The result is bounded: a string to 20000 characters, a collection to 1000 items, the serialized result to " +
+            "131072 characters; errors to 20000 characters and 20 compile errors (a note says what was cut). Return a " +
+            "selection or a summary instead of everything.\n" +
             "- `Debug.Log` / `Console.WriteLine` output is not part of the result: `Debug.Log` goes to the Unity Console " +
             "(read it with rql-query `console | sort sequence desc | first 10 | select logType message`).\n" +
             "- Code runs on the main thread and is not aborted: an endless loop freezes the Editor. An `await` gets at most 120 s.\n" +
-            "- Identical code reuses its compiled assembly, so static fields of your own types keep their values between such calls.\n\n" +
+            "- Every run starts fresh: static fields of your own types do not keep values from an earlier call.\n\n" +
             "## usings / include\n\n" +
             "- `usings`: extra namespaces, e.g. `[\"MyGame.Gameplay\"]`.\n" +
-            "- `include`: helper `.cs` files or folders (recursive), relative to `<Project>/.ai-game-dev/snippets`, compiled with the snippet.\n\n" +
+            "- `include`: helper `.cs` files or folders (recursive) inside `<Project>/.ai-game-dev/snippets` (paths relative to it), " +
+            "compiled with the snippet.\n\n" +
             "## Passing Unity objects as parameters\n\n" +
             "Parameters become the snippet's variables (or the method's arguments, in order):\n\n" +
             "- `UnityEngine.GameObject` — resolves an actual GameObject from value `{\"instanceID\": N}`, `{\"name\": \"...\"}`, or `{\"path\": \"...\"}`.\n" +
@@ -160,14 +162,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (string.IsNullOrEmpty(serializedResult.name))
                 serializedResult.name = JsonSchema.Result;
 
-            // Backstop for a result that is large in depth rather than in length (a big object graph): never megabytes into the
-            // agent's context. Measured once, as compact JSON; its bound leaves room for a shaped result's JSON overhead.
+            // Code-Exec clips only a text value (result.Truncated, the marker is in the string itself); Unity's converter passes
+            // the live object through, so its serialized form is bounded here: a big object graph never reaches the agent's
+            // context whole. Measured once, as compact JSON; the bound leaves room for a shaped result's JSON overhead.
             var json = System.Text.Json.JsonSerializer.Serialize(serializedResult, Compact(reflector.JsonSerializerOptions));
             return json.Length <= ResultValue.MaxSerializedChars
                 ? serializedResult
                 : Scalar(serializedResult.typeName ?? JsonSchema.Object, System.Text.Json.JsonSerializer.Serialize(
                     "The result is too large to return whole (" + json.Length + " characters as JSON); its beginning:\n" +
-                    ResultValue.Truncate(json, "characters")));
+                    OutputLimits.Clip(json, OutputLimits.DefaultValueChars, "return a slice or a summary")));
         }
 
         // The reflector's options without indentation, built once per options instance (System.Text.Json caches its
@@ -277,18 +280,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         static string Describe(ExecuteResult result)
         {
-            // A file that is not C# (e.g. a wrong include) yields thousands of diagnostics: the first ones carry the cause.
+            // Code-Exec bounds both: at most 20 diagnostics (plus a CE0002 count of the rest) and a clipped error.
             var text = result.ErrorKind == ErrorKind.Compile
-                ? "Compilation failed:\n" + string.Join("\n", result.Diagnostics.Take(MaxDiagnostics).Select(d => d.ToString()))
-                  + (result.Diagnostics.Count > MaxDiagnostics ? $"\n… {result.Diagnostics.Count - MaxDiagnostics} more errors" : "")
+                ? "Compilation failed:\n" + string.Join("\n", result.Diagnostics.Select(d => d.ToString()))
                 : $"Execution failed ({result.ErrorKind}): {result.Error}";
-            if (text.Length > ResultValue.MaxChars)
-                text = ResultValue.Truncate(text, "characters of the error");
             if (result.AutoImported.Count > 0)
                 text += "\nAuto-imported: " + string.Join(", ", result.AutoImported);
+            if (result.Truncated.Count > 0)
+                text += "\nTruncated: " + string.Join(", ", result.Truncated);
             return text;
         }
-
-        const int MaxDiagnostics = 20;
     }
 }

@@ -68,8 +68,9 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             var sb = new StringBuilder();
             foreach (var e in root.Externs) // extern aliases must precede every using
                 Emit(sb, e.GetLocation(), e.ToString());
-            foreach (var u in usings)
-                sb.Append("using ").Append(u).Append(";\n");
+            // The runtime's usings (host defaults + request) map to their index, so a bad one is reported as itself.
+            for (var i = 0; i < usings.Count; i++)
+                sb.Append("#line ").Append(i + 1).Append(" \"").Append(RoslynCSharpCompiler.UsingsFile).Append("\"\nusing ").Append(usings[i]).Append(";\n");
             foreach (var u in root.Usings)
                 Emit(sb, u.GetLocation(), u.ToString());
             foreach (var t in topLevel)
