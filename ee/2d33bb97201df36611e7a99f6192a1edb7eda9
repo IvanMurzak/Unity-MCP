@@ -1,0 +1,29 @@
+cli/tests/close.test.ts
+  4a72700fa0d01f72 86,367-373
+cli/src/commands/close.ts
+  4a72700fa0d01f72 67-70,93-97,124,149-155
+cli/src/utils/unity-shutdown.ts
+  4a72700fa0d01f72 72-73,75,85-97,108-143,153-163
+cli/README.md
+  4a72700fa0d01f72 310-311
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "ee2d33bb97201df36611e7a99f6192a1edb7eda9",
+  "prompts": {
+    "4a72700fa0d01f72": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "293d90db-23d4-4578-87ac-05e06ade0c8f",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 711,
+      "total_deletions": 1261,
+      "accepted_lines": 1341,
+      "overriden_lines": 0
+    }
+  }
+}

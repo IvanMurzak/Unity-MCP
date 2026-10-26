@@ -1,0 +1,30 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Script/ScriptExecuteTests.cs
+  s_a4bd5ddb53fd2d::t_06bc376a472cde 470,478-481,506
+  s_a4bd5ddb53fd2d::t_cf0145579210dd 507-543
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Execute.cs
+  s_a4bd5ddb53fd2d::t_5a215ca334def2 108,118-119,131
+  s_a4bd5ddb53fd2d::t_1be0be2fa2e5f4 165-171
+  s_a4bd5ddb53fd2d::t_43b4c07c9504d1 188-189,196,199-202,212-213
+  s_a4bd5ddb53fd2d::t_d56e61fc4d6cae 216-217
+  s_a4bd5ddb53fd2d::t_c1cf2e35dc002f 193-195
+  s_a4bd5ddb53fd2d::t_36152feb189271 150
+  s_a4bd5ddb53fd2d::t_15eeb1cfae7e7f 145
+Unity-MCP-Plugin/.claude/skills/script-execute/SKILL.md
+  s_a4bd5ddb53fd2d::t_f90fcfaa4b9fa3 42-43,72,74-75,93,99-106,109,112-148,163-221
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e55160a463b215cd7c3d43e4672b6dffed18c856",
+  "prompts": {},
+  "sessions": {
+    "s_a4bd5ddb53fd2d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "97ee1b50-e171-4dcb-8ce1-b70a7701b61f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

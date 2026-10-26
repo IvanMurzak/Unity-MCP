@@ -1,0 +1,19 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Diagnostics/CiTimingProbeTests.cs
+  s_ccb6e3eca83ca4::t_daa8574890d260 47-51,53-55
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3379470643d352c0736cbf1805e4075365805733",
+  "prompts": {},
+  "sessions": {
+    "s_ccb6e3eca83ca4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "904a05bd-31d2-4d9b-a5e7-77ea1d9117d0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

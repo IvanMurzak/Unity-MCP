@@ -1,0 +1,50 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageRestorer.cs
+  s_a8c51bc9176e23::t_dec011b0230186 181-186,191
+  s_a8c51bc9176e23::t_7a14ae89a3e391 134-142,192
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs
+  s_a8c51bc9176e23::t_f04b926e513079 190
+  s_a8c51bc9176e23::t_c5d04d23ba5691 127
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetLegacyMigrationTests.cs
+  s_a8c51bc9176e23::t_76afcef7d339c0 135-162
+  s_a8c51bc9176e23::t_d2131664fa212c 111,113-116,118-119,127-130
+  s_a8c51bc9176e23::t_96d40312708535 64,66-70,76
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetExtractorFlatLayoutTests.cs
+  s_a8c51bc9176e23::t_cb97870282a844 20-26
+  s_a8c51bc9176e23::t_1d78d72cdcc346 54,56-59,62,64-67,71,73-75,81,86-88,94,96-108,123
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/com.IvanMurzak.Unity.MCP.Editor.Tests.asmdef
+  s_a8c51bc9176e23::t_db48e72d55e941 21-28
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/com.IvanMurzak.Unity.MCP.Runtime.asmdef
+  s_a8c51bc9176e23::t_00a50f2b48f549 12-21
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetInstallManifest.cs
+  s_a8c51bc9176e23::t_0160c1cd10c003 231-232
+  s_a8c51bc9176e23::t_2f5bef65d751ee 191-194
+  s_a8c51bc9176e23::t_e6e5cf088eafc9 132-136,150-152
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_a8c51bc9176e23::t_30ea9413dac263 6,12,18,24,30,36,42,48,54,60,66,72,78,88,94,100,106,112,118,124,130,136,142,148,154,160,166,172,178,184,190,196,202,208,214,220,226,232,238,244,250,256
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetPackageInstallerStaleVersionFilesystemSweepTests.cs
+  s_a8c51bc9176e23::t_9333bb14ae8acd 21-26,53,55-58,64,77,79-82,100,102-105,108,112,121-122,130-131,138-140,157-159,165,179-181,186,202
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetExtractor.cs
+  s_a8c51bc9176e23::t_4669e9753f6b61 27-33,35-39,53,68-70,72-73,80-83,85,92
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Runtime/com.IvanMurzak.Unity.MCP.Tests.asmdef
+  s_a8c51bc9176e23::t_7e8be83cc5f99d 17-24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/com.IvanMurzak.Unity.MCP.Editor.asmdef
+  s_a8c51bc9176e23::t_fec755095e91d3 15-26
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetLegacyMigration.cs
+  s_a8c51bc9176e23::t_f13cb4858ed8fa 105-117,120-129,134-139,148-149,151,154,156,161,168-171,173-176,178-179,181-183,186-187,189,193-240
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "2768a692cbc5241687fdce7369eea6e04978fb24",
+  "prompts": {},
+  "sessions": {
+    "s_a8c51bc9176e23": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "43026932-e56b-4e7d-bd51-c3c0c7aff3c2",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

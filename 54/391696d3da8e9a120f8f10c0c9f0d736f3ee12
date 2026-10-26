@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UnityMcpPluginEditor.Config.cs
+  c2bf31fda4b99aed 65-68,123,135-136,160
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.11",
+  "base_commit_sha": "54391696d3da8e9a120f8f10c0c9f0d736f3ee12",
+  "prompts": {
+    "c2bf31fda4b99aed": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "10d6d1b9-3e32-4c09-ac2a-ec8a8a74c114",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 26,
+      "total_deletions": 20,
+      "accepted_lines": 8,
+      "overriden_lines": 0
+    }
+  }
+}

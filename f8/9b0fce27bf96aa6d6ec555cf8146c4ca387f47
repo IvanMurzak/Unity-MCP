@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Component.Get.pre-Unity.6.5.cs
+  4f6c1befdf1355be 84
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Modify.cs
+  4f6c1befdf1355be 134,136,139
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.4",
+  "base_commit_sha": "f89b0fce27bf96aa6d6ec555cf8146c4ca387f47",
+  "prompts": {
+    "4f6c1befdf1355be": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "818b14ac-53a6-4387-97a9-f04e12876670",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 4,
+      "total_deletions": 3,
+      "accepted_lines": 172,
+      "overriden_lines": 0
+    }
+  }
+}

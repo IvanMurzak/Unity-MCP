@@ -1,0 +1,21 @@
+commands/tests/test_extensions.py
+  s_eb8bcde0be96a2::t_f4815a07c1fdd8 196-228
+.github/workflows/test_unity_plugin.yml
+  s_eb8bcde0be96a2::t_eaa03655dc56f7 243-245,247
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "494c4e5eb13d88cfe8b51ba84ca3cf8f8f59b288",
+  "prompts": {},
+  "sessions": {
+    "s_eb8bcde0be96a2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14267-6fec-7a30-97a7-931925a48014",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,111 @@
+cli/src/utils/server-version.ts
+  s_8047d5689981d2::t_9b4c31cf9d23ba 18
+.github/nuget-gate.lock
+  s_8047d5689981d2::t_99e3f71c4096f2 3-4,19
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs"
+  s_8047d5689981d2::t_bfe0e6748bb6e2 22
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8047d5689981d2::t_c6db4ecfb2b414 4,10
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_8047d5689981d2::t_39f744c0dd1425 68,117
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs
+  s_8047d5689981d2::t_e3babfc06f9c0d 159
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/com.IvanMurzak.Unity.MCP.Editor.asmdef
+  s_8047d5689981d2::t_33749a0092e1ad 32
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs
+  s_8047d5689981d2::t_a39e43a5aa22b3 30
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/com.IvanMurzak.Unity.MCP.Runtime.asmdef
+  s_8047d5689981d2::t_e3d73825206e61 26
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/TestFiles/com.IvanMurzak.Unity.MCP.TestFiles.asmdef
+  s_8047d5689981d2::t_f85a4d12c79c93 13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/com.IvanMurzak.Unity.MCP.Editor.Tests.asmdef
+  s_8047d5689981d2::t_f1b995cb21515f 34
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Runtime/com.IvanMurzak.Unity.MCP.Tests.asmdef
+  s_8047d5689981d2::t_45419b8abe1e36 30
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json
+  s_8047d5689981d2::t_e1c84ee1190ce7 18
+Unity-MCP-Plugin/ProjectSettings/ProjectSettings.asset
+  s_8047d5689981d2::t_67deb0e7ad0e88 770,772-774,776-777,779-790
+Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj
+  s_8047d5689981d2::t_a158aebfc6ea16 40
+Unity-Tests/2022.3.62f3/Assets/EditorTests/EditorTests.asmdef
+  s_8047d5689981d2::t_05a74aa423e403 24
+Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8047d5689981d2::t_6c0565cb3d7b75 4,10
+Unity-Tests/2022.3.62f3/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8047d5689981d2::t_8a58cd9d8a3677 22
+Unity-Tests/2022.3.62f3/Assets/TestFiles/TestFiles.asmdef
+  s_8047d5689981d2::t_53a2b21fdbb5fc 13
+Unity-Tests/2022.3.62f3/ProjectSettings/ProjectSettings.asset
+  s_8047d5689981d2::t_6374420fbe2134 747-764
+Unity-Tests/2023.2.22f1/Assets/EditorTests/EditorTests.asmdef
+  s_8047d5689981d2::t_aef91a1bcf80f6 24
+Unity-Tests/2023.2.22f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8047d5689981d2::t_6c3a883cc3295f 4,10
+Unity-Tests/2023.2.22f1/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8047d5689981d2::t_787f86ce1cdaa0 22
+Unity-Tests/2023.2.22f1/Assets/TestFiles/TestFiles.asmdef
+  s_8047d5689981d2::t_cf9bbad3af554b 13
+Unity-Tests/2023.2.22f1/ProjectSettings/ProjectSettings.asset
+  s_8047d5689981d2::t_305e6241d3e692 656-672
+Unity-Tests/6000.3.1f1/Assets/EditorTests/EditorTests.asmdef
+  s_8047d5689981d2::t_cb956fad0e18e2 24
+Unity-Tests/6000.3.1f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8047d5689981d2::t_3b9913a4978d5b 4,10
+Unity-Tests/6000.3.1f1/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8047d5689981d2::t_f85fe8713ac83a 22
+Unity-Tests/6000.3.1f1/Assets/TestFiles/TestFiles.asmdef
+  s_8047d5689981d2::t_e45e497b4da84c 13
+Unity-Tests/6000.3.1f1/ProjectSettings/ProjectSettings.asset
+  s_8047d5689981d2::t_a4879fcc077cd0 832-850
+Unity-Tests/6000.5.0b3/Assets/EditorTests/EditorTests.asmdef
+  s_8047d5689981d2::t_a95b3541718c12 24
+Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8047d5689981d2::t_47292a8ea4a4c2 4,10
+Unity-Tests/6000.5.0b3/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8047d5689981d2::t_d4dc3997a5c2d0 22
+Unity-Tests/6000.5.0b3/Assets/TestFiles/TestFiles.asmdef
+  s_8047d5689981d2::t_89824424ca860b 13
+Unity-Tests/6000.5.0b3/ProjectSettings/ProjectSettings.asset
+  s_8047d5689981d2::t_2cd1dc3031acb5 836-854
+Unity-Tests/6000.6.0a2/Assets/EditorTests/EditorTests.asmdef
+  s_8047d5689981d2::t_df10ba3f2524d1 24
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8047d5689981d2::t_01374e6aabe5ed 4,10
+Unity-Tests/6000.6.0a2/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8047d5689981d2::t_df2e870199f84e 22
+Unity-Tests/6000.6.0a2/Assets/TestFiles/TestFiles.asmdef
+  s_8047d5689981d2::t_d88c0be5c98c45 13
+Unity-Tests/6000.6.0a2/ProjectSettings/ProjectSettings.asset
+  s_8047d5689981d2::t_ae7c5eed733a3d 837-855
+Unity-Tests/6000.6.3f1/Assets/EditorTests/EditorTests.asmdef
+  s_8047d5689981d2::t_a2783ca78d09e8 24
+Unity-Tests/6000.6.3f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_8047d5689981d2::t_23245c4dc29a7e 4,10
+Unity-Tests/6000.6.3f1/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_8047d5689981d2::t_188c3bcef9adab 22
+Unity-Tests/6000.6.3f1/Assets/TestFiles/TestFiles.asmdef
+  s_8047d5689981d2::t_7c3149d036858b 13
+Unity-Tests/6000.6.3f1/ProjectSettings/ProjectSettings.asset
+  s_8047d5689981d2::t_5d618ca9da2ad0 593-611
+cli/package-lock.json
+  s_8047d5689981d2::t_16c3128df4e7cf 3,9
+cli/package.json
+  s_8047d5689981d2::t_55129e3fd4dde1 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "b5af6995319368b6893d1d796c79716ecf215fe9",
+  "prompts": {},
+  "sessions": {
+    "s_8047d5689981d2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1230c-c6bd-7aa3-94b2-24a9267b7698",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

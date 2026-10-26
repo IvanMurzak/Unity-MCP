@@ -1,0 +1,36 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/SystemTool/Skills.Create.cs
+  92215d1e815d0ecb 122-127
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "2d0c4016e11f6c3aeadfe9b567fc7c65866037f3",
+  "prompts": {
+    "92215d1e815d0ecb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "adc75ef9-a3f1-409c-8124-491a3166c37a",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 232,
+      "total_deletions": 227,
+      "accepted_lines": 19,
+      "overriden_lines": 0
+    },
+    "d82ace1a389f2043": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0bb6f578-2f7c-40fe-9015-ea4615e01d8f",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 22,
+      "total_deletions": 0,
+      "accepted_lines": 22,
+      "overriden_lines": 0
+    }
+  }
+}
