@@ -50,32 +50,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     case UnityEngine.Object _:
                         return value;
                     case IDictionary dictionary:
-                    {
-                        var entries = new List<object?>();
-                        foreach (DictionaryEntry e in dictionary)
-                        {
-                            if (entries.Count == MaxItems) { entries.Add(More(dictionary.Count)); break; }
-                            entries.Add(new Entry { key = e.Key, value = e.Value });
-                        }
-                        return entries;
-                    }
+                        return Cap(Entries(dictionary), dictionary.Count);
                     case ICollection collection when collection.Count <= MaxItems:
                         return value;
                     case IEnumerable sequence:
-                    {
-                        // A lazy sequence is enumerated once, at most MaxItems + 1 items (it may be endless).
-                        var items = new List<object?>();
-                        var total = (value as ICollection)?.Count;
-                        foreach (var item in sequence)
-                        {
-                            if (items.Count == MaxItems) { items.Add(More(total)); break; }
-                            items.Add(item);
-                        }
-                        return items;
-                    }
+                        return Cap(sequence, (value as ICollection)?.Count);
                     default:
                         return value;
                 }
+            }
+
+            // IDictionary's own enumerator: a generic dictionary's IEnumerable yields KeyValuePairs, not DictionaryEntry.
+            static IEnumerable<Entry> Entries(IDictionary dictionary)
+            {
+                var e = dictionary.GetEnumerator();
+                while (e.MoveNext()) yield return new Entry { key = e.Key, value = e.Value };
+            }
+
+            // Enumerated once, at most MaxItems + 1 items: a lazy sequence may be endless.
+            static List<object?> Cap(IEnumerable items, int? total)
+            {
+                var list = new List<object?>();
+                foreach (var item in items)
+                {
+                    if (list.Count == MaxItems) { list.Add(More(total)); break; }
+                    list.Add(item);
+                }
+                return list;
             }
 
             static string More(int? total) => total is int n

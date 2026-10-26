@@ -36,6 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
              .Add<bool>("active", g => g.activeSelf, (g, v) => g.SetActive(v), description: "activeSelf; assigning calls SetActive")
              // Unity rejects an unknown tag or a layer outside 0..31 by logging an error, not by throwing: checked before any
              // write, so the receipt never reports a change that did not happen and the other writes stay all-or-nothing.
+             // An empty name is legal in Unity but a policy here: unity.find and paths cannot address such an object.
              .Add<string>("name", g => g.name, (g, v) => g.name = v, (g, v) => ValidateName(v), "the GameObject's name (not empty)")
              .Add<string>("tag", g => g.tag, (g, v) => g.tag = v, (g, v) => ValidateTag(v),
                  "tag: one of the project's tags (Untagged, MainCamera, Player … and the tags added in Tags and Layers)")
@@ -45,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  "assign a list, e.g. [\"ContributeGI\", \"BatchingStatic\"] ([] clears; isStatic sets them all)")
              .Function<string, Component>("AddComponent", (g, type) => AddComponent(g, type), "type",
                  "add a component by type name (e.g. \"Rigidbody\", \"Light\", \"BoxCollider\", a script class) and return it")
-             .Method("Destroy", g => Destroy(g), "destroy this GameObject (undoable)")
+             .Method("Destroy", g => RqlUnity.DestroyUndoable(g, $"Unity did not destroy '{g.name}'"), "destroy this GameObject (undoable)")
              .Function("Duplicate", g => Duplicate(g), "copy this GameObject next to it (prefab instances stay linked) and return the copy (undoable)")
              .Function<string, GameObject>("SaveAsPrefab", (g, path) => SaveAsPrefab(g, path), "path",
                  "save as a new prefab asset (\"Assets/…/X.prefab\", not an existing one); this GameObject becomes its instance; returns the prefab asset");
@@ -79,14 +80,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                                                           "conflicts with a component already there, or cannot be added (the Console has the reason)");
         }
 
-        // When Unity refuses to destroy a GameObject it logs instead of throwing.
-        private static void Destroy(GameObject g)
-        {
-            var name = g.name;
-            Undo.DestroyObjectImmediate(g);
-            if (g != null) throw new InvalidOperationException($"Unity did not destroy '{name}' (the Console has the reason)");
-        }
-
         // The Editor's own Ctrl+D path: prefab instances stay linked with their overrides, names stay unique, undo is
         // registered by Unity. It works on the selection, which is restored afterwards.
         private static GameObject Duplicate(GameObject g)
@@ -107,7 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             // An existing prefab would be replaced with this GameObject: every instance of it would change.
             path = RqlEditorApi.NewAssetPath(path, ".prefab");
-            var folder = System.IO.Path.GetDirectoryName(path)?.Replace('\\', '/');
+            var folder = RqlEditorApi.Normalize(System.IO.Path.GetDirectoryName(path) ?? "");
             if (!string.IsNullOrEmpty(folder) && !AssetDatabase.IsValidFolder(folder)) throw new ArgumentException($"folder '{folder}' does not exist (editor | call CreateFolder(\"{folder}\"))");
             return PrefabUtility.SaveAsPrefabAssetAndConnect(g, path, InteractionMode.UserAction, out var ok) is GameObject asset && ok
                 ? asset : throw new ArgumentException($"could not save a prefab at '{path}'");

@@ -161,15 +161,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 serializedResult.name = JsonSchema.Result;
 
             // Backstop for a result that is large in depth rather than in length (a big object graph): never megabytes into the
-            // agent's context. The JSON is wordier than what the agent reads, so its bound leaves room for a shaped result.
-            var json = System.Text.Json.JsonSerializer.Serialize(serializedResult, reflector.JsonSerializerOptions);
-            if (json.Length <= ResultValue.MaxSerializedChars)
-                return serializedResult;
-            var compact = System.Text.Json.JsonSerializer.Serialize(serializedResult,
-                new System.Text.Json.JsonSerializerOptions(reflector.JsonSerializerOptions) { WriteIndented = false });
-            return Scalar(serializedResult.typeName ?? JsonSchema.Object, System.Text.Json.JsonSerializer.Serialize(
-                "The result is too large to return whole (" + compact.Length + " characters as JSON); its beginning:\n" +
-                ResultValue.Truncate(compact, "characters")));
+            // agent's context. Measured once, as compact JSON; its bound leaves room for a shaped result's JSON overhead.
+            var json = System.Text.Json.JsonSerializer.Serialize(serializedResult, Compact(reflector.JsonSerializerOptions));
+            return json.Length <= ResultValue.MaxSerializedChars
+                ? serializedResult
+                : Scalar(serializedResult.typeName ?? JsonSchema.Object, System.Text.Json.JsonSerializer.Serialize(
+                    "The result is too large to return whole (" + json.Length + " characters as JSON); its beginning:\n" +
+                    ResultValue.Truncate(json, "characters")));
+        }
+
+        // The reflector's options without indentation, built once per options instance (System.Text.Json caches its
+        // metadata per instance, so a fresh copy per call would rebuild it every time).
+        static (System.Text.Json.JsonSerializerOptions Source, System.Text.Json.JsonSerializerOptions Compact)? _compact;
+
+        static System.Text.Json.JsonSerializerOptions Compact(System.Text.Json.JsonSerializerOptions source)
+        {
+            if (_compact is { } c && ReferenceEquals(c.Source, source)) return c.Compact;
+            var compact = new System.Text.Json.JsonSerializerOptions(source) { WriteIndented = false };
+            _compact = (source, compact);
+            return compact;
         }
 
         static SerializedMember Scalar(string typeName, string json) =>
@@ -187,14 +197,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             declared.UnionWith(root.DescendantNodes().OfType<BaseTypeDeclarationSyntax>().Select(t => t.Identifier.Text));
             foreach (var u in usings)
                 if (u.IndexOf('=') is var eq && eq > 0) declared.Add(u.Substring(0, eq).Trim());
-            return usings.Concat(HostAliases.Where(a => !declared.Contains(a.Key)).Select(a => $"{a.Key} = {a.Value}")).ToArray();
+            return usings.Concat(HostAliases.Where(a => !declared.Contains(a.Name)).Select(a => $"{a.Name} = {a.Target}")).ToArray();
         }
 
-        static readonly KeyValuePair<string, string>[] HostAliases =
-        {
-            new KeyValuePair<string, string>("Object", "UnityEngine.Object"),
-            new KeyValuePair<string, string>("Random", "UnityEngine.Random"),
-        };
+        static readonly (string Name, string Target)[] HostAliases = { ("Object", "UnityEngine.Object"), ("Random", "UnityEngine.Random") };
 
         static string ParameterName(SerializedMember parameter, int index) => parameter.name ?? $"param{index}";
 

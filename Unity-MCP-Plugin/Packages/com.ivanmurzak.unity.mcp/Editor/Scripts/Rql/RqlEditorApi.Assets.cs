@@ -80,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return pipeline != null && pipeline.defaultShader != null ? pipeline.defaultShader : Shader.Find("Standard");
         }
 
-        private static string Normalize(string path) => path.Replace('\\', '/').TrimEnd('/');
+        internal static string Normalize(string path) => path.Replace('\\', '/').TrimEnd('/');
 
         /// <summary>
         /// <paramref name="path"/> normalized, after checking that it is free and has <paramref name="extension"/> (when one is
@@ -92,7 +92,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             path = Normalize(path);
             if (!string.IsNullOrEmpty(extension) && !path.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException($"'{path}' must end with {extension}");
-            if (AssetDatabase.LoadMainAssetAtPath(path) != null || AssetDatabase.IsValidFolder(path) || File.Exists(path))
+            if (AssetDatabase.IsValidFolder(path) || File.Exists(path))
                 throw new ArgumentException($"'{path}' already exists: pick a new path, or DeleteAsset(\"{path}\") first");
             return path;
         }
@@ -102,8 +102,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (string.IsNullOrEmpty(path)) return;
             path = Normalize(path!);
             if (AssetDatabase.IsValidFolder(path)) return;
-            var parent = Path.GetDirectoryName(path)?.Replace('\\', '/');
+            var parent = Path.GetDirectoryName(path);
             if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
+            parent = Normalize(parent);
             EnsureFolder(parent);
             AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
         }
@@ -115,28 +116,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         internal static List<string> Users(string path)
         {
             bool Inside(string p) => p == path || p.StartsWith(path + "/", StringComparison.Ordinal);
-            var roots = RqlUnity.RootGameObjects();
-            if (OpenPrefabRoot() is GameObject prefabRoot) roots.Add(prefabRoot);
+            var objects = RqlUnity.AllGameObjects();
+            if (OpenPrefabRoot() is GameObject prefabRoot)
+                foreach (var t in prefabRoot.GetComponentsInChildren<Transform>(true)) objects.Add(t.gameObject);
             var users = new List<string>();
-            var transforms = new List<Transform>();
             var components = new List<Component>();
-            foreach (var root in roots)
-            {
-                root.GetComponentsInChildren(true, transforms);
-                foreach (var t in transforms)
-                {
-                    var go = t.gameObject;
-                    var uses = PrefabUtility.IsOutermostPrefabInstanceRoot(go) && Inside(PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go));
-                    if (!uses)
-                    {
-                        go.GetComponents(components);
-                        foreach (var c in components)
-                            if (c != null && References(c, Inside)) { uses = true; break; }
-                    }
-                    if (uses) users.Add(go.GetPath() ?? go.name);
-                }
-            }
+            foreach (var go in objects)
+                if (Uses(go, Inside, components)) users.Add(go.GetPath() ?? go.name);
             return users;
+        }
+
+        private static bool Uses(GameObject go, Func<string, bool> inside, List<Component> components)
+        {
+            if (PrefabUtility.IsOutermostPrefabInstanceRoot(go) && inside(PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go))) return true;
+            go.GetComponents(components);
+            foreach (var c in components)
+                if (c != null && References(c, inside)) return true;
+            return false;
         }
 
         private static bool References(Component c, Func<string, bool> inside)
