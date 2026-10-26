@@ -2,7 +2,10 @@
 
 Each module remains an independent UPM package. Its package ID, assembly names, tests and
 Unity-generated GUIDs survive the migration. Native package dependencies declare the minimum
-core/Unity package versions; a newer compatible core does not require republishing every module.
+core/Unity package versions; a newer compatible core does not require republishing every module,
+except after a NuGet generation bump (`UNITY_MCP_DEPS_<n>` in `NuGetConfig.cs`): module Editor/Runtime
+asmdefs carry the core's gate defines, so a module built for an older generation is skipped (not
+broken) until it is re-released (#957; `.github/scripts/check_nuget_gate.py`).
 
 ```text
 Unity-MCP/

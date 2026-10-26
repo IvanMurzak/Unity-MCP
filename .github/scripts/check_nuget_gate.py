@@ -32,7 +32,8 @@ That only works if nobody ever changes a pin without bumping the define. This sc
      current generation define — so a half-finished bump cannot ship either. That includes the
      extension modules and their template: an extension assembly references the main Editor/Runtime
      assemblies, so if it compiled while those are skipped (stale generation) its CS0246 errors would
-     block the domain reload exactly like #957.
+     block the domain reload exactly like #957. The price: a generation bump must update and
+     re-release every extension (an extension built for an older generation is skipped, not broken).
 
 Usage:
     python .github/scripts/check_nuget_gate.py           # verify (CI)
@@ -52,13 +53,13 @@ NUGET_CONFIG = os.path.join(
     "Editor", "DependencyResolver", "NuGetConfig.cs")
 LOCK_PATH = os.path.join(REPO_ROOT, ".github", "nuget-gate.lock")
 
-# Directories that hold a Unity project whose ProjectSettings must carry the gate defines, plus the
-# extension modules and their template (asmdefs only).
+# Where gated asmdefs and ProjectSettings.asset files live: the plugin and test projects, the extension
+# modules and their template.
 SCAN_ROOTS = ["Unity-MCP-Plugin", "Unity-Tests", "extensions", "templates"]
-# Extension test assemblies compile only where the package is `testable`: the Unity-Tests projects,
-# which `commands/extensions.py prepare` gives the current generation define. Their asmdefs are
-# pinned byte-for-byte by the migration guard (`migration-source.json`), so they are not checked.
-SKIP_TEST_ASMDEFS_UNDER = ("extensions", "templates")
+# Extension test asmdefs are pinned byte-for-byte by the migration guard (`migration-source.json`), so
+# they are not checked: they compile only where the package is `testable`, the Unity-Tests projects,
+# which `commands/extensions.py prepare` gives the current generation define.
+SKIP_TEST_ASMDEFS_UNDER = "extensions"
 
 PIN_RE = re.compile(r'new\s+NuGetPackage\(\s*"([^"]+)"\s*,\s*"([^"]+)"')
 READY_RE = re.compile(r'ReadyDefine\s*=\s*"([^"]+)"')
@@ -114,7 +115,7 @@ def check_propagation(ready_define, generation_define):
 
     for path in iter_files((".asmdef",)):
         parts = os.path.relpath(path, REPO_ROOT).split(os.sep)
-        if parts[0] in SKIP_TEST_ASMDEFS_UNDER and "Tests" in parts:
+        if parts[0] == SKIP_TEST_ASMDEFS_UNDER and "Tests" in parts:
             continue
         try:
             data = json.loads(read(path))
