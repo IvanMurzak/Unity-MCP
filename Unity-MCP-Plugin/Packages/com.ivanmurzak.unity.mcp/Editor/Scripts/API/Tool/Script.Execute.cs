@@ -36,7 +36,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// <summary>
         /// Compiles and runs agent C# through the vendored Code-Exec runtime (Editor/Scripts/CodeExec). One runner per
         /// domain: Mono cannot unload assemblies, so identical requests reuse the already-loaded one (its cache), except
-        /// code with static fields of its own, which Code-Exec loads fresh per run (each copy stays until the domain reloads).
+        /// code with static state of its own (a <c>static readonly</c> field of an immutable type does not count), which
+        /// Code-Exec loads fresh per run (each copy stays until the domain reloads).
         /// Built without Unity APIs, so it can compile off the main thread (the editor's working directory is the project).
         /// </summary>
         static readonly Lazy<CodeRunner> Runner = new Lazy<CodeRunner>(() => new CodeRunner(new RoslynCSharpCompiler(), new CodeRunnerOptions
