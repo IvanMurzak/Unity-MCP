@@ -9,11 +9,18 @@ metadata:
 
 ## Modes
 
-- **Snippet** (default): plain statements. The last expression is the result (`GameObject.Find("Player").name`). Own `using` lines, local classes and functions are allowed; `await` works. Usings for System, LINQ, UnityEngine, UnityEditor and AIGD are already there; an unknown type name is imported automatically when exactly one namespace has it.
+- **Snippet** (default): plain statements. The last expression is the result (`GameObject.Find("Player").name`). Own `using` lines, local classes and functions are allowed; `await` works. Usings for System, LINQ, UnityEngine, UnityEditor and AIGD are already there (`Object` and `Random` mean UnityEngine's); an unknown type name is imported automatically when exactly one namespace has it.
 - **Full code**: when `csharpCode` declares class `className` with a static method `methodName`, that method runs.
 - `isMethodBody=true` forces snippet mode.
 
 Compile errors point at your own lines (`snippet.cs(2,5)`).
+
+## Result and output
+
+- The result is bounded: strings and the serialized result to 65536 characters, collections to 1000 items (a note says what was cut). Return a selection or a summary instead of everything.
+- `Debug.Log` / `Console.WriteLine` output is not part of the result: `Debug.Log` goes to the Unity Console (read it with rql-query `console | sort sequence desc | first 10 | select logType message`).
+- Code runs on the main thread and is not aborted: an endless loop freezes the Editor. An `await` gets at most 120 s.
+- Identical code reuses its compiled assembly, so static fields of your own types keep their values between such calls.
 
 ## usings / include
 

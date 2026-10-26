@@ -34,7 +34,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             return MainThread.Instance.Run(() =>
             {
-                try { return ResponseCallTool.Success(RqlUnitySchema.Render(RqlUnity.Engine, string.IsNullOrWhiteSpace(type) ? null : type!.Trim())); }
+                try
+                {
+                    var text = RqlUnitySchema.Render(RqlUnity.Engine, string.IsNullOrWhiteSpace(type) ? null : type!.Trim());
+                    // An unknown type renders as "error unknown-type: …": a failed call, like rql-query's errors.
+                    return text.StartsWith("error ", StringComparison.Ordinal) ? ResponseCallTool.Error(text) : ResponseCallTool.Success(text);
+                }
                 catch (Exception ex) { return ResponseCallTool.Error($"error internal-error: {ex.GetType().Name}: {ex.Message}"); }
             });
         }

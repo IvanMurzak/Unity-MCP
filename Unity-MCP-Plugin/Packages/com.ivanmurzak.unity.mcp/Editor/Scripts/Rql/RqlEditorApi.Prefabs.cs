@@ -42,7 +42,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return stage.assetPath;
         }
 
-        [RqlCallable("leave the prefab being edited, back to the previous stage (save = true saves first, false discards the changes)")]
+        // Every rql-mutate already saved the open prefab when it finished, so save = false only drops changes made outside RQL.
+        [RqlCallable("leave the prefab being edited, back to the previous stage (save = true saves first; false drops unsaved changes, " +
+                     "but each rql-mutate has already saved its own edits to the prefab: undo them first to revert)")]
         public void ClosePrefab(bool save = true)
         {
             var stage = PrefabStageUtility.GetCurrentPrefabStage() ?? throw new InvalidOperationException("no prefab is open");

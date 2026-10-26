@@ -33,6 +33,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsTrue(PrefabUtility.IsPartOfPrefabInstance(GameObject.Find("Crate")));
         }
 
+        // Saving over an existing prefab would replace it (every instance changes); deleting it would leave missing prefabs.
+        [Test]
+        public void AnExistingPrefabIsNeitherReplacedNorDeletedWhileInUse()
+        {
+            var path = MakePrefab();
+            new GameObject("Other");
+            AssertFails(M($"objects | where name == \"Other\" | call SaveAsPrefab(\"{path}\")"), "getter-threw", "already exists");
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(path).GetComponent<BoxCollider>());
+            AssertFails(M($"editor | call DeleteAsset(\"{path}\")"), "getter-threw", "used by 1 object(s) in the open scenes: Crate.");
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(path));
+        }
+
+        // An instance of Outer uses Inner too (nested in Outer): deleting Inner would leave a missing prefab inside it.
+        [Test]
+        public void ANestedPrefabIsInUseThroughItsOuterPrefab()
+        {
+            var inner = MakePrefab(); // Crate.prefab; its scene instance is removed below
+            var crateInstance = GameObject.Find("Crate");
+            var outer = new GameObject("Outer");
+            ((GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(inner))).transform.SetParent(outer.transform, false);
+            PrefabUtility.SaveAsPrefabAssetAndConnect(outer, $"{Folder}/Outer.prefab", InteractionMode.AutomatedAction);
+            Object.DestroyImmediate(crateInstance); // only Outer's instance is left in the scene
+            AssertFails(M($"editor | call DeleteAsset(\"{inner}\")"), "getter-threw", "used by 1 object(s) in the open scenes: Outer.");
+        }
+
         [Test]
         public void InstantiatePrefabUnderAParentAtAPosition()
         {

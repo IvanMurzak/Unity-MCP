@@ -13,6 +13,7 @@ using com.IvanMurzak.Unity.MCP.TestFiles;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
 {
@@ -122,6 +123,61 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             new GameObject("Self");
             Assert.IsTrue(Warns(Q("objects | where name == \"Self\" | select gameObject"), "unknown-member"));
             StringAssert.Contains("components", Schema("GameObject"));
+        }
+
+        [Test]
+        public void EmptyNamesAreRejected()
+        {
+            var go = new GameObject("Named");
+            AssertFails(M("objects | where name == \"Named\" | set name = \"\""), "coercion-failed", "cannot be empty");
+            AssertFails(M("objects | where name == \"Named\" | set name = \"   \""), "coercion-failed", "cannot be empty");
+            Assert.AreEqual("Named", go.name);
+            AssertOk(M("objects | where name == \"Named\" | set name = \"Renamed\""));
+            Assert.AreEqual("Renamed", go.name);
+        }
+
+        // Unity only logs an error for an unknown tag or a layer outside 0..31 and keeps the old value: the write must fail
+        // before anything changes, the other writes of the same set included.
+        [Test]
+        public void UnknownTagsAndOutOfRangeLayersFailBeforeAnyWrite()
+        {
+            var go = new GameObject("Tagged");
+            AssertFails(M("objects | where name == \"Tagged\" | set transform.position = \"(5, 5, 5)\", tag = \"NoSuchTag\""), "coercion-failed", "not defined");
+            Assert.AreEqual(Vector3.zero, go.transform.position);
+            Assert.AreEqual("Untagged", go.tag);
+            AssertFails(M("objects | where name == \"Tagged\" | set layer = 32"), "coercion-failed", "0..31");
+            AssertFails(M("objects | where name == \"Tagged\" | set layer = -1"), "coercion-failed", "0..31");
+            Assert.AreEqual(0, go.layer);
+
+            AssertOk(M("objects | where name == \"Tagged\" | set tag = \"Player\", layer = 4"));
+            Assert.AreEqual("Player", go.tag);
+            Assert.AreEqual(4, go.layer);
+        }
+
+        // The parent comes first, so its child is already gone when the call reaches it.
+        [Test]
+        public void DestroyingAParentAndItsChildInOneCallSucceeds()
+        {
+            var parent = new GameObject("Enemy");
+            new GameObject("EnemyChild").transform.SetParent(parent.transform, false);
+            AssertOk(M("objects | where name starts-with \"Enemy\" | call Destroy()"));
+            Assert.IsNull(GameObject.Find("Enemy"));
+            Undo.PerformUndo();
+            Assert.IsNotNull(GameObject.Find("Enemy/EnemyChild"));
+        }
+
+        [Test]
+        public void AddComponentFailsInsteadOfReturningNull()
+        {
+            LogAssert.ignoreFailingMessages = true; // Unity logs why it refused
+            var go = new GameObject("Host", typeof(Rigidbody));
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Transform\")"), "getter-threw", "a Transform cannot be added");
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Renderer\")"), "getter-threw", "did not add Renderer");
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Rigidbody\")"), "getter-threw", "did not add Rigidbody");
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Rigidbody2D\")"), "getter-threw", "did not add Rigidbody2D");
+            Assert.AreEqual(2, go.GetComponents<Component>().Length);
+            AssertOk(M("objects | where name == \"Host\" | call AddComponent(\"BoxCollider\")"));
+            Assert.IsNotNull(go.GetComponent<BoxCollider>());
         }
     }
 }

@@ -28,11 +28,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
              .Function("Save", s => string.IsNullOrEmpty(s.path)
                  ? throw new System.InvalidOperationException($"scene '{s.name}' has no file yet; use SaveAs(\"Assets/Scenes/X.unity\")")
                  : EditorSceneManager.SaveScene(s), "save the scene to its asset (false when it failed)")
-             .Function<string, bool>("SaveAs", (s, path) => string.IsNullOrWhiteSpace(path)
-                 ? throw new System.ArgumentException("SaveAs needs a path such as \"Assets/Scenes/X.unity\"")
-                 : EditorSceneManager.SaveScene(s, path), "path", "save the scene to a new asset path")
+             .Function<string, bool>("SaveAs", (s, path) => SaveAs(s, path), "path",
+                 "save the scene to a new asset path (missing folders are created; an existing file is not overwritten)")
              .Function("SetActive", s => SceneManager.SetActiveScene(s), "make it the active scene (new GameObjects go there)")
              .Function("Close", s => EditorSceneManager.CloseScene(s, removeScene: true), "close the scene (one scene must stay open; unsaved changes are lost)");
+        }
+
+        private static bool SaveAs(Scene s, string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new System.ArgumentException("SaveAs needs a path such as \"Assets/Scenes/X.unity\"");
+            path = RqlEditorApi.ScenePath(path);
+            return EditorSceneManager.SaveScene(s, path)
+                ? true
+                : throw new System.InvalidOperationException($"Unity could not save scene '{s.name}' at '{path}' (the Console has the reason)");
         }
     }
 }

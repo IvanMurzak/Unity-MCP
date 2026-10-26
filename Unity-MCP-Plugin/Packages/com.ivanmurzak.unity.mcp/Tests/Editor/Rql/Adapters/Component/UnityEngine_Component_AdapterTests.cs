@@ -13,6 +13,7 @@ using com.IvanMurzak.Unity.MCP.TestFiles;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
 {
@@ -55,6 +56,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             var emptyRef = Cell(Q("objects | where name == \"Empty\" | select $ref"));
             AssertFails(M($"objects | get components | where $ is RqlTestBehaviour | set lamp = ref(\"{emptyRef}\")"), "coercion-failed", "has no Light");
             Assert.IsNull(holder.lamp);
+        }
+
+        [Test]
+        public void DestroyFailsWhenUnityKeepsTheComponent()
+        {
+            LogAssert.ignoreFailingMessages = true; // Unity logs why it refused
+            var go = new GameObject("Owner", typeof(Rigidbody), typeof(FixedJoint));
+            AssertFails(M("objects | get components | where $ is Transform | call Destroy()"), "getter-threw", "cannot be removed");
+            // FixedJoint requires the Rigidbody: Unity keeps it and only logs.
+            AssertFails(M("objects | get components | where $ is Rigidbody | call Destroy()"), "getter-threw", "did not remove Rigidbody");
+            Assert.IsNotNull(go.GetComponent<Rigidbody>());
+            AssertOk(M("objects | get components | where $ is FixedJoint | call Destroy()"));
+            AssertOk(M("objects | get components | where $ is Rigidbody | call Destroy()"));
+            Assert.IsNull(go.GetComponent<Rigidbody>());
+        }
+
+        // name and tag written through a component are its GameObject's: the GameObject's checks apply.
+        [Test]
+        public void NameAndTagThroughAComponentAreChecked()
+        {
+            var go = new GameObject("Lamp", typeof(Light));
+            AssertFails(M("objects | get components | where $ is Light | set tag = \"NoSuchTag\""), "coercion-failed", "not defined");
+            AssertFails(M("objects | get components | where $ is Light | set name = \"\""), "coercion-failed", "cannot be empty");
+            Assert.AreEqual("Untagged", go.tag);
+            Assert.AreEqual("Lamp", go.name);
+            AssertOk(M("objects | get components | where $ is Light | set name = \"Bulb\""));
+            Assert.AreEqual("Bulb", go.name);
         }
     }
 }

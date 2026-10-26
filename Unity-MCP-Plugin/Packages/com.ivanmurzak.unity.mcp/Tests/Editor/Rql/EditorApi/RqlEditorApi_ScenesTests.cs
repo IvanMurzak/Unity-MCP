@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.IO;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -46,6 +47,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.AreEqual("Main", SceneManager.GetActiveScene().name);
             AssertOk(M("scenes | where name == \"Extra\" | call Close()"));
             Assert.AreEqual(1, SceneManager.sceneCount);
+        }
+
+        // A non-additive NewScene replaces the open scenes: a path problem must fail before that, leaving the user's scene.
+        [Test]
+        public void NewSceneChecksThePathBeforeReplacingTheOpenScene()
+        {
+            AssertOk(M($"editor | call NewScene(\"{Folder}/Keep.unity\", true)"));
+            new GameObject("Unsaved");
+            AssertFails(M($"editor | call NewScene(\"{Folder}/Keep.unity\")"), "getter-threw", "already exists");
+            AssertFails(M($"editor | call NewScene(\"{Folder}/Bad.txt\")"), "getter-threw", "must end with .unity");
+            AssertFails(M("editor | call NewScene(\"Other/X.unity\")"), "getter-threw", "not under Assets/");
+            Assert.AreEqual("Keep", SceneManager.GetActiveScene().name);
+            Assert.IsNotNull(GameObject.Find("Unsaved"));
+        }
+
+        [Test]
+        public void NewSceneAndSaveAsCreateMissingFoldersButNeverOverwrite()
+        {
+            AssertOk(M($"editor | call NewScene(\"{Folder}/Deep/Er/N.unity\", true)"));
+            Assert.AreEqual($"{Folder}/Deep/Er/N.unity", SceneManager.GetActiveScene().path);
+            AssertOk(M($"editor | call NewScene(\"{Folder}/Other.unity\", true, true)"));
+            AssertFails(M($"scenes | where name == \"Other\" | call SaveAs(\"{Folder}/Deep/Er/N.unity\")"), "getter-threw", "already exists");
+            AssertOk(M($"scenes | where name == \"Other\" | call SaveAs(\"{Folder}/Copies/Other2.unity\")"));
+            Assert.IsTrue(File.Exists($"{Folder}/Copies/Other2.unity"));
         }
 
         [Test]
