@@ -23,7 +23,9 @@
     ],
     "autoReferenced": false,
     "defineConstraints": [
-        "UNITY_INCLUDE_TESTS"
+        "UNITY_INCLUDE_TESTS",
+        "UNITY_MCP_READY",
+        "UNITY_MCP_DEPS_17"
     ],
     "versionDefines": [],
     "noEngineReferences": false

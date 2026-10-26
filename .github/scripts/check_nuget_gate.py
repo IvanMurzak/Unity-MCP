@@ -56,10 +56,7 @@ LOCK_PATH = os.path.join(REPO_ROOT, ".github", "nuget-gate.lock")
 # Where gated asmdefs and ProjectSettings.asset files live: the plugin and test projects, the extension
 # modules and their template.
 SCAN_ROOTS = ["Unity-MCP-Plugin", "Unity-Tests", "extensions", "templates"]
-# Extension test asmdefs are pinned byte-for-byte by the migration guard (`migration-source.json`), so
-# they are not checked: they compile only where the package is `testable`, the Unity-Tests projects,
-# which `commands/extensions.py prepare` gives the current generation define.
-SKIP_TEST_ASMDEFS_UNDER = "extensions"
+CORE_PACKAGE = os.path.join(REPO_ROOT, "Unity-MCP-Plugin", "Packages", "com.ivanmurzak.unity.mcp")
 
 PIN_RE = re.compile(r'new\s+NuGetPackage\(\s*"([^"]+)"\s*,\s*"([^"]+)"')
 READY_RE = re.compile(r'ReadyDefine\s*=\s*"([^"]+)"')
@@ -109,24 +106,60 @@ def iter_files(suffixes):
                     yield os.path.join(dirpath, name)
 
 
+def migration_pinned_asmdefs():
+    """Extension test asmdefs the migration guard (`commands/extensions.py validate`) pins byte-for-byte to
+    `migration-source.json`. They are not checked: they compile only where the extension is `testable`, i.e. the
+    Unity-Tests projects, which `commands/extensions.py prepare` gives the current generation define."""
+    pinned = set()
+    extensions = os.path.join(REPO_ROOT, "extensions")
+    if not os.path.isdir(extensions):
+        return pinned
+    for module in os.listdir(extensions):
+        source = os.path.join(extensions, module, "migration-source.json")
+        packages = os.path.join(extensions, module, "Packages")
+        if not (os.path.isfile(source) and os.path.isdir(packages)):
+            continue
+        names = [n for n in json.loads(read(source)).get("sourceFiles", {})
+                 if n.startswith("Tests/") and n.endswith(".asmdef")]
+        for package in os.listdir(packages):
+            pinned.update(os.path.normcase(os.path.join(packages, package, *n.split("/"))) for n in names)
+    return pinned
+
+
+def load_asmdef(path):
+    try:
+        return json.loads(read(path))
+    except ValueError:
+        return None  # not our business to police unrelated malformed asmdefs
+
+
 def check_propagation(ready_define, generation_define):
-    """Every place gated on the ready define must also carry the current generation define."""
+    """Every place gated on the ready define must also carry the current generation define, and every asmdef
+    that references a gated core assembly must be gated too (else it compiles while the core is skipped)."""
     problems = []
+    gate = (ready_define, generation_define)
+    gated_core = set()
+    for dirpath, _, filenames in os.walk(CORE_PACKAGE):
+        for name in filenames:
+            data = load_asmdef(os.path.join(dirpath, name)) if name.endswith(".asmdef") else None
+            if data and ready_define in (data.get("defineConstraints") or []):
+                gated_core.add(data.get("name"))
+    pinned = migration_pinned_asmdefs()
 
     for path in iter_files((".asmdef",)):
-        parts = os.path.relpath(path, REPO_ROOT).split(os.sep)
-        if parts[0] == SKIP_TEST_ASMDEFS_UNDER and "Tests" in parts:
+        if os.path.normcase(path) in pinned:
             continue
-        try:
-            data = json.loads(read(path))
-        except ValueError:
-            continue  # not our business to police unrelated malformed asmdefs
+        data = load_asmdef(path)
+        if data is None:
+            continue
         constraints = data.get("defineConstraints") or []
-        if ready_define not in constraints:
-            continue
-        if generation_define not in constraints:
-            problems.append("%s: defineConstraints has %r but not %r"
-                            % (os.path.relpath(path, REPO_ROOT), ready_define, generation_define))
+        references = gated_core.intersection(data.get("references") or [])
+        if ready_define in constraints or references:
+            missing = [d for d in gate if d not in constraints]
+            if missing:
+                problems.append("%s: defineConstraints lacks %s%s"
+                                % (os.path.relpath(path, REPO_ROOT), ", ".join(repr(d) for d in missing),
+                                   " (it references gated %s)" % ", ".join(sorted(references)) if references else ""))
 
     for path in iter_files(("ProjectSettings.asset",)):
         for lineno, line in enumerate(read(path).splitlines(), 1):

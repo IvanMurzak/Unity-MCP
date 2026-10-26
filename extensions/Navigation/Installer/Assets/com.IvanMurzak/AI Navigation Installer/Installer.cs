@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Navigation.Installer
     public static partial class Installer
     {
         public const string PackageId = "com.ivanmurzak.unity.mcp.navigation";
-        public const string Version = "2.0.2";
+        public const string Version = "2.0.3";
 
         static Installer()
         {

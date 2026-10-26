@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.ParticleSystem.Installer
     public static partial class Installer
     {
         public const string PackageId = "com.ivanmurzak.unity.mcp.particlesystem";
-        public const string Version = "2.0.2";
+        public const string Version = "2.0.3";
 
         static Installer()
         {
