@@ -12,7 +12,7 @@ Execute Unity tests and return detailed results. Supports filtering by test mode
 ## Filters
 
 - `testMode` (default `EditMode`) — `EditMode` or `PlayMode`. EditMode is faster; prefer it during iteration.
-- `testAssembly` / `testNamespace` / `testClass` / `testMethod` — optional, layered filters. Namespace and class filters become regex `groupNames` so the validation count and Unity's execution stay in sync. `testMethod` must be fully qualified (`Namespace.FixtureName.TestName`).
+- `testAssembly` / `testNamespace` / `testClass` / `testMethod` — optional filters, combined as Unity's Test Runner combines them: every given filter must match, except that `testNamespace` and `testClass` match when either does. `testMethod` is the case-sensitive full name (`Namespace.FixtureName.TestName`); a parameterized method runs all its cases. Filters that select no test are refused before the run.
 - `query` — RQL over the `tests` source instead of the four filters: any selection, run as ONE Test Runner run, e.g. `tests | where fixture == "PlayerTests" or categories contains "Smoke"`. One mode per run; the mode comes from the selected tests. Explore first with rql-query: `tests | where fullName contains "Spline" | select fullName mode`.
 - `result` — RQL stages applied to the results (source `testResults`: name status durationMs message stackTrace), e.g. `where status == "Failed" | select name message`; the answer is then a summary line plus compact RQL text.
 
