@@ -332,11 +332,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!string.IsNullOrEmpty(filterParams.TestMethod))
                 testNames.Add(filterParams.TestMethod!);
 
-            // Handle namespace filtering with regex (shared pattern ensures validation sync)
+            // Handle namespace filtering with regex
             if (!string.IsNullOrEmpty(filterParams.TestNamespace))
                 groupNames.Add(CreateNamespaceRegexPattern(filterParams.TestNamespace!));
 
-            // Handle class filtering with regex (shared pattern ensures validation sync)
+            // Handle class filtering with regex
             if (!string.IsNullOrEmpty(filterParams.TestClass))
                 groupNames.Add(CreateClassRegexPattern(filterParams.TestClass!));
 
@@ -380,12 +380,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             => Regex.Escape(input);
 
         /// <summary>
-        /// Unity's own test tree for <paramref name="testMode"/>: how many tests <paramref name="filter"/> (the run's own
-        /// filter) selects, and which of the RQL selection's names (<see cref="TestFilterParameters.SelectedNames"/>) match
+        /// Unity's own test tree for the filter's mode: how many tests <paramref name="filter"/> (the run's own filter) selects, and which of the RQL selection's names (<see cref="TestFilterParameters.SelectedNames"/>) match
         /// no test there (a fixture with arguments, a generic fixture: the tests source names them differently).
         /// </summary>
-        static async Task<(int count, List<string> unmatched)> MatchTestTree(TestRunnerApi testRunnerApi, TestMode testMode, Filter filter, TestFilterParameters filterParams)
+        static async Task<(int count, List<string> unmatched)> MatchTestTree(TestRunnerApi testRunnerApi, Filter filter, TestFilterParameters filterParams)
         {
+            var testMode = filter.testMode;
             var tcs = new TaskCompletionSource<(int, List<string>)>();
 
             testRunnerApi.RetrieveTestList(testMode, (testRoot) =>
@@ -434,16 +434,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return names.Where(n => !found.Contains(n)).ToList();
         }
 
-        static async Task<string?> ValidateTestFilters(TestRunnerApi testRunnerApi, TestMode testMode, Filter filter, TestFilterParameters filterParams)
+        static async Task<string?> ValidateTestFilters(TestRunnerApi testRunnerApi, Filter filter, TestFilterParameters filterParams)
         {
             try
             {
-                var (testCount, unmatched) = await MatchTestTree(testRunnerApi, testMode, filter, filterParams);
+                var (testCount, unmatched) = await MatchTestTree(testRunnerApi, filter, filterParams);
                 if (testCount == 0)
                     return Error.NoTestsFound(filterParams);
                 // Never run a silent subset of an RQL selection.
                 if (unmatched.Count > 0)
-                    return Error.TestExecutionFailed($"{unmatched.Count} selected test(s) are not in Unity's {testMode} test tree " +
+                    return Error.TestExecutionFailed($"{unmatched.Count} selected test(s) are not in Unity's {filter.testMode} test tree " +
                         $"(fixtures with arguments or generic fixtures are listed differently): {string.Join(", ", unmatched.Take(5))}");
 
                 return null; // No error, tests found

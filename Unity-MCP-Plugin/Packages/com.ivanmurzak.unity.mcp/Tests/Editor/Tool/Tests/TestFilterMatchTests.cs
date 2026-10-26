@@ -12,9 +12,7 @@ using System.Collections;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.API.TestRunner;
 using NUnit.Framework;
-using UnityEditor;
 using UnityEditor.TestTools.TestRunner.Api;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.FilterMatchData
 {
@@ -55,28 +53,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityEngine.TestTools.UnityTest]
-        public IEnumerator CountsWhatUnityRuns()
+        public IEnumerator CountsWhatUnityRuns() => UnityTestTree.EditMode(root =>
         {
-            ITestAdaptor? root = null;
-            ScriptableObject.CreateInstance<TestRunnerApi>().RetrieveTestList(TestMode.EditMode, r => root = r);
-            var deadline = EditorApplication.timeSinceStartup + 60;
-            while (root == null && EditorApplication.timeSinceStartup < deadline)
-                yield return null;
-            Assert.IsNotNull(root, "Unity's test tree was not retrieved");
-
-            Assert.AreEqual(5, Count(root!, ns: Ns), "namespace");
-            Assert.AreEqual(5, Count(root!, Asm, Ns), "assembly + namespace");
-            Assert.AreEqual(1, Count(root!, Asm.ToUpperInvariant(), cls: "FilterOtherFixture"), "the assembly name ignores case");
-            Assert.AreEqual(0, Count(root!, Asm, cls: "Missing"), "fields are ANDed");
-            Assert.AreEqual(0, Count(root!, cls: "FilterParamFixture", method: Other), "fields are ANDed");
-            Assert.AreEqual(5, Count(root!, ns: Ns, cls: "Missing"), "namespace and class share groupNames: ORed");
-            Assert.AreEqual(2, Count(root!, method: Param), "a parameterized method selects its cases");
-            Assert.AreEqual(2, Count(root!, ns: Ns, method: Param), "a parameterized method selects its cases");
-            Assert.AreEqual(0, Count(root!, method: Param.ToLowerInvariant()), "test names are case-sensitive");
-            Assert.AreEqual(1, Count(root!, cls: "FilterWidget"), "the class pattern also matches a namespace segment");
-            Assert.AreEqual(4, Count(root!, ns: Ns, method: "!" + Other), "'!' excludes");
-            Assert.AreEqual(3, Count(root!, query: new[] { Param, Other }), "RQL selection");
-        }
+            Assert.AreEqual(5, Count(root, ns: Ns), "namespace");
+            Assert.AreEqual(5, Count(root, Asm, Ns), "assembly + namespace");
+            Assert.AreEqual(1, Count(root, Asm.ToUpperInvariant(), cls: "FilterOtherFixture"), "the assembly name ignores case");
+            Assert.AreEqual(0, Count(root, Asm, cls: "Missing"), "fields are ANDed");
+            Assert.AreEqual(0, Count(root, cls: "FilterParamFixture", method: Other), "fields are ANDed");
+            Assert.AreEqual(5, Count(root, ns: Ns, cls: "Missing"), "namespace and class share groupNames: ORed");
+            Assert.AreEqual(2, Count(root, method: Param), "a parameterized method selects its cases");
+            Assert.AreEqual(2, Count(root, ns: Ns, method: Param), "a parameterized method selects its cases");
+            Assert.AreEqual(0, Count(root, method: Param.ToLowerInvariant()), "test names are case-sensitive");
+            Assert.AreEqual(1, Count(root, cls: "FilterWidget"), "the class pattern also matches a namespace segment");
+            Assert.AreEqual(4, Count(root, ns: Ns, method: "!" + Other), "'!' excludes");
+            Assert.AreEqual(3, Count(root, query: new[] { Param, Other }), "RQL selection");
+        });
 
         [Test]
         public void EmptyRun_IsAnError()
