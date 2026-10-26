@@ -1,0 +1,43 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs
+  s_d3cd27dd45e300::t_b139c6a901a35c 344-347
+  s_d3cd27dd45e300::t_2d9c35588053a9 25,265
+  s_d3cd27dd45e300::t_4ca329066482c8 190-215,217-219,223-224
+  s_d3cd27dd45e300::t_f566d7589bb7ba 237-239,242,250-264,270-281
+  s_d3cd27dd45e300::t_487d610f8dad45 220-222
+  s_d3cd27dd45e300::t_9287dbe0f4364b 627-630
+  s_d3cd27dd45e300::t_b121307c5196bc 216
+  s_d3cd27dd45e300::t_547db3569c557c 348-350
+  s_d3cd27dd45e300::t_68a697a87ea375 115-121
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/McpServerPathOverrideTests.cs
+  s_d3cd27dd45e300::t_87f6672a83f6db 1-251
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_d3cd27dd45e300::t_04f4066b7a9531 5-16
+docs/mcp-server.md
+  s_d3cd27dd45e300::t_4559b068aeb328 34-46
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/McpServerPathOverrideTests.cs.meta
+  s_e84b7fe481f089::t_e6370991c97f69 1-11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "801436398b953ad345e454b3f719fdc5b96a65c9",
+  "prompts": {},
+  "sessions": {
+    "s_d3cd27dd45e300": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "761519e4-ddc0-4406-bb0a-a2e5515622e0",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_e84b7fe481f089": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-ab01c5ec411589be0",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

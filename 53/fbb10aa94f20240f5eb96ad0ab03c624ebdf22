@@ -1,0 +1,51 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/OpenCodeConfigurator.cs
+  4003d8a0052f4fa0 116,143
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/ClaudeCodeConfigurator.cs
+  8e6524fbba5338fa 101,103,136-138
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/CodexConfigurator.cs
+  4003d8a0052f4fa0 164,205
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/ClaudeDesktopConfigurator.cs
+  4003d8a0052f4fa0 127
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/KiloCodeConfigurator.cs
+  8e6524fbba5338fa 136
+  4003d8a0052f4fa0 115
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/GeminiConfigurator.cs
+  4003d8a0052f4fa0 116,145
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/VisualStudioCopilotConfigurator.cs
+  4003d8a0052f4fa0 106,124
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/AiAgentConfigurators/Impl/VisualStudioCodeCopilotConfigurator.cs
+  4003d8a0052f4fa0 108,129
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.6",
+  "base_commit_sha": "53fbb10aa94f20240f5eb96ad0ab03c624ebdf22",
+  "prompts": {
+    "4003d8a0052f4fa0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee206ff3-bc7b-4f6e-892d-668c1d02c969",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 1049,
+      "total_deletions": 1036,
+      "accepted_lines": 196,
+      "overriden_lines": 0
+    },
+    "8e6524fbba5338fa": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cc90014d-967c-4f78-a906-6b3c058e98ed",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 164,
+      "total_deletions": 162,
+      "accepted_lines": 36,
+      "overriden_lines": 0
+    }
+  }
+}

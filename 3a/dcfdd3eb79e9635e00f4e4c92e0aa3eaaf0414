@@ -1,0 +1,38 @@
+.github/actions/unity/activate-license/action.yml
+  1cbb3c276cd2b89a 39
+.github/actions/setup-unity-mcp/action.yml
+  068ac9f52afeb62d 85-87,94-100,113
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "3adcfdd3eb79e9635e00f4e4c92e0aa3eaaf0414",
+  "prompts": {
+    "068ac9f52afeb62d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a0667fa7-18c0-45ce-b6f8-daa6e1aac09b",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 160,
+      "total_deletions": 153,
+      "accepted_lines": 25,
+      "overriden_lines": 0
+    },
+    "1cbb3c276cd2b89a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "49d282f2-d350-4c97-b22d-9e14adc5ef0b",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 102,
+      "total_deletions": 102,
+      "accepted_lines": 13,
+      "overriden_lines": 0
+    }
+  }
+}

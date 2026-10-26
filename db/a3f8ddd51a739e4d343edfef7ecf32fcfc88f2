@@ -1,0 +1,33 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Prefab.Close.cs
+  s_f12f848d465dd7::t_e25ae5c81771f1 39-40
+Unity-MCP-Plugin/.claude/skills/assets-prefab-close/SKILL.md
+  s_f12f848d465dd7::t_a77c05e613237c 12
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/GameObject.Create.cs
+  s_f12f848d465dd7::t_6e9b1b68ba9800 41
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Shader.GetData.cs
+  s_f12f848d465dd7::t_21a708fc2621ac 48
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Editor.Application.SetState.cs
+  s_f12f848d465dd7::t_d8b832c2f8c8b4 42
+Unity-MCP-Plugin/.claude/skills/editor-application-set-state/SKILL.md
+  s_f12f848d465dd7::t_92b421d684dc6c 17
+Unity-MCP-Plugin/.claude/skills/assets-shader-get-data/SKILL.md
+  s_f12f848d465dd7::t_815dacb4ea067c 10
+Unity-MCP-Plugin/.claude/skills/gameobject-create/SKILL.md
+  s_f12f848d465dd7::t_2f28c613b376bc 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "dba3f8ddd51a739e4d343edfef7ecf32fcfc88f2",
+  "prompts": {},
+  "sessions": {
+    "s_f12f848d465dd7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "054f71d7-8860-418f-9b1a-a0dc6f00a162",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

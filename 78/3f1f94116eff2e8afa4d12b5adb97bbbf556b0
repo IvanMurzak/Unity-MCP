@@ -1,0 +1,44 @@
+cli/src/commands/exec.ts
+  s_a4bd5ddb53fd2d::t_1f7687e84d1d12 24-33
+  s_a4bd5ddb53fd2d::t_8c64c9eb12e1e7 63-65
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.IdleShutdown.cs
+  s_a4bd5ddb53fd2d::t_77329917b2e756 41
+  s_a4bd5ddb53fd2d::t_6a38607f1d836b 54-56,92-93,97-99,102,109,114-116
+  s_a4bd5ddb53fd2d::t_5417a76f3b74d4 57
+  s_a4bd5ddb53fd2d::t_4e784e1b037fdc 67-69
+  s_a4bd5ddb53fd2d::t_501b837a3d8874 32-35
+cli/tests/exec.test.ts
+  s_a4bd5ddb53fd2d::t_2bda259d12242d 188-199
+  s_a4bd5ddb53fd2d::t_ab9da41681049d 107-119
+  s_a4bd5ddb53fd2d::t_8adfedd960a52c 26
+  s_a4bd5ddb53fd2d::t_53e8fd7cb4b60f 142-147
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Environment/IdleShutdownTests.cs
+  s_a4bd5ddb53fd2d::t_fdd8b2494a80ed 23-35,40-42,49-52,59-62,69-83
+cli/src/lib/exec.ts
+  s_a4bd5ddb53fd2d::t_658661a592e8a0 115-117,123-125
+  s_a4bd5ddb53fd2d::t_e3614317694f54 181,184-188
+  s_a4bd5ddb53fd2d::t_0620769f494ebb 172-175,178-180,182-183,189-190,193
+  s_a4bd5ddb53fd2d::t_e1434a4f799a95 8
+  s_a4bd5ddb53fd2d::t_0515b0d4da4161 25
+  s_a4bd5ddb53fd2d::t_2e9c3d1e7d2548 84-86
+cli/src/lib/wait-for-ready.ts
+  s_a4bd5ddb53fd2d::t_902b73545d4949 48-49,51-54,58-60
+  s_a4bd5ddb53fd2d::t_c6004d42fcc835 69
+  s_a4bd5ddb53fd2d::t_e0371fe13edf1a 16-17,50
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "783f1f94116eff2e8afa4d12b5adb97bbbf556b0",
+  "prompts": {},
+  "sessions": {
+    "s_a4bd5ddb53fd2d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "97ee1b50-e171-4dcb-8ce1-b70a7701b61f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

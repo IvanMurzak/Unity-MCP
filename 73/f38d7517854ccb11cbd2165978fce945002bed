@@ -1,0 +1,31 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Tests/TestsRunLockTests.cs
+  s_ccb6e3eca83ca4::t_38a18a2330198c 1-30,34-37,39-44,49-147
+  s_ccb6e3eca83ca4::t_9b784dd90a7f6f 31-33,38,45-48
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_ccb6e3eca83ca4::t_568c8d19e930c6 51-56
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests/TestResultCollector.cs
+  s_ccb6e3eca83ca4::t_b500135ac31b66 23,83-97,142,180,184,191-231
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests.Run.cs
+  s_ccb6e3eca83ca4::t_b3a675623aa029 121-127
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests.cs
+  s_ccb6e3eca83ca4::t_cd9a774adbcb49 47,51-53,158-220,319,337,439-442
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Tests/TestsRunLockTests.cs.meta
+  s_ccb6e3eca83ca4::t_2d860dc77e0660 2-11
+  s_ccb6e3eca83ca4::t_924699b110a283 1
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "73f38d7517854ccb11cbd2165978fce945002bed",
+  "prompts": {},
+  "sessions": {
+    "s_ccb6e3eca83ca4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "904a05bd-31d2-4d9b-a5e7-77ea1d9117d0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

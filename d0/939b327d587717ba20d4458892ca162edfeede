@@ -1,0 +1,32 @@
+templates/extension/README.md
+  s_eb8bcde0be96a2::t_787ada9ee36c00 1-7
+tests/extensions/Editor/ExtensionIsolationTests.cs
+  s_eb8bcde0be96a2::t_787ada9ee36c00 175,181-193
+  s_5e2881ed8bfd52::t_77ca351086edaf 194-195
+extensions/ProBuilder/README.md
+  s_eb8bcde0be96a2::t_787ada9ee36c00 1,11
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d0939b327d587717ba20d4458892ca162edfeede",
+  "prompts": {},
+  "sessions": {
+    "s_5e2881ed8bfd52": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a139fe-5e37-7630-a5ee-38fd3b09c0dd",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_eb8bcde0be96a2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14267-6fec-7a30-97a7-931925a48014",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
