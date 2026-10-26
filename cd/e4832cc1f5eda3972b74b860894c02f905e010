@@ -1,0 +1,43 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.Assets.cs
+  s_7bc72ecaebd05d::t_9c68a25bd8d21e 119-121,124-125,129-135
+  s_7bc72ecaebd05d::t_87ef2f1bd6df94 95
+  s_7bc72ecaebd05d::t_79bc251f505520 105,107
+  s_7bc72ecaebd05d::t_36053aed48f7c0 83
+  s_7bc72ecaebd05d::t_dc3d1f3618421c 136-137
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Component/UnityEngine_Component_Adapter.cs
+  s_7bc72ecaebd05d::t_e1957dd46ca59d 37
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Execute.Result.cs
+  s_7bc72ecaebd05d::t_42861da3c79241 53
+  s_7bc72ecaebd05d::t_083e515ef7048b 57,70-79
+  s_7bc72ecaebd05d::t_e1aa91f5f88cf3 63-69,80
+  s_7bc72ecaebd05d::t_55e07ca3f3b018 81
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Object/UnityEngine_GameObject_Adapter.cs
+  s_7bc72ecaebd05d::t_9136975ff9f7d1 49
+  s_7bc72ecaebd05d::t_a0831f2adf9718 103
+  s_7bc72ecaebd05d::t_e54f88251c6ed8 39
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Execute.cs
+  s_7bc72ecaebd05d::t_beb0a1b00e2121 165
+  s_7bc72ecaebd05d::t_7c720e63c2c209 173-182
+  s_7bc72ecaebd05d::t_3914339e050037 200,203
+  s_7bc72ecaebd05d::t_3b4b95cff3cc13 164,166-170
+  s_7bc72ecaebd05d::t_4faa77648b9a33 171-172
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnity.cs
+  s_7bc72ecaebd05d::t_1bed058949fdfc 168-177
+  s_7bc72ecaebd05d::t_a1290379f58cc1 210
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "cde4832cc1f5eda3972b74b860894c02f905e010",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
