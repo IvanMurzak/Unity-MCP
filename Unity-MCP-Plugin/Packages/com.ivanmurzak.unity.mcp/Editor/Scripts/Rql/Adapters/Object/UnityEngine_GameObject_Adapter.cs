@@ -46,7 +46,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  "assign a list, e.g. [\"ContributeGI\", \"BatchingStatic\"] ([] clears; isStatic sets them all)")
              .Function<string, Component>("AddComponent", (g, type) => AddComponent(g, type), "type",
                  "add a component by type name (e.g. \"Rigidbody\", \"Light\", \"BoxCollider\", a script class) and return it")
-             .Method("Destroy", g => RqlUnity.DestroyUndoable(g, $"Unity did not destroy '{g.name}'"), "destroy this GameObject (undoable)")
+             // A target is already gone when an earlier target of the same call was its ancestor.
+             .Method("Destroy", g => { if (g != null) RqlUnity.DestroyUndoable(g, $"Unity did not destroy '{g.name}'"); }, "destroy this GameObject (undoable)")
              .Function("Duplicate", g => Duplicate(g), "copy this GameObject next to it (prefab instances stay linked) and return the copy (undoable)")
              .Function<string, GameObject>("SaveAsPrefab", (g, path) => SaveAsPrefab(g, path), "path",
                  "save as a new prefab asset (\"Assets/…/X.prefab\", not an existing one); this GameObject becomes its instance; returns the prefab asset");

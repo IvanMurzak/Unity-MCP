@@ -71,5 +71,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             AssertOk(M("objects | get components | where $ is Rigidbody | call Destroy()"));
             Assert.IsNull(go.GetComponent<Rigidbody>());
         }
+
+        // name and tag written through a component are its GameObject's: the GameObject's checks apply.
+        [Test]
+        public void NameAndTagThroughAComponentAreChecked()
+        {
+            var go = new GameObject("Lamp", typeof(Light));
+            AssertFails(M("objects | get components | where $ is Light | set tag = \"NoSuchTag\""), "coercion-failed", "not defined");
+            AssertFails(M("objects | get components | where $ is Light | set name = \"\""), "coercion-failed", "cannot be empty");
+            Assert.AreEqual("Untagged", go.tag);
+            Assert.AreEqual("Lamp", go.name);
+            AssertOk(M("objects | get components | where $ is Light | set name = \"Bulb\""));
+            Assert.AreEqual("Bulb", go.name);
+        }
     }
 }

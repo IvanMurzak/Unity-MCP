@@ -86,6 +86,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
                 Tool_Script.WithHostAliases("1", new[] { "Random = System.Random" }));
             CollectionAssert.AreEquivalent(new[] { "Random = UnityEngine.Random" },
                 Tool_Script.WithHostAliases("using Object = System.Object;\n1", new string[0]));
+            // Code-Exec accepts a usings entry written as a directive.
+            CollectionAssert.AreEquivalent(new[] { "using Random = System.Random;", "Object = UnityEngine.Object" },
+                Tool_Script.WithHostAliases("1", new[] { "using Random = System.Random;" }));
+            var (r, text) = Call(Tool_Script.ScriptExecuteToolId, new { csharpCode = "typeof(Random).FullName", usings = new[] { "using Random = System.Random;" } });
+            Assert.AreEqual(ResponseStatus.Success, r.Status, text);
+            StringAssert.Contains("System.Random", text);
+        }
+
+        public sealed class Inventory : IEnumerable<int>
+        {
+            public int gold = 7;
+            public IEnumerator<int> GetEnumerator() { yield return 1; }
+            System.Collections.IEnumerator System.Collections.IEnumerable.GetEnumerator() => GetEnumerator();
+        }
+
+        [Test]
+        public void CollectionsAndEnumerableTypesKeepTheirShape()
+        {
+            Assert.IsInstanceOf<HashSet<int>>(Tool_Script.ResultValue.Shape(new HashSet<int> { 1, 2 }));
+            var inventory = new Inventory();
+            Assert.AreSame(inventory, Tool_Script.ResultValue.Shape(inventory));
+            var list = new List<int> { 1, 2, 3 };
+            Assert.AreSame(list, Tool_Script.ResultValue.Shape(list));
+            Assert.IsInstanceOf<List<object?>>(Tool_Script.ResultValue.Shape(list.Select(x => x * 2)));
+            var big = (List<object?>)Tool_Script.ResultValue.Shape(new HashSet<int>(Enumerable.Range(0, 1500)))!;
+            Assert.AreEqual(Tool_Script.ResultValue.MaxItems + 1, big.Count);
+            StringAssert.Contains("500 more items", (string)big[Tool_Script.ResultValue.MaxItems]!);
         }
 
         [Test]

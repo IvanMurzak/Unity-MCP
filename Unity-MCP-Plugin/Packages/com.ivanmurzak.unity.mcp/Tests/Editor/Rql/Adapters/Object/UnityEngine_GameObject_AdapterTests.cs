@@ -154,6 +154,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.AreEqual(4, go.layer);
         }
 
+        // The parent comes first, so its child is already gone when the call reaches it.
+        [Test]
+        public void DestroyingAParentAndItsChildInOneCallSucceeds()
+        {
+            var parent = new GameObject("Enemy");
+            new GameObject("EnemyChild").transform.SetParent(parent.transform, false);
+            AssertOk(M("objects | where name starts-with \"Enemy\" | call Destroy()"));
+            Assert.IsNull(GameObject.Find("Enemy"));
+            Undo.PerformUndo();
+            Assert.IsNotNull(GameObject.Find("Enemy/EnemyChild"));
+        }
+
         [Test]
         public void AddComponentFailsInsteadOfReturningNull()
         {

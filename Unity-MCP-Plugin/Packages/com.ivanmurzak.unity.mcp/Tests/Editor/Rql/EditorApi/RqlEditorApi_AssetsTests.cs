@@ -108,6 +108,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         }
 
         [Test]
+        public void AFolderWithADotInItsNameIsCopied()
+        {
+            AssertOk(M($"editor | call CreateFolder(\"{Folder}/com.foo\")"));
+            AssertOk(M($"editor | call CopyAsset(\"{Folder}/com.foo\", \"{Folder}/Copy\")"));
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Copy"));
+        }
+
+        [Test]
         public void FolderPathsAreNormalized()
         {
             // The RQL string "Assets\\RqlEditorApiTests\\N\\M\\" is Assets\RqlEditorApiTests\N\M\ (backslashes, a trailing one).

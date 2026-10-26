@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Rql;
 using UnityEditor;
@@ -25,7 +26,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("copy an asset to a new path (not an existing one); returns the copy")]
         public Object CopyAsset(string path, string newPath)
         {
-            newPath = NewAssetPath(newPath, Path.GetExtension(path));
+            // A folder keeps no extension, even one named like "com.foo".
+            newPath = NewAssetPath(newPath, AssetDatabase.IsValidFolder(Normalize(path)) ? null : Path.GetExtension(path));
             EnsureFolder(Path.GetDirectoryName(newPath));
             if (!AssetDatabase.CopyAsset(path, newPath)) throw new ArgumentException($"could not copy '{path}' to '{newPath}'");
             return AssetDatabase.LoadMainAssetAtPath(newPath);
@@ -92,7 +94,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             path = Normalize(path);
             if (!string.IsNullOrEmpty(extension) && !path.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException($"'{path}' must end with {extension}");
-            if (AssetDatabase.IsValidFolder(path) || File.Exists(path))
+            // File.Exists alone misses assets of a local "file:" package, whose Packages/ path is not a project file.
+            if (AssetDatabase.IsValidFolder(path) || File.Exists(path) || AssetDatabase.LoadMainAssetAtPath(path) != null)
                 throw new ArgumentException($"'{path}' already exists: pick a new path, or DeleteAsset(\"{path}\") first");
             return path;
         }
@@ -121,14 +124,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 foreach (var t in prefabRoot.GetComponentsInChildren<Transform>(true)) objects.Add(t.gameObject);
             var users = new List<string>();
             var components = new List<Component>();
+            var prefabUses = new Dictionary<string, bool>(); // prefab asset path -> it or its dependencies are inside
             foreach (var go in objects)
-                if (Uses(go, Inside, components)) users.Add(go.GetPath() ?? go.name);
+                if (Uses(go, Inside, components, prefabUses)) users.Add(go.GetPath() ?? go.name);
             return users;
         }
 
-        private static bool Uses(GameObject go, Func<string, bool> inside, List<Component> components)
+        private static bool Uses(GameObject go, Func<string, bool> inside, List<Component> components, Dictionary<string, bool> prefabUses)
         {
-            if (PrefabUtility.IsOutermostPrefabInstanceRoot(go) && inside(PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go))) return true;
+            // An instance uses its prefab and everything the prefab depends on: nested prefabs, a variant's base, its materials.
+            if (PrefabUtility.IsOutermostPrefabInstanceRoot(go) && PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go) is { Length: > 0 } prefab)
+            {
+                if (!prefabUses.TryGetValue(prefab, out var uses))
+                    prefabUses[prefab] = uses = AssetDatabase.GetDependencies(prefab, recursive: true).Any(inside);
+                if (uses) return true;
+            }
             go.GetComponents(components);
             foreach (var c in components)
                 if (c != null && References(c, inside)) return true;

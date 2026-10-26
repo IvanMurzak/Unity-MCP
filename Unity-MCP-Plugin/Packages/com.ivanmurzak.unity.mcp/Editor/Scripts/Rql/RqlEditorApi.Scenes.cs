@@ -45,7 +45,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         internal static string ScenePath(string path)
         {
             path = NewAssetPath(path, ".unity");
-            if (!path.StartsWith("Assets/", StringComparison.Ordinal)) throw new ArgumentException($"'{path}' is not under Assets/");
             EnsureFolder(System.IO.Path.GetDirectoryName(path));
             return path;
         }

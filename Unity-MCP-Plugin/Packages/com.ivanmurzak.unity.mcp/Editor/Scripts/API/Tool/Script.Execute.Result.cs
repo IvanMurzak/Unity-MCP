@@ -51,14 +51,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         return value;
                     case IDictionary dictionary:
                         return Cap(Entries(dictionary), dictionary.Count);
-                    case ICollection collection when collection.Count <= MaxItems:
-                        return value;
                     case IEnumerable sequence:
-                        return Cap(sequence, (value as ICollection)?.Count);
+                        // A collection is returned as it is unless it is too long; a lazy query or iterator as its items; any
+                        // other enumerable type (it may have fields of its own) as it is.
+                        if (CountOf(value) is int count) return count <= MaxItems ? value : Cap(sequence, count);
+                        return IsLazy(value.GetType()) ? Cap(sequence, null) : value;
                     default:
                         return value;
                 }
             }
+
+            // ICollection, or a public int Count (HashSet<T> and other generic-only collections).
+            static int? CountOf(object value) =>
+                value is ICollection collection ? collection.Count
+                : value.GetType().GetProperty("Count", typeof(int))?.GetValue(value) is int count ? count : (int?)null;
+
+            // LINQ operators and compiler-generated iterators (yield return): serialized as is, they show their state.
+            static bool IsLazy(System.Type type) =>
+                type.Namespace == "System.Linq" || type.IsDefined(typeof(System.Runtime.CompilerServices.CompilerGeneratedAttribute), false);
 
             // IDictionary's own enumerator: a generic dictionary's IEnumerable yields KeyValuePairs, not DictionaryEntry.
             static IEnumerable<Entry> Entries(IDictionary dictionary)

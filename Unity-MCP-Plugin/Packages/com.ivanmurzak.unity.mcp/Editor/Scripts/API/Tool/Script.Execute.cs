@@ -196,7 +196,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var declared = new HashSet<string>(root.Usings.Where(u => u.Alias != null).Select(u => u.Alias!.Name.Identifier.Text));
             declared.UnionWith(root.DescendantNodes().OfType<BaseTypeDeclarationSyntax>().Select(t => t.Identifier.Text));
             foreach (var u in usings)
-                if (u.IndexOf('=') is var eq && eq > 0) declared.Add(u.Substring(0, eq).Trim());
+                if (u.IndexOf('=') is var eq && eq > 0)
+                {
+                    // "Random = System.Random" or, as Code-Exec also accepts, "using Random = System.Random;".
+                    var name = u.Substring(0, eq).Trim();
+                    declared.Add(name.StartsWith("using ", StringComparison.Ordinal) ? name.Substring("using ".Length).Trim() : name);
+                }
             return usings.Concat(HostAliases.Where(a => !declared.Contains(a.Name)).Select(a => $"{a.Name} = {a.Target}")).ToArray();
         }
 
