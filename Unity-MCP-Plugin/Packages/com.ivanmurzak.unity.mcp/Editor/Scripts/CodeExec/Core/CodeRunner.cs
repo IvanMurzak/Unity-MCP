@@ -20,6 +20,9 @@ namespace com.IvanMurzak.CodeExec
         /// <summary>Folder that relative include paths resolve against.</summary>
         public string IncludeRoot { get; set; } = Directory.GetCurrentDirectory();
 
+        /// <summary>Accept includes outside <see cref="IncludeRoot"/> (absolute paths, <c>..</c>). Off by default (spec §1).</summary>
+        public bool AllowIncludeOutsideRoot { get; set; }
+
         /// <summary>Defaults to <see cref="AssemblyHosts.CreateDefault"/>.</summary>
         public IAssemblyHost? Host { get; set; }
 
@@ -150,22 +153,31 @@ namespace com.IvanMurzak.CodeExec
             if (request == null)
                 throw new ArgumentNullException(nameof(request));
             var stopwatch = Stopwatch.StartNew();
-            PreparedSnippet Fail(ErrorKind kind, string error) =>
-                new PreparedSnippet(request, ExecuteResult.Fail(kind, error), null, false, stopwatch.ElapsedMilliseconds);
+            PreparedSnippet Fail(ErrorKind kind, string error)
+            {
+                // An early error can quote the request (an include path): the error limit applies to it too.
+                var failure = ExecuteResult.Fail(kind, OutputLimits.Clip(error, Math.Max(request.MaxErrorChars, 0), OutputLimits.ErrorHint));
+                if (!ReferenceEquals(failure.Error, error))
+                    failure.Truncated = new[] { "error" };
+                return new PreparedSnippet(request, failure, null, false, stopwatch.ElapsedMilliseconds);
+            }
 
             if (string.IsNullOrWhiteSpace(request.Code))
                 return Fail(ErrorKind.InvalidRequest, "code is empty");
             if (string.IsNullOrWhiteSpace(request.EntryType) && !string.IsNullOrWhiteSpace(request.EntryMethod))
                 return Fail(ErrorKind.InvalidRequest, "entry method given without entry type");
+            if (request.MaxValueChars < 0 || request.MaxLogChars < 0 || request.MaxLogLineChars < 0 || request.MaxErrorChars < 0)
+                return Fail(ErrorKind.InvalidRequest, "output limits must be >= 0 (0 = no limit)");
 
             List<ParameterDeclaration> parameters;
             List<SourceFile> includes;
             try
             {
                 parameters = request.Parameters.Select(p => new ParameterDeclaration(p.Name, TypeNames.ToCSharp(p.Type))).ToList();
-                includes = IncludeResolver.Read(request.Include, _options.IncludeRoot);
+                includes = IncludeResolver.Read(request.Include, _options.IncludeRoot, _options.AllowIncludeOutsideRoot);
             }
-            catch (Exception e) when (e is IOException || e is ArgumentException || e is UnauthorizedAccessException)
+            catch (Exception e) when (e is IOException || e is ArgumentException || e is UnauthorizedAccessException
+                || e is NotSupportedException || e is System.Security.SecurityException) // bad include paths (`a.cs:zz` on .NET Framework)
             {
                 return Fail(ErrorKind.InvalidRequest, e.Message);
             }
@@ -228,7 +240,7 @@ namespace com.IvanMurzak.CodeExec
             if (compiled.Image == null)
             {
                 var failure = ExecuteResult.Fail(ErrorKind.Compile, "Compilation failed");
-                failure.Diagnostics = compiled.Diagnostics.Concat(ambiguous).ToList();
+                failure.Diagnostics = OutputLimits.Diagnostics(ambiguous.Concat(compiled.Diagnostics)); // the actionable CE0001 first
                 failure.AutoImported = autoImported;
                 failure.CompileMs = stopwatch.ElapsedMilliseconds;
                 return new PreparedSnippet(request, failure, null, false, failure.CompileMs);
@@ -311,7 +323,8 @@ namespace com.IvanMurzak.CodeExec
         /// <summary>
         /// Loads the entry's assembly. A host that cannot unload (Mono) keeps ONE loaded entry per cache key: it loads
         /// outside the cache lock, publishes under it, and reuses whatever was published first. The image bytes are dropped
-        /// and the key leaves the LRU, which only holds images still to load.
+        /// and the key leaves the LRU, which only holds images still to load. A snippet with static state of its own is
+        /// never published: each run loads a fresh copy, so no run sees another run's statics (spec §3.5).
         /// </summary>
         ILoadedAssembly Load(CacheEntry entry)
         {
@@ -329,6 +342,9 @@ namespace com.IvanMurzak.CodeExec
 
             var loaded = _host.Load(image, symbols, entry.AssemblyName);
             Interlocked.Increment(ref Stats.loadedAssemblies); // permanent, even when a concurrent run wins below
+            entry.HasStaticState ??= StaticState.Has(loaded.Assembly); // the same for every copy: reflect once
+            if (entry.HasStaticState == true)
+                return loaded; // stays an image in the LRU: the next identical request loads it again
             lock (_cacheLock)
             {
                 if (_loaded.TryGetValue(entry.Key, out var published))
@@ -408,25 +424,54 @@ namespace com.IvanMurzak.CodeExec
             }
         }
 
-        /// <summary><c>Type: message</c> plus only the stack frames of the snippet's own assembly (snippet and includes).</summary>
+        /// <summary>
+        /// <c>Type: message</c> plus only the stack frames of the snippet's own assembly (snippet and includes): the first and
+        /// the last <see cref="OutputLimits.FramesKept"/> of them; then each inner exception the same way after
+        /// <c> ---&gt; </c>, at most <see cref="OutputLimits.MaxCauses"/>. Never throws, whatever the exception's members do.
+        /// </summary>
         internal static string FormatException(Exception exception, Assembly? snippet)
         {
             while ((exception is TargetInvocationException || exception is AggregateException) && exception.InnerException != null)
                 exception = exception.InnerException;
-            var sb = new StringBuilder(exception.GetType().FullName).Append(": ").Append(exception.Message);
-            if (snippet == null)
-                return sb.ToString();
-            foreach (var frame in new StackTrace(exception, true).GetFrames() ?? Array.Empty<StackFrame>())
-            {
-                var method = frame.GetMethod();
-                if (method?.DeclaringType?.Assembly != snippet)
-                    continue;
-                sb.AppendLine().Append("   at ").Append(method.DeclaringType.FullName).Append('.').Append(method.Name);
-                var file = frame.GetFileName();
-                if (!string.IsNullOrEmpty(file))
-                    sb.Append(" in ").Append(file).Append(":line ").Append(frame.GetFileLineNumber());
-            }
+            var sb = new StringBuilder();
+            AppendException(sb, exception, snippet);
+            var inner = exception.InnerException;
+            for (var depth = 0; inner != null && depth < OutputLimits.MaxCauses; depth++, inner = inner.InnerException)
+                AppendException(sb.AppendLine().Append(" ---> "), inner, snippet);
+            if (inner != null)
+                sb.AppendLine().Append(" ---> ... more inner exception(s) left out");
             return sb.ToString();
+        }
+
+        static void AppendException(StringBuilder sb, Exception exception, Assembly? snippet)
+        {
+            string message;
+            try { message = exception.Message; }
+            catch (Exception) { message = "<unprintable message>"; }
+            sb.Append(exception.GetType().FullName).Append(": ").Append(message);
+            if (snippet == null)
+                return;
+            var frames = new List<string>();
+            try
+            {
+                foreach (var frame in new StackTrace(exception, true).GetFrames() ?? Array.Empty<StackFrame>())
+                {
+                    var method = frame.GetMethod();
+                    if (method?.DeclaringType?.Assembly != snippet)
+                        continue;
+                    var line = "   at " + method.DeclaringType.FullName + "." + method.Name;
+                    var file = frame.GetFileName();
+                    if (!string.IsNullOrEmpty(file))
+                        line += " in " + file + ":line " + frame.GetFileLineNumber();
+                    frames.Add(line);
+                }
+            }
+            catch (Exception) { } // a stack that cannot be read: the message alone
+            const int kept = OutputLimits.FramesKept;
+            if (frames.Count > 2 * kept)
+                frames = frames.Take(kept).Concat(new[] { $"   ... {frames.Count - 2 * kept} frame(s) left out" }).Concat(frames.Skip(frames.Count - kept)).ToList();
+            foreach (var line in frames)
+                sb.AppendLine().Append(line);
         }
 
         static string NormalizeUsing(string value)
@@ -531,6 +576,9 @@ namespace com.IvanMurzak.CodeExec
             public string? ResultType { get; }
             public IReadOnlyList<string> AutoImported { get; }
 
+            /// <summary>Hosts that cannot unload: whether the snippet declares static state (then it is never reused).</summary>
+            public bool? HasStaticState { get; set; }
+
             /// <summary>Set only for hosts that cannot unload (Mono): the assembly is loaded once and reused.</summary>
             public ILoadedAssembly? Loaded { get; set; }
         }
@@ -541,7 +589,7 @@ namespace com.IvanMurzak.CodeExec
             readonly CodeRunner _runner;
             readonly PreparedSnippet _prepared;
             readonly Stopwatch _stopwatch = Stopwatch.StartNew();
-            readonly List<LogEntry> _logs = new List<LogEntry>();
+            readonly LogBudget _logs;
             readonly List<IDisposable> _captures = new List<IDisposable>();
             ErrorKind _errorKind;
             string? _error;
@@ -553,6 +601,7 @@ namespace com.IvanMurzak.CodeExec
             {
                 _runner = runner;
                 _prepared = prepared;
+                _logs = new LogBudget(prepared.Request.MaxLogChars, prepared.Request.MaxLogLineChars);
             }
 
             public ILoadedAssembly? Loaded { get; set; }
@@ -586,7 +635,7 @@ namespace com.IvanMurzak.CodeExec
             public void BeginCapture(IList<ILogCapture> captures)
             {
                 foreach (var capture in captures)
-                    _captures.Add(capture.Begin(entry => { lock (_logs) _logs.Add(entry); }));
+                    _captures.Add(capture.Begin(_logs.Add));
             }
 
             public ExecuteResult Finish()
@@ -612,8 +661,17 @@ namespace com.IvanMurzak.CodeExec
                     Pending = null;
                 }
 
-                List<LogEntry> logs;
-                lock (_logs) logs = new List<LogEntry>(_logs);
+                // Output limits (spec §6): a text value, the logs and the error, in the order `truncated` lists them.
+                var request = _prepared.Request;
+                var truncated = new List<string>();
+                if (value is string text && !ReferenceEquals(value = OutputLimits.Clip(text, request.MaxValueChars, OutputLimits.ValueHint), text))
+                    truncated.Add("value");
+                var logs = _logs.Entries(out var logsTruncated);
+                if (logsTruncated)
+                    truncated.Add("logs");
+                var error = _error == null ? null : OutputLimits.Clip(_error, request.MaxErrorChars, OutputLimits.ErrorHint);
+                if (!ReferenceEquals(error, _error))
+                    truncated.Add("error");
                 return new ExecuteResult
                 {
                     Success = _errorKind == ErrorKind.None,
@@ -621,7 +679,8 @@ namespace com.IvanMurzak.CodeExec
                     ReturnType = ReturnType,
                     Logs = logs,
                     ErrorKind = _errorKind,
-                    Error = _error,
+                    Error = error,
+                    Truncated = truncated,
                     AutoImported = _prepared.Entry!.AutoImported,
                     CompileMs = _prepared.CompileMs,
                     ExecuteMs = _stopwatch.ElapsedMilliseconds,

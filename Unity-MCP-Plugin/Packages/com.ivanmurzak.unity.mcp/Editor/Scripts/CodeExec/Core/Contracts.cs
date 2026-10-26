@@ -54,6 +54,18 @@ namespace com.IvanMurzak.CodeExec
 
         /// <summary>Retry with a namespace when an unknown simple name resolves to exactly one (spec §3.3).</summary>
         public bool AutoImport { get; set; } = true;
+
+        /// <summary>Output limit for a text <see cref="ExecuteResult.Value"/>, in characters (spec §6); 0 = no limit.</summary>
+        public int MaxValueChars { get; set; } = OutputLimits.DefaultValueChars;
+
+        /// <summary>Output limit for all <see cref="ExecuteResult.Logs"/> together (spec §6); 0 = no limit.</summary>
+        public int MaxLogChars { get; set; } = OutputLimits.DefaultLogChars;
+
+        /// <summary>Output limit for one log message (spec §6); 0 = no limit.</summary>
+        public int MaxLogLineChars { get; set; } = OutputLimits.DefaultLogLineChars;
+
+        /// <summary>Output limit for <see cref="ExecuteResult.Error"/> (spec §6); 0 = no limit.</summary>
+        public int MaxErrorChars { get; set; } = OutputLimits.DefaultErrorChars;
     }
 
     public sealed class LogEntry
@@ -74,7 +86,10 @@ namespace com.IvanMurzak.CodeExec
     {
         public string Id { get; set; } = "";
         public string Severity { get; set; } = "error";
-        /// <summary><c>snippet.cs</c>, an include's relative path, or empty for code the agent did not write.</summary>
+        /// <summary>
+        /// <c>snippet.cs</c>, an include's relative path, <c>usings</c> for a namespace the runtime adds (host defaults or
+        /// the request's), or empty for other code the agent did not write.
+        /// </summary>
         public string File { get; set; } = "";
         public int Line { get; set; }
         public int Column { get; set; }
@@ -105,6 +120,9 @@ namespace com.IvanMurzak.CodeExec
         public long CompileMs { get; set; }
         public long ExecuteMs { get; set; }
         public bool CacheHit { get; set; }
+
+        /// <summary>The fields an output limit shortened (spec §6), in this order: <c>value</c>, <c>logs</c>, <c>error</c>.</summary>
+        public IReadOnlyList<string> Truncated { get; set; } = Array.Empty<string>();
 
         internal static ExecuteResult Fail(ErrorKind kind, string error) => new ExecuteResult { ErrorKind = kind, Error = error };
     }
