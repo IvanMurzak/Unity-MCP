@@ -47,9 +47,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "this tool throws an InvalidOperationException listing the dirty scenes; save them and retry.\n\n" +
             "## Filters\n\n" +
             "- `testMode` (default `EditMode`) — `EditMode` or `PlayMode`. EditMode is faster; prefer it during iteration.\n" +
-            "- `testAssembly` / `testNamespace` / `testClass` / `testMethod` — optional, layered filters. Namespace and " +
-            "class filters become regex `groupNames` so the validation count and Unity's execution stay in sync. " +
-            "`testMethod` must be fully qualified (`Namespace.FixtureName.TestName`).\n" +
+            "- `testAssembly` / `testNamespace` / `testClass` / `testMethod` — optional filters, combined as Unity's Test Runner " +
+            "combines them: every given filter must match, except that `testNamespace` and `testClass` match when either does. " +
+            "`testMethod` is the case-sensitive full name (`Namespace.FixtureName.TestName`); a parameterized method runs all " +
+            "its cases. Filters that select no test are refused before the run.\n" +
             "- `query` — RQL over the `tests` source instead of the four filters: any selection, run as ONE Test Runner run, " +
             "e.g. `tests | where fixture == \"PlayerTests\" or categories contains \"Smoke\"`. One mode per run; the mode comes " +
             "from the selected tests. Explore first with rql-query: `tests | where fullName contains \"Spline\" | select fullName mode`.\n" +
@@ -314,7 +315,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         internal static string CreateTestsRegexPattern(IEnumerable<string> fullNames)
             => "^(?:" + string.Join("|", fullNames.Distinct(StringComparer.Ordinal).Select(EscapeRegex)) + @")(\(.*\))?$";
 
-        static Filter CreateTestFilter(TestMode testMode, TestFilterParameters filterParams)
+        internal static Filter CreateTestFilter(TestMode testMode, TestFilterParameters filterParams)
         {
             var filter = new Filter
             {
@@ -331,11 +332,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (!string.IsNullOrEmpty(filterParams.TestMethod))
                 testNames.Add(filterParams.TestMethod!);
 
-            // Handle namespace filtering with regex (shared pattern ensures validation sync)
+            // Handle namespace filtering with regex
             if (!string.IsNullOrEmpty(filterParams.TestNamespace))
                 groupNames.Add(CreateNamespaceRegexPattern(filterParams.TestNamespace!));
 
-            // Handle class filtering with regex (shared pattern ensures validation sync)
+            // Handle class filtering with regex
             if (!string.IsNullOrEmpty(filterParams.TestClass))
                 groupNames.Add(CreateClassRegexPattern(filterParams.TestClass!));
 
@@ -353,7 +354,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         /// <summary>
         /// Creates a regex pattern for namespace filtering that matches Unity's Filter.groupNames behavior.
-        /// This ensures our validation logic (CountFilteredTests) matches exactly what Unity's TestRunner will execute.
         /// Pattern: "^{namespace}\." - matches tests in the specified namespace and its sub namespaces.
         /// </summary>
         /// <param name="namespaceName">The namespace to filter by</param>
@@ -363,7 +363,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         /// <summary>
         /// Creates a regex pattern for class filtering that matches Unity's Filter.groupNames behavior.
-        /// This ensures our validation logic (CountFilteredTests) matches exactly what Unity's TestRunner will execute.
         /// Pattern: "^.*\.{className}\.[^\.]+$" - matches any test class with the specified name followed by a method name.
         /// </summary>
         /// <param name="className">The class name to filter by</param>
@@ -381,27 +380,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             => Regex.Escape(input);
 
         /// <summary>
-        /// Unity's own test tree for <paramref name="testMode"/>: how many tests the filters select, and which of the RQL
-        /// selection's names (<see cref="TestFilterParameters.SelectedNames"/>) match no test there (a fixture with
-        /// arguments, a generic fixture: the tests source names them differently).
+        /// Unity's own test tree for the filter's mode: how many tests <paramref name="filter"/> (the run's own filter) selects, and which of the RQL selection's names (<see cref="TestFilterParameters.SelectedNames"/>) match
+        /// no test there (a fixture with arguments, a generic fixture: the tests source names them differently).
         /// </summary>
-        static async Task<(int count, List<string> unmatched)> MatchTestTree(TestRunnerApi testRunnerApi, TestMode testMode, TestFilterParameters filterParams)
+        static async Task<(int count, List<string> unmatched)> MatchTestTree(TestRunnerApi testRunnerApi, Filter filter, TestFilterParameters filterParams)
         {
+            var testMode = filter.testMode;
             var tcs = new TaskCompletionSource<(int, List<string>)>();
 
             testRunnerApi.RetrieveTestList(testMode, (testRoot) =>
             {
-                var testCount = testRoot != null
-                    ? CountFilteredTests(testRoot, filterParams)
-                    : 0;
-                var unmatched = filterParams.SelectedNames == null ? new List<string>()
-                    : testRoot == null ? filterParams.SelectedNames.ToList()
-                    : UnmatchedNames(testRoot, filterParams.SelectedNames);
+                try
+                {
+                    var testCount = testRoot != null
+                        ? TestFilterMatch.Count(testRoot, filter)
+                        : 0;
+                    var unmatched = filterParams.SelectedNames == null ? new List<string>()
+                        : testRoot == null ? filterParams.SelectedNames.ToList()
+                        : UnmatchedNames(testRoot, filterParams.SelectedNames);
 
-                if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
-                    Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
+                    if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
+                        Debug.Log($"[TestRunner] {testCount} {testMode} tests matched for {filterParams}");
 
-                tcs.SetResult((testCount, unmatched));
+                    tcs.TrySetResult((testCount, unmatched));
+                }
+                catch (Exception ex)
+                {
+                    // Unity re-invokes a throwing callback every frame: settle the task instead.
+                    tcs.TrySetException(ex);
+                }
             });
 
             // The first retrieval after the Editor starts builds the whole test tree, which can take well over a few
@@ -435,16 +442,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return names.Where(n => !found.Contains(n)).ToList();
         }
 
-        static async Task<string?> ValidateTestFilters(TestRunnerApi testRunnerApi, TestMode testMode, TestFilterParameters filterParams)
+        static async Task<string?> ValidateTestFilters(TestRunnerApi testRunnerApi, Filter filter, TestFilterParameters filterParams)
         {
             try
             {
-                var (testCount, unmatched) = await MatchTestTree(testRunnerApi, testMode, filterParams);
+                var (testCount, unmatched) = await MatchTestTree(testRunnerApi, filter, filterParams);
                 if (testCount == 0)
                     return Error.NoTestsFound(filterParams);
                 // Never run a silent subset of an RQL selection.
                 if (unmatched.Count > 0)
-                    return Error.TestExecutionFailed($"{unmatched.Count} selected test(s) are not in Unity's {testMode} test tree " +
+                    return Error.TestExecutionFailed($"{unmatched.Count} selected test(s) are not in Unity's {filter.testMode} test tree " +
                         $"(fixtures with arguments or generic fixtures are listed differently): {string.Join(", ", unmatched.Take(5))}");
 
                 return null; // No error, tests found
@@ -453,72 +460,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 return Error.TestExecutionFailed($"Filter validation failed: {ex.Message}");
             }
-        }
-
-        static int CountFilteredTests(ITestAdaptor test, TestFilterParameters filterParams)
-        {
-            // If no filters are specified, count all tests
-            if (!filterParams.HasAnyFilter)
-                return TestResultCollector.CountTests(test);
-
-            var count = 0;
-
-            // Check if this test matches the filters
-            if (!test.IsSuite)
-            {
-                var matches = false;
-
-                // Check assembly filter using UniqueName which contains assembly information
-                if (!string.IsNullOrEmpty(filterParams.TestAssembly))
-                {
-                    var dllIndex = test.UniqueName.ToLowerInvariant().IndexOf(".dll");
-                    if (dllIndex > 0)
-                    {
-                        var assemblyName = test.UniqueName[..dllIndex];
-                        if (assemblyName.Equals(filterParams.TestAssembly, StringComparison.OrdinalIgnoreCase))
-                            matches = true;
-                    }
-                }
-
-                // Check namespace filter using same regex pattern as Filter.groupNames (ensures sync with Unity's execution)
-                if (!matches && !string.IsNullOrEmpty(filterParams.TestNamespace))
-                {
-                    var namespacePattern = CreateNamespaceRegexPattern(filterParams.TestNamespace!);
-                    if (Regex.IsMatch(test.FullName, namespacePattern))
-                        matches = true;
-                }
-
-                // Check class filter using same regex pattern as Filter.groupNames (ensures sync with Unity's execution)
-                if (!matches && !string.IsNullOrEmpty(filterParams.TestClass))
-                {
-                    var classPattern = CreateClassRegexPattern(filterParams.TestClass!);
-                    if (Regex.IsMatch(test.FullName, classPattern))
-                        matches = true;
-                }
-
-                // Check the RQL selection with the same pattern Unity receives as Filter.groupNames
-                if (!matches && filterParams.HasGroups)
-                    matches = filterParams.Groups!.Any(pattern => Regex.IsMatch(test.FullName, pattern));
-
-                // Check method filter (FixtureName.TestName format, same as Filter.testNames)
-                if (!matches && !string.IsNullOrEmpty(filterParams.TestMethod))
-                {
-                    if (test.FullName.Equals(filterParams.TestMethod, StringComparison.OrdinalIgnoreCase))
-                        matches = true;
-                }
-
-                if (matches)
-                    count = 1;
-            }
-
-            // Recursively check children
-            if (test.HasChildren)
-            {
-                foreach (var child in test.Children)
-                    count += CountFilteredTests(child, filterParams);
-            }
-
-            return count;
         }
     }
 }

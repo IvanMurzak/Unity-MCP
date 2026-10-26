@@ -335,6 +335,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log($"[TestRunner] Resuming test run after recompilation. Mode: {testMode}, Filters: {filterParams}");
 
+            // Started in this tick, before anything can reload the domain again; an empty run is answered as an error.
             ExecuteTestRun(CreateTestFilter(testMode, filterParams));
         }
 
@@ -346,14 +347,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             try
             {
-                var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
+                // One filter for the check and the run: the check counts exactly what Unity will run.
+                var filter = CreateTestFilter(testMode, filterParams);
+                var validation = await ValidateTestFilters(TestRunnerApi, filter, filterParams);
                 if (validation != null)
                 {
                     FailDeferredTestRun(requestId, validation);
                     return;
                 }
 
-                ExecuteTestRun(CreateTestFilter(testMode, filterParams));
+                ExecuteTestRun(filter);
             }
             catch (Exception ex)
             {

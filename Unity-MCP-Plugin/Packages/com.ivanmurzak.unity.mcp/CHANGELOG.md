@@ -48,6 +48,12 @@
 
 ### Fixed
 
+- **`tests-run` filters: the check before the run now counts exactly what Unity runs** (#969). It matched any one
+  filter while Unity requires all of them, so a filter selecting nothing (an assembly with a class that is not in it)
+  answered with the summary of an empty run instead of "no tests found"; a parameterized `testMethod`, a
+  wrong-case `testMethod` and a class name equal to a namespace segment were also miscounted. The check now
+  matches the very filter Unity runs, the way Unity's Test Runner matches it, and a run that executes no test is
+  answered with an error.
 - **`tests-run` answered before Unity's run was over, and never when the run failed** (#1049). The answer and
   the run lock now wait until Unity has left Play Mode and restored the scenes, so the next `tests-run` cannot
   start on top of the previous run; `tests-run` also refuses to start while the Editor is in Play Mode. A run

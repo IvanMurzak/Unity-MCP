@@ -166,7 +166,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
                 ResponseCallTool response;
                 try
                 {
-                    if (string.IsNullOrWhiteSpace(resultQuery) == false)
+                    var emptyRunError = EmptyRunError(_summary.TotalTests, result.TestStatus);
+                    if (emptyRunError != null)
+                        response = ResponseCallValueTool<TestRunResponse>.Error(emptyRunError);
+                    else if (string.IsNullOrWhiteSpace(resultQuery) == false)
                     {
                         // tests-run declares a TestRunResponse output schema: the summary stays structured, the text is the projection.
                         var summaryOnly = new TestRunResponse { Summary = _summary };
@@ -222,6 +225,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             EnsureMcpConnection();
             Tool_Tests.CompleteTestRunAfterTeardown(requestId, ResponseCallValueTool<TestRunResponse>.Error(RunErrorMessage(message, GetLogs())));
         }
+
+        /// <summary>
+        /// The error for a run Unity finished without running a single test, else null: the filter check before the run
+        /// should refuse such filters, and an empty run must never read as a result.
+        /// </summary>
+        internal static string? EmptyRunError(int totalTests, TestStatus runStatus)
+            => totalTests == 0 && runStatus != TestStatus.Failed
+                ? "Unity ran no tests: the filters select no test in its test tree."
+                : null;
 
         /// <summary><paramref name="message"/> plus the last errors logged during the run: Unity's message alone names no cause.</summary>
         internal static string RunErrorMessage(string message, IReadOnlyList<TestLogEntry> logs)
