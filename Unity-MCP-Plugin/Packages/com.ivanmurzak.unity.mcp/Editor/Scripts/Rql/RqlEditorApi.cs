@@ -51,6 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("create a GameObject (optionally under a parent, as a primitive: Cube, Sphere, Capsule, Cylinder, Plane, Quad; at a local position) and return it")]
         public GameObject CreateGameObject(string name, GameObject? parent = null, string? primitive = null, Vector3? position = null)
         {
+            if (Adapters.UnityEngine_GameObject_Adapter.ValidateName(name) is string problem) throw new ArgumentException(problem);
             GameObject go;
             if (string.IsNullOrEmpty(primitive)) go = new GameObject(name);
             else if (Enum.TryParse<PrimitiveType>(primitive, ignoreCase: true, out var type)) { go = GameObject.CreatePrimitive(type); go.name = name; }

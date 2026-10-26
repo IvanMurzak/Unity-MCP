@@ -197,7 +197,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public static object? FindAssets(object?[] args)
         {
             if (args.Length < 1 || !(args[0] is string filter)) return new RqlError("type-mismatch", "unity.assets(filter, folder?) expects a filter string such as \"t:Material\"");
-            var folders = args.Length > 1 && args[1] is string folder ? new[] { folder } : null;
+            var folders = args.Length > 1 && args[1] is string folder ? new[] { folder.Replace('\\', '/').TrimEnd('/') } : null;
+            // FindAssets only logs a missing folder and finds nothing, which reads as "no such assets".
+            if (folders != null && !AssetDatabase.IsValidFolder(folders[0])) return new RqlError("not-found", $"unity.assets: no folder '{folders[0]}'");
             var guids = folders == null ? AssetDatabase.FindAssets(filter) : AssetDatabase.FindAssets(filter, folders);
             return Load(guids);
         }

@@ -34,24 +34,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                     description: "attached components (filter with $ is Light etc.)", owning: true)
              .Add("children", g => Children(g), description: "direct child GameObjects", owning: true)
              .Add<bool>("active", g => g.activeSelf, (g, v) => g.SetActive(v), description: "activeSelf; assigning calls SetActive")
+             // Unity rejects an unknown tag or a layer outside 0..31 by logging an error, not by throwing: checked before any
+             // write, so the receipt never reports a change that did not happen and the other writes stay all-or-nothing.
+             .Add<string>("name", g => g.name, (g, v) => g.name = v, (g, v) => ValidateName(v), "the GameObject's name (not empty)")
+             .Add<string>("tag", g => g.tag, (g, v) => g.tag = v, (g, v) => ValidateTag(v),
+                 "tag: one of the project's tags (Untagged, MainCamera, Player … and the tags added in Tags and Layers)")
+             .Add<int>("layer", g => g.layer, (g, v) => g.layer = v, (g, v) => ValidateLayer(v), "layer index 0..31")
              .Add<List<string>>("staticFlags", g => StaticFlags(g), (g, v) => SetStaticFlags(g, v), ValidateStaticFlags,
                  "Static Editor Flags (" + StaticFlagList + "): filter with staticFlags contains \"ContributeGI\"; " +
                  "assign a list, e.g. [\"ContributeGI\", \"BatchingStatic\"] ([] clears; isStatic sets them all)")
              .Function<string, Component>("AddComponent", (g, type) => AddComponent(g, type), "type",
                  "add a component by type name (e.g. \"Rigidbody\", \"Light\", \"BoxCollider\", a script class) and return it")
-             .Method("Destroy", g => Undo.DestroyObjectImmediate(g), "destroy this GameObject (undoable)")
+             .Method("Destroy", g => Destroy(g), "destroy this GameObject (undoable)")
              .Function("Duplicate", g => Duplicate(g), "copy this GameObject next to it (prefab instances stay linked) and return the copy (undoable)")
              .Function<string, GameObject>("SaveAsPrefab", (g, path) => SaveAsPrefab(g, path), "path",
-                 "save as a prefab asset (\"Assets/…/X.prefab\"); this GameObject becomes its instance; returns the prefab asset");
+                 "save as a new prefab asset (\"Assets/…/X.prefab\", not an existing one); this GameObject becomes its instance; returns the prefab asset");
             // staticFlags is built on read, so element writes are assigned back.
             m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags");
         }
 
+        /// <summary>Null when <paramref name="name"/> is a usable GameObject name, otherwise why not.</summary>
+        internal static string? ValidateName(string? name) =>
+            string.IsNullOrWhiteSpace(name) ? "a GameObject name cannot be empty" : null;
+
+        internal static string? ValidateTag(string? tag)
+        {
+            if (string.IsNullOrEmpty(tag)) return "a tag cannot be empty (use \"Untagged\")";
+            var tags = UnityEditorInternal.InternalEditorUtility.tags;
+            return Array.IndexOf(tags, tag) >= 0 ? null : $"tag '{tag}' is not defined; defined tags: {string.Join(", ", tags)}";
+        }
+
+        internal static string? ValidateLayer(int layer) =>
+            layer < 0 || layer > 31 ? $"layer {layer} is out of range: a layer index is 0..31" : null;
+
+        // Undo.AddComponent returns null (and logs) instead of throwing when Unity refuses: a second component of a type that
+        // allows one per GameObject, a conflicting component (Rigidbody2D next to a Rigidbody) or a type that cannot be added.
         private static Component AddComponent(GameObject g, string typeName)
         {
             var type = UnityTypes.Find(typeName, typeof(Component))
                        ?? throw new ArgumentException($"no component type named '{typeName}'");
-            return Undo.AddComponent(g, type);
+            if (type == typeof(Transform)) throw new ArgumentException("a Transform cannot be added: every GameObject has exactly one");
+            return Undo.AddComponent(g, type)
+                   ?? throw new InvalidOperationException($"Unity did not add {type.Name} to '{g.name}': it allows one per GameObject, " +
+                                                          "conflicts with a component already there, or cannot be added (the Console has the reason)");
+        }
+
+        // When Unity refuses to destroy a GameObject it logs instead of throwing.
+        private static void Destroy(GameObject g)
+        {
+            var name = g.name;
+            Undo.DestroyObjectImmediate(g);
+            if (g != null) throw new InvalidOperationException($"Unity did not destroy '{name}' (the Console has the reason)");
         }
 
         // The Editor's own Ctrl+D path: prefab instances stay linked with their overrides, names stay unique, undo is
@@ -72,6 +105,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         private static GameObject SaveAsPrefab(GameObject g, string path)
         {
+            // An existing prefab would be replaced with this GameObject: every instance of it would change.
+            path = RqlEditorApi.NewAssetPath(path, ".prefab");
             var folder = System.IO.Path.GetDirectoryName(path)?.Replace('\\', '/');
             if (!string.IsNullOrEmpty(folder) && !AssetDatabase.IsValidFolder(folder)) throw new ArgumentException($"folder '{folder}' does not exist (editor | call CreateFolder(\"{folder}\"))");
             return PrefabUtility.SaveAsPrefabAssetAndConnect(g, path, InteractionMode.UserAction, out var ok) is GameObject asset && ok

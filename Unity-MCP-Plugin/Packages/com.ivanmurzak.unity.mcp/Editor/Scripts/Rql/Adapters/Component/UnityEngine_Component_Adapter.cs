@@ -26,7 +26,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         protected override void Members(MemberTable<Component> m)
         {
             m.Untyped.Reference("gameObject", "transform");
-            m.Method("Destroy", c => Undo.DestroyObjectImmediate(c), "remove this component (undoable)");
+            m.Method("Destroy", c => Destroy(c), "remove this component (undoable)");
+        }
+
+        // Unity refuses (and only logs) to remove a Transform or a component another one requires ([RequireComponent]): report
+        // it instead of a receipt for a change that did not happen.
+        private static void Destroy(Component c)
+        {
+            if (c is Transform) throw new InvalidOperationException("a Transform cannot be removed; destroy its GameObject instead (… | call Destroy())");
+            var type = c.GetType().Name;
+            var owner = c.gameObject.name;
+            Undo.DestroyObjectImmediate(c);
+            if (c != null)
+                throw new InvalidOperationException($"Unity did not remove {type} from '{owner}': another component requires it (the Console has the reason)");
         }
 
         public override AdapterOutcome TryCoerce(object? value, Type target, RqlKernel kernel, out object? result, out string? reason)

@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -57,10 +58,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "## Modes\n\n" +
             "- **Snippet** (default): plain statements. The last expression is the result (`GameObject.Find(\"Player\").name`). " +
             "Own `using` lines, local classes and functions are allowed; `await` works. Usings for System, LINQ, UnityEngine, " +
-            "UnityEditor and AIGD are already there; an unknown type name is imported automatically when exactly one namespace has it.\n" +
+            "UnityEditor and AIGD are already there (`Object` and `Random` mean UnityEngine's); an unknown type name is imported " +
+            "automatically when exactly one namespace has it.\n" +
             "- **Full code**: when `csharpCode` declares class `className` with a static method `methodName`, that method runs.\n" +
             "- `isMethodBody=true` forces snippet mode.\n\n" +
             "Compile errors point at your own lines (`snippet.cs(2,5)`).\n\n" +
+            "## Result and output\n\n" +
+            "- The result is bounded: strings and the serialized result to 65536 characters, collections to 1000 items " +
+            "(a note says what was cut). Return a selection or a summary instead of everything.\n" +
+            "- `Debug.Log` / `Console.WriteLine` output is not part of the result: `Debug.Log` goes to the Unity Console " +
+            "(read it with rql-query `console | sort sequence desc | first 10 | select logType message`).\n" +
+            "- Code runs on the main thread and is not aborted: an endless loop freezes the Editor. An `await` gets at most 120 s.\n" +
+            "- Identical code reuses its compiled assembly, so static fields of your own types keep their values between such calls.\n\n" +
             "## usings / include\n\n" +
             "- `usings`: extra namespaces, e.g. `[\"MyGame.Gameplay\"]`.\n" +
             "- `include`: helper `.cs` files or folders (recursive), relative to `<Project>/.ai-game-dev/snippets`, compiled with the snippet.\n\n" +
@@ -103,7 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var request = new ExecuteRequest
             {
                 Code = csharpCode,
-                Usings = usings ?? Array.Empty<string>(),
+                Usings = WithHostAliases(csharpCode, usings ?? Array.Empty<string>()),
                 Include = include ?? Array.Empty<string>(),
                 Parameters = parameters?.Select((p, i) => new SnippetParameter(ParameterName(p, i), ParameterType(p, i), null)).ToList()
                     ?? (IReadOnlyList<SnippetParameter>)Array.Empty<SnippetParameter>(),
@@ -135,23 +144,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             if (result.Value is null)
             {
-                // Typed null reports the result type (C# name from Code-Exec); nothing returned is System.Void "Success".
+                // Typed null reports the result type (C# name from Code-Exec) with a JSON null (not the string "null");
+                // nothing returned is System.Void "Success".
                 var isVoid = result.ReturnType == "System.Void";
-                var member = new SerializedMember
-                {
-                    name = JsonSchema.Result,
-                    typeName = result.ReturnType ?? JsonSchema.Object
-                };
-                return member.SetJsonValue(isVoid ? "\"Success\"" : "\"null\"");
+                return Scalar(result.ReturnType ?? JsonSchema.Object, isVoid ? "\"Success\"" : "null");
             }
             if (result.Value is SerializedMember serialized)
                 return serialized;
 
-            var serializedResult = reflector.Serialize(obj: result.Value, logger: logger);
+            // JSON has no NaN / Infinity: serializing one fails the whole call with a JSON writer error.
+            if ((result.Value is double d && !double.IsFinite(d)) || (result.Value is float f && !float.IsFinite(f)))
+                return Scalar(result.Value.GetType().FullName!, System.Text.Json.JsonSerializer.Serialize(Convert.ToString(result.Value, CultureInfo.InvariantCulture)));
+
+            var serializedResult = reflector.Serialize(obj: ResultValue.Shape(result.Value), logger: logger);
             if (string.IsNullOrEmpty(serializedResult.name))
                 serializedResult.name = JsonSchema.Result;
-            return serializedResult;
+
+            // Backstop for a result that is large in depth rather than in length (a big object graph): never megabytes into the
+            // agent's context. The JSON is wordier than what the agent reads, so its bound leaves room for a shaped result.
+            var json = System.Text.Json.JsonSerializer.Serialize(serializedResult, reflector.JsonSerializerOptions);
+            if (json.Length <= ResultValue.MaxSerializedChars)
+                return serializedResult;
+            var compact = System.Text.Json.JsonSerializer.Serialize(serializedResult,
+                new System.Text.Json.JsonSerializerOptions(reflector.JsonSerializerOptions) { WriteIndented = false });
+            return Scalar(serializedResult.typeName ?? JsonSchema.Object, System.Text.Json.JsonSerializer.Serialize(
+                "The result is too large to return whole (" + compact.Length + " characters as JSON); its beginning:\n" +
+                ResultValue.Truncate(compact, "characters")));
         }
+
+        static SerializedMember Scalar(string typeName, string json) =>
+            new SerializedMember { name = JsonSchema.Result, typeName = typeName }.SetJsonValue(json);
+
+        /// <summary>
+        /// With the default usings System and UnityEngine, <c>Object</c> and <c>Random</c> are ambiguous (CS0104) — the two
+        /// names Unity code uses most. The aliases pick UnityEngine's, unless the code or <paramref name="usings"/> declares
+        /// that name itself (a second alias would be CS1537).
+        /// </summary>
+        internal static string[] WithHostAliases(string code, string[] usings)
+        {
+            var root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code, ScriptParseOptions).GetRoot();
+            var declared = new HashSet<string>(root.Usings.Where(u => u.Alias != null).Select(u => u.Alias!.Name.Identifier.Text));
+            declared.UnionWith(root.DescendantNodes().OfType<BaseTypeDeclarationSyntax>().Select(t => t.Identifier.Text));
+            foreach (var u in usings)
+                if (u.IndexOf('=') is var eq && eq > 0) declared.Add(u.Substring(0, eq).Trim());
+            return usings.Concat(HostAliases.Where(a => !declared.Contains(a.Key)).Select(a => $"{a.Key} = {a.Value}")).ToArray();
+        }
+
+        static readonly KeyValuePair<string, string>[] HostAliases =
+        {
+            new KeyValuePair<string, string>("Object", "UnityEngine.Object"),
+            new KeyValuePair<string, string>("Random", "UnityEngine.Random"),
+        };
 
         static string ParameterName(SerializedMember parameter, int index) => parameter.name ?? $"param{index}";
 
@@ -223,12 +266,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         static string Describe(ExecuteResult result)
         {
+            // A file that is not C# (e.g. a wrong include) yields thousands of diagnostics: the first ones carry the cause.
             var text = result.ErrorKind == ErrorKind.Compile
-                ? "Compilation failed:\n" + string.Join("\n", result.Diagnostics.Select(d => d.ToString()))
+                ? "Compilation failed:\n" + string.Join("\n", result.Diagnostics.Take(MaxDiagnostics).Select(d => d.ToString()))
+                  + (result.Diagnostics.Count > MaxDiagnostics ? $"\n… {result.Diagnostics.Count - MaxDiagnostics} more errors" : "")
                 : $"Execution failed ({result.ErrorKind}): {result.Error}";
+            if (text.Length > ResultValue.MaxChars)
+                text = ResultValue.Truncate(text, "characters of the error");
             if (result.AutoImported.Count > 0)
                 text += "\nAuto-imported: " + string.Join(", ", result.AutoImported);
             return text;
         }
+
+        const int MaxDiagnostics = 20;
     }
 }

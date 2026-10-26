@@ -73,5 +73,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.AreEqual(90f, go.transform.eulerAngles.y, 1e-3f);
             Assert.AreEqual(Vector3.one * 2, go.transform.localScale);
         }
+
+        // Unity logs and keeps the hierarchy for these parents: the set must fail instead of reporting a reparent.
+        [Test]
+        public void ParentingUnderItselfOrADescendantFails()
+        {
+            var group = new GameObject("Group");
+            var child = new GameObject("Child");
+            child.transform.SetParent(group.transform, false);
+            AssertFails(M("objects | where name == \"Group\" | set transform.parent = unity.find(\"Group\")"), "coercion-failed", "itself or one of its children");
+            AssertFails(M("objects | where name == \"Group\" | set transform.parent = unity.find(\"Group/Child\")"), "coercion-failed", "itself or one of its children");
+            Assert.IsNull(group.transform.parent);
+            Assert.AreSame(group.transform, child.transform.parent);
+        }
+
+        [Test]
+        public void ChildrenOfAPrefabInstanceCannotBeReparented()
+        {
+            const string folder = "Assets/RqlTransformTests";
+            if (!UnityEditor.AssetDatabase.IsValidFolder(folder)) UnityEditor.AssetDatabase.CreateFolder("Assets", "RqlTransformTests");
+            try
+            {
+                var root = new GameObject("PrefabRoot");
+                new GameObject("Inner").transform.SetParent(root.transform, false);
+                UnityEditor.PrefabUtility.SaveAsPrefabAssetAndConnect(root, folder + "/Root.prefab", UnityEditor.InteractionMode.AutomatedAction);
+                AssertFails(M("objects | where name == \"Inner\" | set transform.parent = null"), "coercion-failed", "inside a prefab instance");
+                Assert.AreSame(root.transform, GameObject.Find("PrefabRoot/Inner").transform.parent);
+                // The instance root itself moves freely.
+                var other = new GameObject("Other");
+                AssertOk(M("objects | where name == \"PrefabRoot\" | set transform.parent = unity.find(\"Other\")"));
+                Assert.AreSame(other.transform, root.transform.parent);
+            }
+            finally
+            {
+                UnityEditor.AssetDatabase.DeleteAsset(folder);
+            }
+        }
     }
 }

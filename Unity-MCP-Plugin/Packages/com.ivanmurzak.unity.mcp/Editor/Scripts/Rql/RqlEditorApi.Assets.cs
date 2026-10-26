@@ -10,7 +10,9 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using System.IO;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Rql;
 using UnityEditor;
 using UnityEngine;
@@ -20,9 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
     public sealed partial class RqlEditorApi
     {
-        [RqlCallable("copy an asset to a new path; returns the copy")]
+        [RqlCallable("copy an asset to a new path (not an existing one); returns the copy")]
         public Object CopyAsset(string path, string newPath)
         {
+            newPath = NewAssetPath(newPath, Path.GetExtension(path));
             EnsureFolder(Path.GetDirectoryName(newPath));
             if (!AssetDatabase.CopyAsset(path, newPath)) throw new ArgumentException($"could not copy '{path}' to '{newPath}'");
             return AssetDatabase.LoadMainAssetAtPath(newPath);
@@ -37,9 +40,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return newPath;
         }
 
-        [RqlCallable("move an asset (or folder) to the OS trash, so it can be recovered")]
-        public void DeleteAsset(string path)
+        [RqlCallable("move an asset (or folder) to the OS trash, so it can be recovered; refuses while objects in the open scenes or prefab use it, unless force = true (their references become missing)")]
+        public void DeleteAsset(string path, bool force = false)
         {
+            path = Normalize(path);
+            if (!force && Users(path) is { Count: > 0 } users)
+                throw new ArgumentException($"'{path}' is used by {users.Count} object(s) in the open scenes: {Preview(users)}. " +
+                                            $"Clear those references first, or DeleteAsset(\"{path}\", true) to delete it anyway (the references become missing)");
             if (!AssetDatabase.MoveAssetToTrash(path)) throw new ArgumentException($"could not delete '{path}'");
         }
 
@@ -47,12 +54,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public string CreateFolder(string path)
         {
             EnsureFolder(path);
-            return path;
+            return Normalize(path);
         }
 
-        [RqlCallable("create a material asset at path (\"Assets/…/X.mat\") with a shader (default: the render pipeline's default); returns it")]
+        [RqlCallable("create a material asset at a new path (\"Assets/…/X.mat\") with a shader (default: the render pipeline's default); returns it")]
         public Material CreateMaterial(string path, string? shader = null)
         {
+            path = NewAssetPath(path, ".mat");
             var s = shader == null ? DefaultShader() : Shader.Find(shader) ?? throw new ArgumentException($"no shader named '{shader}'");
             EnsureFolder(Path.GetDirectoryName(path));
             var material = new Material(s) { name = Path.GetFileNameWithoutExtension(path) };
@@ -72,15 +80,81 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return pipeline != null && pipeline.defaultShader != null ? pipeline.defaultShader : Shader.Find("Standard");
         }
 
-        private static void EnsureFolder(string? path)
+        private static string Normalize(string path) => path.Replace('\\', '/').TrimEnd('/');
+
+        /// <summary>
+        /// <paramref name="path"/> normalized, after checking that it is free and has <paramref name="extension"/> (when one is
+        /// given). Unity's create / copy / save calls replace an existing asset silently, which breaks every reference to it.
+        /// </summary>
+        internal static string NewAssetPath(string path, string? extension)
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("a path such as \"Assets/Folder/Name" + extension + "\" is required");
+            path = Normalize(path);
+            if (!string.IsNullOrEmpty(extension) && !path.EndsWith(extension, StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"'{path}' must end with {extension}");
+            if (AssetDatabase.LoadMainAssetAtPath(path) != null || AssetDatabase.IsValidFolder(path) || File.Exists(path))
+                throw new ArgumentException($"'{path}' already exists: pick a new path, or DeleteAsset(\"{path}\") first");
+            return path;
+        }
+
+        internal static void EnsureFolder(string? path)
         {
             if (string.IsNullOrEmpty(path)) return;
-            path = path!.Replace('\\', '/').TrimEnd('/');
+            path = Normalize(path!);
             if (AssetDatabase.IsValidFolder(path)) return;
             var parent = Path.GetDirectoryName(path)?.Replace('\\', '/');
             if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
             EnsureFolder(parent);
             AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
         }
+
+        /// <summary>
+        /// The GameObjects of the open scenes and prefab that use the asset at <paramref name="path"/> (for a folder: any asset
+        /// in it): a prefab instance of it, or a component field that references it. Other project assets are not searched.
+        /// </summary>
+        internal static List<string> Users(string path)
+        {
+            bool Inside(string p) => p == path || p.StartsWith(path + "/", StringComparison.Ordinal);
+            var roots = RqlUnity.RootGameObjects();
+            if (OpenPrefabRoot() is GameObject prefabRoot) roots.Add(prefabRoot);
+            var users = new List<string>();
+            var transforms = new List<Transform>();
+            var components = new List<Component>();
+            foreach (var root in roots)
+            {
+                root.GetComponentsInChildren(true, transforms);
+                foreach (var t in transforms)
+                {
+                    var go = t.gameObject;
+                    var uses = PrefabUtility.IsOutermostPrefabInstanceRoot(go) && Inside(PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(go));
+                    if (!uses)
+                    {
+                        go.GetComponents(components);
+                        foreach (var c in components)
+                            if (c != null && References(c, Inside)) { uses = true; break; }
+                    }
+                    if (uses) users.Add(go.GetPath() ?? go.name);
+                }
+            }
+            return users;
+        }
+
+        private static bool References(Component c, Func<string, bool> inside)
+        {
+            using var so = new SerializedObject(c);
+            var it = so.GetIterator();
+            while (it.Next(true))
+                if (it.propertyType == SerializedPropertyType.ObjectReference && !PrefabLinks.Contains(it.name)
+                    && it.objectReferenceValue is Object o && o != null
+                    && EditorUtility.IsPersistent(o) && inside(AssetDatabase.GetAssetPath(o)))
+                    return true;
+            return false;
+        }
+
+        // Every object inside a prefab instance links to its source through these: the instance root already reports the use.
+        private static readonly HashSet<string> PrefabLinks = new HashSet<string> { "m_CorrespondingSourceObject", "m_PrefabInstance", "m_PrefabAsset" };
+
+        private static string Preview(List<string> names) =>
+            names.Count <= 5 ? string.Join(", ", names) : string.Join(", ", names.GetRange(0, 5)) + $" … (+{names.Count - 5})";
     }
 }

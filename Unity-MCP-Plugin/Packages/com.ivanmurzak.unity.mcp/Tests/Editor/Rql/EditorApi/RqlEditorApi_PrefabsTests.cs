@@ -33,6 +33,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsTrue(PrefabUtility.IsPartOfPrefabInstance(GameObject.Find("Crate")));
         }
 
+        // Saving over an existing prefab would replace it (every instance changes); deleting it would leave missing prefabs.
+        [Test]
+        public void AnExistingPrefabIsNeitherReplacedNorDeletedWhileInUse()
+        {
+            var path = MakePrefab();
+            new GameObject("Other");
+            AssertFails(M($"objects | where name == \"Other\" | call SaveAsPrefab(\"{path}\")"), "getter-threw", "already exists");
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(path).GetComponent<BoxCollider>());
+            AssertFails(M($"editor | call DeleteAsset(\"{path}\")"), "getter-threw", "used by 1 object(s) in the open scenes: Crate.");
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(path));
+        }
+
         [Test]
         public void InstantiatePrefabUnderAParentAtAPosition()
         {
