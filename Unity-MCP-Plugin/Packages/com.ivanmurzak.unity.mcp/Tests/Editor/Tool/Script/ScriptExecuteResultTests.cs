@@ -203,19 +203,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
 
         // Mono never unloads: a snippet with a readonly lookup table (not state, Code-Exec 0.3.1) reuses its assembly, while
         // a snippet with real static state loads one per run. Measured after a warm-up run, which may load twice.
-        [TestCase("public static class Table { public static readonly System.Collections.Generic.IReadOnlyDictionary<string, int> Map = new System.Collections.Generic.Dictionary<string, int> { [\"b\"] = 2 }; public static readonly string Name = \"t\"; }\nTable.Map[\"b\"]", 0)]
-        [TestCase("public static class Tally { public static int N; }\nTally.N = 2;\nTally.N", 3)]
-        public void OnlySnippetsWithStaticStateLoadAnAssemblyPerRun(string code, int expectedLoads)
+        [TestCase("public static class Table { public static readonly System.Collections.Generic.IReadOnlyDictionary<string, int> Map = new System.Collections.Generic.Dictionary<string, int> { [\"b\"] = 2 }; public static readonly string Name = \"t\"; }\nTable.Map[\"b\"]", false)]
+        [TestCase("public static class Tally { public static int N; }\nTally.N = 2;\nTally.N", true)]
+        public void OnlySnippetsWithStaticStateLoadAnAssemblyPerRun(string code, bool loadsPerRun)
         {
+            const int runs = 3;
             StringAssert.Contains(": 2", Run(code));
             var before = SnippetAssemblies();
-            for (var i = 0; i < 3; i++)
+            for (var i = 0; i < runs; i++)
                 StringAssert.Contains(": 2", Run(code));
-            Assert.AreEqual(expectedLoads, SnippetAssemblies() - before);
+            Assert.AreEqual(loadsPerRun ? runs : 0, SnippetAssemblies() - before);
         }
 
-        static int SnippetAssemblies() => System.AppDomain.CurrentDomain.GetAssemblies()
-            .Count(a => a.FullName != null && a.FullName.StartsWith(CodeRunner.SnippetAssemblyPrefix, System.StringComparison.Ordinal));
+        static int SnippetAssemblies() => System.AppDomain.CurrentDomain.GetAssemblies().Count(LoadedAssemblies.IsSnippet);
 
         [Test]
         public void IncludesStayInsideTheSnippetsFolder()
