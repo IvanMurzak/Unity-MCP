@@ -70,6 +70,7 @@ UserSettings/
 
 # Materialized shared extension test fixtures.
 /Assets/ExtensionIsolation.meta
+/Assets/FilterOracle.meta
 /Assets/com.IvanMurzak.meta
 /ProjectSettings/Packages/com.unity.probuilder/
 /ProjectSettings/SceneTemplateSettings.json

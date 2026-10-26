@@ -31,6 +31,7 @@ from the plugin version). Bumping the consumed server = changing that constant; 
   and all extension packages via `file:`; prepare with `commands/extensions.py` before opening.
 - `tests/chain-fixtures/` — recorded tool-call fixtures for chain tests, compared byte-for-byte
   (LF); re-recorded by the plugin's `Tests/Editor/Chain/ChainRecordTests.cs`, never hand-edited.
+- `tests/filter-oracle/` — checks the `tests-run` filter count against what Unity runs; see its `AGENTS.md`.
 - `commands/` — PowerShell/Python utility scripts (version bump, Unity tests, release notes).
 - `docs/` — README translations, dev docs (`docs/dev/`), agent detail docs (`docs/agents/`).
 - `memory/` — durable agent lessons (`memory/MEMORY.md` is the index).

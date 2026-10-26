@@ -37,4 +37,7 @@ __pycache__/
 /Unity-Tests/*/Assets/ExtensionIsolation.meta
 /Unity-Tests/*/Assets/com.IvanMurzak/
 /Unity-Tests/*/Assets/com.IvanMurzak.meta
+# The tests-run filter oracle (tests/filter-oracle), copied in by filter_oracle.yml or by hand.
+/Unity-Tests/*/Assets/FilterOracle/
+/Unity-Tests/*/Assets/FilterOracle.meta
 /.artifacts/

@@ -1,0 +1,139 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2026 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
+# tests-run checks its filters against Unity's test tree before a run (TestFilterMatch mirrors Unity's filter
+# rules). This oracle runs tests/filter-oracle in each tested Unity version: Unity executes every scenario's filter
+# and the tests it reports must equal tests-run's count. It runs only when that count or Unity's rules can change:
+# the tests-run code, the oracle, the project preparation, or a Unity / test-framework version.
+name: filter-oracle
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests*.cs"
+      - "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests/**"
+      - "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/AssemblyInfo.cs"
+      - "commands/extensions.py"
+      - "Unity-Tests/*/Packages/manifest.json"
+      - "Unity-Tests/*/ProjectSettings/ProjectVersion.txt"
+      - "tests/filter-oracle/**"
+      - ".github/workflows/filter_oracle.yml"
+      - ".github/workflows/test_pull_request.yml"
+  workflow_dispatch:
+
+concurrency:
+  group: filter-oracle-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+jobs:
+  oracle:
+    # A fork pull request gets no UNITY_LICENSE (see docs/agents/ci-unity-license.md).
+    if: github.event_name != 'pull_request' || github.event.pull_request.head.repo.full_name == github.repository
+    strategy:
+      fail-fast: false
+      matrix:
+        # Keep in step with the versions test_pull_request.yml tests (one test-framework version each: 1.1.33, 1.4.5,
+        # 1.6.0, built-in); a change there triggers this workflow.
+        unityVersion: [2022.3.62f3, 6000.0.85f1, 6000.3.27f1, 6000.6.7f1]
+    name: ${{ matrix.unityVersion }}
+    runs-on: ubuntu-latest
+    # A warm leg takes minutes; a new Unity version has no cached Library yet and imports cold.
+    timeout-minutes: 25
+    env:
+      PROJECT: ./Unity-Tests/${{ matrix.unityVersion }}
+      UNITY_VERSION: ${{ matrix.unityVersion }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+          persist-credentials: false
+
+      # Room for the editor image: only the removals that take seconds (the apt purge and swap would cost minutes).
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: false
+          swap-storage: false
+
+      - name: Prepare the project and copy the oracle in
+        run: |
+          python3 commands/extensions.py prepare --project "$PROJECT"
+          mkdir -p "$PROJECT/Assets/FilterOracle"
+          cp -r tests/filter-oracle/Editor tests/filter-oracle/EditModeFixtures tests/filter-oracle/PlayModeFixtures "$PROJECT/Assets/FilterOracle/"
+
+      # Read-only reuse of the EditMode legs' Library: the key and paths are what test_unity_plugin.yml saves
+      # ("Generate cache key" + "Restore Unity cache"), so the editor starts warm. Never saved from here.
+      - name: Restore Unity cache
+        uses: actions/cache/restore@v5
+        with:
+          path: |
+            ${{ env.PROJECT }}/Library
+            ~/.cache/unity3d
+          key: ._Unity-Tests_${{ matrix.unityVersion }}-editmode-base
+
+      # Library/burst.pid and ilpp.pid from the cached run name PIDs of another container (see test_unity_plugin.yml).
+      - name: Drop stale PID files from the restored Library
+        run: rm -fv "$PROJECT/Library/burst.pid" "$PROJECT/Library/ilpp.pid"
+
+      # Unity 6000.6+ needs >= 1 GiB of /dev/shm for its licensing client (see test_unity_plugin.yml).
+      - name: Raise Docker default shm-size (Unity 6000.6+)
+        run: |
+          IFS=. read -r major minor _ <<< "$UNITY_VERSION"
+          if [ "$major" -lt 6000 ] || { [ "$major" -eq 6000 ] && [ "$minor" -lt 6 ]; }; then exit 0; fi
+          cfg=/etc/docker/daemon.json
+          current='{}'
+          [ -s "$cfg" ] && current="$(sudo cat "$cfg")"
+          echo "$current" | jq '. + {"default-shm-size": "2G"}' | sudo tee "$cfg" > /dev/null
+          sudo systemctl restart docker
+          shm="$(docker run --rm --entrypoint df "unityci/editor:ubuntu-${UNITY_VERSION}-base-3" -m /dev/shm | awk 'NR==2 {print $2}')"
+          [ "$shm" -ge 1025 ] || { echo "::error::default-shm-size did not take effect (/dev/shm = ${shm} MiB)"; exit 1; }
+
+      # The stored Personal license is mounted where the editor reads it, as .github/actions/setup-unity-mcp does,
+      # so one editor launch does it all. The oracle exits by itself (no -quit; exit codes: tests/filter-oracle/AGENTS.md).
+      - name: Run the oracle
+        timeout-minutes: 20
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+        run: |
+          license_dir="$RUNNER_TEMP/unity-license"
+          mkdir -p "$license_dir"
+          printf '%s\n' "$UNITY_LICENSE" > "$license_dir/Unity_lic.ulf"
+          set +e
+          docker run --rm \
+            -v "$GITHUB_WORKSPACE:/github/workspace" -w /github/workspace \
+            -v "$license_dir:/root/.local/share/unity3d/Unity/" \
+            "unityci/editor:ubuntu-${UNITY_VERSION}-base-3" \
+            unity-editor -batchmode -nographics -logFile /dev/stdout -projectPath "$PROJECT" \
+              -executeMethod com.IvanMurzak.Unity.MCP.FilterOracle.FilterOracle.Run -filterOracleOut /github/workspace/filter-oracle.md \
+            > "$RUNNER_TEMP/unity.log" 2>&1
+          status=$?
+          rm -rf "$license_dir"
+          grep -E '\[FilterOracle\]|error CS|[Ll]icens' "$RUNNER_TEMP/unity.log" | grep -vi serial
+          if [ -f filter-oracle.md ]; then cat filter-oracle.md >> "$GITHUB_STEP_SUMMARY"; else echo "::error::the oracle wrote no report (editor exit $status)"; fi
+          exit "$status"
+
+      # Also after the step timeout. Lines naming the license serial stay out of the artifact (a public repo's
+      # artifacts are not masked).
+      - name: Editor log
+        if: failure() || cancelled()
+        run: grep -vi serial "$RUNNER_TEMP/unity.log" > "$RUNNER_TEMP/editor.log" || true
+      - if: failure() || cancelled()
+        uses: actions/upload-artifact@v6
+        with:
+          name: filter-oracle-${{ matrix.unityVersion }}-editor-log
+          path: ${{ runner.temp }}/editor.log
+          retention-days: 3
