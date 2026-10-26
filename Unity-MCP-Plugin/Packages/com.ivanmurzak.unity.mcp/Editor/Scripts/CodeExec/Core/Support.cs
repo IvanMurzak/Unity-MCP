@@ -119,8 +119,9 @@ namespace com.IvanMurzak.CodeExec
 
     /// <summary>
     /// Whether a snippet assembly keeps state between runs if it is reused: a static field (an auto-property's or an
-    /// event's backing field included) declared by one of the agent's own types. The compiler's own types (lambda caches,
-    /// array-initializer data) are stateless for this purpose.
+    /// event's backing field included) declared by one of the agent's own types, unless it is <c>readonly</c> and of an
+    /// immutable type (spec §3.5): a lookup table or a value computed once is not state. The compiler's own types (lambda
+    /// caches, array-initializer data) are stateless for this purpose.
     /// </summary>
     static class StaticState
     {
@@ -129,11 +130,14 @@ namespace com.IvanMurzak.CodeExec
             const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
             try
             {
-                foreach (var type in assembly.GetTypes())
+                // The compiler's own types (lambda caches, array-initializer data, collection-expression wrappers) are skipped.
+                var types = assembly.GetTypes().Where(t => !t.IsDefined(typeof(CompilerGeneratedAttribute), false)).ToList();
+                // A collection view the snippet implements (or derives) itself may keep state in its instance: then no view
+                // type is trusted to be immutable.
+                var trustViews = !types.Any(ImplementsView);
+                foreach (var type in types)
                 {
-                    if (type.IsDefined(typeof(CompilerGeneratedAttribute), false))
-                        continue;
-                    if (type.GetFields(flags).Any(f => !f.IsLiteral))
+                    if (type.GetFields(flags).Any(f => !f.IsLiteral && !(f.IsInitOnly && IsImmutable(f.FieldType, trustViews))))
                         return true;
                 }
                 return false;
@@ -142,6 +146,49 @@ namespace com.IvanMurzak.CodeExec
             {
                 return true;
             }
+        }
+
+        static readonly HashSet<Type> ImmutableValues = new HashSet<Type>
+        {
+            typeof(string), typeof(decimal), typeof(DateTime), typeof(DateTimeOffset), typeof(TimeSpan), typeof(Guid),
+        };
+
+        // Read-only views: their contents cannot change through the declared type (a cast back to a mutable one can).
+        static readonly HashSet<string> ReadOnlyViews = new HashSet<string>
+        {
+            "System.Collections.Generic.IReadOnlyCollection`1", "System.Collections.Generic.IReadOnlyList`1",
+            "System.Collections.Generic.IReadOnlyDictionary`2", "System.Collections.Generic.IReadOnlySet`1",
+            "System.Collections.ObjectModel.ReadOnlyCollection`1", "System.Collections.ObjectModel.ReadOnlyDictionary`2",
+        };
+
+        /// <summary>Immutable by declared type (spec §3.5). Arrays and pointer-sized integers (native memory) are mutable.</summary>
+        static bool IsImmutable(Type type, bool trustViews)
+        {
+            if ((type.IsPrimitive && type != typeof(IntPtr) && type != typeof(UIntPtr)) || type.IsEnum || ImmutableValues.Contains(type))
+                return true;
+            var underlying = Nullable.GetUnderlyingType(type);
+            if (underlying != null)
+                return IsImmutable(underlying, trustViews);
+            return trustViews && IsView(type) && type.GetGenericArguments().All(t => IsImmutable(t, trustViews));
+        }
+
+        static bool IsView(Type type)
+        {
+            if (!type.IsGenericType)
+                return false;
+            var definition = type.GetGenericTypeDefinition();
+            // Nested types there are the mutable builders and enumerators.
+            return (definition.Namespace == "System.Collections.Immutable" && !definition.IsNested) || ReadOnlyViews.Contains(definition.FullName ?? "");
+        }
+
+        static bool ImplementsView(Type type)
+        {
+            for (var t = (Type?)type; t != null; t = t.BaseType)
+            {
+                if (IsView(t))
+                    return true;
+            }
+            return type.GetInterfaces().Any(IsView);
         }
     }
 
