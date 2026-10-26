@@ -20,7 +20,7 @@ Compile errors point at your own lines (`snippet.cs(2,5)`).
 - The result is bounded: a string to 20000 characters, a collection to 1000 items; a result over 131072 characters as JSON comes back as the first 20000 characters of that JSON; errors to 20000 characters and 20 compile errors (a note says what was cut). Return a selection or a summary instead of everything.
 - `Debug.Log` / `Console.WriteLine` output is not part of the result: `Debug.Log` goes to the Unity Console (read it with rql-query `console | sort sequence desc | first 10 | select logType message`).
 - Code runs on the main thread and is not aborted: an endless loop freezes the Editor. An `await` gets at most 120 s.
-- Every run starts fresh: static fields of your own types do not keep values from an earlier call.
+- Every run starts fresh: static fields of your own types do not keep values from an earlier call, except a `static readonly` field of an immutable type (string, number, enum, read-only collection): identical code sets it once per domain, so read live Editor state in a method or property, not in such an initializer.
 
 ## usings / include
 

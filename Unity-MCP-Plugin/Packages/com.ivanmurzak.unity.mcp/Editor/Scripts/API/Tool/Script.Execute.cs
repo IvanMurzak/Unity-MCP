@@ -72,7 +72,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `Debug.Log` / `Console.WriteLine` output is not part of the result: `Debug.Log` goes to the Unity Console " +
             "(read it with rql-query `console | sort sequence desc | first 10 | select logType message`).\n" +
             "- Code runs on the main thread and is not aborted: an endless loop freezes the Editor. An `await` gets at most 120 s.\n" +
-            "- Every run starts fresh: static fields of your own types do not keep values from an earlier call.\n\n" +
+            "- Every run starts fresh: static fields of your own types do not keep values from an earlier call, except a " +
+            "`static readonly` field of an immutable type (string, number, enum, read-only collection): identical code sets it " +
+            "once per domain, so read live Editor state in a method or property, not in such an initializer.\n\n" +
             "## usings / include\n\n" +
             "- `usings`: extra namespaces, e.g. `[\"MyGame.Gameplay\"]`.\n" +
             "- `include`: helper `.cs` files or folders (recursive) inside `<Project>/.ai-game-dev/snippets` (paths relative to it), " +
