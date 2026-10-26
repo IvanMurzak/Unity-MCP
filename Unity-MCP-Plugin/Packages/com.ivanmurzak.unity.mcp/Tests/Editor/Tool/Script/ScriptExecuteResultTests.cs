@@ -72,9 +72,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         {
             var body = typeof(Tool_Script).GetMethod(nameof(Tool_Script.Execute))!
                 .GetCustomAttributes(typeof(AiSkillBodyAttribute), false).Cast<AiSkillBodyAttribute>().Single().Body;
-            foreach (var limit in new[] { OutputLimits.DefaultValueChars, OutputLimits.DefaultErrorChars, OutputLimits.MaxDiagnostics,
-                         Tool_Script.ResultValue.MaxItems, Tool_Script.ResultValue.MaxSerializedChars })
-                StringAssert.Contains(limit.ToString(System.Globalization.CultureInfo.InvariantCulture), body);
+            foreach (var phrase in new[]
+                     {
+                         $"a string to {OutputLimits.DefaultValueChars} characters",
+                         $"a collection to {Tool_Script.ResultValue.MaxItems} items",
+                         $"over {Tool_Script.ResultValue.MaxSerializedChars} characters as JSON comes back as the first {OutputLimits.DefaultValueChars}",
+                         $"errors to {OutputLimits.DefaultErrorChars} characters and {OutputLimits.MaxDiagnostics} compile errors",
+                     })
+                StringAssert.Contains(phrase, body);
         }
 
         [Test]

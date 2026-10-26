@@ -35,7 +35,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         /// <summary>
         /// Compiles and runs agent C# through the vendored Code-Exec runtime (Editor/Scripts/CodeExec). One runner per
-        /// domain: Mono cannot unload assemblies, so identical requests reuse the already-loaded one (its cache).
+        /// domain: Mono cannot unload assemblies, so identical requests reuse the already-loaded one (its cache), except
+        /// code with static fields of its own, which Code-Exec loads fresh per run (each copy stays until the domain reloads).
         /// Built without Unity APIs, so it can compile off the main thread (the editor's working directory is the project).
         /// </summary>
         static readonly Lazy<CodeRunner> Runner = new Lazy<CodeRunner>(() => new CodeRunner(new RoslynCSharpCompiler(), new CodeRunnerOptions
@@ -167,7 +168,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return json.Length <= ResultValue.MaxSerializedChars
                 ? serializedResult
                 : Scalar(serializedResult.typeName ?? JsonSchema.Object, System.Text.Json.JsonSerializer.Serialize(
-                    OutputLimits.Clip(json, OutputLimits.DefaultValueChars, OutputLimits.ValueHint)));
+                    OutputLimits.Clip(json, OutputLimits.DefaultValueChars, "this is the result as JSON; " + OutputLimits.ValueHint)));
         }
 
         // The reflector's options without indentation, built once per options instance (System.Text.Json caches its
