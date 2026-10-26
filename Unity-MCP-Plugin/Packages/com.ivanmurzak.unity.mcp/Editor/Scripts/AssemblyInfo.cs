@@ -11,3 +11,5 @@
 using System.Runtime.CompilerServices;
 
 [assembly: InternalsVisibleTo("com.IvanMurzak.Unity.MCP.Editor.Tests")]
+// tests/filter-oracle: checks the tests-run filter count against what Unity runs (CI, filter_oracle.yml).
+[assembly: InternalsVisibleTo("com.IvanMurzak.Unity.MCP.FilterOracle")]
