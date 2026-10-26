@@ -23,7 +23,7 @@ AI-powered 3D modeling tools for Unity ProBuilder. Enables AI assistants to crea
 - [Video Tutorial for Visual Studio Code](https://www.youtube.com/watch?v=ZhP7Ju91mOE)
 - [Video Tutorial for Visual Studio](https://www.youtube.com/watch?v=RGdak4T69mc)
 
-[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.probuilder%2F2.0.2/AI-ProBuilder-Installer.unitypackage)
+[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.probuilder%2F2.0.3/AI-ProBuilder-Installer.unitypackage)
 
 ### Stability status
 
@@ -62,7 +62,7 @@ Faces are index lists (`[0, 1]`), edges vertex index pairs (`[[0, 1]]`); `probui
 
 ### Option 1 - Installer
 
-- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.probuilder%2F2.0.2/AI-ProBuilder-Installer.unitypackage)**
+- **[⬇️ Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.probuilder%2F2.0.3/AI-ProBuilder-Installer.unitypackage)**
 - **📂 Import installer into Unity project**
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file

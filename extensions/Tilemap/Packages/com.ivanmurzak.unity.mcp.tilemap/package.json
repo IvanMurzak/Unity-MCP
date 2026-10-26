@@ -16,7 +16,7 @@
     "MCP",
     "Unity MCP"
   ],
-  "version": "2.0.2",
+  "version": "2.0.3",
   "unity": "2022.3",
   "description": "MCP Tools for Tilemap - Enhance your Unity projects with AI-powered 2D Tilemap tools using the MCP framework. Create Grid + Tilemap hierarchies, paint and box-fill tiles, read/clear tiles, set tile color and transform flags, build Tile and RuleTile assets, and configure TilemapRenderer/orientation via natural language.",
   "dependencies": {
