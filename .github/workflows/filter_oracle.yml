@@ -9,7 +9,7 @@
 # tests-run checks its filters against Unity's test tree before a run (TestFilterMatch mirrors Unity's filter
 # rules). This oracle runs tests/filter-oracle in each tested Unity version: Unity executes every scenario's filter
 # and the tests it reports must equal tests-run's count. It runs only when that count or Unity's rules can change:
-# the counting code, the oracle, or a Unity / test-framework version (manifest.json, ProjectVersion.txt).
+# the tests-run code, the oracle, the project preparation, or a Unity / test-framework version.
 name: filter-oracle
 
 on:
@@ -17,13 +17,15 @@ on:
     branches: [main]
     types: [opened, synchronize, reopened]
     paths:
-      - "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests.Run.cs"
-      - "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests/TestFilterMatch.cs"
-      - "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests/TestFilterParameters.cs"
+      - "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests*.cs"
+      - "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests/**"
+      - "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/AssemblyInfo.cs"
+      - "commands/extensions.py"
       - "Unity-Tests/*/Packages/manifest.json"
       - "Unity-Tests/*/ProjectSettings/ProjectVersion.txt"
       - "tests/filter-oracle/**"
       - ".github/workflows/filter_oracle.yml"
+      - ".github/workflows/test_pull_request.yml"
   workflow_dispatch:
 
 concurrency:
@@ -40,11 +42,13 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        # The versions test_pull_request.yml tests: one test-framework version each (1.1.33, 1.4.5, 1.6.0, built-in).
+        # Keep in step with the versions test_pull_request.yml tests (one test-framework version each: 1.1.33, 1.4.5,
+        # 1.6.0, built-in); a change there triggers this workflow.
         unityVersion: [2022.3.62f3, 6000.0.85f1, 6000.3.27f1, 6000.6.7f1]
     name: ${{ matrix.unityVersion }}
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    # A healthy leg takes minutes; the cap only bounds a hung editor.
+    timeout-minutes: 15
     env:
       PROJECT: ./Unity-Tests/${{ matrix.unityVersion }}
       UNITY_VERSION: ${{ matrix.unityVersion }}
@@ -54,7 +58,7 @@ jobs:
           lfs: false
           persist-credentials: false
 
-      # The editor image needs the room (test_unity_plugin.yml frees the same).
+      # Room for the editor image: only the removals that take seconds (the apt purge and swap would cost minutes).
       - name: Free disk space
         uses: jlumbroso/free-disk-space@v1.3.1
         with:
@@ -62,8 +66,8 @@ jobs:
           android: true
           dotnet: true
           haskell: true
-          large-packages: true
-          swap-storage: true
+          large-packages: false
+          swap-storage: false
 
       - name: Prepare the project and copy the oracle in
         run: |
@@ -71,13 +75,13 @@ jobs:
           mkdir -p "$PROJECT/Assets/FilterOracle"
           cp -r tests/filter-oracle/Editor tests/filter-oracle/EditModeFixtures tests/filter-oracle/PlayModeFixtures "$PROJECT/Assets/FilterOracle/"
 
-      # Read-only reuse of the EditMode legs' Library (same key and paths as test_unity_plugin.yml): the editor
-      # starts warm. Never saved from here, so the oracle cannot change what the test legs restore.
+      # Read-only reuse of the EditMode legs' Library: the key and paths are what test_unity_plugin.yml saves
+      # ("Generate cache key" + "Restore Unity cache"), so the editor starts warm. Never saved from here.
       - name: Restore Unity cache
         uses: actions/cache/restore@v5
         with:
           path: |
-            ./Unity-Tests/${{ matrix.unityVersion }}/Library
+            ${{ env.PROJECT }}/Library
             ~/.cache/unity3d
           key: ._Unity-Tests_${{ matrix.unityVersion }}-editmode-base
 
@@ -95,6 +99,8 @@ jobs:
           [ -s "$cfg" ] && current="$(sudo cat "$cfg")"
           echo "$current" | jq '. + {"default-shm-size": "2G"}' | sudo tee "$cfg" > /dev/null
           sudo systemctl restart docker
+          shm="$(docker run --rm --entrypoint df "unityci/editor:ubuntu-${UNITY_VERSION}-base-3" -m /dev/shm | awk 'NR==2 {print $2}')"
+          [ "$shm" -ge 1025 ] || { echo "::error::default-shm-size did not take effect (/dev/shm = ${shm} MiB)"; exit 1; }
 
       - name: Run the oracle
         env:
@@ -103,8 +109,8 @@ jobs:
           license_dir="$RUNNER_TEMP/unity-license"
           mkdir -p "$license_dir"
           printf '%s\n' "$UNITY_LICENSE" > "$license_dir/Unity_lic.ulf"
-          # One container: activate the stored Personal license (as game-ci does), then run the oracle. The oracle
-          # exits by itself (no -quit): 0 when every count matches, 1 on a mismatch, 2 when a scenario gave no result.
+          # One container: activate the stored Personal license (as game-ci does), then run the oracle, which exits by
+          # itself (no -quit; exit codes in tests/filter-oracle/AGENTS.md).
           set +e
           docker run --rm \
             -v "$GITHUB_WORKSPACE:/github/workspace" -w /github/workspace \

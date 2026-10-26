@@ -37,74 +37,78 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
         sealed class Scenario
         {
             public string Name = "";
-            public TestMode Mode = TestMode.EditMode;
+            public TestMode Mode;
             public string? Assembly, Namespace, Class, Method;
             public string[]? Query;
         }
 
-        static Scenario Edit(string name, string? asm = null, string? ns = null, string? cls = null, string? method = null, string[]? query = null)
-            => new Scenario { Name = name, Assembly = asm, Namespace = ns, Class = cls, Method = method, Query = query };
-
-        static Scenario Play(string name, string? asm = null, string? ns = null, string? cls = null, string? method = null)
-            => new Scenario { Name = name, Mode = TestMode.PlayMode, Assembly = asm, Namespace = ns, Class = cls, Method = method };
+        static Scenario S(string name, string? asm = null, string? ns = null, string? cls = null, string? method = null,
+            string[]? query = null, TestMode mode = TestMode.EditMode)
+            => new Scenario { Name = name, Mode = mode, Assembly = asm, Namespace = ns, Class = cls, Method = method, Query = query };
 
         // EditMode first, then PlayMode: each run then needs no mode switch.
         static readonly Scenario[] Scenarios =
         {
-            Edit("assembly", Asm),
-            Edit("assembly + missing class", Asm, cls: "Missing"),
-            Edit("assembly + namespace", Asm, Ns),
-            Edit("assembly + method", Asm, method: Ns + ".OracleParam.Plain"),
-            Edit("class + another class's method", cls: "OracleParam", method: Ns + ".OracleOther.Plain2"),
-            Edit("namespace + missing class", ns: Ns, cls: "Missing"),
-            Edit("parameterized method", method: Ns + ".OracleParam.Method"),
-            Edit("namespace + parameterized method", ns: Ns, method: Ns + ".OracleParam.Method"),
-            Edit("assembly + class", Asm, cls: "OracleParam"),
-            Edit("namespace + method", ns: Ns, method: Ns + ".OracleParam.Plain"),
-            Edit("method in another case", method: (Ns + ".OracleParam.Plain").ToLowerInvariant()),
-            Edit("assembly in another case + class", Asm.ToLowerInvariant(), cls: "OracleOther"),
-            Edit("namespace", ns: Ns),
-            Edit("namespace prefix", ns: "FilterOracle"),
-            Edit("namespace = class full name", ns: Ns + ".OracleParam"),
-            Edit("namespace = assembly name", ns: Asm),
-            Edit("namespace + class + method", ns: Ns + ".Sub", cls: "OracleLeaf", method: Ns + ".Sub.OracleLeaf.InSub"),
-            Edit("class with fixture arguments", cls: "OracleArgs"),
-            Edit("method of a fixture case", method: Ns + ".OracleArgs(1).Test"),
-            Edit("method of a fixture with arguments", method: Ns + ".OracleArgs.Test"),
-            Edit("generic class", cls: "OracleGeneric"),
-            Edit("nested class", cls: "Inner"),
-            Edit("class = namespace segment", cls: "Widget"),
-            Edit("class with an explicit test", cls: "OracleExplicit"),
-            Edit("explicit method", method: Ns + ".OracleExplicit.ExplicitTest"),
-            Edit("ignored class", cls: "OracleIgnored"),
-            Edit("UnityTest class", cls: "OracleCoroutine"),
-            Edit("method with duplicate case names", method: Ns + ".OracleDup.Same"),
-            Edit("duplicate case name", method: Ns + ".OracleDup.Same(1)"),
-            Edit("assembly + excluded method", Asm, method: "!" + Ns + ".OracleOther.Plain2"),
-            Edit("query: methods", query: new[] { Ns + ".OracleParam.Method", Ns + ".OracleOther.Plain2" }),
-            Edit("query: fixture case", query: new[] { Ns + ".OracleArgs(1).Test" }),
-            Play("PlayMode assembly", PlayAsm),
-            Play("PlayMode assembly + missing class", PlayAsm, cls: "Missing"),
-            Play("PlayMode namespace + method", ns: PlayNs, method: PlayNs + ".OraclePlay.A"),
-            Play("PlayMode parameterized method", method: PlayNs + ".OraclePlay.Param"),
+            S("assembly", Asm),
+            S("assembly + missing class", Asm, cls: "Missing"),
+            S("assembly + namespace", Asm, Ns),
+            S("assembly + method", Asm, method: Ns + ".OracleParam.Plain"),
+            S("class + another class's method", cls: "OracleParam", method: Ns + ".OracleOther.Plain2"),
+            S("namespace + missing class", ns: Ns, cls: "Missing"),
+            S("parameterized method", method: Ns + ".OracleParam.Method"),
+            S("namespace + parameterized method", ns: Ns, method: Ns + ".OracleParam.Method"),
+            S("assembly + class", Asm, cls: "OracleParam"),
+            S("namespace + method", ns: Ns, method: Ns + ".OracleParam.Plain"),
+            S("method in another case", method: (Ns + ".OracleParam.Plain").ToLowerInvariant()),
+            S("assembly in another case + class", Asm.ToLowerInvariant(), cls: "OracleOther"),
+            S("namespace", ns: Ns),
+            S("namespace prefix", ns: "FilterOracle"),
+            S("namespace = class full name", ns: Ns + ".OracleParam"),
+            S("namespace = assembly name", ns: Asm),
+            S("namespace + class + method", ns: Ns + ".Sub", cls: "OracleLeaf", method: Ns + ".Sub.OracleLeaf.InSub"),
+            S("class with fixture arguments", cls: "OracleArgs"),
+            S("method of a fixture case", method: Ns + ".OracleArgs(1).Test"),
+            S("method of a fixture with arguments", method: Ns + ".OracleArgs.Test"),
+            S("generic class", cls: "OracleGeneric"),
+            S("nested class", cls: "Inner"),
+            S("class = namespace segment", cls: "Widget"),
+            S("class with an explicit test", cls: "OracleExplicit"),
+            S("explicit method", method: Ns + ".OracleExplicit.ExplicitTest"),
+            S("ignored class", cls: "OracleIgnored"),
+            S("UnityTest class", cls: "OracleCoroutine"),
+            S("method with duplicate case names", method: Ns + ".OracleDup.Same"),
+            S("duplicate case name", method: Ns + ".OracleDup.Same(1)"),
+            S("assembly + excluded method", Asm, method: "!" + Ns + ".OracleOther.Plain2"),
+            S("query: methods", query: new[] { Ns + ".OracleParam.Method", Ns + ".OracleOther.Plain2" }),
+            S("query: fixture case", query: new[] { Ns + ".OracleArgs(1).Test" }),
+            S("assembly", PlayAsm, mode: TestMode.PlayMode),
+            S("assembly + missing class", PlayAsm, cls: "Missing", mode: TestMode.PlayMode),
+            S("namespace + method", ns: PlayNs, method: PlayNs + ".OraclePlay.A", mode: TestMode.PlayMode),
+            S("parameterized method", method: PlayNs + ".OraclePlay.Param", mode: TestMode.PlayMode),
         };
 
-        // A scenario takes seconds; one whose run reports nothing in this time is retried once.
-        const double ScenarioTimeoutSeconds = 120;
-        const double TeardownTimeoutSeconds = 60;
+        // The fixture tests take milliseconds: a run that reports nothing for this long is retried once.
+        const double ScenarioTimeoutSeconds = 45;
         const int IdleTicksBeforeRun = 3;
+        const string NoResult = "no result";
 
-        // State survives a domain reload (SessionState); a reload drops the statics below.
+        // State survives a domain reload (SessionState); a reload drops the statics below. Results holds one entry per
+        // finished scenario, so its length is the next scenario's index.
         const string Key = "FilterOracle.";
-        static int Index { get => SessionState.GetInt(Key + "index", 0); set => SessionState.SetInt(Key + "index", value); }
-        static int Attempt { get => SessionState.GetInt(Key + "attempt", 0); set => SessionState.SetInt(Key + "attempt", value); }
-        static int Ran { get => SessionState.GetInt(Key + "ran", 0); set => SessionState.SetInt(Key + "ran", value); }
-        static bool Active { get => SessionState.GetBool(Key + "active", false); set => SessionState.SetBool(Key + "active", value); }
-        static bool Running { get => SessionState.GetBool(Key + "running", false); set => SessionState.SetBool(Key + "running", value); }
-        static string Predicted { get => SessionState.GetString(Key + "predicted", ""); set => SessionState.SetString(Key + "predicted", value); }
-        static string Rows { get => SessionState.GetString(Key + "rows", ""); set => SessionState.SetString(Key + "rows", value); }
-        static string OutPath { get => SessionState.GetString(Key + "out", ""); set => SessionState.SetString(Key + "out", value); }
-        static string Scenes { get => SessionState.GetString(Key + "scenes", ""); set => SessionState.SetString(Key + "scenes", value); }
+        static readonly SessionStateString Predicted = new SessionStateString(Key + "predicted");
+        static readonly SessionStateString Results = new SessionStateString(Key + "results");
+        static readonly SessionStateString OutPath = new SessionStateString(Key + "out");
+        static readonly SessionStateString Scenes = new SessionStateString(Key + "scenes");
+        static readonly SessionStateBool Running = new SessionStateBool(Key + "running");
+        static readonly SessionStateBool Retried = new SessionStateBool(Key + "retried");
+        static readonly SessionStateInt Ran = new SessionStateInt(Key + "ran");
+        static readonly SessionStateInt BootstrapScenesAtStart = new SessionStateInt(Key + "bootstrapScenes");
+        static readonly SessionStateBool PlayModeOptionsEnabled = new SessionStateBool(Key + "optionsEnabled");
+        static readonly SessionStateInt PlayModeOptions = new SessionStateInt(Key + "options");
+
+        static bool Active => Predicted.Value.Length > 0;
+        static List<string> ResultList => Results.Value.Split(new[] { ',' }, StringSplitOptions.RemoveEmptyEntries).ToList();
+        static string Header => $"## tests-run filter oracle: Unity {Application.unityVersion}";
 
         static TestRunnerApi? api;
         static double lastProgress;
@@ -116,9 +120,12 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
             {
                 var args = Environment.GetCommandLineArgs();
                 var outIndex = Array.IndexOf(args, "-filterOracleOut");
-                OutPath = Path.GetFullPath(outIndex >= 0 && outIndex + 1 < args.Length ? args[outIndex + 1] : "filter-oracle-results.md");
-                Index = 0; Attempt = 0; Rows = ""; Running = false; Scenes = Tool_Tests.OpenScenePaths();
-                SessionState.SetInt(Key + "bootstrapScenes", BootstrapScenes());
+                OutPath.Value = Path.GetFullPath(outIndex >= 0 && outIndex + 1 < args.Length ? args[outIndex + 1] : "filter-oracle-results.md");
+                Results.Value = "";
+                Running.Value = false;
+                Retried.Value = false;
+                Scenes.Value = Tool_Tests.OpenScenePaths();
+                BootstrapScenesAtStart.Value = BootstrapScenes();
                 DisablePlayModeReload();
                 var testRunner = Attach();
                 testRunner.RetrieveTestList(TestMode.EditMode, edit => testRunner.RetrieveTestList(TestMode.PlayMode, play =>
@@ -127,9 +134,8 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
                     {
                         if (!Leaves(edit).Any(t => t.FullName.StartsWith(Ns + ".")) || !Leaves(play).Any(t => t.FullName.StartsWith(PlayNs + ".")))
                             throw new InvalidOperationException("the oracle's fixture tests are not in Unity's test tree");
-                        Predicted = string.Join(",", Scenarios.Select(s =>
+                        Predicted.Value = string.Join(",", Scenarios.Select(s =>
                             TestFilterMatch.Count(s.Mode == TestMode.PlayMode ? play : edit, CreateFilter(s))));
-                        Active = true;
                     }
                     catch (Exception e) { Fail(e); }
                 }));
@@ -160,40 +166,41 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
         {
             if (!Active)
                 return;
-            if (Running)
+            if (Running.Value)
             {
                 if (EditorApplication.timeSinceStartup - lastProgress > ScenarioTimeoutSeconds)
-                    NoResult();
+                    GiveUpOnRun();
                 return;
             }
             if (!IsIdle())
             {
                 idleTicks = 0;
-                if (EditorApplication.timeSinceStartup - lastProgress < TeardownTimeoutSeconds)
+                if (EditorApplication.timeSinceStartup - lastProgress < Tool_Tests.TeardownTimeout.TotalSeconds)
                     return;
-                Debug.LogWarning($"[FilterOracle] Unity's previous run did not finish its teardown in {TeardownTimeoutSeconds:0} s; going on");
+                Debug.LogWarning($"[FilterOracle] Unity's previous run did not finish its teardown in {Tool_Tests.TeardownTimeout.TotalSeconds:0} s; going on");
             }
             else if (++idleTicks < IdleTicksBeforeRun)
                 return;
             idleTicks = 0;
-            if (Index >= Scenarios.Length)
+            var index = ResultList.Count;
+            if (index >= Scenarios.Length)
             {
                 Finish();
                 return;
             }
-            Ran = 0;
-            Running = true;
-            Scenes = Tool_Tests.OpenScenePaths();
+            Ran.Value = 0;
+            Running.Value = true;
+            Scenes.Value = Tool_Tests.OpenScenePaths();
             lastProgress = EditorApplication.timeSinceStartup;
-            api!.Execute(new ExecutionSettings(CreateFilter(Scenarios[Index])));
+            api!.Execute(new ExecutionSettings(CreateFilter(Scenarios[index])));
         }
 
         // Unity's run is over (tests-run's own rule: out of Play Mode, the run's scenes restored) and its bootstrap scene,
         // deleted by a later teardown task, is gone; otherwise the next run, or the exit, cuts that teardown short.
         static bool IsIdle()
-            => Tool_Tests.IsTestRunTeardownComplete(EditorApplication.isPlayingOrWillChangePlaymode, Tool_Tests.OpenScenePaths, Scenes)
+            => Tool_Tests.IsTestRunTeardownComplete(EditorApplication.isPlayingOrWillChangePlaymode, Tool_Tests.OpenScenePaths, Scenes.Value)
                 && !EditorApplication.isCompiling && !EditorApplication.isUpdating
-                && BootstrapScenes() <= SessionState.GetInt(Key + "bootstrapScenes", 0);
+                && BootstrapScenes() <= BootstrapScenesAtStart.Value;
 
         // Leftovers of an earlier, cut run stay; only this run's must be gone.
         static int BootstrapScenes() => Directory.GetFiles("Assets", "InitTestScene*.unity").Length;
@@ -214,64 +221,65 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
             public void TestFinished(ITestResultAdaptor result)
             {
                 lastProgress = EditorApplication.timeSinceStartup;
-                if (Running && !result.Test.IsSuite)
-                    Ran++;
+                if (Running.Value && !result.Test.IsSuite)
+                    Ran.Value++;
             }
 
             public void RunFinished(ITestResultAdaptor result)
             {
-                if (Running)
-                    Record(Ran.ToString());
+                if (Running.Value)
+                    Record(Ran.Value.ToString());
             }
         }
 
-        static void NoResult()
+        static void GiveUpOnRun()
         {
-            Running = false;
-            if (Attempt == 0)
+            Running.Value = false;
+            if (!Retried.Value)
             {
-                Attempt = 1;
-                Debug.LogWarning($"[FilterOracle] {Scenarios[Index].Name}: no result in {ScenarioTimeoutSeconds:0} s, retrying");
+                Retried.Value = true;
+                Debug.LogWarning($"[FilterOracle] {Scenarios[ResultList.Count].Name}: no result in {ScenarioTimeoutSeconds:0} s, retrying");
                 return;
             }
-            Record("no result");
+            Record(NoResult);
         }
 
         static void Record(string ran)
         {
-            Running = false;
-            var predicted = Predicted.Split(',')[Index];
-            Rows += $"{Index}\t{ran}\t{predicted}\n";
-            Debug.Log($"[FilterOracle] {Scenarios[Index].Name}: Unity ran {ran}, tests-run counted {predicted}");
-            Index++;
-            Attempt = 0;
+            Running.Value = false;
+            Retried.Value = false;
+            var index = ResultList.Count;
+            Results.Value += ran + ",";
+            Debug.Log($"[FilterOracle] {Scenarios[index].Mode} {Scenarios[index].Name}: Unity ran {ran}, tests-run counted {Predicted.Value.Split(',')[index]}");
         }
 
         static void Finish()
         {
-            Active = false;
+            var predicted = Predicted.Value.Split(',');
+            var ran = ResultList;
+            Predicted.Value = "";
             EditorApplication.update -= Tick;
             RestorePlayModeReload();
-            var rows = Rows.Split(new[] { '\n' }, StringSplitOptions.RemoveEmptyEntries).Select(r => r.Split('\t')).ToList();
-            var lost = rows.Count(r => r[1] == "no result");
-            var mismatched = rows.Count(r => r[1] != r[2]) - lost;
+            var matched = Enumerable.Range(0, ran.Count).Count(i => ran[i] == predicted[i]);
+            var lost = ran.Count(r => r == NoResult);
+            var mismatched = ran.Count - matched - lost;
             var lines = new List<string>
             {
-                $"## tests-run filter oracle: Unity {Application.unityVersion}",
+                Header,
                 "",
-                $"{rows.Count - mismatched - lost} of {rows.Count} scenarios: tests-run counts exactly the tests Unity runs" +
+                $"{matched} of {ran.Count} scenarios: tests-run counts exactly the tests Unity runs" +
                     (mismatched > 0 ? $"; **{mismatched} mismatched**" : "") + (lost > 0 ? $"; **{lost} gave no result**" : "") + ".",
                 "",
                 "| Scenario | Filter | Unity ran | tests-run counted | |",
                 "|---|---|---|---|---|",
             };
-            foreach (var r in rows)
+            for (var i = 0; i < ran.Count; i++)
             {
-                var s = Scenarios[int.Parse(r[0])];
-                lines.Add($"| {s.Mode} {s.Name} | {Describe(s)} | {r[1]} | {r[2]} | {(r[1] == r[2] ? "ok" : "**MISMATCH**")} |");
+                var s = Scenarios[i];
+                lines.Add($"| {s.Mode} {s.Name} | {Describe(s)} | {ran[i]} | {predicted[i]} | {(ran[i] == predicted[i] ? "ok" : "**MISMATCH**")} |");
             }
-            File.WriteAllLines(OutPath, lines);
-            Debug.Log($"[FilterOracle] {rows.Count - mismatched - lost}/{rows.Count} match; report: {OutPath}");
+            File.WriteAllLines(OutPath.Value, lines);
+            Debug.Log($"[FilterOracle] {matched}/{ran.Count} match; report: {OutPath.Value}");
             EditorApplication.Exit(lost > 0 ? 2 : mismatched > 0 ? 1 : 0);
         }
 
@@ -289,16 +297,16 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
         // PlayMode runs without a domain reload: faster, and nothing the oracle tracks is lost to a reload.
         static void DisablePlayModeReload()
         {
-            SessionState.SetBool(Key + "optionsEnabled", EditorSettings.enterPlayModeOptionsEnabled);
-            SessionState.SetInt(Key + "options", (int)EditorSettings.enterPlayModeOptions);
+            PlayModeOptionsEnabled.Value = EditorSettings.enterPlayModeOptionsEnabled;
+            PlayModeOptions.Value = (int)EditorSettings.enterPlayModeOptions;
             EditorSettings.enterPlayModeOptionsEnabled = true;
             EditorSettings.enterPlayModeOptions = EnterPlayModeOptions.DisableDomainReload | EnterPlayModeOptions.DisableSceneReload;
         }
 
         static void RestorePlayModeReload()
         {
-            EditorSettings.enterPlayModeOptionsEnabled = SessionState.GetBool(Key + "optionsEnabled", false);
-            EditorSettings.enterPlayModeOptions = (EnterPlayModeOptions)SessionState.GetInt(Key + "options", 0);
+            EditorSettings.enterPlayModeOptionsEnabled = PlayModeOptionsEnabled.Value;
+            EditorSettings.enterPlayModeOptions = (EnterPlayModeOptions)PlayModeOptions.Value;
         }
 
         static IEnumerable<ITestAdaptor> Leaves(ITestAdaptor node)
@@ -308,12 +316,12 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
 
         static void Fail(Exception e)
         {
-            Active = false;
+            Predicted.Value = "";
             Debug.LogError("[FilterOracle] " + e);
             try
             {
                 RestorePlayModeReload();
-                File.WriteAllText(OutPath, $"## tests-run filter oracle: Unity {Application.unityVersion}\n\nThe oracle failed: `{e.Message}`\n");
+                File.WriteAllText(OutPath.Value, $"{Header}\n\nThe oracle failed: `{e.Message}`\n");
             }
             finally
             {
