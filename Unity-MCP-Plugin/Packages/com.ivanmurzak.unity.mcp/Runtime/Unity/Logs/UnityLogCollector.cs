@@ -109,12 +109,12 @@ namespace com.IvanMurzak.Unity.MCP
         }
 
         /// <summary>
-        /// McpPlugin's McpToolManager logs every tool response it sends ("[AI] McpToolManager Error Response to AI: …"). These
-        /// echoes are not captured: an agent checking "errors after my change" would find its own failed calls, and the
-        /// large responses would push real entries out of the stored window.
+        /// McpPlugin's McpToolManager logs every tool response it sends ("[AI] McpToolManager Error / Success / Processing
+        /// Response to AI: …"). These echoes are not captured: an agent checking "errors after my change" would find its own
+        /// failed calls, and the large responses would push real entries out of the stored window.
         /// </summary>
-        public static bool IsToolResponseEcho(string? message) =>
-            message != null && (message.Contains("McpToolManager Error Response to AI") || message.Contains("McpToolManager Success Response to AI"));
+        internal static bool IsToolResponseEcho(string? message) =>
+            message != null && message.Contains("McpToolManager ") && message.Contains(" Response to AI:");
 
         void OnLogMessageReceived(string message, string stackTrace, LogType type)
         {

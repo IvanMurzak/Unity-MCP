@@ -39,7 +39,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             {
                 var scene = EditorSceneManager.NewScene(empty ? NewSceneSetup.EmptyScene : NewSceneSetup.DefaultGameObjects,
                     additive ? NewSceneMode.Additive : NewSceneMode.Single);
-                return EditorSceneManager.SaveScene(scene, path) ? scene : throw new ArgumentException($"could not save the new scene at '{path}'");
+                if (EditorSceneManager.SaveScene(scene, path)) return scene;
+                if (additive) EditorSceneManager.CloseScene(scene, removeScene: true); // the open scenes stay as they were
+                throw new ArgumentException($"could not save the new scene at '{path}'");
             });
         }
 

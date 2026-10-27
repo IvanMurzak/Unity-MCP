@@ -37,9 +37,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private static string CopyPath(string path, string newPath, bool folder)
         {
             newPath = NewAssetPath(newPath, folder ? null : Path.GetExtension(path));
-            if (folder && newPath.StartsWith(Normalize(path) + "/", StringComparison.OrdinalIgnoreCase))
-                throw new ArgumentException($"cannot copy the folder '{Normalize(path)}' into itself ('{newPath}')");
+            NotIntoItself("copy", path, newPath, folder);
             return newPath;
+        }
+
+        private static void NotIntoItself(string verb, string path, string newPath, bool folder)
+        {
+            if (folder && newPath.StartsWith(Normalize(path) + "/", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"cannot {verb} the folder '{Normalize(path)}' into itself ('{newPath}')");
         }
 
         // Call validators (companions RQL finds by name): the rejection is reported for every target before the first call,
@@ -50,6 +55,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var folder = AssetDatabase.IsValidFolder(Normalize(path));
             if (!folder && AssetDatabase.LoadMainAssetAtPath(Normalize(path)) == null) throw new ArgumentException($"no asset at '{path}'");
             EnsureFolder(Path.GetDirectoryName(CopyPath(path, newPath, folder)), create: false);
+        });
+
+        public string? ValidateMoveAsset(string path, string newPath) => Rejection(() =>
+        {
+            var p = Normalize(path);
+            var folder = AssetDatabase.IsValidFolder(p);
+            if (!folder && AssetDatabase.LoadMainAssetAtPath(p) == null) throw new ArgumentException($"no asset at '{path}'");
+            newPath = Normalize(newPath); // a taken path is Unity's error (a case-only rename is not one)
+            NotIntoItself("move", p, newPath, folder);
+            EnsureFolder(Path.GetDirectoryName(newPath), create: false);
         });
 
         public string? ValidateDeleteAsset(string path, bool force) => Rejection(() =>
@@ -76,6 +91,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("move or rename an asset (missing folders are created); returns its new path")]
         public string MoveAsset(string path, string newPath)
         {
+            newPath = Normalize(newPath);
             return InFolderOf(newPath, () =>
                 AssetDatabase.MoveAsset(path, newPath) is { Length: > 0 } error ? throw new ArgumentException(error) : newPath);
         }
@@ -108,7 +124,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             {
                 var material = new Material(s) { name = Path.GetFileNameWithoutExtension(path) };
                 AssetDatabase.CreateAsset(material, path); // logs instead of throwing when it fails
-                return AssetDatabase.Contains(material) ? material : throw new ArgumentException($"could not create a material at '{path}'");
+                if (AssetDatabase.Contains(material)) return material;
+                Object.DestroyImmediate(material);
+                throw new ArgumentException($"could not create a material at '{path}'");
             });
         }
 
@@ -155,8 +173,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
             parent = Normalize(parent);
             var outermost = EnsureFolder(parent, create);
-            if (create) AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
-            return outermost ?? path;
+            if (!create) return outermost ?? path;
+            // CreateFolder picks another name ("X 1") when the path is taken on disk but not imported (or differs in case):
+            // that folder is not the one asked for, and deleting the requested path could hit the user's folder.
+            var made = AssetDatabase.GUIDToAssetPath(AssetDatabase.CreateFolder(parent, Path.GetFileName(path)));
+            if (made == path) return outermost ?? path;
+            if (!string.IsNullOrEmpty(made)) AssetDatabase.DeleteAsset(made);
+            if (outermost != null) AssetDatabase.DeleteAsset(outermost);
+            throw new ArgumentException($"could not create the folder '{path}' (a file or a folder that is not imported may be in the way)");
         }
 
         /// <summary>

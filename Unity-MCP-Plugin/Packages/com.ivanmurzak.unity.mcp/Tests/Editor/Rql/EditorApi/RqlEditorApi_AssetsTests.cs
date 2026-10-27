@@ -45,13 +45,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsFalse(M("editor | call CreateMaterial(\"Assets/RqlEditorApiTests/X.mat\", \"No/Such/Shader\")").Ok);
         }
 
-        // A call that creates missing folders and then fails removes the folders it created (and only those).
+        // A move that cannot work is rejected before it creates the missing folders of its new path (on a dry run too).
         [Test]
         public void AFailedMoveLeavesNoNewFolders()
         {
-            AssertFails(M($"editor | call MoveAsset(\"{Folder}/NoSuch.mat\", \"{Folder}/New/Deep/NoSuch.mat\")"), "call-threw");
-            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/New"), "the folders the failed call created must be removed");
-            Assert.IsTrue(AssetDatabase.IsValidFolder(Folder), "a folder that existed before stays");
+            const string Missing = "editor | call MoveAsset(\"" + Folder + "/NoSuch.mat\", \"" + Folder + "/New/Deep/NoSuch.mat\")";
+            AssertFails(RqlUnity.Mutate(Missing, dryRun: true), "invalid-value", "no asset at");
+            AssertFails(M(Missing), "invalid-value", "no asset at");
+            AssertOk(M($"editor | call CreateFolder(\"{Folder}/Src\")"));
+            AssertFails(M($"editor | call MoveAsset(\"{Folder}/Src\", \"{Folder}/Src/New/Src\")"), "invalid-value", "into itself");
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/New"));
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/Src/New"));
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Src"));
         }
 
         // The helper behind CopyAsset / MoveAsset / CreateMaterial / NewScene / SaveAs / SaveAsPrefab: the outermost folder it
@@ -66,6 +71,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Old"));
             Assert.AreEqual(1, RqlEditorApi.InFolderOf($"{Folder}/Old/Kept/X.asset", () => 1));
             Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Old/Kept"));
+        }
+
+        // A folder on disk that Unity has not imported: CreateFolder would make "Ghost 1" instead. The call fails, removes that
+        // folder, and leaves the one on disk alone (a rollback by the requested path would delete it).
+        [Test]
+        public void AFolderInTheWayIsNeitherReplacedNorDeleted()
+        {
+            var ghost = $"{Folder}/Ghost";
+            System.IO.Directory.CreateDirectory(ghost);
+            try
+            {
+                AssertFails(M($"editor | call CreateFolder(\"{ghost}/Sub\")"), "call-threw", "could not create the folder");
+                Assert.IsTrue(System.IO.Directory.Exists(ghost));
+                Assert.IsFalse(System.IO.Directory.Exists($"{ghost} 1"));
+            }
+            finally { System.IO.Directory.Delete(ghost, true); }
         }
 
         // Unity copies a folder into its own subfolder (and the new subfolder into the copy): rejected before anything is made.

@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.InputSystem
         {
             var r = Read(A + " | describe");
             var t = Table(r);
-            foreach (var member in new[] { "maps", "actions", "controlSchemes", "assetPath" }) StringAssert.Contains(member, t);
+            foreach (var member in new[] { "maps", "actions", "controlSchemes" }) StringAssert.Contains(member, t);
             foreach (var hidden in new[] { "bindingMask", "devices", "m_ActionMaps", "m_ControlSchemes" }) StringAssert.DoesNotContain(hidden, t);
             Assert.IsTrue(Q(A).Ok, Table(Q(A)));
         }

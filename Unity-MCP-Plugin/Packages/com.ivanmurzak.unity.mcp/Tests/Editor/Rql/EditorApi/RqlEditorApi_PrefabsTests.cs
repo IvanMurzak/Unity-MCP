@@ -51,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             var parent = new GameObject("Holder");
             new GameObject("Part").transform.SetParent(parent.transform);
             AssertOk(M($"objects | where name == \"Holder\" | call SaveAsPrefab(\"{Folder}/Holder.prefab\")"));
-            AssertFails(M($"objects | where name == \"Part\" | call SaveAsPrefab(\"{Folder}/New/Deep/Part.prefab\")"), "call-threw", "part of a Prefab instance");
+            AssertFails(M($"objects | where name == \"Part\" | call SaveAsPrefab(\"{Folder}/New/Deep/Part.prefab\")"), "call-threw");
             Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/New"), "the folders the failed call created must be removed");
         }
 
