@@ -11,7 +11,6 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters;
 using Rql;
 using Rql.Execution;
@@ -19,7 +18,6 @@ using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine;
 using UnityEngine.SceneManagement;
-using Component = UnityEngine.Component;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
@@ -114,13 +112,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 {
                     // Two targets saving to one prefab path (one GameObject reached twice included): the second save would fail
                     // after the first one happened.
-                    case "SaveAsPrefab" when record.Item is GameObject && record.Args.Count > 0 && record.Args[0] is string text:
+                    case "SaveAsPrefab" when record.Item is GameObject && record.Args[0] is string text:
                         var path = UnityEngine_GameObject_Adapter.PrefabPath(text);
                         if (prefabPaths.TryGetValue(path, out var earlier))
                             return $"'{path}' is also the path of {Engine.RefOf(earlier)} in this call: give each GameObject its own prefab path";
                         prefabPaths[path] = record.Item;
                         break;
-                    case "Destroy" when record.Item is Component component && component != null && !(component is Transform):
+                    case "Destroy" when record.Item is Component component && component != null: // a Transform never passed its validator
                         destroying.Add(component);
                         break;
                 }
@@ -134,17 +132,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         // order removes them; Unity keeps both): the reason, or null.
         private static string? UnmetRequirement(HashSet<Component> destroying)
         {
+            static string Refused(Component target, string why) => $"cannot call Destroy() on {Engine.RefOf(target)}: {why}";
             var pending = new List<(Component Target, List<(Component Blocker, string Reason)> Blockers)>();
+            var removed = new HashSet<Component>();
             foreach (var target in destroying)
             {
                 var blockers = UnityEngine_Component_Adapter.Blockers(target);
                 foreach (var (blocker, reason) in blockers)
                     if (!destroying.Contains(blocker))
-                        return $"cannot call Destroy() on {Engine.RefOf(target)}: {reason} (or in the same call)";
+                        return Refused(target, reason + " (or in the same call)");
                 if (blockers.Count > 0) pending.Add((target, blockers));
+                else removed.Add(target);
             }
             // Every blocker is a target too: replay the removal order (dependents first); what never frees up is a cycle.
-            var removed = new HashSet<Component>(destroying.Where(c => !pending.Exists(p => p.Target == c)));
             for (var progress = true; progress && pending.Count > 0;)
             {
                 progress = false;
@@ -157,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 }
             }
             return pending.Count == 0 ? null
-                : $"cannot call Destroy() on {Engine.RefOf(pending[0].Target)}: {pending[0].Blockers[0].Reason} and they require each other: destroy their GameObject instead";
+                : Refused(pending[0].Target, pending[0].Blockers[0].Reason + " and they require each other: destroy their GameObject instead");
         }
 
         /// <summary>Invoke every handler of <paramref name="handlers"/>, even after one threw; returns the messages of those that did.</summary>

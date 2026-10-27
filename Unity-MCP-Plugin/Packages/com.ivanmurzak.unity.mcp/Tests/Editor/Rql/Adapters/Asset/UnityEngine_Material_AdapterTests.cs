@@ -51,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.AreEqual(0.2f, c.g, 1e-6f);
         }
 
-        // RQL 602ce7c: map entries streamed by get are set targets; each write goes through the material's properties map
+        // Map entries streamed by get are set targets; each write goes through the material's properties map
         // (the key-path write properties["_Color"]), validated like it, the receipt naming the material.
         [Test]
         public void PropertyEntriesStreamedByGetWriteThroughTheMaterial()
