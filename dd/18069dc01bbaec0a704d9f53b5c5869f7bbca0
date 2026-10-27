@@ -1,0 +1,74 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/Adapters/Object/UnityEngine_Object_AdapterTests.cs
+  s_7bc72ecaebd05d::t_20ba54bfca0d22 68,70-82
+  s_7bc72ecaebd05d::t_d33a67a672f508 69
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_7bc72ecaebd05d::t_2ed6311a77c7b5 104
+  s_7bc72ecaebd05d::t_8dbf1270528f41 115-116
+  s_7bc72ecaebd05d::t_6e01560272f378 109-110
+  s_7bc72ecaebd05d::t_1c2ad5bebae8db 42,46,49-50,53,55-56,59
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Asset/UnityEngine_Material_Adapter.cs
+  s_7bc72ecaebd05d::t_1daf1f566bd830 28
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Component/UnityEngine_Component_Adapter.cs
+  s_7bc72ecaebd05d::t_a1363e08c54244 43-51
+  s_7bc72ecaebd05d::t_89889adabde036 56-57
+  s_7bc72ecaebd05d::t_5c4c964a4909d1 13,41-42,52,58-59,61-69,73-80,90-93,97
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Execute.cs
+  s_7bc72ecaebd05d::t_5da128b0a5e894 65-66,91
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_PrefabsTests.cs
+  s_7bc72ecaebd05d::t_3487df8a2e1b60 12,37-63
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnity.Save.cs
+  s_7bc72ecaebd05d::t_95ad29a6149cf4 93-109,159-164
+  s_7bc72ecaebd05d::t_91b985a89cbfff 50,56-57,60-61,63-64,68
+  s_7bc72ecaebd05d::t_f96f435ea14f9b 18,110-158,165
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_ScenesTests.cs
+  s_7bc72ecaebd05d::t_e8febc78d32df8 46-47,49-50
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/Adapters/Component/UnityEngine_Transform_AdapterTests.cs
+  s_7bc72ecaebd05d::t_3e744cb8fe3e76 12,69-103
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/ToolFormat/RqlToolBindingTests.cs
+  s_7bc72ecaebd05d::t_ed3fc417a5ed02 119-135
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/Adapters/Object/UnityEngine_GameObject_AdapterTests.cs
+  s_7bc72ecaebd05d::t_f90bfff04f0b51 157-161,163-181
+  s_7bc72ecaebd05d::t_a44b2cb60b8714 162
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_StateTests.cs
+  s_7bc72ecaebd05d::t_ff89ab25c9a44a 97-161
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Scene_Adapter.cs
+  s_7bc72ecaebd05d::t_db666181bcfa38 33
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/Adapters/Component/UnityEngine_Component_AdapterTests.cs
+  s_7bc72ecaebd05d::t_f9aebc7aa2ffb8 12,76-116
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.Console.cs
+  s_7bc72ecaebd05d::t_ce6d91af88b954 43-46,49-54
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Object/UnityEngine_GameObject_Adapter.cs
+  s_7bc72ecaebd05d::t_e361657d54a79c 79,163,168-178,182
+  s_7bc72ecaebd05d::t_ece5db290dd77f 58-59
+  s_7bc72ecaebd05d::t_fcf724e5ff758e 16,30,44-47,61,78,80-84
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Rql.Mutate.cs
+  s_7bc72ecaebd05d::t_9a78a0609e0298 33-35,38
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Object/UnityEngine_Object_Adapter.cs
+  s_7bc72ecaebd05d::t_8f79b1ed877da0 63-65,67-69
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Tool/ReflectorNet_SerializedMemberList_Adapter.cs
+  s_7bc72ecaebd05d::t_c3e66d734bbf1e 83-88
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.Assets.cs
+  s_7bc72ecaebd05d::t_3acf1d455a4d21 26,67,95
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.Scenes.cs
+  s_7bc72ecaebd05d::t_4dbbaa796d5675 31
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.cs
+  s_7bc72ecaebd05d::t_c13fa55711d53c 13,72-123
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnity.cs
+  s_7bc72ecaebd05d::t_df8589534dd429 52,243,246-256,260-263
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dd18069dc01bbaec0a704d9f53b5c5869f7bbca0",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
