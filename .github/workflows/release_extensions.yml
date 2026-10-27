@@ -32,6 +32,9 @@ jobs:
       - uses: actions/setup-python@v6
         with:
           python-version: "3.12"
+      # Extensions build against the core's NuGet set: every pin must be a published release (dry runs fail too).
+      - name: Release dependency guard (no pre-release / unpublished pins)
+        run: python commands/release_dependency_guard.py
       - name: Validate component selection and publication source
         env:
           GH_TOKEN: ${{ github.token }}
