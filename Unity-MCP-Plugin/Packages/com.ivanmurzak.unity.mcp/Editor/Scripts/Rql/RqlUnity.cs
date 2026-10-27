@@ -49,6 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             // One Undo group per mutation: recorded owners, created / destroyed objects and added components undo together.
             engine.Mutations.BeforeWrite = records =>
             {
+                _batch?.BeforeWrite(); // a veto (thrown) before the Undo group opens
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("RQL mutation");
                 _undoGroup = Undo.GetCurrentGroup();
@@ -239,14 +240,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (hits.Count == 1) return hits[0];
             return hits.Count == 0
                 ? new RqlError("not-found", $"no GameObject named '{key}' in the loaded scenes")
-                : new RqlError("ambiguous", $"{hits.Count} GameObjects are named '{key}': use the hierarchy path, e.g. \"{hits[0].GetPath()}\", or a ref");
+                : new RqlError("ambiguous", $"{hits.Count} GameObjects are named '{key}': use one of them {Candidates(hits)}");
         }
 
-        /// <summary><c>unity.asset("Assets/…/Red.mat")</c>: the main asset at a path, or null.</summary>
+        // The ambiguous hits as follow-up arguments: their hierarchy path where it is unique, else their ref.
+        private static string Candidates(List<GameObject> hits)
+        {
+            const int Shown = 5;
+            var paths = hits.Select(g => g.GetPath() ?? g.name).ToList();
+            var parts = hits.Take(Shown).Select((g, i) =>
+                paths.Count(p => p == paths[i]) == 1 ? $"unity.find(\"{paths[i]}\")" : $"ref(\"{Engine.RefOf(g)}\") ({paths[i]})");
+            return string.Join(", ", parts) + (hits.Count > Shown ? $" … (+{hits.Count - Shown})" : "");
+        }
+
+        /// <summary><c>unity.asset("Assets/…/Red.mat")</c>: the main asset at a path; an error when there is none.</summary>
         public static object? LoadAsset(object?[] args)
         {
             if (args.Length != 1 || !(args[0] is string path)) return new RqlError("type-mismatch", "unity.asset(path) expects an asset path");
-            return AssetDatabase.LoadMainAssetAtPath(path);
+            // A missing asset as null would let `set sharedMaterial = unity.asset(<typo>)` clear the field silently.
+            return AssetDatabase.LoadMainAssetAtPath(path) is Object asset && asset != null
+                ? asset
+                : new RqlError("not-found", $"no asset at '{path}' (a project path such as \"Assets/…/Red.mat\"; search with unity.assets(\"t:Material Red\"))");
         }
 
     }

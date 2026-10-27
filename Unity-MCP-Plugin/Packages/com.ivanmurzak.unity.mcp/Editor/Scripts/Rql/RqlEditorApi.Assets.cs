@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
     public sealed partial class RqlEditorApi
     {
-        [RqlCallable("copy an asset to a new path (not an existing one); returns the copy")]
+        [RqlCallable("copy an asset to a new path (not an existing one; missing folders are created); returns the copy")]
         public Object CopyAsset(string path, string newPath)
         {
             // A folder keeps no extension, even one named like "com.foo".
@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             catch (ArgumentException e) { return e.Message; }
         }
 
-        [RqlCallable("move or rename an asset; returns its new path")]
+        [RqlCallable("move or rename an asset (missing folders are created); returns its new path")]
         public string MoveAsset(string path, string newPath)
         {
             EnsureFolder(Path.GetDirectoryName(newPath));
@@ -92,7 +92,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return Normalize(path);
         }
 
-        [RqlCallable("create a material asset at a new path (\"Assets/…/X.mat\") with a shader (default: the render pipeline's default); returns it")]
+        [RqlCallable("create a material asset at a new path (\"Assets/…/X.mat\") with a shader (default: the render pipeline's default; missing folders are created); returns it")]
         public Material CreateMaterial(string path, string? shader = null)
         {
             path = NewAssetPath(path, ".mat");

@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using Rql.Execution;
 using UnityEditor;
 using UnityEngine;
@@ -37,15 +38,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         // stays for a refusal it cannot foresee.
         private static void Destroy(Component c)
         {
-            if (c == null) return; // its GameObject was destroyed by an earlier target of the same call
-            if (ValidateDestroy(c) is { } rejection) throw new InvalidOperationException(rejection); // a C# caller skips RQL's validator
+            if (c == null) return; // its GameObject, or a component it required, was destroyed by an earlier target of the same call
+            // The components that require this one and that the same call removes go first, whatever the target order.
+            if (RqlUnity.Batch is { } batch && Removing.Add(c)) // Removing: two components requiring each other end the recursion
+            {
+                try
+                {
+                    foreach (var blocker in Blockers(c, out _))
+                        if (batch.IsDestroying(blocker)) Destroy(blocker);
+                }
+                finally { Removing.Remove(c); }
+            }
+            if (Rejection(c) is { } rejection) throw new InvalidOperationException(rejection); // a C# caller skips RQL's validator
             RqlUnity.DestroyUndoable(c, $"Unity did not remove {c.GetType().Name} from '{c.gameObject.name}': another component requires it");
         }
 
+        private static readonly HashSet<Component> Removing = new HashSet<Component>();
+
+        // The call validator. Inside rql-mutate a component that others require may still be removed when the same call removes
+        // them as well: that is decided once every target is validated (RqlUnity.CallBatch).
         internal static string? ValidateDestroy(Component c)
+        {
+            if (c == null || c is Transform || !(RqlUnity.Batch is { } batch)) return Rejection(c);
+            var blockers = Blockers(c, out var reason);
+            batch.Destroying(c, blockers, reason + " (or in the same call)");
+            return null;
+        }
+
+        /// <summary>Why <paramref name="c"/> cannot be removed now, or null.</summary>
+        internal static string? Rejection(Component c)
         {
             if (c == null) return null;
             if (c is Transform) return "a Transform cannot be removed; destroy its GameObject instead (… | call Destroy())";
+            return Blockers(c, out var reason).Count > 0 ? reason : null;
+        }
+
+        // The other components on c's GameObject whose [RequireComponent] only c satisfies, and the message for the first one.
+        private static List<Component> Blockers(Component c, out string reason)
+        {
+            reason = "";
+            var blockers = new List<Component>();
             var type = c.GetType();
             foreach (var other in c.GetComponents<Component>())
             {
@@ -54,14 +86,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 {
                     foreach (var required in new[] { require.m_Type0, require.m_Type1, require.m_Type2 })
                     {
-                        if (required == null || !required.IsAssignableFrom(type)) continue;
                         // Another component of the required type keeps the requirement met.
-                        if (c.GetComponents(required).Length < 2)
-                            return $"{other.GetType().Name} on '{c.gameObject.name}' requires {required.Name}: remove the {other.GetType().Name} first";
+                        if (required == null || !required.IsAssignableFrom(type) || c.GetComponents(required).Length >= 2 || blockers.Contains(other)) continue;
+                        if (blockers.Count == 0)
+                            reason = $"{other.GetType().Name} on '{c.gameObject.name}' requires {required.Name}: remove the {other.GetType().Name} first";
+                        blockers.Add(other);
                     }
                 }
             }
-            return null;
+            return blockers;
         }
 
         public override AdapterOutcome TryCoerce(object? value, Type target, RqlKernel kernel, out object? result, out string? reason)

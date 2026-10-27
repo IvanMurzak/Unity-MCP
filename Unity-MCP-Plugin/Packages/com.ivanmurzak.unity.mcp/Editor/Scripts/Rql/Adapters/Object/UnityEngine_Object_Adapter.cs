@@ -60,6 +60,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 .IncludeFields(f => f.IsPrivate && f.IsDefined(typeof(UnityEngine.SerializeField), false))
                 .HideWhere(m => m.Member != null && (m.Member.IsDefined(typeof(ObsoleteAttribute), true) || m.Member.IsDefined(typeof(NonSerializedAttribute), true)))
                 .Hide("hideFlags")
+                // Read only when named (it asks the AssetDatabase): unity.assets("t:Material") | select name assetPath.
+                .Add("assetPath", typeof(string), o => AssetPathOf((Object)o), description: "the asset's project path (\"Assets/…/Red.mat\"); null for scene objects")
+                .ExplicitOnly("assetPath")
                 .Display("name");
+
+        private static string? AssetPathOf(Object o) =>
+            o != null && UnityEditor.AssetDatabase.GetAssetPath(o) is { Length: > 0 } path ? path : null;
     }
 }

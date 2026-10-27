@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Linq;
 using Rql;
 using UnityEditor;
 using UnityEngine;
@@ -66,6 +67,58 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (position.HasValue) go.transform.localPosition = position.Value;
             Undo.RegisterCreatedObjectUndo(go, undoName);
             return go;
+        }
+
+        [RqlDescription("the project's layer names by index 0..31 (\"\" = unused); GameObjects take one by layerName or layer")]
+        public string[] layers => Enumerable.Range(0, 32).Select(LayerMask.LayerToName).ToArray();
+
+        [RqlDescription("the project's tags (Untagged, MainCamera … and the added ones)")]
+        public string[] tags => UnityEditorInternal.InternalEditorUtility.tags;
+
+        [RqlCallable("add a layer in the first free user layer (8..31) of Tags and Layers, or keep the one that has this name; returns its index (undoable)")]
+        public int AddLayer(string name)
+        {
+            if (ValidateAddLayer(name) is string problem) throw new ArgumentException(problem);
+            if (LayerMask.NameToLayer(name) is var existing && existing >= 0) return existing;
+            var (manager, layerList) = TagManager("layers");
+            for (int i = FirstUserLayer; i < layerList.arraySize; i++)
+            {
+                var slot = layerList.GetArrayElementAtIndex(i);
+                if (!string.IsNullOrEmpty(slot.stringValue)) continue;
+                slot.stringValue = name;
+                manager.ApplyModifiedProperties();
+                return i;
+            }
+            throw new ArgumentException("every user layer (8..31) is taken");
+        }
+
+        public string? ValidateAddLayer(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) return "a layer name cannot be empty";
+            if (LayerMask.NameToLayer(name) >= 0) return null;
+            return Enumerable.Range(FirstUserLayer, 32 - FirstUserLayer).Any(i => string.IsNullOrEmpty(LayerMask.LayerToName(i)))
+                ? null : "every user layer (8..31) is taken";
+        }
+
+        [RqlCallable("add a tag to Tags and Layers; false when it already exists (undoable)")]
+        public bool AddTag(string name)
+        {
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("a tag cannot be empty");
+            if (Array.IndexOf(tags, name) >= 0) return false;
+            var (manager, tagList) = TagManager("tags");
+            tagList.InsertArrayElementAtIndex(tagList.arraySize);
+            tagList.GetArrayElementAtIndex(tagList.arraySize - 1).stringValue = name;
+            manager.ApplyModifiedProperties();
+            return true;
+        }
+
+        private const int FirstUserLayer = 8;
+
+        // ProjectSettings/TagManager.asset as a SerializedObject (its writes register Undo), and one of its arrays.
+        private static (SerializedObject Manager, SerializedProperty List) TagManager(string list)
+        {
+            var manager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+            return (manager, manager.FindProperty(list));
         }
 
         [RqlCallable("execute an Editor menu item by path, e.g. \"GameObject/Align With View\"; false when it does not exist")]

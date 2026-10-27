@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -31,6 +32,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             var path = MakePrefab();
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(path));
             Assert.IsTrue(PrefabUtility.IsPartOfPrefabInstance(GameObject.Find("Crate")));
+        }
+
+        // Like CreateMaterial / CopyAsset / NewScene: the missing folders of a new prefab path are created.
+        [Test]
+        public void SaveAsPrefabCreatesMissingFolders()
+        {
+            new GameObject("Crate");
+            AssertOk(M($"objects | where name == \"Crate\" | call SaveAsPrefab(\"{Folder}/New/Deep/Crate.prefab\")"));
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>($"{Folder}/New/Deep/Crate.prefab"));
+            AssertFails(M("objects | where name == \"Crate\" | call SaveAsPrefab(\"Other/Crate.prefab\")"), "invalid-value", "not under Assets/");
+        }
+
+        // Two targets of one rql-mutate call saving to one path: the second save would fail after the first one happened, so
+        // the call is rejected before either (on a dry run too).
+        [Test]
+        public void SeveralGameObjectsCannotSaveToOnePrefabPathInOneCall()
+        {
+            var a = new GameObject("PA");
+            var b = new GameObject("PB");
+            var path = $"{Folder}/Same.prefab";
+            const string Targets = "objects | where name in [\"PA\", \"PB\"]";
+            AssertFails(RqlUnity.Mutate($"{Targets} | call SaveAsPrefab(\"{path}\")", dryRun: true), "invalid-value", "also the path of");
+            AssertFails(RqlUnity.Mutate($"{Targets} | call SaveAsPrefab(\"{path}\")"), "invalid-value", "give each GameObject its own prefab path");
+            Assert.IsNull(AssetDatabase.LoadAssetAtPath<GameObject>(path));
+            Assert.IsFalse(PrefabUtility.IsPartOfPrefabInstance(a));
+            AssertOk(RqlUnity.Mutate($"{Targets} | call SaveAsPrefab(\"{Folder}/\" + name + \".prefab\")"));
+            Assert.IsTrue(PrefabUtility.IsPartOfPrefabInstance(b));
         }
 
         // Saving over an existing prefab would replace it (every instance changes); deleting it would leave missing prefabs.

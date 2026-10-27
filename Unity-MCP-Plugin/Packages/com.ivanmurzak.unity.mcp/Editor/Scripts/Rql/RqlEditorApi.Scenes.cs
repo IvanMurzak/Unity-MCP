@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return scene;
         }
 
-        [RqlCallable("create a scene and save it at a new path (\"Assets/…/X.unity\", missing folders are created); empty = no camera / light; additive keeps the loaded scenes")]
+        [RqlCallable("create a scene and save it at a new path (\"Assets/…/X.unity\", missing folders are created); empty = no camera / light; additive keeps the loaded scenes and makes the new one active (new GameObjects go there)")]
         public Scene NewScene(string path, bool empty = false, bool additive = false)
         {
             // Checked before the scene exists: a non-additive NewScene replaces the open scenes, so a save that fails afterwards

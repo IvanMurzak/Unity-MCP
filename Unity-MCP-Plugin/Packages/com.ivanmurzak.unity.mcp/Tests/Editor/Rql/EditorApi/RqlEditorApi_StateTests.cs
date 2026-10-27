@@ -94,6 +94,71 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsNotNull(go.GetComponent<MeshFilter>());
         }
 
+        // The echo McpToolManager logs for each tool response stays out of the console source (an agent's own failed call is
+        // not an Editor error); other entries stay.
+        [Test]
+        public void ConsoleLeavesOutTheToolResponseEchoes()
+        {
+            var marker = System.Guid.NewGuid().ToString("N");
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
+            Debug.LogError($"fail: [AI] McpToolManager Error Response to AI:\nerror syntax-error {marker}");
+            Debug.LogError($"real error {marker}");
+            UnityMcpPluginEditor.Instance.LogCollector!.Save();
+            var rows = Table(Q($"console | where message contains \"{marker}\" | select message"));
+            StringAssert.Contains("real error", rows);
+            StringAssert.DoesNotContain("McpToolManager", rows);
+        }
+
+        // Tags and Layers: read the lists, add a layer / tag, and use the layer by name. The test project's TagManager is
+        // restored afterwards.
+        [Test]
+        public void LayersAndTagsAreListedAndAdded()
+        {
+            var manager = AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0];
+            var saved = EditorJsonUtility.ToJson(manager);
+            try
+            {
+                StringAssert.Contains("Default", Table(Q("editor | select layers")));
+                StringAssert.Contains("MainCamera", Table(Q("editor | select tags")));
+
+                var index = int.Parse(Cell(M("editor | call AddLayer(\"RqlTestLayer\")"), 0, 2));
+                Assert.AreEqual(index, LayerMask.NameToLayer("RqlTestLayer"));
+                Assert.GreaterOrEqual(index, 8);
+                Assert.AreEqual(index.ToString(), Cell(M("editor | call AddLayer(\"RqlTestLayer\")"), 0, 2)); // already there
+                AssertFails(M("editor | call AddLayer(\"\")"), "invalid-value", "cannot be empty");
+
+                var go = new GameObject("Layered");
+                AssertOk(M("objects | where name == \"Layered\" | set layerName = \"RqlTestLayer\""));
+                Assert.AreEqual(index, go.layer);
+
+                Assert.AreEqual("true", Cell(M("editor | call AddTag(\"RqlTestTag\")"), 0, 2));
+                Assert.AreEqual("false", Cell(M("editor | call AddTag(\"RqlTestTag\")"), 0, 2));
+                AssertOk(M("objects | where name == \"Layered\" | set tag = \"RqlTestTag\""));
+                Assert.AreEqual("RqlTestTag", go.tag);
+            }
+            finally
+            {
+                EditorJsonUtility.FromJsonOverwrite(saved, manager);
+                AssetDatabase.SaveAssets();
+            }
+        }
+
+        // rql-mutate's limit of 20 targets: the hint names the tool's max_targets argument, which raises it.
+        [Test]
+        public void MaxTargetsRaisesTheMutationLimit()
+        {
+            var root = new GameObject("Many");
+            for (int i = 0; i < 25; i++) new GameObject("M" + i).transform.SetParent(root.transform, false);
+            const string Q25 = "objects | where name == \"Many\" | get children | set active = false";
+            var limited = RqlUnity.Mutate(Q25);
+            AssertFails(limited, "mutation-limit");
+            StringAssert.Contains("max_targets", Table(limited));
+            StringAssert.DoesNotContain("budgets.", Table(limited));
+            Assert.IsTrue(root.transform.GetChild(0).gameObject.activeSelf);
+            AssertOk(RqlUnity.Mutate(Q25, maxTargets: 25));
+            Assert.IsFalse(root.transform.GetChild(24).gameObject.activeSelf);
+        }
+
         [Test]
         public void ExecuteMenuItemReportsMissingItems()
         {

@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         protected override void Members(MemberTable<Material> m)
         {
-            m.Untyped.Only("name", "shader", "renderQueue", "enableInstancing", "doubleSidedGI", "globalIlluminationFlags", "passCount");
+            m.Untyped.Only("name", "assetPath", "shader", "renderQueue", "enableInstancing", "doubleSidedGI", "globalIlluminationFlags", "passCount");
             m.Untyped.AddMixedMap("properties", o => Keys((Material)o), (o, k) => EntryType((Material)o, k),
                 (o, k) => Get((Material)o, k), (o, k, v) => Set((Material)o, k, v), (o, k, v) => Validate((Material)o, k, v),
                 "shader properties by name", has: (o, k) => ((Material)o).HasProperty(k));

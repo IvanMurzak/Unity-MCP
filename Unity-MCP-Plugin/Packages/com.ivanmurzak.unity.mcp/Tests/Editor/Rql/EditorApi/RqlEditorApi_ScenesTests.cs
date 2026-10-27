@@ -43,8 +43,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertOk(M($"editor | call NewScene(\"{Folder}/Main.unity\", true)"));
             AssertOk(M($"editor | call NewScene(\"{Folder}/Extra.unity\", true, true)"));
             Assert.AreEqual(2, SceneManager.sceneCount);
-            AssertOk(M("scenes | where name == \"Main\" | call SetActive()"));
+            Assert.AreEqual("Extra", SceneManager.GetActiveScene().name); // an additive new scene becomes the active one
+            Assert.AreEqual("true", Cell(M("scenes | where name == \"Main\" | call SetActive()"), 0, 2));
             Assert.AreEqual("Main", SceneManager.GetActiveScene().name);
+            // Unity's SetActiveScene answers false for the scene that is already active: the call reports true.
+            Assert.AreEqual("true", Cell(M("scenes | where name == \"Main\" | call SetActive()"), 0, 2));
             AssertOk(M("scenes | where name == \"Extra\" | call Close()"));
             Assert.AreEqual(1, SceneManager.sceneCount);
         }

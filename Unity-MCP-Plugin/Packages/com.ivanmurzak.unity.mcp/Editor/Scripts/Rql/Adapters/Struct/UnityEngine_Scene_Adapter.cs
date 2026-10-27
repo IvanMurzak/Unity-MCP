@@ -30,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  : EditorSceneManager.SaveScene(s), "save the scene to its asset (false when it failed)")
              .Function<string, bool>("SaveAs", (s, path) => SaveAs(s, path), "path",
                  "save the scene to a new asset path (missing folders are created; an existing file is not overwritten)")
-             .Function("SetActive", s => SceneManager.SetActiveScene(s), "make it the active scene (new GameObjects go there)")
+             .Function("SetActive", s => s == SceneManager.GetActiveScene() || SceneManager.SetActiveScene(s), "make it the active scene (new GameObjects go there); true when it is the active scene")
              .Function("Close", s => EditorSceneManager.CloseScene(s, removeScene: true), "close the scene (one scene must stay open; unsaved changes are lost)");
         }
 
