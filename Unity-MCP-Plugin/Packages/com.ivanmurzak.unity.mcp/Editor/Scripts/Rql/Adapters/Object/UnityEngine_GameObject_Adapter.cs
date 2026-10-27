@@ -45,12 +45,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  "Static Editor Flags (" + StaticFlagList + "): filter with staticFlags contains \"ContributeGI\"; " +
                  "assign a list, e.g. [\"ContributeGI\", \"BatchingStatic\"] ([] clears; isStatic sets them all)")
              .Function<string, Component>("AddComponent", (g, type) => AddComponent(g, type), "type",
-                 "add a component by type name (e.g. \"Rigidbody\", \"Light\", \"BoxCollider\", a script class) and return it")
+                 "add a component by type name (e.g. \"Rigidbody\", \"Light\", \"BoxCollider\", a script class) and return it",
+                 ValidateAddComponent)
              // A target is already gone when an earlier target of the same call was its ancestor.
              .Method("Destroy", g => { if (g != null) RqlUnity.DestroyUndoable(g, $"Unity did not destroy '{g.name}'"); }, "destroy this GameObject (undoable)")
              .Function("Duplicate", g => Duplicate(g), "copy this GameObject next to it (prefab instances stay linked) and return the copy (undoable)")
              .Function<string, GameObject>("SaveAsPrefab", (g, path) => SaveAsPrefab(g, path), "path",
-                 "save as a new prefab asset (\"Assets/…/X.prefab\", not an existing one); this GameObject becomes its instance; returns the prefab asset");
+                 "save as a new prefab asset (\"Assets/…/X.prefab\", not an existing one); this GameObject becomes its instance; returns the prefab asset",
+                 (g, path) => RqlEditorApi.Rejection(() => PrefabPath(path)));
             // staticFlags is built on read, so element writes are assigned back.
             m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags");
         }
@@ -71,14 +73,61 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         // Undo.AddComponent returns null (and logs) instead of throwing when Unity refuses: a second component of a type that
         // allows one per GameObject, a conflicting component (Rigidbody2D next to a Rigidbody) or a type that cannot be added.
+        // The call validator rejects the foreseeable cases for every target before the first add (dry runs included).
         private static Component AddComponent(GameObject g, string typeName)
         {
-            var type = UnityTypes.Find(typeName, typeof(Component))
-                       ?? throw new ArgumentException($"no component type named '{typeName}'");
-            if (type == typeof(Transform)) throw new ArgumentException("a Transform cannot be added: every GameObject has exactly one");
+            if (ValidateAddComponent(g, typeName) is { } rejection) throw new ArgumentException(rejection); // a C# caller skips RQL's validator
+            var type = UnityTypes.Find(typeName, typeof(Component))!;
             return Undo.AddComponent(g, type)
                    ?? throw new InvalidOperationException($"Unity did not add {type.Name} to '{g.name}': it allows one per GameObject, " +
                                                           "conflicts with a component already there, or cannot be added (the Console has the reason)");
+        }
+
+        internal static string? ValidateAddComponent(GameObject g, string typeName)
+        {
+            var type = UnityTypes.Find(typeName, typeof(Component));
+            if (type == null) return $"no component type named '{typeName}'";
+            if (type == typeof(Transform)) return "a Transform cannot be added: every GameObject has exactly one";
+            if (g == null) return null;
+            // Unity allows one Rigidbody / Rigidbody2D per GameObject natively, without [DisallowMultipleComponent].
+            if ((type.IsDefined(typeof(DisallowMultipleComponent), true) || IsBody(type)) && g.GetComponent(type) != null)
+                return $"'{g.name}' already has a {type.Name}, which allows one per GameObject";
+            // 3D and 2D physics components cannot share a GameObject (by name: the 2D physics module may be disabled), nor
+            // can the components the new one requires (a FixedJoint adds a Rigidbody).
+            foreach (var added in WithRequired(type))
+            {
+                var physics = PhysicsFamily(added);
+                if (physics == 0) continue;
+                foreach (var existing in g.GetComponents<Component>())
+                    if (existing != null && PhysicsFamily(existing.GetType()) == -physics)
+                        return $"{type.Name} conflicts with {existing.GetType().Name} on '{g.name}': 3D and 2D physics cannot be mixed";
+            }
+            return null;
+        }
+
+        static bool IsBody(Type type) => type.FullName == "UnityEngine.Rigidbody" || type.FullName == "UnityEngine.Rigidbody2D";
+
+        // The type and the components its [RequireComponent] attributes make Unity add with it (one level).
+        static IEnumerable<Type> WithRequired(Type type)
+        {
+            yield return type;
+            foreach (RequireComponent r in type.GetCustomAttributes(typeof(RequireComponent), true))
+                foreach (var t in new[] { r.m_Type0, r.m_Type1, r.m_Type2 })
+                    if (t != null) yield return t;
+        }
+
+        // 1 = 3D physics (Rigidbody, Collider), -1 = 2D physics (Rigidbody2D, Collider2D), 0 = neither.
+        static int PhysicsFamily(Type type)
+        {
+            for (var t = type; t != null; t = t.BaseType)
+            {
+                switch (t.FullName)
+                {
+                    case "UnityEngine.Rigidbody": case "UnityEngine.Collider": return 1;
+                    case "UnityEngine.Rigidbody2D": case "UnityEngine.Collider2D": return -1;
+                }
+            }
+            return 0;
         }
 
         // The Editor's own Ctrl+D path: prefab instances stay linked with their overrides, names stay unique, undo is
@@ -99,12 +148,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         private static GameObject SaveAsPrefab(GameObject g, string path)
         {
-            // An existing prefab would be replaced with this GameObject: every instance of it would change.
+            path = PrefabPath(path);
+            return PrefabUtility.SaveAsPrefabAssetAndConnect(g, path, InteractionMode.UserAction, out var ok) is GameObject asset && ok
+                ? asset : throw new ArgumentException($"could not save a prefab at '{path}'");
+        }
+
+        // A new ".prefab" path in an existing folder (also the call validator). An existing prefab would be replaced with this
+        // GameObject: every instance of it would change.
+        private static string PrefabPath(string path)
+        {
             path = RqlEditorApi.NewAssetPath(path, ".prefab");
             var folder = RqlEditorApi.Normalize(System.IO.Path.GetDirectoryName(path) ?? "");
             if (!string.IsNullOrEmpty(folder) && !AssetDatabase.IsValidFolder(folder)) throw new ArgumentException($"folder '{folder}' does not exist (editor | call CreateFolder(\"{folder}\"))");
-            return PrefabUtility.SaveAsPrefabAssetAndConnect(g, path, InteractionMode.UserAction, out var ok) is GameObject asset && ok
-                ? asset : throw new ArgumentException($"could not save a prefab at '{path}'");
+            return path;
         }
 
         // The single-bit, non-obsolete flags of this Unity version by their current names: StaticEditorFlags has obsolete

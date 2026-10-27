@@ -81,8 +81,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             var group = new GameObject("Group");
             var child = new GameObject("Child");
             child.transform.SetParent(group.transform, false);
-            AssertFails(M("objects | where name == \"Group\" | set transform.parent = unity.find(\"Group\")"), "coercion-failed", "itself or one of its children");
-            AssertFails(M("objects | where name == \"Group\" | set transform.parent = unity.find(\"Group/Child\")"), "coercion-failed", "itself or one of its children");
+            AssertFails(M("objects | where name == \"Group\" | set transform.parent = unity.find(\"Group\")"), "invalid-value", "itself or one of its children");
+            AssertFails(M("objects | where name == \"Group\" | set transform.parent = unity.find(\"Group/Child\")"), "invalid-value", "itself or one of its children");
             Assert.IsNull(group.transform.parent);
             Assert.AreSame(group.transform, child.transform.parent);
         }
@@ -97,7 +97,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
                 var root = new GameObject("PrefabRoot");
                 new GameObject("Inner").transform.SetParent(root.transform, false);
                 UnityEditor.PrefabUtility.SaveAsPrefabAssetAndConnect(root, folder + "/Root.prefab", UnityEditor.InteractionMode.AutomatedAction);
-                AssertFails(M("objects | where name == \"Inner\" | set transform.parent = null"), "coercion-failed", "inside a prefab instance");
+                AssertFails(M("objects | where name == \"Inner\" | set transform.parent = null"), "invalid-value", "inside a prefab instance");
                 Assert.AreSame(root.transform, GameObject.Find("PrefabRoot/Inner").transform.parent);
                 // The instance root itself moves freely.
                 var other = new GameObject("Other");

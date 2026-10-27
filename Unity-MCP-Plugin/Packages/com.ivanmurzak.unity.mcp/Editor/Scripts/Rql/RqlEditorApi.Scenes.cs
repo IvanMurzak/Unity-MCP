@@ -41,6 +41,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return scene;
         }
 
+        // Call validator (RQL runs it before the call, on dry runs too): a NewScene that cannot be saved leaves the open scenes alone.
+        public string? ValidateNewScene(string path, bool empty, bool additive) => Rejection(() =>
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("NewScene needs a path such as \"Assets/Scenes/X.unity\"");
+            EnsureFolder(System.IO.Path.GetDirectoryName(NewAssetPath(path, ".unity")), create: false);
+        });
+
         /// <summary>A new scene path: normalized, ".unity", not taken, its folder created. Unity would overwrite an existing scene file.</summary>
         internal static string ScenePath(string path)
         {

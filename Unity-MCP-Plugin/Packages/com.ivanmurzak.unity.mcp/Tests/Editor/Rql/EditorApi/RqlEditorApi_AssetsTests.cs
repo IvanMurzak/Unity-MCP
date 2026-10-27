@@ -84,12 +84,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertOk(M($"editor | call CreateMaterial(\"{Folder}/A.mat\")"));
             var renderer = GameObject.CreatePrimitive(PrimitiveType.Cube).GetComponent<MeshRenderer>();
             renderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Folder}/A.mat");
-            AssertFails(M($"editor | call CreateMaterial(\"{Folder}/A.mat\")"), "getter-threw", "already exists");
+            AssertFails(M($"editor | call CreateMaterial(\"{Folder}/A.mat\")"), "invalid-value", "already exists");
             AssertOk(M($"editor | call CreateMaterial(\"{Folder}/B.mat\")"));
-            AssertFails(M($"editor | call CopyAsset(\"{Folder}/B.mat\", \"{Folder}/A.mat\")"), "getter-threw", "already exists");
+            AssertFails(M($"editor | call CopyAsset(\"{Folder}/B.mat\", \"{Folder}/A.mat\")"), "invalid-value", "already exists");
             Assert.IsNotNull(renderer.sharedMaterial, "the existing material (and the reference to it) must survive");
-            AssertFails(M($"editor | call CreateMaterial(\"{Folder}/C.txt\")"), "getter-threw", "must end with .mat");
-            AssertFails(M($"editor | call CopyAsset(\"{Folder}/B.mat\", \"{Folder}/C.txt\")"), "getter-threw", "must end with .mat");
+            AssertFails(M($"editor | call CreateMaterial(\"{Folder}/C.txt\")"), "invalid-value", "must end with .mat");
+            AssertFails(M($"editor | call CopyAsset(\"{Folder}/B.mat\", \"{Folder}/C.txt\")"), "invalid-value", "must end with .mat");
         }
 
         [Test]
@@ -100,8 +100,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             cube.name = "UsesIt";
             var renderer = cube.GetComponent<MeshRenderer>();
             renderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Folder}/Used.mat");
-            AssertFails(M($"editor | call DeleteAsset(\"{Folder}/Used.mat\")"), "getter-threw", "used by 1 object(s) in the open scenes: UsesIt");
-            AssertFails(M($"editor | call DeleteAsset(\"{Folder}\")"), "getter-threw", "UsesIt"); // a folder holding it, too
+            AssertFails(M($"editor | call DeleteAsset(\"{Folder}/Used.mat\")"), "invalid-value", "used by 1 object(s) in the open scenes: UsesIt");
+            AssertFails(M($"editor | call DeleteAsset(\"{Folder}\")"), "invalid-value", "UsesIt"); // a folder holding it, too
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Material>($"{Folder}/Used.mat"));
             AssertOk(M($"editor | call DeleteAsset(\"{Folder}/Used.mat\", true)"));
             Assert.IsNull(AssetDatabase.LoadAssetAtPath<Material>($"{Folder}/Used.mat"));

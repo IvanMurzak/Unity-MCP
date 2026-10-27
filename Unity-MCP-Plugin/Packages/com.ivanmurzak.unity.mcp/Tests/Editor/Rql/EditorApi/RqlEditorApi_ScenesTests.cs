@@ -55,9 +55,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             AssertOk(M($"editor | call NewScene(\"{Folder}/Keep.unity\", true)"));
             new GameObject("Unsaved");
-            AssertFails(M($"editor | call NewScene(\"{Folder}/Keep.unity\")"), "getter-threw", "already exists");
-            AssertFails(M($"editor | call NewScene(\"{Folder}/Bad.txt\")"), "getter-threw", "must end with .unity");
-            AssertFails(M("editor | call NewScene(\"Other/X.unity\")"), "getter-threw", "not under Assets/");
+            AssertFails(M($"editor | call NewScene(\"{Folder}/Keep.unity\")"), "invalid-value", "already exists");
+            AssertFails(M($"editor | call NewScene(\"{Folder}/Bad.txt\")"), "invalid-value", "must end with .unity");
+            AssertFails(M("editor | call NewScene(\"Other/X.unity\")"), "invalid-value", "not under Assets/");
+            AssertFails(M($"editor | call NewScene(\"{Folder}/Keep.unity\")", dryRun: true), "invalid-value", "already exists"); // a dry run reports it too
             Assert.AreEqual("Keep", SceneManager.GetActiveScene().name);
             Assert.IsNotNull(GameObject.Find("Unsaved"));
         }
@@ -68,7 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertOk(M($"editor | call NewScene(\"{Folder}/Deep/Er/N.unity\", true)"));
             Assert.AreEqual($"{Folder}/Deep/Er/N.unity", SceneManager.GetActiveScene().path);
             AssertOk(M($"editor | call NewScene(\"{Folder}/Other.unity\", true, true)"));
-            AssertFails(M($"scenes | where name == \"Other\" | call SaveAs(\"{Folder}/Deep/Er/N.unity\")"), "getter-threw", "already exists");
+            AssertFails(M($"scenes | where name == \"Other\" | call SaveAs(\"{Folder}/Deep/Er/N.unity\")"), "call-threw", "already exists");
             AssertOk(M($"scenes | where name == \"Other\" | call SaveAs(\"{Folder}/Copies/Other2.unity\")"));
             Assert.IsTrue(File.Exists($"{Folder}/Copies/Other2.unity"));
         }

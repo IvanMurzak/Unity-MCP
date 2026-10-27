@@ -110,7 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             {
                 foreach (var q in queries)
                 {
-                    var r = M(q);
+                    var r = Run(q);
                     Assert.IsTrue(r.Ok, q + "\n" + Table(r));
                 }
 

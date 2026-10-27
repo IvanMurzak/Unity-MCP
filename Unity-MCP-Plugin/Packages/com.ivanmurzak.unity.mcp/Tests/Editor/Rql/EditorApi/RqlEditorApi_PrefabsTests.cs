@@ -39,9 +39,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             var path = MakePrefab();
             new GameObject("Other");
-            AssertFails(M($"objects | where name == \"Other\" | call SaveAsPrefab(\"{path}\")"), "getter-threw", "already exists");
+            AssertFails(M($"objects | where name == \"Other\" | call SaveAsPrefab(\"{path}\")"), "invalid-value", "already exists");
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(path).GetComponent<BoxCollider>());
-            AssertFails(M($"editor | call DeleteAsset(\"{path}\")"), "getter-threw", "used by 1 object(s) in the open scenes: Crate.");
+            AssertFails(M($"editor | call DeleteAsset(\"{path}\")"), "invalid-value", "used by 1 object(s) in the open scenes: Crate.");
             Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<GameObject>(path));
         }
 
@@ -55,7 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             ((GameObject)PrefabUtility.InstantiatePrefab(AssetDatabase.LoadAssetAtPath<GameObject>(inner))).transform.SetParent(outer.transform, false);
             PrefabUtility.SaveAsPrefabAssetAndConnect(outer, $"{Folder}/Outer.prefab", InteractionMode.AutomatedAction);
             Object.DestroyImmediate(crateInstance); // only Outer's instance is left in the scene
-            AssertFails(M($"editor | call DeleteAsset(\"{inner}\")"), "getter-threw", "used by 1 object(s) in the open scenes: Outer.");
+            AssertFails(M($"editor | call DeleteAsset(\"{inner}\")"), "invalid-value", "used by 1 object(s) in the open scenes: Outer.");
         }
 
         [Test]

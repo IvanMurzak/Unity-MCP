@@ -29,16 +29,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             // A component's name and tag are its GameObject's: the same checks as on the GameObject.
             m.Add<string>("name", c => c.name, (c, v) => c.name = v, (c, v) => UnityEngine_GameObject_Adapter.ValidateName(v), "the GameObject's name (not empty)")
              .Add<string>("tag", c => c.tag, (c, v) => c.tag = v, (c, v) => UnityEngine_GameObject_Adapter.ValidateTag(v), "the GameObject's tag (a defined tag)")
-             .Method("Destroy", c => Destroy(c), "remove this component (undoable)");
+             .Method("Destroy", c => Destroy(c), "remove this component (undoable)", ValidateDestroy);
         }
 
-        // Unity refuses (and only logs) to remove a Transform or a component another one requires ([RequireComponent]): report
-        // it instead of a receipt for a change that did not happen.
+        // Unity refuses (and only logs) to remove a Transform or a component another one requires ([RequireComponent]). The call
+        // validator rejects both for every target before the first removal (dry runs included); the check after the removal
+        // stays for a refusal it cannot foresee.
         private static void Destroy(Component c)
         {
             if (c == null) return; // its GameObject was destroyed by an earlier target of the same call
-            if (c is Transform) throw new InvalidOperationException("a Transform cannot be removed; destroy its GameObject instead (… | call Destroy())");
+            if (ValidateDestroy(c) is { } rejection) throw new InvalidOperationException(rejection); // a C# caller skips RQL's validator
             RqlUnity.DestroyUndoable(c, $"Unity did not remove {c.GetType().Name} from '{c.gameObject.name}': another component requires it");
+        }
+
+        internal static string? ValidateDestroy(Component c)
+        {
+            if (c == null) return null;
+            if (c is Transform) return "a Transform cannot be removed; destroy its GameObject instead (… | call Destroy())";
+            var type = c.GetType();
+            foreach (var other in c.GetComponents<Component>())
+            {
+                if (other == null || other == c) continue;
+                foreach (RequireComponent require in other.GetType().GetCustomAttributes(typeof(RequireComponent), true))
+                {
+                    foreach (var required in new[] { require.m_Type0, require.m_Type1, require.m_Type2 })
+                    {
+                        if (required == null || !required.IsAssignableFrom(type)) continue;
+                        // Another component of the required type keeps the requirement met.
+                        if (c.GetComponents(required).Length < 2)
+                            return $"{other.GetType().Name} on '{c.gameObject.name}' requires {required.Name}: remove the {other.GetType().Name} first";
+                    }
+                }
+            }
+            return null;
         }
 
         public override AdapterOutcome TryCoerce(object? value, Type target, RqlKernel kernel, out object? result, out string? reason)

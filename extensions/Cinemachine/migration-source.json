@@ -52,7 +52,7 @@
     "Tests/Editor/com.IvanMurzak.Unity.MCP.Cinemachine.Editor.Tests.asmdef.meta": "1465d3774382b1262627f8191dc946cb9cf3af54c3c3285a0d6e9aa2e935a6d5",
     "Tests/Editor/Rql/CinemachineApiTests.cs": "7422e6c0ebacbaa03aa26a75f756a8c44ad320c2c85ed77445c0686f6b520c41",
     "Tests/Editor/Rql/CinemachineApiTests.cs.meta": "faecdc5204513432cdf7fe26eced308c5fe35f7fd5c4b34ad9438f26ea69c04e",
-    "Tests/Editor/Rql/CinemachineModuleTests.cs": "05acb69c9b307d13d12a36aa4cea4f4bbc43edf015c2cd7979b3d31fda531f06",
+    "Tests/Editor/Rql/CinemachineModuleTests.cs": "8d311341cb3ed92c9d31ef4b5b7872e11e65f0c760098d39593e0fe1dd44076c",
     "Tests/Editor/Rql/CinemachineModuleTests.cs.meta": "3a759dc36fce596321af291aace1ef13423fa8e677e6335c121e91f5e2133e69",
     "Tests/Editor/Rql/CinemachineTestBase.cs": "8fb2b898574168ddab23d24fd9fef4dc19c75b93279301498dfb3f952de3e423",
     "Tests/Editor/Rql/CinemachineTestBase.cs.meta": "2c14e88b4060bb5e0433cf1360548ffb59a6eac1184ca55233ed061fb1587654",

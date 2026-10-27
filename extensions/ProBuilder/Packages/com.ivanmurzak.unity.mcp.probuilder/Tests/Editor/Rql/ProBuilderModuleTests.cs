@@ -79,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ProBuilder
                 Assert.GreaterOrEqual(queries.Count, 24);
                 foreach (var q in queries)
                 {
-                    var r = Mut(q);
+                    var r = Regex.IsMatch(q, @"\|\s*(set|call)\b") ? Mut(q) : Q(q); // a read-only example is a query (RQL 0.2: invalid-plan as a mutation)
                     TestContext.Out.WriteLine(q + "\n" + Table(r));
                     Assert.IsTrue(r.Ok, q + "\n" + Table(r));
                 }
