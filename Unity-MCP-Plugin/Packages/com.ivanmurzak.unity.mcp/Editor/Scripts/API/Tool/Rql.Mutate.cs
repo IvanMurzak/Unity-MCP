@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             string query,
             [Description("true = preview the receipt without changing anything")]
             bool dry_run = false,
-            [Description("Raise the limit of 20 targets per call for an intended bulk change (at most 1000; 0 = the default 20)")]
+            [Description("Raise the limit of 200 targets per call for an intended bulk change (at most 1000; 0 = the default 200)")]
             int max_targets = 0
         )
         {

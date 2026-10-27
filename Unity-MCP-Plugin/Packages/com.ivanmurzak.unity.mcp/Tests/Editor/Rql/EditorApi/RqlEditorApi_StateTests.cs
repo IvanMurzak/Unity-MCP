@@ -160,20 +160,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.AreEqual(-1, LayerMask.NameToLayer("RqlTestLayer"), "the TagManager was restored");
         }
 
-        // rql-mutate's limit of 20 targets: the hint names the tool's max_targets argument, which raises it.
+        // rql-mutate's limit of 200 targets: the hint names the tool's max_targets argument with the matched count, which
+        // raises it.
         [Test]
         public void MaxTargetsRaisesTheMutationLimit()
         {
+            const int Count = RqlUnity.DefaultMaxTargets + 5;
             var root = new GameObject("Many");
-            for (int i = 0; i < 25; i++) new GameObject("M" + i).transform.SetParent(root.transform, false);
-            const string Q25 = "objects | where name == \"Many\" | get children | set active = false";
-            var limited = RqlUnity.Mutate(Q25);
+            for (int i = 0; i < Count; i++) new GameObject("M" + i).transform.SetParent(root.transform, false);
+            const string Query = "objects | where name == \"Many\" | get children | set active = false";
+            var limited = RqlUnity.Mutate(Query);
             AssertFails(limited, "mutation-limit");
-            StringAssert.Contains("max_targets", Table(limited));
+            StringAssert.Contains($"pass max_targets = {Count}", Table(limited));
             StringAssert.DoesNotContain("budgets.", Table(limited));
             Assert.IsTrue(root.transform.GetChild(0).gameObject.activeSelf);
-            AssertOk(RqlUnity.Mutate(Q25, maxTargets: 25));
-            Assert.IsFalse(root.transform.GetChild(24).gameObject.activeSelf);
+            AssertOk(RqlUnity.Mutate(Query, maxTargets: Count));
+            Assert.IsFalse(root.transform.GetChild(Count - 1).gameObject.activeSelf);
+            // Fewer than the default needs no max_targets.
+            AssertOk(RqlUnity.Mutate("objects | where name == \"Many\" | get children | first 160 | set active = true"));
         }
 
         [Test]

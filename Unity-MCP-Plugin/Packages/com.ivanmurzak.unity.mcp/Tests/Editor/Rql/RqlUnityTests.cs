@@ -247,6 +247,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             StringAssert.Contains("unity.find(", Table(byName));
         }
 
+        // Hints name what this host has: the schema tool, a real source, and the source that has an unknown call method.
+        [Test]
+        public void HintsNameTheHostsToolsAndSources()
+        {
+            var unknownSource = Q("nosuchsource | count");
+            Assert.IsFalse(unknownSource.Ok);
+            StringAssert.DoesNotContain("world", Table(unknownSource));
+            var call = M("objects | where name == \"Alpha\" | call CreateGameObject(\"Made\")");
+            Assert.IsFalse(call.Ok);
+            StringAssert.Contains("editor | call CreateGameObject", Table(call));
+        }
+
+        // c ? a : b and if(c, a, b); only the taken branch runs.
+        [Test]
+        public void ConditionalsPickABranch()
+        {
+            var r = Q("objects | where name in [\"Alpha\", \"Lamp\"] | get components | where not ($ is Transform) | select k = ($ is Light ? \"light\" : \"other\")");
+            Assert.AreEqual("light", Cell(r), Table(r));
+            Assert.AreEqual("on", Cell(Q("objects | where name == \"Alpha\" | select k = if(active, \"on\", \"off\")")));
+        }
+
+        // Enum values also take the Inspector's names (nicified or [InspectorName]).
+        [Test]
+        public void EnumsAcceptInspectorNames()
+        {
+            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.name = "Cube";
+            AssertOk(M("objects | where name == \"Cube\" | get components | where $ is MeshRenderer | set shadowCastingMode = \"Two Sided\""));
+            Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.TwoSided, cube.GetComponent<MeshRenderer>().shadowCastingMode);
+            Assert.AreEqual("Cube", Cell(Q("objects | get components | where $ is MeshRenderer and shadowCastingMode == \"Two Sided\" | select gameObject.name")));
+            var aliases = UnityTypes.EnumAliases(typeof(UnityEngine.Rendering.ShadowCastingMode))!;
+            Assert.AreEqual("ShadowsOnly", aliases["Shadows Only"]);
+            Assert.IsFalse(aliases.ContainsKey("On"), "an entry's own name is never an alias");
+        }
+
         [Test]
         public void ToolsReturnTextResults()
         {
