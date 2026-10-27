@@ -1,0 +1,41 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_7bc72ecaebd05d::t_b8f4ae4f922069 50,129-130
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/UnityTypes.cs
+  s_7be60963fe3603::t_023a3c1cc16e68 17,74-76,80-84,91,93-100,106-130,143,148-152
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_StateTests.cs
+  s_7bc72ecaebd05d::t_d0588e7c4a4a27 181-182
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/RqlUnityTests.cs
+  s_7bc72ecaebd05d::t_2367e8df11941d 254-271,309-314
+tests/chain-fixtures/2022.3.62f3/tools.jsonl
+  s_7be60963fe3603::t_4c73d6650d6cc2 6-7,23
+tests/chain-fixtures/6000.0.85f1/tools.jsonl
+  s_7be60963fe3603::t_2fef2bf5fe3683 6-7,23
+tests/chain-fixtures/6000.3.27f1/tools.jsonl
+  s_7be60963fe3603::t_48c4cafd62d6e2 6-7,23
+tests/chain-fixtures/6000.6.7f1/tools.jsonl
+  s_7be60963fe3603::t_5a32d83853fd94 6-7,23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8ad5efbce1598da98b6f0205b974f6acaebf9cff",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_7be60963fe3603": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9c306a43-6f1a-4fe9-9b57-09acf4bc1a65",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
