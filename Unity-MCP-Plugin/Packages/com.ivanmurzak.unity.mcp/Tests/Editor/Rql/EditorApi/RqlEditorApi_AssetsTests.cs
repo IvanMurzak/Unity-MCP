@@ -57,14 +57,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         // The helper behind CopyAsset / MoveAsset / CreateMaterial / NewScene / SaveAs / SaveAsPrefab: the outermost folder it
         // created goes when the write throws; existing folders and a successful write's folders stay.
         [Test]
-        public void InFolderRemovesOnlyTheFoldersItCreatedWhenTheWriteFails()
+        public void InFolderOfRemovesOnlyTheFoldersItCreatedWhenTheWriteFails()
         {
             AssetDatabase.CreateFolder(Folder, "Old");
             Assert.Throws<System.InvalidOperationException>(() =>
-                RqlEditorApi.InFolder<int>($"{Folder}/Old/New/Deep", () => throw new System.InvalidOperationException("write failed")));
+                RqlEditorApi.InFolderOf<int>($"{Folder}/Old/New/Deep/X.asset", () => throw new System.InvalidOperationException("write failed")));
             Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/Old/New"));
             Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Old"));
-            Assert.AreEqual(1, RqlEditorApi.InFolder($"{Folder}/Old/Kept", () => 1));
+            Assert.AreEqual(1, RqlEditorApi.InFolderOf($"{Folder}/Old/Kept/X.asset", () => 1));
             Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Old/Kept"));
         }
 

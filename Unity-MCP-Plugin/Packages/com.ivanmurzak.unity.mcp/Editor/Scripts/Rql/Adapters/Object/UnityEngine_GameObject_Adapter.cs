@@ -161,7 +161,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             path = PrefabPath(path);
             // Like CreateMaterial / CopyAsset / NewScene: missing folders are created, and removed again when the save fails.
-            return RqlEditorApi.InFolder(System.IO.Path.GetDirectoryName(path), () =>
+            return RqlEditorApi.InFolderOf(path, () =>
                 PrefabUtility.SaveAsPrefabAssetAndConnect(g, path, InteractionMode.UserAction, out var ok) is GameObject asset && ok
                     ? asset : throw new ArgumentException($"could not save a prefab at '{path}'"));
         }

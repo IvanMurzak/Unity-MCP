@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public Object CopyAsset(string path, string newPath)
         {
             newPath = CopyPath(path, newPath, AssetDatabase.IsValidFolder(Normalize(path)));
-            return InFolder(Path.GetDirectoryName(newPath), () => AssetDatabase.CopyAsset(path, newPath)
+            return InFolderOf(newPath, () => AssetDatabase.CopyAsset(path, newPath)
                 ? AssetDatabase.LoadMainAssetAtPath(newPath)
                 : throw new ArgumentException($"could not copy '{path}' to '{newPath}'"));
         }
@@ -76,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("move or rename an asset (missing folders are created); returns its new path")]
         public string MoveAsset(string path, string newPath)
         {
-            return InFolder(Path.GetDirectoryName(newPath), () =>
+            return InFolderOf(newPath, () =>
                 AssetDatabase.MoveAsset(path, newPath) is { Length: > 0 } error ? throw new ArgumentException(error) : newPath);
         }
 
@@ -104,7 +104,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             path = NewAssetPath(path, ".mat");
             var s = shader == null ? DefaultShader() : Shader.Find(shader) ?? throw new ArgumentException($"no shader named '{shader}'");
-            return InFolder(Path.GetDirectoryName(path), () =>
+            return InFolderOf(path, () =>
             {
                 var material = new Material(s) { name = Path.GetFileNameWithoutExtension(path) };
                 AssetDatabase.CreateAsset(material, path); // logs instead of throwing when it fails
@@ -144,7 +144,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         /// <summary>
         /// Creates the folder and its missing parents; with <paramref name="create"/> = false it only throws where it would.
-        /// Returns the outermost folder it created (or would create), or null when the folder exists.
+        /// Returns the outermost folder it created, or null when the folder exists.
         /// </summary>
         internal static string? EnsureFolder(string? path, bool create = true)
         {
@@ -160,12 +160,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         }
 
         /// <summary>
-        /// Runs <paramref name="write"/> after creating the missing folders of <paramref name="folder"/>; when it throws, the
+        /// Runs <paramref name="write"/> after creating the missing folders of <paramref name="assetPath"/>; when it throws, the
         /// folders created here are deleted again, so a failed call leaves no empty folders behind.
         /// </summary>
-        internal static T InFolder<T>(string? folder, Func<T> write)
+        internal static T InFolderOf<T>(string assetPath, Func<T> write)
         {
-            var created = EnsureFolder(folder);
+            var created = EnsureFolder(Path.GetDirectoryName(assetPath));
             try { return write(); }
             catch
             {

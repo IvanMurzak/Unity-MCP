@@ -38,7 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             if (string.IsNullOrWhiteSpace(path)) throw new System.ArgumentException("SaveAs needs a path such as \"Assets/Scenes/X.unity\"");
             path = RqlEditorApi.NewAssetPath(path, ".unity"); // Unity would overwrite an existing scene file
-            return RqlEditorApi.InFolder(System.IO.Path.GetDirectoryName(path), () => EditorSceneManager.SaveScene(s, path)
+            return RqlEditorApi.InFolderOf(path, () => EditorSceneManager.SaveScene(s, path)
                 ? true
                 : throw new System.InvalidOperationException($"Unity could not save scene '{s.name}' at '{path}' (the Console has the reason)"));
         }

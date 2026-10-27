@@ -35,7 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             // would leave the user with an untitled scene. An empty path would make SaveScene open the modal "Save Scene" dialog.
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("NewScene needs a path such as \"Assets/Scenes/X.unity\"");
             path = NewAssetPath(path, ".unity"); // Unity would overwrite an existing scene file
-            return InFolder(System.IO.Path.GetDirectoryName(path), () =>
+            return InFolderOf(path, () =>
             {
                 var scene = EditorSceneManager.NewScene(empty ? NewSceneSetup.EmptyScene : NewSceneSetup.DefaultGameObjects,
                     additive ? NewSceneMode.Additive : NewSceneMode.Single);
