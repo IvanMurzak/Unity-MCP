@@ -117,6 +117,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         internal static string? ValidateBatch(IReadOnlyList<MutationRecord> records)
         {
             Destroying = null;
+            if (EditorApplication.isPlaying && WritesProjectSettings(records))
+                return "Project Settings are not changed in Play Mode (the save would keep the game's runtime values, e.g. a paused timeScale): exit Play Mode first (editor | set isPlaying = false)";
             var prefabPaths = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             var destroying = new HashSet<Component>();
             foreach (var record in records)
@@ -141,6 +143,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var refused = UnmetRequirement(destroying);
             if (refused != null) Destroying = null; // nothing will run
             return refused;
+        }
+
+        // A write into a view whose undo owners are assets (the settings source's pages: ProjectSettings/*.asset).
+        private static bool WritesProjectSettings(IReadOnlyList<MutationRecord> records)
+        {
+            foreach (var record in records)
+                foreach (var owner in record.Owners)
+                {
+                    if (owner is UnityEngine.Object) break; // the nearest owner decides, as in Owners()
+                    if (owner is IRqlUndoOwners view)
+                    {
+                        foreach (var o in view.UndoOwners)
+                            if (o != null && EditorUtility.IsPersistent(o)) return true;
+                        break;
+                    }
+                }
+            return false;
         }
 
         // A component the call removes while another one that requires it stays, or components that require each other (no

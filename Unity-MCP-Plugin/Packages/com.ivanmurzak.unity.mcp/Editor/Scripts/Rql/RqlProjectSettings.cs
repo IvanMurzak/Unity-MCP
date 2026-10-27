@@ -102,7 +102,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private RqlQualitySettings() { }
 
         [RqlDescription("the quality level names, by index")]
-        public string[] levels => QualitySettings.names;
+        public IReadOnlyList<string> levels => QualitySettings.names; // a copy: read-only, so an element write is refused
 
         [RqlDescription("index of the level the Editor uses (the values below are that level's); assign an index of levels")]
         public int currentLevel
@@ -224,12 +224,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             set { Require(value, !string.IsNullOrWhiteSpace(value), "a non-empty version"); PlayerSettings.bundleVersion = value; }
         }
 
-        [RqlDescription("Color Space: Gamma or Linear (changing it reimports textures)")]
-        public ColorSpace colorSpace
-        {
-            get => PlayerSettings.colorSpace;
-            set { Require(value, value == ColorSpace.Gamma || value == ColorSpace.Linear, "Gamma or Linear"); PlayerSettings.colorSpace = value; }
-        }
+        // Read-only: switching reimports every texture, which Undo would not reverse (the setting would flip back, the textures not).
+        [RqlDescription("Color Space: Gamma or Linear (read-only here: change it in Project Settings > Player, it reimports textures)")]
+        public ColorSpace colorSpace => PlayerSettings.colorSpace;
 
         [RqlDescription("Run In Background: the player keeps running without focus")]
         public bool runInBackground { get => PlayerSettings.runInBackground; set => PlayerSettings.runInBackground = value; }

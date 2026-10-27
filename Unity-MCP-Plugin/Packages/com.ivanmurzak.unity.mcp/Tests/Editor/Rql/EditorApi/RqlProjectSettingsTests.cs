@@ -43,6 +43,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Time.fixedDeltaTime = _fixedDeltaTime;
             QualitySettings.vSyncCount = _vSyncCount;
             PlayerSettings.productName = _productName;
+            // Script setters do not dirty the settings assets: dirty them, so a test that saved its value cannot leave it on disk.
+            foreach (var file in new[] { "DynamicsManager", "TimeManager", "QualitySettings", "ProjectSettings" })
+                foreach (var asset in RqlProjectSettings.Asset(file))
+                    EditorUtility.SetDirty(asset);
             AssetDatabase.SaveAssets();
         }
 
@@ -94,6 +98,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsFalse(r.Ok, Table(r));
             Assert.AreEqual(0.02f, Time.fixedDeltaTime, 1e-6f);
             Assert.AreEqual(new Vector3(0, -9.81f, 0), Physics.gravity);
+        }
+
+        [Test]
+        public void LevelsAndColorSpaceAreReadOnly()
+        {
+            Assert.IsFalse(M("settings | set quality.levels = [\"A\"]").Ok);
+            Assert.IsFalse(M("settings | set player.colorSpace = \"Linear\"").Ok);
         }
 
         [Test]

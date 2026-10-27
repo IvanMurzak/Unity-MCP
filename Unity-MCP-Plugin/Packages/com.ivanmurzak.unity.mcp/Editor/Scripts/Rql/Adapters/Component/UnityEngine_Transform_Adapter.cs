@@ -105,6 +105,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             result = null;
             if (value is TransformOrPosition) { result = value; reason = null; return AdapterOutcome.Ok; }
+            if (value is Component component && component != null)
+            {
+                result = new TransformOrPosition(component.transform); // the Component adapter coerces only GameObjects to components
+                reason = null;
+                return AdapterOutcome.Ok;
+            }
             if (value is UnityEngine.Object o)
             {
                 if (o != null && kernel.TryCoerce(o, typeof(Transform), out var t, out _) && t is Transform transform && transform != null)
