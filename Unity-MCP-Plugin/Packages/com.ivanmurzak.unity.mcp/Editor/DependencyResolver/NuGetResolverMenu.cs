@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     static class NuGetResolverMenu
     {
         const string Tag = NuGetConfig.LogTag;
-        const string MenuPath = "Tools/AI Game Developer/Dependencies/Force Resolve NuGet DLLs";
+        public const string MenuPath = "Tools/AI Game Developer/Dependencies/Force Resolve NuGet DLLs";
 
         [MenuItem(MenuPath, priority = 1050)]
         public static void ForceResolve()
