@@ -56,7 +56,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             var path = MakeTexture();
             Assert.IsFalse(AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().Any());
-            AssertOk(RqlUnity.Mutate($"unity.asset(\"{path}\") | get importer | set textureType = \"Sprite\""));
+            // spriteImportMode too, as the Inspector does: on 6000.0 the texture had no sprite after textureType alone
+            AssertOk(RqlUnity.Mutate($"unity.asset(\"{path}\") | get importer | set textureType = \"Sprite\", spriteImportMode = \"Single\""));
             Assert.AreEqual(TextureImporterType.Sprite, ((TextureImporter)AssetImporter.GetAtPath(path)).textureType);
             Assert.IsTrue(AssetDatabase.LoadAllAssetsAtPath(path).OfType<Sprite>().Any(), "the texture was not reimported as a sprite");
             StringAssert.Contains("textureType: 8", File.ReadAllText(path + ".meta"));

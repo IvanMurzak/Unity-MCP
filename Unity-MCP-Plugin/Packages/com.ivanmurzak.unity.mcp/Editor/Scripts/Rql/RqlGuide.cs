@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  unity.asset(\"Assets/Mats/Red.mat\") | set properties[\"_Color\"] = \"(1, 0, 0, 1)\"\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set parent = unity.asset(\"Assets/Mats/Base.mat\")   make it a Material Variant of Base\n" +
             "  objects | where name starts-with \"Pillar\" | get components | where $ is MeshFilter | set sharedMesh = \"Cylinder\"   built-in mesh\n" +
-            "  unity.asset(\"Assets/Art/hero.png\") | get importer | set textureType = \"Sprite\"   import settings (the file is reimported)\n" +
+            "  unity.asset(\"Assets/Art/hero.png\") | get importer | set textureType = \"Sprite\", spriteImportMode = \"Single\"   import settings (reimported)\n" +
             "  objects | where name == \"Spawner\" | set targets = append(targets, ref(\"GameObject#1234\"))\n" +
             "Create / add / remove (call; the receipt's result column holds the new object's $ref for follow-up queries):\n" +
             "  editor | call CreateGameObject(\"Props\")                                   new root GameObject\n" +
