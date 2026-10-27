@@ -68,9 +68,16 @@ UserSettings/AI-Game-Developer-Config.json
 # Unity Render cache
 kernelsCache/*
 
-# Procedural Skills
+# Procedural Skills: the plugin writes SKILL.md files for the selected AI agent (Window/AI Game Developer,
+# `unity-skill-generate`, `unity-mcp-cli setup-skills`). The output depends on the OS (bash vs PowerShell
+# commands, line endings), the enabled tools and the installed extensions, so it is never committed.
+.claude/skills
 .github/skills
 .agent/skills
+.agents/skills
+.cline/skills
+.junie/skills
+.opencode/skills
 
 # AI agents
 opencode.json

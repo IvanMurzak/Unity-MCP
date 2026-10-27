@@ -37,10 +37,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         private static bool SaveAs(Scene s, string path)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new System.ArgumentException("SaveAs needs a path such as \"Assets/Scenes/X.unity\"");
-            path = RqlEditorApi.ScenePath(path);
-            return EditorSceneManager.SaveScene(s, path)
+            path = RqlEditorApi.NewAssetPath(path, ".unity"); // Unity would overwrite an existing scene file
+            return RqlEditorApi.InFolderOf(path, () => EditorSceneManager.SaveScene(s, path)
                 ? true
-                : throw new System.InvalidOperationException($"Unity could not save scene '{s.name}' at '{path}' (the Console has the reason)");
+                : throw new System.InvalidOperationException($"Unity could not save scene '{s.name}' at '{path}' (the Console has the reason)"));
         }
     }
 }

@@ -44,6 +44,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertFails(M("objects | where name == \"Crate\" | call SaveAsPrefab(\"Other/Crate.prefab\")"), "invalid-value", "not under Assets/");
         }
 
+        // A save that fails after the missing folders were created removes them: Unity refuses part of a prefab instance.
+        [Test]
+        public void AFailedSaveAsPrefabLeavesNoNewFolders()
+        {
+            var parent = new GameObject("Holder");
+            new GameObject("Part").transform.SetParent(parent.transform);
+            AssertOk(M($"objects | where name == \"Holder\" | call SaveAsPrefab(\"{Folder}/Holder.prefab\")"));
+            AssertFails(M($"objects | where name == \"Part\" | call SaveAsPrefab(\"{Folder}/New/Deep/Part.prefab\")"), "call-threw");
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/New"), "the folders the failed call created must be removed");
+        }
+
         // Two targets of one rql-mutate call saving to one path: the second save would fail after the first one happened, so
         // the call is rejected before either (on a dry run too).
         [Test]

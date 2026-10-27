@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using Rql.Execution;
-using UnityEditor;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
 {
@@ -29,17 +28,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
     public sealed class UnityEngine_InputSystem_InputActionAsset_Adapter : RqlTypeAdapter<InputActionAsset>
     {
         public override string Description =>
-            "InputActionAsset (.inputactions): name path maps actions controlSchemes; call AddMap(name), " +
+            "InputActionAsset (.inputactions): name assetPath maps actions controlSchemes; call AddMap(name), " +
             "AddControlScheme(name, requiredDevices?, optionalDevices?, bindingGroup?); maps / actions / bindings / schemes have their own " +
             "writable members and Remove(); every change is saved to the file";
 
         protected override void Members(MemberTable<InputActionAsset> m)
         {
-            m.Add("path", a => AssetDatabase.GetAssetPath(a), description: "asset path (empty for an asset created at runtime)")
-             .Add("maps", Maps, description: "the action maps (name, actions …)")
+            // assetPath is the member every asset has (Object.assetPath, read when named), as on Material.
+            m.Add("maps", Maps, description: "the action maps (name, actions …)")
              .Add("actions", Actions, description: "every action of every map (map, name, type, bindings …)")
              .Add("controlSchemes", Schemes, description: "the control schemes (name, bindingGroup, requiredDevices, optionalDevices)")
-             .Only("name", "path", "maps", "actions", "controlSchemes")
+             .Only("name", "assetPath", "maps", "actions", "controlSchemes")
              .ReadOnly("name");
 
             m.Untyped.AddMethod("AddMap", new[] { new CallableParameter("name", typeof(string)) }, typeof(ActionMapView),

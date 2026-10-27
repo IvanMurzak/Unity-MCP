@@ -160,9 +160,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         private static GameObject SaveAsPrefab(GameObject g, string path)
         {
             path = PrefabPath(path);
-            RqlEditorApi.EnsureFolder(System.IO.Path.GetDirectoryName(path)); // like CreateMaterial / CopyAsset / NewScene
-            return PrefabUtility.SaveAsPrefabAssetAndConnect(g, path, InteractionMode.UserAction, out var ok) is GameObject asset && ok
-                ? asset : throw new ArgumentException($"could not save a prefab at '{path}'");
+            // Like CreateMaterial / CopyAsset / NewScene: missing folders are created, and removed again when the save fails.
+            return RqlEditorApi.InFolderOf(path, () =>
+                PrefabUtility.SaveAsPrefabAssetAndConnect(g, path, InteractionMode.UserAction, out var ok) is GameObject asset && ok
+                    ? asset : throw new ArgumentException($"could not save a prefab at '{path}'"));
         }
 
         // The call validator: a new path, and inside rql-mutate not the path an earlier target of the same call saves to (the

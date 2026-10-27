@@ -109,6 +109,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             StringAssert.DoesNotContain("McpToolManager", rows);
         }
 
+        // The echoes are never captured, so they cannot take the entry limit: a busy session that logged MaxLogEntries echoes
+        // after a real entry still returns it.
+        [Test]
+        public void ConsoleLeavesOutTheEchoesBeforeItsLimit()
+        {
+            var marker = System.Guid.NewGuid().ToString("N");
+            Debug.Log($"real entry {marker}");
+            for (int i = 0; i < RqlEditorApi.MaxLogEntries; i++)
+                Debug.Log($"[AI] McpToolManager Success Response to AI: {marker} {i}");
+            UnityMcpPluginEditor.Instance.LogCollector!.Save();
+            var rows = Q($"console | where message contains \"{marker}\" | select message");
+            Assert.AreEqual(1, rows.Rows!.Count, Table(rows));
+            Assert.AreEqual($"real entry {marker}", Cell(rows));
+        }
+
         // Tags and Layers: read the lists, add a layer / tag, and use the layer by name. The test project's TagManager is
         // restored afterwards.
         [Test]
