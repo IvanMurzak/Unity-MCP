@@ -129,8 +129,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         public void EmptyNamesAreRejected()
         {
             var go = new GameObject("Named");
-            AssertFails(M("objects | where name == \"Named\" | set name = \"\""), "coercion-failed", "cannot be empty");
-            AssertFails(M("objects | where name == \"Named\" | set name = \"   \""), "coercion-failed", "cannot be empty");
+            AssertFails(M("objects | where name == \"Named\" | set name = \"\""), "invalid-value", "cannot be empty");
+            AssertFails(M("objects | where name == \"Named\" | set name = \"   \""), "invalid-value", "cannot be empty");
             Assert.AreEqual("Named", go.name);
             AssertOk(M("objects | where name == \"Named\" | set name = \"Renamed\""));
             Assert.AreEqual("Renamed", go.name);
@@ -142,11 +142,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         public void UnknownTagsAndOutOfRangeLayersFailBeforeAnyWrite()
         {
             var go = new GameObject("Tagged");
-            AssertFails(M("objects | where name == \"Tagged\" | set transform.position = \"(5, 5, 5)\", tag = \"NoSuchTag\""), "coercion-failed", "not defined");
+            AssertFails(M("objects | where name == \"Tagged\" | set transform.position = \"(5, 5, 5)\", tag = \"NoSuchTag\""), "invalid-value", "not defined");
             Assert.AreEqual(Vector3.zero, go.transform.position);
             Assert.AreEqual("Untagged", go.tag);
-            AssertFails(M("objects | where name == \"Tagged\" | set layer = 32"), "coercion-failed", "0..31");
-            AssertFails(M("objects | where name == \"Tagged\" | set layer = -1"), "coercion-failed", "0..31");
+            AssertFails(M("objects | where name == \"Tagged\" | set layer = 32"), "invalid-value", "0..31");
+            AssertFails(M("objects | where name == \"Tagged\" | set layer = -1"), "invalid-value", "0..31");
             Assert.AreEqual(0, go.layer);
 
             AssertOk(M("objects | where name == \"Tagged\" | set tag = \"Player\", layer = 4"));
@@ -171,13 +171,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         {
             LogAssert.ignoreFailingMessages = true; // Unity logs why it refused
             var go = new GameObject("Host", typeof(Rigidbody));
-            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Transform\")"), "getter-threw", "a Transform cannot be added");
-            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Renderer\")"), "getter-threw", "did not add Renderer");
-            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Rigidbody\")"), "getter-threw", "did not add Rigidbody");
-            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Rigidbody2D\")"), "getter-threw", "did not add Rigidbody2D");
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Transform\")"), "invalid-value", "a Transform cannot be added");
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Renderer\")"), "call-threw", "did not add Renderer"); // Unity refuses it at the call
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Rigidbody\")"), "call-threw", "did not add Rigidbody");
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Rigidbody2D\")"), "invalid-value", "Rigidbody2D conflicts with Rigidbody");
             Assert.AreEqual(2, go.GetComponents<Component>().Length);
             AssertOk(M("objects | where name == \"Host\" | call AddComponent(\"BoxCollider\")"));
             Assert.IsNotNull(go.GetComponent<BoxCollider>());
+        }
+
+        // RQL 0.2 call validators: every target is checked before the first call, on dry runs too.
+        [Test]
+        public void AddComponentIsCheckedForEveryTargetBeforeAnyIsAdded()
+        {
+            var free = new GameObject("PairA");
+            new GameObject("PairB", typeof(Rigidbody2D));
+            AssertFails(M("objects | where name starts-with \"Pair\" | call AddComponent(\"BoxCollider\")"), "invalid-value", "BoxCollider conflicts with Rigidbody2D");
+            Assert.IsNull(free.GetComponent<BoxCollider>());
+            AssertFails(M("objects | where name == \"PairB\" | call AddComponent(\"BoxCollider\")", dryRun: true), "invalid-value", "conflicts with Rigidbody2D");
+            AssertOk(M("objects | where name == \"PairA\" | call AddComponent(\"BoxCollider\")", dryRun: true));
+            Assert.IsNull(free.GetComponent<BoxCollider>());
         }
     }
 }

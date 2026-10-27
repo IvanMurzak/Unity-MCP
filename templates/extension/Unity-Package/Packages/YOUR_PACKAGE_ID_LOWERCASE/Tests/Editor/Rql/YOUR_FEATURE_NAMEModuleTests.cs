@@ -57,7 +57,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.YOUR_FEATURE_NAME
             Assert.GreaterOrEqual(queries.Count, 5);
             foreach (var q in queries)
             {
-                var r = M(q);
+                var r = Regex.IsMatch(q, @"\|\s*(set|call)\b") ? M(q) : Q(q); // a read-only example is a query (RQL 0.2: invalid-plan as a mutation)
                 Assert.IsTrue(r.Ok, q + "\n" + Table(r));
             }
 

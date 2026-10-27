@@ -33,6 +33,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return AssetDatabase.LoadMainAssetAtPath(newPath);
         }
 
+        // Call validators (companions RQL finds by name): the rejection is reported for every target before the first call,
+        // on dry runs too, so a call that would fail changes nothing (RQL spec §8). They only read; the calls repeat the checks.
+
+        public string? ValidateCopyAsset(string path, string newPath) => Rejection(() =>
+        {
+            var folder = AssetDatabase.IsValidFolder(Normalize(path));
+            if (!folder && AssetDatabase.LoadMainAssetAtPath(Normalize(path)) == null) throw new ArgumentException($"no asset at '{path}'");
+            CheckFolder(Path.GetDirectoryName(NewAssetPath(newPath, folder ? null : Path.GetExtension(path))));
+        });
+
+        public string? ValidateDeleteAsset(string path, bool force) => Rejection(() =>
+        {
+            var p = Normalize(path);
+            if (!AssetDatabase.IsValidFolder(p) && AssetDatabase.LoadMainAssetAtPath(p) == null) throw new ArgumentException($"no asset at '{path}'");
+            if (!force && Users(p) is { Count: > 0 } users) throw InUse(p, users);
+        });
+
+        public string? ValidateCreateMaterial(string path, string? shader) => Rejection(() =>
+        {
+            path = NewAssetPath(path, ".mat");
+            if (shader != null && Shader.Find(shader) == null) throw new ArgumentException($"no shader named '{shader}'");
+            CheckFolder(Path.GetDirectoryName(path));
+        });
+
+        /// <summary>The message a check throws (<see cref="ArgumentException"/>), or null when it passes.</summary>
+        internal static string? Rejection(Action check)
+        {
+            try { check(); return null; }
+            catch (ArgumentException e) { return e.Message; }
+        }
+
+        /// <summary>Throws where <see cref="EnsureFolder"/> would (a path not under Assets/), without creating anything.</summary>
+        internal static void CheckFolder(string? path)
+        {
+            if (string.IsNullOrEmpty(path)) return;
+            for (path = Normalize(path!); !AssetDatabase.IsValidFolder(path); path = Normalize(path))
+            {
+                var parent = Path.GetDirectoryName(path);
+                if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
+                path = parent;
+            }
+        }
+
         [RqlCallable("move or rename an asset; returns its new path")]
         public string MoveAsset(string path, string newPath)
         {
@@ -46,11 +89,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public void DeleteAsset(string path, bool force = false)
         {
             path = Normalize(path);
-            if (!force && Users(path) is { Count: > 0 } users)
-                throw new ArgumentException($"'{path}' is used by {users.Count} object(s) in the open scenes: {Preview(users)}. " +
-                                            $"Clear those references first, or DeleteAsset(\"{path}\", true) to delete it anyway (the references become missing)");
+            if (!force && Users(path) is { Count: > 0 } users) throw InUse(path, users);
             if (!AssetDatabase.MoveAssetToTrash(path)) throw new ArgumentException($"could not delete '{path}'");
         }
+
+        static ArgumentException InUse(string path, List<string> users) =>
+            new ArgumentException($"'{path}' is used by {users.Count} object(s) in the open scenes: {Preview(users)}. " +
+                                  $"Clear those references first, or DeleteAsset(\"{path}\", true) to delete it anyway (the references become missing)");
 
         [RqlCallable("create a folder (and missing parents), e.g. \"Assets/Art/Materials\"; returns its path")]
         public string CreateFolder(string path)

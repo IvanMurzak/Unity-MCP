@@ -63,9 +63,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         {
             LogAssert.ignoreFailingMessages = true; // Unity logs why it refused
             var go = new GameObject("Owner", typeof(Rigidbody), typeof(FixedJoint));
-            AssertFails(M("objects | get components | where $ is Transform | call Destroy()"), "getter-threw", "cannot be removed");
+            AssertFails(M("objects | get components | where $ is Transform | call Destroy()"), "invalid-value", "cannot be removed");
             // FixedJoint requires the Rigidbody: Unity keeps it and only logs.
-            AssertFails(M("objects | get components | where $ is Rigidbody | call Destroy()"), "getter-threw", "did not remove Rigidbody");
+            AssertFails(M("objects | get components | where $ is Rigidbody | call Destroy()"), "invalid-value", "FixedJoint on 'Owner' requires Rigidbody");
             Assert.IsNotNull(go.GetComponent<Rigidbody>());
             AssertOk(M("objects | get components | where $ is FixedJoint | call Destroy()"));
             AssertOk(M("objects | get components | where $ is Rigidbody | call Destroy()"));
@@ -77,8 +77,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         public void NameAndTagThroughAComponentAreChecked()
         {
             var go = new GameObject("Lamp", typeof(Light));
-            AssertFails(M("objects | get components | where $ is Light | set tag = \"NoSuchTag\""), "coercion-failed", "not defined");
-            AssertFails(M("objects | get components | where $ is Light | set name = \"\""), "coercion-failed", "cannot be empty");
+            AssertFails(M("objects | get components | where $ is Light | set tag = \"NoSuchTag\""), "invalid-value", "not defined");
+            AssertFails(M("objects | get components | where $ is Light | set name = \"\""), "invalid-value", "cannot be empty");
             Assert.AreEqual("Untagged", go.tag);
             Assert.AreEqual("Lamp", go.name);
             AssertOk(M("objects | get components | where $ is Light | set name = \"Bulb\""));

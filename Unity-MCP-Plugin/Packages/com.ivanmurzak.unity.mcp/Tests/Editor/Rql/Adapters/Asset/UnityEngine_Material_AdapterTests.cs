@@ -54,13 +54,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         [Test]
         public void RangePropertiesAreValidated()
         {
-            AssertFails(M(Mat + " | set properties[\"_Glossiness\"] = 2"), "coercion-failed", "must be within");
+            AssertFails(M(Mat + " | set properties[\"_Glossiness\"] = 2"), "invalid-value", "must be within");
             Assert.AreEqual(0.5f, _mat.GetFloat("_Glossiness"), 1e-6f);
         }
 
         [Test]
         public void UnknownPropertiesAreRejected() =>
-            AssertFails(M(Mat + " | set properties[\"_NoSuchProperty\"] = 1"), "coercion-failed", "no entry");
+            AssertFails(M(Mat + " | set properties[\"_NoSuchProperty\"] = 1"), "invalid-value", "no entry");
 
         [Test]
         public void OnlySafeMembersAreExposed()
