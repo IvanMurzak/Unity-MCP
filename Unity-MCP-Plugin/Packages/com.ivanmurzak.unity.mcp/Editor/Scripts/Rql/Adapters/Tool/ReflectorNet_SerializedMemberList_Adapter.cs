@@ -80,7 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             member = null;
             if (typeName == null)
             {
-                reason = value is IList<object?>
+                reason = value is System.Collections.IEnumerable && !(value is string) && !(value is ObjectValue)
                     ? $"parameter '{name}': lists are not supported (pass each value as its own parameter, or text to split in the code)"
                     : value is Missing
                         // A name RQL cannot resolve here, e.g. a source (objects, scenes) used as a value.

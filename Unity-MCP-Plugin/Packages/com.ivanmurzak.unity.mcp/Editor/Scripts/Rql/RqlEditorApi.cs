@@ -78,35 +78,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlDescription("the project's tags (Untagged, MainCamera … and the added ones)")]
         public string[] tags => UnityEditorInternal.InternalEditorUtility.tags;
 
-        [RqlCallable("add a layer in the first free user layer (8..31) of Tags and Layers, or keep the one that has this name; returns its index (undoable)")]
+        [RqlCallable("add a layer in the first free user layer (8..31, then 3, 6, 7) of Tags and Layers, or keep the one that has this name; returns its index (undoable)")]
         public int AddLayer(string name)
         {
             if (ValidateAddLayer(name) is { } problem) throw new ArgumentException(problem);
             var existing = LayerMask.NameToLayer(name);
             if (existing >= 0) return existing;
             var (manager, layerList) = TagManager("layers");
-            for (int i = FirstUserLayer; i < layerList.arraySize; i++)
-            {
-                var slot = layerList.GetArrayElementAtIndex(i);
-                if (!string.IsNullOrEmpty(slot.stringValue)) continue;
-                slot.stringValue = name;
-                manager.ApplyModifiedProperties();
-                return i;
-            }
-            throw new ArgumentException("every user layer (8..31) is taken");
+            var free = FreeUserLayer() ?? throw new ArgumentException(NoFreeLayer);
+            layerList.GetArrayElementAtIndex(free).stringValue = name;
+            manager.ApplyModifiedProperties();
+            return free;
         }
 
         public string? ValidateAddLayer(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) return "a layer name cannot be empty";
-            if (LayerMask.NameToLayer(name) >= 0) return null;
-            return LayerNames().Skip(FirstUserLayer).Any(string.IsNullOrEmpty) ? null : "every user layer (8..31) is taken";
+            if (string.IsNullOrWhiteSpace(name) || name.Trim() != name) return "a layer name cannot be empty or start / end with spaces";
+            return LayerMask.NameToLayer(name) >= 0 || FreeUserLayer() != null ? null : NoFreeLayer;
         }
 
         [RqlCallable("add a tag to Tags and Layers; false when it already exists (undoable)")]
         public bool AddTag(string name)
         {
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("a tag cannot be empty");
+            if (ValidateAddTag(name) is { } problem) throw new ArgumentException(problem);
             if (Array.IndexOf(tags, name) >= 0) return false;
             var (manager, tagList) = TagManager("tags");
             tagList.InsertArrayElementAtIndex(tagList.arraySize);
@@ -115,7 +109,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return true;
         }
 
-        private const int FirstUserLayer = 8;
+        public string? ValidateAddTag(string name) =>
+            string.IsNullOrWhiteSpace(name) || name.Trim() != name ? "a tag cannot be empty or start / end with spaces" : null;
+
+        // The layers a project may name: 8..31 first (where users expect them), then the free built-in slots 3, 6 and 7.
+        private static readonly int[] UserLayers = Enumerable.Range(8, 24).Concat(new[] { 3, 6, 7 }).ToArray();
+        private const string NoFreeLayer = "every user layer (3, 6, 7, 8..31) is taken";
+
+        private static int? FreeUserLayer()
+        {
+            var names = LayerNames();
+            foreach (var i in UserLayers)
+                if (string.IsNullOrEmpty(names[i])) return i;
+            return null;
+        }
 
         // ProjectSettings/TagManager.asset as a SerializedObject (its writes register Undo), and one of its arrays.
         private static (SerializedObject Manager, SerializedProperty List) TagManager(string list)

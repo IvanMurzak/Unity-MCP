@@ -139,8 +139,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             finally
             {
                 EditorJsonUtility.FromJsonOverwrite(saved, manager);
+                EditorUtility.SetDirty(manager);
                 AssetDatabase.SaveAssets();
             }
+            Assert.AreEqual(-1, LayerMask.NameToLayer("RqlTestLayer"), "the TagManager was restored");
         }
 
         // rql-mutate's limit of 20 targets: the hint names the tool's max_targets argument, which raises it.

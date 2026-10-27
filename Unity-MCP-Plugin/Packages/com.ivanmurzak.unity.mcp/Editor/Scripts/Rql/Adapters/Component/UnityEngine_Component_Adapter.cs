@@ -44,7 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             {
                 try
                 {
-                    foreach (var blocker in Blockers(c, out _))
+                    foreach (var (blocker, _) in Blockers(c))
                         if (batch.IsDestroying(blocker)) Destroy(blocker);
                 }
                 finally { batch.Removing.Remove(c); }
@@ -58,8 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         internal static string? ValidateDestroy(Component c)
         {
             if (c == null || c is Transform || !(RqlUnity.Batch is { } batch)) return Rejection(c);
-            var blockers = Blockers(c, out var reason);
-            batch.Destroying(c, blockers, reason + " (or in the same call)");
+            batch.Destroying(c, Blockers(c));
             return null;
         }
 
@@ -68,15 +67,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             if (c == null) return null;
             if (c is Transform) return "a Transform cannot be removed; destroy its GameObject instead (… | call Destroy())";
-            return Blockers(c, out var reason).Count > 0 ? reason : null;
+            var blockers = Blockers(c);
+            return blockers.Count > 0 ? blockers[0].Reason : null;
         }
 
-        // The other components on c's GameObject whose [RequireComponent] only c satisfies, and the message for the first one.
-        private static List<Component> Blockers(Component c, out string reason)
+        // The other components on c's GameObject whose [RequireComponent] only c satisfies, each with the reason it blocks. Inside
+        // rql-mutate a provider the same call removes does not count (two colliders removed together leave a Collider requirement unmet).
+        private static List<(Component Blocker, string Reason)> Blockers(Component c)
         {
-            reason = "";
-            var blockers = new List<Component>();
+            var blockers = new List<(Component, string)>();
             var type = c.GetType();
+            var batch = RqlUnity.Batch;
+            bool Survives(Component x) => x != null && x != c && (batch == null || !batch.IsDestroying(x));
             foreach (var other in c.GetComponents<Component>())
             {
                 if (other == null || other == c) continue;
@@ -85,10 +87,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                     foreach (var required in new[] { require.m_Type0, require.m_Type1, require.m_Type2 })
                     {
                         // Another component of the required type keeps the requirement met.
-                        if (required == null || !required.IsAssignableFrom(type) || c.GetComponents(required).Length >= 2 || blockers.Contains(other)) continue;
-                        if (blockers.Count == 0)
-                            reason = $"{other.GetType().Name} on '{c.gameObject.name}' requires {required.Name}: remove the {other.GetType().Name} first";
-                        blockers.Add(other);
+                        if (required == null || !required.IsAssignableFrom(type) || Array.Exists(c.GetComponents(required), Survives) || blockers.Exists(b => b.Item1 == other)) continue;
+                        blockers.Add((other, $"{other.GetType().Name} on '{c.gameObject.name}' requires {required.Name}: remove the {other.GetType().Name} first"));
                     }
                 }
             }

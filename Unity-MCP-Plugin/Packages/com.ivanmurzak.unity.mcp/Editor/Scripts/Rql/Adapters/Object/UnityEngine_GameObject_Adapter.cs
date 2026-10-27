@@ -44,7 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
              .Add<int>("layer", g => g.layer, (g, v) => g.layer = v, (g, v) => ValidateLayer(v), "layer index 0..31 (by name: layerName)")
              .Add<string>("layerName", g => LayerMask.LayerToName(g.layer), (g, v) => g.layer = LayerMask.NameToLayer(v), (g, v) => ValidateLayerName(v),
                  "the layer's name, e.g. set layerName = \"Pickups\" (a defined layer; editor | call AddLayer(name) adds one)")
-             .Add<string?>("path", g => g.GetPath(), description: "hierarchy path, e.g. \"Level/Props/Crate\" (what unity.find accepts)")
+             .Add<string?>("path", g => g.GetPath(), description: "hierarchy path, e.g. \"Level/Props/Crate\" (for a scene object: what unity.find accepts; in a prefab: from its root)")
              .Add<List<string>>("staticFlags", g => StaticFlags(g), (g, v) => SetStaticFlags(g, v), ValidateStaticFlags,
                  "Static Editor Flags (" + StaticFlagList + "): filter with staticFlags contains \"ContributeGI\"; " +
                  "assign a list, e.g. [\"ContributeGI\", \"BatchingStatic\"] ([] clears; isStatic sets them all)")

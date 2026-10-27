@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Rql;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -116,13 +117,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             private readonly Dictionary<string, object> _claimedPaths = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             private readonly HashSet<Component> _destroying = new HashSet<Component>();
-            private readonly List<(Component Target, List<Component> Blockers, string Reason)> _deferred = new List<(Component, List<Component>, string)>();
+            private readonly List<(Component Target, List<(Component Blocker, string Reason)> Blockers)> _deferred =
+                new List<(Component, List<(Component, string)>)>();
             private string? _rejection;
 
-            /// <summary>Claims a new asset path for <paramref name="owner"/>; the earlier target that claimed it, or null.</summary>
+            /// <summary>
+            /// Claims a new asset path for <paramref name="owner"/>; the earlier target that claimed it, or null. Every target is
+            /// validated once, so a second claim (the same GameObject reached twice included) is always a conflict.
+            /// </summary>
             public object? Claim(string path, object owner)
             {
-                if (_claimedPaths.TryGetValue(path, out var earlier) && !ReferenceEquals(earlier, owner)) return earlier;
+                if (_claimedPaths.TryGetValue(path, out var earlier)) return earlier;
                 _claimedPaths[path] = owner;
                 return null;
             }
@@ -137,20 +142,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             /// <paramref name="target"/> is destroyed by this call; its <paramref name="blockers"/> (components that require it)
             /// must be destroyed by the same call, which is known only once every target was validated.
             /// </summary>
-            public void Destroying(Component target, List<Component> blockers, string reason)
+            public void Destroying(Component target, List<(Component Blocker, string Reason)> blockers)
             {
                 _destroying.Add(target);
-                if (blockers.Count > 0) _deferred.Add((target, blockers, reason));
+                if (blockers.Count > 0) _deferred.Add((target, blockers));
             }
 
-            /// <summary>The first deferred check the whole call does not meet, or null.</summary>
+            /// <summary>
+            /// The first deferred check the whole call does not meet, or null: a blocker the call leaves in place, or components
+            /// that require each other (no order removes them; Unity keeps both).
+            /// </summary>
             public string? Unmet()
             {
-                foreach (var (target, blockers, reason) in _deferred)
-                    if (blockers.Exists(b => b != null && !_destroying.Contains(b)))
-                        return $"cannot call Destroy() on {Engine.RefOf(target)}: {reason}; nothing was called";
-                return null;
+                foreach (var (target, blockers) in _deferred)
+                    foreach (var (blocker, reason) in blockers)
+                        if (blocker != null && !_destroying.Contains(blocker))
+                            return Rejected(target, reason + " (or in the same call)");
+                // Every blocker is a target too: replay the removal order (dependents first); what never frees up is a cycle.
+                var pending = new List<(Component Target, List<(Component Blocker, string Reason)> Blockers)>(_deferred);
+                var removed = new HashSet<Component>(_destroying.Where(c => !_deferred.Exists(d => d.Target == c)));
+                for (var progress = true; progress && pending.Count > 0;)
+                {
+                    progress = false;
+                    for (int i = pending.Count - 1; i >= 0; i--)
+                    {
+                        if (!pending[i].Blockers.TrueForAll(b => b.Blocker == null || removed.Contains(b.Blocker))) continue;
+                        removed.Add(pending[i].Target);
+                        pending.RemoveAt(i);
+                        progress = true;
+                    }
+                }
+                return pending.Count == 0 ? null
+                    : Rejected(pending[0].Target, pending[0].Blockers[0].Reason + " and they require each other: destroy their GameObject instead");
             }
+
+            private static string Rejected(Component target, string reason) =>
+                $"cannot call Destroy() on {Engine.RefOf(target)}: {reason}; nothing was called";
 
             /// <summary>Before the first write (the engine skips this hook on dry runs): veto the call when a deferred check is unmet.</summary>
             public void BeforeWrite()

@@ -107,7 +107,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
             "value is checked before anything is written; a failure changes nothing. Undoable: one Undo step per call (Ctrl+Z; from an " +
-            "agent: script-execute UnityEditor.Undo.PerformUndo(), then editor | call SaveScenes()). Changed assets, " +
+            "agent: script-execute UnityEditor.Undo.PerformUndo(), then editor | call SaveScenes() and editor | call SaveAssets()). Changed assets, " +
             "scenes and the open prefab are saved to disk automatically; an untitled scene needs SaveAs(path). " +
             "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; " +
             "a read-only member fails with readonly-member instead of being approximated.\n" +
