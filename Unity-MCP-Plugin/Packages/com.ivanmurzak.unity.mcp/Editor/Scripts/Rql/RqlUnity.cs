@@ -33,6 +33,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>Most assets <c>unity.assets(...)</c> loads per call (loading assets is expensive).</summary>
         public const int MaxAssets = 200;
 
+        /// <summary>Targets one rql-mutate call may change without <c>max_targets</c>.</summary>
+        public const int DefaultMaxTargets = 200;
+
         private static RqlEngine? _engine;
 
         public static RqlEngine Engine => _engine ??= Create();
@@ -42,18 +45,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public static RqlEngine Create()
         {
-            // ref("Name") hints name the finder; the tools take no budgets argument (only rql-mutate's max_targets, which the
-            // mutation-limit hint names), so no hint advises raising budgets.*.
-            var engine = new RqlEngine(AccessorMode.Compiled) { RuntimeName = "unity", FindHint = "unity.find(\"…\")" };
+            // ref("Name") hints name the finder, no-match hints the schema tool; the tools take no budgets argument (only
+            // rql-mutate's max_targets, which the mutation-limit hint names), so no hint advises raising budgets.*.
+            var engine = new RqlEngine(AccessorMode.Compiled)
+            {
+                RuntimeName = "unity",
+                FindHint = "unity.find(\"…\")",
+                SchemaHint = API.Tool_Rql.SchemaToolId,
+                EnumAliases = UnityTypes.EnumAliases,
+            };
+            // Streams of components and assets are polymorphic: a member that some Unity type has is not a typo (it does not
+            // fail an empty mutation), even when the types reachable from the sources (GameObject, Component …) lack it.
+            engine.IsKnownMember = name => UnityTypes.IsKnownMember(engine, name);
             engine.Defaults.BudgetsAdjustable = false;
             engine.ResolveStableRef = ResolveStableRef;
 
             engine.Mutations.Enabled = true;
-            engine.Mutations.LimitHint = (op, limit) =>
-                $"narrow the query (where / ref(...)) or split the change into batches of {limit}: … | first {limit} | {op} …, then " +
-                $"… | skip {limit} | first {limit} | {op} … (repeat plain first {limit} instead when the change removes the items from your where)" +
-                (limit < engine.Mutations.HardMaxTargets
-                    ? $"; or pass max_targets (up to {engine.Mutations.HardMaxTargets}) when the bulk change is intended" : "");
+            // One mutation is one Undo step, so the limit guards breadth only (RQL spec §8: editor hosts default to ~200).
+            engine.Mutations.MaxTargets = DefaultMaxTargets;
+            engine.Mutations.LimitArgument = "max_targets";
             // Checks that span the targets of one set / call stage (two SaveAsPrefab to one path; a component removed with or
             // without the components that require it), before anything runs, dry runs included.
             engine.Mutations.ValidateBatch = ValidateBatch;

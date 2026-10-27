@@ -247,6 +247,53 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             StringAssert.Contains("unity.find(", Table(byName));
         }
 
+        // Hints name what this host has: the schema tool, a real source, and the source that has an unknown call method.
+        [Test]
+        public void HintsNameTheHostsToolsAndSources()
+        {
+            var noSource = Q("[0, 1, 2] | select $");
+            AssertFails(noSource, "unknown-source", "(e.g. objects)");
+            StringAssert.DoesNotContain("e.g. world", Table(noSource)); // (an extension may add tilemap.worldToCell)
+            AssertFails(M("objects | where name == \"Alpha\" | call CreateGameObject(\"Made\")"), "unknown-function",
+                "editor | call CreateGameObject");
+        }
+
+        // Members of any Unity type count as known (internal scripts and adapter members too): a polymorphic set that no item
+        // reaches stays a no-op; a name no type has is a typo that fails.
+        [Test]
+        public void KnownMembersCoverEveryUnityType()
+        {
+            Assert.IsTrue(UnityTypes.IsKnownMember(RqlUnity.Engine, "orthographicSize"));
+            Assert.IsTrue(UnityTypes.IsKnownMember(RqlUnity.Engine, "rqlInternalOnlyMember"), "internal MonoBehaviour field");
+            Assert.IsTrue(UnityTypes.IsKnownMember(RqlUnity.Engine, "prefabSource"), "adapter member");
+            Assert.IsFalse(UnityTypes.IsKnownMember(RqlUnity.Engine, "transfrom"));
+            AssertOk(M("objects | get components | where rqlInternalOnlyMember > 1 | set rqlInternalOnlyMember = 2"));
+            AssertFails(M("objects | get components | where rqlInternalOnlyMembr > 1 | set rqlInternalOnlyMembr = 2"), "unknown-member");
+        }
+
+        // c ? a : b and if(c, a, b); only the taken branch runs.
+        [Test]
+        public void ConditionalsPickABranch()
+        {
+            var r = Q("objects | where name in [\"Alpha\", \"Lamp\"] | get components | where not ($ is Transform) | select k = ($ is Light ? \"light\" : \"other\")");
+            Assert.AreEqual("light", Cell(r), Table(r));
+            Assert.AreEqual("on", Cell(Q("objects | where name == \"Alpha\" | select k = if(active, \"on\", \"off\")")));
+        }
+
+        // Enum values also take the Inspector's names (nicified or [InspectorName]).
+        [Test]
+        public void EnumsAcceptInspectorNames()
+        {
+            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.name = "Cube";
+            AssertOk(M("objects | where name == \"Cube\" | get components | where $ is MeshRenderer | set shadowCastingMode = \"Two Sided\""));
+            Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.TwoSided, cube.GetComponent<MeshRenderer>().shadowCastingMode);
+            Assert.AreEqual("Cube", Cell(Q("objects | get components | where $ is MeshRenderer and shadowCastingMode == \"Two Sided\" | select gameObject.name")));
+            var aliases = UnityTypes.EnumAliases(typeof(UnityEngine.Rendering.ShadowCastingMode))!;
+            Assert.AreEqual("ShadowsOnly", aliases["Shadows Only"]);
+            Assert.IsFalse(aliases.ContainsKey("On"), "an entry's own name is never an alias");
+        }
+
         [Test]
         public void ToolsReturnTextResults()
         {
@@ -258,5 +305,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             var schema = tool.Schema("Transform");
             Assert.AreEqual(ResponseStatus.Success, schema.Status);
         }
+    }
+
+    // Only for KnownMembersCoverEveryUnityType: an internal script type whose member no other type declares.
+    internal sealed class RqlInternalOnlyBehaviour : MonoBehaviour
+    {
+        public int rqlInternalOnlyMember;
     }
 }
