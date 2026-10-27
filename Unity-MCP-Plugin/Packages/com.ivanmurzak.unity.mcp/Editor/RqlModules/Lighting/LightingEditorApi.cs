@@ -77,6 +77,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
                 throw new ArgumentException($"'{path}' must be an asset path under Assets/ ending in .lighting, e.g. \"Assets/Lighting/Outdoor.lighting\"");
             if (AssetDatabase.LoadMainAssetAtPath(path) != null)
                 throw new ArgumentException($"an asset already exists at '{path}'; assign it with: lighting | call UseSettings(\"{path}\")");
+            if (File.Exists(path) || Directory.Exists(path)) // on disk, not imported yet: Unity would replace it
+                throw new ArgumentException($"'{path}' is taken on disk by a file Unity has not imported (RefreshAssets() imports it)");
             RqlEditorApi.EnsureFolder(Path.GetDirectoryName(path), create: false);
             return path;
         }

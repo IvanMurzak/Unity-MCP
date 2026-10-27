@@ -68,8 +68,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Animation
         public AnimatorController CreateController(string path, Motion? motion = null)
         {
             path = RqlEditorApi.NewModuleAssetPath(path, ".controller");
-            var controller = RqlEditorApi.InFolderOf(path, () => AnimatorController.CreateAnimatorControllerAtPath(path)
-                ?? throw new ArgumentException($"could not create an AnimatorController at '{path}'"));
+            // Unity returns the controller even when it could not save it (CreateAsset only logged): checked here, so the
+            // folders created for it are removed and no unsaved controller is returned.
+            var controller = RqlEditorApi.InFolderOf(path, () =>
+            {
+                var c = AnimatorController.CreateAnimatorControllerAtPath(path);
+                if (c != null && AssetDatabase.Contains(c)) return c;
+                if (c != null) UnityEngine.Object.DestroyImmediate(c);
+                throw new ArgumentException($"could not create an AnimatorController at '{path}'");
+            });
             if (motion != null) controller.AddMotion(motion);
             return controller;
         }

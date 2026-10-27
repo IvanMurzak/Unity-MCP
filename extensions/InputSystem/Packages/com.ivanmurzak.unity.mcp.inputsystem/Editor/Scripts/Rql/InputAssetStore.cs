@@ -161,9 +161,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
             // Missing folders are created, and removed again (with a file written into them) when the write or import fails.
             return RqlEditorApi.InFolderOf(path, () =>
             {
-                Write(path, json);
-                return AssetDatabase.LoadAssetAtPath<InputActionAsset>(path)
-                    ?? throw new InvalidOperationException($"'{path}' was written but did not import as an InputActionAsset");
+                try
+                {
+                    Write(path, json);
+                    return AssetDatabase.LoadAssetAtPath<InputActionAsset>(path)
+                        ?? throw new InvalidOperationException($"'{path}' was written but did not import as an InputActionAsset");
+                }
+                catch
+                {
+                    if (!AssetDatabase.DeleteAsset(path) && File.Exists(path)) File.Delete(path); // the new file goes too
+                    throw;
+                }
             });
         }
 

@@ -164,10 +164,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public static string NewModuleAssetPath(string? path, string extension)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("path is empty");
-            path = path!.Replace('\\', '/');
+            path = Normalize(path!);
             if (!path.StartsWith("Assets/", StringComparison.Ordinal)) throw new ArgumentException($"'{path}' must start with Assets/");
             if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"'{path}' must end with {extension}");
-            if (AssetDatabase.LoadMainAssetAtPath(path) != null || File.Exists(path))
+            if (AssetDatabase.LoadMainAssetAtPath(path) != null || File.Exists(path) || Directory.Exists(path))
                 throw new ArgumentException($"an asset already exists at '{path}' (choose another path)");
             EnsureFolder(Path.GetDirectoryName(path), create: false);
             return path;
@@ -184,10 +184,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (string.IsNullOrEmpty(path)) return null;
             path = Normalize(path!);
             if (AssetDatabase.IsValidFolder(path)) return null;
+            // Checked before the disk: "Library", "ProjectSettings" … exist on disk but are no asset folders.
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal) && !path.StartsWith("Packages/", StringComparison.Ordinal))
+                throw new ArgumentException($"'{path}' is not under Assets/");
             var file = File.Exists(path);
             if (file || Directory.Exists(path))
-                throw new ArgumentException($"could not create the folder '{path}': it is taken on disk by a " +
-                                            (file ? "file" : "folder Unity has not imported, or one whose name differs in case (RefreshAssets() imports new files)"));
+                throw new ArgumentException($"could not create the folder '{path}': it is taken on disk by a " + (file ? "file" :
+                    "folder Unity has not imported: a new one (RefreshAssets() imports it), one Unity ignores (\"X~\", \".X\") or one whose name differs in case"));
             var parent = Path.GetDirectoryName(path);
             if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
             parent = Normalize(parent);
@@ -215,7 +218,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             try { return write(); }
             catch
             {
-                if (created != null) AssetDatabase.DeleteAsset(created);
+                if (created != null)
+                    try { AssetDatabase.DeleteAsset(created); }
+                    catch (Exception e) { Debug.LogWarning($"[RQL] could not remove the folder '{created}' after a failed write: {e.Message}"); }
                 throw;
             }
         }
@@ -235,7 +240,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             }
             finally
             {
-                if (!saved) Object.DestroyImmediate(asset);
+                if (!saved && !EditorUtility.IsPersistent(asset)) Object.DestroyImmediate(asset); // an asset cannot be destroyed
             }
             return saved ? asset : throw new ArgumentException($"could not create an asset at '{path}'");
         });
