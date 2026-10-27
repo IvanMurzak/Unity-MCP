@@ -10,7 +10,6 @@
 
 #nullable enable
 using System;
-using System.IO;
 using UnityEditor;
 using UnityEngine;
 
@@ -82,19 +81,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Terrains
             $"(33, 65, 129, 257, 513, 1025, 2049, 4097); nearest to {value}: {NearestHeightmapResolution(value)}";
 
         private static bool IsPowerOfTwo(int v) => v > 0 && (v & (v - 1)) == 0;
-
-        /// <summary>
-        /// Validate a new asset path: under Assets/, the expected extension, not overwriting an existing asset, and folders that
-        /// can be created (the call creates them with <see cref="RqlEditorApi.SaveNewAsset{T}"/>).
-        /// </summary>
-        public static string NewAssetPath(string path, string extension)
-        {
-            path = path.Replace('\\', '/');
-            if (!path.StartsWith("Assets/", StringComparison.Ordinal)) throw new ArgumentException($"'{path}' must start with Assets/");
-            if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"'{path}' must end with {extension}");
-            if (AssetDatabase.LoadMainAssetAtPath(path) != null) throw new ArgumentException($"an asset already exists at '{path}' (choose another path)");
-            RqlEditorApi.EnsureFolder(Path.GetDirectoryName(path), create: false);
-            return path;
-        }
     }
 }

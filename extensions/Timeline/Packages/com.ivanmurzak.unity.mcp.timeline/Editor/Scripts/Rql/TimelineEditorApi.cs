@@ -49,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Timelines
         [RqlCallable("create a SignalAsset at path (\"Assets/…/X.signal\") for SignalEmitter markers (set asset = …) and SignalReceivers; returns it")]
         public SignalAsset CreateSignal(string path)
         {
-            path = TimelineOps.NewAssetPath(path, ".signal");
+            path = RqlEditorApi.NewModuleAssetPath(path, ".signal");
             var signal = ScriptableObject.CreateInstance<SignalAsset>();
             signal.name = Path.GetFileNameWithoutExtension(path);
             return RqlEditorApi.SaveNewAsset(signal, path);
@@ -59,13 +59,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Timelines
         public string? ValidateCreate(string path, double frameRate, double fixedDuration) =>
             RqlEditorApi.Rejection(() => CreatePath(path, frameRate, fixedDuration));
 
-        public string? ValidateCreateSignal(string path) => RqlEditorApi.Rejection(() => TimelineOps.NewAssetPath(path, ".signal"));
+        public string? ValidateCreateSignal(string path) => RqlEditorApi.Rejection(() => RqlEditorApi.NewModuleAssetPath(path, ".signal"));
 
         private static string CreatePath(string path, double frameRate, double fixedDuration)
         {
             if (frameRate <= 0.0 || frameRate > 1000.0) throw new ArgumentException($"frameRate {frameRate} must be within (0, 1000]");
             if (fixedDuration < 0.0) throw new ArgumentException($"fixedDuration {fixedDuration} must be >= 0 (0 = based on clips)");
-            return TimelineOps.NewAssetPath(path, ".playable");
+            return RqlEditorApi.NewModuleAssetPath(path, ".playable");
         }
     }
 }

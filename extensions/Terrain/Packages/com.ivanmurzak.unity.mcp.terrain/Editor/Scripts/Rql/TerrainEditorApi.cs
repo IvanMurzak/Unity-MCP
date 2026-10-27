@@ -53,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Terrains
             RqlEditorApi.Rejection(() => CreateChecks(name, dataPath, heightmapResolution, size));
 
         public string? ValidateCreateLayer(string path, Texture2D? diffuse, Vector2? tileSize) =>
-            RqlEditorApi.Rejection(() => TerrainOps.NewAssetPath(path, ".terrainlayer"));
+            RqlEditorApi.Rejection(() => RqlEditorApi.NewModuleAssetPath(path, ".terrainlayer"));
 
         // The checks Create makes before it writes: the terrain's settings and the data asset's path.
         private static (string path, Vector3 size) CreateChecks(string name, string? dataPath, int heightmapResolution, Vector3? size)
@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Terrains
             if (s.x <= 0 || s.y <= 0 || s.z <= 0) throw new ArgumentException($"size must be positive, got ({s.x}, {s.y}, {s.z})");
             var path = dataPath == null
                 ? AssetDatabase.GenerateUniqueAssetPath($"Assets/TerrainData_{name}.asset")
-                : TerrainOps.NewAssetPath(dataPath, ".asset");
+                : RqlEditorApi.NewModuleAssetPath(dataPath, ".asset");
             return (path, s);
         }
 
@@ -72,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Terrains
                      "(unity.asset(\"Assets/…/grass.png\")) and tile size \"(x, y)\"; returns it — add it with Terrain.AddLayer")]
         public TerrainLayer CreateLayer(string path, Texture2D? diffuse = null, Vector2? tileSize = null)
         {
-            path = TerrainOps.NewAssetPath(path, ".terrainlayer");
+            path = RqlEditorApi.NewModuleAssetPath(path, ".terrainlayer");
             return RqlEditorApi.SaveNewAsset(new TerrainLayer
             {
                 diffuseTexture = diffuse,

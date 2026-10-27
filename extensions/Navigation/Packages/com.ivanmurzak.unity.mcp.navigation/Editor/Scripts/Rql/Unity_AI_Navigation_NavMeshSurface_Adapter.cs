@@ -61,7 +61,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Navigation
             if (previous != null) AssetDatabase.DeleteAsset(previous);
             var invalid = Path.GetInvalidFileNameChars();
             var name = new string(surface.name.Select(ch => invalid.Contains(ch) ? '_' : ch).ToArray());
-            // Missing folders are created, and removed again when the asset cannot be saved (the NavMesh then stays in memory).
+            // Missing folders are created, and removed again when the asset cannot be saved (the NavMesh then stays in memory,
+            // which is why this is not SaveNewAsset: that destroys the object on failure).
             RqlEditorApi.InFolder(folder, () =>
             {
                 var path = AssetDatabase.GenerateUniqueAssetPath($"{folder}/NavMesh-{name}.asset");

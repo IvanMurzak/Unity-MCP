@@ -54,12 +54,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Animation
         // Call validators (RQL runs them before the call, on dry runs too).
         public string? ValidateCreateClip(string path, float frameRate, bool loop) => RqlEditorApi.Rejection(() => ClipPath(path, frameRate));
 
-        public string? ValidateCreateController(string path, Motion? motion) => RqlEditorApi.Rejection(() => AnimationEdit.NewAssetPath(path, ".controller"));
+        public string? ValidateCreateController(string path, Motion? motion) => RqlEditorApi.Rejection(() => RqlEditorApi.NewModuleAssetPath(path, ".controller"));
 
         private static string ClipPath(string path, float frameRate)
         {
             if (frameRate <= 0f) throw new ArgumentException($"frameRate {frameRate} must be positive");
-            return AnimationEdit.NewAssetPath(path, ".anim");
+            return RqlEditorApi.NewModuleAssetPath(path, ".anim");
         }
 
         [RqlCallable("create an AnimatorController asset at path (\"Assets/…/Name.controller\", folders are created) with a Base Layer; " +
@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Animation
                      "Asset creation is not undone by Undo")]
         public AnimatorController CreateController(string path, Motion? motion = null)
         {
-            path = AnimationEdit.NewAssetPath(path, ".controller");
+            path = RqlEditorApi.NewModuleAssetPath(path, ".controller");
             var controller = RqlEditorApi.InFolderOf(path, () => AnimatorController.CreateAnimatorControllerAtPath(path)
                 ?? throw new ArgumentException($"could not create an AnimatorController at '{path}'"));
             if (motion != null) controller.AddMotion(motion);

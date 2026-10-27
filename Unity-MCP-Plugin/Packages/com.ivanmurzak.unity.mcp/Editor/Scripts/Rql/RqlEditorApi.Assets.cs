@@ -156,6 +156,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         }
 
         /// <summary>
+        /// The new-asset path check of the modules' create calls (and their call validators): under Assets/, with
+        /// <paramref name="extension"/>, nothing there yet (imported or on disk), and folders that can be created. The folders
+        /// themselves are created by the call (<see cref="SaveNewAsset{T}"/> / <see cref="InFolderOf{T}"/>), so a failed save
+        /// can remove them again.
+        /// </summary>
+        public static string NewModuleAssetPath(string? path, string extension)
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("path is empty");
+            path = path!.Replace('\\', '/');
+            if (!path.StartsWith("Assets/", StringComparison.Ordinal)) throw new ArgumentException($"'{path}' must start with Assets/");
+            if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"'{path}' must end with {extension}");
+            if (AssetDatabase.LoadMainAssetAtPath(path) != null || File.Exists(path))
+                throw new ArgumentException($"an asset already exists at '{path}' (choose another path)");
+            EnsureFolder(Path.GetDirectoryName(path), create: false);
+            return path;
+        }
+
+        /// <summary>
         /// Creates the folder and its missing parents; with <paramref name="create"/> = false it only throws where it would
         /// (call validators, so dry runs report it). Returns the outermost folder it created, or null when the folder exists.
         /// A missing folder whose path is taken on disk (a file, or a folder Unity has not imported yet) is refused before
@@ -166,9 +184,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (string.IsNullOrEmpty(path)) return null;
             path = Normalize(path!);
             if (AssetDatabase.IsValidFolder(path)) return null;
-            if (Directory.Exists(path) || File.Exists(path))
+            var file = File.Exists(path);
+            if (file || Directory.Exists(path))
                 throw new ArgumentException($"could not create the folder '{path}': it is taken on disk by a " +
-                                            (File.Exists(path) ? "file" : "folder Unity has not imported, or one whose name differs in case (RefreshAssets() imports new files)"));
+                                            (file ? "file" : "folder Unity has not imported, or one whose name differs in case (RefreshAssets() imports new files)"));
             var parent = Path.GetDirectoryName(path);
             if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
             parent = Normalize(parent);

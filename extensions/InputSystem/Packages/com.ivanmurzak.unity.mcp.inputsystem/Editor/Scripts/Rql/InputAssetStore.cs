@@ -170,7 +170,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
         /// <summary>The checks <see cref="Create"/> makes before it writes (also its call validator): the new path and the map name.</summary>
         public static string CreatePath(string path, string? map)
         {
-            path = NewAssetPath(path);
+            path = RqlEditorApi.NewModuleAssetPath(path, Extension);
             if (!string.IsNullOrEmpty(map)) InputValidation.Name(map, "action map");
             return path;
         }
@@ -235,19 +235,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
             if (tracked.Contains(path)) return;
             tracked.Add(path);
             SessionState.SetString(TrackedKey, string.Join("\n", tracked));
-        }
-
-        /// <summary>Validate a path for a new asset: Assets/, .inputactions, nothing there yet, folders that can be created.</summary>
-        public static string NewAssetPath(string path)
-        {
-            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("path is empty");
-            path = path.Replace('\\', '/');
-            if (!path.StartsWith("Assets/", StringComparison.Ordinal)) throw new ArgumentException($"'{path}' must start with Assets/");
-            if (!path.EndsWith(Extension, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"'{path}' must end with {Extension}");
-            if (AssetDatabase.LoadMainAssetAtPath(path) != null || File.Exists(path))
-                throw new ArgumentException($"an asset already exists at '{path}' (choose another path)");
-            RqlEditorApi.EnsureFolder(Path.GetDirectoryName(path), create: false);
-            return path;
         }
 
         // ------------------------------------------------------------ serialized fields without a public setter
