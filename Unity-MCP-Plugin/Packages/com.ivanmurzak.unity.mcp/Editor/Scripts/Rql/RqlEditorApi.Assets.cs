@@ -26,11 +26,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("copy an asset to a new path (not an existing one; missing folders are created); returns the copy")]
         public Object CopyAsset(string path, string newPath)
         {
-            // A folder keeps no extension, even one named like "com.foo".
-            newPath = NewAssetPath(newPath, AssetDatabase.IsValidFolder(Normalize(path)) ? null : Path.GetExtension(path));
-            EnsureFolder(Path.GetDirectoryName(newPath));
-            if (!AssetDatabase.CopyAsset(path, newPath)) throw new ArgumentException($"could not copy '{path}' to '{newPath}'");
-            return AssetDatabase.LoadMainAssetAtPath(newPath);
+            newPath = CopyPath(path, newPath, AssetDatabase.IsValidFolder(Normalize(path)));
+            return InFolder(Path.GetDirectoryName(newPath), () => AssetDatabase.CopyAsset(path, newPath)
+                ? AssetDatabase.LoadMainAssetAtPath(newPath)
+                : throw new ArgumentException($"could not copy '{path}' to '{newPath}'"));
+        }
+
+        // The copy's path: new, with the asset's extension (a folder keeps none, even one named like "com.foo"), and not inside
+        // the folder being copied (Unity would copy the new folder into the copy as well).
+        private static string CopyPath(string path, string newPath, bool folder)
+        {
+            newPath = NewAssetPath(newPath, folder ? null : Path.GetExtension(path));
+            if (folder && newPath.StartsWith(Normalize(path) + "/", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"cannot copy the folder '{Normalize(path)}' into itself ('{newPath}')");
+            return newPath;
         }
 
         // Call validators (companions RQL finds by name): the rejection is reported for every target before the first call,
@@ -40,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             var folder = AssetDatabase.IsValidFolder(Normalize(path));
             if (!folder && AssetDatabase.LoadMainAssetAtPath(Normalize(path)) == null) throw new ArgumentException($"no asset at '{path}'");
-            EnsureFolder(Path.GetDirectoryName(NewAssetPath(newPath, folder ? null : Path.GetExtension(path))), create: false);
+            EnsureFolder(Path.GetDirectoryName(CopyPath(path, newPath, folder)), create: false);
         });
 
         public string? ValidateDeleteAsset(string path, bool force) => Rejection(() =>
@@ -67,10 +76,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("move or rename an asset (missing folders are created); returns its new path")]
         public string MoveAsset(string path, string newPath)
         {
-            EnsureFolder(Path.GetDirectoryName(newPath));
-            var error = AssetDatabase.MoveAsset(path, newPath);
-            if (!string.IsNullOrEmpty(error)) throw new ArgumentException(error);
-            return newPath;
+            return InFolder(Path.GetDirectoryName(newPath), () =>
+                AssetDatabase.MoveAsset(path, newPath) is { Length: > 0 } error ? throw new ArgumentException(error) : newPath);
         }
 
         [RqlCallable("move an asset (or folder) to the OS trash, so it can be recovered; refuses while objects in the open scenes or prefab use it, unless force = true (their references become missing)")]
@@ -97,10 +104,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             path = NewAssetPath(path, ".mat");
             var s = shader == null ? DefaultShader() : Shader.Find(shader) ?? throw new ArgumentException($"no shader named '{shader}'");
-            EnsureFolder(Path.GetDirectoryName(path));
-            var material = new Material(s) { name = Path.GetFileNameWithoutExtension(path) };
-            AssetDatabase.CreateAsset(material, path);
-            return material;
+            return InFolder(Path.GetDirectoryName(path), () =>
+            {
+                var material = new Material(s) { name = Path.GetFileNameWithoutExtension(path) };
+                AssetDatabase.CreateAsset(material, path); // logs instead of throwing when it fails
+                return AssetDatabase.Contains(material) ? material : throw new ArgumentException($"could not create a material at '{path}'");
+            });
         }
 
         [RqlCallable("write every modified asset to disk")]
@@ -133,17 +142,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return path;
         }
 
-        /// <summary>Creates the folder and its missing parents; with <paramref name="create"/> = false it only throws where it would.</summary>
-        internal static void EnsureFolder(string? path, bool create = true)
+        /// <summary>
+        /// Creates the folder and its missing parents; with <paramref name="create"/> = false it only throws where it would.
+        /// Returns the outermost folder it created (or would create), or null when the folder exists.
+        /// </summary>
+        internal static string? EnsureFolder(string? path, bool create = true)
         {
-            if (string.IsNullOrEmpty(path)) return;
+            if (string.IsNullOrEmpty(path)) return null;
             path = Normalize(path!);
-            if (AssetDatabase.IsValidFolder(path)) return;
+            if (AssetDatabase.IsValidFolder(path)) return null;
             var parent = Path.GetDirectoryName(path);
             if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
             parent = Normalize(parent);
-            EnsureFolder(parent, create);
+            var outermost = EnsureFolder(parent, create);
             if (create) AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
+            return outermost ?? path;
+        }
+
+        /// <summary>
+        /// Runs <paramref name="write"/> after creating the missing folders of <paramref name="folder"/>; when it throws, the
+        /// folders created here are deleted again, so a failed call leaves no empty folders behind.
+        /// </summary>
+        internal static T InFolder<T>(string? folder, Func<T> write)
+        {
+            var created = EnsureFolder(folder);
+            try { return write(); }
+            catch
+            {
+                if (created != null) AssetDatabase.DeleteAsset(created);
+                throw;
+            }
         }
 
         /// <summary>

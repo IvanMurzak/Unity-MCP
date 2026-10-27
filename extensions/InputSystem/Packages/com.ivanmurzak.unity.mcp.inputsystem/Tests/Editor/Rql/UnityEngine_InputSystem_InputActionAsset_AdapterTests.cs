@@ -23,7 +23,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.InputSystem
         {
             var r = Read(A + " | describe");
             var t = Table(r);
-            foreach (var member in new[] { "maps", "actions", "controlSchemes", "path" }) StringAssert.Contains(member, t);
+            foreach (var member in new[] { "maps", "actions", "controlSchemes", "assetPath" }) StringAssert.Contains(member, t);
             foreach (var hidden in new[] { "bindingMask", "devices", "m_ActionMaps", "m_ControlSchemes" }) StringAssert.DoesNotContain(hidden, t);
             Assert.IsTrue(Q(A).Ok, Table(Q(A)));
         }
@@ -42,8 +42,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.InputSystem
             Assert.AreEqual("Vector2", Cell(actions, 3, 1));
             Assert.AreEqual("5", Cell(actions, 4, 1));
             Assert.AreEqual("UI", Cell(actions, 0, 2));
-            var path = Read(A + " | select path");
-            Assert.AreEqual(P, Cell(path));
+        }
+
+        // The asset path is assetPath, as on every other asset (Object.assetPath); there is no second "path" member meaning the
+        // same thing (a binding's path is its control path).
+        [Test]
+        public void AssetPathIsTheAssetsPath()
+        {
+            Assert.AreEqual(P, Cell(Read(A + " | select assetPath")));
+            Assert.AreEqual("Fixture", Cell(Read($"input | get assets | where assetPath == \"{P}\" | select name")));
+            StringAssert.Contains("no member 'path' on InputActionAsset", Table(Q(A + " | select path")));
         }
 
         [Test]

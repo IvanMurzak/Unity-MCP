@@ -46,8 +46,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// </summary>
         public static IReadOnlyList<LogEntry> ConsoleEntries() =>
             UnityMcpPluginEditor.HasInstance && UnityMcpPluginEditor.Instance.LogCollector is { } logs
-                ? logs.Query(maxEntries: MaxLogEntries, includeStackTrace: true).Where(e => !IsToolResponseEcho(e.Message)).ToList()
+                ? NewestWithoutEchoes(window => logs.Query(maxEntries: window, includeStackTrace: true), MaxLogEntries)
                 : (IReadOnlyList<LogEntry>)Array.Empty<LogEntry>();
+
+        /// <summary>
+        /// The newest <paramref name="max"/> entries that are not tool response echoes, oldest first. The echoes are left out
+        /// before the limit: <paramref name="query"/> (the newest <c>n</c> entries, oldest first) is read with a growing
+        /// window until it holds <paramref name="max"/> other entries or everything stored, so a busy session still gets
+        /// <paramref name="max"/> real entries.
+        /// </summary>
+        internal static List<LogEntry> NewestWithoutEchoes(Func<int, IReadOnlyList<LogEntry>> query, int max)
+        {
+            for (var window = max; ; window = window > int.MaxValue / 2 ? int.MaxValue : window * 2)
+            {
+                var newest = query(window);
+                var kept = newest.Where(e => !IsToolResponseEcho(e.Message)).ToList();
+                if (kept.Count >= max || newest.Count < window || window == int.MaxValue)
+                    return kept.Count > max ? kept.GetRange(kept.Count - max, max) : kept;
+            }
+        }
 
         // McpPlugin's McpToolManager logs every tool response it sends ("[AI] McpToolManager Error Response to AI: …").
         internal static bool IsToolResponseEcho(string? message) =>

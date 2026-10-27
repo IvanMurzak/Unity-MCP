@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -42,6 +43,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             Assert.IsFalse(M("editor | call MoveAsset(\"Assets/NoSuch.mat\", \"Assets/X.mat\")").Ok);
             Assert.IsFalse(M("editor | call CreateMaterial(\"Assets/RqlEditorApiTests/X.mat\", \"No/Such/Shader\")").Ok);
+        }
+
+        // A call that creates missing folders and then fails removes the folders it created (and only those).
+        [Test]
+        public void AFailedMoveLeavesNoNewFolders()
+        {
+            AssertFails(M($"editor | call MoveAsset(\"{Folder}/NoSuch.mat\", \"{Folder}/New/Deep/NoSuch.mat\")"), "call-threw");
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/New"), "the folders the failed call created must be removed");
+            Assert.IsTrue(AssetDatabase.IsValidFolder(Folder), "a folder that existed before stays");
+        }
+
+        // The helper behind CopyAsset / MoveAsset / CreateMaterial / NewScene / SaveAs / SaveAsPrefab: the outermost folder it
+        // created goes when the write throws; existing folders and a successful write's folders stay.
+        [Test]
+        public void InFolderRemovesOnlyTheFoldersItCreatedWhenTheWriteFails()
+        {
+            AssetDatabase.CreateFolder(Folder, "Old");
+            Assert.Throws<System.InvalidOperationException>(() =>
+                RqlEditorApi.InFolder<int>($"{Folder}/Old/New/Deep", () => throw new System.InvalidOperationException("write failed")));
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/Old/New"));
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Old"));
+            Assert.AreEqual(1, RqlEditorApi.InFolder($"{Folder}/Old/Kept", () => 1));
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Old/Kept"));
+        }
+
+        // Unity copies a folder into its own subfolder (and the new subfolder into the copy): rejected before anything is made.
+        [Test]
+        public void AFolderIsNotCopiedIntoItself()
+        {
+            AssertOk(M($"editor | call CreateFolder(\"{Folder}/Src\")"));
+            AssertFails(RqlUnity.Mutate($"editor | call CopyAsset(\"{Folder}/Src\", \"{Folder}/Src/Sub/Src\")", dryRun: true), "invalid-value", "into itself");
+            AssertFails(M($"editor | call CopyAsset(\"{Folder}/Src\", \"{Folder}/Src/Sub/Src\")"), "invalid-value", "into itself");
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/Src/Sub"));
         }
 
         [Test]

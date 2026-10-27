@@ -36,7 +36,7 @@ file and re-imported at once, and is undoable. Paths look like `""<Keyboard>/spa
 
 ```
 input | call CreateAsset(""" + ExamplePath + @""", ""Player"")   path, map? (first action map); missing folders are created
-input | get assets | select $ref name path
+input | get assets | select $ref name assetPath
 " + A + @" | call AddControlScheme(""Keyboard&Mouse"", [""<Keyboard>"", ""<Mouse>""])   name, requiredDevices?, optionalDevices?, bindingGroup? (default: name)
 " + A + @" | call AddControlScheme(""Gamepad"", [""<Gamepad>""])
 " + A + @" | call AddMap(""UI"")

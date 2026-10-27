@@ -9,6 +9,8 @@
 */
 
 #nullable enable
+using System.Collections.Generic;
+using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters;
 using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
@@ -107,6 +109,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             var rows = Table(Q($"console | where message contains \"{marker}\" | select message"));
             StringAssert.Contains("real error", rows);
             StringAssert.DoesNotContain("McpToolManager", rows);
+        }
+
+        // The echoes are left out before the entry limit: a busy session whose newest MaxLogEntries entries are all echoes
+        // still returns the real entry logged before them.
+        [Test]
+        public void ConsoleLeavesOutTheEchoesBeforeItsLimit()
+        {
+            var marker = System.Guid.NewGuid().ToString("N");
+            Debug.Log($"real entry {marker}");
+            for (int i = 0; i < RqlEditorApi.MaxLogEntries; i++)
+                Debug.Log($"[AI] McpToolManager Success Response to AI: {marker} {i}");
+            UnityMcpPluginEditor.Instance.LogCollector!.Save();
+            var rows = Q($"console | where message contains \"{marker}\" | select message");
+            Assert.AreEqual(1, rows.Rows!.Count, Table(rows));
+            Assert.AreEqual($"real entry {marker}", Cell(rows));
+        }
+
+        // The window grows until it holds max real entries (or everything stored); the newest of them are kept, oldest first.
+        [Test]
+        public void NewestWithoutEchoesFillsTheLimitWithRealEntries()
+        {
+            var stored = new List<LogEntry>();
+            for (int i = 0; i < 10; i++)
+            {
+                stored.Add(new LogEntry(LogType.Log, $"real {i}"));
+                stored.Add(new LogEntry(LogType.Error, $"[AI] McpToolManager Error Response to AI: {i}"));
+                stored.Add(new LogEntry(LogType.Log, $"[AI] McpToolManager Success Response to AI: {i}"));
+            }
+            var windows = new List<int>();
+            IReadOnlyList<LogEntry> Newest(int n)
+            {
+                windows.Add(n);
+                return stored.Skip(System.Math.Max(0, stored.Count - n)).ToList();
+            }
+
+            var four = RqlEditorApi.NewestWithoutEchoes(Newest, 4);
+            CollectionAssert.AreEqual(new[] { "real 6", "real 7", "real 8", "real 9" }, four.Select(e => e.Message).ToArray());
+            CollectionAssert.AreEqual(new[] { 4, 8, 16 }, windows);
+
+            windows.Clear();
+            var all = RqlEditorApi.NewestWithoutEchoes(Newest, 50); // fewer stored than asked: everything real, one read
+            Assert.AreEqual(10, all.Count);
+            Assert.AreEqual("real 0", all[0].Message);
+            CollectionAssert.AreEqual(new[] { 50 }, windows);
         }
 
         // Tags and Layers: read the lists, add a layer / tag, and use the layer by name. The test project's TagManager is

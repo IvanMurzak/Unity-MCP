@@ -75,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.InputSystem
         [Test]
         public void AssetsListsTheProjectsInputActionAssets()
         {
-            var r = Read("input | get assets | where path == \"" + P + "\" | select name path");
+            var r = Read("input | get assets | where assetPath == \"" + P + "\" | select name assetPath");
             Assert.AreEqual(1, r.Rows!.Count, Table(r));
             Assert.AreEqual("Fixture", Cell(r));
         }
