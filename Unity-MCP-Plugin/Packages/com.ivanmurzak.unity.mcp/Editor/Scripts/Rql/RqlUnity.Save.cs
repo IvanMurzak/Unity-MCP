@@ -55,6 +55,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             _mutating++;
             QueryResult result;
             var completed = false;
+            var outerDestroying = Destroying; // a Mutate nested in a call of an outer one leaves the outer stage's set in place
             try
             {
                 var budgets = maxTargets.HasValue ? new Budgets { MaxMutationTargets = maxTargets.Value } : null;
@@ -63,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             }
             finally
             {
-                Destroying = null; // a dry run, or a stage that failed before its calls
+                Destroying = outerDestroying; // after a dry run, or a stage that failed before its calls
                 _mutating--;
                 if (_mutating == 0)
                 {
@@ -125,7 +126,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             }
             if (destroying.Count == 0) return null;
             Destroying = destroying;
-            return UnmetRequirement(destroying);
+            var refused = UnmetRequirement(destroying);
+            if (refused != null) Destroying = null; // nothing will run
+            return refused;
         }
 
         // A component the call removes while another one that requires it stays, or components that require each other (no

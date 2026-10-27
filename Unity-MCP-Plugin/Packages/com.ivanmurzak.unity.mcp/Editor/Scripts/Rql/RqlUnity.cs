@@ -50,8 +50,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
             engine.Mutations.Enabled = true;
             engine.Mutations.LimitHint = (op, limit) =>
-                $"narrow the query (where / first / ref(...)), split it into batches of {limit} (… | first {limit} | {op} …), " +
-                $"or pass max_targets (up to {engine.Mutations.HardMaxTargets}) when the bulk change is intended";
+                $"narrow the query (where / ref(...)) or split the change into batches of {limit}: … | first {limit} | {op} …, then " +
+                $"… | skip {limit} | first {limit} | {op} … (repeat plain first {limit} instead when the change removes the items from your where)" +
+                (limit < engine.Mutations.HardMaxTargets
+                    ? $"; or pass max_targets (up to {engine.Mutations.HardMaxTargets}) when the bulk change is intended" : "");
             // Checks that span the targets of one set / call stage (two SaveAsPrefab to one path; a component removed with or
             // without the components that require it), before anything runs, dry runs included.
             engine.Mutations.ValidateBatch = ValidateBatch;

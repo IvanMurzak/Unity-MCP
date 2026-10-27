@@ -73,7 +73,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.IsNull(go.GetComponent<Rigidbody>());
         }
 
-        // rql-mutate (RqlUnity.Mutate) decides a required component's removal for the whole call: removing it together with
+        // The batch check (RqlUnity.ValidateBatch, every engine query) decides a required component's removal for the whole call: removing it together with
         // the components that require it works in either target order, on dry runs and real runs alike.
         [Test]
         public void ARequiredComponentGoesTogetherWithItsDependentsInOneCall()
