@@ -11,12 +11,13 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.Linq;
+using com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters;
 using Rql;
+using Rql.Execution;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine;
 using UnityEngine.SceneManagement;
-using Component = UnityEngine.Component;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
@@ -54,20 +55,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             _mutating++;
             QueryResult result;
             var completed = false;
-            var outerBatch = _batch;
-            var batch = new CallBatch();
-            _batch = batch; // restored in finally; the local outlives it for Finish
+            var outerDestroying = Destroying; // a Mutate nested in a call of an outer one leaves the outer stage's set in place
             try
             {
                 var budgets = maxTargets.HasValue ? new Budgets { MaxMutationTargets = maxTargets.Value } : null;
                 result = Engine.Execute(query, budgets, new QueryOptions { AllowMutation = true, DryRun = dryRun });
                 completed = true;
-                result = batch.Finish(result);
-                ExplainMutationLimit(result);
             }
             finally
             {
-                _batch = outerBatch;
+                Destroying = outerDestroying; // after a dry run, or a stage that failed before its calls
                 _mutating--;
                 if (_mutating == 0)
                 {
@@ -95,103 +92,75 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>Hard ceiling of <c>max_targets</c> (the engine clamps a request to it).</summary>
         public static int HardMaxTargets => Engine.Mutations.HardMaxTargets;
 
-        // RQL's hint names its own budget option; the tool's argument for it is max_targets.
-        private static void ExplainMutationLimit(QueryResult result)
+        /// <summary>
+        /// The components the running call stage destroys, known to <see cref="ValidateBatch"/> before the first call (null
+        /// otherwise): Destroy removes the ones that require a target first, and a requirement they meet does not block.
+        /// </summary>
+        internal static HashSet<Component>? Destroying { get; private set; }
+
+        /// <summary>
+        /// RQL's batch check (<see cref="MutationPolicy.ValidateBatch"/>): every planned change of a set / call stage, after each
+        /// target passed its own validator and before anything runs, dry runs included. A reason refuses the whole stage.
+        /// </summary>
+        internal static string? ValidateBatch(IReadOnlyList<MutationRecord> records)
         {
-            var d = result.Diagnostics;
-            for (int i = 0; i < d.Count; i++)
-                if (d[i].Code == "mutation-limit")
-                    d[i] = new Diagnostic(d[i].Severity, d[i].Code, d[i].Message, d[i].At,
-                        $"narrow the query (where / first / ref(...)), or pass max_targets (up to {HardMaxTargets}) when the bulk change is intended");
+            Destroying = null;
+            var prefabPaths = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            var destroying = new HashSet<Component>();
+            foreach (var record in records)
+            {
+                switch (record.Method?.Name)
+                {
+                    // Two targets saving to one prefab path (one GameObject reached twice included): the second save would fail
+                    // after the first one happened.
+                    case "SaveAsPrefab" when record.Item is GameObject && record.Args[0] is string text:
+                        var path = UnityEngine_GameObject_Adapter.PrefabPath(text);
+                        if (prefabPaths.TryGetValue(path, out var earlier))
+                            return $"'{path}' is also the path of {Engine.RefOf(earlier)} in this call: give each GameObject its own prefab path";
+                        prefabPaths[path] = record.Item;
+                        break;
+                    case "Destroy" when record.Item is Component component && component != null: // a Transform never passed its validator
+                        destroying.Add(component);
+                        break;
+                }
+            }
+            if (destroying.Count == 0) return null;
+            Destroying = destroying;
+            var refused = UnmetRequirement(destroying);
+            if (refused != null) Destroying = null; // nothing will run
+            return refused;
         }
 
-        // The call stage of the running Mutate (null outside one): call validators see the targets validated before them,
-        // so checks that span several targets of one call (two SaveAsPrefab to one path, removing a component together with
-        // the components that require it) are decided for the whole call, on dry runs too.
-        private static CallBatch? _batch;
-
-        /// <summary>The running Mutate's call batch, or null (a C# caller, a direct engine query): checks stay per target.</summary>
-        internal static CallBatch? Batch => _batch;
-
-        internal sealed class CallBatch
+        // A component the call removes while another one that requires it stays, or components that require each other (no
+        // order removes them; Unity keeps both): the reason, or null.
+        private static string? UnmetRequirement(HashSet<Component> destroying)
         {
-            private readonly Dictionary<string, object> _claimedPaths = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
-            private readonly HashSet<Component> _destroying = new HashSet<Component>();
-            private readonly List<(Component Target, List<(Component Blocker, string Reason)> Blockers)> _deferred =
-                new List<(Component, List<(Component, string)>)>();
-            private string? _rejection;
-
-            /// <summary>
-            /// Claims a new asset path for <paramref name="owner"/>; the earlier target that claimed it, or null. Every target is
-            /// validated once, so a second claim (the same GameObject reached twice included) is always a conflict.
-            /// </summary>
-            public object? Claim(string path, object owner)
+            static string Refused(Component target, string why) => $"cannot call Destroy() on {Engine.RefOf(target)}: {why}";
+            var pending = new List<(Component Target, List<(Component Blocker, string Reason)> Blockers)>();
+            var removed = new HashSet<Component>();
+            foreach (var target in destroying)
             {
-                if (_claimedPaths.TryGetValue(path, out var earlier)) return earlier;
-                _claimedPaths[path] = owner;
-                return null;
+                var blockers = UnityEngine_Component_Adapter.Blockers(target);
+                foreach (var (blocker, reason) in blockers)
+                    if (!destroying.Contains(blocker))
+                        return Refused(target, reason + " (or in the same call)");
+                if (blockers.Count > 0) pending.Add((target, blockers));
+                else removed.Add(target);
             }
-
-            /// <summary>Components whose dependents are being removed first (two components requiring each other end the recursion).</summary>
-            public readonly HashSet<Component> Removing = new HashSet<Component>();
-
-            /// <summary>A component this call destroys (every target is validated before the first call runs).</summary>
-            public bool IsDestroying(Component c) => _destroying.Contains(c);
-
-            /// <summary>
-            /// <paramref name="target"/> is destroyed by this call; its <paramref name="blockers"/> (components that require it)
-            /// must be destroyed by the same call, which is known only once every target was validated.
-            /// </summary>
-            public void Destroying(Component target, List<(Component Blocker, string Reason)> blockers)
+            // Every blocker is a target too: replay the removal order (dependents first); what never frees up is a cycle.
+            for (var progress = true; progress && pending.Count > 0;)
             {
-                _destroying.Add(target);
-                if (blockers.Count > 0) _deferred.Add((target, blockers));
-            }
-
-            /// <summary>
-            /// The first deferred check the whole call does not meet, or null: a blocker the call leaves in place, or components
-            /// that require each other (no order removes them; Unity keeps both).
-            /// </summary>
-            public string? Unmet()
-            {
-                foreach (var (target, blockers) in _deferred)
-                    foreach (var (blocker, reason) in blockers)
-                        if (blocker != null && !_destroying.Contains(blocker))
-                            return Rejected(target, reason + " (or in the same call)");
-                // Every blocker is a target too: replay the removal order (dependents first); what never frees up is a cycle.
-                var pending = new List<(Component Target, List<(Component Blocker, string Reason)> Blockers)>(_deferred);
-                var removed = new HashSet<Component>(_destroying.Where(c => !_deferred.Exists(d => d.Target == c)));
-                for (var progress = true; progress && pending.Count > 0;)
+                progress = false;
+                for (int i = pending.Count - 1; i >= 0; i--)
                 {
-                    progress = false;
-                    for (int i = pending.Count - 1; i >= 0; i--)
-                    {
-                        if (!pending[i].Blockers.TrueForAll(b => b.Blocker == null || removed.Contains(b.Blocker))) continue;
-                        removed.Add(pending[i].Target);
-                        pending.RemoveAt(i);
-                        progress = true;
-                    }
+                    if (!pending[i].Blockers.TrueForAll(b => removed.Contains(b.Blocker))) continue;
+                    removed.Add(pending[i].Target);
+                    pending.RemoveAt(i);
+                    progress = true;
                 }
-                return pending.Count == 0 ? null
-                    : Rejected(pending[0].Target, pending[0].Blockers[0].Reason + " and they require each other: destroy their GameObject instead");
             }
-
-            private static string Rejected(Component target, string reason) =>
-                $"cannot call Destroy() on {Engine.RefOf(target)}: {reason}; nothing was called";
-
-            /// <summary>Before the first write (the engine skips this hook on dry runs): veto the call when a deferred check is unmet.</summary>
-            public void BeforeWrite()
-            {
-                _rejection = Unmet();
-                if (_rejection != null) throw new InvalidOperationException(_rejection);
-            }
-
-            /// <summary>The query's result with the deferred checks applied: a dry run is checked here, a real run was vetoed in BeforeWrite.</summary>
-            public QueryResult Finish(QueryResult result)
-            {
-                var rejection = _rejection ?? (result.Ok && result.DryRun ? Unmet() : null);
-                return rejection == null ? result : QueryResult.Fail(new[] { Diagnostic.Error("invalid-value", rejection) });
-            }
+            return pending.Count == 0 ? null
+                : Refused(pending[0].Target, pending[0].Blockers[0].Reason + " and they require each other: destroy their GameObject instead");
         }
 
         /// <summary>Invoke every handler of <paramref name="handlers"/>, even after one threw; returns the messages of those that did.</summary>

@@ -43,11 +43,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  first N | skip N | count\n" +
             "  get <path>                         replace each item by a member (lists are flattened)\n" +
             "  recurse children [max-depth=N] [include-self=false]   walk the hierarchy (input items included by default)\n" +
-            "  distinct [expr] | group-by expr | sum expr | min expr | max expr | avg expr   (distinct keeps whole items; values: get tag | distinct)\n" +
+            "  distinct [expr] | sum expr | min expr | max expr | avg expr   (distinct keeps whole items; values: get tag | distinct)\n" +
+            "  group-by expr                      rows key|count; group-by a, b (or kind=$type) gives one column per key, then count\n" +
             "Expressions: == != < <= > >= and or not + - * / %; contains, starts-with, ends-with (case-insensitive); " +
             "matches \"regex\"; x in [a, b]; x is null; x is not null; $ is Light (includes subclasses); has(member). " +
-            "Literals: numbers, \"strings\", true/false/null, lists [a, b], objects {x: 1, y: 2}. Text functions: lower upper len " +
-            "(no replace / substring: rename by a pattern with script-execute).\n" +
+            "Literals: numbers, \"strings\", true/false/null, lists [a, b], objects {x: 1, y: 2}. Text functions: lower upper len, " +
+            "replace(s, from, to) (case-insensitive), replace-regex(s, pattern, repl) ($1 = group 1), substring(s, start[, length]), " +
+            "split(s, sep), trim(s), pad(v, width[, fill]) — also as methods: name.replace(\"Old\", \"New\"), name.substring(0, 4).\n" +
             "Paths: a.b.c, list[0], map[\"key\"]; .member on a list maps over its elements. List methods: .any(pred) .all(pred) " +
             ".count([pred]) .sum(e) .min(e) .max(e) .first([pred]); inside them bare names refer to the element, falling back to the outer item.\n" +
             "Meta: $ (current item), $ref (stable id such as Light#1234), $type, $path (the item's place in this query, e.g. roots[0].children[2]), $index, $depth. Enums compare to strings (type == \"Spot\"); " +
@@ -77,6 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public const string MutateStages =
             "  set path = expr, ...   assign members (paths may go through structs: set transform.position.y = transform.position.y + 1)\n" +
+            "                         values see each target: $ and $index (its position in the stream entering set / call)\n" +
             "  call Method(args)      invoke a method the tools expose\n";
 
         public const string MutateExamples =
@@ -84,6 +87,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name == \"Player\" | set transform.position = \"(0, 1, 0)\"\n" +
             "  objects | get components | where $ is Light | set intensity = intensity * 2, color = \"#ffcc88\"\n" +
             "  objects | where tag == \"Enemy\" | set active = false\n" +
+            "  objects | where name starts-with \"Pillar_\" | set name = name.replace(\"Pillar_\", \"Column_\")   bulk rename\n" +
+            "  objects | where name starts-with \"Crate\" | sort name | set transform.position.x = $index * 2   spread along x\n" +
+            "  unity.asset(\"Assets/Mats/Red.mat\") | get properties | where Key ends-with \"Color\" | set Value = \"#ffffff\"   map entries write through\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set properties[\"_Color\"] = \"(1, 0, 0, 1)\"\n" +
             "  objects | where name == \"Spawner\" | set targets = append(targets, ref(\"GameObject#1234\"))\n" +
             "Create / add / remove (call; the receipt's result column holds the new object's $ref for follow-up queries):\n" +
@@ -112,7 +118,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; " +
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             MutateStages + MutateExamples +
-            "Object literals build values: set settings = {speed: 2, \"$type\": \"FastSettings\"}. At most 20 targets per call; " +
+            "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}. At most 20 targets per call; " +
             "max_targets raises the limit (up to 1000) for an intended bulk change.\n\n" +
             QuerySyntaxShort;
 

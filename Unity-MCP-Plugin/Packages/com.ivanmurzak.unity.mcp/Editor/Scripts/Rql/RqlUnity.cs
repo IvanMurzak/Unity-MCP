@@ -42,14 +42,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public static RqlEngine Create()
         {
-            var engine = new RqlEngine(AccessorMode.Compiled) { RuntimeName = "unity" };
+            // ref("Name") hints name the finder; the tools take no budgets argument (only rql-mutate's max_targets, which the
+            // mutation-limit hint names), so no hint advises raising budgets.*.
+            var engine = new RqlEngine(AccessorMode.Compiled) { RuntimeName = "unity", FindHint = "unity.find(\"…\")" };
+            engine.Defaults.BudgetsAdjustable = false;
             engine.ResolveStableRef = ResolveStableRef;
 
             engine.Mutations.Enabled = true;
+            engine.Mutations.LimitHint = (op, limit) =>
+                $"narrow the query (where / ref(...)) or split the change into batches of {limit}: … | first {limit} | {op} …, then " +
+                $"… | skip {limit} | first {limit} | {op} … (repeat plain first {limit} instead when the change removes the items from your where)" +
+                (limit < engine.Mutations.HardMaxTargets
+                    ? $"; or pass max_targets (up to {engine.Mutations.HardMaxTargets}) when the bulk change is intended" : "");
+            // Checks that span the targets of one set / call stage (two SaveAsPrefab to one path; a component removed with or
+            // without the components that require it), before anything runs, dry runs included.
+            engine.Mutations.ValidateBatch = ValidateBatch;
             // One Undo group per mutation: recorded owners, created / destroyed objects and added components undo together.
             engine.Mutations.BeforeWrite = records =>
             {
-                _batch?.BeforeWrite(); // a veto (thrown) before the Undo group opens
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("RQL mutation");
                 _undoGroup = Undo.GetCurrentGroup();
@@ -60,6 +70,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             // later call threw. A set the engine rolled back never gets here, so it does not trigger Mutate's save.
             engine.Mutations.Committed = records =>
             {
+                Destroying = null;
                 if (records.Any(ChangesProjectState)) _wrote = true; // Mutate saves only after writes that change project state
                 CloseUndoGroup();
                 var scenes = new HashSet<Scene>();
