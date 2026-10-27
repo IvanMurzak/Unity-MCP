@@ -14,6 +14,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using Rql;
 using Rql.Execution;
 using UnityEditor;
 using UnityEngine;
@@ -70,41 +71,61 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return _index = byName.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray(), StringComparer.OrdinalIgnoreCase);
         }
 
-        // The engine and the member names of the indexed UnityEngine.Object and module item types.
+        // Member names declared by UnityEngine.Object and module item types (once per domain), and the engine whose adapters'
+        // members were added on top of them.
+        private static HashSet<string>? _declaredMembers;
         private static (RqlEngine engine, HashSet<string> names)? _members;
 
         /// <summary>
-        /// <see cref="RqlEngine.IsKnownMember"/>: whether an indexed UnityEngine.Object type (components, ScriptableObjects,
-        /// assets, user scripts) or RQL module item type has a member of this name, case-insensitive: its public properties
-        /// and fields, its [SerializeField] fields, and the members RQL's adapters add (read from the engine's type model for
-        /// the adapters' target types only; building it for every type takes seconds). Collected once per engine, on the
-        /// first name RQL asks about.
+        /// <see cref="RqlEngine.IsKnownMember"/>: whether a UnityEngine.Object type (components, ScriptableObjects, assets, user
+        /// scripts, internal ones included) or an RQL module item type has a member of this name, case-insensitive: its public
+        /// properties and fields and its [SerializeField] fields (not [RqlIgnore] ones), plus the members RQL's adapters add
+        /// (read from the engine's type model for the adapters' target types only; building it for every type takes seconds).
+        /// Collected on the first name RQL asks about: the declared names once per domain, the adapter names once per engine.
         /// </summary>
         public static bool IsKnownMember(RqlEngine engine, string name)
         {
             var cached = _members;
             if (cached == null || cached.Value.engine != engine)
             {
-                const System.Reflection.BindingFlags Own = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public
-                    | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly;
-                var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-                var seen = new HashSet<Type>();
-                foreach (var types in Index().Values)
-                    foreach (var type in types)
-                        if (typeof(UnityEngine.Object).IsAssignableFrom(type) || IsModuleItemType(type))
-                            for (var t = type; t != null && seen.Add(t); t = t.BaseType) // each declaring type once
-                            {
-                                foreach (var p in t.GetProperties(Own))
-                                    if (p.GetMethod?.IsPublic == true) names.Add(p.Name);
-                                foreach (var f in t.GetFields(Own))
-                                    if (f.IsPublic || f.IsDefined(typeof(SerializeField), false)) names.Add(f.Name);
-                            }
+                var names = new HashSet<string>(_declaredMembers ??= DeclaredMembers(), StringComparer.OrdinalIgnoreCase);
                 foreach (var adapter in TypeCache.GetTypesDerivedFrom<RqlTypeAdapter>())
-                    if (AdapterTarget(adapter) is { } target)
-                        foreach (var m in engine.Types.Info(target).Members) names.Add(m.Name);
+                {
+                    try
+                    {
+                        if (AdapterTarget(adapter) is { } target)
+                            foreach (var m in engine.Types.Info(target).Members) names.Add(m.Name);
+                    }
+                    catch (Exception) { } // a type that cannot load contributes nothing
+                }
                 _members = cached = (engine, names);
             }
             return cached.Value.names.Contains(name);
+        }
+
+        private static HashSet<string> DeclaredMembers()
+        {
+            const System.Reflection.BindingFlags Own = System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.Public
+                | System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.DeclaredOnly;
+            var names = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            var seen = new HashSet<Type>();
+            var moduleItemTypes = Index().Values.SelectMany(types => types).Where(IsModuleItemType);
+            foreach (var type in TypeCache.GetTypesDerivedFrom<UnityEngine.Object>().Concat(moduleItemTypes))
+                for (var t = type; t != null && seen.Add(t); t = t.BaseType) // each declaring type once
+                {
+                    try
+                    {
+                        foreach (var p in t.GetProperties(Own))
+                            if (p.GetMethod?.IsPublic == true && p.GetIndexParameters().Length == 0 && !p.IsDefined(typeof(RqlIgnoreAttribute), true))
+                                names.Add(p.Name);
+                        foreach (var f in t.GetFields(Own))
+                            if ((f.IsPublic || f.IsDefined(typeof(SerializeField), false)) && !f.IsDefined(typeof(RqlIgnoreAttribute), true)
+                                && f.Name.IndexOf('<') < 0) // compiler-generated backing fields
+                                names.Add(f.Name);
+                    }
+                    catch (Exception) { } // a type that cannot load contributes nothing
+                }
+            return names;
         }
 
         // T of an RqlTypeAdapter<T> subclass, or null (a non-generic adapter, an open generic one).
@@ -119,14 +140,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>
         /// <see cref="RqlEngine.EnumAliases"/>: an enum entry's Inspector name ([InspectorName], else the nicified entry name,
         /// e.g. "Two Sided") → the entry name, so values written as the Inspector shows them resolve. Names that are some entry's
-        /// own name (any case) or that two entries share are left out: they would make a working name ambiguous.
+        /// own name or unprefixed name, or that two entries share (any case), are left out: they would make a working name ambiguous.
         /// </summary>
         public static IReadOnlyDictionary<string, string>? EnumAliases(Type enumType)
         {
             var fields = enumType.GetFields(System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Static);
-            var entryNames = new HashSet<string>(fields.Select(f => f.Name), StringComparer.OrdinalIgnoreCase);
-            var aliases = new Dictionary<string, string>(StringComparer.Ordinal);
-            var shared = new HashSet<string>(StringComparer.Ordinal);
+            // Entry names and their unprefixed forms ("HAlign_Fill" -> "Fill"), which RQL also resolves.
+            var entryNames = new HashSet<string>(fields.SelectMany(f => new[] { f.Name, f.Name.Substring(f.Name.IndexOf('_') + 1) }),
+                StringComparer.OrdinalIgnoreCase);
+            var aliases = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var shared = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var f in fields)
             {
                 var display = (Attribute.GetCustomAttribute(f, typeof(InspectorNameAttribute)) as InspectorNameAttribute)?.displayName

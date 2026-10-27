@@ -178,6 +178,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsFalse(root.transform.GetChild(Count - 1).gameObject.activeSelf);
             // Fewer than the default needs no max_targets.
             AssertOk(RqlUnity.Mutate("objects | where name == \"Many\" | get children | first 160 | set active = true"));
+            Assert.IsTrue(root.transform.GetChild(159).gameObject.activeSelf);
+            Assert.IsFalse(root.transform.GetChild(160).gameObject.activeSelf);
         }
 
         [Test]

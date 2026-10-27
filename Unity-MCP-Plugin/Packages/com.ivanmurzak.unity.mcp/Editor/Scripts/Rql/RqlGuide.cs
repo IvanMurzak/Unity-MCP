@@ -47,7 +47,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  group-by expr                      rows key|count; group-by a, b (or kind=$type) gives one column per key, then count\n" +
             "Expressions: == != < <= > >= and or not + - * / %; contains, starts-with, ends-with (case-insensitive); " +
             "matches \"regex\"; x in [a, b]; x is null; x is not null; $ is Light (includes subclasses); has(member); " +
-            "c ? a : b or if(c, a, b) (only the taken branch runs; in select / sort wrap it: kind=($ is Light ? \"light\" : \"other\")). " +
+            "c ? a : b or if(c, a, b) (only the taken branch runs; where a stage takes one expression, wrap it: select kind=($ is Light ? \"light\" : \"other\")). " +
             "Literals: numbers, \"strings\", true/false/null, lists [a, b], objects {x: 1, y: 2}. Text functions: lower upper len, " +
             "replace(s, from, to) (case-insensitive), replace-regex(s, pattern, repl) ($1 = group 1), substring(s, start[, length]), " +
             "split(s, sep), trim(s), pad(v, width[, fill]) — also as methods: name.replace(\"Old\", \"New\"), name.substring(0, 4).\n" +
@@ -126,8 +126,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             MutateStages + MutateExamples +
             "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}. At most 200 targets per call; " +
-            "max_targets raises the limit (up to 1000) for an intended bulk change. A misspelt member that leaves set / call with " +
-            "no target fails with unknown-member (nothing changed); a real member that no matched item has is a no-op.\n\n" +
+            "max_targets raises the limit (up to 1000) for an intended bulk change. A misspelt member that empties the stream of set / call " +
+            "fails with unknown-member (nothing changed); a real member that no matched item has is a no-op.\n\n" +
             QuerySyntaxShort;
 
         /// <summary>

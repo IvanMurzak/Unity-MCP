@@ -251,12 +251,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
         [Test]
         public void HintsNameTheHostsToolsAndSources()
         {
-            var unknownSource = Q("nosuchsource | count");
-            Assert.IsFalse(unknownSource.Ok);
-            StringAssert.DoesNotContain("world", Table(unknownSource));
-            var call = M("objects | where name == \"Alpha\" | call CreateGameObject(\"Made\")");
-            Assert.IsFalse(call.Ok);
-            StringAssert.Contains("editor | call CreateGameObject", Table(call));
+            var noSource = Q("[0, 1, 2] | select $");
+            AssertFails(noSource, "unknown-source", "(e.g. objects)");
+            StringAssert.DoesNotContain("e.g. world", Table(noSource)); // (an extension may add tilemap.worldToCell)
+            AssertFails(M("objects | where name == \"Alpha\" | call CreateGameObject(\"Made\")"), "unknown-function",
+                "editor | call CreateGameObject");
+        }
+
+        // Members of any Unity type count as known (internal scripts and adapter members too): a polymorphic set that no item
+        // reaches stays a no-op; a name no type has is a typo that fails.
+        [Test]
+        public void KnownMembersCoverEveryUnityType()
+        {
+            Assert.IsTrue(UnityTypes.IsKnownMember(RqlUnity.Engine, "orthographicSize"));
+            Assert.IsTrue(UnityTypes.IsKnownMember(RqlUnity.Engine, "rqlInternalOnlyMember"), "internal MonoBehaviour field");
+            Assert.IsTrue(UnityTypes.IsKnownMember(RqlUnity.Engine, "prefabSource"), "adapter member");
+            Assert.IsFalse(UnityTypes.IsKnownMember(RqlUnity.Engine, "transfrom"));
+            AssertOk(M("objects | get components | where rqlInternalOnlyMember > 1 | set rqlInternalOnlyMember = 2"));
+            AssertFails(M("objects | get components | where rqlInternalOnlyMembr > 1 | set rqlInternalOnlyMembr = 2"), "unknown-member");
         }
 
         // c ? a : b and if(c, a, b); only the taken branch runs.
@@ -293,5 +305,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             var schema = tool.Schema("Transform");
             Assert.AreEqual(ResponseStatus.Success, schema.Status);
         }
+    }
+
+    // Only for KnownMembersCoverEveryUnityType: an internal script type whose member no other type declares.
+    internal sealed class RqlInternalOnlyBehaviour : MonoBehaviour
+    {
+        public int rqlInternalOnlyMember;
     }
 }
