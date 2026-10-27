@@ -13,6 +13,8 @@ What it checks (everything the core, extension and CLI releases ship):
   * the NuGet pins of the resolver (`new NuGetPackage("<id>", "<version>")` in `NuGetConfig.cs`):
     a pre-release version (any `-` suffix) or a version not listed on nuget.org fails, and the
     resolver's `NuGetBaseUrl` must be the nuget.org flat container (no local / pre-release feed);
+    a pin must be written exactly as nuget.org lists it (the resolver downloads `<id>/<version>` verbatim).
+    Not covered: the transitive dependencies the resolver reads from those packages' nuspecs;
   * the vendored Code-Exec sources (`Editor/Scripts/CodeExec/VENDORED.md`): the recorded release must
     be a published `com.IvanMurzak.CodeExec` version (`release **<version>**`), not a pre-release;
   * the UPM dependencies of the core package and of every extension package
@@ -43,7 +45,8 @@ ROOT = Path(__file__).resolve().parents[1]
 NUGET_INDEX_URL = "https://api.nuget.org/v3-flatcontainer/{id}/index.json"
 
 NPM_PRERELEASE_RE = re.compile(r"\d+\.\d+\.\d+-")
-NPM_NON_REGISTRY_PREFIXES = ("file:", "link:", "git", "http:", "https:", "github:", "workspace:", "portal:")
+# A registry semver spec (`1.2.3`, `^1.2`, `~1`, `>=1 <2`, `v1.2.3`); dist-tags, paths, git and URLs are not.
+NPM_REGISTRY_SPEC_RE = re.compile(r"^\s*[0-9^~<>=v]")
 
 
 @dataclass(frozen=True)
@@ -163,7 +166,7 @@ def scan_package_json(path: Path) -> tuple[list[Pin], list[Problem]]:
     for section in ("dependencies", "optionalDependencies"):
         for package, spec in (data.get(section) or {}).items():
             line = line_of(text, f'"{package}"')
-            if spec.startswith(NPM_NON_REGISTRY_PREFIXES) or spec.startswith((".", "/")):
+            if not isinstance(spec, str) or not NPM_REGISTRY_SPEC_RE.match(spec):
                 problems.append(Problem(path, line, f"{package}: '{spec}' is not a registry version"))
             else:
                 pins.append(Pin("semver", package, spec, path, line))
@@ -186,8 +189,10 @@ def check_pins(pins: list[Pin], registry: NuGetRegistry) -> list[Problem]:
             continue
         if listed is None:
             problems.append(Problem(pin.file, pin.line, f"{pin.package} is not a package on nuget.org"))
-        elif normalize_nuget_version(pin.version) not in listed:
-            problems.append(Problem(pin.file, pin.line, f"{pin.package} {pin.version} is not published on nuget.org"))
+        elif pin.version.lower() not in listed:
+            # NuGetDownloader fetches `<id>/<version>/` exactly as written: `1.3` 404s where `1.3.0` exists.
+            problems.append(Problem(pin.file, pin.line, f"{pin.package} {pin.version} is not published on nuget.org "
+                                                        f"(write the exact version nuget.org lists)"))
     return problems
 
 
@@ -250,6 +255,7 @@ def collect(root: Path) -> tuple[list[Pin], list[Problem]]:
 
 def run(root: Path, registry: NuGetRegistry) -> tuple[list[Pin], list[Problem]]:
     pins, problems = collect(root)
+    pins = list(dict.fromkeys(pins))
     problems += check_pins(pins, registry)
     unique = sorted(set(problems), key=lambda p: (rel(p.file, root), p.line, p.message))
     return pins, unique

@@ -86,10 +86,21 @@ class GuardTests(unittest.TestCase):
 
     def test_unpublished_pin_and_unknown_package_fail(self):
         self.fixture(rql="0.9.0")
-        self.assertEqual([(guard.NUGET_CONFIG.as_posix(), "com.IvanMurzak.Rql 0.9.0 is not published on nuget.org")],
+        self.assertEqual([(guard.NUGET_CONFIG.as_posix(), "com.IvanMurzak.Rql 0.9.0 is not published on nuget.org "
+                                                          "(write the exact version nuget.org lists)")],
                          self.problems())
         unknown = self.problems(fake_registry({**PUBLISHED, "r3": None}))
         self.assertIn((guard.NUGET_CONFIG.as_posix(), "R3 is not a package on nuget.org"), unknown)
+
+    def test_resolver_downloads_the_version_exactly_as_written(self):
+        self.fixture(rql="0.2")  # NuGet would normalize it to 0.2.0, the resolver's download URL does not
+        self.assertEqual([(guard.NUGET_CONFIG.as_posix(), "com.IvanMurzak.Rql 0.2 is not published on nuget.org "
+                                                          "(write the exact version nuget.org lists)")], self.problems())
+
+    def test_npm_dist_tags_are_not_pins(self):
+        self.write("cli/package.json", json.dumps({"dependencies": {"commander": "latest", "chalk": None}}))
+        self.assertEqual({("cli/package.json", "commander: 'latest' is not a registry version"),
+                          ("cli/package.json", "chalk: 'None' is not a registry version")}, set(self.problems()))
 
     def test_registry_outage_fails_closed(self):
         problems = self.problems(fake_registry(fail=True))
@@ -106,7 +117,8 @@ class GuardTests(unittest.TestCase):
         self.assertIn((guard.CODE_EXEC_VENDORED.as_posix(), "com.IvanMurzak.CodeExec 0.4.0-dev.1 is a pre-release version"),
                       self.problems())
         self.fixture(code_exec="0.9.9")
-        self.assertIn((guard.CODE_EXEC_VENDORED.as_posix(), "com.IvanMurzak.CodeExec 0.9.9 is not published on nuget.org"),
+        self.assertIn((guard.CODE_EXEC_VENDORED.as_posix(), "com.IvanMurzak.CodeExec 0.9.9 is not published on nuget.org "
+                       "(write the exact version nuget.org lists)"),
                       self.problems())
         self.write(guard.CODE_EXEC_VENDORED, "Copied from Code-Exec main (unreleased), commit abc.\n")
         self.assertEqual([(guard.CODE_EXEC_VENDORED.as_posix(), "vendored com.IvanMurzak.CodeExec: no release version "
