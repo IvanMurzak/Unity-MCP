@@ -32,7 +32,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         protected override void Members(MemberTable<ReflectionProbe> m) => m
             .Function<string>("Bake", p => Bake(p),
                 "render this Custom probe into a texture next to its scene and return the texture's asset path; a Realtime probe re-renders " +
-                "(returns \"\"); a Baked probe bakes with the scene's lighting (lighting | call Bake())");
+                "(returns \"\"); a Baked probe bakes with the scene's lighting (lighting | call Bake())",
+                p => RqlEditorApi.Rejection(() => // dry runs report a texture folder that cannot be created
+                {
+                    if (p.mode == ReflectionProbeMode.Custom && LightingScenes.Folder(p.gameObject.scene) is string folder)
+                        RqlEditorApi.EnsureFolder(folder, create: false);
+                }));
 
         /// <summary>Bake one Custom probe and return the texture's asset path, or re-render a Realtime one ("").</summary>
         public static string Bake(ReflectionProbe probe)
@@ -51,13 +56,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
             var folder = LightingScenes.Folder(probe.gameObject.scene)
                 ?? throw new InvalidOperationException(
                     $"reflection probe '{probe.name}' is in an unsaved scene: a baked probe is stored next to its scene. " + LightingScenes.SaveSceneHint);
-            // The folder first: GenerateUniqueAssetPath returns "" for a folder that does not exist yet.
-            RqlEditorApi.Instance.CreateFolder(folder);
-            var path = TexturePath(probe, folder);
-            if (string.IsNullOrEmpty(path))
-                throw new InvalidOperationException($"no asset path for reflection probe '{probe.name}' in '{folder}'");
-            if (!Lightmapping.BakeReflectionProbe(probe, path))
-                throw new InvalidOperationException($"Unity could not bake reflection probe '{probe.name}' to '{path}'");
+            // The folder first: GenerateUniqueAssetPath returns "" for a folder that does not exist yet. A folder created
+            // here is removed again when the bake fails.
+            var path = RqlEditorApi.InFolder(folder, () =>
+            {
+                var texture = TexturePath(probe, folder);
+                if (string.IsNullOrEmpty(texture))
+                    throw new InvalidOperationException($"no asset path for reflection probe '{probe.name}' in '{folder}'");
+                return Lightmapping.BakeReflectionProbe(probe, texture)
+                    ? texture
+                    : throw new InvalidOperationException($"Unity could not bake reflection probe '{probe.name}' to '{texture}'");
+            });
 
             // Show the new texture (serialized on the probe); the next Bake() of this probe overwrites the same file.
             probe.customBakedTexture = AssetDatabase.LoadAssetAtPath<Texture>(path);

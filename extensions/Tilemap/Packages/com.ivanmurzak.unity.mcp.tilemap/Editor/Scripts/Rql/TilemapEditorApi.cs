@@ -70,27 +70,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Tilemaps
                      "returns the Tile")]
         public Tile CreateTile(string path, Sprite? sprite = null, Color? color = null, Tile.ColliderType colliderType = Tile.ColliderType.Sprite)
         {
-            path = TilemapOps.NewAssetPath(path, ".asset");
+            path = RqlEditorApi.NewModuleAssetPath(path, ".asset");
             var tile = ScriptableObject.CreateInstance<Tile>();
             tile.name = Path.GetFileNameWithoutExtension(path);
             tile.sprite = sprite;
             tile.color = color ?? Color.white;
             tile.colliderType = colliderType;
-            AssetDatabase.CreateAsset(tile, path);
-            return tile;
+            return RqlEditorApi.SaveNewAsset(tile, path); // missing folders are created, and removed again when the save fails
         }
 
         [RqlCallable("create a RuleTile asset at path (\"Assets/…/Ground.asset\") with an optional default sprite; add rules with " +
                      "call AddRule(sprite, \"TTT/T.T/NNN\") on it; returns the RuleTile")]
         public RuleTile CreateRuleTile(string path, Sprite? defaultSprite = null, Tile.ColliderType colliderType = Tile.ColliderType.Sprite)
         {
-            path = TilemapOps.NewAssetPath(path, ".asset");
+            path = RqlEditorApi.NewModuleAssetPath(path, ".asset");
             var tile = ScriptableObject.CreateInstance<RuleTile>();
             tile.name = Path.GetFileNameWithoutExtension(path);
             tile.m_DefaultSprite = defaultSprite;
             tile.m_DefaultColliderType = colliderType;
-            AssetDatabase.CreateAsset(tile, path);
-            return tile;
+            return RqlEditorApi.SaveNewAsset(tile, path);
         }
+
+        // Call validators (RQL runs them before the call, on dry runs too).
+        public string? ValidateCreateTile(string path, Sprite? sprite, Color? color, Tile.ColliderType colliderType) =>
+            RqlEditorApi.Rejection(() => RqlEditorApi.NewModuleAssetPath(path, ".asset"));
+
+        public string? ValidateCreateRuleTile(string path, Sprite? defaultSprite, Tile.ColliderType colliderType) =>
+            RqlEditorApi.Rejection(() => RqlEditorApi.NewModuleAssetPath(path, ".asset"));
     }
 }

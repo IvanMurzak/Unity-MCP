@@ -50,5 +50,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
         [RqlCallable("create an .inputactions asset at path (\"Assets/…/Player.inputactions\", missing folders are created) with an optional " +
                      "first action map; returns the asset")]
         public InputActionAsset CreateAsset(string path, string? map = null) => InputAssetStore.Create(path, map);
+
+        // Call validator (RQL runs it before the call, on dry runs too).
+        public string? ValidateCreateAsset(string path, string? map) => RqlEditorApi.Rejection(() => InputAssetStore.CreatePath(path, map));
     }
 }

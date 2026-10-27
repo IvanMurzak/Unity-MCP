@@ -60,18 +60,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         public LightingSettings CreateSettings(string path)
         {
             LightingScenes.RequireEditMode("assigning Lighting Settings");
+            path = SettingsPath(path);
+            // Missing folders are created, and removed again when Unity cannot create the asset.
+            var created = RqlEditorApi.SaveNewAsset(new LightingSettings { name = Path.GetFileNameWithoutExtension(path) }, path);
+            Assign(created);
+            return created;
+        }
+
+        // Call validator (RQL runs it before the call, on dry runs too).
+        public string? ValidateCreateSettings(string path) => RqlEditorApi.Rejection(() => SettingsPath(path));
+
+        private static string SettingsPath(string? path)
+        {
             path = (path ?? "").Replace('\\', '/').Trim();
             if (!path.StartsWith("Assets/", StringComparison.Ordinal) || !path.EndsWith(".lighting", StringComparison.OrdinalIgnoreCase))
                 throw new ArgumentException($"'{path}' must be an asset path under Assets/ ending in .lighting, e.g. \"Assets/Lighting/Outdoor.lighting\"");
             if (AssetDatabase.LoadMainAssetAtPath(path) != null)
                 throw new ArgumentException($"an asset already exists at '{path}'; assign it with: lighting | call UseSettings(\"{path}\")");
-
-            var folder = Path.GetDirectoryName(path)!.Replace('\\', '/');
-            RqlEditorApi.Instance.CreateFolder(folder);
-            var created = new LightingSettings { name = Path.GetFileNameWithoutExtension(path) };
-            AssetDatabase.CreateAsset(created, path);
-            Assign(created);
-            return created;
+            if (File.Exists(path) || Directory.Exists(path)) // on disk, not imported yet: Unity would replace it
+                throw new ArgumentException($"'{path}' is taken on disk by a file Unity has not imported (RefreshAssets() imports it)");
+            RqlEditorApi.EnsureFolder(Path.GetDirectoryName(path), create: false);
+            return path;
         }
 
         [RqlCallable("assign an existing Lighting Settings asset (path \"Assets/…/X.lighting\") to the active scene; returns it")]

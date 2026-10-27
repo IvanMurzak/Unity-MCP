@@ -36,7 +36,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Navigation
             NavigationMembers.AddAreaName(m, "defaultAreaName", s => s.defaultArea, (s, i) => s.defaultArea = i, "defaultArea");
             m.Add<NavMeshBuildSettings>("buildSettings", s => s.GetBuildSettings(),
                     description: "effective bake settings: the agent type's (navigation | get agentTypes) plus this surface's overrides")
-             .Method("Bake", s => Bake(s), "build the NavMesh now; in a saved scene the data is stored as an asset next to it (undoable reference)")
+             .Method("Bake", s => Bake(s), "build the NavMesh now; in a saved scene the data is stored as an asset next to it (undoable reference)",
+                 // dry runs report a folder in the way (Play Mode keeps the bake in memory: nothing is written)
+                 s => EditorApplication.isPlaying ? null : RqlEditorApi.Rejection(() => RqlEditorApi.EnsureFolder(AssetFolder(s), create: false)))
              .Method("Clear", s => Clear(s), "remove the baked NavMesh (and the asset Bake() created for it)");
             NavigationMembers.HideBackingFields(m.Untyped);
         }
@@ -57,11 +59,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Navigation
 
             var folder = AssetFolder(surface);
             if (folder == null) return;
-            if (previous != null) AssetDatabase.DeleteAsset(previous);
-            RqlEditorApi.Instance.CreateFolder(folder);
             var invalid = Path.GetInvalidFileNameChars();
             var name = new string(surface.name.Select(ch => invalid.Contains(ch) ? '_' : ch).ToArray());
-            AssetDatabase.CreateAsset(surface.navMeshData, AssetDatabase.GenerateUniqueAssetPath($"{folder}/NavMesh-{name}.asset"));
+            // Missing folders are created, and removed again when the asset cannot be saved (the NavMesh then stays in memory,
+            // which is why this is not SaveNewAsset: that destroys the object on failure).
+            var path = RqlEditorApi.InFolder(folder, () =>
+            {
+                var unique = AssetDatabase.GenerateUniqueAssetPath($"{folder}/NavMesh-{name}.asset");
+                AssetDatabase.CreateAsset(surface.navMeshData, unique); // throws for most bad paths, only logs for some
+                return AssetDatabase.Contains(surface.navMeshData)
+                    ? unique
+                    : throw new System.InvalidOperationException($"could not save the NavMesh of '{surface.name}' at '{unique}' (it stays in memory)");
+            });
+            // The previous bake's asset goes only once the new one is saved, and the new one takes its name.
+            if (previous == null) return;
+            AssetDatabase.DeleteAsset(previous);
+            AssetDatabase.MoveAsset(path, previous); // on failure (an error message) the new asset keeps its unique name
         }
 
         public static void Clear(NavMeshSurface surface)

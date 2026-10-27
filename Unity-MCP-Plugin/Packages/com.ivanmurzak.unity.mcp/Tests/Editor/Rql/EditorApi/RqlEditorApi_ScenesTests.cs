@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.IO;
+using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEditor.SceneManagement;
@@ -72,7 +73,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertOk(M($"editor | call NewScene(\"{Folder}/Deep/Er/N.unity\", true)"));
             Assert.AreEqual($"{Folder}/Deep/Er/N.unity", SceneManager.GetActiveScene().path);
             AssertOk(M($"editor | call NewScene(\"{Folder}/Other.unity\", true, true)"));
-            AssertFails(M($"scenes | where name == \"Other\" | call SaveAs(\"{Folder}/Deep/Er/N.unity\")"), "call-threw", "already exists");
+            const string Taken = "scenes | where name == \"Other\" | call SaveAs(\"" + Folder + "/Deep/Er/N.unity\")";
+            AssertFails(RqlUnity.Mutate(Taken, dryRun: true), "invalid-value", "already exists"); // the call validator: dry runs report it
+            AssertFails(M(Taken), "invalid-value", "already exists");
             AssertOk(M($"scenes | where name == \"Other\" | call SaveAs(\"{Folder}/Copies/Other2.unity\")"));
             Assert.IsTrue(File.Exists($"{Folder}/Copies/Other2.unity"));
         }

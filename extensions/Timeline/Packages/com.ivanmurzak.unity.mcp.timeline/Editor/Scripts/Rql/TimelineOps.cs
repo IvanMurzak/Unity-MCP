@@ -11,7 +11,6 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 using System.Reflection;
 using Rql.Execution;
@@ -114,18 +113,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Timelines
 
         public static TrackAsset ParentTrack(TimelineClip clip) =>
             clip.GetParentTrack() ?? throw new InvalidOperationException($"clip '{clip.displayName}' is not on a track");
-
-        /// <summary>Validate a new asset path: under Assets/, the expected extension, not overwriting an existing asset; creates folders.</summary>
-        public static string NewAssetPath(string path, string extension)
-        {
-            if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("path is empty");
-            path = path.Replace('\\', '/');
-            if (!path.StartsWith("Assets/", StringComparison.Ordinal)) throw new ArgumentException($"'{path}' must start with Assets/");
-            if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"'{path}' must end with {extension}");
-            if (AssetDatabase.LoadMainAssetAtPath(path) != null) throw new ArgumentException($"an asset already exists at '{path}' (choose another path)");
-            RqlEditorApi.Instance.CreateFolder(Path.GetDirectoryName(path)!);
-            return path;
-        }
 
         public static string Describe(Object? o) => o == null ? "null" : $"{o.GetType().Name} '{o.name}'";
     }

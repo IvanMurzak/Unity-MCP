@@ -40,8 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Animation
                      "and loop (Loop Time); returns the clip — then call SetCurve / AddEvent on unity.asset(path). Asset creation is not undone by Undo")]
         public AnimationClip CreateClip(string path, float frameRate = 60f, bool loop = false)
         {
-            if (frameRate <= 0f) throw new ArgumentException($"frameRate {frameRate} must be positive");
-            path = AnimationEdit.NewAssetPath(path, ".anim");
+            path = ClipPath(path, frameRate);
             var clip = new AnimationClip { name = Path.GetFileNameWithoutExtension(path), frameRate = frameRate };
             if (loop)
             {
@@ -49,8 +48,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Animation
                 settings.loopTime = true;
                 AnimationUtility.SetAnimationClipSettings(clip, settings);
             }
-            AssetDatabase.CreateAsset(clip, path);
-            return clip;
+            return RqlEditorApi.SaveNewAsset(clip, path); // missing folders are created, and removed again when the save fails
+        }
+
+        // Call validators (RQL runs them before the call, on dry runs too).
+        public string? ValidateCreateClip(string path, float frameRate, bool loop) => RqlEditorApi.Rejection(() => ClipPath(path, frameRate));
+
+        public string? ValidateCreateController(string path, Motion? motion) => RqlEditorApi.Rejection(() => RqlEditorApi.NewModuleAssetPath(path, ".controller"));
+
+        private static string ClipPath(string path, float frameRate)
+        {
+            if (frameRate <= 0f) throw new ArgumentException($"frameRate {frameRate} must be positive");
+            return RqlEditorApi.NewModuleAssetPath(path, ".anim");
         }
 
         [RqlCallable("create an AnimatorController asset at path (\"Assets/…/Name.controller\", folders are created) with a Base Layer; " +
@@ -58,8 +67,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Animation
                      "Asset creation is not undone by Undo")]
         public AnimatorController CreateController(string path, Motion? motion = null)
         {
-            path = AnimationEdit.NewAssetPath(path, ".controller");
-            var controller = AnimatorController.CreateAnimatorControllerAtPath(path);
+            path = RqlEditorApi.NewModuleAssetPath(path, ".controller");
+            // Unity returns the controller even when it could not save it (CreateAsset only logged): checked here, so the
+            // folders created for it are removed and no unsaved controller is returned.
+            var controller = RqlEditorApi.InFolderOf(path, () =>
+            {
+                var c = AnimatorController.CreateAnimatorControllerAtPath(path);
+                if (c != null && AssetDatabase.Contains(c)) return c;
+                if (c != null) UnityEngine.Object.DestroyImmediate(c);
+                throw new ArgumentException($"could not create an AnimatorController at '{path}'");
+            });
             if (motion != null) controller.AddMotion(motion);
             return controller;
         }

@@ -13,6 +13,7 @@ using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 {
@@ -73,8 +74,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Old/Kept"));
         }
 
-        // A folder on disk that Unity has not imported: CreateFolder would make "Ghost 1" instead. The call fails, removes that
-        // folder, and leaves the one on disk alone (a rollback by the requested path would delete it).
+        // A folder on disk that Unity has not imported: CreateFolder would make "Ghost 1" instead. The calls refuse it before
+        // they create anything (dry runs report it) and leave the one on disk alone (a rollback by the requested path would
+        // delete it).
         [Test]
         public void AFolderInTheWayIsNeitherReplacedNorDeleted()
         {
@@ -82,11 +84,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             System.IO.Directory.CreateDirectory(ghost);
             try
             {
-                AssertFails(M($"editor | call CreateFolder(\"{ghost}/Sub\")"), "call-threw", "could not create the folder");
+                foreach (var call in new[]
+                {
+                    $"editor | call CreateFolder(\"{ghost}/Sub\")",
+                    $"editor | call CreateMaterial(\"{ghost}/Sub/X.mat\")",
+                    $"editor | call NewScene(\"{ghost}/X.unity\", true, true)",
+                })
+                {
+                    AssertFails(RqlUnity.Mutate(call, dryRun: true), "invalid-value", "has not imported");
+                    AssertFails(M(call), "invalid-value", "has not imported");
+                }
                 Assert.IsTrue(System.IO.Directory.Exists(ghost));
+                Assert.IsFalse(System.IO.Directory.Exists($"{ghost} 1"));
+                Assert.IsFalse(System.IO.Directory.Exists($"{ghost}/Sub"));
+                Assert.Throws<System.ArgumentException>(() => RqlEditorApi.EnsureFolder($"{ghost}/Sub")); // a C# caller skips the validator
                 Assert.IsFalse(System.IO.Directory.Exists($"{ghost} 1"));
             }
             finally { System.IO.Directory.Delete(ghost, true); }
+        }
+
+        // A file where a folder is needed is refused the same way.
+        [Test]
+        public void AFileInTheWayIsRefused()
+        {
+            var file = $"{Folder}/Taken";
+            System.IO.File.WriteAllText(file, "");
+            try
+            {
+                AssertFails(RqlUnity.Mutate($"editor | call CreateMaterial(\"{file}/X.mat\")", dryRun: true), "invalid-value", "by a file");
+                Assert.IsFalse(System.IO.Directory.Exists($"{file} 1"));
+            }
+            finally { System.IO.File.Delete(file); }
+        }
+
+        // SaveNewAsset (CreateMaterial and the modules' create calls): when Unity cannot create the asset (here a file name
+        // longer than any file system allows), the folders the call created are removed again.
+        [Test]
+        public void AFailedCreateMaterialLeavesNoNewFolders()
+        {
+            LogAssert.ignoreFailingMessages = true; // Unity logs why it could not write the asset
+            AssertFails(M($"editor | call CreateMaterial(\"{Folder}/New/Deep/{new string('x', 300)}.mat\")"), "call-threw");
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/New"), "the folders the failed call created must be removed");
+            AssertOk(M($"editor | call CreateMaterial(\"{Folder}/New/Deep/X.mat\")")); // the same folders with a valid name stay
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/New/Deep"));
         }
 
         // Unity copies a folder into its own subfolder (and the new subfolder into the copy): rejected before anything is made.
