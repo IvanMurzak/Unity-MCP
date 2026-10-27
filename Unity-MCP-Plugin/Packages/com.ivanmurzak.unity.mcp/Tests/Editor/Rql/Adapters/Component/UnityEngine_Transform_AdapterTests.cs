@@ -18,6 +18,52 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
     public class UnityEngine_Transform_AdapterTests : AdapterTestBase
     {
         [Test]
+        public void LookAtTurnsTowardAGameObjectAndIsUndoable()
+        {
+            var cam = new GameObject("Cam");
+            new GameObject("Target").transform.position = new Vector3(10, 0, 0);
+            AssertOk(M("objects | where name == \"Cam\" | get transform | call LookAt(unity.find(\"Target\"))"));
+            Assert.Less(Vector3.Distance(Vector3.right, cam.transform.forward), 1e-4f);
+            UnityEditor.Undo.PerformUndo();
+            Assert.Less(Vector3.Distance(Vector3.forward, cam.transform.forward), 1e-4f);
+        }
+
+        [Test]
+        public void LookAtOnAGameObjectTakesAPositionAndWorldUp()
+        {
+            var cam = new GameObject("Cam");
+            AssertOk(M("objects | where name == \"Cam\" | call LookAt(\"(0, -5, 0)\", [0, 0, 1])")); // straight down, top toward +z
+            Assert.Less(Vector3.Distance(Vector3.down, cam.transform.forward), 1e-4f);
+            Assert.Less(Vector3.Distance(Vector3.forward, cam.transform.up), 1e-4f);
+            UnityEditor.Undo.PerformUndo();
+            Assert.Less(Vector3.Distance(Vector3.forward, cam.transform.forward), 1e-4f);
+        }
+
+        [Test]
+        public void LookAtTakesAComponent()
+        {
+            var cam = new GameObject("Cam");
+            var lamp = new GameObject("Lamp").AddComponent<Light>();
+            lamp.transform.position = new Vector3(0, 0, -10);
+            var lampRef = Cell(Q("objects | get components | where $ is Light | select $ref"));
+            AssertOk(M($"objects | where name == \"Cam\" | call LookAt(ref(\"{lampRef}\"))"));
+            Assert.Less(Vector3.Distance(Vector3.back, cam.transform.forward), 1e-4f);
+        }
+
+        [Test]
+        public void LookAtRefusesTargetsWithoutADirection()
+        {
+            var cam = new GameObject("Cam");
+            cam.transform.position = new Vector3(1, 2, 3);
+            var r = M("objects | where name == \"Cam\" | call LookAt(\"(1, 2, 3)\")");
+            Assert.IsFalse(r.Ok, Table(r));
+            StringAssert.Contains("own position", Table(r));
+            Assert.IsFalse(M("objects | where name == \"Cam\" | call LookAt(unity.find(\"Cam\"))").Ok);
+            Assert.IsFalse(M("objects | where name == \"Cam\" | call LookAt(\"not a target\")").Ok);
+            Assert.AreEqual(Quaternion.identity, cam.transform.rotation);
+        }
+
+        [Test]
         public void TransformIsAnObjectNotAListOfChildren()
         {
             var parent = new GameObject("Parent");

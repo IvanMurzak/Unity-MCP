@@ -61,7 +61,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
              .Add<string?>("prefabSource", g => PrefabSource(g),
                  description: "path of the prefab asset this scene object is (part of) an instance of, the nearest one for nested prefabs; null otherwise")
              .Add<List<string>?>("prefabOverrides", g => PrefabOverrides(g),
-                 description: "the instance's overrides of its prefab (property changes \"Child/Type.property = value\", added / removed components and GameObjects); [] = none, null = not a prefab instance")
+                 description: "overrides of its prefab (property changes \"Child/Type.property = value\", added / removed components and GameObjects): " +
+                              "on the instance root all of the instance's, on an object inside it only that object's own; [] = none, null = not a prefab instance")
              .Method("ApplyPrefabOverrides", g => PrefabUtility.ApplyPrefabInstance(OutermostInstanceRoot(g), InteractionMode.UserAction),
                  "write the overrides of this prefab instance (its outermost instance root) into the prefab asset; every instance gets them (undoable)",
                  ApplyRejection)
@@ -72,6 +73,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  description: "references to objects that no longer exist (a deleted asset, a destroyed object) as \"Component.serializedPath\" " +
                               "(e.g. MeshRenderer.m_Materials.Array.data[0]), \"missing script\" for a component whose script is gone and \"missing prefab\" " +
                               "for an instance of a deleted prefab; [] = none (a reference left empty is not missing)");
+            UnityEngine_Transform_Adapter.AddLookAt(m.Untyped, o => ((GameObject)o).transform);
             // staticFlags is built on read, so element writes are assigned back.
             m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags")
                 .ExplicitOnly("path", "layerName", "prefabSource", "prefabOverrides", "missingReferences");
@@ -100,26 +102,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 ? $"the prefab of '{g.name}' is a model or immutable prefab ({PrefabSource(g)}): it cannot take overrides"
                 : null);
 
+        // On the outermost instance root: every override of the instance. On an object inside it: only the ones on that
+        // object (its properties, its components, children added under it or removed from it), so a query over the parts of
+        // an instance does not repeat the whole list per part.
         private static List<string>? PrefabOverrides(GameObject g)
         {
             if (!IsSceneInstance(g)) return null;
             var root = OutermostInstanceRoot(g);
+            var whole = g == root;
+            // Property modifications target the prefab asset's objects: g's counterpart there.
+            var source = whole ? null : PrefabUtility.GetCorrespondingObjectFromSource(g);
+            static GameObject? Owner(Object? o) => o is Component c ? c.gameObject : o as GameObject;
+            bool Mine(GameObject? instanceObject) => whole || instanceObject == g;
             var result = new List<string>();
             foreach (var mod in PrefabUtility.GetPropertyModifications(root) ?? Array.Empty<PropertyModification>())
             {
                 // The root's position, rotation and name are per-instance by design (Unity's "default overrides").
                 if (mod.target == null || PrefabUtility.IsDefaultOverride(mod)) continue;
+                if (!whole && Owner(mod.target) != source) continue;
                 var value = mod.objectReference != null ? mod.objectReference.name : mod.value;
                 result.Add($"{Label(mod.target)}.{mod.propertyPath} = {value}");
             }
             foreach (var added in PrefabUtility.GetAddedComponents(root))
-                if (added.instanceComponent != null) result.Add($"added component {Label(added.instanceComponent)}");
+                if (added.instanceComponent != null && Mine(added.instanceComponent.gameObject))
+                    result.Add($"added component {Label(added.instanceComponent)}");
             foreach (var removed in PrefabUtility.GetRemovedComponents(root))
-                if (removed.assetComponent != null) result.Add($"removed component {Label(removed.assetComponent)}");
+                if (removed.assetComponent != null && Mine(removed.containingInstanceGameObject))
+                    result.Add($"removed component {Label(removed.assetComponent)}");
             foreach (var added in PrefabUtility.GetAddedGameObjects(root))
-                if (added.instanceGameObject != null) result.Add($"added GameObject {Label(added.instanceGameObject)}");
+                if (added.instanceGameObject != null && (whole || added.instanceGameObject.transform.parent == g.transform))
+                    result.Add($"added GameObject {Label(added.instanceGameObject)}");
             foreach (var removed in PrefabUtility.GetRemovedGameObjects(root))
-                if (removed.assetGameObject != null) result.Add($"removed GameObject {Label(removed.assetGameObject)}");
+                if (removed.assetGameObject != null && Mine(removed.parentOfRemovedGameObjectInInstance))
+                    result.Add($"removed GameObject {Label(removed.assetGameObject)}");
             return result;
         }
 

@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "Sources: objects (every GameObject in the loaded scenes, inactive included), roots, scenes, selection, prefab (the prefab open " +
             "in prefab editing mode), console (Editor log entries), shaders, componentTypes, profiler (memory / rendering / frame " +
             "snapshots; call Start / Stop / Save), tests (test methods; run a selection with tests-run query), testResults (last run), " +
-            "editor (Editor state and operations). " +
+            "editor (Editor state and operations), settings (Project Settings: physics, time, quality, player). " +
             "Assets: unity.assets(\"t:Material\") or unity.assets(\"t:Prefab\", \"Assets/Enemies\"), unity.asset(\"Assets/Mats/Red.mat\"). " +
             "ref(\"Light#1234\") resolves a $ref; unity.find(\"Player\") or unity.find(\"Level/Pillar_1\") a GameObject by unique name or path.\n" +
             "Stages:\n" +
@@ -57,11 +57,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "== on strings is case-sensitive.\n" +
             "Unity: GameObject has components (list), children (list), active, name, path (hierarchy path \"Level/Props/Crate\"), tag, " +
             "layer, layerName, transform (position, localPosition, " +
-            "eulerAngles, localScale, parent). Component members are the C# members (public + [SerializeField]); find them via " +
+            "eulerAngles, localScale, parent; call LookAt(target) turns it toward a GameObject or a position). Component members are the C# members (public + [SerializeField]); find them via " +
             "objects | get components | where $ is Light. Vectors/colors print as (x, y, z); write \"(1, 2, 3)\", [1, 2, 3] or " +
             "{x: 1, y: 2, z: 3}; colors also \"#ff8800\". An asset's file: assetPath; its import settings: get importer. Material shader properties: " +
             "properties[\"_Color\"] (the main color / texture: color, mainTexture); a Material Variant has a parent. A Mesh value also takes a primitive's name (\"Cylinder\"), a Material value a built-in material's (\"Default-Material\"). Prefab instances: " +
-            "prefabSource, prefabOverrides. Destroyed objects read as " +
+            "prefabSource, prefabOverrides (all of the instance's on its root, an object's own on a part). Destroyed objects read as " +
             "null; a GameObject's missingReferences lists references to deleted assets or objects (where missingReferences.count() > 0). Navigate with paths or get; select only projects output columns.\n" +
             "Results come back as compact rows (header line, then col|col). Long results are truncated — refine with where/first or use count. " +
             "Unknown members produce warnings with suggestions; rql-schema(type) lists a type's members.";
@@ -70,7 +70,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  console | where logType == \"Error\" | sort sequence desc | first 5 | select message\n" +
             "  scenes | select name path isDirty rootCount\n" +
             "  componentTypes | where name contains \"Collider\" | select name\n" +
-            "  editor | select isPlaying isPaused selection";
+            "  editor | select isPlaying isPaused selection\n" +
+            "  settings | select physics.gravity time.fixedDeltaTime quality.levels";
 
         public const string QueryDescription =
             "Run a read-only RQL query against the live Unity Editor scene and return compact rows. One precise query beats many " +
@@ -107,6 +108,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name == \"Old\" | call Destroy()                             remove a GameObject (components: get components | where $ is X | call Destroy())\n" +
             "  objects | where name == \"Lamp\" | set transform.parent = ref(\"GameObject#1234\")   reparent (keeps the world position)\n" +
             "  objects | where name == \"Crate\" | call Duplicate()                          copy next to it (returns the copy)\n" +
+            "  objects | where name == \"Main Camera\" | call LookAt(unity.find(\"Player\"))   aim at a GameObject (or a position \"(0, 1, 0)\")\n" +
             "Scenes, prefabs, assets, Editor state:\n" +
             "  editor | call OpenScene(\"Assets/Scenes/Level.unity\")          editor | call NewScene(\"Assets/Scenes/New.unity\")\n" +
             "  scenes | where path == \"\" | call SaveAs(\"Assets/Scenes/New.unity\")   scenes | where name == \"Level\" | call SetActive()\n" +
@@ -118,7 +120,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true   (scripts reload: retry a call that fails right after)\n" +
             "  editor | call AddLayer(\"Pickups\")  then  objects | where name starts-with \"Pickup\" | set layerName = \"Pickups\"   (read: editor | select layers tags)\n" +
             "  editor | call AddTag(\"Interactive\")  then  objects | where name starts-with \"Barrel\" | set tag = \"Interactive\"\n" +
-            "  profiler | call Start()      profiler | call Save(\"Logs/profile.json\")      (read: profiler | select memory frame)\n";
+            "  profiler | call Start()      profiler | call Save(\"Logs/profile.json\")      (read: profiler | select memory frame)\n" +
+            "  settings | set physics.gravity = \"(0, -12, 0)\", time.fixedDeltaTime = 0.01   Project Settings (saved, undoable)\n";
 
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +

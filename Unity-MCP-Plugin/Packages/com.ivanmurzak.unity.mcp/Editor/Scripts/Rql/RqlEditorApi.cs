@@ -130,7 +130,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         // ProjectSettings/TagManager.asset as a SerializedObject (its writes register Undo), and one of its arrays.
         private static (SerializedObject Manager, SerializedProperty List) TagManager(string list)
         {
-            var manager = new SerializedObject(AssetDatabase.LoadAllAssetsAtPath("ProjectSettings/TagManager.asset")[0]);
+            var manager = new SerializedObject(RqlProjectSettings.Asset("TagManager")[0]);
             return (manager, manager.FindProperty(list));
         }
 
