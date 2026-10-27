@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using Rql;
 using UnityEditor;
 using UnityEngine;
+using static com.IvanMurzak.Unity.MCP.Editor.Rql.RqlValueGuard;
 using Object = UnityEngine.Object;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
@@ -51,12 +52,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var all = AssetDatabase.LoadAllAssetsAtPath($"ProjectSettings/{file}.asset");
             return all.Length > 0 && all[0] != null ? new[] { all[0] } : Array.Empty<Object>();
         }
-
-        /// <summary>Checked before the assignment: a rejected value changes nothing (the engine rolls back earlier writes of the set).</summary>
-        public static void Require<T>(T value, bool ok, string range)
-        {
-            if (!ok) throw new ArgumentOutOfRangeException(nameof(value), value, "must be " + range);
-        }
     }
 
     [RqlDescription("Project Settings > Time: fixedDeltaTime (physics step), maximumDeltaTime, timeScale, maximumParticleDeltaTime")]
@@ -70,28 +65,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public float fixedDeltaTime
         {
             get => Time.fixedDeltaTime;
-            set { RqlProjectSettings.Require(value, value > 0f, "> 0"); Time.fixedDeltaTime = value; }
+            set { Require(value, value > 0f, "> 0"); Time.fixedDeltaTime = value; }
         }
 
         [RqlDescription("Maximum Allowed Timestep: the longest frame physics and FixedUpdate catch up on, seconds (> 0)")]
         public float maximumDeltaTime
         {
             get => Time.maximumDeltaTime;
-            set { RqlProjectSettings.Require(value, value > 0f, "> 0"); Time.maximumDeltaTime = value; }
+            set { Require(value, value > 0f, "> 0"); Time.maximumDeltaTime = value; }
         }
 
         [RqlDescription("Time Scale: speed of game time (1 = real time, 0 = paused; 0 - 100)")]
         public float timeScale
         {
             get => Time.timeScale;
-            set { RqlProjectSettings.Require(value, value >= 0f && value <= 100f, "between 0 and 100"); Time.timeScale = value; }
+            set { Require(value, value >= 0f && value <= 100f, "between 0 and 100"); Time.timeScale = value; }
         }
 
         [RqlDescription("Maximum Particle Timestep, seconds (> 0)")]
         public float maximumParticleDeltaTime
         {
             get => Time.maximumParticleDeltaTime;
-            set { RqlProjectSettings.Require(value, value > 0f, "> 0"); Time.maximumParticleDeltaTime = value; }
+            set { Require(value, value > 0f, "> 0"); Time.maximumParticleDeltaTime = value; }
         }
 
         public override string ToString() => $"time (fixedDeltaTime {fixedDeltaTime})";
@@ -115,7 +110,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             get => QualitySettings.GetQualityLevel();
             set
             {
-                RqlProjectSettings.Require(value, value >= 0 && value < QualitySettings.names.Length, $"a level index 0..{QualitySettings.names.Length - 1} ({string.Join(", ", QualitySettings.names)})");
+                var names = QualitySettings.names;
+                Require(value, value >= 0 && value < names.Length, $"a level index 0..{names.Length - 1} ({string.Join(", ", names)})");
                 QualitySettings.SetQualityLevel(value, applyExpensiveChanges: true);
             }
         }
@@ -124,14 +120,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public int vSyncCount
         {
             get => QualitySettings.vSyncCount;
-            set { RqlProjectSettings.Require(value, value >= 0 && value <= 4, "between 0 and 4"); QualitySettings.vSyncCount = value; }
+            set { Require(value, value >= 0 && value <= 4, "between 0 and 4"); QualitySettings.vSyncCount = value; }
         }
 
         [RqlDescription("MSAA samples: 0 (off), 2, 4 or 8")]
         public int antiAliasing
         {
             get => QualitySettings.antiAliasing;
-            set { RqlProjectSettings.Require(value, value == 0 || value == 2 || value == 4 || value == 8, "0, 2, 4 or 8"); QualitySettings.antiAliasing = value; }
+            set { Require(value, value == 0 || value == 2 || value == 4 || value == 8, "0, 2, 4 or 8"); QualitySettings.antiAliasing = value; }
         }
 
         [RqlDescription("Shadows: Disable, HardOnly or All")]
@@ -144,42 +140,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public float shadowDistance
         {
             get => QualitySettings.shadowDistance;
-            set { RqlProjectSettings.Require(value, value >= 0f, ">= 0"); QualitySettings.shadowDistance = value; }
+            set { Require(value, value >= 0f, ">= 0"); QualitySettings.shadowDistance = value; }
         }
 
         [RqlDescription("Shadow Cascades: 1, 2 or 4")]
         public int shadowCascades
         {
             get => QualitySettings.shadowCascades;
-            set { RqlProjectSettings.Require(value, value == 1 || value == 2 || value == 4, "1, 2 or 4"); QualitySettings.shadowCascades = value; }
+            set { Require(value, value == 1 || value == 2 || value == 4, "1, 2 or 4"); QualitySettings.shadowCascades = value; }
         }
 
         [RqlDescription("Pixel Light Count: per-pixel lights per object in Forward rendering (>= 0)")]
         public int pixelLightCount
         {
             get => QualitySettings.pixelLightCount;
-            set { RqlProjectSettings.Require(value, value >= 0, ">= 0"); QualitySettings.pixelLightCount = value; }
+            set { Require(value, value >= 0, ">= 0"); QualitySettings.pixelLightCount = value; }
         }
 
         [RqlDescription("LOD Bias: > 1 keeps detailed LODs longer (> 0)")]
         public float lodBias
         {
             get => QualitySettings.lodBias;
-            set { RqlProjectSettings.Require(value, value > 0f, "> 0"); QualitySettings.lodBias = value; }
+            set { Require(value, value > 0f, "> 0"); QualitySettings.lodBias = value; }
         }
 
         [RqlDescription("Maximum LOD Level: LODs below it are never used (>= 0)")]
         public int maximumLODLevel
         {
             get => QualitySettings.maximumLODLevel;
-            set { RqlProjectSettings.Require(value, value >= 0, ">= 0"); QualitySettings.maximumLODLevel = value; }
+            set { Require(value, value >= 0, ">= 0"); QualitySettings.maximumLODLevel = value; }
         }
 
         [RqlDescription("Global Mipmap Limit: 0 = full resolution textures, 1 = half, 2 = quarter, 3 = eighth")]
         public int globalTextureMipmapLimit
         {
             get => QualitySettings.globalTextureMipmapLimit;
-            set { RqlProjectSettings.Require(value, value >= 0 && value <= 3, "between 0 and 3"); QualitySettings.globalTextureMipmapLimit = value; }
+            set { Require(value, value >= 0 && value <= 3, "between 0 and 3"); QualitySettings.globalTextureMipmapLimit = value; }
         }
 
         [RqlDescription("Anisotropic Textures: Disable, Enable or ForceEnable")]
@@ -191,7 +187,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlDescription("Realtime Reflection Probes")]
         public bool realtimeReflectionProbes { get => QualitySettings.realtimeReflectionProbes; set => QualitySettings.realtimeReflectionProbes = value; }
 
-        public override string ToString() => $"quality ({(currentLevel < levels.Length ? levels[currentLevel] : currentLevel.ToString())})";
+        public override string ToString()
+        {
+            var (names, level) = (QualitySettings.names, QualitySettings.GetQualityLevel());
+            return $"quality ({(level < names.Length ? names[level] : level.ToString())})";
+        }
 
         IReadOnlyList<Object> IRqlUndoOwners.UndoOwners => RqlProjectSettings.Asset("QualitySettings");
     }
@@ -207,28 +207,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public string companyName
         {
             get => PlayerSettings.companyName;
-            set { RqlProjectSettings.Require(value, !string.IsNullOrWhiteSpace(value), "a non-empty name"); PlayerSettings.companyName = value; }
+            set { Require(value, !string.IsNullOrWhiteSpace(value), "a non-empty name"); PlayerSettings.companyName = value; }
         }
 
         [RqlDescription("Product Name: the application's name (not empty)")]
         public string productName
         {
             get => PlayerSettings.productName;
-            set { RqlProjectSettings.Require(value, !string.IsNullOrWhiteSpace(value), "a non-empty name"); PlayerSettings.productName = value; }
+            set { Require(value, !string.IsNullOrWhiteSpace(value), "a non-empty name"); PlayerSettings.productName = value; }
         }
 
         [RqlDescription("Version, e.g. \"1.2.0\" (not empty)")]
         public string bundleVersion
         {
             get => PlayerSettings.bundleVersion;
-            set { RqlProjectSettings.Require(value, !string.IsNullOrWhiteSpace(value), "a non-empty version"); PlayerSettings.bundleVersion = value; }
+            set { Require(value, !string.IsNullOrWhiteSpace(value), "a non-empty version"); PlayerSettings.bundleVersion = value; }
         }
 
         [RqlDescription("Color Space: Gamma or Linear (changing it reimports textures)")]
         public ColorSpace colorSpace
         {
             get => PlayerSettings.colorSpace;
-            set { RqlProjectSettings.Require(value, value == ColorSpace.Gamma || value == ColorSpace.Linear, "Gamma or Linear"); PlayerSettings.colorSpace = value; }
+            set { Require(value, value == ColorSpace.Gamma || value == ColorSpace.Linear, "Gamma or Linear"); PlayerSettings.colorSpace = value; }
         }
 
         [RqlDescription("Run In Background: the player keeps running without focus")]
@@ -241,14 +241,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public int defaultScreenWidth
         {
             get => PlayerSettings.defaultScreenWidth;
-            set { RqlProjectSettings.Require(value, value > 0, "> 0"); PlayerSettings.defaultScreenWidth = value; }
+            set { Require(value, value > 0, "> 0"); PlayerSettings.defaultScreenWidth = value; }
         }
 
         [RqlDescription("Default Screen Height of a windowed standalone player, pixels (> 0)")]
         public int defaultScreenHeight
         {
             get => PlayerSettings.defaultScreenHeight;
-            set { RqlProjectSettings.Require(value, value > 0, "> 0"); PlayerSettings.defaultScreenHeight = value; }
+            set { Require(value, value > 0, "> 0"); PlayerSettings.defaultScreenHeight = value; }
         }
 
         public override string ToString() => $"player ({productName})";

@@ -113,6 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             // Property modifications target the prefab asset's objects: g's counterpart there.
             var source = whole ? null : PrefabUtility.GetCorrespondingObjectFromSource(g);
             static GameObject? Owner(Object? o) => o is Component c ? c.gameObject : o as GameObject;
+            bool Mine(GameObject? instanceObject) => whole || instanceObject == g;
             var result = new List<string>();
             foreach (var mod in PrefabUtility.GetPropertyModifications(root) ?? Array.Empty<PropertyModification>())
             {
@@ -123,16 +124,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 result.Add($"{Label(mod.target)}.{mod.propertyPath} = {value}");
             }
             foreach (var added in PrefabUtility.GetAddedComponents(root))
-                if (added.instanceComponent != null && (whole || added.instanceComponent.gameObject == g))
+                if (added.instanceComponent != null && Mine(added.instanceComponent.gameObject))
                     result.Add($"added component {Label(added.instanceComponent)}");
             foreach (var removed in PrefabUtility.GetRemovedComponents(root))
-                if (removed.assetComponent != null && (whole || removed.containingInstanceGameObject == g))
+                if (removed.assetComponent != null && Mine(removed.containingInstanceGameObject))
                     result.Add($"removed component {Label(removed.assetComponent)}");
             foreach (var added in PrefabUtility.GetAddedGameObjects(root))
                 if (added.instanceGameObject != null && (whole || added.instanceGameObject.transform.parent == g.transform))
                     result.Add($"added GameObject {Label(added.instanceGameObject)}");
             foreach (var removed in PrefabUtility.GetRemovedGameObjects(root))
-                if (removed.assetGameObject != null && (whole || removed.parentOfRemovedGameObjectInInstance == g))
+                if (removed.assetGameObject != null && Mine(removed.parentOfRemovedGameObjectInInstance))
                     result.Add($"removed GameObject {Label(removed.assetGameObject)}");
             return result;
         }

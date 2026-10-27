@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using Rql;
 using UnityEngine;
 using UnityEngine.Rendering;
+using static com.IvanMurzak.Unity.MCP.Editor.Rql.RqlValueGuard;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
 {
@@ -106,11 +107,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         // The objects behind RenderSettings' static properties (one per loaded scene; the active scene's is the one written),
         // found publicly and all recorded, which also covers the active one.
         IReadOnlyList<UnityEngine.Object> IRqlUndoOwners.UndoOwners => Resources.FindObjectsOfTypeAll<RenderSettings>();
-
-        // Checked before the assignment: a rejected value changes nothing (the engine rolls back the earlier ones of the set).
-        private static void Require<T>(T value, bool ok, string range)
-        {
-            if (!ok) throw new ArgumentOutOfRangeException(nameof(value), value, "must be " + range);
-        }
     }
 }

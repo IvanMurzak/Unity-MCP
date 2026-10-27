@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using Rql;
 using Rql.Execution;
 using UnityEngine;
+using static com.IvanMurzak.Unity.MCP.Editor.Rql.RqlValueGuard;
 using Object = UnityEngine.Object;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Physics3D
@@ -39,42 +40,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Physics3D
         public float defaultContactOffset
         {
             get => Physics.defaultContactOffset;
-            set { RqlProjectSettings.Require(value, value > 0f, "> 0"); Physics.defaultContactOffset = value; }
+            set { Require(value, value > 0f, "> 0"); Physics.defaultContactOffset = value; }
         }
 
         [RqlDescription("Bounce Threshold: slower contacts do not bounce, m/s (>= 0)")]
         public float bounceThreshold
         {
             get => Physics.bounceThreshold;
-            set { RqlProjectSettings.Require(value, value >= 0f, ">= 0"); Physics.bounceThreshold = value; }
+            set { Require(value, value >= 0f, ">= 0"); Physics.bounceThreshold = value; }
         }
 
         [RqlDescription("Sleep Threshold: energy below which a Rigidbody sleeps (>= 0)")]
         public float sleepThreshold
         {
             get => Physics.sleepThreshold;
-            set { RqlProjectSettings.Require(value, value >= 0f, ">= 0"); Physics.sleepThreshold = value; }
+            set { Require(value, value >= 0f, ">= 0"); Physics.sleepThreshold = value; }
         }
 
         [RqlDescription("Default Solver Iterations (1 - 255)")]
         public int defaultSolverIterations
         {
             get => Physics.defaultSolverIterations;
-            set { RqlProjectSettings.Require(value, value >= 1 && value <= 255, "between 1 and 255"); Physics.defaultSolverIterations = value; }
+            set { Require(value, value >= 1 && value <= 255, "between 1 and 255"); Physics.defaultSolverIterations = value; }
         }
 
         [RqlDescription("Default Solver Velocity Iterations (1 - 255)")]
         public int defaultSolverVelocityIterations
         {
             get => Physics.defaultSolverVelocityIterations;
-            set { RqlProjectSettings.Require(value, value >= 1 && value <= 255, "between 1 and 255"); Physics.defaultSolverVelocityIterations = value; }
+            set { Require(value, value >= 1 && value <= 255, "between 1 and 255"); Physics.defaultSolverVelocityIterations = value; }
         }
 
         [RqlDescription("Default Max Angular Speed of Rigidbodies, rad/s (>= 0)")]
         public float defaultMaxAngularSpeed
         {
             get => Physics.defaultMaxAngularSpeed;
-            set { RqlProjectSettings.Require(value, value >= 0f, ">= 0"); Physics.defaultMaxAngularSpeed = value; }
+            set { Require(value, value >= 0f, ">= 0"); Physics.defaultMaxAngularSpeed = value; }
         }
 
         [RqlDescription("Queries Hit Triggers: raycasts and overlaps report trigger colliders")]

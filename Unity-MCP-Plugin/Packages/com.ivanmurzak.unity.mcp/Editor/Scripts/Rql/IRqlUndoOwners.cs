@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Generic;
 using Object = UnityEngine.Object;
 
@@ -24,5 +25,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     public interface IRqlUndoOwners
     {
         IReadOnlyList<Object> UndoOwners { get; }
+    }
+
+    /// <summary>Range checks for the setters of settings views (<see cref="IRqlUndoOwners"/>).</summary>
+    public static class RqlValueGuard
+    {
+        /// <summary>
+        /// Checked before the assignment: a rejected value changes nothing (the engine rolls back the earlier writes of the set).
+        /// </summary>
+        public static void Require<T>(T value, bool ok, string range)
+        {
+            if (!ok) throw new ArgumentOutOfRangeException(nameof(value), value, "must be " + range);
+        }
     }
 }
