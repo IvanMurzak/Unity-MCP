@@ -158,7 +158,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<(Type type, string? member, bool isCall), bool> NoAutoSave =
             new System.Collections.Concurrent.ConcurrentDictionary<(Type, string?, bool), bool>();
 
-        /// <param name="sceneSettings">The owners named by an <see cref="IRqlUndoOwners"/> (scene-level settings), or null.</param>
+        /// <param name="sceneSettings">The scene-level owners named by an <see cref="IRqlUndoOwners"/> (not assets), or null.</param>
         private static List<Object> Owners(IReadOnlyList<MutationRecord> records, out HashSet<Object>? sceneSettings)
         {
             var owners = new List<Object>();
@@ -178,10 +178,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                     if (candidate is IRqlUndoOwners settings)
                     {
                         // Once per view object, not per written member: naming the objects may scan (FindObjectsOfTypeAll).
-                        sceneSettings ??= new HashSet<Object>();
                         if ((views ??= new HashSet<IRqlUndoOwners>()).Add(settings))
                             foreach (var s in settings.UndoOwners)
-                                if (s != null && seen.Add(s)) { owners.Add(s); sceneSettings.Add(s); }
+                            {
+                                if (s == null || !seen.Add(s)) continue;
+                                owners.Add(s);
+                                // A Project Settings asset (ProjectSettings/*.asset) is dirtied and saved itself; scene-level
+                                // settings (RenderSettings) are written through the active scene.
+                                if (!EditorUtility.IsPersistent(s)) (sceneSettings ??= new HashSet<Object>()).Add(s);
+                            }
                         break;
                     }
                 }

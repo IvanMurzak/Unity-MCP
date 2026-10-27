@@ -55,8 +55,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             StringAssert.Contains("Mesh/Transform.m_LocalScale.x = 2", overrides);
             StringAssert.Contains("added component Coin/BoxCollider", overrides);
             StringAssert.DoesNotContain("m_LocalPosition", overrides);
-            // a part reports its outermost instance's overrides
-            Assert.AreEqual(overrides, Cell(Q("objects | where name == \"Mesh\" | select prefabOverrides")));
+            // a part reports only its own overrides, not the whole instance's again
+            var part = Cell(Q("objects | where name == \"Mesh\" | select prefabOverrides"));
+            StringAssert.Contains("Mesh/Transform.m_LocalScale.x = 2", part);
+            StringAssert.DoesNotContain("BoxCollider", part);
+        }
+
+        [Test]
+        public void PrefabOverridesOfAPartAreScopedToIt()
+        {
+            var instance = MakeInstance();
+            new GameObject("Other").transform.SetParent(instance.transform);
+            AssertOk(M("objects | where name == \"Coin\" | set tag = \"EditorOnly\""));
+            AssertOk(M("objects | where name == \"Mesh\" | call AddComponent(\"SphereCollider\")"));
+            var root = Cell(Q("objects | where name == \"Coin\" | select prefabOverrides"));
+            StringAssert.Contains("m_TagString = EditorOnly", root);
+            StringAssert.Contains("added component Coin/Mesh/SphereCollider", root);
+            StringAssert.Contains("added GameObject Coin/Other", root);
+            var mesh = Cell(Q("objects | where name == \"Mesh\" | select prefabOverrides"));
+            StringAssert.Contains("added component Coin/Mesh/SphereCollider", mesh);
+            StringAssert.DoesNotContain("m_TagString", mesh);
+            StringAssert.DoesNotContain("Other", mesh);
         }
 
         [Test]

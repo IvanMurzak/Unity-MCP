@@ -15,9 +15,11 @@ using Object = UnityEngine.Object;
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
     /// <summary>
-    /// A plain view object whose writes land on scene-level Unity objects that are neither GameObjects nor components, e.g.
-    /// the RenderSettings behind <c>lighting | get environment</c>. A mutation of it records <see cref="UndoOwners"/> for Undo
-    /// and marks the active scene modified (the objects of other loaded scenes are recorded, not dirtied).
+    /// A plain view object whose writes land on Unity objects that are neither GameObjects nor components, e.g. the
+    /// RenderSettings behind <c>lighting | get environment</c> or the TimeManager behind <c>settings | get time</c>. A
+    /// mutation of it records <see cref="UndoOwners"/> for Undo; scene-level owners mark the active scene modified (the
+    /// objects of other loaded scenes are recorded, not dirtied), persistent ones (ProjectSettings/*.asset) are dirtied and
+    /// saved with the assets.
     /// </summary>
     public interface IRqlUndoOwners
     {

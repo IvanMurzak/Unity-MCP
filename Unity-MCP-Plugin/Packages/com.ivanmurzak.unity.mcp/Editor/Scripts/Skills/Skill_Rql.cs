@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         [AiSkill(SkillId,
 @"How to read and change anything in the Unity Editor with RQL (rql-query / rql-mutate / rql-schema): the query
-language, operators, sources (scene objects, assets, scenes, prefabs, console logs, Editor state), Editor operations
+language, operators, sources (scene objects, assets, scenes, prefabs, console logs, Editor state, Project Settings), Editor operations
 (create, add components, scenes, prefabs, assets, selection, Play Mode) and what installed extensions add.")]
         public static string Markdown => MainThread.Instance.Run(Render);
 
