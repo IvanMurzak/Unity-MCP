@@ -166,23 +166,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // Code-Exec clips only text values; the live object Unity's converter passes through is bounded here, as JSON.
             // A collection of large items keeps the share of its items that fits (with the "… more items" note): whole items
             // beat the first characters of the JSON.
-            SerializedMember serializedResult;
-            string json;
-            for (var maxItems = ResultValue.MaxItems; ; )
-            {
-                var shaped = ResultValue.Shape(result.Value, maxItems);
-                serializedResult = reflector.Serialize(obj: shaped, logger: logger);
-                if (string.IsNullOrEmpty(serializedResult.name))
-                    serializedResult.name = JsonSchema.Result;
-                json = System.Text.Json.JsonSerializer.Serialize(serializedResult, Compact(reflector.JsonSerializerOptions));
-                if (json.Length <= ResultValue.MaxSerializedChars || !(shaped is System.Collections.ICollection items) || items.Count <= ResultValue.MinItems)
-                    break;
-                maxItems = Math.Max(ResultValue.MinItems, (int)(items.Count * 0.9 * ResultValue.MaxSerializedChars / json.Length));
-            }
+            // Only a counted collection is shaped again: a lazy query would run (and repeat its side effects) once more.
+            var (serializedResult, json, count) = SerializeShaped(ResultValue.MaxItems);
+            if (json.Length > ResultValue.MaxSerializedChars && result.Value is System.Collections.ICollection && count > ResultValue.MinItems)
+                (serializedResult, json, _) = SerializeShaped(Math.Max(ResultValue.MinItems, (int)(count * 0.9 * ResultValue.MaxSerializedChars / json.Length)));
             return json.Length <= ResultValue.MaxSerializedChars
                 ? serializedResult
                 : Scalar(serializedResult.typeName ?? JsonSchema.Object, System.Text.Json.JsonSerializer.Serialize(
                     OutputLimits.Clip(json, OutputLimits.DefaultValueChars, "this is the result as JSON; " + OutputLimits.ValueHint)));
+
+            // The shaped result, its JSON and how many items it holds (-1: not a collection).
+            (SerializedMember, string, int) SerializeShaped(int maxItems)
+            {
+                var shaped = ResultValue.Shape(result.Value, maxItems);
+                var member = reflector.Serialize(obj: shaped, logger: logger);
+                if (string.IsNullOrEmpty(member.name))
+                    member.name = JsonSchema.Result;
+                return (member, System.Text.Json.JsonSerializer.Serialize(member, Compact(reflector.JsonSerializerOptions)),
+                    shaped is System.Collections.ICollection items ? items.Count : -1);
+            }
         }
 
         // The reflector's options without indentation, built once per options instance (System.Text.Json caches its

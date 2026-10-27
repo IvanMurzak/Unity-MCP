@@ -38,11 +38,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         // Unity ignores a parent that would make a cycle (it logs an error and keeps the old one): refused before any write.
         internal static string? ValidateParent(Material material, Material? parent)
         {
+            if (parent == material) return "a material cannot be its own parent";
             for (var p = parent; p != null; p = p.parent)
                 if (p == material)
-                    return ReferenceEquals(parent, material)
-                        ? "a material cannot be its own parent"
-                        : $"'{parent!.name}' is already a variant of '{material.name}' (directly or through its parents): a cycle";
+                    return $"'{parent!.name}' is already a variant of '{material.name}' (directly or through its parents): a cycle";
             return null;
         }
 

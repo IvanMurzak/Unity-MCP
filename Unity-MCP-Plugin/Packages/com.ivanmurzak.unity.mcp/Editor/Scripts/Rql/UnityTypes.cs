@@ -58,14 +58,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 }
             }
             foreach (var t in TypeCache.GetTypesDerivedFrom<UnityEngine.Object>()) Add(t);
-            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
-                foreach (var t in TypeModel.LoadableTypes(asm))
-                    if (t.IsEnum || (t.IsValueType && IsUnityEngine(t))) Add(t);
             // The RQL modules' own item types (ActionMapView, SplineView, LightingEnvironment …): the schema names them as member
             // types, and RQL's reachability walk stops long before them in a Unity project.
-            foreach (var asm in TypeCache.GetTypesDerivedFrom<IRqlModule>().Select(t => t.Assembly).Distinct())
+            var moduleAssemblies = new HashSet<System.Reflection.Assembly>(TypeCache.GetTypesDerivedFrom<IRqlModule>().Select(t => t.Assembly));
+            foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+            {
+                var isModule = moduleAssemblies.Contains(asm);
                 foreach (var t in TypeModel.LoadableTypes(asm))
-                    if (IsModuleItemType(t)) Add(t);
+                    if (t.IsEnum || (t.IsValueType && IsUnityEngine(t)) || (isModule && IsModuleItemType(t))) Add(t);
+            }
             return _index = byName.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray(), StringComparer.OrdinalIgnoreCase);
         }
 

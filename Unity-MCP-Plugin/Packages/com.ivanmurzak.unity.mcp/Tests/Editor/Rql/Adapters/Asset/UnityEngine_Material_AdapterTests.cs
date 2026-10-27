@@ -99,8 +99,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             var child = new Material(_mat.shader) { name = "Child", parent = _mat };
             try
             {
-                AssertFails(M(Mat + " | set parent = " + $"ref(\"{RefOf(child)}\")"), "invalid-value", "a cycle");
-                AssertFails(M(Mat + " | set parent = " + $"ref(\"{RefOf(_mat)}\")"), "invalid-value", "its own parent");
+                AssertFails(M(Mat + $" | set parent = ref(\"{RefOf(child)}\")"), "invalid-value", "a cycle");
+                AssertFails(M(Mat + $" | set parent = ref(\"{RefOf(_mat)}\")"), "invalid-value", "its own parent");
                 Assert.IsNull(_mat.parent);
             }
             finally { Object.DestroyImmediate(child); }

@@ -70,7 +70,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 {
                     CloseUndoGroup(); // a mutation that failed before Committed
                     // Execute threw: nothing gets saved. Raised here, like below, once InMutation is false again.
-                    if (!completed) Raise(Discarded);
+                    if (!completed)
+                    {
+                        Reimports.Clear();
+                        Raise(Discarded);
+                    }
                 }
             }
             if (_mutating > 0) return result;
@@ -196,10 +200,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return problems;
         }
 
-        /// <summary>Write every pending change to disk; returns what could not be saved.</summary>
         // Importers written by the running Mutate: their settings reach the asset only through a reimport.
         internal static readonly HashSet<AssetImporter> Reimports = new HashSet<AssetImporter>();
 
+        /// <summary>Write every pending change to disk; returns what could not be saved.</summary>
         public static List<string> SaveChanges()
         {
             var problems = Raise(Saving);

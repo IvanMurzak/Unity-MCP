@@ -24,9 +24,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
     public sealed class UnityEngine_Mesh_Adapter : RqlTypeAdapter<Mesh>
     {
         public override string Description =>
-            "Mesh: write as a ref, an asset path, or a primitive's name (Cube, Sphere, Capsule, Cylinder, Plane, Quad) for Unity's built-in mesh";
+            $"Mesh: write as a ref, an asset path, or a primitive's name ({Names}) for Unity's built-in mesh";
 
         private static readonly Dictionary<PrimitiveType, Mesh> Primitives = new Dictionary<PrimitiveType, Mesh>();
+
+        // By name only (Enum.TryParse also takes "3"), any case.
+        private static readonly Dictionary<string, PrimitiveType> ByName = new Dictionary<string, PrimitiveType>(StringComparer.OrdinalIgnoreCase);
+        private static readonly string Names = string.Join(", ", Enum.GetNames(typeof(PrimitiveType)));
+
+        static UnityEngine_Mesh_Adapter()
+        {
+            foreach (PrimitiveType p in Enum.GetValues(typeof(PrimitiveType))) ByName[p.ToString()] = p;
+        }
 
         public override AdapterOutcome TryCoerce(object? value, Type target, RqlKernel kernel, out object? result, out string? reason)
         {
@@ -34,26 +43,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             reason = null;
             if (!(value is string text) || UnityEngine_Object_Adapter.TryAssetPath(text, out _))
                 return AdapterOutcome.NotHandled; // refs and asset paths: the Object adapter
-            if (!TryPrimitive(text, out var primitive))
+            if (!ByName.TryGetValue(text.Trim(), out var primitive))
             {
-                reason = $"'{text}' is neither an asset path nor a primitive ({string.Join(", ", Enum.GetNames(typeof(PrimitiveType)))})";
+                reason = $"'{text}' is neither an asset path nor a primitive ({Names})";
                 return AdapterOutcome.Failed;
             }
             result = PrimitiveMesh(primitive);
             return AdapterOutcome.Ok;
-        }
-
-        // By name only: Enum.TryParse also takes "3".
-        private static bool TryPrimitive(string text, out PrimitiveType primitive)
-        {
-            foreach (var name in Enum.GetNames(typeof(PrimitiveType)))
-                if (string.Equals(name, text.Trim(), StringComparison.OrdinalIgnoreCase))
-                {
-                    primitive = (PrimitiveType)Enum.Parse(typeof(PrimitiveType), name);
-                    return true;
-                }
-            primitive = default;
-            return false;
         }
 
         /// <summary>The mesh GameObject.CreatePrimitive gives <paramref name="primitive"/> (cached per domain).</summary>

@@ -64,10 +64,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  description: "the instance's overrides of its prefab (property changes \"Child/Type.property = value\", added / removed components and GameObjects); [] = none, null = not a prefab instance")
              .Method("ApplyPrefabOverrides", g => PrefabUtility.ApplyPrefabInstance(OutermostInstanceRoot(g), InteractionMode.UserAction),
                  "write the overrides of this prefab instance (its outermost instance root) into the prefab asset; every instance gets them (undoable)",
-                 g => PrefabInstanceRejection(g))
+                 PrefabInstanceRejection)
              .Method("RevertPrefabOverrides", g => PrefabUtility.RevertPrefabInstance(OutermostInstanceRoot(g), InteractionMode.UserAction),
                  "drop every override of this prefab instance (its outermost instance root): it matches its prefab again (undoable)",
-                 g => PrefabInstanceRejection(g));
+                 PrefabInstanceRejection);
             // staticFlags is built on read, so element writes are assigned back.
             m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags")
                 .ExplicitOnly("path", "layerName", "prefabSource", "prefabOverrides");
@@ -82,7 +82,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         private static GameObject OutermostInstanceRoot(GameObject g) =>
             PrefabUtility.GetOutermostPrefabInstanceRoot(g) ?? throw new InvalidOperationException($"'{g.name}' is not a prefab instance");
 
-        internal static string? PrefabInstanceRejection(GameObject g) =>
+        private static string? PrefabInstanceRejection(GameObject g) =>
             IsSceneInstance(g) ? null : $"'{g.name}' is not part of a prefab instance in a scene (prefabSource is null)";
 
         private static List<string>? PrefabOverrides(GameObject g)
@@ -109,7 +109,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         // "Child/Transform" for a component, the GameObject's path for a GameObject (from the prefab or instance root).
         private static string Label(Object target) => target switch
         {
-            Component c => (c.gameObject.GetPath() ?? c.gameObject.name) + "/" + c.GetType().Name,
+            Component c => Label(c.gameObject) + "/" + c.GetType().Name,
             GameObject go => go.GetPath() ?? go.name,
             _ => target.name,
         };
