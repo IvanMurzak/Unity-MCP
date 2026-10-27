@@ -38,6 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         private static void Destroy(Component c)
         {
             if (c == null) return; // its GameObject was destroyed by an earlier target of the same call
+            if (ValidateDestroy(c) is { } rejection) throw new InvalidOperationException(rejection); // a C# caller skips RQL's validator
             RqlUnity.DestroyUndoable(c, $"Unity did not remove {c.GetType().Name} from '{c.gameObject.name}': another component requires it");
         }
 

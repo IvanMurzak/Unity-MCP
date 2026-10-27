@@ -76,8 +76,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         // The call validator rejects the foreseeable cases for every target before the first add (dry runs included).
         private static Component AddComponent(GameObject g, string typeName)
         {
-            var type = UnityTypes.Find(typeName, typeof(Component))
-                       ?? throw new ArgumentException($"no component type named '{typeName}'");
+            if (ValidateAddComponent(g, typeName) is { } rejection) throw new ArgumentException(rejection); // a C# caller skips RQL's validator
+            var type = UnityTypes.Find(typeName, typeof(Component))!;
             return Undo.AddComponent(g, type)
                    ?? throw new InvalidOperationException($"Unity did not add {type.Name} to '{g.name}': it allows one per GameObject, " +
                                                           "conflicts with a component already there, or cannot be added (the Console has the reason)");
@@ -89,15 +89,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             if (type == null) return $"no component type named '{typeName}'";
             if (type == typeof(Transform)) return "a Transform cannot be added: every GameObject has exactly one";
             if (g == null) return null;
-            if (type.IsDefined(typeof(DisallowMultipleComponent), true) && g.GetComponent(type) != null)
+            // Unity allows one Rigidbody / Rigidbody2D per GameObject natively, without [DisallowMultipleComponent].
+            if ((type.IsDefined(typeof(DisallowMultipleComponent), true) || IsBody(type)) && g.GetComponent(type) != null)
                 return $"'{g.name}' already has a {type.Name}, which allows one per GameObject";
-            // 3D and 2D physics components cannot share a GameObject (by name: the 2D physics module may be disabled).
-            var physics = PhysicsFamily(type);
-            if (physics != 0)
+            // 3D and 2D physics components cannot share a GameObject (by name: the 2D physics module may be disabled), nor
+            // can the components the new one requires (a FixedJoint adds a Rigidbody).
+            foreach (var added in WithRequired(type))
+            {
+                var physics = PhysicsFamily(added);
+                if (physics == 0) continue;
                 foreach (var existing in g.GetComponents<Component>())
                     if (existing != null && PhysicsFamily(existing.GetType()) == -physics)
                         return $"{type.Name} conflicts with {existing.GetType().Name} on '{g.name}': 3D and 2D physics cannot be mixed";
+            }
             return null;
+        }
+
+        static bool IsBody(Type type) => type.FullName == "UnityEngine.Rigidbody" || type.FullName == "UnityEngine.Rigidbody2D";
+
+        // The type and the components its [RequireComponent] attributes make Unity add with it (one level).
+        static IEnumerable<Type> WithRequired(Type type)
+        {
+            yield return type;
+            foreach (RequireComponent r in type.GetCustomAttributes(typeof(RequireComponent), true))
+                foreach (var t in new[] { r.m_Type0, r.m_Type1, r.m_Type2 })
+                    if (t != null) yield return t;
         }
 
         // 1 = 3D physics (Rigidbody, Collider), -1 = 2D physics (Rigidbody2D, Collider2D), 0 = neither.

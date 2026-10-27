@@ -173,8 +173,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             var go = new GameObject("Host", typeof(Rigidbody));
             AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Transform\")"), "invalid-value", "a Transform cannot be added");
             AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Renderer\")"), "call-threw", "did not add Renderer"); // Unity refuses it at the call
-            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Rigidbody\")"), "call-threw", "did not add Rigidbody");
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Rigidbody\")"), "invalid-value", "already has a Rigidbody");
             AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"Rigidbody2D\")"), "invalid-value", "Rigidbody2D conflicts with Rigidbody");
+            AssertFails(M("objects | where name == \"Host\" | call AddComponent(\"HingeJoint2D\")"), "invalid-value", "conflicts with Rigidbody"); // it requires a Rigidbody2D
             Assert.AreEqual(2, go.GetComponents<Component>().Length);
             AssertOk(M("objects | where name == \"Host\" | call AddComponent(\"BoxCollider\")"));
             Assert.IsNotNull(go.GetComponent<BoxCollider>());
