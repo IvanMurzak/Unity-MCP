@@ -69,8 +69,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  "drop every override of this prefab instance (its outermost instance root): it matches its prefab again (undoable)",
                  PrefabInstanceRejection)
              .Add<List<string>>("missingReferences", g => MissingReferences(g),
-                 description: "references to objects that no longer exist (a deleted asset, a destroyed object) as \"Component.property\", " +
-                              "and \"missing script\" for a component whose script is gone; [] = none (a reference left empty is not missing)");
+                 description: "references to objects that no longer exist (a deleted asset, a destroyed object) as \"Component.serializedPath\" " +
+                              "(e.g. MeshRenderer.m_Materials.Array.data[0]), \"missing script\" for a component whose script is gone and \"missing prefab\" " +
+                              "for an instance of a deleted prefab; [] = none (a reference left empty is not missing)");
             // staticFlags is built on read, so element writes are assigned back.
             m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags")
                 .ExplicitOnly("path", "layerName", "prefabSource", "prefabOverrides", "missingReferences");
@@ -126,17 +127,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         private static List<string> MissingReferences(GameObject g)
         {
             var result = new List<string>();
+            if (IsSceneInstance(g) && PrefabUtility.IsPrefabAssetMissing(g)) result.Add("missing prefab");
             foreach (var c in g.GetComponents<Component>())
             {
                 if (c == null) { result.Add("missing script"); continue; }
                 using var so = new SerializedObject(c);
                 var p = so.GetIterator();
-                while (p.Next(true))
-                    if (p.propertyType == SerializedPropertyType.ObjectReference && p.objectReferenceValue == null && HoldsAnId(p))
+                while (p.Next(MayHoldReferences(p)))
+                    // The id first: reading objectReferenceValue may load the referenced asset.
+                    if (p.propertyType == SerializedPropertyType.ObjectReference && !PrefabLinks.Contains(p.propertyPath)
+                        && HoldsAnId(p) && p.objectReferenceValue == null)
                         result.Add(c.GetType().Name + "." + p.propertyPath);
             }
             return result;
         }
+
+        // The prefab link of every object of an instance: a deleted prefab is reported once, as "missing prefab".
+        private static readonly HashSet<string> PrefabLinks = new HashSet<string> { "m_CorrespondingSourceObject", "m_PrefabInstance", "m_PrefabAsset" };
+
+        // Element types that never hold a reference: large arrays of them (tiles, positions, curves) are not walked.
+        private static readonly HashSet<string> PlainElements = new HashSet<string>
+            { "int", "unsigned int", "float", "double", "bool", "char", "UInt8", "SInt8", "UInt16", "SInt16", "SInt64", "UInt64",
+              "Vector2", "Vector3", "Vector4", "Vector2f", "Vector3f", "Vector4f", "Quaternionf", "ColorRGBA", "Color", "Keyframe", "string" };
+
+        private static bool MayHoldReferences(SerializedProperty p) =>
+            (p.propertyType == SerializedPropertyType.Generic || p.propertyType == SerializedPropertyType.ManagedReference)
+            && !(p.isArray && PlainElements.Contains(p.arrayElementType));
 
 #if UNITY_6000_5_OR_NEWER
         private static bool HoldsAnId(SerializedProperty p) => !p.objectReferenceEntityIdValue.Equals(default(EntityId));

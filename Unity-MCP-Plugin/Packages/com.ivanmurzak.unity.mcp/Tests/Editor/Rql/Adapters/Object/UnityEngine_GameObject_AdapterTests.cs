@@ -229,6 +229,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             var empty = GameObject.CreatePrimitive(PrimitiveType.Cube);
             empty.name = "Empty";
             empty.GetComponent<MeshRenderer>().sharedMaterial = null;
+            UnityEditor.AssetDatabase.DeleteAsset(Path); // a leftover of an aborted run
             try
             {
                 UnityEditor.AssetDatabase.CreateAsset(new Material(Shader.Find("Hidden/Internal-Colored")), Path);
@@ -237,9 +238,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
                 UnityEditor.AssetDatabase.DeleteAsset(Path);
                 Assert.AreEqual("[\"MeshRenderer.m_Materials.Array.data[0]\"]", Cell(Q("objects | where name == \"Lost\" | select missingReferences")));
                 Assert.AreEqual("[]", Cell(Q("objects | where name == \"Empty\" | select missingReferences")));
+                Assert.AreEqual(1, Count("objects | where missingReferences.count() > 0 | count"));
                 Assert.AreEqual("Lost", Cell(Q("objects | where missingReferences.count() > 0 | select name")));
             }
             finally { UnityEditor.AssetDatabase.DeleteAsset(Path); }
+        }
+
+        [Test]
+        public void MissingReferencesListsDestroyedSceneObjects()
+        {
+            var target = new GameObject("Target");
+            var joint = new GameObject("Holder", typeof(Rigidbody), typeof(FixedJoint)).GetComponent<FixedJoint>();
+            joint.connectedBody = target.AddComponent<Rigidbody>();
+            Assert.AreEqual("[]", Cell(Q("objects | where name == \"Holder\" | select missingReferences")));
+            Object.DestroyImmediate(target);
+            StringAssert.Contains("FixedJoint.m_ConnectedBody", Cell(Q("objects | where name == \"Holder\" | select missingReferences")));
         }
     }
 }
