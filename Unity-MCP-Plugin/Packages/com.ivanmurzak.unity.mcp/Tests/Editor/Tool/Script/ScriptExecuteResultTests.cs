@@ -160,9 +160,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         [Test]
         public void AGraphTooLargeToSerializeWholeReturnsItsBeginning()
         {
-            var text = Run("Enumerable.Range(0, 900).Select(i => new { a = i, b = new string('y', 300) }).ToList()");
-            StringAssert.Contains($"[truncated: {OutputLimits.DefaultValueChars} of ", text); // 270 000+ characters as JSON
+            // One object (not a collection) whose JSON is 270 000+ characters: only its beginning fits.
+            var text = Run("new { items = Enumerable.Range(0, 900).Select(i => new { a = i, b = new string('y', 300) }).ToList() }");
+            StringAssert.Contains($"[truncated: {OutputLimits.DefaultValueChars} of ", text);
             Assert.Less(text.Length, OutputLimits.DefaultValueChars + 2000); // + the quotes the JSON string escapes
+        }
+
+        // A collection whose items are too large together keeps whole items and says how many it left out, instead of the
+        // first characters of its JSON (which lost the "more items" note and every item past the cut).
+        [Test]
+        public void ACollectionOfLargeItemsKeepsTheItemsThatFit()
+        {
+            var text = Run("Enumerable.Range(0, 900).Select(i => new { a = i, b = new string('y', 300) }).ToList()");
+            StringAssert.DoesNotContain("[truncated:", text);
+            StringAssert.IsMatch(@"… \d+ more items \(first \d+ of 900 shown\)", text);
+            var shown = int.Parse(System.Text.RegularExpressions.Regex.Match(text, @"first (\d+) of 900").Groups[1].Value);
+            Assert.That(shown, Is.InRange(Tool_Script.ResultValue.MinItems, 899));
+            Assert.Less(text.Length, Tool_Script.ResultValue.MaxSerializedChars);
         }
 
         [Test]

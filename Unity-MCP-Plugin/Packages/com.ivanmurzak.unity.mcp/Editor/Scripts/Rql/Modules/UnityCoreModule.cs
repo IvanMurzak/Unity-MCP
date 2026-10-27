@@ -72,7 +72,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
 
             // Assets
             ctx.AddAdapter(new UnityEngine_Material_Adapter())
-               .AddAdapter(new UnityEngine_Sprite_Adapter());
+               .AddAdapter(new UnityEngine_Sprite_Adapter())
+               .AddAdapter(new UnityEngine_Mesh_Adapter());
 
             // Structs
             ctx.AddAdapter(new UnityEngine_Vector2_Adapter())

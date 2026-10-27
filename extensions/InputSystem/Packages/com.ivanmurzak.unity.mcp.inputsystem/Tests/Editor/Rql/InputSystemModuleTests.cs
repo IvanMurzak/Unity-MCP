@@ -35,6 +35,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.InputSystem
             Assert.IsTrue(RqlUnity.Engine.Modules.All(m => m.Ok), string.Join("\n", RqlUnity.Engine.Modules));
         }
 
+        // The views the asset's schema names (maps IReadOnlyList<ActionMapView> …) are described by name too.
+        [Test]
+        public void TheViewTypesHaveASchema()
+        {
+            foreach (var view in new[] { "ActionMapView", "ActionView", "BindingView", "ControlSchemeView" })
+                StringAssert.StartsWith(view + " {", RqlUnitySchema.Render(RqlUnity.Engine, view));
+            StringAssert.Contains("AddAction(", RqlUnitySchema.Render(RqlUnity.Engine, "ActionMapView"));
+        }
+
         [Test]
         public void TheGuideIsPartOfTheRqlSkill()
         {

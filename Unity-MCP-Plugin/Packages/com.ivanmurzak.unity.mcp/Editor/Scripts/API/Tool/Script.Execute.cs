@@ -163,12 +163,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if ((result.Value is double d && !double.IsFinite(d)) || (result.Value is float f && !float.IsFinite(f)))
                 return Scalar(result.Value.GetType().FullName!, System.Text.Json.JsonSerializer.Serialize(Convert.ToString(result.Value, CultureInfo.InvariantCulture)));
 
-            var serializedResult = reflector.Serialize(obj: ResultValue.Shape(result.Value), logger: logger);
-            if (string.IsNullOrEmpty(serializedResult.name))
-                serializedResult.name = JsonSchema.Result;
-
             // Code-Exec clips only text values; the live object Unity's converter passes through is bounded here, as JSON.
-            var json = System.Text.Json.JsonSerializer.Serialize(serializedResult, Compact(reflector.JsonSerializerOptions));
+            // A collection of large items keeps the share of its items that fits (with the "… more items" note): whole items
+            // beat the first characters of the JSON.
+            SerializedMember serializedResult;
+            string json;
+            for (var maxItems = ResultValue.MaxItems; ; )
+            {
+                var shaped = ResultValue.Shape(result.Value, maxItems);
+                serializedResult = reflector.Serialize(obj: shaped, logger: logger);
+                if (string.IsNullOrEmpty(serializedResult.name))
+                    serializedResult.name = JsonSchema.Result;
+                json = System.Text.Json.JsonSerializer.Serialize(serializedResult, Compact(reflector.JsonSerializerOptions));
+                if (json.Length <= ResultValue.MaxSerializedChars || !(shaped is System.Collections.ICollection items) || items.Count <= ResultValue.MinItems)
+                    break;
+                maxItems = Math.Max(ResultValue.MinItems, (int)(items.Count * 0.9 * ResultValue.MaxSerializedChars / json.Length));
+            }
             return json.Length <= ResultValue.MaxSerializedChars
                 ? serializedResult
                 : Scalar(serializedResult.typeName ?? JsonSchema.Object, System.Text.Json.JsonSerializer.Serialize(

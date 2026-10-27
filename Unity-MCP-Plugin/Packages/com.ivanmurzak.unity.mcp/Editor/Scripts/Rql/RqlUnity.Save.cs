@@ -74,12 +74,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 }
             }
             if (_mutating > 0) return result;
+            if (MatchedNothingThroughUnknownMember(result))
+            {
+                // "0 results" with a warning read as a successful change: a misspelt member must fail the call.
+                result.Ok = false;
+                result.Diagnostics.Insert(0, Diagnostic.Error("unknown-member",
+                    "nothing was changed: the query names a member that does not exist (see the warning), so no target reached set / call",
+                    "fix the member name (rql-schema \"<type>\" lists a type's members)"));
+            }
             if (dryRun || !_wrote)
             {
+                Reimports.Clear();
                 foreach (var problem in Raise(Discarded))
                     result.Diagnostics.Add(Diagnostic.Warning("not-discarded", problem));
                 return result;
             }
+            if (PlayModeNotice(EditorApplication.isPlaying) is { } notice)
+                result.Diagnostics.Add(notice);
             List<string> problems;
             // The changes are applied: a save that throws must not turn the receipt into a tool error.
             try { problems = SaveChanges(); }
@@ -88,6 +99,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 result.Diagnostics.Add(Diagnostic.Warning("not-saved", problem));
             return result;
         }
+
+        // Play Mode changes look applied (and are, until Play Mode exits): the receipt says they will not last.
+        internal static Diagnostic? PlayModeNotice(bool isPlaying) => isPlaying
+            ? Diagnostic.Warning("play-mode", "the Editor is in Play Mode: scene changes are temporary and are lost when Play Mode exits (asset changes stay)")
+            : null;
+
+        internal static bool MatchedNothingThroughUnknownMember(QueryResult result) =>
+            result.Ok && (result.Rows == null || result.Rows.Count == 0) && (result.Total ?? 0) == 0
+            && result.Diagnostics.Exists(d => d.Severity == DiagnosticSeverity.Warning && d.Code == "unknown-member");
 
         /// <summary>Hard ceiling of <c>max_targets</c> (the engine clamps a request to it).</summary>
         public static int HardMaxTargets => Engine.Mutations.HardMaxTargets;
@@ -177,9 +197,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         }
 
         /// <summary>Write every pending change to disk; returns what could not be saved.</summary>
+        // Importers written by the running Mutate: their settings reach the asset only through a reimport.
+        internal static readonly HashSet<AssetImporter> Reimports = new HashSet<AssetImporter>();
+
         public static List<string> SaveChanges()
         {
             var problems = Raise(Saving);
+            foreach (var importer in Reimports)
+            {
+                if (importer == null) continue;
+                try { importer.SaveAndReimport(); }
+                catch (Exception ex) { problems.Add($"'{importer.assetPath}' was not reimported: {ex.Message}"); }
+            }
+            Reimports.Clear();
             AssetDatabase.SaveAssets();
             if (EditorApplication.isPlaying) return problems; // play mode scene changes are temporary by design
 

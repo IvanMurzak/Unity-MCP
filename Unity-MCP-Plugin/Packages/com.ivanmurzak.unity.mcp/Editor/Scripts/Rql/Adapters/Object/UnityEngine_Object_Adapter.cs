@@ -67,9 +67,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             if (!members.Contains("assetPath"))
                 members.Add("assetPath", typeof(string), o => AssetPathOf((Object)o), description: "the asset's project path (\"Assets/…/Red.mat\"); null for scene objects")
                        .ExplicitOnly("assetPath");
+            // The import settings of an asset file (TextureImporter, ModelImporter, AudioImporter …): written like any object,
+            // then saved and reimported by RqlUnity.SaveChanges.
+            // Components are never asset files of their own.
+            if (!members.Contains("importer") && !typeof(UnityEditor.AssetImporter).IsAssignableFrom(members.Type)
+                && !typeof(UnityEngine.Component).IsAssignableFrom(members.Type))
+                members.Add("importer", typeof(UnityEditor.AssetImporter), o => ImporterOf((Object)o),
+                           description: "the asset file's import settings (TextureImporter, ModelImporter, AudioImporter …; writes are saved and the file reimported); null for scene objects")
+                       .ExplicitOnly("importer");
         }
 
         private static string? AssetPathOf(Object o) =>
             o != null && UnityEditor.AssetDatabase.GetAssetPath(o) is { Length: > 0 } path ? path : null;
+
+        // A sub-asset (a sprite of a sheet, a mesh inside an .fbx) shares its file's importer.
+        private static UnityEditor.AssetImporter? ImporterOf(Object o) =>
+            AssetPathOf(o) is { } path ? UnityEditor.AssetImporter.GetAtPath(path) : null;
     }
 }

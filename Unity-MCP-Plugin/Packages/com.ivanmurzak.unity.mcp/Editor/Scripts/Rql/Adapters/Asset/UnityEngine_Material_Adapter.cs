@@ -21,7 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
     /// <summary>Material: safe members plus every shader property as a typed, validated map: <c>properties["_Color"]</c>.</summary>
     public sealed class UnityEngine_Material_Adapter : RqlTypeAdapter<Material>
     {
-        public override string Description => "Material: shader properties via properties[\"_Name\"] (colors, vectors, floats, textures, ints)";
+        public override string Description => "Material: shader properties via properties[\"_Name\"] (colors, vectors, floats, textures, ints); " +
+                                               "a Material Variant: set parent = unity.asset(\"….mat\")";
 
         protected override void Members(MemberTable<Material> m)
         {
@@ -29,6 +30,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             m.Untyped.AddMixedMap("properties", o => Keys((Material)o), (o, k) => EntryType((Material)o, k),
                 (o, k) => Get((Material)o, k), (o, k, v) => Set((Material)o, k, v), (o, k, v) => Validate((Material)o, k, v),
                 "shader properties by name", has: (o, k) => ((Material)o).HasProperty(k));
+            m.Add<Material?>("parent", o => o.parent, (o, v) => o.parent = v, (o, v) => ValidateParent(o, v),
+                    "the material this one is a Material Variant of (it takes the parent's shader; properties set on it become overrides); null = a plain material")
+             .Add<bool>("isVariant", o => o.isVariant, description: "true when this material is a Material Variant (has a parent)");
+        }
+
+        // Unity ignores a parent that would make a cycle (it logs an error and keeps the old one): refused before any write.
+        internal static string? ValidateParent(Material material, Material? parent)
+        {
+            for (var p = parent; p != null; p = p.parent)
+                if (p == material)
+                    return ReferenceEquals(parent, material)
+                        ? "a material cannot be its own parent"
+                        : $"'{parent!.name}' is already a variant of '{material.name}' (directly or through its parents): a cycle";
+            return null;
         }
 
         private static IEnumerable<string> Keys(Material m)

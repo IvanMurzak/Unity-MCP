@@ -55,11 +55,64 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
              .Method("Destroy", g => { if (g != null) RqlUnity.DestroyUndoable(g, $"Unity did not destroy '{g.name}'"); }, "destroy this GameObject (undoable)")
              .Function("Duplicate", g => Duplicate(g), "copy this GameObject next to it (prefab instances stay linked) and return the copy (undoable)")
              .Function<string, GameObject>("SaveAsPrefab", (g, path) => SaveAsPrefab(g, path), "path",
-                 "save as a new prefab asset (\"Assets/…/X.prefab\", not an existing one; missing folders are created); this GameObject becomes its instance; returns the prefab asset",
-                 ValidateSaveAsPrefab);
+                 "save as a new prefab asset (\"Assets/…/X.prefab\", not an existing one; missing folders are created); this GameObject becomes its instance; " +
+                 "on a prefab instance it saves a Prefab Variant of that prefab; returns the prefab asset",
+                 ValidateSaveAsPrefab)
+             .Add<string?>("prefabSource", g => PrefabSource(g),
+                 description: "path of the prefab asset this scene object is (part of) an instance of, the nearest one for nested prefabs; null otherwise")
+             .Add<List<string>?>("prefabOverrides", g => PrefabOverrides(g),
+                 description: "the instance's overrides of its prefab (property changes \"Child/Type.property = value\", added / removed components and GameObjects); [] = none, null = not a prefab instance")
+             .Method("ApplyPrefabOverrides", g => PrefabUtility.ApplyPrefabInstance(OutermostInstanceRoot(g), InteractionMode.UserAction),
+                 "write the overrides of this prefab instance (its outermost instance root) into the prefab asset; every instance gets them (undoable)",
+                 g => PrefabInstanceRejection(g))
+             .Method("RevertPrefabOverrides", g => PrefabUtility.RevertPrefabInstance(OutermostInstanceRoot(g), InteractionMode.UserAction),
+                 "drop every override of this prefab instance (its outermost instance root): it matches its prefab again (undoable)",
+                 g => PrefabInstanceRejection(g));
             // staticFlags is built on read, so element writes are assigned back.
-            m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags").ExplicitOnly("path", "layerName");
+            m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags")
+                .ExplicitOnly("path", "layerName", "prefabSource", "prefabOverrides");
         }
+
+        private static bool IsSceneInstance(GameObject g) =>
+            g != null && PrefabUtility.IsPartOfPrefabInstance(g) && !PrefabUtility.IsPartOfPrefabAsset(g);
+
+        private static string? PrefabSource(GameObject g) =>
+            IsSceneInstance(g) && PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(g) is { Length: > 0 } path ? path : null;
+
+        private static GameObject OutermostInstanceRoot(GameObject g) =>
+            PrefabUtility.GetOutermostPrefabInstanceRoot(g) ?? throw new InvalidOperationException($"'{g.name}' is not a prefab instance");
+
+        internal static string? PrefabInstanceRejection(GameObject g) =>
+            IsSceneInstance(g) ? null : $"'{g.name}' is not part of a prefab instance in a scene (prefabSource is null)";
+
+        private static List<string>? PrefabOverrides(GameObject g)
+        {
+            if (!IsSceneInstance(g)) return null;
+            var root = OutermostInstanceRoot(g);
+            var result = new List<string>();
+            foreach (var mod in PrefabUtility.GetPropertyModifications(root) ?? Array.Empty<PropertyModification>())
+            {
+                // The root's position, rotation and name are per-instance by design (Unity's "default overrides").
+                if (mod.target == null || PrefabUtility.IsDefaultOverride(mod)) continue;
+                var value = mod.objectReference != null ? mod.objectReference.name : mod.value;
+                result.Add($"{Label(mod.target)}.{mod.propertyPath} = {value}");
+            }
+            foreach (var added in PrefabUtility.GetAddedComponents(root))
+                if (added.instanceComponent != null) result.Add($"added component {Label(added.instanceComponent)}");
+            foreach (var removed in PrefabUtility.GetRemovedComponents(root))
+                if (removed.assetComponent != null) result.Add($"removed component {Label(removed.assetComponent)}");
+            foreach (var added in PrefabUtility.GetAddedGameObjects(root))
+                if (added.instanceGameObject != null) result.Add($"added GameObject {added.instanceGameObject.GetPath()}");
+            return result;
+        }
+
+        // "Child/Transform" for a component, the GameObject's path for a GameObject (from the prefab or instance root).
+        private static string Label(Object target) => target switch
+        {
+            Component c => (c.gameObject.GetPath() ?? c.gameObject.name) + "/" + c.GetType().Name,
+            GameObject go => go.GetPath() ?? go.name,
+            _ => target.name,
+        };
 
         /// <summary>Null when <paramref name="name"/> is a usable GameObject name, otherwise why not.</summary>
         internal static string? ValidateName(string? name) =>

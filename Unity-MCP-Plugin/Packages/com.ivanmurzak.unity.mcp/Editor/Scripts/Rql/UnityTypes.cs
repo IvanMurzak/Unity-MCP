@@ -61,9 +61,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
                 foreach (var t in TypeModel.LoadableTypes(asm))
                     if (t.IsEnum || (t.IsValueType && IsUnityEngine(t))) Add(t);
+            // The RQL modules' own item types (ActionMapView, SplineView, LightingEnvironment …): the schema names them as member
+            // types, and RQL's reachability walk stops long before them in a Unity project.
+            foreach (var asm in TypeCache.GetTypesDerivedFrom<IRqlModule>().Select(t => t.Assembly).Distinct())
+                foreach (var t in TypeModel.LoadableTypes(asm))
+                    if (IsModuleItemType(t)) Add(t);
             return _index = byName.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray(), StringComparer.OrdinalIgnoreCase);
         }
 
         private static bool IsUnityEngine(Type t) => t.Namespace?.StartsWith("UnityEngine", StringComparison.Ordinal) == true;
+
+        // A concrete public class of an RQL namespace that agents read (views, editor APIs), not the adapters and modules.
+        internal static bool IsModuleItemType(Type t) =>
+            t.IsClass && !t.IsAbstract && t.IsVisible
+            && t.Namespace?.StartsWith(typeof(UnityTypes).Namespace!, StringComparison.Ordinal) == true
+            && !typeof(RqlTypeAdapter).IsAssignableFrom(t) && !typeof(IRqlModule).IsAssignableFrom(t)
+            && !typeof(Attribute).IsAssignableFrom(t) && !typeof(UnityEngine.Object).IsAssignableFrom(t);
     }
 }
