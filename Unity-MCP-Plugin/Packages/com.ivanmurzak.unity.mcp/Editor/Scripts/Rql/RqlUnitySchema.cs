@@ -91,6 +91,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private static string RenderType(RqlEngine engine, string typeName)
         {
             var candidates = SourceTypes(engine, typeName).Concat(UnityTypes.Candidates(typeName)).Distinct().Take(3).ToList();
+            // A [Serializable] row / settings type (ItemRow of a ScriptableObject's list): reached through get, never added.
+            if (candidates.Count == 0) candidates = UnityTypes.SerializableCandidates(typeName).Take(3).ToList();
             if (candidates.Count == 0)
             {
                 // Types only reachable through sources (e.g. an extension's view objects): RQL's own schema walk finds them.

@@ -218,6 +218,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/N/M"));
         }
 
+        // AssetDatabase.FindAssets("t:Material") also finds files that only embed a material (a model, a font, a shader
+        // graph): unity.assets gives the materials, never such a main asset of another type.
+        [Test]
+        public void AssetsOfATypeAreThatTypeEvenWhenEmbedded()
+        {
+            AssertOk(M($"editor | call CreateMaterial(\"{Folder}/Plain.mat\")"));
+            var mesh = new Mesh { name = "Holder" };
+            AssetDatabase.CreateAsset(mesh, $"{Folder}/Holder.asset");
+            AssetDatabase.AddObjectToAsset(new Material(Shader.Find("Hidden/Internal-Colored")) { name = "Embedded" }, mesh);
+            AssetDatabase.SaveAssets();
+            var rows = Table(Q($"unity.assets(\"t:Material\", \"{Folder}\") | sort name | select name $type"));
+            StringAssert.Contains("Embedded|Material", rows);
+            StringAssert.Contains("Plain|Material", rows);
+            StringAssert.DoesNotContain("Holder", rows);
+            // AssetDatabase kinds (t:Prefab, t:Scene …) and plain filters keep the found main assets
+            Assert.AreEqual("Holder", Cell(Q($"unity.assets(\"t:Mesh\", \"{Folder}\") | select name")));
+        }
+
         [Test]
         public void AssetsInAMissingFolderIsAnError()
         {

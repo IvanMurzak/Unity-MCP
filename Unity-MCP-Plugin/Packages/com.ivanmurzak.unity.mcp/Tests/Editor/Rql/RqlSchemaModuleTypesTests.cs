@@ -32,5 +32,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             Assert.IsFalse(UnityTypes.IsModuleItemType(typeof(RqlUnity)), "a static class has no members to read");
             Assert.IsEmpty(UnityTypes.Candidates("UnityEngine_Material_Adapter"));
         }
+
+        [System.Serializable]
+        public class RqlSchemaRowProbe { public int Price; public string Category = ""; }
+
+        // A ScriptableObject's list of [Serializable] rows: get rows reaches them, so rql-schema must know the row type.
+        [Test]
+        public void SerializableRowTypesHaveASchema()
+        {
+            var text = RqlUnitySchema.Render(RqlUnity.Engine, "RqlSchemaRowProbe");
+            StringAssert.StartsWith("RqlSchemaRowProbe", text);
+            StringAssert.Contains("Price int", text);
+            StringAssert.Contains("Category string", text);
+            Assert.IsEmpty(UnityTypes.Candidates("RqlSchemaRowProbe"), "not an addable / creatable type");
+        }
+
+        // Wave 4: agents fell back to code for a tag (AddTag was undocumented), the default material and data-asset rows.
+        [Test]
+        public void TheGuideShowsTagsBuiltInMaterialsAndDataRows()
+        {
+            StringAssert.Contains("editor | call AddTag(", RqlGuide.MutateDescription);
+            StringAssert.Contains("set sharedMaterial = \"Default-Material\"", RqlGuide.MutateDescription);
+            StringAssert.Contains("| get rows |", RqlGuide.MutateDescription);
+            StringAssert.Contains("AddTag", RqlUnitySchema.Render(RqlUnity.Engine, null));
+        }
     }
 }

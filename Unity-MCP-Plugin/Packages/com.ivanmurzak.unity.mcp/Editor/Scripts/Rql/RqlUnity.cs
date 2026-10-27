@@ -234,16 +234,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             // FindAssets only logs a missing folder and finds nothing, which reads as "no such assets".
             if (folders != null && !AssetDatabase.IsValidFolder(folders[0])) return new RqlError("not-found", $"unity.assets: no folder '{folders[0]}'");
             var guids = folders == null ? AssetDatabase.FindAssets(filter) : AssetDatabase.FindAssets(filter, folders);
-            return Load(guids);
+            return Load(guids, FilterTypes(filter));
         }
 
-        // Lazy: a query that needs only a few assets (… | first 3) loads only those.
-        private static IEnumerable<Object> Load(string[] guids)
+        /// <summary>
+        /// The types named by the filter's <c>t:</c> terms (any of them matches), or null when there are none or one is not a
+        /// UnityEngine.Object type (t:Prefab, t:Scene, t:Model are AssetDatabase kinds: the found main assets are kept as they are).
+        /// </summary>
+        private static readonly string[] AssetKinds = { "Prefab", "Scene", "Model", "Folder" };
+
+        internal static List<Type>? FilterTypes(string filter)
         {
-            foreach (var guid in guids.Take(MaxAssets))
+            var types = new List<Type>();
+            foreach (var term in filter.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
             {
-                var asset = AssetDatabase.LoadMainAssetAtPath(AssetDatabase.GUIDToAssetPath(guid));
-                if (asset != null) yield return asset;
+                if (!term.StartsWith("t:", StringComparison.OrdinalIgnoreCase)) continue;
+                var name = term.Substring(2);
+                if (Array.Exists(AssetKinds, k => string.Equals(k, name, StringComparison.OrdinalIgnoreCase))) return null;
+                var type = UnityTypes.Candidates(name).FirstOrDefault(t => typeof(Object).IsAssignableFrom(t));
+                if (type == null) return null;
+                types.Add(type);
+            }
+            return types.Count > 0 ? types : null;
+        }
+
+        // Lazy: a query that needs only a few assets (… | first 3) loads only those. AssetDatabase.FindAssets("t:Material")
+        // returns every file holding a Material, so a font, model or shader graph with an embedded material is found too:
+        // with t: types, a main asset of another type is replaced by its visible sub-assets of those types (none for most).
+        private static IEnumerable<Object> Load(string[] guids, List<Type>? types)
+        {
+            bool Matches(Object o) => types == null || types.Any(t => t.IsInstanceOfType(o));
+            var count = 0;
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                var asset = AssetDatabase.LoadMainAssetAtPath(path);
+                if (asset == null) continue;
+                var found = Matches(asset) ? new[] { asset } : AssetDatabase.LoadAllAssetRepresentationsAtPath(path).Where(o => o != null && Matches(o));
+                foreach (var o in found)
+                {
+                    if (count++ >= MaxAssets) yield break;
+                    yield return o;
+                }
             }
         }
 

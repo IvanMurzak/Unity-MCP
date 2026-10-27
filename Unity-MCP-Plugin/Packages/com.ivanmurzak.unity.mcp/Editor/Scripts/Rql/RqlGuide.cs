@@ -60,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "eulerAngles, localScale, parent). Component members are the C# members (public + [SerializeField]); find them via " +
             "objects | get components | where $ is Light. Vectors/colors print as (x, y, z); write \"(1, 2, 3)\", [1, 2, 3] or " +
             "{x: 1, y: 2, z: 3}; colors also \"#ff8800\". An asset's file: assetPath; its import settings: get importer. Material shader properties: " +
-            "properties[\"_Color\"]; a Material Variant has a parent. A Mesh value also takes a primitive's name (\"Cylinder\"). Prefab instances: " +
+            "properties[\"_Color\"] (the main color / texture: color, mainTexture); a Material Variant has a parent. A Mesh value also takes a primitive's name (\"Cylinder\"), a Material value a built-in material's (\"Default-Material\"). Prefab instances: " +
             "prefabSource, prefabOverrides. Destroyed objects read as " +
             "null (missing references: where target == null). Navigate with paths or get; select only projects output columns.\n" +
             "Results come back as compact rows (header line, then col|col). Long results are truncated — refine with where/first or use count. " +
@@ -95,7 +95,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  unity.asset(\"Assets/Mats/Red.mat\") | get properties | where Key ends-with \"Color\" | set Value = \"#ffffff\"   map entries write through\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set properties[\"_Color\"] = \"(1, 0, 0, 1)\"\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set parent = unity.asset(\"Assets/Mats/Base.mat\")   make it a Material Variant of Base\n" +
+            "  unity.asset(\"Assets/Data/Items.asset\") | get rows | where Category == \"Tool\" | set Price = round(Price * 1.15)   data asset (ScriptableObject list rows)\n" +
             "  objects | where name starts-with \"Pillar\" | get components | where $ is MeshFilter | set sharedMesh = \"Cylinder\"   built-in mesh\n" +
+            "  objects | get components | where $ is MeshRenderer and sharedMaterial == null | set sharedMaterial = \"Default-Material\"   built-in material\n" +
             "  unity.asset(\"Assets/Art/hero.png\") | get importer | set textureType = \"Sprite\", spriteImportMode = \"Single\"   import settings (reimported)\n" +
             "  objects | where name == \"Spawner\" | set targets = append(targets, ref(\"GameObject#1234\"))\n" +
             "Create / add / remove (call; the receipt's result column holds the new object's $ref for follow-up queries):\n" +
@@ -115,6 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  editor | call CreateMaterial(\"Assets/Mats/Glow.mat\")        editor | call MoveAsset(\"Assets/A.mat\", \"Assets/Mats/A.mat\")\n" +
             "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true   (scripts reload: retry a call that fails right after)\n" +
             "  editor | call AddLayer(\"Pickups\")  then  objects | where name starts-with \"Pickup\" | set layerName = \"Pickups\"   (read: editor | select layers tags)\n" +
+            "  editor | call AddTag(\"Interactive\")  then  objects | where name starts-with \"Barrel\" | set tag = \"Interactive\"\n" +
             "  profiler | call Start()      profiler | call Save(\"Logs/profile.json\")      (read: profiler | select memory frame)\n";
 
         public const string MutateDescription =

@@ -40,6 +40,44 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public static Type? Find(string name, Type baseType) =>
             Candidates(name).FirstOrDefault(t => baseType.IsAssignableFrom(t) && !t.IsAbstract);
 
+        private static Dictionary<string, Type[]>? _serializable;
+
+        /// <summary>
+        /// [Serializable] plain classes and structs of the project and packages (not UnityEngine.Object), e.g. the row type of a
+        /// ScriptableObject's list field: what an agent meets through <c>get rows</c>. Kept apart from <see cref="Candidates"/>,
+        /// which names creatable / addable types; rql-schema asks here when nothing else has the name. One index per domain.
+        /// </summary>
+        public static IReadOnlyList<Type> SerializableCandidates(string name)
+        {
+            if (_serializable == null)
+            {
+                var byName = new Dictionary<string, List<Type>>(StringComparer.OrdinalIgnoreCase);
+                foreach (var asm in AppDomain.CurrentDomain.GetAssemblies())
+                {
+                    if (IsFrameworkAssembly(asm.GetName().Name)) continue;
+                    foreach (var t in TypeModel.LoadableTypes(asm))
+                    {
+                        if (!t.IsVisible || t.IsGenericTypeDefinition || t.IsEnum || t.IsInterface || !t.IsSerializable
+                            || typeof(UnityEngine.Object).IsAssignableFrom(t) || typeof(Delegate).IsAssignableFrom(t)) continue;
+                        foreach (var key in new[] { t.Name, t.FullName })
+                        {
+                            if (key == null) continue;
+                            if (!byName.TryGetValue(key, out var list)) byName[key] = list = new List<Type>(1);
+                            if (!list.Contains(t)) list.Add(t);
+                        }
+                    }
+                }
+                _serializable = byName.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray(), StringComparer.OrdinalIgnoreCase);
+            }
+            return _serializable.TryGetValue(name, out var hits)
+                ? hits.OrderBy(t => t.Name == name || t.FullName == name ? 0 : 1).ToList()
+                : (IReadOnlyList<Type>)Array.Empty<Type>();
+        }
+
+        private static bool IsFrameworkAssembly(string? name) =>
+            name == null || name == "mscorlib" || name == "netstandard" || name.StartsWith("System", StringComparison.Ordinal)
+            || name.StartsWith("Microsoft.", StringComparison.Ordinal) || name.StartsWith("Mono.", StringComparison.Ordinal);
+
         /// <summary>Every indexed short name (for "did you mean" suggestions).</summary>
         public static IReadOnlyCollection<string> ShortNames() => Index().Keys.Where(k => k.IndexOf('.') < 0).ToList();
 
