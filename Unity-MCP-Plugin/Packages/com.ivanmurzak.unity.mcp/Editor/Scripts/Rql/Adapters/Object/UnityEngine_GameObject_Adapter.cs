@@ -67,10 +67,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  ApplyRejection)
              .Method("RevertPrefabOverrides", g => PrefabUtility.RevertPrefabInstance(OutermostInstanceRoot(g), InteractionMode.UserAction),
                  "drop every override of this prefab instance (its outermost instance root): it matches its prefab again (undoable)",
-                 PrefabInstanceRejection);
+                 PrefabInstanceRejection)
+             .Add<List<string>>("missingReferences", g => MissingReferences(g),
+                 description: "references to objects that no longer exist (a deleted asset, a destroyed object) as \"Component.property\", " +
+                              "and \"missing script\" for a component whose script is gone; [] = none (a reference left empty is not missing)");
             // staticFlags is built on read, so element writes are assigned back.
             m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags")
-                .ExplicitOnly("path", "layerName", "prefabSource", "prefabOverrides");
+                .ExplicitOnly("path", "layerName", "prefabSource", "prefabOverrides", "missingReferences");
         }
 
         // Prefab Mode contents are not scene instances: Apply / Revert there would write into, or wipe, a variant's base.
@@ -118,6 +121,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 if (removed.assetGameObject != null) result.Add($"removed GameObject {Label(removed.assetGameObject)}");
             return result;
         }
+
+        // A missing reference reads as null like an empty one; the serialized reference still holds the lost object's id.
+        private static List<string> MissingReferences(GameObject g)
+        {
+            var result = new List<string>();
+            foreach (var c in g.GetComponents<Component>())
+            {
+                if (c == null) { result.Add("missing script"); continue; }
+                using var so = new SerializedObject(c);
+                var p = so.GetIterator();
+                while (p.Next(true))
+                    if (p.propertyType == SerializedPropertyType.ObjectReference && p.objectReferenceValue == null && HoldsAnId(p))
+                        result.Add(c.GetType().Name + "." + p.propertyPath);
+            }
+            return result;
+        }
+
+#if UNITY_6000_5_OR_NEWER
+        private static bool HoldsAnId(SerializedProperty p) => !p.objectReferenceEntityIdValue.Equals(default(EntityId));
+#else
+        private static bool HoldsAnId(SerializedProperty p) => p.objectReferenceInstanceIDValue != 0;
+#endif
 
         // "Child/Transform" for a component, the GameObject's path for a GameObject (from the prefab or instance root).
         private static string Label(Object target) => target switch

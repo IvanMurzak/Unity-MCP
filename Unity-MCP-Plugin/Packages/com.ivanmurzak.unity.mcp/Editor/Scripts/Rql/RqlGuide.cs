@@ -62,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "{x: 1, y: 2, z: 3}; colors also \"#ff8800\". An asset's file: assetPath; its import settings: get importer. Material shader properties: " +
             "properties[\"_Color\"] (the main color / texture: color, mainTexture); a Material Variant has a parent. A Mesh value also takes a primitive's name (\"Cylinder\"), a Material value a built-in material's (\"Default-Material\"). Prefab instances: " +
             "prefabSource, prefabOverrides. Destroyed objects read as " +
-            "null (missing references: where target == null). Navigate with paths or get; select only projects output columns.\n" +
+            "null; a GameObject's missingReferences lists references to deleted assets or objects (where missingReferences.count() > 0). Navigate with paths or get; select only projects output columns.\n" +
             "Results come back as compact rows (header line, then col|col). Long results are truncated — refine with where/first or use count. " +
             "Unknown members produce warnings with suggestions; rql-schema(type) lists a type's members.";
 
