@@ -166,18 +166,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                     ? asset : throw new ArgumentException($"could not save a prefab at '{path}'"));
         }
 
-        // The call validator: a new path, and inside rql-mutate not the path an earlier target of the same call saves to (the
-        // second save would fail after the first one happened).
-        private static string? ValidateSaveAsPrefab(GameObject g, string path) => RqlEditorApi.Rejection(() =>
-        {
-            path = PrefabPath(path);
-            if (RqlUnity.Batch?.Claim(path, g) is { } earlier)
-                throw new ArgumentException($"'{path}' is also the path of {RqlUnity.Engine.RefOf(earlier)} in this call: give each GameObject its own prefab path");
-        });
+        // The call validator: a new path (two targets saving to one path are refused by RqlUnity.ValidateBatch).
+        private static string? ValidateSaveAsPrefab(GameObject g, string path) => RqlEditorApi.Rejection(() => PrefabPath(path));
 
         // A new ".prefab" path under Assets/ (missing folders are created by the call). An existing prefab would be replaced
         // with this GameObject: every instance of it would change.
-        private static string PrefabPath(string path)
+        internal static string PrefabPath(string path)
         {
             path = RqlEditorApi.NewAssetPath(path, ".prefab");
             RqlEditorApi.EnsureFolder(System.IO.Path.GetDirectoryName(path), create: false);

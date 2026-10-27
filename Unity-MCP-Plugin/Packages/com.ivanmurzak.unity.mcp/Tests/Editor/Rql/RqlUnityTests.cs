@@ -216,6 +216,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             Assert.AreEqual(ResponseStatus.Success, schema.Value!.Status, schema.ToJson(UnityMcpPluginEditor.Instance.Reflector));
         }
 
+        // RQL 602ce7c: $index in a set value is the target's position in the stream entering set; text functions as methods;
+        // group-by with two keys gives one column per key.
+        [Test]
+        public void SpreadsWithIndexRenamesWithReplaceAndGroupsByTwoKeys()
+        {
+            var c = new GameObject("Crate_C");
+            var a = new GameObject("Crate_A");
+            var b = new GameObject("Crate_B");
+            AssertOk(M("objects | where name starts-with \"Crate_\" | sort name | set transform.position.x = $index * 2"));
+            Assert.AreEqual(0f, a.transform.position.x);
+            Assert.AreEqual(2f, b.transform.position.x);
+            Assert.AreEqual(4f, c.transform.position.x);
+
+            AssertOk(M("objects | where name starts-with \"Crate_\" | set name = name.replace(\"Crate_\", \"Box_\")"));
+            CollectionAssert.AreEquivalent(new[] { "Box_A", "Box_B", "Box_C" }, new[] { a.name, b.name, c.name });
+
+            var groups = Q("objects | where name starts-with \"Box_\" | group-by $type, far=(transform.position.x > 1)");
+            Assert.IsTrue(groups.Ok, Table(groups));
+            CollectionAssert.AreEqual(new[] { "$type", "far", "count" }, groups.Columns);
+            Assert.AreEqual(2, groups.Rows!.Count, Table(groups));
+        }
+
+        // The host's hints: ref() given a name points at unity.find, and no hint advises budgets.* (the tools take none).
+        [Test]
+        public void HintsNameTheFinderAndNoBudgets()
+        {
+            var byName = Q("ref(\"Alpha\") | select name");
+            Assert.IsFalse(byName.Ok);
+            StringAssert.Contains("unity.find(", Table(byName));
+            Assert.IsFalse(RqlUnity.Engine.Defaults.BudgetsAdjustable);
+        }
+
         [Test]
         public void ToolsReturnTextResults()
         {

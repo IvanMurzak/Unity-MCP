@@ -108,7 +108,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             // Door's pair is complete, Gate's Rigidbody is targeted without its HingeJoint: nothing is removed.
             var r = RqlUnity.Mutate("objects | get components | where ($ is Rigidbody) or ($ is HingeJoint and gameObject.name == \"Door\") | call Destroy()");
             AssertFails(r, "invalid-value", "HingeJoint on 'Gate' requires Rigidbody");
-            StringAssert.Contains("nothing was called", Table(r));
+            StringAssert.Contains("nothing was changed", Table(r));
             Assert.IsNotNull(door.GetComponent<Rigidbody>());
             Assert.IsNotNull(door.GetComponent<HingeJoint>());
             Assert.IsNotNull(gate.GetComponent<Rigidbody>());
