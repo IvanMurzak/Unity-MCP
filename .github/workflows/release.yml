@@ -58,6 +58,13 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      # Dependency guard: every NuGet pin the resolver installs in consumer projects (NuGetConfig.cs),
+      # the vendored Code-Exec release and the UPM/npm dependencies of the core, extension and CLI
+      # packages must be published releases. FAILS every run (dry runs too) while main consumes a
+      # pre-release dependency, e.g. RQL 0.3.0-dev.<sha>.
+      - name: Release dependency guard (no pre-release / unpublished pins)
+        run: python3 commands/release_dependency_guard.py
+
       - name: Get version from package.json
         id: get_version
         uses: martinbeentjes/npm-get-version-action@v1.3.1
