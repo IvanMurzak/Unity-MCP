@@ -14,7 +14,7 @@ What it checks (everything the core, extension and CLI releases ship):
     a pre-release version (any `-` suffix) or a version not listed on nuget.org fails, and the
     resolver's `NuGetBaseUrl` must be the nuget.org flat container (no local / pre-release feed);
   * the vendored Code-Exec sources (`Editor/Scripts/CodeExec/VENDORED.md`): the recorded release must
-    be a published `com.IvanMurzak.CodeExec` version, not a pre-release or an unreleased commit;
+    be a published `com.IvanMurzak.CodeExec` version (`release **<version>**`), not a pre-release;
   * the UPM dependencies of the core package and of every extension package
     (`extensions/*/Packages/*/package.json`): pre-release or non-registry (`file:`, git) specs fail;
   * the npm dependencies of `unity-mcp-cli` (`cli/package.json`) the same way.
@@ -50,7 +50,7 @@ NPM_NON_REGISTRY_PREFIXES = ("file:", "link:", "git", "http:", "https:", "github
 class Pin:
     """One dependency version as written in a shipped file."""
 
-    ecosystem: str  # "nuget" (pre-release + nuget.org check), "npm" / "upm" (pre-release check)
+    ecosystem: str  # "nuget": pre-release + nuget.org check; "semver": pre-release check only
     package: str
     version: str
     file: Path
@@ -73,16 +73,22 @@ class NuGetRegistry:
 
     def __init__(self, fetch: Optional[Callable[[str], Optional[bytes]]] = None) -> None:
         self._fetch = fetch or _http_get
-        self._cache: dict[str, Optional[set[str]]] = {}
+        self._cache: dict[str, Optional[set[str]] | RegistryError] = {}
 
     def versions(self, package: str) -> Optional[set[str]]:
         key = package.lower()
         if key not in self._cache:
-            body = self._fetch(NUGET_INDEX_URL.format(id=key))
-            self._cache[key] = None if body is None else {
-                normalize_nuget_version(v) for v in json.loads(body.decode("utf-8")).get("versions", [])
-            }
-        return self._cache[key]
+            try:
+                body = self._fetch(NUGET_INDEX_URL.format(id=key))
+                self._cache[key] = None if body is None else {
+                    normalize_nuget_version(v) for v in json.loads(body.decode("utf-8")).get("versions", [])
+                }
+            except RegistryError as error:  # remembered: one retry cycle per package, not per pin
+                self._cache[key] = error
+        cached = self._cache[key]
+        if isinstance(cached, RegistryError):
+            raise cached
+        return cached
 
 
 def _http_get(url: str) -> Optional[bytes]:
@@ -98,7 +104,8 @@ def _http_get(url: str) -> Optional[bytes]:
             last = error
         except (urllib.error.URLError, TimeoutError, OSError) as error:
             last = error
-        time.sleep(2 ** attempt)
+        if attempt < 2:
+            time.sleep(2 ** attempt)
     raise RegistryError(f"{url}: {last}")
 
 
@@ -140,10 +147,10 @@ def rel(path: Path, root: Path) -> str:
         return path.as_posix()
 
 
-def scan_regex_pins(path: Path, pattern: re.Pattern[str], ecosystem: str = "nuget") -> list[Pin]:
-    """Pins written as code (`pattern` captures the package id and the version)."""
+def scan_regex_pins(path: Path, pattern: re.Pattern[str]) -> list[Pin]:
+    """NuGet pins written as code (`pattern` captures the package id and the version)."""
     text = path.read_text(encoding="utf-8-sig")
-    return [Pin(ecosystem, m.group(1), m.group(2), path, text.count("\n", 0, m.start()) + 1)
+    return [Pin("nuget", m.group(1), m.group(2), path, text.count("\n", 0, m.start()) + 1)
             for m in pattern.finditer(text)]
 
 
@@ -159,7 +166,7 @@ def scan_package_json(path: Path) -> tuple[list[Pin], list[Problem]]:
             if spec.startswith(NPM_NON_REGISTRY_PREFIXES) or spec.startswith((".", "/")):
                 problems.append(Problem(path, line, f"{package}: '{spec}' is not a registry version"))
             else:
-                pins.append(Pin("npm", package, spec, path, line))
+                pins.append(Pin("semver", package, spec, path, line))
     return pins, problems
 
 
@@ -203,14 +210,12 @@ VENDORED_RELEASE_RE = re.compile(r"release\s+\*\*([^*\s]+)\*\*")
 NUGET_FLAT_CONTAINER = "https://api.nuget.org/v3-flatcontainer"
 
 
-def scan_vendored(path: Path, package: str) -> tuple[list[Pin], list[Problem]]:
-    """A vendored source copy records the release it came from (`release **x.y.z**`)."""
+def scan_vendored(path: Path, package: str, marker: re.Pattern[str] = VENDORED_RELEASE_RE) -> tuple[list[Pin], list[Problem]]:
+    """A vendored source copy records the package release it came from (`marker` captures the version)."""
     text = path.read_text(encoding="utf-8-sig")
-    match = VENDORED_RELEASE_RE.search(text)
-    if "unreleased" in text.lower():
-        return [], [Problem(path, line_of(text.lower(), "unreleased"), f"vendored {package} is marked unreleased")]
+    match = marker.search(text)
     if not match:
-        return [], [Problem(path, 1, f"vendored {package}: no `release **<version>**` marker")]
+        return [], [Problem(path, 1, f"vendored {package}: no release version marker (copy it from a published release)")]
     return [Pin("nuget", package, match.group(1), path, text.count("\n", 0, match.start()) + 1)], []
 
 
@@ -238,8 +243,7 @@ def collect(root: Path) -> tuple[list[Pin], list[Problem]]:
         if not require(manifest, problems):
             continue
         found, found_problems = scan_package_json(manifest)
-        ecosystem = "npm" if manifest.parent.name == "cli" else "upm"
-        pins += [Pin(ecosystem, p.package, p.version, p.file, p.line) for p in found]
+        pins += found
         problems += found_problems
     return pins, problems
 

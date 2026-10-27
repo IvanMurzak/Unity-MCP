@@ -109,8 +109,8 @@ class GuardTests(unittest.TestCase):
         self.assertIn((guard.CODE_EXEC_VENDORED.as_posix(), "com.IvanMurzak.CodeExec 0.9.9 is not published on nuget.org"),
                       self.problems())
         self.write(guard.CODE_EXEC_VENDORED, "Copied from Code-Exec main (unreleased), commit abc.\n")
-        self.assertIn((guard.CODE_EXEC_VENDORED.as_posix(), "vendored com.IvanMurzak.CodeExec is marked unreleased"),
-                      self.problems())
+        self.assertEqual([(guard.CODE_EXEC_VENDORED.as_posix(), "vendored com.IvanMurzak.CodeExec: no release version "
+                           "marker (copy it from a published release)")], self.problems())
 
     def test_extension_upm_dependencies_are_scanned(self):
         self.fixture(extension_core="1.6.0-preview.1")
