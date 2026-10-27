@@ -36,7 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         // Built-in extra resources that exist in every supported Editor (unity_builtin_extra). Default-Material is resolved
         // through a primitive instead, so that it is the active render pipeline's default material.
-        private static readonly string[] Builtins =
+        internal static readonly string[] Builtins =
         {
             DefaultMaterialName, "Default-Line", "Default-Particle", "Default-ParticleSystem", "Default-Skybox",
             "Default-Terrain-Standard", "Default-Terrain-Diffuse", "Sprites-Default", "Sprites-Mask",
@@ -55,7 +55,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             var name = Array.Find(Builtins, n => string.Equals(n, text.Trim(), StringComparison.OrdinalIgnoreCase));
             result = name == null ? null : BuiltinMaterial(name);
             if (result != null) return AdapterOutcome.Ok;
-            reason = $"'{text}' is neither an asset path nor a built-in material ({BuiltinNames})";
+            reason = name != null
+                ? $"the built-in material '{name}' is not available in this Editor"
+                : $"'{text}' is neither an asset path nor a built-in material ({BuiltinNames})";
             return AdapterOutcome.Failed;
         }
 
@@ -64,11 +66,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             if (name != DefaultMaterialName) return AssetDatabase.GetBuiltinExtraResource<Material>(name + ".mat");
             var pipeline = GraphicsSettings.currentRenderPipeline;
-            if (_defaultMaterial != null && _defaultMaterialPipeline == pipeline) return _defaultMaterial;
-            // Without creating anything visible: coercion also runs for dry runs. Cached per render pipeline.
-            var probe = GameObject.CreatePrimitive(PrimitiveType.Cube);
-            try { _defaultMaterial = probe.GetComponent<MeshRenderer>().sharedMaterial; }
-            finally { Object.DestroyImmediate(probe); }
+            if (_defaultMaterial != null && ReferenceEquals(_defaultMaterialPipeline, pipeline)) return _defaultMaterial;
+            // Read without creating anything: coercion also runs for dry runs, and a probe primitive would dirty the scene.
+#pragma warning disable CS0618 // defaultMaterial is what CreatePrimitive assigns under a render pipeline
+            _defaultMaterial = pipeline != null ? pipeline.defaultMaterial : null;
+#pragma warning restore CS0618
+            if (_defaultMaterial == null) _defaultMaterial = AssetDatabase.GetBuiltinExtraResource<Material>(DefaultMaterialName + ".mat");
             _defaultMaterialPipeline = pipeline;
             return _defaultMaterial;
         }
@@ -83,12 +86,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                     "the material this one is a Material Variant of (it takes the parent's shader; properties set on it become overrides); null = a plain material")
              .Add<bool>("isVariant", o => o.isVariant, description: "true when this material is a Material Variant (has a parent)")
              .Add<Color?>("color", o => MainColor(o) is { } p ? o.GetColor(p) : (Color?)null,
-                 (o, v) => o.SetColor(MainColor(o)!, v!.Value),
+                 (o, v) => o.SetColor(MainColor(o) ?? throw new InvalidOperationException(NoMain(o, "color")), v!.Value),
                  (o, v) => v == null ? "color cannot be null"
                      : MainColor(o) == null ? NoMain(o, "color") : null,
                  "the shader's main color ([MainColor], else _Color; _BaseColor in URP / HDRP); null when the shader has none")
              .Add<Texture?>("mainTexture", o => MainTexture(o) is { } p ? o.GetTexture(p) : null,
-                 (o, v) => o.SetTexture(MainTexture(o)!, v),
+                 (o, v) => o.SetTexture(MainTexture(o) ?? throw new InvalidOperationException(NoMain(o, "texture")), v),
                  (o, v) => MainTexture(o) == null ? NoMain(o, "texture") : null,
                  "the shader's main texture ([MainTexture], else _MainTex; _BaseMap in URP / HDRP); null when the shader has none");
         }

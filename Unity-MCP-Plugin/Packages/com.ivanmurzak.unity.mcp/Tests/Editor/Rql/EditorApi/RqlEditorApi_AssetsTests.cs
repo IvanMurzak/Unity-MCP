@@ -228,11 +228,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssetDatabase.CreateAsset(mesh, $"{Folder}/Holder.asset");
             AssetDatabase.AddObjectToAsset(new Material(Shader.Find("Hidden/Internal-Colored")) { name = "Embedded" }, mesh);
             AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset($"{Folder}/Holder.asset", ImportAssetOptions.ForceUpdate);
             var rows = Table(Q($"unity.assets(\"t:Material\", \"{Folder}\") | sort name | select name $type"));
             StringAssert.Contains("Embedded|Material", rows);
             StringAssert.Contains("Plain|Material", rows);
             StringAssert.DoesNotContain("Holder", rows);
-            // AssetDatabase kinds (t:Prefab, t:Scene …) and plain filters keep the found main assets
+            // a main asset of the requested type is itself the result
             Assert.AreEqual("Holder", Cell(Q($"unity.assets(\"t:Mesh\", \"{Folder}\") | select name")));
         }
 

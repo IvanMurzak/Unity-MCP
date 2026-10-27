@@ -237,12 +237,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return Load(guids, FilterTypes(filter));
         }
 
-        /// <summary>
-        /// The types named by the filter's <c>t:</c> terms (any of them matches), or null when there are none or one is not a
-        /// UnityEngine.Object type (t:Prefab, t:Scene, t:Model are AssetDatabase kinds: the found main assets are kept as they are).
-        /// </summary>
+        // AssetDatabase kinds, not types: t:Prefab finds GameObject main assets, t:Scene SceneAssets.
         private static readonly string[] AssetKinds = { "Prefab", "Scene", "Model", "Folder" };
 
+        /// <summary>
+        /// The types named by the filter's <c>t:</c> terms (any of them matches), or null when there are none or one is not a
+        /// UnityEngine.Object type (AssetDatabase kinds such as t:Prefab; a Component type, which finds prefabs): then the found
+        /// main assets are kept as they are.
+        /// </summary>
         internal static List<Type>? FilterTypes(string filter)
         {
             var types = new List<Type>();
@@ -251,9 +253,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 if (!term.StartsWith("t:", StringComparison.OrdinalIgnoreCase)) continue;
                 var name = term.Substring(2);
                 if (Array.Exists(AssetKinds, k => string.Equals(k, name, StringComparison.OrdinalIgnoreCase))) return null;
-                var type = UnityTypes.Candidates(name).FirstOrDefault(t => typeof(Object).IsAssignableFrom(t));
-                if (type == null) return null;
-                types.Add(type);
+                // Every type of that short name: FindAssets matches them all (UnityEngine.Tilemaps.Tile and a project's Tile).
+                var named = UnityTypes.Candidates(name).Where(t => typeof(Object).IsAssignableFrom(t)).ToList();
+                if (named.Count == 0 || named.Any(t => typeof(Component).IsAssignableFrom(t))) return null;
+                types.AddRange(named);
             }
             return types.Count > 0 ? types : null;
         }
@@ -268,9 +271,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             foreach (var guid in guids)
             {
                 var path = AssetDatabase.GUIDToAssetPath(guid);
-                var asset = AssetDatabase.LoadMainAssetAtPath(path);
-                if (asset == null) continue;
-                var found = Matches(asset) ? new[] { asset } : AssetDatabase.LoadAllAssetRepresentationsAtPath(path).Where(o => o != null && Matches(o));
+                // The main asset's type first: only matching main assets are loaded, and a scene file is never opened as assets.
+                var mainType = AssetDatabase.GetMainAssetTypeAtPath(path);
+                if (mainType == null) continue;
+                IEnumerable<Object> found;
+                if (types == null || types.Any(t => t.IsAssignableFrom(mainType)))
+                {
+                    var asset = AssetDatabase.LoadMainAssetAtPath(path);
+                    if (asset == null) continue;
+                    found = new[] { asset };
+                }
+                else if (typeof(SceneAsset).IsAssignableFrom(mainType)) continue;
+                else found = AssetDatabase.LoadAllAssetRepresentationsAtPath(path).Where(o => o != null && Matches(o));
                 foreach (var o in found)
                 {
                     if (count++ >= MaxAssets) yield break;

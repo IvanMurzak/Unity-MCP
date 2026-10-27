@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -134,7 +135,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.AreEqual("Sprites-Default", renderer.sharedMaterial.name);
             AssertFails(M(Bare + " | set sharedMaterial = \"Glow\""), "coercion-failed", "Default-Material");
             Assert.AreEqual("Sprites-Default", renderer.sharedMaterial.name);
-            Assert.AreEqual(2, Object.FindObjectsByType<MeshRenderer>(FindObjectsSortMode.None).Length, "the probe primitive stayed in the scene");
+        }
+
+        // Coercion also runs for dry runs: resolving Default-Material must not create (and so dirty) anything.
+        [Test]
+        public void ResolvingTheDefaultMaterialChangesNothing()
+        {
+            var scene = UnityEditor.SceneManagement.EditorSceneManager.NewScene(UnityEditor.SceneManagement.NewSceneSetup.EmptyScene);
+            Assert.IsFalse(scene.isDirty);
+            var builtIn = UnityEngine_Material_Adapter.BuiltinMaterial(UnityEngine_Material_Adapter.DefaultMaterialName);
+            Assert.IsNotNull(builtIn);
+            Assert.IsFalse(scene.isDirty, "resolving the default material dirtied the scene");
+            Assert.AreEqual(0, scene.rootCount);
+            var probe = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            try { Assert.AreSame(probe.GetComponent<MeshRenderer>().sharedMaterial, builtIn, "not the material a new primitive gets"); }
+            finally { Object.DestroyImmediate(probe); }
+        }
+
+        [Test]
+        public void EveryListedBuiltInMaterialExists()
+        {
+            foreach (var name in UnityEngine_Material_Adapter.Builtins)
+                Assert.IsNotNull(UnityEngine_Material_Adapter.BuiltinMaterial(name), name);
         }
 
         // color / mainTexture: the shader's main color and texture, the properties Material.color / mainTexture use.
