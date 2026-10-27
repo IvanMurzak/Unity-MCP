@@ -35,19 +35,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Terrains
                      "size is (width, height, length) in world units; returns the GameObject (undoable; the asset stays)")]
         public GameObject Create(string name = "Terrain", string? dataPath = null, int heightmapResolution = 513, Vector3? size = null, Vector3? position = null)
         {
-            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("name is empty");
-            if (!TerrainOps.IsValidHeightmapResolution(heightmapResolution)) throw new ArgumentException(TerrainOps.HeightmapResolutionRule(heightmapResolution));
-            var s = size ?? new Vector3(1000f, 600f, 1000f);
-            if (s.x <= 0 || s.y <= 0 || s.z <= 0) throw new ArgumentException($"size must be positive, got ({s.x}, {s.y}, {s.z})");
-
-            var path = dataPath == null
-                ? AssetDatabase.GenerateUniqueAssetPath($"Assets/TerrainData_{name}.asset")
-                : TerrainOps.NewAssetPath(dataPath, ".asset");
-            RqlEditorApi.Instance.CreateFolder(Path.GetDirectoryName(path)!);
-
+            var (path, s) = CreateChecks(name, dataPath, heightmapResolution, size);
             // heightmapResolution before size: changing the resolution keeps the size, the other way round it rescales.
-            var data = new TerrainData { heightmapResolution = heightmapResolution, size = s, name = Path.GetFileNameWithoutExtension(path) };
-            AssetDatabase.CreateAsset(data, path);
+            // Missing folders of dataPath are created, and removed again when the asset cannot be saved.
+            var data = RqlEditorApi.SaveNewAsset(
+                new TerrainData { heightmapResolution = heightmapResolution, size = s, name = Path.GetFileNameWithoutExtension(path) }, path);
 
             var go = Terrain.CreateTerrainGameObject(data);
             go.name = name;
@@ -56,19 +48,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Terrains
             return go;
         }
 
+        // Call validators (RQL runs them before the call, on dry runs too).
+        public string? ValidateCreate(string name, string? dataPath, int heightmapResolution, Vector3? size, Vector3? position) =>
+            RqlEditorApi.Rejection(() => CreateChecks(name, dataPath, heightmapResolution, size));
+
+        public string? ValidateCreateLayer(string path, Texture2D? diffuse, Vector2? tileSize) =>
+            RqlEditorApi.Rejection(() => TerrainOps.NewAssetPath(path, ".terrainlayer"));
+
+        // The checks Create makes before it writes: the terrain's settings and the data asset's path.
+        private static (string path, Vector3 size) CreateChecks(string name, string? dataPath, int heightmapResolution, Vector3? size)
+        {
+            if (string.IsNullOrWhiteSpace(name)) throw new ArgumentException("name is empty");
+            if (!TerrainOps.IsValidHeightmapResolution(heightmapResolution)) throw new ArgumentException(TerrainOps.HeightmapResolutionRule(heightmapResolution));
+            var s = size ?? new Vector3(1000f, 600f, 1000f);
+            if (s.x <= 0 || s.y <= 0 || s.z <= 0) throw new ArgumentException($"size must be positive, got ({s.x}, {s.y}, {s.z})");
+            var path = dataPath == null
+                ? AssetDatabase.GenerateUniqueAssetPath($"Assets/TerrainData_{name}.asset")
+                : TerrainOps.NewAssetPath(dataPath, ".asset");
+            return (path, s);
+        }
+
         [RqlCallable("create a TerrainLayer asset at path (\"Assets/…/X.terrainlayer\") from an optional diffuse texture " +
                      "(unity.asset(\"Assets/…/grass.png\")) and tile size \"(x, y)\"; returns it — add it with Terrain.AddLayer")]
         public TerrainLayer CreateLayer(string path, Texture2D? diffuse = null, Vector2? tileSize = null)
         {
             path = TerrainOps.NewAssetPath(path, ".terrainlayer");
-            var layer = new TerrainLayer
+            return RqlEditorApi.SaveNewAsset(new TerrainLayer
             {
                 diffuseTexture = diffuse,
                 tileSize = tileSize ?? new Vector2(15f, 15f),
                 name = Path.GetFileNameWithoutExtension(path),
-            };
-            AssetDatabase.CreateAsset(layer, path);
-            return layer;
+            }, path);
         }
     }
 }

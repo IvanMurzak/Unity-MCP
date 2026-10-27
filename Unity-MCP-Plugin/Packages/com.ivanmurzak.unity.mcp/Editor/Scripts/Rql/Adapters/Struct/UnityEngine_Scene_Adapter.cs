@@ -29,18 +29,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  ? throw new System.InvalidOperationException($"scene '{s.name}' has no file yet; use SaveAs(\"Assets/Scenes/X.unity\")")
                  : EditorSceneManager.SaveScene(s), "save the scene to its asset (false when it failed)")
              .Function<string, bool>("SaveAs", (s, path) => SaveAs(s, path), "path",
-                 "save the scene to a new asset path (missing folders are created; an existing file is not overwritten)")
+                 "save the scene to a new asset path (missing folders are created; an existing file is not overwritten)",
+                 (s, path) => RqlEditorApi.Rejection(() => SaveAsPath(path)))
              .Function("SetActive", s => s == SceneManager.GetActiveScene() || SceneManager.SetActiveScene(s), "make it the active scene (new GameObjects go there); true when it is the active scene")
              .Function("Close", s => EditorSceneManager.CloseScene(s, removeScene: true), "close the scene (one scene must stay open; unsaved changes are lost)");
         }
 
         private static bool SaveAs(Scene s, string path)
         {
-            if (string.IsNullOrWhiteSpace(path)) throw new System.ArgumentException("SaveAs needs a path such as \"Assets/Scenes/X.unity\"");
-            path = RqlEditorApi.NewAssetPath(path, ".unity"); // Unity would overwrite an existing scene file
+            path = SaveAsPath(path);
             return RqlEditorApi.InFolderOf(path, () => EditorSceneManager.SaveScene(s, path)
                 ? true
                 : throw new System.InvalidOperationException($"Unity could not save scene '{s.name}' at '{path}' (the Console has the reason)"));
+        }
+
+        // The checks SaveAs makes before it writes (also its call validator, so dry runs report them).
+        private static string SaveAsPath(string path)
+        {
+            if (string.IsNullOrWhiteSpace(path)) throw new System.ArgumentException("SaveAs needs a path such as \"Assets/Scenes/X.unity\"");
+            path = RqlEditorApi.NewAssetPath(path, ".unity"); // Unity would overwrite an existing scene file
+            RqlEditorApi.EnsureFolder(System.IO.Path.GetDirectoryName(path), create: false);
+            return path;
         }
     }
 }

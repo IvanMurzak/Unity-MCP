@@ -74,6 +74,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (!force && Users(p) is { Count: > 0 } users) throw InUse(p, users);
         });
 
+        public string? ValidateCreateFolder(string path) => Rejection(() => EnsureFolder(path, create: false));
+
         public string? ValidateCreateMaterial(string path, string? shader) => Rejection(() =>
         {
             path = NewAssetPath(path, ".mat");
@@ -82,7 +84,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         });
 
         /// <summary>The message a check throws (<see cref="ArgumentException"/>), or null when it passes.</summary>
-        internal static string? Rejection(Action check)
+        public static string? Rejection(Action check)
         {
             try { check(); return null; }
             catch (ArgumentException e) { return e.Message; }
@@ -120,14 +122,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             path = NewAssetPath(path, ".mat");
             var s = shader == null ? DefaultShader() : Shader.Find(shader) ?? throw new ArgumentException($"no shader named '{shader}'");
-            return InFolderOf(path, () =>
-            {
-                var material = new Material(s) { name = Path.GetFileNameWithoutExtension(path) };
-                AssetDatabase.CreateAsset(material, path); // logs instead of throwing when it fails
-                if (AssetDatabase.Contains(material)) return material;
-                Object.DestroyImmediate(material);
-                throw new ArgumentException($"could not create a material at '{path}'");
-            });
+            return SaveNewAsset(new Material(s) { name = Path.GetFileNameWithoutExtension(path) }, path);
         }
 
         [RqlCallable("write every modified asset to disk")]
@@ -161,21 +156,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         }
 
         /// <summary>
-        /// Creates the folder and its missing parents; with <paramref name="create"/> = false it only throws where it would.
-        /// Returns the outermost folder it created, or null when the folder exists.
+        /// Creates the folder and its missing parents; with <paramref name="create"/> = false it only throws where it would
+        /// (call validators, so dry runs report it). Returns the outermost folder it created, or null when the folder exists.
+        /// A missing folder whose path is taken on disk (a file, or a folder Unity has not imported yet) is refused before
+        /// anything is created: Unity would make "X 1" instead, and a rollback by the requested path would delete the user's folder.
         /// </summary>
-        internal static string? EnsureFolder(string? path, bool create = true)
+        public static string? EnsureFolder(string? path, bool create = true)
         {
             if (string.IsNullOrEmpty(path)) return null;
             path = Normalize(path!);
             if (AssetDatabase.IsValidFolder(path)) return null;
+            if (Directory.Exists(path) || File.Exists(path))
+                throw new ArgumentException($"could not create the folder '{path}': it is taken on disk by a " +
+                                            (File.Exists(path) ? "file" : "folder Unity has not imported, or one whose name differs in case (RefreshAssets() imports new files)"));
             var parent = Path.GetDirectoryName(path);
             if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
             parent = Normalize(parent);
             var outermost = EnsureFolder(parent, create);
             if (!create) return outermost ?? path;
-            // CreateFolder picks another name ("X 1") when the path is taken on disk but not imported (or differs in case):
-            // that folder is not the one asked for, and deleting the requested path could hit the user's folder.
+            // Unity still picks another name ("X 1") when the path differs only in case from an existing folder on a
+            // case-sensitive disk: that folder is not the one asked for.
             var made = AssetDatabase.GUIDToAssetPath(AssetDatabase.CreateFolder(parent, Path.GetFileName(path)));
             if (made == path) return outermost ?? path;
             if (!string.IsNullOrEmpty(made)) AssetDatabase.DeleteAsset(made);
@@ -187,9 +187,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// Runs <paramref name="write"/> after creating the missing folders of <paramref name="assetPath"/>; when it throws, the
         /// folders created here are deleted again, so a failed call leaves no empty folders behind.
         /// </summary>
-        internal static T InFolderOf<T>(string assetPath, Func<T> write)
+        public static T InFolderOf<T>(string assetPath, Func<T> write) => InFolder(Path.GetDirectoryName(assetPath), write);
+
+        /// <summary><see cref="InFolderOf{T}"/> for a folder: creates it and its missing parents, removes them when <paramref name="write"/> throws.</summary>
+        public static T InFolder<T>(string? folder, Func<T> write)
         {
-            var created = EnsureFolder(Path.GetDirectoryName(assetPath));
+            var created = EnsureFolder(folder);
             try { return write(); }
             catch
             {
@@ -197,6 +200,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 throw;
             }
         }
+
+        /// <summary>
+        /// Saves the in-memory <paramref name="asset"/> as a new asset at <paramref name="path"/> (already checked to be free),
+        /// creating the missing folders. When Unity cannot create it, the folders created here are removed and the object is
+        /// destroyed, so a failed call leaves nothing behind.
+        /// </summary>
+        public static T SaveNewAsset<T>(T asset, string path) where T : Object => InFolderOf(path, () =>
+        {
+            var saved = false;
+            try
+            {
+                AssetDatabase.CreateAsset(asset, path); // throws for most bad paths, only logs for some
+                saved = AssetDatabase.Contains(asset);
+            }
+            finally
+            {
+                if (!saved) Object.DestroyImmediate(asset);
+            }
+            return saved ? asset : throw new ArgumentException($"could not create an asset at '{path}'");
+        });
 
         /// <summary>
         /// The GameObjects of the open scenes and prefab that use the asset at <paramref name="path"/> (for a folder: any asset

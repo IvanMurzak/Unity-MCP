@@ -33,9 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Timelines
                      "frame rate (1 … 1000, default 60); fixedDuration > 0 switches durationMode to FixedLength; returns the asset")]
         public TimelineAsset Create(string path, double frameRate = 60.0, double fixedDuration = 0.0)
         {
-            if (frameRate <= 0.0 || frameRate > 1000.0) throw new ArgumentException($"frameRate {frameRate} must be within (0, 1000]");
-            if (fixedDuration < 0.0) throw new ArgumentException($"fixedDuration {fixedDuration} must be >= 0 (0 = based on clips)");
-            path = TimelineOps.NewAssetPath(path, ".playable");
+            path = CreatePath(path, frameRate, fixedDuration);
 
             var timeline = ScriptableObject.CreateInstance<TimelineAsset>();
             timeline.name = Path.GetFileNameWithoutExtension(path);
@@ -45,8 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Timelines
                 timeline.durationMode = TimelineAsset.DurationMode.FixedLength;
                 timeline.fixedDuration = fixedDuration;
             }
-            AssetDatabase.CreateAsset(timeline, path);
-            return timeline;
+            return RqlEditorApi.SaveNewAsset(timeline, path); // missing folders are created, and removed again when the save fails
         }
 
         [RqlCallable("create a SignalAsset at path (\"Assets/…/X.signal\") for SignalEmitter markers (set asset = …) and SignalReceivers; returns it")]
@@ -55,8 +52,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Timelines
             path = TimelineOps.NewAssetPath(path, ".signal");
             var signal = ScriptableObject.CreateInstance<SignalAsset>();
             signal.name = Path.GetFileNameWithoutExtension(path);
-            AssetDatabase.CreateAsset(signal, path);
-            return signal;
+            return RqlEditorApi.SaveNewAsset(signal, path);
+        }
+
+        // Call validators (RQL runs them before the call, on dry runs too).
+        public string? ValidateCreate(string path, double frameRate, double fixedDuration) =>
+            RqlEditorApi.Rejection(() => CreatePath(path, frameRate, fixedDuration));
+
+        public string? ValidateCreateSignal(string path) => RqlEditorApi.Rejection(() => TimelineOps.NewAssetPath(path, ".signal"));
+
+        private static string CreatePath(string path, double frameRate, double fixedDuration)
+        {
+            if (frameRate <= 0.0 || frameRate > 1000.0) throw new ArgumentException($"frameRate {frameRate} must be within (0, 1000]");
+            if (fixedDuration < 0.0) throw new ArgumentException($"fixedDuration {fixedDuration} must be >= 0 (0 = based on clips)");
+            return TimelineOps.NewAssetPath(path, ".playable");
         }
     }
 }

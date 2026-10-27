@@ -40,8 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Animation
                      "and loop (Loop Time); returns the clip — then call SetCurve / AddEvent on unity.asset(path). Asset creation is not undone by Undo")]
         public AnimationClip CreateClip(string path, float frameRate = 60f, bool loop = false)
         {
-            if (frameRate <= 0f) throw new ArgumentException($"frameRate {frameRate} must be positive");
-            path = AnimationEdit.NewAssetPath(path, ".anim");
+            path = ClipPath(path, frameRate);
             var clip = new AnimationClip { name = Path.GetFileNameWithoutExtension(path), frameRate = frameRate };
             if (loop)
             {
@@ -49,8 +48,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Animation
                 settings.loopTime = true;
                 AnimationUtility.SetAnimationClipSettings(clip, settings);
             }
-            AssetDatabase.CreateAsset(clip, path);
-            return clip;
+            return RqlEditorApi.SaveNewAsset(clip, path); // missing folders are created, and removed again when the save fails
+        }
+
+        // Call validators (RQL runs them before the call, on dry runs too).
+        public string? ValidateCreateClip(string path, float frameRate, bool loop) => RqlEditorApi.Rejection(() => ClipPath(path, frameRate));
+
+        public string? ValidateCreateController(string path, Motion? motion) => RqlEditorApi.Rejection(() => AnimationEdit.NewAssetPath(path, ".controller"));
+
+        private static string ClipPath(string path, float frameRate)
+        {
+            if (frameRate <= 0f) throw new ArgumentException($"frameRate {frameRate} must be positive");
+            return AnimationEdit.NewAssetPath(path, ".anim");
         }
 
         [RqlCallable("create an AnimatorController asset at path (\"Assets/…/Name.controller\", folders are created) with a Base Layer; " +
@@ -59,7 +68,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Animation
         public AnimatorController CreateController(string path, Motion? motion = null)
         {
             path = AnimationEdit.NewAssetPath(path, ".controller");
-            var controller = AnimatorController.CreateAnimatorControllerAtPath(path);
+            var controller = RqlEditorApi.InFolderOf(path, () => AnimatorController.CreateAnimatorControllerAtPath(path)
+                ?? throw new ArgumentException($"could not create an AnimatorController at '{path}'"));
             if (motion != null) controller.AddMotion(motion);
             return controller;
         }

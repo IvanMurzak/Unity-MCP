@@ -145,26 +145,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
         /// <summary>Create a new <c>.inputactions</c> file with an optional first action map; returns the imported asset.</summary>
         public static InputActionAsset Create(string path, string? map)
         {
-            path = NewAssetPath(path);
+            path = CreatePath(path, map);
             var asset = ScriptableObject.CreateInstance<InputActionAsset>();
             string json;
             try
             {
                 asset.name = Path.GetFileNameWithoutExtension(path);
-                if (!string.IsNullOrEmpty(map))
-                {
-                    InputValidation.Name(map, "action map");
-                    UnityEngine.InputSystem.InputActionSetupExtensions.AddActionMap(asset, map!);
-                }
+                if (!string.IsNullOrEmpty(map)) UnityEngine.InputSystem.InputActionSetupExtensions.AddActionMap(asset, map!);
                 json = ToJson(asset);
             }
             finally
             {
                 UnityEngine.Object.DestroyImmediate(asset);
             }
-            Write(path, json);
-            return AssetDatabase.LoadAssetAtPath<InputActionAsset>(path)
-                ?? throw new InvalidOperationException($"'{path}' was written but did not import as an InputActionAsset");
+            // Missing folders are created, and removed again (with a file written into them) when the write or import fails.
+            return RqlEditorApi.InFolderOf(path, () =>
+            {
+                Write(path, json);
+                return AssetDatabase.LoadAssetAtPath<InputActionAsset>(path)
+                    ?? throw new InvalidOperationException($"'{path}' was written but did not import as an InputActionAsset");
+            });
+        }
+
+        /// <summary>The checks <see cref="Create"/> makes before it writes (also its call validator): the new path and the map name.</summary>
+        public static string CreatePath(string path, string? map)
+        {
+            path = NewAssetPath(path);
+            if (!string.IsNullOrEmpty(map)) InputValidation.Name(map, "action map");
+            return path;
         }
 
         /// <summary>
@@ -229,7 +237,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
             SessionState.SetString(TrackedKey, string.Join("\n", tracked));
         }
 
-        /// <summary>Validate a path for a new asset: Assets/, .inputactions, nothing there yet; creates missing folders.</summary>
+        /// <summary>Validate a path for a new asset: Assets/, .inputactions, nothing there yet, folders that can be created.</summary>
         public static string NewAssetPath(string path)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("path is empty");
@@ -238,7 +246,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
             if (!path.EndsWith(Extension, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"'{path}' must end with {Extension}");
             if (AssetDatabase.LoadMainAssetAtPath(path) != null || File.Exists(path))
                 throw new ArgumentException($"an asset already exists at '{path}' (choose another path)");
-            RqlEditorApi.Instance.CreateFolder(Path.GetDirectoryName(path)!);
+            RqlEditorApi.EnsureFolder(Path.GetDirectoryName(path), create: false);
             return path;
         }
 

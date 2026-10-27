@@ -115,7 +115,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Timelines
         public static TrackAsset ParentTrack(TimelineClip clip) =>
             clip.GetParentTrack() ?? throw new InvalidOperationException($"clip '{clip.displayName}' is not on a track");
 
-        /// <summary>Validate a new asset path: under Assets/, the expected extension, not overwriting an existing asset; creates folders.</summary>
+        /// <summary>
+        /// Validate a new asset path: under Assets/, the expected extension, not overwriting an existing asset, and folders that
+        /// can be created (the call creates them with <see cref="RqlEditorApi.SaveNewAsset{T}"/>).
+        /// </summary>
         public static string NewAssetPath(string path, string extension)
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("path is empty");
@@ -123,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Timelines
             if (!path.StartsWith("Assets/", StringComparison.Ordinal)) throw new ArgumentException($"'{path}' must start with Assets/");
             if (!path.EndsWith(extension, StringComparison.OrdinalIgnoreCase)) throw new ArgumentException($"'{path}' must end with {extension}");
             if (AssetDatabase.LoadMainAssetAtPath(path) != null) throw new ArgumentException($"an asset already exists at '{path}' (choose another path)");
-            RqlEditorApi.Instance.CreateFolder(Path.GetDirectoryName(path)!);
+            RqlEditorApi.EnsureFolder(Path.GetDirectoryName(path), create: false);
             return path;
         }
 
