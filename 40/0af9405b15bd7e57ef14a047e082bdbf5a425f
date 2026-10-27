@@ -1,0 +1,51 @@
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/Editor/Scripts/Rql/InputSystemModule.cs
+  s_7bc72ecaebd05d::t_66d3c514fa37ad 39
+Unity-MCP-Plugin/AGENTS.md
+  s_7bc72ecaebd05d::t_b0075ac7afed39 17-19
+Unity-MCP-Plugin/.gitignore
+  s_7bc72ecaebd05d::t_6cef3d6ac224aa 71-74,77-80
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_StateTests.cs
+  s_7bc72ecaebd05d::t_61b48de1d65cb6 12-13,114-157
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/Tests/Editor/Rql/InputEditorApiTests.cs
+  s_7bc72ecaebd05d::t_66d3c514fa37ad 78
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/Editor/Scripts/Rql/UnityEngine_InputSystem_InputActionAsset_Adapter.cs
+  s_7bc72ecaebd05d::t_45da3ec67a1b81 31
+  s_7bc72ecaebd05d::t_26bced71800908 41
+  s_7bc72ecaebd05d::t_b0b42365243920 37-38
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/Tests/Editor/Rql/UnityEngine_InputSystem_InputActionAsset_AdapterTests.cs
+  s_7bc72ecaebd05d::t_4abfd5741241a8 26
+  s_7bc72ecaebd05d::t_f5a36a723533a4 47-48,54
+  s_7bc72ecaebd05d::t_eee294a6fa3beb 45-46,49-53
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.Assets.cs
+  s_7bc72ecaebd05d::t_846b862d6cdecd 29-42,52,79-80,107-112,145-149,151,153,157,159-174
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_AssetsTests.cs
+  s_7bc72ecaebd05d::t_f9d94fb74ea912 52
+  s_7bc72ecaebd05d::t_00139f362a7b44 12
+  s_7bc72ecaebd05d::t_5c02b5c1563748 48-51,53-80
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Scene_Adapter.cs
+  s_7bc72ecaebd05d::t_05908358e39807 40-41,43
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_PrefabsTests.cs
+  s_7bc72ecaebd05d::t_2b63457318f57b 47-57
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Object/UnityEngine_GameObject_Adapter.cs
+  s_7bc72ecaebd05d::t_7b9338e9236a40 163-166
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.Console.cs
+  s_7bc72ecaebd05d::t_2604e9c561128c 49,52-68
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.Scenes.cs
+  s_7bc72ecaebd05d::t_203d514c1d996b 37-43
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "400af9405b15bd7e57ef14a047e082bdbf5a425f",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
