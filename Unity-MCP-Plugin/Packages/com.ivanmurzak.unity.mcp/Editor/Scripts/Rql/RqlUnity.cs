@@ -258,7 +258,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             if (args.Length != 1 || !(args[0] is string path)) return new RqlError("type-mismatch", "unity.asset(path) expects an asset path");
             // A missing asset as null would let `set sharedMaterial = unity.asset(<typo>)` clear the field silently.
-            return AssetDatabase.LoadMainAssetAtPath(path) is Object asset && asset != null
+            var asset = AssetDatabase.LoadMainAssetAtPath(path);
+            return asset != null
                 ? asset
                 : new RqlError("not-found", $"no asset at '{path}' (a project path such as \"Assets/…/Red.mat\"; search with unity.assets(\"t:Material Red\"))");
         }

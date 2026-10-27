@@ -70,7 +70,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         }
 
         [RqlDescription("the project's layer names by index 0..31 (\"\" = unused); GameObjects take one by layerName or layer")]
-        public string[] layers => Enumerable.Range(0, 32).Select(LayerMask.LayerToName).ToArray();
+        public string[] layers => LayerNames();
+
+        /// <summary>The 32 layer names by index ("" = unused).</summary>
+        internal static string[] LayerNames() => Enumerable.Range(0, 32).Select(LayerMask.LayerToName).ToArray();
 
         [RqlDescription("the project's tags (Untagged, MainCamera … and the added ones)")]
         public string[] tags => UnityEditorInternal.InternalEditorUtility.tags;
@@ -78,8 +81,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("add a layer in the first free user layer (8..31) of Tags and Layers, or keep the one that has this name; returns its index (undoable)")]
         public int AddLayer(string name)
         {
-            if (ValidateAddLayer(name) is string problem) throw new ArgumentException(problem);
-            if (LayerMask.NameToLayer(name) is var existing && existing >= 0) return existing;
+            if (ValidateAddLayer(name) is { } problem) throw new ArgumentException(problem);
+            var existing = LayerMask.NameToLayer(name);
+            if (existing >= 0) return existing;
             var (manager, layerList) = TagManager("layers");
             for (int i = FirstUserLayer; i < layerList.arraySize; i++)
             {
@@ -96,8 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             if (string.IsNullOrWhiteSpace(name)) return "a layer name cannot be empty";
             if (LayerMask.NameToLayer(name) >= 0) return null;
-            return Enumerable.Range(FirstUserLayer, 32 - FirstUserLayer).Any(i => string.IsNullOrEmpty(LayerMask.LayerToName(i)))
-                ? null : "every user layer (8..31) is taken";
+            return LayerNames().Skip(FirstUserLayer).Any(string.IsNullOrEmpty) ? null : "every user layer (8..31) is taken";
         }
 
         [RqlCallable("add a tag to Tags and Layers; false when it already exists (undoable)")]

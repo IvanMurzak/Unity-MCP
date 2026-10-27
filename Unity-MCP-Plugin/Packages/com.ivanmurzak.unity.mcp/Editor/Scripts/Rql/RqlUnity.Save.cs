@@ -54,7 +54,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             QueryResult result;
             var completed = false;
             var outerBatch = _batch;
-            var batch = _batch = new CallBatch();
+            var batch = new CallBatch();
+            _batch = batch; // restored in finally; the local outlives it for Finish
             try
             {
                 var budgets = maxTargets.HasValue ? new Budgets { MaxMutationTargets = maxTargets.Value } : null;
@@ -125,6 +126,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 _claimedPaths[path] = owner;
                 return null;
             }
+
+            /// <summary>Components whose dependents are being removed first (two components requiring each other end the recursion).</summary>
+            public readonly HashSet<Component> Removing = new HashSet<Component>();
 
             /// <summary>A component this call destroys (every target is validated before the first call runs).</summary>
             public bool IsDestroying(Component c) => _destroying.Contains(c);

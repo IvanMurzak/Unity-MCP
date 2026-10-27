@@ -40,20 +40,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             if (c == null) return; // its GameObject, or a component it required, was destroyed by an earlier target of the same call
             // The components that require this one and that the same call removes go first, whatever the target order.
-            if (RqlUnity.Batch is { } batch && Removing.Add(c)) // Removing: two components requiring each other end the recursion
+            if (RqlUnity.Batch is { } batch && batch.Removing.Add(c))
             {
                 try
                 {
                     foreach (var blocker in Blockers(c, out _))
                         if (batch.IsDestroying(blocker)) Destroy(blocker);
                 }
-                finally { Removing.Remove(c); }
+                finally { batch.Removing.Remove(c); }
             }
             if (Rejection(c) is { } rejection) throw new InvalidOperationException(rejection); // a C# caller skips RQL's validator
             RqlUnity.DestroyUndoable(c, $"Unity did not remove {c.GetType().Name} from '{c.gameObject.name}': another component requires it");
         }
-
-        private static readonly HashSet<Component> Removing = new HashSet<Component>();
 
         // The call validator. Inside rql-mutate a component that others require may still be removed when the same call removes
         // them as well: that is decided once every target is validated (RqlUnity.CallBatch).

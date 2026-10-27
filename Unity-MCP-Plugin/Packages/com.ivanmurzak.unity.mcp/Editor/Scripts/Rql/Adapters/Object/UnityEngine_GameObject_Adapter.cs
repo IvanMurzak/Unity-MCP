@@ -78,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         internal static string? ValidateLayerName(string? name)
         {
             if (!string.IsNullOrEmpty(name) && LayerMask.NameToLayer(name) >= 0) return null;
-            var defined = Enumerable.Range(0, 32).Select(LayerMask.LayerToName).Where(n => !string.IsNullOrEmpty(n));
+            var defined = RqlEditorApi.LayerNames().Where(n => n.Length > 0);
             return $"layer '{name}' is not defined; defined layers: {string.Join(", ", defined)} (editor | call AddLayer(\"{name}\") adds it)";
         }
 
