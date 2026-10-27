@@ -1,0 +1,43 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Modules/UnityCoreModule.cs
+  s_7bc72ecaebd05d::t_05be2d05b5ed99 37
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Asset/UnityEngine_Material_Adapter.cs
+  s_7bc72ecaebd05d::t_546d520a921a51 16,19,23-27,30-74,84-93,96-110
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_7bc72ecaebd05d::t_9520fc20942fb1 63,98,100,120
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnity.cs
+  s_7bc72ecaebd05d::t_78b116f2d17337 237,240-264,266-268,270-278
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnitySchema.cs
+  s_7bc72ecaebd05d::t_32ea2a13d132c1 94-95
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/UnityTypes.cs
+  s_7bc72ecaebd05d::t_cf9855f8403ba0 43-80
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/Adapters/Asset/UnityEngine_Material_AdapterTests.cs
+  s_7bc72ecaebd05d::t_eb4c488f91fe68 117,120-165
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_AssetsTests.cs
+  s_7bc72ecaebd05d::t_b9af992c7b4c0a 221-238
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/RqlSchemaModuleTypesTests.cs
+  s_7bc72ecaebd05d::t_aed9d392caacd2 35-58
+tests/chain-fixtures/2022.3.62f3/tools.jsonl
+  s_7bc72ecaebd05d::t_24680b81e4e53d 6-7,23
+tests/chain-fixtures/6000.0.85f1/tools.jsonl
+  s_7bc72ecaebd05d::t_ac6e7ef9635ec9 6-7,23
+tests/chain-fixtures/6000.3.27f1/tools.jsonl
+  s_7bc72ecaebd05d::t_2b4c8971d4aa3d 6-7,23
+tests/chain-fixtures/6000.6.7f1/tools.jsonl
+  s_7bc72ecaebd05d::t_0df6968e31d02e 6-7,23
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1b9f1e9fe399ff116229bbcad7bd831b77423016",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
