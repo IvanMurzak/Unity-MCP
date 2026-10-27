@@ -45,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public string? ValidateNewScene(string path, bool empty, bool additive) => Rejection(() =>
         {
             if (string.IsNullOrWhiteSpace(path)) throw new ArgumentException("NewScene needs a path such as \"Assets/Scenes/X.unity\"");
-            CheckFolder(System.IO.Path.GetDirectoryName(NewAssetPath(path, ".unity")));
+            EnsureFolder(System.IO.Path.GetDirectoryName(NewAssetPath(path, ".unity")), create: false);
         });
 
         /// <summary>A new scene path: normalized, ".unity", not taken, its folder created. Unity would overwrite an existing scene file.</summary>

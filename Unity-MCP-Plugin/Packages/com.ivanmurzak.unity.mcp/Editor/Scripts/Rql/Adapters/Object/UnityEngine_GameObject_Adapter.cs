@@ -88,7 +88,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             var type = UnityTypes.Find(typeName, typeof(Component));
             if (type == null) return $"no component type named '{typeName}'";
             if (type == typeof(Transform)) return "a Transform cannot be added: every GameObject has exactly one";
-            if (type.IsAbstract) return $"{type.Name} is abstract: add one of its concrete types";
             if (g == null) return null;
             if (type.IsDefined(typeof(DisallowMultipleComponent), true) && g.GetComponent(type) != null)
                 return $"'{g.name}' already has a {type.Name}, which allows one per GameObject";

@@ -40,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             var folder = AssetDatabase.IsValidFolder(Normalize(path));
             if (!folder && AssetDatabase.LoadMainAssetAtPath(Normalize(path)) == null) throw new ArgumentException($"no asset at '{path}'");
-            CheckFolder(Path.GetDirectoryName(NewAssetPath(newPath, folder ? null : Path.GetExtension(path))));
+            EnsureFolder(Path.GetDirectoryName(NewAssetPath(newPath, folder ? null : Path.GetExtension(path))), create: false);
         });
 
         public string? ValidateDeleteAsset(string path, bool force) => Rejection(() =>
@@ -54,7 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             path = NewAssetPath(path, ".mat");
             if (shader != null && Shader.Find(shader) == null) throw new ArgumentException($"no shader named '{shader}'");
-            CheckFolder(Path.GetDirectoryName(path));
+            EnsureFolder(Path.GetDirectoryName(path), create: false);
         });
 
         /// <summary>The message a check throws (<see cref="ArgumentException"/>), or null when it passes.</summary>
@@ -62,18 +62,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             try { check(); return null; }
             catch (ArgumentException e) { return e.Message; }
-        }
-
-        /// <summary>Throws where <see cref="EnsureFolder"/> would (a path not under Assets/), without creating anything.</summary>
-        internal static void CheckFolder(string? path)
-        {
-            if (string.IsNullOrEmpty(path)) return;
-            for (path = Normalize(path!); !AssetDatabase.IsValidFolder(path); path = Normalize(path))
-            {
-                var parent = Path.GetDirectoryName(path);
-                if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
-                path = parent;
-            }
         }
 
         [RqlCallable("move or rename an asset; returns its new path")]
@@ -145,7 +133,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return path;
         }
 
-        internal static void EnsureFolder(string? path)
+        /// <summary>Creates the folder and its missing parents; with <paramref name="create"/> = false it only throws where it would.</summary>
+        internal static void EnsureFolder(string? path, bool create = true)
         {
             if (string.IsNullOrEmpty(path)) return;
             path = Normalize(path!);
@@ -153,8 +142,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var parent = Path.GetDirectoryName(path);
             if (string.IsNullOrEmpty(parent)) throw new ArgumentException($"'{path}' is not under Assets/");
             parent = Normalize(parent);
-            EnsureFolder(parent);
-            AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
+            EnsureFolder(parent, create);
+            if (create) AssetDatabase.CreateFolder(parent, Path.GetFileName(path));
         }
 
         /// <summary>
