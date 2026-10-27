@@ -46,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             var instance = MakeInstance();
             Assert.AreEqual("[]", Cell(Q("objects | where name == \"Coin\" | select prefabOverrides")));
-            instance.transform.position = new Vector3(5, 0, 0); // a default override: per-instance by design
+            AssertOk(M("objects | where name == \"Coin\" | set transform.position = \"(5, 0, 0)\"")); // a default override: per-instance by design
             Assert.AreEqual("[]", Cell(Q("objects | where name == \"Coin\" | select prefabOverrides")));
 
             AssertOk(M("objects | where name == \"Mesh\" | set transform.localScale = \"(2, 2, 2)\""));
@@ -57,6 +57,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             StringAssert.DoesNotContain("m_LocalPosition", overrides);
             // a part reports its outermost instance's overrides
             Assert.AreEqual(overrides, Cell(Q("objects | where name == \"Mesh\" | select prefabOverrides")));
+        }
+
+        [Test]
+        public void PrefabOverridesListARemovedGameObject()
+        {
+            MakeInstance();
+            AssertOk(M("objects | where name == \"Mesh\" | call Destroy()"));
+            var roots = Table(Q("roots | select name prefabSource prefabOverrides"));
+            StringAssert.Contains("removed GameObject Coin/Mesh", roots);
         }
 
         [Test]
@@ -80,6 +89,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertOk(M("objects | where name == \"Coin\" | call ApplyPrefabOverrides()"));
             Assert.AreEqual(new Vector3(0.5f, 0.5f, 0.5f), AssetDatabase.LoadAssetAtPath<GameObject>(Path).transform.localScale);
             Assert.AreEqual("[]", Cell(Q("objects | where name == \"Coin\" | select prefabOverrides")));
+        }
+
+        // Prefab Mode contents are not scene instances: Apply there would write a variant's overrides into its base.
+        [Test]
+        public void PrefabModeContentsAreNoSceneInstances()
+        {
+            MakeInstance();
+            AssertOk(M($"editor | call OpenPrefab(\"{Path}\")"));
+            Assert.AreEqual("null", Cell(Q("prefab | select prefabSource")));
+            AssertFails(M("prefab | call RevertPrefabOverrides()", dryRun: true), "invalid-value", "not part of a prefab instance");
         }
 
         [Test]

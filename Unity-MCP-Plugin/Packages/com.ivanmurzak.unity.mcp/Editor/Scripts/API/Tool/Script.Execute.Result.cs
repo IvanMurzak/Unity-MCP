@@ -60,6 +60,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
             }
 
+            /// <summary>A collection that knows its count (enumerating it again is cheap and has no side effects).</summary>
+            public static bool IsCounted(object? value) =>
+                value is IEnumerable && !(value is string) && !(value is UnityEngine.Object) && CountOf(value) != null;
+
             // ICollection, or a public int Count (HashSet<T> and other generic-only collections).
             static int? CountOf(object value) =>
                 value is ICollection collection ? collection.Count

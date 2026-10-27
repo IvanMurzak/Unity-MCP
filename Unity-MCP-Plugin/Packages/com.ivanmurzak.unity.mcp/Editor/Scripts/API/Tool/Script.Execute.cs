@@ -168,7 +168,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // beat the first characters of the JSON.
             // Only a counted collection is shaped again: a lazy query would run (and repeat its side effects) once more.
             var (serializedResult, json, count) = SerializeShaped(ResultValue.MaxItems);
-            if (json.Length > ResultValue.MaxSerializedChars && result.Value is System.Collections.ICollection && count > ResultValue.MinItems)
+            if (json.Length > ResultValue.MaxSerializedChars && ResultValue.IsCounted(result.Value) && count > ResultValue.MinItems)
                 (serializedResult, json, _) = SerializeShaped(Math.Max(ResultValue.MinItems, (int)(count * 0.9 * ResultValue.MaxSerializedChars / json.Length)));
             return json.Length <= ResultValue.MaxSerializedChars
                 ? serializedResult

@@ -75,7 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         // A concrete public class of an RQL namespace that agents read (views, editor APIs), not the adapters and modules.
         internal static bool IsModuleItemType(Type t) =>
             t.IsClass && !t.IsAbstract && t.IsVisible
-            && t.Namespace?.StartsWith(typeof(UnityTypes).Namespace!, StringComparison.Ordinal) == true
+            && (t.Namespace == typeof(UnityTypes).Namespace || t.Namespace?.StartsWith(typeof(UnityTypes).Namespace + ".", StringComparison.Ordinal) == true)
             && !typeof(RqlTypeAdapter).IsAssignableFrom(t) && !typeof(IRqlModule).IsAssignableFrom(t)
             && !typeof(Attribute).IsAssignableFrom(t) && !typeof(UnityEngine.Object).IsAssignableFrom(t);
     }

@@ -28,6 +28,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             File.WriteAllBytes(path, texture.EncodeToPNG());
             Object.DestroyImmediate(texture);
             AssetDatabase.ImportAsset(path);
+            // A project in 2D mode imports new textures as sprites: start from Default whatever the project's mode.
+            var importer = (TextureImporter)AssetImporter.GetAtPath(path);
+            if (importer.textureType != TextureImporterType.Default)
+            {
+                importer.textureType = TextureImporterType.Default;
+                importer.SaveAndReimport();
+            }
             return path;
         }
 
@@ -75,6 +82,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             StringAssert.Contains("no member 'transfrom'", Table(typo));
             // An empty where without a misspelling is still a successful no-op.
             AssertOk(RqlUnity.Mutate("objects | where name == \"Nobody\" | set name = \"X\""));
+            // A real member that no item of a mixed stream has is a successful no-op.
+            AssertOk(RqlUnity.Mutate("objects | get components | where intensity > 1 | set intensity = 2"));
             // A dry run is checked the same way.
             AssertFails(RqlUnity.Mutate("objects | where name == \"Target\" | get transfrom | set position = \"(1, 2, 3)\"", dryRun: true), "unknown-member");
         }

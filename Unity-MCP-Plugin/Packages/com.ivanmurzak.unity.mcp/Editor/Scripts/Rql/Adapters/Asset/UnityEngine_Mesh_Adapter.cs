@@ -56,8 +56,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         internal static Mesh PrimitiveMesh(PrimitiveType primitive)
         {
             if (Primitives.TryGetValue(primitive, out var mesh) && mesh != null) return mesh;
-            // Its resource name differs between Unity versions ("Cylinder.fbx" / "New-Cylinder.fbx"): take it from a
-            // throwaway primitive, which never reaches the scene file (destroyed before anything saves).
+            // The built-in resource, without creating anything (coercion also runs for dry runs). Cube and Quad live in
+            // "Cube.fbx" / "Quad.fbx", the others in "New-<Name>.fbx" ("Cylinder.fbx" holds a different mesh, pCylinder1):
+            // the mesh must carry the primitive's name. A throwaway primitive is the fallback for an Editor that renames them.
+            var name = primitive.ToString();
+            var files = primitive == PrimitiveType.Cube || primitive == PrimitiveType.Quad
+                ? new[] { name + ".fbx", "New-" + name + ".fbx" }
+                : new[] { "New-" + name + ".fbx", name + ".fbx" };
+            foreach (var file in files)
+            {
+                mesh = Resources.GetBuiltinResource<Mesh>(file);
+                if (mesh != null && mesh.name == name) return Primitives[primitive] = mesh;
+            }
             var probe = GameObject.CreatePrimitive(primitive);
             try { mesh = probe.GetComponent<MeshFilter>().sharedMesh; }
             finally { Object.DestroyImmediate(probe); }

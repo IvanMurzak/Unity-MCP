@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  description: "the instance's overrides of its prefab (property changes \"Child/Type.property = value\", added / removed components and GameObjects); [] = none, null = not a prefab instance")
              .Method("ApplyPrefabOverrides", g => PrefabUtility.ApplyPrefabInstance(OutermostInstanceRoot(g), InteractionMode.UserAction),
                  "write the overrides of this prefab instance (its outermost instance root) into the prefab asset; every instance gets them (undoable)",
-                 PrefabInstanceRejection)
+                 ApplyRejection)
              .Method("RevertPrefabOverrides", g => PrefabUtility.RevertPrefabInstance(OutermostInstanceRoot(g), InteractionMode.UserAction),
                  "drop every override of this prefab instance (its outermost instance root): it matches its prefab again (undoable)",
                  PrefabInstanceRejection);
@@ -73,8 +73,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 .ExplicitOnly("path", "layerName", "prefabSource", "prefabOverrides");
         }
 
+        // Prefab Mode contents are not scene instances: Apply / Revert there would write into, or wipe, a variant's base.
         private static bool IsSceneInstance(GameObject g) =>
-            g != null && PrefabUtility.IsPartOfPrefabInstance(g) && !PrefabUtility.IsPartOfPrefabAsset(g);
+            g != null && PrefabUtility.IsPartOfPrefabInstance(g) && !PrefabUtility.IsPartOfPrefabAsset(g)
+            && UnityEditor.SceneManagement.PrefabStageUtility.GetPrefabStage(g) == null;
 
         private static string? PrefabSource(GameObject g) =>
             IsSceneInstance(g) && PrefabUtility.GetPrefabAssetPathOfNearestInstanceRoot(g) is { Length: > 0 } path ? path : null;
@@ -83,7 +85,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             PrefabUtility.GetOutermostPrefabInstanceRoot(g) ?? throw new InvalidOperationException($"'{g.name}' is not a prefab instance");
 
         private static string? PrefabInstanceRejection(GameObject g) =>
-            IsSceneInstance(g) ? null : $"'{g.name}' is not part of a prefab instance in a scene (prefabSource is null)";
+            !IsSceneInstance(g) ? $"'{g.name}' is not part of a prefab instance in a scene (prefabSource is null)"
+            : PrefabUtility.IsPrefabAssetMissing(g) ? $"the prefab asset of '{g.name}' is missing"
+            : null;
+
+        // Unity throws on Apply for an immutable prefab (a model file such as .fbx): refused before any target of the call.
+        private static string? ApplyRejection(GameObject g) =>
+            PrefabInstanceRejection(g)
+            ?? (PrefabUtility.IsPartOfImmutablePrefab(PrefabUtility.GetCorrespondingObjectFromSource(OutermostInstanceRoot(g)))
+                ? $"the prefab of '{g.name}' is a model or immutable prefab ({PrefabSource(g)}): it cannot take overrides"
+                : null);
 
         private static List<string>? PrefabOverrides(GameObject g)
         {
@@ -102,7 +113,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             foreach (var removed in PrefabUtility.GetRemovedComponents(root))
                 if (removed.assetComponent != null) result.Add($"removed component {Label(removed.assetComponent)}");
             foreach (var added in PrefabUtility.GetAddedGameObjects(root))
-                if (added.instanceGameObject != null) result.Add($"added GameObject {added.instanceGameObject.GetPath()}");
+                if (added.instanceGameObject != null) result.Add($"added GameObject {Label(added.instanceGameObject)}");
+            foreach (var removed in PrefabUtility.GetRemovedGameObjects(root))
+                if (removed.assetGameObject != null) result.Add($"removed GameObject {Label(removed.assetGameObject)}");
             return result;
         }
 

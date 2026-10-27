@@ -109,9 +109,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             ? Diagnostic.Warning("play-mode", "the Editor is in Play Mode: scene changes are temporary and are lost when Play Mode exits (asset changes stay)")
             : null;
 
+        // An empty set / call receipt whose stream lost every item to a member no Unity type has (a typo). RQL also warns when
+        // no item of a mixed stream has a real member (get components | where intensity > 1 in a scene without lights):
+        // that stays a successful no-op, like a read query that ends in count.
         internal static bool MatchedNothingThroughUnknownMember(QueryResult result) =>
-            result.Ok && (result.Rows == null || result.Rows.Count == 0) && (result.Total ?? 0) == 0
-            && result.Diagnostics.Exists(d => d.Severity == DiagnosticSeverity.Warning && d.Code == "unknown-member");
+            result.Ok && result.Kind == ResultKind.Rows && result.Columns?.Contains("$ref") == true
+            && (result.Rows == null || result.Rows.Count == 0)
+            && result.Diagnostics.Exists(d => d.Severity == DiagnosticSeverity.Warning && d.Code == "unknown-member"
+                                              && UnknownMemberName(d.Message) is { } name && !AnyObjectTypeHas(name));
+
+        private static readonly System.Text.RegularExpressions.Regex UnknownMemberPattern =
+            new System.Text.RegularExpressions.Regex(@"no member '([^']+)'");
+
+        private static string? UnknownMemberName(string message) =>
+            UnknownMemberPattern.Match(message) is { Success: true } m ? m.Groups[1].Value : null;
+
+        // Public C# members of every UnityEngine.Object type (components, assets, user scripts): rare path, cached per name.
+        private static readonly Dictionary<string, bool> KnownMembers = new Dictionary<string, bool>(StringComparer.Ordinal);
+
+        internal static bool AnyObjectTypeHas(string member)
+        {
+            if (KnownMembers.TryGetValue(member, out var known)) return known;
+            const System.Reflection.BindingFlags flags = System.Reflection.BindingFlags.Public | System.Reflection.BindingFlags.Instance;
+            known = false;
+            foreach (var t in TypeCache.GetTypesDerivedFrom<UnityEngine.Object>())
+            {
+                try { known = t.GetProperty(member, flags) != null || t.GetField(member, flags) != null; }
+                catch (System.Reflection.AmbiguousMatchException) { known = true; }
+                catch (Exception) { }
+                if (known) break;
+            }
+            return KnownMembers[member] = known;
+        }
 
         /// <summary>Hard ceiling of <c>max_targets</c> (the engine clamps a request to it).</summary>
         public static int HardMaxTargets => Engine.Mutations.HardMaxTargets;
