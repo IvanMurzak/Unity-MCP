@@ -79,6 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 {
                     if (sceneSettings != null && sceneSettings.Contains(o)) continue; // written through the active scene below
                     EditorUtility.SetDirty(o);
+                    if (o is AssetImporter importer && InMutation) Reimports.Add(importer); // import settings apply on reimport (SaveChanges)
                     var scene = o is GameObject go ? go.scene : o is Component c ? c.gameObject.scene : default;
                     if (scene.IsValid() && scenes.Add(scene) && !EditorApplication.isPlaying) EditorSceneManager.MarkSceneDirty(scene);
                 }

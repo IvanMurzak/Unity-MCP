@@ -75,6 +75,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         public void UnknownPropertiesAreRejected() =>
             AssertFails(M(Mat + " | set properties[\"_NoSuchProperty\"] = 1"), "invalid-value", "no entry");
 
+        // A Material Variant: parent is writable, isVariant reports it; null makes it a plain material again.
+        [Test]
+        public void ParentMakesAMaterialVariant()
+        {
+            var baseMat = new Material(_mat.shader) { name = "Base" };
+            try
+            {
+                Assert.AreEqual("false", Cell(Q(Mat + " | select isVariant")));
+                AssertOk(M(Mat + $" | set parent = ref(\"{RefOf(baseMat)}\")"));
+                Assert.AreSame(baseMat, _mat.parent);
+                Assert.AreEqual("true", Cell(Q(Mat + " | select isVariant")));
+                AssertOk(M(Mat + " | set parent = null"));
+                Assert.IsNull(_mat.parent);
+            }
+            finally { Object.DestroyImmediate(baseMat); }
+        }
+
+        // Unity ignores a parent that would close a cycle (it only logs): refused before anything is written.
+        [Test]
+        public void AParentCycleIsRefused()
+        {
+            var child = new Material(_mat.shader) { name = "Child", parent = _mat };
+            try
+            {
+                AssertFails(M(Mat + $" | set parent = ref(\"{RefOf(child)}\")"), "invalid-value", "a cycle");
+                AssertFails(M(Mat + $" | set parent = ref(\"{RefOf(_mat)}\")"), "invalid-value", "its own parent");
+                Assert.IsNull(_mat.parent);
+            }
+            finally { Object.DestroyImmediate(child); }
+        }
+
+        private static string RefOf(Object o) => com.IvanMurzak.Unity.MCP.Editor.Rql.RqlUnity.Engine.RefOf(o)!;
+
         [Test]
         public void OnlySafeMembersAreExposed()
         {

@@ -30,13 +30,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             /// <summary>Most items of a collection result.</summary>
             public const int MaxItems = 1000;
 
+            /// <summary>Fewest items a collection is cut to when its items are too large for <see cref="MaxSerializedChars"/>.</summary>
+            public const int MinItems = 10;
+
             public sealed class Entry
             {
                 public object? key;
                 public object? value;
             }
 
-            public static object? Shape(object? value)
+            public static object? Shape(object? value, int maxItems = MaxItems)
             {
                 switch (value)
                 {
@@ -46,16 +49,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     case UnityEngine.Object _:
                         return value;
                     case IDictionary dictionary:
-                        return Cap(Entries(dictionary), dictionary.Count);
+                        return Cap(Entries(dictionary), dictionary.Count, maxItems);
                     case IEnumerable sequence:
                         // A collection is returned as it is unless it is too long; a lazy query or iterator as its items; any
                         // other enumerable type (it may have fields of its own) as it is.
-                        if (CountOf(value) is int count) return count <= MaxItems ? value : Cap(sequence, count);
-                        return IsLazy(value.GetType()) ? Cap(sequence, null) : value;
+                        if (CountOf(value) is int count) return count <= maxItems ? value : Cap(sequence, count, maxItems);
+                        return IsLazy(value.GetType()) ? Cap(sequence, null, maxItems) : value;
                     default:
                         return value;
                 }
             }
+
+            /// <summary>A collection that knows its count (enumerating it again is cheap and has no side effects).</summary>
+            public static bool IsCounted(object? value) =>
+                value is IEnumerable && !(value is string) && !(value is UnityEngine.Object) && CountOf(value) != null;
 
             // ICollection, or a public int Count (HashSet<T> and other generic-only collections).
             static int? CountOf(object value) =>
@@ -73,21 +80,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 while (e.MoveNext()) yield return new Entry { key = e.Key, value = e.Value };
             }
 
-            // Enumerated once, at most MaxItems + 1 items: a lazy sequence may be endless.
-            static List<object?> Cap(IEnumerable items, int? total)
+            // Enumerated once, at most maxItems + 1 items: a lazy sequence may be endless.
+            static List<object?> Cap(IEnumerable items, int? total, int maxItems)
             {
                 var list = new List<object?>();
                 foreach (var item in items)
                 {
-                    if (list.Count == MaxItems) { list.Add(More(total)); break; }
+                    if (list.Count == maxItems) { list.Add(More(total, maxItems)); break; }
                     list.Add(item);
                 }
                 return list;
             }
 
-            static string More(int? total) => total is int n
-                ? $"… {n - MaxItems} more items (first {MaxItems} of {n} shown): return a smaller selection, e.g. .Take(100), or a summary"
-                : $"… more items (first {MaxItems} shown): return a smaller selection, e.g. .Take(100), or a summary";
+            static string More(int? total, int shown) => total is int n
+                ? $"… {n - shown} more items (first {shown} of {n} shown): return a smaller selection, e.g. .Take(100), or a summary"
+                : $"… more items (first {shown} shown): return a smaller selection, e.g. .Take(100), or a summary";
         }
     }
 }

@@ -27,9 +27,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     {
         public static readonly RqlEditorApi Instance = new RqlEditorApi();
 
-        [RqlDescription("true while in Play Mode; assign to enter or exit Play Mode")]
+        // Reads the requested state: the switch itself happens on the Editor's next update, so right after an assignment
+        // isPlaying would still report the old state and the receipt would read "false → false".
+        [RqlDescription("true in Play Mode (or while entering it); assign to enter or exit it. Scripts usually reload right after: " +
+                        "retry a call that fails then. Scene changes made in Play Mode are lost when it exits")]
         [RqlNoAutoSave] // entering Play Mode must not save the user's unsaved scene edits
-        public bool isPlaying { get => EditorApplication.isPlaying; set => EditorApplication.isPlaying = value; }
+        public bool isPlaying { get => EditorApplication.isPlayingOrWillChangePlaymode; set => EditorApplication.isPlaying = value; }
 
         [RqlDescription("Play Mode paused; assign to pause / resume")]
         [RqlNoAutoSave]

@@ -58,7 +58,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "layer, layerName, transform (position, localPosition, " +
             "eulerAngles, localScale, parent). Component members are the C# members (public + [SerializeField]); find them via " +
             "objects | get components | where $ is Light. Vectors/colors print as (x, y, z); write \"(1, 2, 3)\", [1, 2, 3] or " +
-            "{x: 1, y: 2, z: 3}; colors also \"#ff8800\". An asset's file: assetPath. Material shader properties: properties[\"_Color\"]. Destroyed objects read as " +
+            "{x: 1, y: 2, z: 3}; colors also \"#ff8800\". An asset's file: assetPath; its import settings: get importer. Material shader properties: " +
+            "properties[\"_Color\"]; a Material Variant has a parent. A Mesh value also takes a primitive's name (\"Cylinder\"). Prefab instances: " +
+            "prefabSource, prefabOverrides. Destroyed objects read as " +
             "null (missing references: where target == null). Navigate with paths or get; select only projects output columns.\n" +
             "Results come back as compact rows (header line, then col|col). Long results are truncated — refine with where/first or use count. " +
             "Unknown members produce warnings with suggestions; rql-schema(type) lists a type's members.";
@@ -91,6 +93,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name starts-with \"Crate\" | sort name | set transform.position.x = $index * 2   spread along x\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | get properties | where Key ends-with \"Color\" | set Value = \"#ffffff\"   map entries write through\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set properties[\"_Color\"] = \"(1, 0, 0, 1)\"\n" +
+            "  unity.asset(\"Assets/Mats/Red.mat\") | set parent = unity.asset(\"Assets/Mats/Base.mat\")   make it a Material Variant of Base\n" +
+            "  objects | where name starts-with \"Pillar\" | get components | where $ is MeshFilter | set sharedMesh = \"Cylinder\"   built-in mesh\n" +
+            "  unity.asset(\"Assets/Art/hero.png\") | get importer | set textureType = \"Sprite\", spriteImportMode = \"Single\"   import settings (reimported)\n" +
             "  objects | where name == \"Spawner\" | set targets = append(targets, ref(\"GameObject#1234\"))\n" +
             "Create / add / remove (call; the receipt's result column holds the new object's $ref for follow-up queries):\n" +
             "  editor | call CreateGameObject(\"Props\")                                   new root GameObject\n" +
@@ -103,10 +108,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  editor | call OpenScene(\"Assets/Scenes/Level.unity\")          editor | call NewScene(\"Assets/Scenes/New.unity\")\n" +
             "  scenes | where path == \"\" | call SaveAs(\"Assets/Scenes/New.unity\")   scenes | where name == \"Level\" | call SetActive()\n" +
             "  editor | call InstantiatePrefab(\"Assets/Prefabs/Enemy.prefab\", ref(\"GameObject#1234\"), \"(0, 0, 5)\")\n" +
-            "  objects | where name == \"Crate\" | call SaveAsPrefab(\"Assets/Prefabs/Crate.prefab\")\n" +
+            "  objects | where name == \"Crate\" | call SaveAsPrefab(\"Assets/Prefabs/Crate.prefab\")   (on a prefab instance: a Prefab Variant)\n" +
+            "  objects | where name == \"Coin_3\" | call RevertPrefabOverrides()   or ApplyPrefabOverrides() (read: select prefabSource prefabOverrides)\n" +
             "  editor | call OpenPrefab(\"Assets/Prefabs/Enemy.prefab\")  then  prefab | recurse children | …  then  editor | call ClosePrefab()\n" +
             "  editor | call CreateMaterial(\"Assets/Mats/Glow.mat\")        editor | call MoveAsset(\"Assets/A.mat\", \"Assets/Mats/A.mat\")\n" +
-            "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true\n" +
+            "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true   (scripts reload: retry a call that fails right after)\n" +
             "  editor | call AddLayer(\"Pickups\")  then  objects | where name starts-with \"Pickup\" | set layerName = \"Pickups\"   (read: editor | select layers tags)\n" +
             "  profiler | call Start()      profiler | call Save(\"Logs/profile.json\")      (read: profiler | select memory frame)\n";
 
