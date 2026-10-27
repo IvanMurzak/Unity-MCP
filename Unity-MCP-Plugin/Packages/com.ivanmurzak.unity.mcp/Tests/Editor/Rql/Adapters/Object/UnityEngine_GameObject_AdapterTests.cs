@@ -154,6 +154,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.AreEqual(4, go.layer);
         }
 
+        [Test]
+        public void PathIsTheHierarchyPath()
+        {
+            new GameObject("Crate").transform.SetParent(new GameObject("Props").transform, false);
+            Assert.AreEqual("Props/Crate", Cell(Q("objects | where name == \"Crate\" | select path")));
+            Assert.AreEqual("Crate", Cell(Q("unity.find(\"Props/Crate\") | select name")));
+            AssertFails(M("objects | where name == \"Crate\" | set path = \"X\""), "readonly-member");
+        }
+
+        [Test]
+        public void LayerNameReadsWritesAndFiltersByName()
+        {
+            var go = new GameObject("Splash");
+            AssertOk(M("objects | where name == \"Splash\" | set layerName = \"Water\""));
+            Assert.AreEqual(LayerMask.NameToLayer("Water"), go.layer);
+            Assert.AreEqual("Water", Cell(Q("objects | where name == \"Splash\" | select layerName")));
+            Assert.AreEqual(1, Count("objects | where layerName == \"Water\" | count"));
+
+            var r = M("objects | where name == \"Splash\" | set layerName = \"NoSuchLayer\", name = \"Renamed\"");
+            AssertFails(r, "invalid-value", "layer 'NoSuchLayer' is not defined");
+            StringAssert.Contains("AddLayer(\"NoSuchLayer\")", Table(r));
+            Assert.AreEqual("Splash", go.name); // all-or-nothing
+            Assert.AreEqual(LayerMask.NameToLayer("Water"), go.layer);
+        }
+
         // The parent comes first, so its child is already gone when the call reaches it.
         [Test]
         public void DestroyingAParentAndItsChildInOneCallSucceeds()

@@ -40,11 +40,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (UnityMcpPluginEditor.HasInstance) UnityMcpPluginEditor.Instance.LogCollector?.Clear();
         }
 
-        /// <summary>The <c>console</c> source: captured Editor log entries, oldest first.</summary>
+        /// <summary>
+        /// The <c>console</c> source: captured Editor log entries, oldest first, without the plugin's echo of its own tool
+        /// responses (an agent checking "errors after my change" would otherwise find its own failed calls).
+        /// </summary>
         public static IReadOnlyList<LogEntry> ConsoleEntries() =>
             UnityMcpPluginEditor.HasInstance && UnityMcpPluginEditor.Instance.LogCollector is { } logs
-                ? logs.Query(maxEntries: MaxLogEntries, includeStackTrace: true)
-                : Array.Empty<LogEntry>();
+                ? logs.Query(maxEntries: MaxLogEntries, includeStackTrace: true).Where(e => !IsToolResponseEcho(e.Message)).ToList()
+                : (IReadOnlyList<LogEntry>)Array.Empty<LogEntry>();
+
+        // McpPlugin's McpToolManager logs every tool response it sends ("[AI] McpToolManager Error Response to AI: …").
+        internal static bool IsToolResponseEcho(string? message) =>
+            message != null && (message.Contains("McpToolManager Error Response to AI") || message.Contains("McpToolManager Success Response to AI"));
 
         /// <summary>The <c>shaders</c> source: every shader the Editor knows (built-in and project).</summary>
         public static ShaderInfo[] Shaders() => ShaderUtil.GetAllShaderInfo();

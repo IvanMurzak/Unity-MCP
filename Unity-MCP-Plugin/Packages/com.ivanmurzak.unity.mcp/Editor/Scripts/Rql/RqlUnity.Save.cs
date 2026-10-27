@@ -11,10 +11,12 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Rql;
 using UnityEditor;
 using UnityEditor.SceneManagement;
 using UnityEngine.SceneManagement;
+using Component = UnityEngine.Component;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
@@ -46,19 +48,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// applied nothing (a parse error, no matching items, a set the engine rolled back) saves nothing, so it never
         /// persists unrelated unsaved edits. Untitled scenes (no path yet) stay in memory and are reported as a warning.
         /// </summary>
-        public static QueryResult Mutate(string query, bool dryRun = false)
+        public static QueryResult Mutate(string query, bool dryRun = false, int? maxTargets = null)
         {
             if (_mutating == 0) _wrote = false;
             _mutating++;
             QueryResult result;
             var completed = false;
+            var outerBatch = _batch;
+            var batch = new CallBatch();
+            _batch = batch; // restored in finally; the local outlives it for Finish
             try
             {
-                result = Engine.Execute(query, null, new QueryOptions { AllowMutation = true, DryRun = dryRun });
+                var budgets = maxTargets.HasValue ? new Budgets { MaxMutationTargets = maxTargets.Value } : null;
+                result = Engine.Execute(query, budgets, new QueryOptions { AllowMutation = true, DryRun = dryRun });
                 completed = true;
+                result = batch.Finish(result);
+                ExplainMutationLimit(result);
             }
             finally
             {
+                _batch = outerBatch;
                 _mutating--;
                 if (_mutating == 0)
                 {
@@ -81,6 +90,108 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             foreach (var problem in problems)
                 result.Diagnostics.Add(Diagnostic.Warning("not-saved", problem));
             return result;
+        }
+
+        /// <summary>Hard ceiling of <c>max_targets</c> (the engine clamps a request to it).</summary>
+        public static int HardMaxTargets => Engine.Mutations.HardMaxTargets;
+
+        // RQL's hint names its own budget option; the tool's argument for it is max_targets.
+        private static void ExplainMutationLimit(QueryResult result)
+        {
+            var d = result.Diagnostics;
+            for (int i = 0; i < d.Count; i++)
+                if (d[i].Code == "mutation-limit")
+                    d[i] = new Diagnostic(d[i].Severity, d[i].Code, d[i].Message, d[i].At,
+                        $"narrow the query (where / first / ref(...)), or pass max_targets (up to {HardMaxTargets}) when the bulk change is intended");
+        }
+
+        // The call stage of the running Mutate (null outside one): call validators see the targets validated before them,
+        // so checks that span several targets of one call (two SaveAsPrefab to one path, removing a component together with
+        // the components that require it) are decided for the whole call, on dry runs too.
+        private static CallBatch? _batch;
+
+        /// <summary>The running Mutate's call batch, or null (a C# caller, a direct engine query): checks stay per target.</summary>
+        internal static CallBatch? Batch => _batch;
+
+        internal sealed class CallBatch
+        {
+            private readonly Dictionary<string, object> _claimedPaths = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            private readonly HashSet<Component> _destroying = new HashSet<Component>();
+            private readonly List<(Component Target, List<(Component Blocker, string Reason)> Blockers)> _deferred =
+                new List<(Component, List<(Component, string)>)>();
+            private string? _rejection;
+
+            /// <summary>
+            /// Claims a new asset path for <paramref name="owner"/>; the earlier target that claimed it, or null. Every target is
+            /// validated once, so a second claim (the same GameObject reached twice included) is always a conflict.
+            /// </summary>
+            public object? Claim(string path, object owner)
+            {
+                if (_claimedPaths.TryGetValue(path, out var earlier)) return earlier;
+                _claimedPaths[path] = owner;
+                return null;
+            }
+
+            /// <summary>Components whose dependents are being removed first (two components requiring each other end the recursion).</summary>
+            public readonly HashSet<Component> Removing = new HashSet<Component>();
+
+            /// <summary>A component this call destroys (every target is validated before the first call runs).</summary>
+            public bool IsDestroying(Component c) => _destroying.Contains(c);
+
+            /// <summary>
+            /// <paramref name="target"/> is destroyed by this call; its <paramref name="blockers"/> (components that require it)
+            /// must be destroyed by the same call, which is known only once every target was validated.
+            /// </summary>
+            public void Destroying(Component target, List<(Component Blocker, string Reason)> blockers)
+            {
+                _destroying.Add(target);
+                if (blockers.Count > 0) _deferred.Add((target, blockers));
+            }
+
+            /// <summary>
+            /// The first deferred check the whole call does not meet, or null: a blocker the call leaves in place, or components
+            /// that require each other (no order removes them; Unity keeps both).
+            /// </summary>
+            public string? Unmet()
+            {
+                foreach (var (target, blockers) in _deferred)
+                    foreach (var (blocker, reason) in blockers)
+                        if (blocker != null && !_destroying.Contains(blocker))
+                            return Rejected(target, reason + " (or in the same call)");
+                // Every blocker is a target too: replay the removal order (dependents first); what never frees up is a cycle.
+                var pending = new List<(Component Target, List<(Component Blocker, string Reason)> Blockers)>(_deferred);
+                var removed = new HashSet<Component>(_destroying.Where(c => !_deferred.Exists(d => d.Target == c)));
+                for (var progress = true; progress && pending.Count > 0;)
+                {
+                    progress = false;
+                    for (int i = pending.Count - 1; i >= 0; i--)
+                    {
+                        if (!pending[i].Blockers.TrueForAll(b => b.Blocker == null || removed.Contains(b.Blocker))) continue;
+                        removed.Add(pending[i].Target);
+                        pending.RemoveAt(i);
+                        progress = true;
+                    }
+                }
+                return pending.Count == 0 ? null
+                    : Rejected(pending[0].Target, pending[0].Blockers[0].Reason + " and they require each other: destroy their GameObject instead");
+            }
+
+            private static string Rejected(Component target, string reason) =>
+                $"cannot call Destroy() on {Engine.RefOf(target)}: {reason}; nothing was called";
+
+            /// <summary>Before the first write (the engine skips this hook on dry runs): veto the call when a deferred check is unmet.</summary>
+            public void BeforeWrite()
+            {
+                _rejection = Unmet();
+                if (_rejection != null) throw new InvalidOperationException(_rejection);
+            }
+
+            /// <summary>The query's result with the deferred checks applied: a dry run is checked here, a real run was vetoed in BeforeWrite.</summary>
+            public QueryResult Finish(QueryResult result)
+            {
+                var rejection = _rejection ?? (result.Ok && result.DryRun ? Unmet() : null);
+                return rejection == null ? result : QueryResult.Fail(new[] { Diagnostic.Error("invalid-value", rejection) });
+            }
         }
 
         /// <summary>Invoke every handler of <paramref name="handlers"/>, even after one threw; returns the messages of those that did.</summary>

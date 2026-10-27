@@ -13,6 +13,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Reflection;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Rql.Execution;
 using UnityEditor;
 using UnityEngine;
@@ -26,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
     /// </summary>
     public sealed class UnityEngine_GameObject_Adapter : RqlTypeAdapter<GameObject>
     {
-        public override string Description => "GameObject: navigate with components / children; write active (SetActive), name, tag, layer, staticFlags";
+        public override string Description => "GameObject: navigate with components / children; path is the hierarchy path; write active (SetActive), name, tag, layer / layerName, staticFlags";
 
         protected override void Members(MemberTable<GameObject> m)
         {
@@ -40,7 +41,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
              .Add<string>("name", g => g.name, (g, v) => g.name = v, (g, v) => ValidateName(v), "the GameObject's name (not empty)")
              .Add<string>("tag", g => g.tag, (g, v) => g.tag = v, (g, v) => ValidateTag(v),
                  "tag: one of the project's tags (Untagged, MainCamera, Player … and the tags added in Tags and Layers)")
-             .Add<int>("layer", g => g.layer, (g, v) => g.layer = v, (g, v) => ValidateLayer(v), "layer index 0..31")
+             .Add<int>("layer", g => g.layer, (g, v) => g.layer = v, (g, v) => ValidateLayer(v), "layer index 0..31 (by name: layerName)")
+             .Add<string>("layerName", g => LayerMask.LayerToName(g.layer), (g, v) => g.layer = LayerMask.NameToLayer(v), (g, v) => ValidateLayerName(v),
+                 "the layer's name, e.g. set layerName = \"Pickups\" (a defined layer; editor | call AddLayer(name) adds one)")
+             .Add<string?>("path", g => g.GetPath(), description: "hierarchy path, e.g. \"Level/Props/Crate\" (for a scene object: what unity.find accepts; in a prefab: from its root)")
              .Add<List<string>>("staticFlags", g => StaticFlags(g), (g, v) => SetStaticFlags(g, v), ValidateStaticFlags,
                  "Static Editor Flags (" + StaticFlagList + "): filter with staticFlags contains \"ContributeGI\"; " +
                  "assign a list, e.g. [\"ContributeGI\", \"BatchingStatic\"] ([] clears; isStatic sets them all)")
@@ -51,10 +55,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
              .Method("Destroy", g => { if (g != null) RqlUnity.DestroyUndoable(g, $"Unity did not destroy '{g.name}'"); }, "destroy this GameObject (undoable)")
              .Function("Duplicate", g => Duplicate(g), "copy this GameObject next to it (prefab instances stay linked) and return the copy (undoable)")
              .Function<string, GameObject>("SaveAsPrefab", (g, path) => SaveAsPrefab(g, path), "path",
-                 "save as a new prefab asset (\"Assets/…/X.prefab\", not an existing one); this GameObject becomes its instance; returns the prefab asset",
-                 (g, path) => RqlEditorApi.Rejection(() => PrefabPath(path)));
+                 "save as a new prefab asset (\"Assets/…/X.prefab\", not an existing one; missing folders are created); this GameObject becomes its instance; returns the prefab asset",
+                 ValidateSaveAsPrefab);
             // staticFlags is built on read, so element writes are assigned back.
-            m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags");
+            m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags").ExplicitOnly("path", "layerName");
         }
 
         /// <summary>Null when <paramref name="name"/> is a usable GameObject name, otherwise why not.</summary>
@@ -70,6 +74,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         internal static string? ValidateLayer(int layer) =>
             layer < 0 || layer > 31 ? $"layer {layer} is out of range: a layer index is 0..31" : null;
+
+        internal static string? ValidateLayerName(string? name)
+        {
+            if (!string.IsNullOrEmpty(name) && LayerMask.NameToLayer(name) >= 0) return null;
+            var defined = RqlEditorApi.LayerNames().Where(n => n.Length > 0);
+            return $"layer '{name}' is not defined; defined layers: {string.Join(", ", defined)} (editor | call AddLayer(\"{name}\") adds it)";
+        }
 
         // Undo.AddComponent returns null (and logs) instead of throwing when Unity refuses: a second component of a type that
         // allows one per GameObject, a conflicting component (Rigidbody2D next to a Rigidbody) or a type that cannot be added.
@@ -149,17 +160,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         private static GameObject SaveAsPrefab(GameObject g, string path)
         {
             path = PrefabPath(path);
+            RqlEditorApi.EnsureFolder(System.IO.Path.GetDirectoryName(path)); // like CreateMaterial / CopyAsset / NewScene
             return PrefabUtility.SaveAsPrefabAssetAndConnect(g, path, InteractionMode.UserAction, out var ok) is GameObject asset && ok
                 ? asset : throw new ArgumentException($"could not save a prefab at '{path}'");
         }
 
-        // A new ".prefab" path in an existing folder (also the call validator). An existing prefab would be replaced with this
-        // GameObject: every instance of it would change.
+        // The call validator: a new path, and inside rql-mutate not the path an earlier target of the same call saves to (the
+        // second save would fail after the first one happened).
+        private static string? ValidateSaveAsPrefab(GameObject g, string path) => RqlEditorApi.Rejection(() =>
+        {
+            path = PrefabPath(path);
+            if (RqlUnity.Batch?.Claim(path, g) is { } earlier)
+                throw new ArgumentException($"'{path}' is also the path of {RqlUnity.Engine.RefOf(earlier)} in this call: give each GameObject its own prefab path");
+        });
+
+        // A new ".prefab" path under Assets/ (missing folders are created by the call). An existing prefab would be replaced
+        // with this GameObject: every instance of it would change.
         private static string PrefabPath(string path)
         {
             path = RqlEditorApi.NewAssetPath(path, ".prefab");
-            var folder = RqlEditorApi.Normalize(System.IO.Path.GetDirectoryName(path) ?? "");
-            if (!string.IsNullOrEmpty(folder) && !AssetDatabase.IsValidFolder(folder)) throw new ArgumentException($"folder '{folder}' does not exist (editor | call CreateFolder(\"{folder}\"))");
+            RqlEditorApi.EnsureFolder(System.IO.Path.GetDirectoryName(path), create: false);
             return path;
         }
 

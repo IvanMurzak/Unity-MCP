@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using UnityEngine;
 
@@ -63,6 +64,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             var ambiguous = M("objects | where name == \"Lamp\" | set transform.parent = unity.find(\"Player\")");
             Assert.IsFalse(ambiguous.Ok, Table(ambiguous));
             StringAssert.Contains("2 GameObjects are named 'Player'", Table(ambiguous));
+        }
+
+        // The ambiguity names usable arguments: a unique hierarchy path, else the ref (two roots share the path "Crate").
+        [Test]
+        public void AnAmbiguousFindListsTheCandidatesAsArguments()
+        {
+            var a = new GameObject("Crate");
+            var b = new GameObject("Crate");
+            new GameObject("Crate").transform.SetParent(new GameObject("Shelf").transform, false);
+            var r = Q("unity.find(\"Crate\") | select name");
+            AssertFails(r, "ambiguous", "2 GameObjects are named 'Crate'"); // the two roots match the path "Crate" itself
+            StringAssert.Contains($"ref(\"{RqlUnity.Engine.RefOf(a)}\") (Crate)", Table(r));
+            StringAssert.Contains($"ref(\"{RqlUnity.Engine.RefOf(b)}\") (Crate)", Table(r));
+
+            Object.DestroyImmediate(a);
+            Object.DestroyImmediate(b);
+            new GameObject("Lamp").transform.SetParent(GameObject.Find("Shelf").transform, false);
+            new GameObject("Lamp").transform.SetParent(new GameObject("Bin").transform, false);
+            var lamps = Q("unity.find(\"Lamp\") | select name");
+            AssertFails(lamps, "ambiguous", "unity.find(\"Shelf/Lamp\")");
+            StringAssert.Contains("unity.find(\"Bin/Lamp\")", Table(lamps));
+        }
+
+        [Test]
+        public void AMissingAssetPathIsAnErrorNotNull()
+        {
+            var renderer = GameObject.CreatePrimitive(PrimitiveType.Cube).GetComponent<MeshRenderer>();
+            var before = renderer.sharedMaterial;
+            Assert.IsNotNull(before);
+            AssertFails(Q("unity.asset(\"Assets/NoSuchFolder/Nope.mat\") | select name"), "not-found", "no asset at 'Assets/NoSuchFolder/Nope.mat'");
+            // As a value it fails the write instead of clearing the field.
+            var r = M("objects | get components | where $ is MeshRenderer | set sharedMaterial = unity.asset(\"Assets/NoSuchFolder/Nope.mat\")");
+            Assert.IsFalse(r.Ok, Table(r));
+            StringAssert.Contains("no asset at", Table(r));
+            Assert.AreSame(before, renderer.sharedMaterial);
         }
 
         [Test]

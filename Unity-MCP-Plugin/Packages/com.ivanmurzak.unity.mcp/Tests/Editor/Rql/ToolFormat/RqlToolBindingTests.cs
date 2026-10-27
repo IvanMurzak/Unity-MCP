@@ -116,6 +116,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
             StringAssert.Contains("Alpha:42", text);
         }
 
+        // A parameter expression that names nothing (e.g. the objects source used as a value) and a list each get a reason the
+        // agent can act on, not "Missing values are not supported".
+        [Test]
+        public void ScriptExecuteExplainsParametersItCannotPass()
+        {
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true; // the tool logs its error response
+            var (missing, missingText) = Call(Plugin, Tool_Script.ScriptExecuteToolId,
+                JsonSerializer.Serialize(new { csharpCode = "x", parameters = "{x: objects.first(name == \"Alpha\")}" }));
+            Assert.AreEqual(ResponseStatus.Error, missing.Status, missingText);
+            StringAssert.Contains("parameter 'x' has no value", missingText);
+            StringAssert.Contains("unity.find", missingText);
+            var (list, listText) = Call(Plugin, Tool_Script.ScriptExecuteToolId,
+                JsonSerializer.Serialize(new { csharpCode = "x", parameters = "{x: [1, 2]}" }));
+            Assert.AreEqual(ResponseStatus.Error, list.Status, listText);
+            StringAssert.Contains("lists are not supported", listText);
+        }
+
         [Test]
         public void ABadArgumentNamesTheParameterAndTheExpectedType()
         {

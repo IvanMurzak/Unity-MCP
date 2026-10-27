@@ -25,7 +25,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             AssertOk(Q("roots | recurse children | get components"));
             Assert.AreSame(shared, filter.sharedMesh, "a mesh instance was created by a read");
             Assert.AreEqual(shared.name, Cell(Q("objects | get components | where $ is MeshFilter | select sharedMesh.name")));
-            StringAssert.Contains("explicit-only", Schema("MeshFilter"));
+            StringAssert.IsMatch(@"\bmesh Mesh explicit-only", Schema("MeshFilter")); // the instancing getter, not just any member
         }
     }
 }

@@ -62,7 +62,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Own `using` lines, local classes and functions are allowed; `await` works. Usings for System, LINQ, UnityEngine, " +
             "UnityEditor and AIGD are already there (`Object` and `Random` mean UnityEngine's); an unknown type name is imported " +
             "automatically when exactly one namespace has it.\n" +
-            "- **Full code**: when `csharpCode` declares class `className` with a static method `methodName`, that method runs.\n" +
+            "- **Full code**: when `csharpCode` declares class `className` with a static method `methodName`, that method runs. " +
+            "Write its `using` lines (`using UnityEngine;`, `using System.Linq;` …): the default usings apply to snippets only.\n" +
             "- `isMethodBody=true` forces snippet mode.\n\n" +
             "Compile errors point at your own lines (`snippet.cs(2,5)`).\n\n" +
             "## Result and output\n\n" +
@@ -87,7 +88,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `AIGD.ComponentRef` — passes a `ComponentRef` POCO.\n" +
             "- `AIGD.ObjectRef` — passes a base `ObjectRef` POCO.")]
         [Description("Compiles and runs C# in the Unity Editor: plain statements with the last expression as the result " +
-            "(own usings, local classes, await allowed), or a declared class 'className' with static method 'methodName'.")]
+            "(own usings, local classes, await allowed), or a declared class 'className' with static method 'methodName' (that code writes its own using lines).")]
         public static async Task<SerializedMember?> Execute
         (
             [Description("C# code. Snippet: 'var go = GameObject.Find(\"Player\");\\ngo.transform.position'. " +

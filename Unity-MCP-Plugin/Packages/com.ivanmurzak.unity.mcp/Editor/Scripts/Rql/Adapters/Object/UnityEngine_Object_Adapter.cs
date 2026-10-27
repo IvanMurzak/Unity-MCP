@@ -54,12 +54,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             return AdapterOutcome.Failed;
         }
 
-        public override void ConfigureMembers(MemberTable members) =>
+        public override void ConfigureMembers(MemberTable members)
+        {
             members
                 // Include the private [SerializeField] fields first, so the [Obsolete] / [NonSerialized] rule hides them too.
                 .IncludeFields(f => f.IsPrivate && f.IsDefined(typeof(UnityEngine.SerializeField), false))
                 .HideWhere(m => m.Member != null && (m.Member.IsDefined(typeof(ObsoleteAttribute), true) || m.Member.IsDefined(typeof(NonSerializedAttribute), true)))
                 .Hide("hideFlags")
                 .Display("name");
+            // Read only when named (it asks the AssetDatabase): unity.assets("t:Material") | select name assetPath. A type's own
+            // assetPath member (AssetImporter, a script field) keeps its meaning.
+            if (!members.Contains("assetPath"))
+                members.Add("assetPath", typeof(string), o => AssetPathOf((Object)o), description: "the asset's project path (\"Assets/…/Red.mat\"); null for scene objects")
+                       .ExplicitOnly("assetPath");
+        }
+
+        private static string? AssetPathOf(Object o) =>
+            o != null && UnityEditor.AssetDatabase.GetAssetPath(o) is { Length: > 0 } path ? path : null;
     }
 }

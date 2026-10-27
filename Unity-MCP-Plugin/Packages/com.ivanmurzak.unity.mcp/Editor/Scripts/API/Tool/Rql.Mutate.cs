@@ -30,10 +30,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("RQL query ending with a set or call stage, e.g. objects | where name == \"Player\" | set active = false")]
             string query,
             [Description("true = preview the receipt without changing anything")]
-            bool dry_run = false
+            bool dry_run = false,
+            [Description("Raise the limit of 20 targets per call for an intended bulk change (at most 1000; 0 = the default 20)")]
+            int max_targets = 0
         )
         {
-            return Run(() => RqlUnity.Mutate(query, dry_run));
+            return Run(() => RqlUnity.Mutate(query, dry_run, max_targets > 0 ? max_targets : (int?)null));
         }
     }
 }
