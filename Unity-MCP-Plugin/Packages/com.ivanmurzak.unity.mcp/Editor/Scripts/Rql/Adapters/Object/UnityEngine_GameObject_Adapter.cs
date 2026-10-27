@@ -67,10 +67,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  ApplyRejection)
              .Method("RevertPrefabOverrides", g => PrefabUtility.RevertPrefabInstance(OutermostInstanceRoot(g), InteractionMode.UserAction),
                  "drop every override of this prefab instance (its outermost instance root): it matches its prefab again (undoable)",
-                 PrefabInstanceRejection);
+                 PrefabInstanceRejection)
+             .Add<List<string>>("missingReferences", g => MissingReferences(g),
+                 description: "references to objects that no longer exist (a deleted asset, a destroyed object) as \"Component.serializedPath\" " +
+                              "(e.g. MeshRenderer.m_Materials.Array.data[0]), \"missing script\" for a component whose script is gone and \"missing prefab\" " +
+                              "for an instance of a deleted prefab; [] = none (a reference left empty is not missing)");
             // staticFlags is built on read, so element writes are assigned back.
             m.Untyped.Reference("transform").Hide("gameObject").CopyOnRead("staticFlags")
-                .ExplicitOnly("path", "layerName", "prefabSource", "prefabOverrides");
+                .ExplicitOnly("path", "layerName", "prefabSource", "prefabOverrides", "missingReferences");
         }
 
         // Prefab Mode contents are not scene instances: Apply / Revert there would write into, or wipe, a variant's base.
@@ -118,6 +122,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 if (removed.assetGameObject != null) result.Add($"removed GameObject {Label(removed.assetGameObject)}");
             return result;
         }
+
+        // A missing reference reads as null like an empty one; the serialized reference still holds the lost object's id.
+        private static List<string> MissingReferences(GameObject g)
+        {
+            var result = new List<string>();
+            if (IsSceneInstance(g) && PrefabUtility.IsPrefabAssetMissing(g)) result.Add("missing prefab");
+            foreach (var c in g.GetComponents<Component>())
+            {
+                if (c == null) { result.Add("missing script"); continue; }
+                using var so = new SerializedObject(c);
+                var p = so.GetIterator();
+                while (p.Next(MayHoldReferences(p)))
+                    // The id first: reading objectReferenceValue may load the referenced asset.
+                    if (p.propertyType == SerializedPropertyType.ObjectReference && !PrefabLinks.Contains(p.propertyPath)
+                        && HoldsAnId(p) && p.objectReferenceValue == null)
+                        result.Add(c.GetType().Name + "." + p.propertyPath);
+            }
+            return result;
+        }
+
+        // The prefab link of every object of an instance: a deleted prefab is reported once, as "missing prefab".
+        private static readonly HashSet<string> PrefabLinks = new HashSet<string> { "m_CorrespondingSourceObject", "m_PrefabInstance", "m_PrefabAsset" };
+
+        // Element types that never hold a reference: large arrays of them (tiles, positions, curves) are not walked.
+        private static readonly HashSet<string> PlainElements = new HashSet<string>
+            { "int", "unsigned int", "float", "double", "bool", "char", "UInt8", "SInt8", "UInt16", "SInt16", "SInt64", "UInt64",
+              "Vector2", "Vector3", "Vector4", "Vector2f", "Vector3f", "Vector4f", "Quaternionf", "ColorRGBA", "Color", "Keyframe", "string" };
+
+        private static bool MayHoldReferences(SerializedProperty p) =>
+            (p.propertyType == SerializedPropertyType.Generic || p.propertyType == SerializedPropertyType.ManagedReference)
+            && !(p.isArray && PlainElements.Contains(p.arrayElementType));
+
+#if UNITY_6000_5_OR_NEWER
+        private static bool HoldsAnId(SerializedProperty p) => !p.objectReferenceEntityIdValue.Equals(default(EntityId));
+#else
+        private static bool HoldsAnId(SerializedProperty p) => p.objectReferenceInstanceIDValue != 0;
+#endif
 
         // "Child/Transform" for a component, the GameObject's path for a GameObject (from the prefab or instance root).
         private static string Label(Object target) => target switch

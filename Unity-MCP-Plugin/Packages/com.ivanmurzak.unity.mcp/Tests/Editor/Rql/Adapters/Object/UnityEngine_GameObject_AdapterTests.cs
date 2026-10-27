@@ -218,5 +218,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             AssertOk(M("objects | where name == \"PairA\" | call AddComponent(\"BoxCollider\")", dryRun: true));
             Assert.IsNull(free.GetComponent<BoxCollider>());
         }
+
+        // A reference to a deleted asset reads as null like an empty one; missingReferences tells them apart.
+        [Test]
+        public void MissingReferencesListsDeletedAssetsNotEmptySlots()
+        {
+            const string Path = "Assets/RqlMissingRefProbe.mat";
+            var lost = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            lost.name = "Lost";
+            var empty = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            empty.name = "Empty";
+            empty.GetComponent<MeshRenderer>().sharedMaterial = null;
+            UnityEditor.AssetDatabase.DeleteAsset(Path); // a leftover of an aborted run
+            try
+            {
+                UnityEditor.AssetDatabase.CreateAsset(new Material(Shader.Find("Hidden/Internal-Colored")), Path);
+                lost.GetComponent<MeshRenderer>().sharedMaterial = UnityEditor.AssetDatabase.LoadAssetAtPath<Material>(Path);
+                Assert.AreEqual("[]", Cell(Q("objects | where name == \"Lost\" | select missingReferences")));
+                UnityEditor.AssetDatabase.DeleteAsset(Path);
+                Assert.AreEqual("[\"MeshRenderer.m_Materials.Array.data[0]\"]", Cell(Q("objects | where name == \"Lost\" | select missingReferences")));
+                Assert.AreEqual("[]", Cell(Q("objects | where name == \"Empty\" | select missingReferences")));
+                Assert.AreEqual(1, Count("objects | where missingReferences.count() > 0 | count"));
+                Assert.AreEqual("Lost", Cell(Q("objects | where missingReferences.count() > 0 | select name")));
+            }
+            finally { UnityEditor.AssetDatabase.DeleteAsset(Path); }
+        }
+
+        [Test]
+        public void MissingReferencesListsDestroyedSceneObjects()
+        {
+            var target = new GameObject("Target");
+            var joint = new GameObject("Holder", typeof(Rigidbody), typeof(FixedJoint)).GetComponent<FixedJoint>();
+            joint.connectedBody = target.AddComponent<Rigidbody>();
+            Assert.AreEqual("[]", Cell(Q("objects | where name == \"Holder\" | select missingReferences")));
+            Object.DestroyImmediate(target);
+            StringAssert.Contains("FixedJoint.m_ConnectedBody", Cell(Q("objects | where name == \"Holder\" | select missingReferences")));
+        }
     }
 }

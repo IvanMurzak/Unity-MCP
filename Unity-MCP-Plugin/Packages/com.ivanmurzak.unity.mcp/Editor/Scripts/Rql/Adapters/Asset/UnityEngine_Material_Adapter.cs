@@ -13,16 +13,68 @@ using System;
 using System.Collections.Generic;
 using System.Globalization;
 using Rql.Execution;
+using UnityEditor;
 using UnityEngine;
 using UnityEngine.Rendering;
+using Object = UnityEngine.Object;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 {
-    /// <summary>Material: safe members plus every shader property as a typed, validated map: <c>properties["_Color"]</c>.</summary>
+    /// <summary>
+    /// Material: safe members plus every shader property as a typed, validated map: <c>properties["_Color"]</c>; color and
+    /// mainTexture for the shader's main color / texture. Material values also take a built-in material's name:
+    /// <c>set sharedMaterial = "Default-Material"</c> (the built-in materials are not project assets, so no path reaches them).
+    /// </summary>
     public sealed class UnityEngine_Material_Adapter : RqlTypeAdapter<Material>
     {
-        public override string Description => "Material: shader properties via properties[\"_Name\"] (colors, vectors, floats, textures, ints); " +
-                                               "a Material Variant: set parent = unity.asset(\"….mat\")";
+        public override string Description => "Material: shader properties via properties[\"_Name\"] (colors, vectors, floats, textures, ints), " +
+                                               "the main color / texture as color / mainTexture; a Material Variant: set parent = unity.asset(\"….mat\"); " +
+                                               $"write as a ref, an asset path, or a built-in material's name ({BuiltinNames})";
+
+        /// <summary>The material a new primitive gets (the render pipeline's default), by this name.</summary>
+        internal const string DefaultMaterialName = "Default-Material";
+
+        // Built-in extra resources that exist in every supported Editor (unity_builtin_extra). Default-Material is resolved
+        // through a primitive instead, so that it is the active render pipeline's default material.
+        internal static readonly string[] Builtins =
+        {
+            DefaultMaterialName, "Default-Line", "Default-Particle", "Default-ParticleSystem", "Default-Skybox",
+            "Default-Terrain-Standard", "Default-Terrain-Diffuse", "Sprites-Default", "Sprites-Mask",
+        };
+        private static readonly string BuiltinNames = string.Join(", ", Builtins);
+
+        private static Material? _defaultMaterial;
+        private static Object? _defaultMaterialPipeline;
+
+        public override AdapterOutcome TryCoerce(object? value, Type target, RqlKernel kernel, out object? result, out string? reason)
+        {
+            result = null;
+            reason = null;
+            if (!(value is string text) || UnityEngine_Object_Adapter.TryAssetPath(text, out _))
+                return AdapterOutcome.NotHandled; // refs and asset paths: the Object adapter
+            var name = Array.Find(Builtins, n => string.Equals(n, text.Trim(), StringComparison.OrdinalIgnoreCase));
+            result = name == null ? null : BuiltinMaterial(name);
+            if (result != null) return AdapterOutcome.Ok;
+            reason = name != null
+                ? $"the built-in material '{name}' is not available in this Editor"
+                : $"'{text}' is neither an asset path nor a built-in material ({BuiltinNames})";
+            return AdapterOutcome.Failed;
+        }
+
+        /// <summary>A built-in material by its name; <see cref="DefaultMaterialName"/> is the one GameObject > 3D Object gives.</summary>
+        internal static Material? BuiltinMaterial(string name)
+        {
+            if (name != DefaultMaterialName) return AssetDatabase.GetBuiltinExtraResource<Material>(name + ".mat");
+            var pipeline = GraphicsSettings.currentRenderPipeline;
+            if (_defaultMaterial != null && ReferenceEquals(_defaultMaterialPipeline, pipeline)) return _defaultMaterial;
+            // Read without creating anything: coercion also runs for dry runs, and a probe primitive would dirty the scene.
+#pragma warning disable CS0618 // defaultMaterial is what CreatePrimitive assigns under a render pipeline
+            _defaultMaterial = pipeline != null ? pipeline.defaultMaterial : null;
+#pragma warning restore CS0618
+            if (_defaultMaterial == null) _defaultMaterial = AssetDatabase.GetBuiltinExtraResource<Material>(DefaultMaterialName + ".mat");
+            _defaultMaterialPipeline = pipeline;
+            return _defaultMaterial;
+        }
 
         protected override void Members(MemberTable<Material> m)
         {
@@ -32,8 +84,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 "shader properties by name", has: (o, k) => ((Material)o).HasProperty(k));
             m.Add<Material?>("parent", o => o.parent, (o, v) => o.parent = v, (o, v) => ValidateParent(o, v),
                     "the material this one is a Material Variant of (it takes the parent's shader; properties set on it become overrides); null = a plain material")
-             .Add<bool>("isVariant", o => o.isVariant, description: "true when this material is a Material Variant (has a parent)");
+             .Add<bool>("isVariant", o => o.isVariant, description: "true when this material is a Material Variant (has a parent)")
+             .Add<Color?>("color", o => MainColor(o) is { } p ? o.GetColor(p) : (Color?)null,
+                 (o, v) => o.SetColor(MainColor(o) ?? throw new InvalidOperationException(NoMain(o, "color")), v!.Value),
+                 (o, v) => v == null ? "color cannot be null"
+                     : MainColor(o) == null ? NoMain(o, "color") : null,
+                 "the shader's main color ([MainColor], else _Color; _BaseColor in URP / HDRP); null when the shader has none")
+             .Add<Texture?>("mainTexture", o => MainTexture(o) is { } p ? o.GetTexture(p) : null,
+                 (o, v) => o.SetTexture(MainTexture(o) ?? throw new InvalidOperationException(NoMain(o, "texture")), v),
+                 (o, v) => MainTexture(o) == null ? NoMain(o, "texture") : null,
+                 "the shader's main texture ([MainTexture], else _MainTex; _BaseMap in URP / HDRP); null when the shader has none");
         }
+
+        private static string? MainColor(Material m) => MainProperty(m, ShaderPropertyFlags.MainColor, "_Color", ShaderPropertyType.Color);
+        private static string? MainTexture(Material m) => MainProperty(m, ShaderPropertyFlags.MainTexture, "_MainTex", ShaderPropertyType.Texture);
+
+        // The property Material.color / mainTexture use, found without Unity's "Material doesn't have a color property" error log.
+        internal static string? MainProperty(Material m, ShaderPropertyFlags flag, string fallback, ShaderPropertyType kind)
+        {
+            var shader = m.shader;
+            if (shader == null) return null;
+            int n = shader.GetPropertyCount();
+            for (int i = 0; i < n; i++)
+                if ((shader.GetPropertyFlags(i) & flag) != 0) return shader.GetPropertyName(i);
+            int at = shader.FindPropertyIndex(fallback);
+            return at >= 0 && shader.GetPropertyType(at) == kind ? fallback : null;
+        }
+
+        private static string NoMain(Material m, string what) =>
+            $"shader '{(m.shader != null ? m.shader.name : "none")}' has no main {what}: set its property by name, properties[\"_Name\"]";
 
         // Unity ignores a parent that would make a cycle (it logs an error and keeps the old one): refused before any write.
         internal static string? ValidateParent(Material material, Material? parent)
