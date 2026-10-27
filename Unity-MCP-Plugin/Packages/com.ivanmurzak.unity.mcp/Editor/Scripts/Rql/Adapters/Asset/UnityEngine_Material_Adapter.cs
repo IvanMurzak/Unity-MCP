@@ -82,16 +82,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             m.Add<Material?>("parent", o => o.parent, (o, v) => o.parent = v, (o, v) => ValidateParent(o, v),
                     "the material this one is a Material Variant of (it takes the parent's shader; properties set on it become overrides); null = a plain material")
              .Add<bool>("isVariant", o => o.isVariant, description: "true when this material is a Material Variant (has a parent)")
-             .Add<Color?>("color", o => MainProperty(o, ShaderPropertyFlags.MainColor, "_Color", ShaderPropertyType.Color) is { } p ? o.GetColor(p) : (Color?)null,
-                 (o, v) => o.SetColor(MainProperty(o, ShaderPropertyFlags.MainColor, "_Color", ShaderPropertyType.Color)!, v!.Value),
+             .Add<Color?>("color", o => MainColor(o) is { } p ? o.GetColor(p) : (Color?)null,
+                 (o, v) => o.SetColor(MainColor(o)!, v!.Value),
                  (o, v) => v == null ? "color cannot be null"
-                     : MainProperty(o, ShaderPropertyFlags.MainColor, "_Color", ShaderPropertyType.Color) == null ? NoMain(o, "color") : null,
+                     : MainColor(o) == null ? NoMain(o, "color") : null,
                  "the shader's main color ([MainColor], else _Color; _BaseColor in URP / HDRP); null when the shader has none")
-             .Add<Texture?>("mainTexture", o => MainProperty(o, ShaderPropertyFlags.MainTexture, "_MainTex", ShaderPropertyType.Texture) is { } p ? o.GetTexture(p) : null,
-                 (o, v) => o.SetTexture(MainProperty(o, ShaderPropertyFlags.MainTexture, "_MainTex", ShaderPropertyType.Texture)!, v),
-                 (o, v) => MainProperty(o, ShaderPropertyFlags.MainTexture, "_MainTex", ShaderPropertyType.Texture) == null ? NoMain(o, "texture") : null,
+             .Add<Texture?>("mainTexture", o => MainTexture(o) is { } p ? o.GetTexture(p) : null,
+                 (o, v) => o.SetTexture(MainTexture(o)!, v),
+                 (o, v) => MainTexture(o) == null ? NoMain(o, "texture") : null,
                  "the shader's main texture ([MainTexture], else _MainTex; _BaseMap in URP / HDRP); null when the shader has none");
         }
+
+        private static string? MainColor(Material m) => MainProperty(m, ShaderPropertyFlags.MainColor, "_Color", ShaderPropertyType.Color);
+        private static string? MainTexture(Material m) => MainProperty(m, ShaderPropertyFlags.MainTexture, "_MainTex", ShaderPropertyType.Texture);
 
         // The property Material.color / mainTexture use, found without Unity's "Material doesn't have a color property" error log.
         internal static string? MainProperty(Material m, ShaderPropertyFlags flag, string fallback, ShaderPropertyType kind)

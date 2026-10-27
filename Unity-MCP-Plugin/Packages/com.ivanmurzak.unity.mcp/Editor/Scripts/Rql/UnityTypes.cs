@@ -59,20 +59,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                     {
                         if (!t.IsVisible || t.IsGenericTypeDefinition || t.IsEnum || t.IsInterface || !t.IsSerializable
                             || typeof(UnityEngine.Object).IsAssignableFrom(t) || typeof(Delegate).IsAssignableFrom(t)) continue;
-                        foreach (var key in new[] { t.Name, t.FullName })
-                        {
-                            if (key == null) continue;
-                            if (!byName.TryGetValue(key, out var list)) byName[key] = list = new List<Type>(1);
-                            if (!list.Contains(t)) list.Add(t);
-                        }
+                        AddByName(byName, t);
                     }
                 }
-                _serializable = byName.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray(), StringComparer.OrdinalIgnoreCase);
+                _serializable = Freeze(byName);
             }
             return _serializable.TryGetValue(name, out var hits)
                 ? hits.OrderBy(t => t.Name == name || t.FullName == name ? 0 : 1).ToList()
                 : (IReadOnlyList<Type>)Array.Empty<Type>();
         }
+
+        private static void AddByName(Dictionary<string, List<Type>> byName, Type t)
+        {
+            foreach (var key in new[] { t.Name, t.FullName })
+            {
+                if (key == null) continue;
+                if (!byName.TryGetValue(key, out var list)) byName[key] = list = new List<Type>(1);
+                if (!list.Contains(t)) list.Add(t);
+            }
+        }
+
+        private static Dictionary<string, Type[]> Freeze(Dictionary<string, List<Type>> byName) =>
+            byName.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray(), StringComparer.OrdinalIgnoreCase);
 
         private static bool IsFrameworkAssembly(string? name) =>
             name == null || name == "mscorlib" || name == "netstandard" || name.StartsWith("System", StringComparison.Ordinal)
@@ -88,13 +96,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             void Add(Type t)
             {
                 // IsVisible, not IsPublic: nested public types (ParticleSystem.MinMaxCurve, ParticleSystem.MainModule …) count too.
-                if (!t.IsVisible || t.IsGenericTypeDefinition) return;
-                foreach (var key in new[] { t.Name, t.FullName })
-                {
-                    if (key == null) continue;
-                    if (!byName.TryGetValue(key, out var list)) byName[key] = list = new List<Type>(1);
-                    if (!list.Contains(t)) list.Add(t);
-                }
+                if (t.IsVisible && !t.IsGenericTypeDefinition) AddByName(byName, t);
             }
             foreach (var t in TypeCache.GetTypesDerivedFrom<UnityEngine.Object>()) Add(t);
             // The RQL modules' own item types (ActionMapView, SplineView, LightingEnvironment …): the schema names them as member
@@ -106,7 +108,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 foreach (var t in TypeModel.LoadableTypes(asm))
                     if (t.IsEnum || (t.IsValueType && IsUnityEngine(t)) || (isModule && IsModuleItemType(t))) Add(t);
             }
-            return _index = byName.ToDictionary(kv => kv.Key, kv => kv.Value.ToArray(), StringComparer.OrdinalIgnoreCase);
+            return _index = Freeze(byName);
         }
 
         // Member names declared by UnityEngine.Object and module item types (once per domain), and the engine whose adapters'
