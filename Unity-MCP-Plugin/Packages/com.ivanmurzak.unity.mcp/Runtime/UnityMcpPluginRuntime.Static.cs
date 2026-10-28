@@ -118,7 +118,6 @@ namespace com.IvanMurzak.Unity.MCP
 
             var mcpBuilder = new McpPluginBuilder(version, loggerProvider);
             configure?.Invoke(mcpBuilder);
-            DeclareRuntimeRole(mcpBuilder);
 
             return new UnityMcpPluginBuilder(mcpBuilder, runtimeInstance, loggerProvider);
         }

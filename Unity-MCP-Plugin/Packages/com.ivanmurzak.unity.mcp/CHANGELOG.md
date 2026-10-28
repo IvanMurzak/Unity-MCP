@@ -10,7 +10,8 @@
   writes `"visible"`; a file saved with `"enabled"` still loads. The `tool-set-visibility` tool (input
   `{ Name, Visible }`) replaces `tool-set-enabled-state`, which keeps working as a deprecated alias until the next
   major release. `unity-mcp-cli configure` reads both keys and writes `visible`; `--list` prints `[visible]` /
-  `[hidden]`.
+  `[hidden]`. Use a `unity-mcp-cli` of this release with this plugin: an older CLI does not know `"visible"` and
+  drops those entries when it edits the file, and an older plugin ignores entries a new CLI wrote.
 - **A player connects as a runtime.** `UnityMcpPluginRuntime` declares McpPlugin's `ClientRole.Runtime` (sent at
   connect), so GameDev-MCP-Server keeps a running player beside the Editor. The `" (runtime)"` handshake suffix is
   gone. McpPlugin 8.14.0-dev.e8985d5 (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_23`).

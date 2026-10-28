@@ -127,6 +127,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (typeDropdown != null)
             {
                 typeDropdown.choices = Enum.GetNames(typeof(McpFilterType)).ToList();
+                typeDropdown.tooltip = "Visible: listed to MCP clients (tools/list). Hidden: left out of the list to save context; a hidden tool still runs when called by name.";
                 typeDropdown.index = (int)McpFilterType.All;
                 typeDropdown.RegisterValueChangedCallback(evt => PopulateList());
             }
