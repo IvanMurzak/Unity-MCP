@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using Rql;
 using UnityEditor;
 using UnityEngine;
@@ -25,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     /// ProjectSettings/*.asset object: a write is recorded for Undo, dirtied and saved with the assets, like an edit in the
     /// Project Settings window. Pages of optional engine modules (physics) are added by their RQL module's adapter.
     /// </summary>
-    [RqlDescription("Project Settings pages (time, quality, player; physics with the Physics module): writable, undoable, saved to ProjectSettings/")]
+    [RqlDescription("Project Settings pages (time, quality, player, build; physics with the Physics module): writable, undoable, saved to ProjectSettings/")]
     public sealed class RqlProjectSettings
     {
         public static readonly RqlProjectSettings Instance = new RqlProjectSettings();
@@ -40,6 +41,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         [RqlDescription("Project Settings > Player")]
         public RqlPlayerSettings player => RqlPlayerSettings.Instance;
+
+        [RqlDescription("Build Settings: the scenes in the build")]
+        public RqlBuildSettings build => RqlBuildSettings.Instance;
 
         public override string ToString() => "project settings";
 
@@ -251,5 +255,47 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public override string ToString() => $"player ({productName})";
 
         IReadOnlyList<Object> IRqlUndoOwners.UndoOwners => RqlProjectSettings.Asset("ProjectSettings");
+    }
+
+    [RqlDescription("Build Settings: scenes (the scenes in the build; SceneManager.LoadScene in Play Mode loads only these)")]
+    public sealed class RqlBuildSettings : IRqlUndoOwners
+    {
+        internal static readonly RqlBuildSettings Instance = new RqlBuildSettings();
+
+        private RqlBuildSettings() { }
+
+        [RqlDescription("Scenes In Build: asset paths of the enabled scenes in build-index order; assign the whole list " +
+            "(scene assets, each once; listing a disabled scene enables it; the other disabled entries stay, after the enabled ones)")]
+        public string[] scenes
+        {
+            get => EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
+            set
+            {
+                var current = EditorBuildSettings.scenes;
+                var listed = new HashSet<string>(current.Select(s => s.path));
+                var paths = new List<string>();
+                var seen = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+                foreach (var raw in value ?? Array.Empty<string>())
+                {
+                    // An entry already in the list passes as it is (a deleted scene stays readable and writable back, e.g. on
+                    // rollback); a new one must be a scene asset, stored under its canonical project path.
+                    var path = raw;
+                    if (!listed.Contains(path))
+                    {
+                        Require(raw, !string.IsNullOrEmpty(raw) && AssetDatabase.GetMainAssetTypeAtPath(raw) == typeof(SceneAsset),
+                            "the path of an existing scene asset (\"Assets/…/Level.unity\")");
+                        path = AssetDatabase.GUIDToAssetPath(AssetDatabase.AssetPathToGUID(raw));
+                    }
+                    Require(raw, seen.Add(path), "each scene once");
+                    paths.Add(path);
+                }
+                var disabled = current.Where(s => !s.enabled && !seen.Contains(s.path));
+                EditorBuildSettings.scenes = paths.Select(p => new EditorBuildSettingsScene(p, true)).Concat(disabled).ToArray();
+            }
+        }
+
+        public override string ToString() => $"build ({scenes.Length} scene(s))";
+
+        IReadOnlyList<Object> IRqlUndoOwners.UndoOwners => RqlProjectSettings.Asset("EditorBuildSettings");
     }
 }

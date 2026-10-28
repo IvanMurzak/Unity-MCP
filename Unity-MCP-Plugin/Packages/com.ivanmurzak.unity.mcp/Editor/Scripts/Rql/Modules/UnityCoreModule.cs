@@ -38,7 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
                .AddSource("settings", () => RqlProjectSettings.Instance,
                    "Project Settings pages, writable and undoable, saved to ProjectSettings/: physics (gravity, defaultContactOffset, solver " +
                    "iterations …), time (fixedDeltaTime, timeScale …), quality (levels, currentLevel, vSyncCount, shadows …), player " +
-                   "(productName, companyName, bundleVersion, colorSpace …), e.g. settings | select physics.gravity time.fixedDeltaTime")
+                   "(productName, companyName, bundleVersion, colorSpace …), build (scenes in the build), e.g. settings | select physics.gravity time.fixedDeltaTime")
                .AddSource("prefab", RqlEditorApi.OpenPrefabRoot, "root GameObject of the prefab open in prefab editing mode (none otherwise)")
                .AddSource("console", RqlEditorApi.ConsoleEntries, $"captured Editor log entries, oldest first (last {RqlEditorApi.MaxLogEntries}): logType message timestamp stackTrace sequence")
                .AddSource("shaders", RqlEditorApi.Shaders, "every shader the Editor knows (built-in and project): name supported hasErrors")
