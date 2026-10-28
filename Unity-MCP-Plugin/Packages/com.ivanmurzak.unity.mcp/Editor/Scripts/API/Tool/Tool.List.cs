@@ -48,7 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [AiSkillDescription("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
+        [AiSkillDescription("List all Unity-MCP tools registered in the connected Unity Editor instance, hidden ones included (each with `Visible`). " +
             "Optional regex filter matches against tool name, description, and argument names/descriptions. " +
             "Use the `includeDescription` / `includeInputs` toggles to control the response size.")]
         [AiSkillBody("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
@@ -60,8 +60,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `includeInputs` (default `None`) — one of `None`, `Inputs` (names only), `InputsWithDescription` (names + descriptions).\n\n" +
             "## Behavior\n\n" +
             "Iterates `UnityMcpPluginEditor.Instance.Tools.GetAllTools()`, evaluates the filter (if any), and projects " +
-            "each surviving tool into a `ToolInfoData` honoring the verbosity toggles.")]
-        [Description("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
+            "each surviving tool into a `ToolInfoData` honoring the verbosity toggles. `Visible` is false for a hidden tool: " +
+            "MCP clients do not see it in `tools/list`, but it still runs when called by name.")]
+        [Description("List all Unity-MCP tools registered in the connected Unity Editor instance, hidden ones included " +
+            "(Visible false: not in tools/list, still runs when called by name). " +
             "Optionally filter by regex across tool names, descriptions, and arguments.")]
         public ToolInfoData[] List
         (
@@ -111,7 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                             continue;
                     }
 
-                    var info = new ToolInfoData { Name = tool.Name };
+                    var info = new ToolInfoData { Name = tool.Name, Visible = toolManager.IsToolVisible(tool.Name) };
 
                     if (descriptionRequested)
                         info.Description = tool.Description;
