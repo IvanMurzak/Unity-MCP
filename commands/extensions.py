@@ -60,6 +60,10 @@ def validate(root=ROOT):
     for row in rows:
         package = root / row['package']
         for path in package.rglob('*.asmdef'):
+            # Unity warns on every compilation about an assembly definition without scripts (in every consumer project for
+            # shipped assemblies; test assemblies compile only where the package is testable).
+            if 'Tests' not in path.relative_to(package).parts and not any(path.parent.rglob('*.cs')):
+                raise ValueError(f'{path}: assembly definition has no scripts (add one, e.g. AssemblyInfo.cs)')
             name = read(path)['name']
             if name in owners:
                 raise ValueError(f'Duplicate assembly {name}')

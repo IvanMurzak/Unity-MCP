@@ -52,6 +52,13 @@ class PackageBoundaryTests(unittest.TestCase):
         extensions.write(package, metadata)
         self.assertEqual(2, len(extensions.validate(self.root)))
 
+    def test_assembly_definition_without_scripts_fails(self):
+        runtime = self.root / self.rows[0]['package'] / 'Runtime'
+        for script in runtime.rglob('*.cs'):
+            script.unlink()
+        with self.assertRaisesRegex(ValueError, 'assembly definition has no scripts'):
+            extensions.validate(self.root)
+
     def test_original_test_deletion_or_assertion_changes_fail(self):
         test = next((self.root / self.rows[0]['package'] / 'Tests').rglob('*.cs'))
         original = test.read_bytes()
