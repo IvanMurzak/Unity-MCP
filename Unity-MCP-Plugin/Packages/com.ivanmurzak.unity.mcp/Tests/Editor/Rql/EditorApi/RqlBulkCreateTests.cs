@@ -39,9 +39,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsTrue(cubes.All(c => c.GetComponent<MeshFilter>() != null));
             Assert.AreEqual(new Vector3(6, 0, 4), cubes.Single(c => c.name == "Cube_13").transform.localPosition);
 
-            // Every receipt row carries the created object's $ref, not the editor's.
-            var refs = Table(r);
-            foreach (var cube in cubes) StringAssert.Contains("\n" + RqlUnity.Engine.RefOf(cube) + "|", refs);
+            // Every receipt row carries the created object's reference, not the editor's. The compact receipt prints the shared
+            // method once and drops the $ref column, which equals each row's result.
+            var receipt = Table(r);
+            StringAssert.Contains("\nmethod: ", receipt);
+            foreach (var cube in cubes) StringAssert.Contains("\n" + RqlUnity.Engine.RefOf(cube) + "(" + cube.name + ")", receipt);
 
             Undo.PerformUndo();
             Assert.IsFalse(Roots().Any(g => g.name.StartsWith("Cube_")), "one Undo step removes all 30");
@@ -105,15 +107,73 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
                 "invalid-value", "no prefab at");
         }
 
-        // An object literal never becomes a Unity object: RQL would construct the parameter's type, and new GameObject() puts a
-        // stray object in the scene.
+        // An object literal never becomes a Unity object: UnityEngine.Object has a liveness adapter, so RQL treats it as an engine
+        // object and no overload check constructs one (new GameObject() would leave a stray object in the scene).
         [Test]
         public void AnObjectLiteralIsNotAGameObject()
         {
-            AssertFails(M("editor | call CreateGameObject(\"Child\", {}, \"Cube\")"), "coercion-failed", "an object literal cannot become a GameObject");
-            // A typo inside the placement literal is reported through the last overload tried: the hint names the members.
-            AssertFails(M("editor | call CreateGameObject(\"Typo\", {primtive: \"Cube\"})"), "coercion-failed", "takes only primitive, parent, position");
+            AssertFails(M("editor | call CreateGameObject(\"Child\", {}, \"Cube\")"), "coercion-failed",
+                "is an engine object and cannot be built from an object literal");
+            // A typo inside the placement literal is reported against the placement overload.
+            AssertFails(M("editor | call CreateGameObject(\"Typo\", {primtive: \"Cube\"})"), "coercion-failed", "no member 'primtive'");
+            // Assets too (a Material is a UnityEngine.Object), as the plugin's own refusal did before.
+            var holder = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            AssertFails(M("objects | get components | where $ is MeshRenderer | set sharedMaterial = {}"), "coercion-failed", "engine object");
+            Object.DestroyImmediate(holder);
             Assert.AreEqual(0, Roots().Length, string.Join(", ", Roots().Select(g => g.name)));
+        }
+
+        [Test]
+        public void DryRunsThroughOverloadsLeaveTheSceneUnchanged()
+        {
+            foreach (var rql in new[]
+                     {
+                         "editor | call CreateGameObject(\"Child\", {}, \"Cube\")",
+                         "editor | call CreateGameObject(\"Typo\", {primtive: \"Cube\"})",
+                         "editor | call CreateGameObject(\"Dry\", {primitive: \"Cube\", position: [1, 2, 3]})",
+                         "editor | call CreateGameObject({name: \"DryNamed\", primitive: \"Sphere\"})",
+                     })
+                M(rql, dryRun: true);
+            Assert.AreEqual(0, Roots().Length, string.Join(", ", Roots().Select(g => g.name)));
+        }
+
+        [Test]
+        public void ArgumentsByName()
+        {
+            var parent = new GameObject("Shelf");
+            AssertOk(M("editor | call CreateGameObject({scale: [2, 2, 2], name: \"Crate\", primitive: \"Cube\", " +
+                       $"parent: ref(\"{RqlUnity.Engine.RefOf(parent)}\"), position: [1, 0, 2]}})"));
+            var crate = parent.transform.Find("Crate");
+            Assert.IsNotNull(crate);
+            Assert.IsNotNull(crate.GetComponent<MeshFilter>());
+            Assert.AreEqual(new Vector3(1, 0, 2), crate.localPosition);
+            Assert.AreEqual(new Vector3(2, 2, 2), crate.localScale);
+            Assert.AreEqual(Vector3.zero, crate.localEulerAngles, "a parameter left out takes its default");
+
+            // Bulk create by name: every item is checked before the first call, and it undoes as one step.
+            Undo.ClearAll();
+            AssertFails(M("range(0, 3) | call editor.CreateGameObject({name: \"N\" + $, primitive: ($ == 2 ? \"Pyramid\" : \"Cube\")})"),
+                "invalid-value", "unknown primitive 'Pyramid'");
+            Assert.IsFalse(Roots().Any(g => g.name.StartsWith("N")), "nothing was created");
+            AssertOk(M("range(0, 3) | call editor.CreateGameObject({name: \"N\" + $, position: [$ * 2, 0, 0]})"));
+            Assert.AreEqual(new Vector3(4, 0, 0), Roots().Single(g => g.name == "N2").transform.localPosition);
+            Undo.PerformUndo();
+            Assert.IsFalse(Roots().Any(g => g.name.StartsWith("N")), "one Undo step removes all three");
+
+            AssertFails(M("editor | call CreateGameObject({name: \"X\", sise: [1, 1, 1]})"), "coercion-failed", "no parameter 'sise'");
+            AssertFails(M($"editor | call InstantiatePrefab({{path: \"{Folder}/Missing.prefab\"}})"), "invalid-value", "no prefab at");
+        }
+
+        [Test]
+        public void ABulkReceiptIsCompact()
+        {
+            var r = RqlUnity.Mutate("range(0, 300) | call editor.CreateGameObject({name: \"C\" + $})", maxTargets: 300);
+            AssertOk(r);
+            Assert.AreEqual(300, Roots().Length);
+            var receipt = Table(r);
+            StringAssert.Contains("\nmethod: ", receipt);
+            StringAssert.Contains("250 more row(s) not shown", receipt);
+            Assert.Less(receipt.Length, 4000, receipt);
         }
 
         [Test]
