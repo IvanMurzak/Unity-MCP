@@ -45,9 +45,10 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             string entryType, entryMethod;
             SnippetWriter.Output? snippet = null;
 
+            var importable = true; // auto-import can add usings to the agent's code (spec §3.3)
             if (request.EntryType != null)
             {
-                trees.Add(Parse(request.Code, SnippetFile));
+                trees.Add(FullSource(request.Code, request.Usings, out importable));
                 entryType = request.EntryType;
                 entryMethod = request.EntryMethod ?? "Main";
             }
@@ -59,6 +60,8 @@ namespace com.IvanMurzak.CodeExec.Roslyn
                 entryMethod = SnippetWriter.EntryMethod;
             }
             trees.AddRange(request.Includes.Select(include => Parse(include.Text, include.Path)));
+            if (request.Guards)
+                trees.Add(Parse(ExecutionGuard.Source, ExecutionGuard.FileName));
 
             var compilation = CSharpCompilation.Create(
                 request.AssemblyName,
@@ -88,8 +91,23 @@ namespace com.IvanMurzak.CodeExec.Roslyn
                 }
             }
 
-            // Auto-import can only add usings to the generated snippet: full-source code and includes are compiled verbatim.
-            var result = Emit(compilation, snippet != null ? trees[0] : null, request.Usings);
+            if (request.Guards)
+            {
+                // The guard calls go in last: the spans above (the result expression) point into the unguarded snippet.
+                for (var i = 0; i < trees.Count; i++)
+                {
+                    if (trees[i].FilePath == ExecutionGuard.FileName)
+                        continue;
+                    var guarded = GuardWriter.Write(trees[i]);
+                    if (guarded == trees[i])
+                        continue;
+                    compilation = compilation.ReplaceSyntaxTree(trees[i], guarded);
+                    trees[i] = guarded;
+                }
+            }
+
+            // Auto-import adds usings to the agent's own code (generated snippet or full source); includes stay verbatim.
+            var result = Emit(compilation, importable ? trees[0] : null, request.Usings);
             result.EntryType = entryType;
             result.EntryMethod = entryMethod;
             result.ResultType = resultType;
@@ -103,6 +121,25 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             miscellaneousOptions: SymbolDisplayMiscellaneousOptions.ExpandNullable);
 
         static SyntaxTree Parse(string text, string path) => CSharpSyntaxTree.ParseText(text, ParseOptions, path, Encoding.UTF8);
+
+        /// <summary>
+        /// Full-source code with the request's usings in front (spec §3.2: never the host's defaults), each mapped to its
+        /// index like the snippet's (§3.4), the code to its own lines. <paramref name="importable"/> is false when the code
+        /// starts with what must precede every using (`#define`, `extern alias`, `global using`): then it stays verbatim.
+        /// </summary>
+        static SyntaxTree FullSource(string code, IReadOnlyList<string> usings, out bool importable)
+        {
+            var verbatim = Parse(code, SnippetFile);
+            var root = verbatim.GetCompilationUnitRoot();
+            importable = root.Externs.Count == 0 && !root.Usings.Any(u => u.GetFirstToken().IsKind(SyntaxKind.GlobalKeyword))
+                && !root.GetLeadingTrivia().Any(t => t.IsKind(SyntaxKind.DefineDirectiveTrivia) || t.IsKind(SyntaxKind.UndefDirectiveTrivia));
+            if (!importable || usings.Count == 0)
+                return verbatim;
+            var sb = new StringBuilder();
+            for (var i = 0; i < usings.Count; i++)
+                sb.Append("#line ").Append(i + 1).Append(" \"").Append(UsingsFile).Append("\"\nusing ").Append(usings[i]).Append(";\n");
+            return Parse(sb.Append("#line 1 \"").Append(SnippetFile).Append("\"\n").Append(code).ToString(), SnippetFile);
+        }
 
         static ITypeSymbol? TypeAt(CSharpCompilation compilation, SyntaxTree tree, Microsoft.CodeAnalysis.Text.TextSpan span)
         {

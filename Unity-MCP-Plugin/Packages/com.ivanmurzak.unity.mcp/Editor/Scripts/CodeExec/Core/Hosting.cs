@@ -46,8 +46,11 @@ namespace com.IvanMurzak.CodeExec
 
         public bool SupportsUnload => false;
 
+        // UAC0020 (Unity's analyzer): loading from bytes is what this host is for; Unity on Mono loads them in its domain.
+#pragma warning disable UAC0020
         public ILoadedAssembly Load(byte[] image, byte[]? symbols, string name) =>
             new Loaded(symbols == null ? Assembly.Load(image) : Assembly.Load(image, symbols));
+#pragma warning restore UAC0020
 
         sealed class Loaded : ILoadedAssembly
         {
@@ -133,7 +136,11 @@ namespace com.IvanMurzak.CodeExec
             // They are on their way out (a host reload): never compile or bind against them.
             var live = new HashSet<AssemblyLoadContext>(AssemblyLoadContext.All);
 #endif
+            // UAC0005 (Unity's analyzer): the engine-agnostic core lists the domain itself; unloaded or dying ones are
+            // filtered here (dynamic, snippets, unloading load contexts).
+#pragma warning disable UAC0005
             foreach (var assembly in AppDomain.CurrentDomain.GetAssemblies())
+#pragma warning restore UAC0005
             {
                 if (assembly.IsDynamic || IsSnippet(assembly))
                     continue;

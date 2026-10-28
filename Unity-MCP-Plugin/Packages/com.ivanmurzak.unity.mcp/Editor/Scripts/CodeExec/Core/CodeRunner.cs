@@ -39,6 +39,29 @@ namespace com.IvanMurzak.CodeExec
 
         /// <summary>Compiled snippets kept for identical requests (least recently used are dropped).</summary>
         public int CacheCapacity { get; set; } = 64;
+
+        /// <summary>
+        /// The time budget of a request that leaves <see cref="ExecuteRequest.TimeoutMs"/> at 0 (spec §1): how long an
+        /// asynchronous result is awaited and, with <see cref="ExecutionGuards"/>, how long the snippet's own code may run
+        /// before its loops are stopped. 0 = no bound.
+        /// </summary>
+        public int DefaultTimeoutMs { get; set; } = DefaultTimeout;
+
+        /// <summary><see cref="DefaultTimeoutMs"/> unless the host sets another: 120 s.</summary>
+        public const int DefaultTimeout = 120_000;
+
+        /// <summary>
+        /// Compile the execution guards into every snippet (spec §3.6): runaway recursion is stopped before a stack
+        /// overflow ends the process, and loops are stopped once the time budget is spent, also on the host's main
+        /// thread. On by default; costs a counter decrement per loop iteration and a stack check per call.
+        /// </summary>
+        public bool ExecutionGuards { get; set; } = true;
+
+        /// <summary>
+        /// With <see cref="ExecutionGuards"/>: how much stack a snippet may use on a thread before it stops as runaway
+        /// recursion, besides the runtime's own margin (spec §3.6). 0 = only that margin. Default 1 MiB.
+        /// </summary>
+        public int MaxStackBytes { get; set; } = 1024 * 1024;
     }
 
     public sealed class CodeRunnerStats
@@ -168,6 +191,8 @@ namespace com.IvanMurzak.CodeExec
                 return Fail(ErrorKind.InvalidRequest, "entry method given without entry type");
             if (request.MaxValueChars < 0 || request.MaxLogChars < 0 || request.MaxLogLineChars < 0 || request.MaxErrorChars < 0)
                 return Fail(ErrorKind.InvalidRequest, "output limits must be >= 0 (0 = no limit)");
+            if (request.TimeoutMs < 0)
+                return Fail(ErrorKind.InvalidRequest, "timeoutMs must be >= 0 (0 = the host's default)");
 
             List<ParameterDeclaration> parameters;
             List<SourceFile> includes;
@@ -182,15 +207,19 @@ namespace com.IvanMurzak.CodeExec
                 return Fail(ErrorKind.InvalidRequest, e.Message);
             }
 
-            var usings = _options.DefaultUsings.Concat(request.Usings).Select(NormalizeUsing).Where(u => u.Length > 0).Distinct(StringComparer.Ordinal).ToList();
+            // Full-source mode gets the request's usings, never the host's defaults (spec §3.2).
+            var fullSource = !string.IsNullOrWhiteSpace(request.EntryType);
+            var usings = (fullSource ? request.Usings : _options.DefaultUsings.Concat(request.Usings))
+                .Select(NormalizeUsing).Where(u => u.Length > 0).Distinct(StringComparer.Ordinal).ToList();
             var compileRequest = new CompileRequest
             {
                 Code = request.Code,
                 Includes = includes,
                 ReferencePaths = _references.GetReferencePaths(),
                 Parameters = parameters,
-                EntryType = string.IsNullOrWhiteSpace(request.EntryType) ? null : request.EntryType,
+                EntryType = fullSource ? request.EntryType : null,
                 EntryMethod = string.IsNullOrWhiteSpace(request.EntryMethod) ? null : request.EntryMethod,
+                Guards = _options.ExecutionGuards,
             };
 
             var key = CacheKey(compileRequest, usings, request.AutoImport, ReferencesHash(compileRequest.ReferencePaths));
@@ -239,8 +268,19 @@ namespace com.IvanMurzak.CodeExec
 
             if (compiled.Image == null)
             {
+                if (fullSource && compiled.UnresolvedNames.Count > 0 && _options.DefaultUsings.Count > 0)
+                {
+                    ambiguous.Add(new CodeDiagnostic
+                    {
+                        Id = "CE0003",
+                        File = "snippet.cs",
+                        Message = "Full-source mode does not add the host's default usings (" + string.Join(", ", _options.DefaultUsings)
+                            + ") and " + string.Join(", ", compiled.UnresolvedNames.Select(n => "'" + n + "'"))
+                            + " stayed unresolved: write the using directives the code needs, or pass them in usings.",
+                    });
+                }
                 var failure = ExecuteResult.Fail(ErrorKind.Compile, "Compilation failed");
-                failure.Diagnostics = OutputLimits.Diagnostics(ambiguous.Concat(compiled.Diagnostics)); // the actionable CE0001 first
+                failure.Diagnostics = OutputLimits.Diagnostics(ambiguous.Concat(compiled.Diagnostics)); // the actionable CE0001 / CE0003 first
                 failure.AutoImported = autoImported;
                 failure.CompileMs = stopwatch.ElapsedMilliseconds;
                 return new PreparedSnippet(request, failure, null, false, failure.CompileMs);
@@ -273,7 +313,8 @@ namespace com.IvanMurzak.CodeExec
             var run = Start(prepared);
             if (run.Pending is Task task)
             {
-                var timeout = prepared.Request.TimeoutMs > 0 ? prepared.Request.TimeoutMs : Timeout.Infinite;
+                var budget = TimeBudget(prepared.Request);
+                var timeout = budget > 0 ? budget : Timeout.Infinite;
                 Task finished;
                 using (var delay = CancellationTokenSource.CreateLinkedTokenSource(cancellationToken))
                 {
@@ -283,10 +324,14 @@ namespace com.IvanMurzak.CodeExec
                 if (finished != task)
                     run.Fail(ErrorKind.Timeout, cancellationToken.IsCancellationRequested
                         ? "Canceled while waiting for the snippet's result; the snippet may still be running."
-                        : $"No result within {prepared.Request.TimeoutMs} ms; the snippet may still be running.");
+                        : $"No result within {budget} ms (timeoutMs); the snippet may still be running."
+                            + (run.Guarded ? " Its loops stop at their next iteration." : ""));
             }
             return run.Finish();
         }
+
+        /// <summary>The request's <see cref="ExecuteRequest.TimeoutMs"/>, else the host's default; 0 = no bound.</summary>
+        int TimeBudget(ExecuteRequest request) => request.TimeoutMs > 0 ? request.TimeoutMs : Math.Max(_options.DefaultTimeoutMs, 0);
 
         Execution Start(PreparedSnippet prepared)
         {
@@ -308,6 +353,7 @@ namespace com.IvanMurzak.CodeExec
 
                 var declared = new DeclaredResult(method.ReturnType);
                 run.ReturnType = entry.ResultType ?? declared.YieldsName; // the compiler knows a snippet's real result type
+                run.Arm(TimeBudget(prepared.Request));
                 run.BeginCapture(_options.LogCaptures);
                 run.SetResult(declared, method.Invoke(null, parameters.Select(p => p.Value).ToArray()));
             }
@@ -315,7 +361,7 @@ namespace com.IvanMurzak.CodeExec
             {
                 // Anything (a generic entry method, a byref-like return, a bad image) is the snippet's failure: Start must
                 // always hand back a run, so Finish restores the log captures and releases the assembly.
-                run.Fail(ErrorKind.Runtime, FormatException(e, run.Loaded?.Assembly));
+                run.Fail(e);
             }
             return run;
         }
@@ -457,7 +503,7 @@ namespace com.IvanMurzak.CodeExec
                 foreach (var frame in new StackTrace(exception, true).GetFrames() ?? Array.Empty<StackFrame>())
                 {
                     var method = frame.GetMethod();
-                    if (method?.DeclaringType?.Assembly != snippet)
+                    if (method?.DeclaringType?.Assembly != snippet || method.DeclaringType.FullName == ExecutionGuard.TypeName)
                         continue;
                     var line = "   at " + method.DeclaringType.FullName + "." + method.Name;
                     var file = frame.GetFileName();
@@ -497,7 +543,7 @@ namespace com.IvanMurzak.CodeExec
 
         static string CacheKey(CompileRequest request, IEnumerable<string> usings, bool autoImport, string referencesHash)
         {
-            var parts = new List<string?> { request.Code, request.EntryType, request.EntryMethod, autoImport ? "1" : "0", referencesHash };
+            var parts = new List<string?> { request.Code, request.EntryType, request.EntryMethod, autoImport ? "1" : "0", request.Guards ? "1" : "0", referencesHash };
             parts.AddRange(usings);
             parts.Add("|");
             foreach (var p in request.Parameters) { parts.Add(p.TypeName); parts.Add(p.Name); }
@@ -517,6 +563,16 @@ namespace com.IvanMurzak.CodeExec
                     hash.AppendData(separator);
                 }
                 return Convert.ToBase64String(hash.GetHashAndReset());
+            }
+        }
+
+        /// <summary>A loaded entry (hosts that cannot unload) is not reused: the next identical request compiles afresh.</summary>
+        void Forget(CacheEntry entry)
+        {
+            lock (_cacheLock)
+            {
+                if (_loaded.TryGetValue(entry.Key, out var loaded) && loaded == entry)
+                    _loaded.Remove(entry.Key);
             }
         }
 
@@ -607,6 +663,49 @@ namespace com.IvanMurzak.CodeExec
             public ILoadedAssembly? Loaded { get; set; }
             public string? ReturnType { get; set; }
 
+            /// <summary>The snippet's execution guard (spec §3.6), when it was compiled with one.</summary>
+            Type? _guard;
+            public bool Guarded => _guard != null;
+
+            /// <summary>Starts the guard's time budget for this run (0 = none).</summary>
+            public void Arm(int budgetMs)
+            {
+                _guard = ExecutionGuard.Find(Loaded!.Assembly);
+                if (_guard != null)
+                    ExecutionGuard.Arm(_guard, budgetMs, Math.Max(_runner._options.MaxStackBytes, 0));
+            }
+
+            /// <summary>
+            /// After the run: a finished one lifts the time budget (callbacks the snippet left behind run on, still with the
+            /// stack check). A timed-out one keeps its stop for whatever still runs, and on a host that cannot unload, its
+            /// assembly is never reused, so no later run re-arms that guard.
+            /// </summary>
+            void Disarm()
+            {
+                if (_guard == null)
+                    return;
+                if (_errorKind == ErrorKind.Timeout)
+                {
+                    _runner.Forget(_prepared.Entry!);
+                    return;
+                }
+                try { ExecutionGuard.Arm(_guard, 0, Math.Max(_runner._options.MaxStackBytes, 0)); }
+                catch (Exception) { } // a guard that cannot be reached: nothing to lift
+            }
+
+            /// <summary>An exception of the snippet: <see cref="ErrorKind.Timeout"/> when the guard stopped it for time.</summary>
+            public void Fail(Exception e)
+            {
+                var kind = ErrorKind.Runtime;
+                try
+                {
+                    if (_guard != null && ExecutionGuard.Stopped(_guard) == ExecutionGuard.StoppedByTime)
+                        kind = ErrorKind.Timeout;
+                }
+                catch (Exception) { } // a guard that cannot be read: the snippet's error stays a Runtime one
+                Fail(kind, FormatException(e, Loaded?.Assembly));
+            }
+
             /// <summary>The snippet's task while its result is still to come; null for synchronous results.</summary>
             public Task? Pending { get; private set; }
 
@@ -648,10 +747,11 @@ namespace com.IvanMurzak.CodeExec
                 }
                 catch (Exception e)
                 {
-                    Fail(ErrorKind.Runtime, FormatException(e, Loaded?.Assembly));
+                    Fail(e);
                 }
                 finally
                 {
+                    Disarm();
                     for (var i = _captures.Count - 1; i >= 0; i--)
                         _captures[i].Dispose();
                     if (_runner._host.SupportsUnload)

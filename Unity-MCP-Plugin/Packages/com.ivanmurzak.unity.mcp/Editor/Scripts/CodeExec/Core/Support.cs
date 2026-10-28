@@ -130,8 +130,10 @@ namespace com.IvanMurzak.CodeExec
             const BindingFlags flags = BindingFlags.Static | BindingFlags.Public | BindingFlags.NonPublic | BindingFlags.DeclaredOnly;
             try
             {
-                // The compiler's own types (lambda caches, array-initializer data, collection-expression wrappers) are skipped.
-                var types = assembly.GetTypes().Where(t => !t.IsDefined(typeof(CompilerGeneratedAttribute), false)).ToList();
+                // The compiler's own types (lambda caches, array-initializer data, collection-expression wrappers) are skipped,
+                // and so is the execution guard: each run re-arms it (spec §3.6).
+                var types = assembly.GetTypes()
+                    .Where(t => !t.IsDefined(typeof(CompilerGeneratedAttribute), false) && t.FullName != ExecutionGuard.TypeName).ToList();
                 // A collection view the snippet implements (or derives) itself may keep state in its instance: then no view
                 // type is trusted to be immutable.
                 var trustViews = !types.Any(ImplementsView);

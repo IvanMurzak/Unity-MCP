@@ -83,7 +83,9 @@ namespace com.IvanMurzak.CodeExec
         void AddFrameworkFacades(Dictionary<string, string> byName)
         {
             // CoreLib itself, never the host resolver: that one maps in-memory HOST assemblies, not the runtime.
+#pragma warning disable UAC0007 // CoreLib's own file (CoreCLR builds only); see LocationOf for host assemblies
             var directory = Path.GetDirectoryName(typeof(object).Assembly.Location) ?? "";
+#pragma warning restore UAC0007
             if (directory.Length == 0)
                 return; // single-file or in-memory runtime: nothing on disk to point at
             foreach (var name in FrameworkFacades)
@@ -98,7 +100,10 @@ namespace com.IvanMurzak.CodeExec
         string LocationOf(Assembly assembly)
         {
             string location;
+            // UAC0007 (Unity's analyzer): an empty Location (loaded from a stream) falls back to the host's resolver below.
+#pragma warning disable UAC0007
             try { location = assembly.Location; }
+#pragma warning restore UAC0007
             catch (NotSupportedException) { location = ""; }
             if (location.Length == 0 && _locationResolver != null)
                 location = _locationResolver(assembly) ?? "";
