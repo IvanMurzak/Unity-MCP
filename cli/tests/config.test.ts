@@ -8,6 +8,7 @@ import {
   writeConfig,
   getOrCreateConfig,
   updateFeatures,
+  readFeatures,
   type UnityConnectionConfig,
   type McpFeature,
 } from '../src/utils/config.js';
@@ -73,7 +74,7 @@ describe('config', () => {
         keepConnected: true,
         logLevel: 2,
         timeoutMs: 5000,
-        tools: [{ name: 'test-tool', enabled: true }],
+        tools: [{ name: 'test-tool', visible: true }],
         prompts: [],
         resources: [],
       };
@@ -84,7 +85,7 @@ describe('config', () => {
       expect(result!.keepConnected).toBe(true);
       expect(result!.logLevel).toBe(2);
       expect(result!.timeoutMs).toBe(5000);
-      expect(result!.tools).toEqual([{ name: 'test-tool', enabled: true }]);
+      expect(result!.tools).toEqual([{ name: 'test-tool', visible: true }]);
     });
 
     it('creates UserSettings directory if needed', () => {
@@ -125,13 +126,13 @@ describe('config', () => {
       const original: UnityConnectionConfig = {
         host: 'http://localhost:12345',
         keepConnected: true,
-        tools: [{ name: 'custom-tool', enabled: false }],
+        tools: [{ name: 'custom-tool', visible: false }],
       };
       writeConfig(tmpDir, original);
       const config = getOrCreateConfig(tmpDir);
       expect(config.host).toBe('http://localhost:12345');
       expect(config.keepConnected).toBe(true);
-      expect(config.tools).toEqual([{ name: 'custom-tool', enabled: false }]);
+      expect(config.tools).toEqual([{ name: 'custom-tool', visible: false }]);
     });
   });
 
@@ -141,104 +142,122 @@ describe('config', () => {
     it('enables specific tools by name', () => {
       const config: UnityConnectionConfig = {
         tools: [
-          { name: 'tool-a', enabled: false },
-          { name: 'tool-b', enabled: false },
+          { name: 'tool-a', visible: false },
+          { name: 'tool-b', visible: false },
         ],
       };
       updateFeatures(config, 'tools', { enableNames: ['tool-a'] });
-      expect(config.tools![0].enabled).toBe(true);
-      expect(config.tools![1].enabled).toBe(false);
+      expect(config.tools![0].visible).toBe(true);
+      expect(config.tools![1].visible).toBe(false);
     });
 
     it('disables specific tools by name', () => {
       const config: UnityConnectionConfig = {
         tools: [
-          { name: 'tool-a', enabled: true },
-          { name: 'tool-b', enabled: true },
+          { name: 'tool-a', visible: true },
+          { name: 'tool-b', visible: true },
         ],
       };
       updateFeatures(config, 'tools', { disableNames: ['tool-b'] });
-      expect(config.tools![0].enabled).toBe(true);
-      expect(config.tools![1].enabled).toBe(false);
+      expect(config.tools![0].visible).toBe(true);
+      expect(config.tools![1].visible).toBe(false);
     });
 
     it('adds new tool entry when enabling a non-existing tool', () => {
       const config: UnityConnectionConfig = { tools: [] };
       updateFeatures(config, 'tools', { enableNames: ['new-tool'] });
       expect(config.tools!.length).toBe(1);
-      expect(config.tools![0]).toEqual({ name: 'new-tool', enabled: true });
+      expect(config.tools![0]).toEqual({ name: 'new-tool', visible: true });
     });
 
     it('adds new tool entry when disabling a non-existing tool', () => {
       const config: UnityConnectionConfig = { tools: [] };
       updateFeatures(config, 'tools', { disableNames: ['new-tool'] });
       expect(config.tools!.length).toBe(1);
-      expect(config.tools![0]).toEqual({ name: 'new-tool', enabled: false });
+      expect(config.tools![0]).toEqual({ name: 'new-tool', visible: false });
     });
 
     it('enables all tools', () => {
       const config: UnityConnectionConfig = {
         tools: [
-          { name: 'tool-a', enabled: false },
-          { name: 'tool-b', enabled: false },
-          { name: 'tool-c', enabled: false },
+          { name: 'tool-a', visible: false },
+          { name: 'tool-b', visible: false },
+          { name: 'tool-c', visible: false },
         ],
       };
       updateFeatures(config, 'tools', { enableAll: true });
       for (const tool of config.tools!) {
-        expect(tool.enabled).toBe(true);
+        expect(tool.visible).toBe(true);
       }
     });
 
     it('disables all tools', () => {
       const config: UnityConnectionConfig = {
         tools: [
-          { name: 'tool-a', enabled: true },
-          { name: 'tool-b', enabled: true },
+          { name: 'tool-a', visible: true },
+          { name: 'tool-b', visible: true },
         ],
       };
       updateFeatures(config, 'tools', { disableAll: true });
       for (const tool of config.tools!) {
-        expect(tool.enabled).toBe(false);
+        expect(tool.visible).toBe(false);
       }
     });
 
     it('works with prompts', () => {
       const config: UnityConnectionConfig = {
-        prompts: [{ name: 'prompt-a', enabled: false }],
+        prompts: [{ name: 'prompt-a', visible: false }],
       };
       updateFeatures(config, 'prompts', { enableNames: ['prompt-a'] });
-      expect(config.prompts![0].enabled).toBe(true);
+      expect(config.prompts![0].visible).toBe(true);
     });
 
     it('works with resources', () => {
       const config: UnityConnectionConfig = {
-        resources: [{ name: 'resource-a', enabled: true }],
+        resources: [{ name: 'resource-a', visible: true }],
       };
       updateFeatures(config, 'resources', { disableNames: ['resource-a'] });
-      expect(config.resources![0].enabled).toBe(false);
+      expect(config.resources![0].visible).toBe(false);
     });
 
     it('handles both enable and disable in the same call', () => {
       const config: UnityConnectionConfig = {
         tools: [
-          { name: 'tool-a', enabled: false },
-          { name: 'tool-b', enabled: true },
+          { name: 'tool-a', visible: false },
+          { name: 'tool-b', visible: true },
         ],
       };
       updateFeatures(config, 'tools', {
         enableNames: ['tool-a'],
         disableNames: ['tool-b'],
       });
-      expect(config.tools![0]).toEqual({ name: 'tool-a', enabled: true });
-      expect(config.tools![1]).toEqual({ name: 'tool-b', enabled: false });
+      expect(config.tools![0]).toEqual({ name: 'tool-a', visible: true });
+      expect(config.tools![1]).toEqual({ name: 'tool-b', visible: false });
     });
 
     it('handles undefined feature list gracefully', () => {
       const config: UnityConnectionConfig = {};
       updateFeatures(config, 'tools', { enableNames: ['new-tool'] });
       expect(config.tools!.length).toBe(1);
-      expect(config.tools![0]).toEqual({ name: 'new-tool', enabled: true });
+      expect(config.tools![0]).toEqual({ name: 'new-tool', visible: true });
     });
+  });
+});
+
+describe('a config saved before the Enabled -> Visible rename', () => {
+  it('reads the old enabled key, and visible wins when both are present', () => {
+    expect(readFeatures([{ name: 'a', enabled: false }, { name: 'b', enabled: true, visible: false }])).toEqual([
+      { name: 'a', visible: false },
+      { name: 'b', visible: false },
+    ]);
+  });
+
+  it('writes visible when it updates an old file', () => {
+    const config: UnityConnectionConfig = { tools: [{ name: 'a', enabled: false } as never] };
+    updateFeatures(config, 'tools', { enableNames: ['b'] });
+    expect(config.tools).toEqual([
+      { name: 'a', visible: false },
+      { name: 'b', visible: true },
+    ]);
   });
 });

@@ -223,9 +223,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     if (manager == null) return (0, 0, 0);
                     var all = manager.GetAllTools();
                     var totalCount = all.Count();
-                    var enabledCount = all.Count(t => manager.IsToolEnabled(t.Name));
-                    var totalTokens = all.Where(t => manager.IsToolEnabled(t.Name)).Sum(t => t.TokenCount);
-                    return (totalCount, enabledCount, totalTokens);
+                    var visibleCount = all.Count(t => manager.IsToolVisible(t.Name));
+                    var totalTokens = all.Where(t => manager.IsToolVisible(t.Name)).Sum(t => t.TokenCount);
+                    return (totalCount, visibleCount, totalTokens);
                 },
                 getOnUpdated: plugin => plugin.McpManager.ToolManager?.OnToolsUpdated,
                 tokenLabel: tokenLabel);

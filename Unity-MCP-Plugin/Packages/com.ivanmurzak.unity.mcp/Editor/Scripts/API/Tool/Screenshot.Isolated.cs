@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Screenshot / Isolated GameObject",
             ReadOnlyHint = true,
             IdempotentHint = true,
-            Enabled = true
+            Visible = true
         )]
         [AiSkillDescription("Render a target GameObject from a chosen camera angle with optional layer-based " +
             "isolation, configurable background (solid/skybox/transparent), multi-light setup via JSON, and Composite " +

@@ -3,11 +3,11 @@
         <ui:VisualElement class="item-header tool-item-header">
             <ui:VisualElement class="tool-item-row tool-item-title-row">
                 <ui:Label name="item-title" text="Tool title, could be multiple lines long" class="item-title" />
-                <ui:Toggle name="item-toggle" class="item-switch" />
+                <ui:Toggle name="item-toggle" class="item-switch" tooltip="Visible: listed to MCP clients (tools/list). Hidden items are left out of the list to save context, but a hidden tool still runs when called by name." />
             </ui:VisualElement>
             <ui:VisualElement class="tool-item-row tool-item-subtitle-row">
                 <ui:Label name="item-id" text="tool-id-single-line" class="item-id" />
-                <ui:Label name="item-token-count" text="~0 tokens" class="item-token-count" tooltip="Total tokens consumed by active tools in the AI context. Fewer tokens means more free context for AI to reason, leading to better and more accurate responses. Disable unused tools to reduce token usage." />
+                <ui:Label name="item-token-count" text="~0 tokens" class="item-token-count" tooltip="Total tokens consumed by visible tools in the AI context. Fewer tokens means more free context for AI to reason, leading to better and more accurate responses. Hide unused tools to reduce token usage (a hidden tool still runs when called by name)." />
             </ui:VisualElement>
         </ui:VisualElement>
         <ui:VisualElement name="item-details">

@@ -11,6 +11,7 @@
 #nullable enable
 using System.Diagnostics;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
 using Microsoft.Extensions.Logging;
 using R3;
 
@@ -26,23 +27,18 @@ namespace com.IvanMurzak.Unity.MCP
         protected UnityMcpPluginRuntime(UnityConnectionConfig? config = null) : base()
         {
             unityConnectionConfig = config ?? new UnityConnectionConfig();
+            unityConnectionConfig.ClientRole = ClientRole.Runtime;
             IncrementSingletonCount();
         }
 
         /// <summary>
-        /// Appended to the handshake's <c>environment</c> (the Unity version): the MCP server classifies a connection whose
-        /// environment ends in <c>(runtime)</c> as a game, so a running player is kept beside the Editor instead of replacing
-        /// it (GameDev-MCP-Server plugin roles). A <c>client_role=runtime</c> hub parameter would say it at connect time, but
-        /// McpPlugin does not let a plugin add one yet.
+        /// Declares the connection a <see cref="ClientRole.Runtime"/> (McpPlugin sends it as <c>client_role</c> at connect):
+        /// the MCP server keeps a running player beside the Editor instead of letting it replace the Editor
+        /// (GameDev-MCP-Server plugin roles). Applied after the developer's <c>WithConfig</c> calls, so a game never
+        /// registers as the Editor.
         /// </summary>
-        public const string RuntimeEnvironmentSuffix = " (runtime)";
-
-        protected override McpPlugin.Common.Version BuildVersion()
-        {
-            var version = base.BuildVersion();
-            version.Environment += RuntimeEnvironmentSuffix;
-            return version;
-        }
+        protected static IMcpPluginBuilder DeclareRuntimeRole(IMcpPluginBuilder builder)
+            => builder.WithConfig(config => config.ClientRole = ClientRole.Runtime);
 
         internal IMcpPlugin BuildFromBuilder(IMcpPluginBuilder builder)
         {

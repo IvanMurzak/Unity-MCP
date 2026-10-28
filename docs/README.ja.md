@@ -622,7 +622,7 @@ Unity MCP Plugin は起動時に以下の環境変数（およびコマンドラ
 | `UNITY_MCP_TOKEN`           | `-token`                    | string                        | 認証トークンの強制設定                                  |
 | `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | プラグインが設定するクライアントトランスポートを強制                    |
 | `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | プラグインがローカルサーバープロセスを起動し続けるかどうかを強制       |
-| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | comma-separated tool IDs      | リストされたツールのみを有効化し、その他はすべて無効化。不明な ID はエラーとしてログに記録されます。 |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | comma-separated tool IDs      | リストされたツールのみを MCP クライアントに表示し（tools/list）、その他はすべて非表示にします（非表示のツールも名前で呼び出せば実行されます）。不明な ID はエラーとしてログに記録されます。 |
 
 > コマンドライン引数は環境変数よりも優先されます。両方とも保存された設定ファイルの値を上書きします。短縮フラグ `-url`、`-token`、`-auth` はエイリアスです。完全な `-UNITY_MCP_*` 引数名も受け付けられます。
 

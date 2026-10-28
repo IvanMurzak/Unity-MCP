@@ -248,17 +248,17 @@ export function startSpinner(text: string): Spinner {
 /**
  * Format a status badge (enabled/disabled).
  */
-export function badge(enabled: boolean): string {
-  return enabled
-    ? chalk.bgGreen.black('[enabled]')
-    : chalk.bgRed.white('[disabled]');
+export function badge(visible: boolean): string {
+  return visible
+    ? chalk.bgGreen.black('[visible]')
+    : chalk.bgRed.white('[hidden]');
 }
 
 /**
  * Print a feature row with a styled badge and name.
  */
-export function featureRow(name: string, enabled: boolean): void {
-  console.log(`    ${badge(enabled)} ${name}`);
+export function featureRow(name: string, visible: boolean): void {
+  console.log(`    ${badge(visible)} ${name}`);
 }
 
 /**

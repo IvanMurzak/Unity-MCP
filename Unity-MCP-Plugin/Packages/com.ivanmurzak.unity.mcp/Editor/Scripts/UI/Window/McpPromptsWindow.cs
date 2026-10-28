@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             allItems = refreshed;
         }
 
-        protected override void OnItemToggleChanged(PromptViewModel viewModel, bool isEnabled)
+        protected override void OnItemToggleChanged(PromptViewModel viewModel, bool isVisible)
         {
             var promptManager = UnityMcpPluginEditor.Instance.Prompts;
             if (promptManager == null)
@@ -74,12 +74,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-            viewModel.IsEnabled = isEnabled;
+            viewModel.IsVisible = isVisible;
             if (!string.IsNullOrWhiteSpace(viewModel.Name))
             {
-                Logger.LogTrace("{method} Setting prompt '{name}' enabled state to {enabled}.",
-                    nameof(OnItemToggleChanged), viewModel.Name, isEnabled);
-                promptManager.SetPromptEnabled(viewModel.Name, isEnabled);
+                Logger.LogTrace("{method} Setting prompt '{name}' visibility to {visible}.",
+                    nameof(OnItemToggleChanged), viewModel.Name, isVisible);
+                promptManager.SetPromptEnabled(viewModel.Name, isVisible);
                 UnityMcpPluginEditor.Instance.Save();
             }
         }
@@ -135,7 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             public string? Title { get; set; }
             public string? Description { get; set; }
             public string Role { get; set; }
-            public bool IsEnabled { get; set; }
+            public bool IsVisible { get; set; }
             public IReadOnlyList<ArgumentData> Arguments { get; set; }
             public PlayerPrefsBool descriptionExpanded;
             public PlayerPrefsBool argumentsExpanded;
@@ -146,7 +146,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Title = prompt.Title;
                 Description = prompt.Description;
                 Role = prompt.Role.ToString();
-                IsEnabled = promptManager?.IsPromptEnabled(prompt.Name) == true;
+                IsVisible = promptManager?.IsPromptEnabled(prompt.Name) == true;
                 Arguments = ParseSchemaArguments(prompt.InputSchema);
                 descriptionExpanded = new PlayerPrefsBool(GetFoldoutKey(prompt.Name, "description-foldout"));
                 argumentsExpanded = new PlayerPrefsBool(GetFoldoutKey(prompt.Name, "arguments-foldout"));

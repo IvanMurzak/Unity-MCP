@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SkillsGenerateToolId,
             Title = "Skill (Tool) / Generate All",
             DestructiveHint = false,
-            Enabled = false,
+            Visible = false,
             ToolType = McpToolType.System
         )]
         [AiSkillDescription("Regenerate every `SKILL.md` from the project's currently-registered MCP tools into " +

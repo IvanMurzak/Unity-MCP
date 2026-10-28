@@ -44,11 +44,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsNotNull(testTool, "Should have at least one tool other than SetEnabledState");
 
             _testToolName = testTool!.Name;
-            _originalTestToolEnabled = toolManager.IsToolEnabled(_testToolName);
-            _originalSetEnabledStateEnabled = toolManager.IsToolEnabled(Tool_Tool.ToolSetEnabledStateId);
+            _originalTestToolEnabled = toolManager.IsToolVisible(_testToolName);
+            _originalSetEnabledStateEnabled = toolManager.IsToolVisible(Tool_Tool.ToolSetEnabledStateId);
 
-            toolManager.SetToolEnabled(_testToolName, true);
-            toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, true);
+            toolManager.SetToolVisible(_testToolName, true);
+            toolManager.SetToolVisible(Tool_Tool.ToolSetEnabledStateId, true);
             UnityMcpPluginEditor.Instance.Save();
         }
 
@@ -59,10 +59,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             if (toolManager != null)
             {
                 if (_testToolName != null && _originalTestToolEnabled.HasValue)
-                    toolManager.SetToolEnabled(_testToolName, _originalTestToolEnabled.Value);
+                    toolManager.SetToolVisible(_testToolName, _originalTestToolEnabled.Value);
 
                 if (_originalSetEnabledStateEnabled.HasValue)
-                    toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, _originalSetEnabledStateEnabled.Value);
+                    toolManager.SetToolVisible(Tool_Tool.ToolSetEnabledStateId, _originalSetEnabledStateEnabled.Value);
 
                 UnityMcpPluginEditor.Instance.Save();
             }
@@ -116,7 +116,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should successfully disable tool '{_testToolName}'");
 
             var toolManager = UnityMcpPluginEditor.Instance.Tools!;
-            Assert.IsFalse(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be disabled");
+            Assert.IsFalse(toolManager.IsToolVisible(_testToolName!), $"Tool '{_testToolName}' should be disabled");
         }
 
         [UnityTest]
@@ -125,7 +125,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
 
             var toolManager = UnityMcpPluginEditor.Instance.Tools!;
-            toolManager.SetToolEnabled(_testToolName!, false);
+            toolManager.SetToolVisible(_testToolName!, false);
             UnityMcpPluginEditor.Instance.Save();
 
             var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
@@ -134,7 +134,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }}").Value!.ToolResultJson();
 
             Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should successfully enable tool '{_testToolName}'");
-            Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be enabled");
+            Assert.IsTrue(toolManager.IsToolVisible(_testToolName!), $"Tool '{_testToolName}' should be enabled");
         }
 
         [UnityTest]
@@ -189,7 +189,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.IsNotNull(secondTool, "Should have at least two tools for testing");
 
-            var originalSecondState = toolManager.IsToolEnabled(secondTool!.Name);
+            var originalSecondState = toolManager.IsToolVisible(secondTool!.Name);
 
             try
             {
@@ -207,7 +207,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             }
             finally
             {
-                toolManager.SetToolEnabled(secondTool.Name, originalSecondState);
+                toolManager.SetToolVisible(secondTool.Name, originalSecondState);
                 UnityMcpPluginEditor.Instance.Save();
             }
         }
@@ -318,17 +318,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var toolManager = UnityMcpPluginEditor.Instance.Tools!;
             var allTools = toolManager.GetAllTools().ToList();
-            var originalStates = allTools.ToDictionary(t => t.Name, t => toolManager.IsToolEnabled(t.Name));
+            var originalStates = allTools.ToDictionary(t => t.Name, t => toolManager.IsToolVisible(t.Name));
 
             try
             {
                 // Disable ALL tools (simulates "disable all" in AI Game Developer window)
                 foreach (var tool in allTools)
-                    toolManager.SetToolEnabled(tool.Name, false);
+                    toolManager.SetToolVisible(tool.Name, false);
                 UnityMcpPluginEditor.Instance.Save();
 
                 // Re-enable only SetEnabledState so we can call it
-                toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, true);
+                toolManager.SetToolVisible(Tool_Tool.ToolSetEnabledStateId, true);
 
                 // SetEnabledState should still work and be able to enable a tool
                 var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
@@ -337,12 +337,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}").Value!.ToolResultJson();
 
                 Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should enable tool '{_testToolName}' even when all tools start disabled");
-                Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be enabled after operation");
+                Assert.IsTrue(toolManager.IsToolVisible(_testToolName!), $"Tool '{_testToolName}' should be enabled after operation");
             }
             finally
             {
                 foreach (var kvp in originalStates)
-                    toolManager.SetToolEnabled(kvp.Key, kvp.Value);
+                    toolManager.SetToolVisible(kvp.Key, kvp.Value);
                 UnityMcpPluginEditor.Instance.Save();
             }
         }
@@ -365,7 +365,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}").Value!.ToolResultJson();
 
                 Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should disable tool '{_testToolName}' even with LogLevel.None");
-                Assert.IsFalse(UnityMcpPluginEditor.Instance.Tools!.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be disabled");
+                Assert.IsFalse(UnityMcpPluginEditor.Instance.Tools!.IsToolVisible(_testToolName!), $"Tool '{_testToolName}' should be disabled");
             }
             finally
             {
@@ -380,7 +380,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             var toolManager = UnityMcpPluginEditor.Instance.Tools!;
             var allTools = toolManager.GetAllTools().ToList();
-            var originalStates = allTools.ToDictionary(t => t.Name, t => toolManager.IsToolEnabled(t.Name));
+            var originalStates = allTools.ToDictionary(t => t.Name, t => toolManager.IsToolVisible(t.Name));
             var originalLogLevel = UnityMcpPluginEditor.LogLevel;
 
             try
@@ -388,11 +388,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 // Simulate real user scenario: LogLevel.None + all tools disabled
                 UnityMcpPluginEditor.LogLevel = LogLevel.None;
                 foreach (var tool in allTools)
-                    toolManager.SetToolEnabled(tool.Name, false);
+                    toolManager.SetToolVisible(tool.Name, false);
                 UnityMcpPluginEditor.Instance.Save();
 
                 // Re-enable only SetEnabledState so we can call it
-                toolManager.SetToolEnabled(Tool_Tool.ToolSetEnabledStateId, true);
+                toolManager.SetToolVisible(Tool_Tool.ToolSetEnabledStateId, true);
 
                 var json = RunTool(Tool_Tool.ToolSetEnabledStateId, $@"{{
                     ""tools"": [{{ ""name"": ""{_testToolName}"", ""enabled"": true }}],
@@ -400,13 +400,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 }}").Value!.ToolResultJson();
 
                 Assert.IsTrue(GetSuccessValue(json, _testToolName!), $"Should enable tool '{_testToolName}' with LogLevel.None and all tools disabled");
-                Assert.IsTrue(toolManager.IsToolEnabled(_testToolName!), $"Tool '{_testToolName}' should be enabled after operation");
+                Assert.IsTrue(toolManager.IsToolVisible(_testToolName!), $"Tool '{_testToolName}' should be enabled after operation");
             }
             finally
             {
                 UnityMcpPluginEditor.LogLevel = originalLogLevel;
                 foreach (var kvp in originalStates)
-                    toolManager.SetToolEnabled(kvp.Key, kvp.Value);
+                    toolManager.SetToolVisible(kvp.Key, kvp.Value);
                 UnityMcpPluginEditor.Instance.Save();
             }
         }

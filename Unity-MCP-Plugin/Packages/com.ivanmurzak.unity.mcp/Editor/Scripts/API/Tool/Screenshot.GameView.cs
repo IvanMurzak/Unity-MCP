@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Screenshot / Game View",
             ReadOnlyHint = true,
             IdempotentHint = true,
-            Enabled = false
+            Visible = false
         )]
         [AiSkillDescription("Capture a screenshot of the Unity Editor's Game View by reading its internal " +
             "render texture directly. Image size matches the current Game View resolution; the tool corrects Y-flip on " +

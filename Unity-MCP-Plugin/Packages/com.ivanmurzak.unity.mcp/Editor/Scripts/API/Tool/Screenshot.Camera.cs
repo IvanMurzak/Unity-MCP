@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Screenshot / Camera",
             ReadOnlyHint = true,
             IdempotentHint = true,
-            Enabled = false
+            Visible = false
         )]
         [AiSkillDescription("Capture a screenshot from a Unity `Camera` and return it as a PNG image " +
             "for direct LLM inspection. Falls back to `Camera.main` (then any active camera) when `cameraRef` is null. " +

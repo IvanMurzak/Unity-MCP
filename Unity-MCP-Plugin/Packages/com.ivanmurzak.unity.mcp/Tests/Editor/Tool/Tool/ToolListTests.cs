@@ -35,8 +35,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var toolManager = UnityMcpPluginEditor.Instance.Tools;
             Assert.IsNotNull(toolManager, "ToolManager should not be null");
 
-            _originalToolListEnabled = toolManager!.IsToolEnabled(Tool_Tool.ToolListId);
-            toolManager.SetToolEnabled(Tool_Tool.ToolListId, true);
+            _originalToolListEnabled = toolManager!.IsToolVisible(Tool_Tool.ToolListId);
+            toolManager.SetToolVisible(Tool_Tool.ToolListId, true);
             UnityMcpPluginEditor.Instance.Save();
         }
 
@@ -46,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var toolManager = UnityMcpPluginEditor.Instance.Tools;
             if (toolManager != null && _originalToolListEnabled.HasValue)
             {
-                toolManager.SetToolEnabled(Tool_Tool.ToolListId, _originalToolListEnabled.Value);
+                toolManager.SetToolVisible(Tool_Tool.ToolListId, _originalToolListEnabled.Value);
                 UnityMcpPluginEditor.Instance.Save();
             }
 
@@ -218,7 +218,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
 
             var json = RunTool(Tool_Tool.ToolListId, @"{
-                ""regexSearch"": ""Enable or disable MCP tools""
+                ""regexSearch"": ""Show or hide MCP tools""
             }").Value!.ToolResultJson();
 
             using var doc = JsonDocument.Parse(json);
@@ -229,8 +229,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var names = Enumerable.Range(0, arr.GetArrayLength())
                 .Select(i => arr[i].GetPropertyCI("name").GetString())
                 .ToList();
-            Assert.Contains("tool-set-enabled-state", names,
-                "tool-set-enabled-state description contains 'Enable or disable MCP tools'");
+            Assert.Contains("tool-set-visibility", names,
+                "tool-set-visibility description contains 'Show or hide MCP tools'");
         }
 
         [UnityTest]

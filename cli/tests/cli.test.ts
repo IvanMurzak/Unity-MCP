@@ -300,14 +300,14 @@ describe('CLI integration', () => {
       runCli(['configure', '--path', tmpDir, '--enable-tools', 'tool-a,tool-b']);
 
       const { stdout } = runCli(['configure', '--path', tmpDir, '--list']);
-      expect(stdout).toContain('[enabled] tool-a');
-      expect(stdout).toContain('[enabled] tool-b');
+      expect(stdout).toContain('[visible] tool-a');
+      expect(stdout).toContain('[visible] tool-b');
 
       // Now disable one
       runCli(['configure', '--path', tmpDir, '--disable-tools', 'tool-a']);
       const { stdout: stdout2 } = runCli(['configure', '--path', tmpDir, '--list']);
-      expect(stdout2).toContain('[disabled] tool-a');
-      expect(stdout2).toContain('[enabled] tool-b');
+      expect(stdout2).toContain('[hidden] tool-a');
+      expect(stdout2).toContain('[visible] tool-b');
     });
 
     it('fails when project path does not exist', () => {

@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScriptDeleteToolId,
             Title = "Script / Delete",
             DestructiveHint = true,
-            Enabled = false
+            Visible = false
         )]
         [AiSkillDescription("Delete one or more `.cs` script files from disk, refresh the AssetDatabase, and " +
             "wait for Unity compilation to settle before delivering the final result via the request's `requestId`. " +
