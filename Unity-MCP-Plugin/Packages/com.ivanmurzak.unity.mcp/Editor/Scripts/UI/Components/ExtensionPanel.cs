@@ -269,6 +269,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return new Dictionary<string, string>();
             switch (packageId)
             {
+                case "com.ivanmurzak.unity.mcp.inputsystem":
+                    return new Dictionary<string, string> { ["com.unity.inputsystem"] = "1.19.0" };
                 case "com.ivanmurzak.unity.mcp.navigation":
                     return new Dictionary<string, string> { ["com.unity.ai.navigation"] = "2.0.10" };
                 case "com.ivanmurzak.unity.mcp.probuilder":
