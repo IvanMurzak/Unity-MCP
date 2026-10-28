@@ -15,6 +15,14 @@
 - **A player connects as a runtime.** `UnityMcpPluginRuntime` declares McpPlugin's `ClientRole.Runtime` (sent at
   connect), so GameDev-MCP-Server keeps a running player beside the Editor. The `" (runtime)"` handshake suffix is
   gone. McpPlugin 8.14.0-dev.e8985d5 (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_23`).
+- **RQL arguments by name, side-effect-free overloads, compact receipts** (RQL main 2877579, temporary
+  pre-release DLLs 0.3.0-dev.2877579, gate `UNITY_MCP_DEPS_24`). A lone object literal binds parameters by name:
+  `editor | call CreateGameObject({name: "Crate", primitive: "Cube", position: [1, 0, 2]})`, also in a bulk create
+  (`range(0, 300) | call editor.CreateGameObject({name: "C" + $, ...})`), validated before the first call and undone
+  as one step. Trying an overload no longer creates anything, dry runs included, and a typo inside a placement
+  literal is reported against the placement overload. Unity objects are never built from object literals; RQL now
+  refuses that itself (`… is an engine object …`), so the plugin's own refusal is gone. Receipts of 2 or more rows
+  print a shared method once, drop a `$ref` column equal to the result, and list 50 rows plus a count.
 
 ### Added
 

@@ -116,6 +116,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "                         bulk create, one call per item: a 15x20 grid in ONE request and ONE Undo step; each receipt row has the new object's $ref\n" +
             "  [[\"Crate\", [0, 0, 0]], [\"Barrel\", [2, 0, 0]]] | call editor.CreateGameObject($[0], {primitive: \"Cube\", position: $[1]})   one per entry\n" +
             "                         {placement}: primitive, parent: ref(…), position / rotation (Euler degrees) / scale as [x, y, z], local to the parent\n" +
+            "  editor | call CreateGameObject({name: \"Crate\", primitive: \"Cube\", position: [1, 0, 2], scale: [2, 2, 2]})   arguments by name: one literal, any order, the rest default\n" +
             "  objects | where name == \"Crate\" | call AddComponent(\"Rigidbody\")           add a component by type name\n" +
             "  objects | where name == \"Old\" | call Destroy()                             remove a GameObject (components: get components | where $ is X | call Destroy())\n" +
             "  objects | where name == \"Lamp\" | set transform.parent = ref(\"GameObject#1234\")   reparent (keeps the world position)\n" +
