@@ -163,13 +163,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         static async Task<SerializedMember?> RunOnMainThread(PreparedSnippet prepared, SerializedMemberList? parameters)
         {
+            if (DeferForReload())
+                throw new Exception(ReloadPendingMessage); // run nothing: the reload goes first
             var logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute");
             var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
             if (parameters != null)
                 prepared = prepared.WithValues(parameters.Select(p => reflector.Deserialize(data: p, logger: logger)).ToList());
 
-            if (CompilePending())
-                throw new Exception(ReloadPendingMessage); // run nothing: the reload goes first
             var (result, stoppedForReload) = await RunHoldingReload(prepared);
             if (stoppedForReload)
                 throw new Exception(ReloadStopMessage);

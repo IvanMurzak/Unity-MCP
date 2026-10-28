@@ -91,21 +91,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         }
 
         // Wave 6: an agent polling with script-execute after writing a script kept the reload held forever (each call locks
-        // it until 1 s after its reply): isCompiling stayed true for minutes. While a compile waits, a call runs nothing.
+        // it until 1 s after its reply): isCompiling stayed true for minutes. A compile our lock held defers new calls.
         [Test]
-        public void ACallMadeWhileScriptsCompileRunsNothing()
+        public void ACompileOurLockHeldDefersCallsUntilItReloads()
         {
-            var saved = Tool_Script.CompilePending;
-            UnityEditor.SessionState.EraseBool("wave6.reload.ran");
-            Tool_Script.CompilePending = () => true;
+            var t0 = new System.DateTime(2026, 10, 28, 12, 0, 0, System.DateTimeKind.Utc);
+            Tool_Script.DeferForReload(compiling: false, playing: false, reloadLocked: false, t0); // reset
             try
             {
-                StringAssert.Contains(Tool_Script.ReloadPendingMessage, Fails(Tool_Script.ScriptExecuteToolId,
-                    new { csharpCode = "UnityEditor.SessionState.SetBool(\"wave6.reload.ran\", true); 1" }));
-                Assert.IsFalse(UnityEditor.SessionState.GetBool("wave6.reload.ran", false), "the snippet must not run");
+                Assert.IsFalse(Tool_Script.DeferForReload(true, false, false, t0), "a compile we never held: calls run");
+                Assert.IsTrue(Tool_Script.DeferForReload(true, false, true, t0), "pending while our lock holds the reload");
+                Assert.IsTrue(Tool_Script.DeferForReload(true, false, false, t0.AddSeconds(5)), "still pending after the lock dropped");
+                Assert.IsFalse(Tool_Script.DeferForReload(true, false, false, t0 + Tool_Script.DeferLimit), "not forever");
+                Assert.IsFalse(Tool_Script.DeferForReload(false, false, false, t0.AddSeconds(61)), "reloaded: reset");
+                Assert.IsFalse(Tool_Script.DeferForReload(true, false, false, t0.AddSeconds(62)), "a new compile starts unheld");
+                Assert.IsFalse(Tool_Script.DeferForReload(true, true, true, t0.AddSeconds(63)), "Play Mode never defers");
             }
-            finally { Tool_Script.CompilePending = saved; }
-            Assert.AreEqual("System.Int32: 1", Run("1"), "runs again once no compile waits");
+            finally { Tool_Script.DeferForReload(false, false, false, t0); }
         }
 
         [Test]

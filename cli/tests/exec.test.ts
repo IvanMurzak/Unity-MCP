@@ -124,6 +124,18 @@ describe('execCode', () => {
     expect(explicit.invoke).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: 5_000 }));
   });
 
+  it('re-sends a snippet the plugin deferred for a script reload', async () => {
+    const deferred: RunToolResult = {
+      kind: 'success', success: true, endpoint: 'e', httpStatus: 200,
+      data: { status: 'error', content: [{ type: 'text', text: "Tool execution failed for 'Script / Execute': Scripts are compiling and reload next, so this snippet was not run" }] },
+    };
+    const d = { ...deps(), sleep: vi.fn(async () => {}) };
+    d.invoke.mockResolvedValueOnce(deferred).mockResolvedValueOnce(deferred);
+    expect(await execCode(options(d))).toMatchObject({ kind: 'success' });
+    expect(d.invoke).toHaveBeenCalledTimes(3);
+    expect(d.sleep).toHaveBeenCalledTimes(2);
+  });
+
   it('passes a failed tool call through', async () => {
     const failure: RunToolResult = { kind: 'failure', success: false, endpoint: 'e', reason: 'http-error', httpStatus: 500, message: 'boom' };
     const d = deps();
