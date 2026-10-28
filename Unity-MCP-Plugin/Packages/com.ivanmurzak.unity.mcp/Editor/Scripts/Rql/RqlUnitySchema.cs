@@ -106,15 +106,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 var package = assembly == null ? null : UnityEditor.PackageManager.PackageInfo.FindForAssembly(assembly);
                 return package != null && package.name.StartsWith(ExtensionPrefix, StringComparison.Ordinal) ? package : null;
             }
-            var moduleTypes = UnityEditor.TypeCache.GetTypesDerivedFrom<IRqlModule>().ToDictionary(t => t.FullName ?? t.Name, StringComparer.Ordinal);
+            // GroupBy: two assemblies can hold a module of the same full name (a copied module, two package versions).
+            var moduleTypes = UnityEditor.TypeCache.GetTypesDerivedFrom<IRqlModule>()
+                .GroupBy(t => t.FullName ?? t.Name, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
             var modules = engine.Modules
                 .Select(m => (report: m, package: moduleTypes.TryGetValue(m.Module, out var t) ? ExtensionOf(t.Assembly) : null))
                 .Where(m => m.package != null).ToList();
-            if (modules.Count == 0) return;
             var adds = engine.Sources.Values.Select(src => (package: ExtensionOf(src.Getter.Method.DeclaringType?.Assembly), what: "source " + src.Name))
                 .Concat(engine.Functions.Select(f => (package: ExtensionOf(f.Value.Method.DeclaringType?.Assembly), what: "function " + f.Key)))
                 .Where(x => x.package != null).ToLookup(x => x.package!.name, x => x.what);
-            sb.Append("extensions (installed packages, always active: nothing to turn on):\n");
+            if (modules.Count > 0) sb.Append("extensions (installed packages, always active: nothing to turn on):\n");
             foreach (var group in modules.GroupBy(m => m.package!.name).OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 var package = group.First().package!;

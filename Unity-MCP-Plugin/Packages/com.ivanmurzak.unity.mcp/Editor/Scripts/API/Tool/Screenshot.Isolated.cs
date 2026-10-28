@@ -483,6 +483,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // so no defensive clamp is needed here.
             var fovRad = fov * 0.5f * Mathf.Deg2Rad;
             var distance = (radius * padding) / Mathf.Sin(fovRad);
+            // The camera stands back by the bounding radius: a large target (a default 1000 m terrain) would otherwise lie past
+            // the far plane and render as background only.
+            cam.farClipPlane = Mathf.Max(far, distance + radius * 1.1f);
 
             var (dir, up) = GetViewDirectionAndUp(view);
             cameraGo.transform.position = bounds.center + dir * distance;
