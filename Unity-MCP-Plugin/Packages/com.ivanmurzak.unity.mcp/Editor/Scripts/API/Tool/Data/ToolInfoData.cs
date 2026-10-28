@@ -27,7 +27,7 @@ namespace AIGD
         public string Name { get; set; } = string.Empty;
 
         [JsonInclude, JsonPropertyName("visible")]
-        [Description("Listed for MCP clients (tools/list). false = hidden: not listed, but still runs when called by name.")]
+        [Description("Offered to MCP clients (tools/list). false = hidden: not offered to this client; the user can show it in the Tools window.")]
         public bool Visible { get; set; }
 
         [JsonInclude, JsonPropertyName("description")]

@@ -30,6 +30,8 @@
   Unity-MCP extension package (always active: there is nothing to turn on) with the sources and functions it adds,
   and the guide topics; `rql-schema "guide:<topic>"` prints that guide (the text the unity-rql skill carries). In
   wave-6 testing an agent asked to "turn on every extension" spent 60 turns reflecting over assemblies instead.
+- **`unity-tool-list` shows `Visible`.** Hidden tools are listed with `Visible: false`, and the tool says plainly that
+  they are not offered to this client: ask the user to show one in the Tools window (or via `unity-mcp-cli configure`).
 - **`screenshot-isolated` frames a Terrain.** A Terrain has no Renderer component, so the tool reported "No Renderers
   found"; its TerrainData bounds now count (when the Terrain module is present).
 
