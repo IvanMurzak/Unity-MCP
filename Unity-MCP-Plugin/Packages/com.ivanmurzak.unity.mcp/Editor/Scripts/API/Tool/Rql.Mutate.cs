@@ -31,11 +31,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             string query,
             [Description("true = preview the receipt without changing anything")]
             bool dry_run = false,
-            [Description("Raise the limit of 200 targets per call for an intended bulk change (at most 1000; 0 = the default 200)")]
-            int max_targets = 0
+            [Description("Raise the limit of 200 targets per call for an intended bulk change (1 to 1000); omit it for the default 200")]
+            int? max_targets = null
         )
         {
-            return Run(() => RqlUnity.Mutate(query, dry_run, max_targets > 0 ? max_targets : (int?)null));
+            return Run(() => RqlUnity.Mutate(query, dry_run, max_targets));
         }
     }
 }

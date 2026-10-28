@@ -9,11 +9,16 @@
 */
 
 #nullable enable
+using System.Text.Json;
+using System.Text.RegularExpressions;
+using com.IvanMurzak.McpPlugin.Common.Model;
+using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters;
 using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 {
@@ -180,6 +185,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertOk(RqlUnity.Mutate("objects | where name == \"Many\" | get children | first 160 | set active = true"));
             Assert.IsTrue(root.transform.GetChild(159).gameObject.activeSelf);
             Assert.IsFalse(root.transform.GetChild(160).gameObject.activeSelf);
+        }
+
+        // max_targets outside 1 … the host ceiling is refused before anything runs; the tool's omitted argument is the default.
+        [Test]
+        public void MaxTargetsOutOfRangeIsRefused()
+        {
+            var go = new GameObject("Limited");
+            const string Query = "objects | where name == \"Limited\" | set active = false";
+            AssertFails(RqlUnity.Mutate(Query, maxTargets: 0), "invalid-value", "max_targets");
+            AssertFails(RqlUnity.Mutate(Query, maxTargets: RqlUnity.HardMaxTargets + 1), "invalid-value");
+            Assert.IsTrue(go.activeSelf);
+
+            // The plugin logs every error reply it sends to the agent.
+            LogAssert.Expect(LogType.Error, new Regex("invalid-value: max_targets must be from 1"));
+            var zero = CallThroughMcpPlugin(Tool_Rql.MutateToolId, JsonSerializer.Serialize(new { query = Query, max_targets = 0 }));
+            Assert.AreEqual(ResponseStatus.Error, zero.Value!.Status, Text(zero.Value));
+            StringAssert.Contains("invalid-value", Text(zero.Value));
+            Assert.IsTrue(go.activeSelf);
+            var omitted = CallThroughMcpPlugin(Tool_Rql.MutateToolId, JsonSerializer.Serialize(new { query = Query }));
+            Assert.AreEqual(ResponseStatus.Success, omitted.Value!.Status, Text(omitted.Value));
+            Assert.IsFalse(go.activeSelf);
         }
 
         [Test]
