@@ -28,8 +28,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         /// <summary>What an agent should do about a hidden tool (owner's design: visibility is the user's choice).</summary>
         public const string HiddenToolHint =
-            "Hidden tools (Visible false) are not offered to this client; ask the user to show one in the Tools window " +
-            "(or via unity-mcp-cli configure) instead of changing visibility yourself.";
+            "Hidden tools (Visible false) are not offered to MCP clients; ask the user to show one in the MCP Tools window " +
+            "(Window > AI Game Developer — MCP, Tools > Open) or with unity-mcp-cli configure --enable-tools <name>, " +
+            "instead of changing visibility yourself.";
 
         static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(200);
 

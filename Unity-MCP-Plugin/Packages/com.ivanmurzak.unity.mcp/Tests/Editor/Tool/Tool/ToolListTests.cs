@@ -77,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Assert.AreEqual(false, VisibleOf(hidden), json);
                 Assert.AreEqual(true, VisibleOf(Tool_Tool.ToolListId), json);
                 var listTool = toolManager.GetAllTools().First(t => t.Name == Tool_Tool.ToolListId);
-                StringAssert.Contains("ask the user to show one in the Tools window", listTool.Description);
+                StringAssert.Contains(Tool_Tool.HiddenToolHint, listTool.Description);
             }
             finally { toolManager.SetToolVisible(hidden, wasVisible); }
         }
