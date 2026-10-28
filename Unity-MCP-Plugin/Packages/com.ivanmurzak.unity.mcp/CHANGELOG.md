@@ -62,6 +62,11 @@
 
 ### Fixed
 
+- **The Input System extension compiles on Unity 6.6.** Its native floor `com.unity.inputsystem` 1.8.2 fails there
+  (`CS0619`: `TreeViewState` / `TreeViewItem` are obsolete as errors, about 260 errors; a batchmode editor exits).
+  On Unity 6000.6 and later, the editor's extension panel, `unity-mcp-cli`, the self-contained installer and
+  `commands/extensions.py prepare` now raise an older Input System pin to 1.19.0, as they already did for Navigation,
+  ProBuilder and Tilemap. Newer or custom pins are kept.
 - **`tests-run` filters: the check before the run now counts exactly what Unity runs** (#969). It matched any one
   filter while Unity requires all of them, so a filter selecting nothing (an assembly with a class that is not in it)
   answered with the summary of an empty run instead of "no tests found"; a parameterized `testMethod`, a

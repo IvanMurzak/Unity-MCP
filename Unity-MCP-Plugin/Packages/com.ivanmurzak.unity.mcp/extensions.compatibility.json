@@ -3,6 +3,10 @@
   "minimumUnityVersion": "6000.6",
   "extensions": [
     {
+      "packageId": "com.ivanmurzak.unity.mcp.inputsystem",
+      "dependencies": { "com.unity.inputsystem": "1.19.0" }
+    },
+    {
       "packageId": "com.ivanmurzak.unity.mcp.navigation",
       "dependencies": { "com.unity.ai.navigation": "2.0.10" }
     },

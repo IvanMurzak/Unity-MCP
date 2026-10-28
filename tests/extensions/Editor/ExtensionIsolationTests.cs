@@ -24,6 +24,7 @@ namespace UnityMcp.Monorepo.Tests
     public sealed class ExtensionCompatibilityTests
     {
         static readonly object[][] Cases = {
+            new object[] { "InputSystem", "com.unity.inputsystem", "1.19.0" },
             new object[] { "Navigation", "com.unity.ai.navigation", "2.0.10" },
             new object[] { "ProBuilder", "com.unity.probuilder", "6.1.3" },
             new object[] { "Tilemap", "com.unity.2d.tilemap.extras", "7.0.1" }
