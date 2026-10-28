@@ -222,10 +222,10 @@ namespace com.IvanMurzak.Unity.MCP
                 foreach (var prompt in promptManager.GetAllPrompts())
                 {
                     var promptFeature = unityConnectionConfig.Prompts.FirstOrDefault(p => p.Name == prompt.Name);
-                    var isEnabled = promptFeature?.Visible ?? prompt.Enabled;
-                    promptManager.SetPromptEnabled(prompt.Name, isEnabled);
-                    _logger.LogDebug("{method}: Prompt '{prompt}' enabled: {isEnabled}",
-                        nameof(ApplyConfigToMcpPlugin), prompt.Name, isEnabled);
+                    var isVisible = promptFeature?.Visible ?? prompt.Enabled;
+                    promptManager.SetPromptEnabled(prompt.Name, isVisible);
+                    _logger.LogDebug("{method}: Prompt '{prompt}' visible: {isVisible}",
+                        nameof(ApplyConfigToMcpPlugin), prompt.Name, isVisible);
                 }
             }
 
@@ -236,10 +236,10 @@ namespace com.IvanMurzak.Unity.MCP
                 foreach (var resource in resourceManager.GetAllResources())
                 {
                     var resourceFeature = unityConnectionConfig.Resources.FirstOrDefault(r => r.Name == resource.Name);
-                    var isEnabled = resourceFeature?.Visible ?? resource.Enabled;
-                    resourceManager.SetResourceEnabled(resource.Name, isEnabled);
-                    _logger.LogDebug("{method}: Resource '{resource}' enabled: {isEnabled}",
-                        nameof(ApplyConfigToMcpPlugin), resource.Name, isEnabled);
+                    var isVisible = resourceFeature?.Visible ?? resource.Enabled;
+                    resourceManager.SetResourceEnabled(resource.Name, isVisible);
+                    _logger.LogDebug("{method}: Resource '{resource}' visible: {isVisible}",
+                        nameof(ApplyConfigToMcpPlugin), resource.Name, isVisible);
                 }
             }
 

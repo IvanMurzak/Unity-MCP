@@ -24,18 +24,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     {
         private sealed class ProbeRuntime : UnityMcpPluginRuntime
         {
-            public ClientRole Role => unityConnectionConfig.ClientRole;
             public string Environment => BuildVersion().Environment;
             public static void Declare(IMcpPluginBuilder builder) => DeclareRuntimeRole(builder);
         }
 
         [Test]
-        public void TheRuntimeConfig_IsARuntime_AndTheHandshakeEnvironmentIsTheUnityVersion()
+        public void TheRuntimeHandshakeEnvironment_IsTheUnityVersion_WithoutASuffix()
         {
             var runtime = new ProbeRuntime();
             try
             {
-                Assert.AreEqual(ClientRole.Runtime, runtime.Role);
                 Assert.AreEqual(Application.unityVersion, runtime.Environment);
             }
             finally { runtime.Dispose(); }

@@ -27,7 +27,6 @@ namespace com.IvanMurzak.Unity.MCP
         protected UnityMcpPluginRuntime(UnityConnectionConfig? config = null) : base()
         {
             unityConnectionConfig = config ?? new UnityConnectionConfig();
-            unityConnectionConfig.ClientRole = ClientRole.Runtime;
             IncrementSingletonCount();
         }
 
@@ -37,7 +36,7 @@ namespace com.IvanMurzak.Unity.MCP
         /// (GameDev-MCP-Server plugin roles). Applied after the developer's <c>WithConfig</c> calls, so a game never
         /// registers as the Editor.
         /// </summary>
-        protected static IMcpPluginBuilder DeclareRuntimeRole(IMcpPluginBuilder builder)
+        protected static void DeclareRuntimeRole(IMcpPluginBuilder builder)
             => builder.WithConfig(config => config.ClientRole = ClientRole.Runtime);
 
         internal IMcpPlugin BuildFromBuilder(IMcpPluginBuilder builder)

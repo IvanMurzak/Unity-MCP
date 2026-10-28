@@ -12,7 +12,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.Linq;
-using System.Text.Json;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
@@ -61,17 +60,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return base.TearDown();
         }
 
-        static bool SuccessOf(string json, string toolName)
-        {
-            using var doc = JsonDocument.Parse(json);
-            var root = doc.RootElement;
-            if (root.TryGetPropertyCI("result", out var resultEl))
-                root = resultEl;
-            Assert.IsTrue(root.TryGetPropertyCI("success", out var success), "No 'success' property found in JSON");
-            Assert.IsTrue(success.TryGetPropertyCI(toolName, out var value), $"No entry for tool '{toolName}'");
-            return value.GetBoolean();
-        }
-
         [UnityTest]
         public IEnumerator SetVisibility_HidesAndShowsATool()
         {
@@ -81,13 +69,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var json = RunTool(Tool_Tool.ToolSetVisibilityId, $@"{{
                 ""tools"": [{{ ""name"": ""{HiddenProbeToolId}"", ""visible"": false }}]
             }}").Value!.ToolResultJson();
-            Assert.IsTrue(SuccessOf(json, HiddenProbeToolId));
+            Assert.IsTrue(ToolSetEnabledStateTests.GetSuccessValue(json, HiddenProbeToolId));
             Assert.IsFalse(toolManager.IsToolVisible(HiddenProbeToolId), "the tool should be hidden");
 
             json = RunTool(Tool_Tool.ToolSetVisibilityId, $@"{{
                 ""tools"": [{{ ""name"": ""{HiddenProbeToolId}"", ""visible"": true }}]
             }}").Value!.ToolResultJson();
-            Assert.IsTrue(SuccessOf(json, HiddenProbeToolId));
+            Assert.IsTrue(ToolSetEnabledStateTests.GetSuccessValue(json, HiddenProbeToolId));
             Assert.IsTrue(toolManager.IsToolVisible(HiddenProbeToolId), "the tool should be visible again");
         }
 
@@ -115,7 +103,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ""tools"": [{{ ""name"": ""{HiddenProbeToolId}"", ""enabled"": false }}]
             }}").Value!.ToolResultJson();
 
-            Assert.IsTrue(SuccessOf(json, HiddenProbeToolId));
+            Assert.IsTrue(ToolSetEnabledStateTests.GetSuccessValue(json, HiddenProbeToolId));
             Assert.IsFalse(toolManager.IsToolVisible(HiddenProbeToolId), "the old tool name must still hide the tool");
         }
 

@@ -13,6 +13,7 @@ using AIGD;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -58,14 +59,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (tools == null || tools.Length == 0)
                 throw new ArgumentException(Error.ToolsArrayIsNullOrEmpty());
 
-            var requests = new List<(string? Name, bool Visible)>(tools.Length);
-            foreach (var input in tools)
-                requests.Add((input?.Name, input?.Visible ?? false));
-            return ApplyVisibility(requests, includeLogs == true);
+            return ApplyVisibility(tools.Select(t => (t?.Name, t?.Visible ?? false)), includeLogs == true);
         }
 
         /// <summary>Shared by <see cref="SetVisibility"/> and its deprecated alias <see cref="SetEnabledState"/>.</summary>
-        static ToolToggleResult ApplyVisibility(IReadOnlyList<(string? Name, bool Visible)> requests, bool includeLogs)
+        static ToolToggleResult ApplyVisibility(IEnumerable<(string? Name, bool Visible)> requests, bool includeLogs)
         {
             return MainThread.Instance.Run(() =>
             {

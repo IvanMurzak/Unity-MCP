@@ -13,6 +13,7 @@ using AIGD;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Model;
 using com.IvanMurzak.ReflectorNet.Utils;
@@ -58,10 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (tools == null || tools.Length == 0)
                 throw new ArgumentException(Error.ToolsArrayIsNullOrEmpty());
 
-            var requests = new List<(string? Name, bool Visible)>(tools.Length);
-            foreach (var input in tools)
-                requests.Add((input?.Name, input?.Enabled ?? false));
-            return ApplyVisibility(requests, includeLogs == true);
+            return ApplyVisibility(tools.Select(t => (t?.Name, t?.Enabled ?? false)), includeLogs == true);
         }
     }
 }

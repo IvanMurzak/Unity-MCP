@@ -70,7 +70,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return base.TearDown();
         }
 
-        static bool GetSuccessValue(string json, string toolName)
+        internal static bool GetSuccessValue(string json, string toolName)
         {
             using var doc = JsonDocument.Parse(json);
             var root = doc.RootElement;
