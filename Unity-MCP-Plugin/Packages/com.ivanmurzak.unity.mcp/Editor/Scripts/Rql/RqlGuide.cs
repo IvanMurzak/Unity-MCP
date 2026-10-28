@@ -45,7 +45,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  recurse children [max-depth=N] [include-self=false]   walk the hierarchy (input items included by default)\n" +
             "  distinct [expr] | sum expr | min expr | max expr | avg expr   (distinct keeps whole items; values: get tag | distinct)\n" +
             "  group-by expr                      rows key|count; group-by a, b (or kind=$type) gives one column per key, then count;\n" +
-            "                                     items = the group's items: … | where $ is Light | group-by type | select key, count, avg = items.avg(intensity)\n" +
+            "                                     items = the group's items: … | where $ is Light | group-by type | select key count avg=(items.avg(intensity))\n" +
             "Expressions: == != < <= > >= and or not + - * / %; contains, starts-with, ends-with (case-insensitive); " +
             "matches \"regex\"; x in [a, b]; x is null; x is not null; $ is Light (includes subclasses); has(member); " +
             "c ? a : b or if(c, a, b) (only the taken branch runs; where a stage takes one expression, wrap it: select kind=($ is Light ? \"light\" : \"other\")). " +
@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "replace(s, from, to) (case-insensitive), replace-regex(s, pattern, repl) ($1 = group 1), substring(s, start[, length]), " +
             "split(s, sep), trim(s), pad(v, width[, fill]) — also as methods: name.replace(\"Old\", \"New\"), name.substring(0, 4).\n" +
             "Paths: a.b.c, list[0], map[\"key\"]; .member on a list maps over its elements. List methods: .any(pred) .all(pred) " +
-            ".count([pred]) .sum(e) .min(e) .max(e) .first([pred]); inside them bare names refer to the element, falling back to the outer item.\n" +
+            ".count([pred]) .sum(e) .avg(e) .min(e) .max(e) .first([pred]); inside them bare names refer to the element, falling back to the outer item.\n" +
             "Meta: $ (current item), $ref (stable id such as Light#1234), $type, $path (the item's place in this query, e.g. roots[0].children[2]), $index, $depth. Enums compare to strings (type == \"Spot\", or the Inspector's name: shadowCastingMode == \"Two Sided\"); " +
             "== on strings is case-sensitive.\n" +
             "Unity: GameObject has components (list), children (list), active, name, path (hierarchy path \"Level/Props/Crate\"), tag, " +

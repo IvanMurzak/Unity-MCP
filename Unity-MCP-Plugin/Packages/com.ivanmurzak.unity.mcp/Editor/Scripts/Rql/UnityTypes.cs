@@ -111,10 +111,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return _index = Freeze(byName);
         }
 
-        // Member names declared by UnityEngine.Object and module item types (once per domain), and the engine whose adapters'
-        // members were added on top of them.
+        // Member names declared by UnityEngine.Object and module item types (once per domain), and the engine (with its adapter
+        // count, so an adapter added later is picked up) whose adapters' members were added on top of them.
         private static HashSet<string>? _declaredMembers;
-        private static (RqlEngine engine, HashSet<string> names)? _members;
+        private static (RqlEngine engine, int adapters, HashSet<string> names)? _members;
 
         /// <summary>
         /// <see cref="RqlEngine.IsKnownMember"/>: whether a UnityEngine.Object type (components, ScriptableObjects, assets, user
@@ -126,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public static bool IsKnownMember(RqlEngine engine, string name)
         {
             var cached = _members;
-            if (cached == null || cached.Value.engine != engine)
+            if (cached == null || cached.Value.engine != engine || cached.Value.adapters != engine.Adapters.Count)
             {
                 var names = new HashSet<string>(_declaredMembers ??= DeclaredMembers(), StringComparer.OrdinalIgnoreCase);
                 foreach (var adapter in engine.Adapters)
@@ -137,7 +137,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                     }
                     catch (Exception) { } // a target whose members cannot be read contributes nothing (a throwing hook reads as "unknown")
                 }
-                _members = cached = (engine, names);
+                _members = cached = (engine, engine.Adapters.Count, names);
             }
             return cached.Value.names.Contains(name);
         }
