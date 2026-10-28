@@ -43,6 +43,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             result = null;
             reason = null;
+            // RQL builds an object literal by constructing the target type: for a GameObject that would put a new object in the
+            // scene (an overload tried with {…} for a GameObject parameter included), and components / assets cannot be made so.
+            if (value is ObjectValue)
+            {
+                reason = $"an object literal cannot become a {target.Name} (pass ref(\"…\"), unity.find(\"…\") or an asset path)";
+                return AdapterOutcome.Failed;
+            }
             if (!(value is string text) || !TryAssetPath(text, out var path)) return AdapterOutcome.NotHandled;
             var asset = UnityEditor.AssetDatabase.LoadAssetAtPath(path, target);
             if (asset == null)

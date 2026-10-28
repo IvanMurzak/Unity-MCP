@@ -19,12 +19,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
     public sealed partial class RqlEditorApi
     {
-        [RqlCallable("instantiate a prefab asset (path \"Assets/…/X.prefab\") as a linked instance, optionally under a parent at a local position; returns it (undoable)")]
-        public GameObject InstantiatePrefab(string path, GameObject? parent = null, Vector3? position = null)
+        [RqlCallable("instantiate a prefab asset (path \"Assets/…/X.prefab\") as a linked instance, optionally under a parent at a local position, " +
+                     "rotation (Euler degrees) and scale; returns it (undoable)")]
+        public GameObject InstantiatePrefab(string path, GameObject? parent = null, Vector3? position = null, Vector3? rotation = null, Vector3? scale = null)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path) ?? throw new ArgumentException($"no prefab at '{path}'");
-            return Place((GameObject)PrefabUtility.InstantiatePrefab(prefab), parent, position, "RQL instantiate " + prefab.name);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path) ?? throw new ArgumentException(NoPrefab(path));
+            return Place((GameObject)PrefabUtility.InstantiatePrefab(prefab), parent, position, rotation, scale, "RQL instantiate " + prefab.name);
         }
+
+        [RqlCallable("instantiate a prefab asset placed by an object literal {parent, position, rotation (Euler degrees), scale}, " +
+                     "e.g. InstantiatePrefab(\"Assets/Prefabs/Coin.prefab\", {position: [0, 1, 0]}); returns it (undoable)")]
+        public GameObject InstantiatePrefab(string path, RqlPlacement? placement)
+        {
+            if (ValidateInstantiatePrefab(path, placement) is string problem) throw new ArgumentException(problem);
+            return InstantiatePrefab(path, placement?.parent, placement?.position, placement?.rotation, placement?.scale);
+        }
+
+        // Checked for every item before the first call (and on dry runs).
+        public string? ValidateInstantiatePrefab(string path, GameObject? parent, Vector3? position, Vector3? rotation, Vector3? scale) =>
+            AssetDatabase.LoadAssetAtPath<GameObject>(path) == null ? NoPrefab(path) : null;
+
+        public string? ValidateInstantiatePrefab(string path, RqlPlacement? placement) =>
+            !string.IsNullOrEmpty(placement?.primitive) ? "a prefab instance takes no primitive (CreateGameObject makes primitives)"
+            : ValidateInstantiatePrefab(path, placement?.parent, placement?.position, placement?.rotation, placement?.scale);
+
+        private static string NoPrefab(string path) => $"no prefab at '{path}'";
 
         [RqlCallable("open a prefab asset in prefab editing mode; its contents are then the prefab source")]
         public GameObject OpenPrefab(string path)

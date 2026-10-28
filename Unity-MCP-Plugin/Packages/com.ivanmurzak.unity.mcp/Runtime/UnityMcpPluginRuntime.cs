@@ -29,6 +29,21 @@ namespace com.IvanMurzak.Unity.MCP
             IncrementSingletonCount();
         }
 
+        /// <summary>
+        /// Appended to the handshake's <c>environment</c> (the Unity version): the MCP server classifies a connection whose
+        /// environment ends in <c>(runtime)</c> as a game, so a running player is kept beside the Editor instead of replacing
+        /// it (GameDev-MCP-Server plugin roles). A <c>client_role=runtime</c> hub parameter would say it at connect time, but
+        /// McpPlugin does not let a plugin add one yet.
+        /// </summary>
+        public const string RuntimeEnvironmentSuffix = " (runtime)";
+
+        protected override McpPlugin.Common.Version BuildVersion()
+        {
+            var version = base.BuildVersion();
+            version.Environment += RuntimeEnvironmentSuffix;
+            return version;
+        }
+
         internal IMcpPlugin BuildFromBuilder(IMcpPluginBuilder builder)
         {
             _logger.LogTrace("{method} called.", nameof(BuildFromBuilder));

@@ -1,7 +1,7 @@
 # Vendored: Code-Exec (C#)
 
 `Core/` and `Roslyn/` are copied verbatim from [IvanMurzak/Code-Exec](https://github.com/IvanMurzak/Code-Exec) `main` at
-commit `21dd065` (execution guards, Code-Exec PR #7), which is **not released yet**: release **0.3.2-dev.21dd065**, a
+commit `2b784e4` (execution guards, Code-Exec PRs #7 and #8), which is **not released yet**: release **0.3.2-dev.2b784e4**, a
 pre-release on top of 0.3.1 (tag `nuget-v0.3.1`, commit `96c2919`). The release guard
 (`commands/release_dependency_guard.py`) refuses this marker on purpose: before a Unity-MCP release, copy the files again
 from the published Code-Exec release and record that version here.
@@ -23,7 +23,7 @@ b66fc569401fbe1491beb10b4814f8ef2e0a633d8731914859ff5e4eedb1ffba *Core/CodeRunne
 eb6777505f7afe05cc051ecd32d97d62296ebc795dcbe611a400acff8cd4d116 *Core/Limits.cs
 22a082265c5180b2d2bca913efbe7580df74f27d7cf41ba4d0d19b513c084af2 *Core/References.cs
 3169f7daa632f51c4990d189e540f229a592db1873d87a4b442c8bf414e1c7e0 *Core/Support.cs
-4a334d8cf39db1caca12bdbc80192df525b587fcb65bf61ab40468f66b884e39 *Roslyn/GuardWriter.cs
-720c63d9bcf2883c39a7c076b8d51ef7666bf074dba368346e49604667154849 *Roslyn/RoslynCSharpCompiler.cs
+8d1e5d913c1a4d4751e67c61929aa11658243c560eaac05541f0c7d98738d403 *Roslyn/GuardWriter.cs
+c569f7e99ceacf8d4795a569d2b6de268cabf0c287ab5d1cb92113508b788052 *Roslyn/RoslynCSharpCompiler.cs
 cda17a995db83cd7dd61cfc978fb587f2cc862e56f461d0aefd32865bdfb610d *Roslyn/SnippetWriter.cs
 ```

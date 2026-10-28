@@ -94,11 +94,13 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             if (request.Guards)
             {
                 // The guard calls go in last: the spans above (the result expression) point into the unguarded snippet.
+                // Guards change no declaration: every tree is read against the same unguarded compilation (bound once).
+                var unguarded = compilation;
                 for (var i = 0; i < trees.Count; i++)
                 {
                     if (trees[i].FilePath == ExecutionGuard.FileName)
                         continue;
-                    var guarded = GuardWriter.Write(trees[i]);
+                    var guarded = GuardWriter.Write(trees[i], unguarded);
                     if (guarded == trees[i])
                         continue;
                     compilation = compilation.ReplaceSyntaxTree(trees[i], guarded);

@@ -21,6 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         public override string Description => "Vector2Int: write as \"(x, y)\" or [x, y] with whole numbers";
         protected override string Expected => "(x, y) or [x, y] with whole numbers";
         protected override int Width => 2;
+        // Component-wise arithmetic; a result with a fractional component (cell / 2 of an odd cell) is a type-mismatch, not truncated.
+        protected override bool Arithmetic => true;
         protected override float Part(Vector2Int v, int i) => i switch { 0 => v.x, _ => v.y };
         protected override float Tolerance => 0;
 
@@ -28,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         {
             if (f.Length != 2) return null;
             foreach (var x in f) if (Math.Abs(x - Math.Round(x)) > 1e-6) return null;
-            return new Vector2Int((int)f[0], (int)f[1]);
+            return new Vector2Int((int)Math.Round(f[0]), (int)Math.Round(f[1]));
         }
     }
 }
