@@ -12,7 +12,6 @@
 using System.IO;
 using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.Rql;
-using com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -21,16 +20,15 @@ using UnityEngine.SceneManagement;
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 {
     /// <summary>The <c>settings</c> source: Project Settings pages, written undoably and saved to ProjectSettings/.</summary>
-    public class RqlProjectSettingsTests : AdapterTestBase
+    public class RqlProjectSettingsTests : EditorApiTestBase
     {
         private Vector3 _gravity;
         private float _fixedDeltaTime;
         private int _vSyncCount;
         private string _productName = "";
         private EditorBuildSettingsScene[] _buildScenes = new EditorBuildSettingsScene[0];
-        private const string BuildProbeFolder = "Assets/RqlBuildProbe";
-        private const string LevelA = BuildProbeFolder + "/LevelA.unity";
-        private const string LevelB = BuildProbeFolder + "/LevelB.unity";
+        private const string LevelA = Folder + "/LevelA.unity";
+        private const string LevelB = Folder + "/LevelB.unity";
 
         [SetUp]
         public void Remember()
@@ -50,7 +48,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             QualitySettings.vSyncCount = _vSyncCount;
             PlayerSettings.productName = _productName;
             EditorBuildSettings.scenes = _buildScenes;
-            AssetDatabase.DeleteAsset(BuildProbeFolder);
             // Script setters do not dirty the settings assets: dirty them, so a test that saved its value cannot leave it on disk.
             foreach (var file in new[] { "DynamicsManager", "TimeManager", "QualitySettings", "ProjectSettings", "EditorBuildSettings" })
                 foreach (var asset in RqlProjectSettings.Asset(file))
@@ -126,9 +123,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 
         // ---------------------------------------------------------------- build (scenes in the build)
 
+        private static string[] BuildPaths() => EditorBuildSettings.scenes.Select(s => s.path).ToArray();
+
         private static void SceneAssets(params string[] paths)
         {
-            if (!AssetDatabase.IsValidFolder(BuildProbeFolder)) AssetDatabase.CreateFolder("Assets", "RqlBuildProbe");
             foreach (var path in paths)
             {
                 // an empty scene file (the test's own scene stays untitled, so no NewScene + SaveScene here)
@@ -146,12 +144,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.AreEqual(LevelA, Cell(Q("settings | select first=(build.scenes[0])")));
 
             AssertOk(M($"settings | set build.scenes = append(build.scenes, \"{LevelB}\")"));
-            CollectionAssert.AreEqual(new[] { LevelA, LevelB }, EditorBuildSettings.scenes.Select(s => s.path).ToArray());
+            CollectionAssert.AreEqual(new[] { LevelA, LevelB }, BuildPaths());
             Assert.IsTrue(EditorBuildSettings.scenes.All(s => s.enabled));
             Assert.IsFalse(SceneManager.GetActiveScene().isDirty);
 
             Undo.PerformUndo();
-            CollectionAssert.AreEqual(new[] { LevelA }, EditorBuildSettings.scenes.Select(s => s.path).ToArray());
+            CollectionAssert.AreEqual(new[] { LevelA }, BuildPaths());
         }
 
         [Test]
@@ -166,7 +164,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsFalse(EditorBuildSettings.scenes[1].enabled);
 
             AssertOk(M($"settings | set build.scenes = [\"{LevelB}\", \"{LevelA}\"]"));
-            CollectionAssert.AreEqual(new[] { LevelB, LevelA }, EditorBuildSettings.scenes.Select(s => s.path).ToArray());
+            CollectionAssert.AreEqual(new[] { LevelB, LevelA }, BuildPaths());
             Assert.IsTrue(EditorBuildSettings.scenes.All(s => s.enabled));
         }
 
@@ -177,7 +175,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(LevelA, true) };
             AssertFails(M("settings | set build.scenes = [\"Assets/NoSuchScene.unity\"]"), "coercion-failed", "existing scene asset");
             AssertFails(M($"settings | set build.scenes = [\"{LevelA}\", \"{LevelA}\"]"), "coercion-failed", "each scene once");
-            CollectionAssert.AreEqual(new[] { LevelA }, EditorBuildSettings.scenes.Select(s => s.path).ToArray());
+            CollectionAssert.AreEqual(new[] { LevelA }, BuildPaths());
         }
     }
 }

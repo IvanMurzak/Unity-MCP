@@ -257,28 +257,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         IReadOnlyList<Object> IRqlUndoOwners.UndoOwners => RqlProjectSettings.Asset("ProjectSettings");
     }
 
-    [RqlDescription("Build Settings: scenes (the scenes in the build, by build index; SceneManager.LoadScene in Play Mode loads only these)")]
+    [RqlDescription("Build Settings: scenes (the scenes in the build; SceneManager.LoadScene in Play Mode loads only these)")]
     public sealed class RqlBuildSettings : IRqlUndoOwners
     {
         internal static readonly RqlBuildSettings Instance = new RqlBuildSettings();
 
         private RqlBuildSettings() { }
 
-        [RqlDescription("Scenes In Build: asset paths of the enabled scenes in build-index order; assign the whole list, e.g. " +
-            "set build.scenes = append(build.scenes, \"Assets/Scenes/Level2.unity\") (each an existing .unity scene; disabled entries are kept)")]
+        [RqlDescription("Scenes In Build: asset paths of the enabled scenes in build-index order; assign the whole list " +
+            "(existing scene assets, each once; disabled entries are kept)")]
         public string[] scenes
         {
             get => EditorBuildSettings.scenes.Where(s => s.enabled).Select(s => s.path).ToArray();
             set
             {
                 var paths = value ?? Array.Empty<string>();
+                var seen = new HashSet<string>();
                 foreach (var path in paths)
-                    Require(path, !string.IsNullOrEmpty(path) && path.EndsWith(".unity", StringComparison.OrdinalIgnoreCase)
-                        && AssetDatabase.LoadAssetAtPath<SceneAsset>(path) != null, "the path of an existing scene asset (\"Assets/…/Level.unity\")");
-                var duplicate = paths.GroupBy(p => p).FirstOrDefault(g => g.Count() > 1);
-                if (duplicate != null)
-                    Require(duplicate.Key, false, "each scene once");
-                var disabled = EditorBuildSettings.scenes.Where(s => !s.enabled && !paths.Contains(s.path));
+                {
+                    Require(path, !string.IsNullOrEmpty(path) && AssetDatabase.GetMainAssetTypeAtPath(path) == typeof(SceneAsset),
+                        "the path of an existing scene asset (\"Assets/…/Level.unity\")");
+                    Require(path, seen.Add(path), "each scene once");
+                }
+                var disabled = EditorBuildSettings.scenes.Where(s => !s.enabled && !seen.Contains(s.path));
                 EditorBuildSettings.scenes = paths.Select(p => new EditorBuildSettingsScene(p, true)).Concat(disabled).ToArray();
             }
         }

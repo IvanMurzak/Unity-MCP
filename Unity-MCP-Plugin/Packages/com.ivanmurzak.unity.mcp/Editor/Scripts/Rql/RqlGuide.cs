@@ -126,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  editor | call AddTag(\"Interactive\")  then  objects | where name starts-with \"Barrel\" | set tag = \"Interactive\"\n" +
             "  profiler | call Start()      profiler | call Save(\"Logs/profile.json\")      (read: profiler | select memory frame)\n" +
             "  settings | set physics.gravity = \"(0, -12, 0)\", time.fixedDeltaTime = 0.01   Project Settings (saved, undoable)\n" +
-            "  settings | set build.scenes = append(build.scenes, \"Assets/Scenes/Level2.unity\")   scenes in the build (SceneManager.LoadScene needs them)\n";
+            "  settings | set build.scenes = append(build.scenes, \"Assets/Scenes/Level2.unity\")   scenes in the build\n";
 
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
