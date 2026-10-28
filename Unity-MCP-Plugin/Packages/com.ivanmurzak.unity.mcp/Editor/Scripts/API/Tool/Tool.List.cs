@@ -26,6 +26,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         public const string ToolListId = "unity-tool-list";
 
+        /// <summary>What an agent should do about a hidden tool (owner's design: visibility is the user's choice).</summary>
+        public const string HiddenToolHint =
+            "Hidden tools (Visible false) are not offered to MCP clients; ask the user to show one in the MCP Tools window " +
+            "(Window > AI Game Developer — MCP, Tools > Open) or with unity-mcp-cli configure --enable-tools <name>, " +
+            "instead of changing visibility yourself.";
+
         static readonly TimeSpan RegexTimeout = TimeSpan.FromMilliseconds(200);
 
         [Description("Specifies what to include for tool input arguments.")]
@@ -48,7 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             IdempotentHint = true
         )]
-        [AiSkillDescription("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
+        [AiSkillDescription("List all Unity-MCP tools registered in the connected Unity Editor instance, hidden ones included (each with `Visible`). " +
             "Optional regex filter matches against tool name, description, and argument names/descriptions. " +
             "Use the `includeDescription` / `includeInputs` toggles to control the response size.")]
         [AiSkillBody("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
@@ -60,8 +66,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `includeInputs` (default `None`) — one of `None`, `Inputs` (names only), `InputsWithDescription` (names + descriptions).\n\n" +
             "## Behavior\n\n" +
             "Iterates `UnityMcpPluginEditor.Instance.Tools.GetAllTools()`, evaluates the filter (if any), and projects " +
-            "each surviving tool into a `ToolInfoData` honoring the verbosity toggles.")]
-        [Description("List all Unity-MCP tools registered in the connected Unity Editor instance. " +
+            "each surviving tool into a `ToolInfoData` honoring the verbosity toggles. `Visible` is false for a hidden tool: " +
+            "it is not offered to MCP clients in `tools/list`. " + HiddenToolHint)]
+        [Description("List all Unity-MCP tools registered in the connected Unity Editor instance, hidden ones included " +
+            "(each with Visible). " + HiddenToolHint + " " +
             "Optionally filter by regex across tool names, descriptions, and arguments.")]
         public ToolInfoData[] List
         (
@@ -111,7 +119,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                             continue;
                     }
 
-                    var info = new ToolInfoData { Name = tool.Name };
+                    var info = new ToolInfoData { Name = tool.Name, Visible = toolManager.IsToolVisible(tool.Name) };
 
                     if (descriptionRequested)
                         info.Description = tool.Description;

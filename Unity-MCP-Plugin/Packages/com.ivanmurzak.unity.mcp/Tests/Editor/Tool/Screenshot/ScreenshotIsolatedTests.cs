@@ -56,6 +56,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Error, result.Status, "Should error when target has no renderers");
         }
 
+#if UNITY_MCP_TERRAIN_MODULE
+        // A Terrain has no Renderer component (wave 6: "No Renderers found" for a landscape); its TerrainData gives the bounds.
+        [Test]
+        public void ScreenshotIsolated_Terrain_Succeeds()
+        {
+            var data = new TerrainData { heightmapResolution = 33, size = new Vector3(20, 4, 20) };
+            var go = Terrain.CreateTerrainGameObject(data);
+            go.name = "IsolatedTerrain";
+            try
+            {
+                var goRef = new GameObjectRef { InstanceID = go.GetEntityId() };
+                var result = new Tool_Screenshot().ScreenshotIsolated(gameObjectRef: goRef, includeChildren: false, resolution: 64);
+                Assert.IsNotNull(result);
+                Assert.AreNotEqual(ResponseStatus.Error, result.Status, "a Terrain is framed by its TerrainData bounds");
+            }
+            finally
+            {
+                Object.DestroyImmediate(go);
+                Object.DestroyImmediate(data);
+            }
+        }
+#endif
+
         [Test]
         public void ScreenshotIsolated_DefaultIsolated_RestoresLayer()
         {

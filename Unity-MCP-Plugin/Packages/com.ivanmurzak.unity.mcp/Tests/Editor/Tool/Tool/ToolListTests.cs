@@ -53,6 +53,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return base.TearDown();
         }
 
+        // Wave 6: asked which tools are hidden, an agent read the plugin's config file through script-execute; the list says it.
+        [UnityTest]
+        public IEnumerator List_ReportsVisibility()
+        {
+            yield return null;
+
+            var toolManager = UnityMcpPluginEditor.Instance.Tools!;
+            var hidden = Tool_Tool.ToolSetEnabledStateId;
+            var wasVisible = toolManager.IsToolVisible(hidden);
+            toolManager.SetToolVisible(hidden, false);
+            try
+            {
+                var json = RunTool(Tool_Tool.ToolListId, "{}").Value!.ToolResultJson();
+                using var doc = JsonDocument.Parse(json);
+                bool? VisibleOf(string name)
+                {
+                    foreach (var t in GetResultArray(doc).EnumerateArray())
+                        if (t.TryGetPropertyCI("name", out var n) && n.GetString() == name)
+                            return t.TryGetPropertyCI("visible", out var v) ? v.GetBoolean() : (bool?)null;
+                    return null;
+                }
+                Assert.AreEqual(false, VisibleOf(hidden), json);
+                Assert.AreEqual(true, VisibleOf(Tool_Tool.ToolListId), json);
+                var listTool = toolManager.GetAllTools().First(t => t.Name == Tool_Tool.ToolListId);
+                StringAssert.Contains(Tool_Tool.HiddenToolHint, listTool.Description);
+            }
+            finally { toolManager.SetToolVisible(hidden, wasVisible); }
+        }
+
         [UnityTest]
         public IEnumerator List_NoArgs_ReturnsAllTools()
         {

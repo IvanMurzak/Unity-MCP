@@ -27,6 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     {
         public static string Render(RqlEngine engine, string? typeName)
         {
+            if (typeName != null && typeName.StartsWith(GuidePrefix, StringComparison.OrdinalIgnoreCase))
+                return RenderGuide(engine, typeName.Substring(GuidePrefix.Length).Trim());
             if (typeName != null) return RenderType(engine, typeName);
 
             var sb = new StringBuilder();
@@ -36,6 +38,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             sb.Append("functions:\n");
             foreach (var f in engine.Functions.Keys.OrderBy(k => k, StringComparer.Ordinal))
                 sb.Append("  ").Append(engine.FunctionDescriptions.TryGetValue(f, out var d) ? d : f + "(…)").Append('\n');
+            AppendExtensions(engine, sb);
 
             var counts = new Dictionary<Type, int>();
             var components = new List<Component>();
@@ -86,6 +89,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var info = engine.Types.Info(t);
             if ((info.IsList || info.IsMap) && info.ElementType != null) t = info.ElementType;
             return cache[source.Name] = t;
+        }
+
+        private const string ExtensionPrefix = "com.ivanmurzak.unity.mcp.";
+        private const string GuidePrefix = "guide:";
+
+        /// <summary>
+        /// The installed Unity-MCP extension packages and what each adds (sources, functions), so an agent asked to "turn on the
+        /// extensions" learns that they are already active, plus the guide topics that rql-schema "guide:&lt;topic&gt;" prints.
+        /// A source or function belongs to the package of the assembly its delegate was declared in (the module's own lambda).
+        /// </summary>
+        private static void AppendExtensions(RqlEngine engine, StringBuilder sb)
+        {
+            static UnityEditor.PackageManager.PackageInfo? ExtensionOf(System.Reflection.Assembly? assembly)
+            {
+                var package = assembly == null ? null : UnityEditor.PackageManager.PackageInfo.FindForAssembly(assembly);
+                return package != null && package.name.StartsWith(ExtensionPrefix, StringComparison.Ordinal) ? package : null;
+            }
+            // GroupBy: two assemblies can hold a module of the same full name (a copied module, two package versions).
+            var moduleTypes = UnityEditor.TypeCache.GetTypesDerivedFrom<IRqlModule>()
+                .GroupBy(t => t.FullName ?? t.Name, StringComparer.Ordinal).ToDictionary(g => g.Key, g => g.First(), StringComparer.Ordinal);
+            var modules = engine.Modules
+                .Select(m => (report: m, package: moduleTypes.TryGetValue(m.Module, out var t) ? ExtensionOf(t.Assembly) : null))
+                .Where(m => m.package != null).ToList();
+            var adds = engine.Sources.Values.Select(src => (package: ExtensionOf(src.Getter.Method.DeclaringType?.Assembly), what: "source " + src.Name))
+                .Concat(engine.Functions.Select(f => (package: ExtensionOf(f.Value.Method.DeclaringType?.Assembly), what: "function " + f.Key)))
+                .Where(x => x.package != null).ToLookup(x => x.package!.name, x => x.what);
+            if (modules.Count > 0) sb.Append("extensions (installed packages, always active: nothing to turn on):\n");
+            foreach (var group in modules.GroupBy(m => m.package!.name).OrderBy(g => g.Key, StringComparer.Ordinal))
+            {
+                var package = group.First().package!;
+                var failed = group.Where(m => !m.report.Ok).Select(m => m.report.Error).ToList();
+                sb.Append("  ").Append(package.displayName).Append(" (").Append(package.name).Append(' ').Append(package.version).Append("): ")
+                  .Append(failed.Count > 0 ? "FAILED to load: " + string.Join("; ", failed)
+                        : adds[package.name].Any() ? string.Join(", ", adds[package.name])
+                        : "types and value formats only (its components: objects | get components | where $ is …)")
+                  .Append('\n');
+            }
+            if (engine.Guides.Count > 0)
+                sb.Append("guides (rql-schema \"").Append(GuidePrefix).Append("<topic>\" prints one): ")
+                  .Append(string.Join(", ", engine.Guides.Select(g => g.Key))).Append('\n');
+        }
+
+        /// <summary>"guide:&lt;topic&gt;": a module's agent guide (the same text the unity-rql skill carries).</summary>
+        private static string RenderGuide(RqlEngine engine, string topic)
+        {
+            foreach (var g in engine.Guides)
+                if (string.Equals(g.Key, topic, StringComparison.OrdinalIgnoreCase)) return "guide " + g.Key + ":\n" + g.Value.Trim();
+            return $"error unknown-guide: no guide '{topic}' — guides: {string.Join(", ", engine.Guides.Select(g => g.Key))}";
         }
 
         private static string RenderType(RqlEngine engine, string typeName)
