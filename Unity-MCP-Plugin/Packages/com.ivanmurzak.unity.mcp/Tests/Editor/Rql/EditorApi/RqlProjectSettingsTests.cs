@@ -177,5 +177,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertFails(M($"settings | set build.scenes = [\"{LevelA}\", \"{LevelA}\"]"), "coercion-failed", "each scene once");
             CollectionAssert.AreEqual(new[] { LevelA }, BuildPaths());
         }
+
+        [Test]
+        public void BuildScenesKeepADeletedSceneAlreadyInTheList()
+        {
+            SceneAssets(LevelA);
+            const string deleted = Folder + "/Deleted.unity";
+            EditorBuildSettings.scenes = new[] { new EditorBuildSettingsScene(deleted, true) };
+            AssertOk(M($"settings | set build.scenes = append(build.scenes, \"{LevelA}\")"));
+            CollectionAssert.AreEqual(new[] { deleted, LevelA }, BuildPaths());
+        }
+
+        [Test]
+        public void BuildScenesRefuseACaseVariantOfAListedScene()
+        {
+            SceneAssets(LevelA);
+            EditorBuildSettings.scenes = new EditorBuildSettingsScene[0];
+            // refused either as a repeat (case-insensitive file systems) or as no scene asset (case-sensitive ones)
+            AssertFails(M($"settings | set build.scenes = [\"{LevelA}\", \"{LevelA.ToUpperInvariant()}\"]"), "coercion-failed");
+            Assert.AreEqual(0, EditorBuildSettings.scenes.Length);
+        }
     }
 }

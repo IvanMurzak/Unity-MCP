@@ -73,8 +73,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `Debug.Log` / `Console.WriteLine` output is not part of the result: `Debug.Log` goes to the Unity Console " +
             "(read it with rql-query `console | sort sequence desc | first 10 | select logType message`).\n" +
             "- Code runs on the main thread and is not aborted: an endless loop freezes the Editor. An `await` gets at most 120 s.\n" +
-            "- A written `.cs` file compiles and reloads the scripts after the call; a snippet still waiting when the reload " +
-            "starts loses its reply. Use the new types in a later call (retry one that fails during the reload).\n" +
+            "- A `.cs` file written in a snippet compiles once imported (`AssetDatabase.ImportAsset` / `Refresh`), and the scripts " +
+            "then reload after the call; a snippet still waiting when the reload starts loses its reply. Use the new types in a " +
+            "later call (retry one that fails during the reload).\n" +
             "- Every run starts fresh: static fields of your own types do not keep values from an earlier call, except a " +
             "`static readonly` field of an immutable type (string, number, enum, read-only collection): identical code sets it " +
             "once per domain, so read live Editor state in a method or property, not in such an initializer.\n\n" +
@@ -91,7 +92,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "- `AIGD.ObjectRef` — passes a base `ObjectRef` POCO.")]
         [Description("Compiles and runs C# in the Unity Editor: plain statements with the last expression as the result " +
             "(own usings, local classes, await allowed), or a declared class 'className' with static method 'methodName' (that code writes its own using lines). " +
-            "After writing a .cs file, use its types in a later call (scripts reload after this one).")]
+            "After writing and importing a .cs file, use its types in a later call (scripts reload after this one).")]
         public static async Task<SerializedMember?> Execute
         (
             [Description("C# code. Snippet: 'var go = GameObject.Find(\"Player\");\\ngo.transform.position'. " +
