@@ -135,7 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                     {
                         foreach (var m in engine.Types.Info(adapter.Target).Members) names.Add(m.Name);
                     }
-                    catch (Exception) { } // a type that cannot load contributes nothing
+                    catch (Exception) { } // a target whose members cannot be read contributes nothing (a throwing hook reads as "unknown")
                 }
                 _members = cached = (engine, names);
             }

@@ -9,6 +9,8 @@
 */
 
 #nullable enable
+using System.Text.Json;
+using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters;
@@ -16,6 +18,7 @@ using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 {
@@ -195,12 +198,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsTrue(go.activeSelf);
 
             // The plugin logs every error reply it sends to the agent.
-            UnityEngine.TestTools.LogAssert.Expect(LogType.Error, new System.Text.RegularExpressions.Regex("invalid-value: max_targets must be from 1"));
-            var zero = CallThroughMcpPlugin(Tool_Rql.MutateToolId, "{\"query\": \"" + Query.Replace("\"", "\\\"") + "\", \"max_targets\": 0}");
+            LogAssert.Expect(LogType.Error, new Regex("invalid-value: max_targets must be from 1"));
+            var zero = CallThroughMcpPlugin(Tool_Rql.MutateToolId, JsonSerializer.Serialize(new { query = Query, max_targets = 0 }));
             Assert.AreEqual(ResponseStatus.Error, zero.Value!.Status, Text(zero.Value));
             StringAssert.Contains("invalid-value", Text(zero.Value));
             Assert.IsTrue(go.activeSelf);
-            var omitted = CallThroughMcpPlugin(Tool_Rql.MutateToolId, "{\"query\": \"" + Query.Replace("\"", "\\\"") + "\"}");
+            var omitted = CallThroughMcpPlugin(Tool_Rql.MutateToolId, JsonSerializer.Serialize(new { query = Query }));
             Assert.AreEqual(ResponseStatus.Success, omitted.Value!.Status, Text(omitted.Value));
             Assert.IsFalse(go.activeSelf);
         }
