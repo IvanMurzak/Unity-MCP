@@ -116,6 +116,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
                 "is an engine object and cannot be built from an object literal");
             // A typo inside the placement literal is reported against the placement overload.
             AssertFails(M("editor | call CreateGameObject(\"Typo\", {primtive: \"Cube\"})"), "coercion-failed", "no member 'primtive'");
+            // Assets too (a Material is a UnityEngine.Object), as the plugin's own refusal did before.
+            var holder = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            AssertFails(M("objects | get components | where $ is MeshRenderer | set sharedMaterial = {}"), "coercion-failed", "engine object");
+            Object.DestroyImmediate(holder);
             Assert.AreEqual(0, Roots().Length, string.Join(", ", Roots().Select(g => g.name)));
         }
 
@@ -163,8 +167,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         [Test]
         public void ABulkReceiptIsCompact()
         {
-            var r = RqlUnity.Engine.Execute("range(0, 300) | call editor.CreateGameObject({name: \"C\" + $})",
-                new global::Rql.Budgets { MaxMutationTargets = 300 }, new global::Rql.QueryOptions { AllowMutation = true });
+            var r = RqlUnity.Mutate("range(0, 300) | call editor.CreateGameObject({name: \"C\" + $})", maxTargets: 300);
             AssertOk(r);
             Assert.AreEqual(300, Roots().Length);
             var receipt = Table(r);
