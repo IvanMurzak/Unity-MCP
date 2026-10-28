@@ -26,6 +26,13 @@
 
 ### Added
 
+- **`rql-schema` lists the installed extensions and their guides.** Without a type it now names every installed
+  Unity-MCP extension package (always active: there is nothing to turn on) with the sources and functions it adds,
+  and the guide topics; `rql-schema "guide:<topic>"` prints that guide (the text the unity-rql skill carries). In
+  wave-6 testing an agent asked to "turn on every extension" spent 60 turns reflecting over assemblies instead.
+- **`screenshot-isolated` frames a Terrain.** A Terrain has no Renderer component, so the tool reported "No Renderers
+  found"; its TerrainData bounds now count (when the Terrain module is present).
+
 - **`staticFlags` on GameObject (RQL).** The per-flag Static Editor Flags behind `isStatic`
   (ContributeGI, OccluderStatic, OccludeeStatic, BatchingStatic, ReflectionProbeStatic): filter with
   `where staticFlags contains "ContributeGI"`, assign a list (`set staticFlags = ["ContributeGI"]`);

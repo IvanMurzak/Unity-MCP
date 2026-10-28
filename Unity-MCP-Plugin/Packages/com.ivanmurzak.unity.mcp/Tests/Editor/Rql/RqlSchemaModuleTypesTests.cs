@@ -47,6 +47,34 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             Assert.IsEmpty(UnityTypes.Candidates("RqlSchemaRowProbe"), "not an addable / creatable type");
         }
 
+        // Wave 6: asked to "turn on every extension", an agent spent 60 turns reflecting over assemblies: the overview now
+        // names the installed extension packages (always active) and what each adds, and rql-schema "guide:<topic>" prints a
+        // module's guide.
+        [Test]
+        public void TheOverviewListsInstalledExtensionsAndGuides()
+        {
+            var overview = RqlUnitySchema.Render(RqlUnity.Engine, null);
+            var modules = UnityEditor.TypeCache.GetTypesDerivedFrom<global::Rql.Execution.IRqlModule>();
+            var extensionPackages = modules
+                .Select(t => UnityEditor.PackageManager.PackageInfo.FindForAssembly(t.Assembly))
+                .Where(p => p != null && p.name.StartsWith("com.ivanmurzak.unity.mcp.", System.StringComparison.Ordinal))
+                .Select(p => p!.name).Distinct().ToList();
+            if (extensionPackages.Count == 0)
+                StringAssert.DoesNotContain("extensions (installed packages", overview);
+            else
+            {
+                StringAssert.Contains("extensions (installed packages, always active: nothing to turn on):", overview);
+                foreach (var package in extensionPackages) StringAssert.Contains(package, overview);
+            }
+            foreach (var guide in RqlUnity.Engine.Guides) StringAssert.Contains(guide.Key, overview);
+
+            var engine = new global::Rql.Execution.RqlEngine();
+            engine.AddGuide("Test Topic", "use `objects | where …`");
+            StringAssert.StartsWith("guide Test Topic:\nuse `objects", RqlUnitySchema.Render(engine, "guide:test topic"));
+            StringAssert.StartsWith("error unknown-guide: no guide 'Nope' — guides: Test Topic", RqlUnitySchema.Render(engine, "guide: Nope"));
+            StringAssert.Contains("guide:<topic>", RqlGuide.SchemaDescription);
+        }
+
         // Wave 4: agents fell back to code for a tag (AddTag was undocumented), the default material and data-asset rows.
         [Test]
         public void TheGuideShowsTagsBuiltInMaterialsAndDataRows()

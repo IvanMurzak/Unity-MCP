@@ -36,6 +36,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             sb.Append("functions:\n");
             foreach (var f in engine.Functions.Keys.OrderBy(k => k, StringComparer.Ordinal))
                 sb.Append("  ").Append(engine.FunctionDescriptions.TryGetValue(f, out var d) ? d : f + "(…)").Append('\n');
+            AppendExtensions(engine, sb);
 
             var counts = new Dictionary<Type, int>();
             var components = new List<Component>();
@@ -88,8 +89,53 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return cache[source.Name] = t;
         }
 
+        private const string ExtensionPrefix = "com.ivanmurzak.unity.mcp.";
+        private const string GuidePrefix = "guide:";
+
+        /// <summary>
+        /// The installed Unity-MCP extension packages and what each adds (sources, functions), so an agent asked to "turn on the
+        /// extensions" learns that they are already active, plus the guide topics that rql-schema "guide:&lt;topic&gt;" prints.
+        /// </summary>
+        private static void AppendExtensions(RqlEngine engine, StringBuilder sb)
+        {
+            var packages = new SortedDictionary<string, (string label, List<string> adds)>(StringComparer.Ordinal);
+            List<string>? Adds(System.Reflection.Assembly? assembly)
+            {
+                var package = assembly == null ? null : UnityEditor.PackageManager.PackageInfo.FindForAssembly(assembly);
+                if (package == null || !package.name.StartsWith(ExtensionPrefix, StringComparison.Ordinal)) return null;
+                if (!packages.TryGetValue(package.name, out var entry))
+                    packages[package.name] = entry = ($"{package.displayName} ({package.name} {package.version})", new List<string>());
+                return entry.adds;
+            }
+            var modules = new Dictionary<string, Type>(StringComparer.Ordinal);
+            foreach (var t in UnityEditor.TypeCache.GetTypesDerivedFrom<IRqlModule>()) modules[t.FullName ?? t.Name] = t;
+            foreach (var m in engine.Modules)
+                if (modules.TryGetValue(m.Module, out var type)) Adds(type.Assembly);
+            foreach (var s in engine.Sources.Values) Adds(s.Getter.Method.DeclaringType?.Assembly)?.Add("source " + s.Name);
+            foreach (var f in engine.Functions) Adds(f.Value.Method.DeclaringType?.Assembly)?.Add("function " + f.Key);
+            if (packages.Count == 0) return;
+            sb.Append("extensions (installed packages, always active: nothing to turn on):\n");
+            foreach (var p in packages.Values)
+                sb.Append("  ").Append(p.label).Append(": ")
+                  .Append(p.adds.Count == 0 ? "types and value formats only (its components: objects | get components | where $ is …)" : string.Join(", ", p.adds))
+                  .Append('\n');
+            if (engine.Guides.Count > 0)
+                sb.Append("guides (rql-schema \"guide:<topic>\" prints one): ").Append(string.Join(", ", engine.Guides.Select(g => g.Key))).Append('\n');
+        }
+
+        /// <summary>"guide:&lt;topic&gt;": a module's agent guide (the same text the unity-rql skill carries); null for a type name.</summary>
+        private static string? RenderGuide(RqlEngine engine, string typeName)
+        {
+            if (!typeName.StartsWith(GuidePrefix, StringComparison.OrdinalIgnoreCase)) return null;
+            var topic = typeName.Substring(GuidePrefix.Length).Trim();
+            foreach (var g in engine.Guides)
+                if (string.Equals(g.Key, topic, StringComparison.OrdinalIgnoreCase)) return "guide " + g.Key + ":\n" + g.Value.Trim();
+            return $"error unknown-guide: no guide '{topic}' — guides: {string.Join(", ", engine.Guides.Select(g => g.Key))}";
+        }
+
         private static string RenderType(RqlEngine engine, string typeName)
         {
+            if (RenderGuide(engine, typeName) is string guide) return guide;
             var candidates = SourceTypes(engine, typeName).Concat(UnityTypes.Candidates(typeName)).Distinct().Take(3).ToList();
             // A [Serializable] row / settings type (ItemRow of a ScriptableObject's list): reached through get, never added.
             if (candidates.Count == 0) candidates = UnityTypes.SerializableCandidates(typeName).Take(3).ToList();

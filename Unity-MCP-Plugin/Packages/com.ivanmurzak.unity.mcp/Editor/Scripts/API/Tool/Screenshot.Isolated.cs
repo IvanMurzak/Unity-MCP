@@ -235,12 +235,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 }
 
                 var renderers = CollectRenderers(target, resolvedIncludeChildren);
-                if (renderers.Count == 0)
+                var terrainBounds = CollectTerrainBounds(target, resolvedIncludeChildren);
+                if (renderers.Count == 0 && terrainBounds.Count == 0)
                     return ResponseCallTool.Error(resolvedIncludeChildren
                         ? "[Error] No Renderers found on target GameObject or its children. Cannot compute bounds."
                         : "[Error] No Renderers found on target GameObject (includeChildren=false). Set includeChildren=true if renderers live on child objects.");
 
-                var bounds = ComputeBounds(renderers);
+                var bounds = ComputeBounds(renderers, terrainBounds);
 
                 var targetGameObjects = CollectAllGameObjects(target, resolvedIncludeChildren);
 
@@ -395,21 +396,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return list;
         }
 
-        private static Bounds ComputeBounds(List<Renderer> renderers)
+        // A Terrain draws itself without a Renderer component: its world bounds come from its TerrainData size.
+        private static List<Bounds> CollectTerrainBounds(GameObject target, bool includeChildren)
+        {
+            var list = new List<Bounds>();
+#if UNITY_MCP_TERRAIN_MODULE
+            var terrains = includeChildren ? target.GetComponentsInChildren<Terrain>(includeInactive: true) : target.GetComponents<Terrain>();
+            foreach (var t in terrains)
+                if (t != null && t.terrainData != null)
+                    list.Add(new Bounds(t.transform.position + t.terrainData.bounds.center, t.terrainData.bounds.size));
+#endif
+            return list;
+        }
+
+        private static Bounds ComputeBounds(List<Renderer> renderers, List<Bounds> extra)
         {
             var initialised = false;
             var bounds = new Bounds();
-            foreach (var r in renderers)
+            foreach (var b in renderers.Where(r => r != null).Select(r => r.bounds).Concat(extra))
             {
-                if (r == null) continue;
                 if (!initialised)
                 {
-                    bounds = r.bounds;
+                    bounds = b;
                     initialised = true;
                 }
                 else
                 {
-                    bounds.Encapsulate(r.bounds);
+                    bounds.Encapsulate(b);
                 }
             }
 

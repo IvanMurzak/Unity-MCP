@@ -34,6 +34,12 @@
         "UNITY_MCP_READY",
         "UNITY_MCP_DEPS_24"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.unity.modules.terrain",
+            "expression": "1.0.0",
+            "define": "UNITY_MCP_TERRAIN_MODULE"
+        }
+    ],
     "noEngineReferences": false
 }
