@@ -27,6 +27,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     {
         public static string Render(RqlEngine engine, string? typeName)
         {
+            if (typeName != null && typeName.StartsWith(GuidePrefix, StringComparison.OrdinalIgnoreCase))
+                return RenderGuide(engine, typeName.Substring(GuidePrefix.Length).Trim());
             if (typeName != null) return RenderType(engine, typeName);
 
             var sb = new StringBuilder();
@@ -95,39 +97,42 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>
         /// The installed Unity-MCP extension packages and what each adds (sources, functions), so an agent asked to "turn on the
         /// extensions" learns that they are already active, plus the guide topics that rql-schema "guide:&lt;topic&gt;" prints.
+        /// A source or function belongs to the package of the assembly its delegate was declared in (the module's own lambda).
         /// </summary>
         private static void AppendExtensions(RqlEngine engine, StringBuilder sb)
         {
-            var packages = new SortedDictionary<string, (string label, List<string> adds)>(StringComparer.Ordinal);
-            List<string>? Adds(System.Reflection.Assembly? assembly)
+            static UnityEditor.PackageManager.PackageInfo? ExtensionOf(System.Reflection.Assembly? assembly)
             {
                 var package = assembly == null ? null : UnityEditor.PackageManager.PackageInfo.FindForAssembly(assembly);
-                if (package == null || !package.name.StartsWith(ExtensionPrefix, StringComparison.Ordinal)) return null;
-                if (!packages.TryGetValue(package.name, out var entry))
-                    packages[package.name] = entry = ($"{package.displayName} ({package.name} {package.version})", new List<string>());
-                return entry.adds;
+                return package != null && package.name.StartsWith(ExtensionPrefix, StringComparison.Ordinal) ? package : null;
             }
-            var modules = new Dictionary<string, Type>(StringComparer.Ordinal);
-            foreach (var t in UnityEditor.TypeCache.GetTypesDerivedFrom<IRqlModule>()) modules[t.FullName ?? t.Name] = t;
-            foreach (var m in engine.Modules)
-                if (modules.TryGetValue(m.Module, out var type)) Adds(type.Assembly);
-            foreach (var s in engine.Sources.Values) Adds(s.Getter.Method.DeclaringType?.Assembly)?.Add("source " + s.Name);
-            foreach (var f in engine.Functions) Adds(f.Value.Method.DeclaringType?.Assembly)?.Add("function " + f.Key);
-            if (packages.Count == 0) return;
+            var moduleTypes = UnityEditor.TypeCache.GetTypesDerivedFrom<IRqlModule>().ToDictionary(t => t.FullName ?? t.Name, StringComparer.Ordinal);
+            var modules = engine.Modules
+                .Select(m => (report: m, package: moduleTypes.TryGetValue(m.Module, out var t) ? ExtensionOf(t.Assembly) : null))
+                .Where(m => m.package != null).ToList();
+            if (modules.Count == 0) return;
+            var adds = engine.Sources.Values.Select(src => (package: ExtensionOf(src.Getter.Method.DeclaringType?.Assembly), what: "source " + src.Name))
+                .Concat(engine.Functions.Select(f => (package: ExtensionOf(f.Value.Method.DeclaringType?.Assembly), what: "function " + f.Key)))
+                .Where(x => x.package != null).ToLookup(x => x.package!.name, x => x.what);
             sb.Append("extensions (installed packages, always active: nothing to turn on):\n");
-            foreach (var p in packages.Values)
-                sb.Append("  ").Append(p.label).Append(": ")
-                  .Append(p.adds.Count == 0 ? "types and value formats only (its components: objects | get components | where $ is …)" : string.Join(", ", p.adds))
+            foreach (var group in modules.GroupBy(m => m.package!.name).OrderBy(g => g.Key, StringComparer.Ordinal))
+            {
+                var package = group.First().package!;
+                var failed = group.Where(m => !m.report.Ok).Select(m => m.report.Error).ToList();
+                sb.Append("  ").Append(package.displayName).Append(" (").Append(package.name).Append(' ').Append(package.version).Append("): ")
+                  .Append(failed.Count > 0 ? "FAILED to load: " + string.Join("; ", failed)
+                        : adds[package.name].Any() ? string.Join(", ", adds[package.name])
+                        : "types and value formats only (its components: objects | get components | where $ is …)")
                   .Append('\n');
+            }
             if (engine.Guides.Count > 0)
-                sb.Append("guides (rql-schema \"guide:<topic>\" prints one): ").Append(string.Join(", ", engine.Guides.Select(g => g.Key))).Append('\n');
+                sb.Append("guides (rql-schema \"").Append(GuidePrefix).Append("<topic>\" prints one): ")
+                  .Append(string.Join(", ", engine.Guides.Select(g => g.Key))).Append('\n');
         }
 
-        /// <summary>"guide:&lt;topic&gt;": a module's agent guide (the same text the unity-rql skill carries); null for a type name.</summary>
-        private static string? RenderGuide(RqlEngine engine, string typeName)
+        /// <summary>"guide:&lt;topic&gt;": a module's agent guide (the same text the unity-rql skill carries).</summary>
+        private static string RenderGuide(RqlEngine engine, string topic)
         {
-            if (!typeName.StartsWith(GuidePrefix, StringComparison.OrdinalIgnoreCase)) return null;
-            var topic = typeName.Substring(GuidePrefix.Length).Trim();
             foreach (var g in engine.Guides)
                 if (string.Equals(g.Key, topic, StringComparison.OrdinalIgnoreCase)) return "guide " + g.Key + ":\n" + g.Value.Trim();
             return $"error unknown-guide: no guide '{topic}' — guides: {string.Join(", ", engine.Guides.Select(g => g.Key))}";
@@ -135,7 +140,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         private static string RenderType(RqlEngine engine, string typeName)
         {
-            if (RenderGuide(engine, typeName) is string guide) return guide;
             var candidates = SourceTypes(engine, typeName).Concat(UnityTypes.Candidates(typeName)).Distinct().Take(3).ToList();
             // A [Serializable] row / settings type (ItemRow of a ScriptableObject's list): reached through get, never added.
             if (candidates.Count == 0) candidates = UnityTypes.SerializableCandidates(typeName).Take(3).ToList();
