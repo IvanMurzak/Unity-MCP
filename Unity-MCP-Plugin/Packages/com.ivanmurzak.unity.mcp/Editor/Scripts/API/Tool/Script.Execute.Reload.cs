@@ -34,6 +34,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// <summary>How long the reload stays held after the snippet answered: the reply still has to leave over the connection.</summary>
         internal const int ReplyGraceMs = 1_000;
 
+        internal const string ReloadPendingMessage =
+            "Scripts are compiling and reload next, so this snippet was not run (a running snippet holds the reload back). " +
+            "Retry in a few seconds: rql-query `editor | select isCompiling` reads false once the reload is done.";
+
+        /// <summary>How long calls are deferred for one pending compile; after it they run again (another lock may hold it).</summary>
+        internal static readonly TimeSpan DeferLimit = TimeSpan.FromSeconds(60);
+
+        // When a compile was first seen waiting while this plugin held the reload (null: not seen). Main thread only.
+        static DateTime? _heldCompileSince;
+
+        /// <summary>
+        /// Whether a new call must not run: a compile is waiting for a reload that our own lock held back. A snippet started
+        /// now would lock the reload again, and a client that keeps calling (polling for its new type) would hold it forever,
+        /// as each call locks until 1 s after its reply. Compiles we never held (another lock, Play Mode's
+        /// recompile-after-playing) do not defer anything, and the deferral ends after <see cref="DeferLimit"/>.
+        /// </summary>
+        internal static bool DeferForReload(bool compiling, bool playing, bool reloadLocked, DateTime now)
+        {
+            if (playing || !compiling)
+            {
+                _heldCompileSince = null;
+                return false;
+            }
+            if (reloadLocked && _heldCompileSince == null) _heldCompileSince = now;
+            return _heldCompileSince is DateTime since && now - since < DeferLimit;
+        }
+
+        static bool DeferForReload() =>
+            DeferForReload(EditorApplication.isCompiling, EditorApplication.isPlaying, _reloadLocks > 0, DateTime.UtcNow);
+
         internal const string ReloadStopMessage =
             "Scripts must compile and reload, which waits while a snippet runs, so the snippet was stopped to deliver this " +
             "reply (EditorApplication.isCompiling stays true until then: do not wait for it in a snippet). The compile starts " +
@@ -93,6 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         static void UnlockReload()
         {
             if (_reloadLocks == 0) return; // already released by ReleaseReloadLocks
+            DeferForReload(); // a compile waiting now was held by this lock: later calls defer until it reloads
             if (--_reloadLocks == 0) AssemblyReloadEvents.beforeAssemblyReload -= ReleaseReloadLocks;
             EditorApplication.UnlockReloadAssemblies();
         }

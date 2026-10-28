@@ -21,10 +21,24 @@ export const SCRIPT_EXECUTE_TOOL = 'script-execute';
  */
 export const DEFAULT_EXEC_TIMEOUT_MS = 310_000;
 
+/** The plugin's answer while a compile waits for its reload: the snippet did not run (Script.Execute.Reload.cs). */
+export const RELOAD_PENDING_TEXT = 'Scripts are compiling and reload next';
+
+/** How long `exec` keeps re-sending a snippet the plugin deferred for a reload. */
+export const RELOAD_WAIT_MS = 120_000;
+
+function deferredForReload(result: RunToolResult): boolean {
+  if (result.kind === 'failure') return result.message.includes(RELOAD_PENDING_TEXT);
+  const response = readToolResponse(result.data);
+  return !response.ok && response.text.includes(RELOAD_PENDING_TEXT);
+}
+
 /** Injection points for tests. */
 export interface ExecDeps {
   session: (options: UnitySessionOptions) => Pick<EditorSession<string>, 'ensure'>;
   invoke: (options: RunToolOptions) => Promise<RunToolResult>;
+  /** Waits between re-sends of a deferred snippet (default: a timer). */
+  sleep?: (ms: number) => Promise<void>;
 }
 
 export interface ExecCodeOptions {
@@ -138,14 +152,23 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
   }
 
   options.onStatus?.('Running...');
-  const result = await deps.invoke({
-    toolName: SCRIPT_EXECUTE_TOOL,
-    url: baseUrl,
-    ...(options.token ? { token: options.token } : {}),
-    tokenFromCloudStore: options.tokenFromCloudStore,
-    input: buildScriptExecuteInput(options.code, options.usings ?? [], options.include ?? []),
-    timeoutMs: options.timeoutMs ?? DEFAULT_EXEC_TIMEOUT_MS,
-  });
+  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
+  const deadline = Date.now() + RELOAD_WAIT_MS;
+  let result: RunToolResult;
+  for (;;) {
+    result = await deps.invoke({
+      toolName: SCRIPT_EXECUTE_TOOL,
+      url: baseUrl,
+      ...(options.token ? { token: options.token } : {}),
+      tokenFromCloudStore: options.tokenFromCloudStore,
+      input: buildScriptExecuteInput(options.code, options.usings ?? [], options.include ?? []),
+      timeoutMs: options.timeoutMs ?? DEFAULT_EXEC_TIMEOUT_MS,
+    });
+    // The snippet did not run because scripts are about to reload: send it again once they have.
+    if (!deferredForReload(result) || Date.now() >= deadline) break;
+    options.onStatus?.('Scripts are compiling; waiting for the reload...');
+    await sleep(2_000);
+  }
   if (result.kind === 'failure') {
     return {
       kind: 'failure', success: false, reason: 'tool-failed', baseUrl, toolFailure: result, message: result.message, error: result.error,

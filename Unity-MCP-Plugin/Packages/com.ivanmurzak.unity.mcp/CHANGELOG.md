@@ -80,6 +80,10 @@
 
 ### Fixed
 
+- **Polling with `script-execute` no longer holds a script reload forever.** Each call holds the domain reload until
+  1 s after its reply, so a client calling every half second after writing a script (waiting for its new type) kept
+  `isCompiling` true for minutes. While a compile that our lock held waits, `script-execute` now answers at once that the
+  snippet did not run (for at most 60 s; never in Play Mode), and `unity-mcp-cli exec` re-sends it after the reload.
 - **The Input System extension compiles on Unity 6.6.** Its native floor `com.unity.inputsystem` 1.8.2 fails there
   (`CS0619`: `TreeViewState` / `TreeViewItem` are obsolete as errors, about 260 errors; a batchmode editor exits).
   On Unity 6000.6 and later, the editor's extension panel, `unity-mcp-cli`, the self-contained installer and

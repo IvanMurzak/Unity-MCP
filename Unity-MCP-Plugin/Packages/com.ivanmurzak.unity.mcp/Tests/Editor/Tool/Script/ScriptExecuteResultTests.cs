@@ -90,6 +90,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
                 StringAssert.Contains(phrase, body);
         }
 
+        // Wave 6: an agent polling with script-execute after writing a script kept the reload held forever (each call locks
+        // it until 1 s after its reply): isCompiling stayed true for minutes. A compile our lock held defers new calls.
+        [Test]
+        public void ACompileOurLockHeldDefersCallsUntilItReloads()
+        {
+            var t0 = new System.DateTime(2026, 10, 28, 12, 0, 0, System.DateTimeKind.Utc);
+            Tool_Script.DeferForReload(compiling: false, playing: false, reloadLocked: false, t0); // reset
+            try
+            {
+                Assert.IsFalse(Tool_Script.DeferForReload(true, false, false, t0), "a compile we never held: calls run");
+                Assert.IsTrue(Tool_Script.DeferForReload(true, false, true, t0), "pending while our lock holds the reload");
+                Assert.IsTrue(Tool_Script.DeferForReload(true, false, false, t0.AddSeconds(5)), "still pending after the lock dropped");
+                Assert.IsFalse(Tool_Script.DeferForReload(true, false, false, t0 + Tool_Script.DeferLimit), "not forever");
+                Assert.IsFalse(Tool_Script.DeferForReload(false, false, false, t0.AddSeconds(61)), "reloaded: reset");
+                Assert.IsFalse(Tool_Script.DeferForReload(true, false, false, t0.AddSeconds(62)), "a new compile starts unheld");
+                Assert.IsFalse(Tool_Script.DeferForReload(true, true, true, t0.AddSeconds(63)), "Play Mode never defers");
+            }
+            finally { Tool_Script.DeferForReload(false, false, false, t0); }
+        }
+
         [Test]
         public void ATypedNullIsNullNotTheStringNull() =>
             Assert.AreEqual("System.String: null", Run("(string)null"));
