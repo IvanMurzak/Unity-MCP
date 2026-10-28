@@ -49,7 +49,11 @@ namespace com.IvanMurzak.CodeExec
 
         public IReadOnlyList<SnippetParameter> Parameters { get; set; } = Array.Empty<SnippetParameter>();
 
-        /// <summary>Upper bound for awaiting an asynchronous result; 0 = no bound. Never aborts running code.</summary>
+        /// <summary>
+        /// The snippet's time budget in ms (spec §1): it stops with <see cref="ErrorKind.Timeout"/> once the budget is spent
+        /// (execution guards, spec §3.6), and an asynchronous result is awaited no longer. 0 = the host's
+        /// <see cref="CodeRunnerOptions.DefaultTimeoutMs"/>; negative = InvalidRequest.
+        /// </summary>
         public int TimeoutMs { get; set; }
 
         /// <summary>Retry with a namespace when an unknown simple name resolves to exactly one (spec §3.3).</summary>

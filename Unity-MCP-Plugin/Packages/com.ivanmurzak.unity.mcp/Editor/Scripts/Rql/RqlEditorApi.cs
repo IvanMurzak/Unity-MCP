@@ -52,22 +52,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlNoAutoSave]
         public Object[] selection { get => Selection.objects; set => Selection.objects = value ?? Array.Empty<Object>(); }
 
-        [RqlCallable("create a GameObject (optionally under a parent, as a primitive: Cube, Sphere, Capsule, Cylinder, Plane, Quad; at a local position) and return it")]
-        public GameObject CreateGameObject(string name, GameObject? parent = null, string? primitive = null, Vector3? position = null)
+        [RqlCallable("create a GameObject (optionally under a parent, as a primitive: Cube, Sphere, Capsule, Cylinder, Plane, Quad; at a local position, " +
+                     "rotation (Euler degrees) and scale) and return it")]
+        public GameObject CreateGameObject(string name, GameObject? parent = null, string? primitive = null, Vector3? position = null,
+            Vector3? rotation = null, Vector3? scale = null)
         {
-            if (Adapters.UnityEngine_GameObject_Adapter.ValidateName(name) is string problem) throw new ArgumentException(problem);
+            if (ValidateCreateGameObject(name, parent, primitive, position, rotation, scale) is string problem) throw new ArgumentException(problem);
             GameObject go;
-            if (string.IsNullOrEmpty(primitive)) go = new GameObject(name);
-            else if (Enum.TryParse<PrimitiveType>(primitive, ignoreCase: true, out var type)) { go = GameObject.CreatePrimitive(type); go.name = name; }
-            else throw new ArgumentException($"unknown primitive '{primitive}' (Cube, Sphere, Capsule, Cylinder, Plane, Quad)");
-            return Place(go, parent, position, "RQL create " + name);
+            if (Adapters.UnityEngine_Mesh_Adapter.TryParsePrimitive(primitive ?? "", out var type)) { go = GameObject.CreatePrimitive(type); go.name = name; }
+            else go = new GameObject(name);
+            return Place(go, parent, position, rotation, scale, "RQL create " + name);
         }
 
-        /// <summary>A new object under <paramref name="parent"/> at a local <paramref name="position"/>, registered for Undo.</summary>
-        private static GameObject Place(GameObject go, GameObject? parent, Vector3? position, string undoName)
+        /// <summary>
+        /// <c>CreateGameObject(name, {primitive: "Cube", position: [x, y, z], rotation: [x, y, z], scale: [x, y, z], parent: ref(…)})</c>:
+        /// the placement as an object literal, so a bulk create names only what it sets.
+        /// </summary>
+        [RqlCallable("create a GameObject placed by an object literal {primitive, parent, position, rotation (Euler degrees), scale}, " +
+                     "e.g. CreateGameObject(\"Cube\", {primitive: \"Cube\", position: [0, 1, 0]}), and return it")]
+        public GameObject CreateGameObject(string name, RqlPlacement? placement) =>
+            CreateGameObject(name, placement?.parent, placement?.primitive, placement?.position, placement?.rotation, placement?.scale);
+
+        // Called by RQL for every item before the first call (and on dry runs), so a bulk create fails whole or not at all.
+        public string? ValidateCreateGameObject(string name, GameObject? parent, string? primitive, Vector3? position, Vector3? rotation, Vector3? scale) =>
+            Adapters.UnityEngine_GameObject_Adapter.ValidateName(name)
+            ?? (string.IsNullOrEmpty(primitive) || Adapters.UnityEngine_Mesh_Adapter.TryParsePrimitive(primitive!, out _)
+                ? null
+                : $"unknown primitive '{primitive}' ({Adapters.UnityEngine_Mesh_Adapter.Names})");
+
+        public string? ValidateCreateGameObject(string name, RqlPlacement? placement) =>
+            ValidateCreateGameObject(name, placement?.parent, placement?.primitive, placement?.position, placement?.rotation, placement?.scale);
+
+        /// <summary>A new object under <paramref name="parent"/> at a local position / rotation / scale, registered for Undo.</summary>
+        private static GameObject Place(GameObject go, GameObject? parent, Vector3? position, Vector3? rotation, Vector3? scale, string undoName)
         {
             if (parent != null) go.transform.SetParent(parent.transform, false);
             if (position.HasValue) go.transform.localPosition = position.Value;
+            if (rotation.HasValue) go.transform.localEulerAngles = rotation.Value;
+            if (scale.HasValue) go.transform.localScale = scale.Value;
+            // Inside a mutation this joins the mutation's Undo group (RqlUnity's BeforeWrite), so N creations undo as one step.
             Undo.RegisterCreatedObjectUndo(go, undoName);
             return go;
         }
@@ -136,5 +159,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         [RqlCallable("execute an Editor menu item by path, e.g. \"GameObject/Align With View\"; false when it does not exist")]
         public bool ExecuteMenuItem(string path) => EditorApplication.ExecuteMenuItem(path);
+    }
+
+    /// <summary>
+    /// Where <c>editor.CreateGameObject</c> / <c>editor.InstantiatePrefab</c> put a new object, written as an object literal:
+    /// <c>{primitive: "Cube", parent: ref("GameObject#12"), position: [x, y, z], rotation: [x, y, z], scale: [x, y, z]}</c>. Every
+    /// member is optional; position, rotation (Euler degrees) and scale are local to the parent.
+    /// </summary>
+    public sealed class RqlPlacement
+    {
+        public string? primitive { get; set; }
+        public GameObject? parent { get; set; }
+        public Vector3? position { get; set; }
+        public Vector3? rotation { get; set; }
+        public Vector3? scale { get; set; }
     }
 }

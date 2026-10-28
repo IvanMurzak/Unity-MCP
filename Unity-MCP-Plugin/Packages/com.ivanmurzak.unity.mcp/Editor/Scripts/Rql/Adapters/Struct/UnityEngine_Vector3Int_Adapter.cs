@@ -21,14 +21,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         public override string Description => "Vector3Int: write as \"(x, y, z)\" or [x, y, z] with whole numbers";
         protected override string Expected => "(x, y, z) or [x, y, z] with whole numbers";
         protected override int Width => 3;
+        // Component-wise arithmetic; a result with a fractional component (cell / 2 of an odd cell) is a type-mismatch, not truncated.
+        protected override bool Arithmetic => true;
         protected override float Part(Vector3Int v, int i) => i switch { 0 => v.x, 1 => v.y, _ => v.z };
         protected override float Tolerance => 0;
 
         protected override Vector3Int? Make(float[] f)
         {
             if (f.Length != 3) return null;
-            foreach (var x in f) if (Math.Abs(x - Math.Round(x)) > 1e-6) return null;
-            return new Vector3Int((int)f[0], (int)f[1], (int)f[2]);
+            foreach (var x in f) if (Math.Abs(x - Math.Round(x)) > 1e-6 || Math.Abs(x) > int.MaxValue) return null;
+            return new Vector3Int((int)Math.Round(f[0]), (int)Math.Round(f[1]), (int)Math.Round(f[2]));
         }
     }
 }

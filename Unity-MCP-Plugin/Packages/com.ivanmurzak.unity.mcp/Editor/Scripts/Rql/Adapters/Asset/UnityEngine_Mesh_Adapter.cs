@@ -30,7 +30,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         // By name only (Enum.TryParse also takes "3"), any case.
         private static readonly Dictionary<string, PrimitiveType> ByName = new Dictionary<string, PrimitiveType>(StringComparer.OrdinalIgnoreCase);
-        private static readonly string Names = string.Join(", ", Enum.GetNames(typeof(PrimitiveType)));
+        internal static readonly string Names = string.Join(", ", Enum.GetNames(typeof(PrimitiveType)));
+
+        /// <summary>A primitive by name (Cube, Sphere …), any case; not by number.</summary>
+        internal static bool TryParsePrimitive(string name, out PrimitiveType primitive) => ByName.TryGetValue(name.Trim(), out primitive);
 
         static UnityEngine_Mesh_Adapter()
         {
@@ -43,7 +46,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             reason = null;
             if (!(value is string text) || UnityEngine_Object_Adapter.TryAssetPath(text, out _))
                 return AdapterOutcome.NotHandled; // refs and asset paths: the Object adapter
-            if (!ByName.TryGetValue(text.Trim(), out var primitive))
+            if (!TryParsePrimitive(text, out var primitive))
             {
                 reason = $"'{text}' is neither an asset path nor a primitive ({Names})";
                 return AdapterOutcome.Failed;

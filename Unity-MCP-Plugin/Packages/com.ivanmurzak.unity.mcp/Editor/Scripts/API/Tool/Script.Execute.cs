@@ -46,7 +46,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IncludeRoot = Path.GetFullPath(Path.Combine(".ai-game-dev", "snippets")),
             ValueConverter = value => value, // Mono keeps the assembly loaded: the reflector serializes the live value
             LogCaptures = new List<ILogCapture>(), // Debug.Log stays in the Unity console
+            DefaultTimeoutMs = MaxSnippetTimeoutMs, // never "no bound": every request also sets its own budget
         }));
+
+        /// <summary>The longest a snippet runs (its loops, calls and awaits) before Code-Exec stops it with Timeout.</summary>
+        internal const int MaxSnippetTimeoutMs = 120_000;
+
+        /// <summary>How much earlier than the server's tool timeout the snippet's budget ends, so its Timeout reaches the agent.</summary>
+        internal const int ToolTimeoutMarginMs = 10_000;
+
+        /// <summary>
+        /// The snippet's time budget: <see cref="MaxSnippetTimeoutMs"/>, or less when the server's tool timeout is shorter, so
+        /// the guard's Timeout answers before the server gives up on the call. Never 0, which Code-Exec reads as the default.
+        /// </summary>
+        internal static int SnippetTimeoutMs(int toolTimeoutMs) =>
+            Math.Max(1_000, Math.Min(MaxSnippetTimeoutMs, toolTimeoutMs - ToolTimeoutMarginMs));
 
         [AiTool
         (
@@ -72,10 +86,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "compile errors (a note says what was cut). Return a selection or a summary instead of everything.\n" +
             "- `Debug.Log` / `Console.WriteLine` output is not part of the result: `Debug.Log` goes to the Unity Console " +
             "(read it with rql-query `console | sort sequence desc | first 10 | select logType message`).\n" +
-            "- Code runs on the main thread and is not aborted: an endless loop freezes the Editor. An `await` gets at most 120 s.\n" +
-            "- A `.cs` file written in a snippet compiles once imported (`AssetDatabase.ImportAsset` / `Refresh`), and the scripts " +
-            "then reload after the call; a snippet still waiting when the reload starts loses its reply. Use the new types in a " +
-            "later call (retry one that fails during the reload).\n" +
+            "- Code runs on the main thread with a time budget of 120 s (less when the tool timeout is shorter): an endless loop " +
+            "or a long `await` stops with `Execution failed (Timeout)` and the Editor carries on; runaway recursion fails with " +
+            "`Recursion too deep`. Code blocked inside one Unity call stops only once that call returns.\n" +
+            "- A `.cs` file written in a snippet compiles once imported (`AssetDatabase.ImportAsset` / `Refresh`); the scripts " +
+            "reload after the call: the reload waits while a snippet runs, so its reply arrives, but the snippet cannot use the new " +
+            "types and must not wait for the compile (`EditorApplication.isCompiling` stays true until the reload; a snippet still " +
+            "running 10 s after a compile is requested is stopped). Use the new types in a later call (retry one that fails during the reload).\n" +
             "- Every run starts fresh: static fields of your own types do not keep values from an earlier call, except a " +
             "`static readonly` field of an immutable type (string, number, enum, read-only collection): identical code sets it " +
             "once per domain, so read live Editor state in a method or property, not in such an initializer.\n\n" +
@@ -127,7 +144,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 Include = include ?? Array.Empty<string>(),
                 Parameters = parameters?.Select((p, i) => new SnippetParameter(ParameterName(p, i), ParameterType(p, i), null)).ToList()
                     ?? (IReadOnlyList<SnippetParameter>)Array.Empty<SnippetParameter>(),
-                TimeoutMs = 120_000,
+                TimeoutMs = SnippetTimeoutMs(UnityMcpPluginEditor.EffectiveToolTimeoutMs),
             };
             if (!isMethodBody && FullSourceEntryType(csharpCode, className, methodName) is { } entryType)
             {
@@ -149,7 +166,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (parameters != null)
                 prepared = prepared.WithValues(parameters.Select(p => reflector.Deserialize(data: p, logger: logger)).ToList());
 
-            var result = await Runner.Value.RunAsync(prepared);
+            var (result, stoppedForReload) = await RunHoldingReload(prepared);
+            if (stoppedForReload)
+                throw new Exception(ReloadStopMessage);
             if (!result.Success)
                 throw new Exception(Describe(result));
 

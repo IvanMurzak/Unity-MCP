@@ -9,6 +9,8 @@
 */
 
 #nullable enable
+using Rql.Execution;
+
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
     /// <summary>
@@ -49,9 +51,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "Expressions: == != < <= > >= and or not + - * / %; contains, starts-with, ends-with (case-insensitive); " +
             "matches \"regex\"; x in [a, b]; x is null; x is not null; $ is Light (includes subclasses); has(member); " +
             "c ? a : b or if(c, a, b) (only the taken branch runs; where a stage takes one expression, wrap it: select kind=($ is Light ? \"light\" : \"other\")). " +
-            "Conditions (where, and / or / not, ?:, if, the predicates of .any .all .count .first) must be booleans, else type-mismatch: " +
-            "test objects with x != null or has(x), numbers with x != 0, strings with x != \"\", lists with len(x) > 0 (null counts as false). " +
-            "Lists compare by value ([1, 2] == [1, 2]); distinct and group-by merge equal lists. " +
             "Literals: numbers, \"strings\", true/false/null, lists [a, b], objects {x: 1, y: 2}. Text functions: lower upper len, " +
             "replace(s, from, to) (case-insensitive), replace-regex(s, pattern, repl) ($1 = group 1), substring(s, start[, length]), " +
             "split(s, sep), trim(s), pad(v, width[, fill]) — also as methods: name.replace(\"Old\", \"New\"), name.substring(0, 4).\n" +
@@ -68,7 +67,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "prefabSource, prefabOverrides (all of the instance's on its root, an object's own on a part). Destroyed objects read as " +
             "null; a GameObject's missingReferences lists references to deleted assets or objects (where missingReferences.count() > 0). Navigate with paths or get; select only projects output columns.\n" +
             "Results come back as compact rows (header line, then col|col). Long results are truncated — refine with where/first or use count. " +
-            "Unknown members produce warnings with suggestions; rql-schema(type) lists a type's members.";
+            "Unknown members produce warnings with suggestions; rql-schema(type) lists a type's members.\n" +
+            // The rules every RQL host shares (conditions, ?:, list equality, group items, receipts, call, bulk create, vectors,
+            // missing map entries): kept in step with the bundled runtime instead of copied here.
+            RqlLanguageGuide.Rules;
 
         public const string QueryExamplesExtra =
             "  console | where logType == \"Error\" | sort sequence desc | first 5 | select message\n" +
@@ -97,6 +99,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where tag == \"Enemy\" | set active = false\n" +
             "  objects | where name starts-with \"Pillar_\" | set name = name.replace(\"Pillar_\", \"Column_\")   bulk rename\n" +
             "  objects | where name starts-with \"Crate\" | sort name | set transform.position.x = $index * 2   spread along x\n" +
+            "  objects | where name starts-with \"Coin\" | set transform.localScale = transform.localScale * 1.5   vectors / colors compute per component (a color's alpha too)\n" +
+            "  objects | where name starts-with \"Lamp\" | set transform.position = transform.position + [0, 2.5, 0]\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | get properties | where Key ends-with \"Color\" | set Value = \"#ffffff\"   map entries write through\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set properties[\"_Color\"] = \"(1, 0, 0, 1)\"\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set parent = unity.asset(\"Assets/Mats/Base.mat\")   make it a Material Variant of Base\n" +
@@ -108,6 +112,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "Create / add / remove (call; the receipt's result column holds the new object's $ref for follow-up queries):\n" +
             "  editor | call CreateGameObject(\"Props\")                                   new root GameObject\n" +
             "  editor | call CreateGameObject(\"Crate\", ref(\"GameObject#1234\"), \"Cube\")    child of a parent, optional primitive\n" +
+            "  range(0, 300) | call editor.CreateGameObject(\"Cube_\" + $, {primitive: \"Cube\", position: [($ % 15) * 2, 0, floor($ / 15) * 2]})   with max_targets=300:\n" +
+            "                         bulk create, one call per item: a 15x20 grid in ONE request and ONE Undo step; each receipt row has the new object's $ref\n" +
+            "  [[\"Crate\", [0, 0, 0]], [\"Barrel\", [2, 0, 0]]] | call editor.CreateGameObject($[0], {primitive: \"Cube\", position: $[1]})   one per entry\n" +
+            "                         {placement}: primitive, parent: ref(…), position / rotation (Euler degrees) / scale as [x, y, z], local to the parent\n" +
             "  objects | where name == \"Crate\" | call AddComponent(\"Rigidbody\")           add a component by type name\n" +
             "  objects | where name == \"Old\" | call Destroy()                             remove a GameObject (components: get components | where $ is X | call Destroy())\n" +
             "  objects | where name == \"Lamp\" | set transform.parent = ref(\"GameObject#1234\")   reparent (keeps the world position)\n" +
@@ -116,7 +124,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "Scenes, prefabs, assets, Editor state:\n" +
             "  editor | call OpenScene(\"Assets/Scenes/Level.unity\")          editor | call NewScene(\"Assets/Scenes/New.unity\")\n" +
             "  scenes | where path == \"\" | call SaveAs(\"Assets/Scenes/New.unity\")   scenes | where name == \"Level\" | call SetActive()\n" +
-            "  editor | call InstantiatePrefab(\"Assets/Prefabs/Enemy.prefab\", ref(\"GameObject#1234\"), \"(0, 0, 5)\")\n" +
+            "  editor | call InstantiatePrefab(\"Assets/Prefabs/Enemy.prefab\", {parent: ref(\"GameObject#1234\"), position: [0, 0, 5]})\n" +
+            "  range(0, 10) | call editor.InstantiatePrefab(\"Assets/Prefabs/Coin.prefab\", {position: [$ * 2, 1, 0]})   ten instances, one Undo step\n" +
             "  objects | where name == \"Crate\" | call SaveAsPrefab(\"Assets/Prefabs/Crate.prefab\")   (on a prefab instance: a Prefab Variant)\n" +
             "  objects | where name == \"Coin_3\" | call RevertPrefabOverrides()   or ApplyPrefabOverrides() (read: select prefabSource prefabOverrides)\n" +
             "  editor | call OpenPrefab(\"Assets/Prefabs/Enemy.prefab\")  then  prefab | recurse children | …  then  editor | call ClosePrefab()\n" +
@@ -136,7 +145,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; " +
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             MutateStages + MutateExamples +
-            "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}. At most 200 targets per call; " +
+            "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}. At most 200 targets (or bulk-create items) per call; " +
             "max_targets raises the limit (up to 1000) for an intended bulk change. The receipt lists the assignments that change a " +
             "value; \"N unchanged\" counts the ones whose target already held it (written anyway). A misspelt member that empties the stream of set / call " +
             "fails with unknown-member (nothing changed); a real member that no matched item has is a no-op.\n\n" +

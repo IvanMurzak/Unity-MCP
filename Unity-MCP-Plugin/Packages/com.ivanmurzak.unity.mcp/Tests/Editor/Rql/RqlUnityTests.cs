@@ -251,7 +251,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
         [Test]
         public void HintsNameTheHostsToolsAndSources()
         {
-            var noSource = Q("[0, 1, 2] | select $");
+            var noSource = Q("\"text\" | select $"); // (a list literal is a source since RQL 5ea1377)
             AssertFails(noSource, "unknown-source", "(e.g. objects)");
             StringAssert.DoesNotContain("e.g. world", Table(noSource)); // (an extension may add tilemap.worldToCell)
             AssertFails(M("objects | where name == \"Alpha\" | call CreateGameObject(\"Made\")"), "unknown-function",

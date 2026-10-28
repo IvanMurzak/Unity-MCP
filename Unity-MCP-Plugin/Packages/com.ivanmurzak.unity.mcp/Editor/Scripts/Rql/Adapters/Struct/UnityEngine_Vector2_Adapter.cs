@@ -20,6 +20,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         public override string Description => "Vector2: write as \"(x, y)\", [x, y] or {x: 1, y: 2}";
         protected override string Expected => "(x, y) or [x, y]";
         protected override int Width => 2;
+        // Component-wise arithmetic: Scale * 1.5, Position + [0, 1, 0], -Velocity (RQL spec §4.2).
+        protected override bool Arithmetic => true;
         protected override float Part(Vector2 v, int i) => i switch { 0 => v.x, _ => v.y };
         protected override Vector2? Make(float[] f) => f.Length == 2 ? new Vector2(f[0], f[1]) : (Vector2?)null;
     }
