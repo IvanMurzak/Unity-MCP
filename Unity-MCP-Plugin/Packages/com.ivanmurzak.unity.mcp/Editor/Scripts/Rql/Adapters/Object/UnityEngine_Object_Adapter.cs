@@ -47,7 +47,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             // scene (an overload tried with {…} for a GameObject parameter included), and components / assets cannot be made so.
             if (value is ObjectValue)
             {
-                reason = $"an object literal cannot become a {target.Name} (pass ref(\"…\"), unity.find(\"…\") or an asset path)";
+                reason = $"an object literal cannot become a {target.Name} (pass ref(\"…\"), unity.find(\"…\") or an asset path)" +
+                         // The last overload tried reports here, also for a mistake inside CreateGameObject's placement literal.
+                         (target == typeof(UnityEngine.GameObject) ? PlacementHint : "");
                 return AdapterOutcome.Failed;
             }
             if (!(value is string text) || !TryAssetPath(text, out var path)) return AdapterOutcome.NotHandled;
@@ -60,6 +62,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             reason = main == null ? $"no asset at '{path}'" : $"'{path}' is a {main.GetType().Name}, expected {target.Name}";
             return AdapterOutcome.Failed;
         }
+
+        private const string PlacementHint =
+            "; a placement literal of editor.CreateGameObject / InstantiatePrefab takes only primitive, parent, position, " +
+            "rotation and scale ([x, y, z])";
 
         public override void ConfigureMembers(MemberTable members)
         {

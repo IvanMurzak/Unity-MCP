@@ -41,7 +41,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 
             // Every receipt row carries the created object's $ref, not the editor's.
             var refs = Table(r);
-            foreach (var cube in cubes) StringAssert.Contains(RqlUnity.Engine.RefOf(cube), refs);
+            foreach (var cube in cubes) StringAssert.Contains("\n" + RqlUnity.Engine.RefOf(cube) + "|", refs);
 
             Undo.PerformUndo();
             Assert.IsFalse(Roots().Any(g => g.name.StartsWith("Cube_")), "one Undo step removes all 30");
@@ -111,6 +111,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         public void AnObjectLiteralIsNotAGameObject()
         {
             AssertFails(M("editor | call CreateGameObject(\"Child\", {}, \"Cube\")"), "coercion-failed", "an object literal cannot become a GameObject");
+            // A typo inside the placement literal is reported through the last overload tried: the hint names the members.
+            AssertFails(M("editor | call CreateGameObject(\"Typo\", {primtive: \"Cube\"})"), "coercion-failed", "takes only primitive, parent, position");
             Assert.AreEqual(0, Roots().Length, string.Join(", ", Roots().Select(g => g.name)));
         }
 

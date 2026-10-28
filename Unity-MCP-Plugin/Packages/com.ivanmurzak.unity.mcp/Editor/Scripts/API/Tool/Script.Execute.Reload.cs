@@ -9,7 +9,9 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.CodeExec;
@@ -22,8 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     /// A domain reload while a snippet runs (it imported a script, or one compiled meanwhile) would disconnect the plugin
     /// and drop the snippet's reply. The reload therefore waits while a snippet runs. While it waits Unity does not start
     /// the compile either and keeps <c>EditorApplication.isCompiling</c> true, so a snippet that waits for the compile would
-    /// wait for its whole budget: once a compile is pending, a running snippet gets <see cref="ReloadGraceMs"/> more, then
-    /// its wait ends and it answers with <see cref="ReloadStopMessage"/>; the compile and reload follow.
+    /// wait for its whole budget: once a compile has been pending for <see cref="ReloadGraceMs"/>, a running snippet's wait
+    /// ends and it answers with <see cref="ReloadStopMessage"/>; the compile and reload follow.
     /// </summary>
     public static partial class Tool_Script
     {
@@ -37,26 +39,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "reply (EditorApplication.isCompiling stays true until then: do not wait for it in a snippet). The compile starts " +
             "now; use the new types in a later call.";
 
-        // The running snippets' stop sources, and those already timed to stop; touched on the main thread only.
-        static readonly HashSet<CancellationTokenSource> Running = new HashSet<CancellationTokenSource>();
-        static readonly HashSet<CancellationTokenSource> Stopping = new HashSet<CancellationTokenSource>();
+        // Running snippets → when a pending compile stops them (null: none pending). Main thread only.
+        static readonly Dictionary<CancellationTokenSource, DateTime?> Running = new Dictionary<CancellationTokenSource, DateTime?>();
+
+        // Reload locks this domain holds (main thread only); released before any reload, so a lock never outlives its domain.
+        static int _reloadLocks;
 
         /// <returns>The run's result, and whether it was stopped because a reload is waiting.</returns>
         static async Task<(ExecuteResult Result, bool StoppedForReload)> RunHoldingReload(PreparedSnippet prepared)
         {
             var stop = new CancellationTokenSource();
             if (Running.Count == 0) EditorApplication.update += StopForPendingReload;
-            Running.Add(stop);
-            EditorApplication.LockReloadAssemblies();
+            Running.Add(stop, null);
+            LockReload();
             try
             {
                 var result = await Runner.Value.RunAsync(prepared, stop.Token);
-                return (result, stop.IsCancellationRequested && !result.Success);
+                // Code-Exec reports a canceled wait as Timeout; the snippet's own failure keeps its error.
+                return (result, stop.IsCancellationRequested && result.ErrorKind == ErrorKind.Timeout);
             }
             finally
             {
                 Running.Remove(stop);
-                Stopping.Remove(stop);
                 if (Running.Count == 0) EditorApplication.update -= StopForPendingReload;
                 stop.Dispose();
                 UnlockReloadSoon();
@@ -65,15 +69,39 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         static void StopForPendingReload()
         {
-            if (!EditorApplication.isCompiling) return;
-            foreach (var stop in Running)
-                if (Stopping.Add(stop)) stop.CancelAfter(ReloadGraceMs); // once: a second CancelAfter would restart the timer
+            var now = DateTime.UtcNow;
+            foreach (var entry in Running.ToList())
+            {
+                if (!EditorApplication.isCompiling) Running[entry.Key] = null; // the compile ended without a reload
+                else if (entry.Value == null) Running[entry.Key] = now.AddMilliseconds(ReloadGraceMs);
+                else if (now >= entry.Value) entry.Key.Cancel();
+            }
+        }
+
+        static void LockReload()
+        {
+            if (_reloadLocks++ == 0) AssemblyReloadEvents.beforeAssemblyReload += ReleaseReloadLocks;
+            EditorApplication.LockReloadAssemblies();
         }
 
         static async void UnlockReloadSoon()
         {
             try { await Task.Delay(ReplyGraceMs); }
-            finally { MainThread.Instance.Run(EditorApplication.UnlockReloadAssemblies); }
+            finally { MainThread.Instance.Run(UnlockReload); }
+        }
+
+        static void UnlockReload()
+        {
+            if (_reloadLocks == 0) return; // already released by ReleaseReloadLocks
+            if (--_reloadLocks == 0) AssemblyReloadEvents.beforeAssemblyReload -= ReleaseReloadLocks;
+            EditorApplication.UnlockReloadAssemblies();
+        }
+
+        // A reload that happens anyway (e.g. entering Play Mode right after a snippet) drops the pending UnlockReloadSoon:
+        // Unity's lock count outlives the domain, so without this every later script reload would stay blocked.
+        static void ReleaseReloadLocks()
+        {
+            while (_reloadLocks > 0) UnlockReload();
         }
     }
 }

@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         protected override Vector2Int? Make(float[] f)
         {
             if (f.Length != 2) return null;
-            foreach (var x in f) if (Math.Abs(x - Math.Round(x)) > 1e-6) return null;
+            foreach (var x in f) if (Math.Abs(x - Math.Round(x)) > 1e-6 || Math.Abs(x) > int.MaxValue) return null;
             return new Vector2Int((int)Math.Round(f[0]), (int)Math.Round(f[1]));
         }
     }

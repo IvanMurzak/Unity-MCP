@@ -84,6 +84,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
                          $"a collection to {Tool_Script.ResultValue.MaxItems} items",
                          $"over {Tool_Script.ResultValue.MaxSerializedChars} characters as JSON comes back as the first {OutputLimits.DefaultValueChars}",
                          $"errors to {OutputLimits.DefaultErrorChars} characters and {OutputLimits.MaxDiagnostics} compile errors",
+                         $"a time budget of {Tool_Script.MaxSnippetTimeoutMs / 1000} s",
+                         $"running {Tool_Script.ReloadGraceMs / 1000} s after a compile is requested",
                      })
                 StringAssert.Contains(phrase, body);
         }

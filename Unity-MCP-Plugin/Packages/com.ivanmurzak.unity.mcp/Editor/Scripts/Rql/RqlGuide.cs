@@ -99,7 +99,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where tag == \"Enemy\" | set active = false\n" +
             "  objects | where name starts-with \"Pillar_\" | set name = name.replace(\"Pillar_\", \"Column_\")   bulk rename\n" +
             "  objects | where name starts-with \"Crate\" | sort name | set transform.position.x = $index * 2   spread along x\n" +
-            "  objects | where name starts-with \"Coin\" | set transform.localScale = transform.localScale * 1.5   vectors / colors compute per component\n" +
+            "  objects | where name starts-with \"Coin\" | set transform.localScale = transform.localScale * 1.5   vectors / colors compute per component (a color's alpha too)\n" +
             "  objects | where name starts-with \"Lamp\" | set transform.position = transform.position + [0, 2.5, 0]\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | get properties | where Key ends-with \"Color\" | set Value = \"#ffffff\"   map entries write through\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set properties[\"_Color\"] = \"(1, 0, 0, 1)\"\n" +
