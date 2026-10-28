@@ -294,6 +294,58 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             Assert.IsFalse(aliases.ContainsKey("On"), "an entry's own name is never an alias");
         }
 
+        // Conditions must be booleans (RQL spec §1.2): an object in a where fails with a hint showing the test to write.
+        [Test]
+        public void ConditionsMustBeBoolean()
+        {
+            GameObject.CreatePrimitive(PrimitiveType.Cube).name = "Cube";
+            const string Renderers = "objects | get components | where $ is MeshRenderer";
+            AssertFails(Q(Renderers + " | where sharedMaterial | select gameObject.name"), "type-mismatch", "sharedMaterial != null");
+            Assert.AreEqual("Cube", Cell(Q(Renderers + " | where sharedMaterial != null | select gameObject.name")));
+            Assert.AreEqual("Cube", Cell(Q(Renderers + " | where has(sharedMaterial) | select gameObject.name")));
+            AssertFails(Q("objects | where name == \"Alpha\" and children.count() | select name"), "type-mismatch");
+        }
+
+        // Group rows carry their items; float members aggregate as their shortest decimal (2.5 and 2.7 average to 2.6).
+        [Test]
+        public void GroupItemsAggregateFloatMembers()
+        {
+            new GameObject("Lamp2").AddComponent<Light>().intensity = 2.7f;
+            var r = Q("objects | get components | where $ is Light | group-by type | select key, count, avg = items.avg(intensity)");
+            Assert.AreEqual("Point", Cell(r, 0, 0), Table(r));
+            Assert.AreEqual("2", Cell(r, 0, 1));
+            Assert.AreEqual("2.6", Cell(r, 0, 2));
+            Assert.AreEqual("2.6", Q("objects | get components | where $ is Light | avg intensity").Value!.ToJsonString());
+        }
+
+        // Lists compare by value: equal lists are equal and merge in group-by.
+        [Test]
+        public void ListsCompareByValue()
+        {
+            Assert.AreEqual("1", Cell(Q("objects | where name == \"Alpha\" | select ok = ([1, 2] == [1, 2] ? 1 : 0)")));
+            Assert.AreEqual(1L, Count("objects | where name in [\"Alpha\", \"Beta\"] | group-by [1, 2] | count"));
+        }
+
+        // A set from rql-query: the permission-denied hint names rql-mutate.
+        [Test]
+        public void PermissionDeniedNamesTheMutateTool()
+        {
+            AssertFails(Q("objects | where name == \"Alpha\" | set name = \"X\""), "permission-denied", Tool_Rql.MutateToolId);
+            Assert.AreEqual("Alpha", _a.name);
+        }
+
+        // Receipts leave out assignments that keep the old value and count them as unchanged (the writes still happen).
+        [Test]
+        public void NoOpAssignmentsAreCountedAsUnchanged()
+        {
+            var r = RqlUnity.Mutate("objects | where name in [\"Alpha\", \"Beta\", \"Lamp\"] | set name = (name == \"Beta\" ? \"Gamma\" : name)");
+            AssertOk(r);
+            Assert.AreEqual(1, r.Rows!.Count, Table(r));
+            Assert.AreEqual(2L, r.Unchanged, Table(r));
+            StringAssert.Contains("2 unchanged", Table(r));
+            Assert.AreEqual("Gamma", _b.name);
+        }
+
         [Test]
         public void ToolsReturnTextResults()
         {

@@ -119,8 +119,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>
         /// <see cref="RqlEngine.IsKnownMember"/>: whether a UnityEngine.Object type (components, ScriptableObjects, assets, user
         /// scripts, internal ones included) or an RQL module item type has a member of this name, case-insensitive: its public
-        /// properties and fields and its [SerializeField] fields (not [RqlIgnore] ones), plus the members RQL's adapters add
-        /// (read from the engine's type model for the adapters' target types only; building it for every type takes seconds).
+        /// properties and fields and its [SerializeField] fields (not [RqlIgnore] ones), plus the members the engine's registered
+        /// adapters add (read from its type model for the adapters' target types only; building it for every type takes seconds).
         /// Collected on the first name RQL asks about: the declared names once per domain, the adapter names once per engine.
         /// </summary>
         public static bool IsKnownMember(RqlEngine engine, string name)
@@ -129,12 +129,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (cached == null || cached.Value.engine != engine)
             {
                 var names = new HashSet<string>(_declaredMembers ??= DeclaredMembers(), StringComparer.OrdinalIgnoreCase);
-                foreach (var adapter in TypeCache.GetTypesDerivedFrom<RqlTypeAdapter>())
+                foreach (var adapter in engine.Adapters)
                 {
                     try
                     {
-                        if (AdapterTarget(adapter) is { } target)
-                            foreach (var m in engine.Types.Info(target).Members) names.Add(m.Name);
+                        foreach (var m in engine.Types.Info(adapter.Target).Members) names.Add(m.Name);
                     }
                     catch (Exception) { } // a type that cannot load contributes nothing
                 }
@@ -166,15 +165,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                     catch (Exception) { } // a type that cannot load contributes nothing
                 }
             return names;
-        }
-
-        // T of an RqlTypeAdapter<T> subclass, or null (a non-generic adapter, an open generic one).
-        private static Type? AdapterTarget(Type adapter)
-        {
-            for (var t = adapter; t != null; t = t.BaseType)
-                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(RqlTypeAdapter<>))
-                    return t.GetGenericArguments()[0] is { ContainsGenericParameters: false } target ? target : null;
-            return null;
         }
 
         /// <summary>

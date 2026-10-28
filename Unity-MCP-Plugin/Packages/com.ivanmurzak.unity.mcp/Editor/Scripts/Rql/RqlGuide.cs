@@ -37,17 +37,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "Assets: unity.assets(\"t:Material\") or unity.assets(\"t:Prefab\", \"Assets/Enemies\"), unity.asset(\"Assets/Mats/Red.mat\"). " +
             "ref(\"Light#1234\") resolves a $ref; unity.find(\"Player\") or unity.find(\"Level/Pillar_1\") a GameObject by unique name or path.\n" +
             "Stages:\n" +
-            "  where <predicate>                  filter\n" +
+            "  where <condition>                  filter (a boolean: where sharedMaterial != null, not where sharedMaterial)\n" +
             "  select a b.c alias=(expr)          project columns (wrap computed expressions in parentheses)\n" +
             "  sort <expr> [desc], ...            stable sort (computed keys in parentheses: sort (a * b) desc)\n" +
             "  first N | skip N | count\n" +
             "  get <path>                         replace each item by a member (lists are flattened)\n" +
             "  recurse children [max-depth=N] [include-self=false]   walk the hierarchy (input items included by default)\n" +
             "  distinct [expr] | sum expr | min expr | max expr | avg expr   (distinct keeps whole items; values: get tag | distinct)\n" +
-            "  group-by expr                      rows key|count; group-by a, b (or kind=$type) gives one column per key, then count\n" +
+            "  group-by expr                      rows key|count; group-by a, b (or kind=$type) gives one column per key, then count;\n" +
+            "                                     items = the group's items: … | where $ is Light | group-by type | select key, count, avg = items.avg(intensity)\n" +
             "Expressions: == != < <= > >= and or not + - * / %; contains, starts-with, ends-with (case-insensitive); " +
             "matches \"regex\"; x in [a, b]; x is null; x is not null; $ is Light (includes subclasses); has(member); " +
             "c ? a : b or if(c, a, b) (only the taken branch runs; where a stage takes one expression, wrap it: select kind=($ is Light ? \"light\" : \"other\")). " +
+            "Conditions (where, and / or / not, ?:, if, the predicates of .any .all .count .first) must be booleans, else type-mismatch: " +
+            "test objects with x != null or has(x), numbers with x != 0, strings with x != \"\", lists with len(x) > 0 (null counts as false). " +
+            "Lists compare by value ([1, 2] == [1, 2]); distinct and group-by merge equal lists. " +
             "Literals: numbers, \"strings\", true/false/null, lists [a, b], objects {x: 1, y: 2}. Text functions: lower upper len, " +
             "replace(s, from, to) (case-insensitive), replace-regex(s, pattern, repl) ($1 = group 1), substring(s, start[, length]), " +
             "split(s, sep), trim(s), pad(v, width[, fill]) — also as methods: name.replace(\"Old\", \"New\"), name.substring(0, 4).\n" +
@@ -132,7 +136,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             MutateStages + MutateExamples +
             "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}. At most 200 targets per call; " +
-            "max_targets raises the limit (up to 1000) for an intended bulk change. A misspelt member that empties the stream of set / call " +
+            "max_targets raises the limit (up to 1000) for an intended bulk change. The receipt lists the assignments that change a " +
+            "value; \"N unchanged\" counts the ones whose target already held it (written anyway). A misspelt member that empties the stream of set / call " +
             "fails with unknown-member (nothing changed); a real member that no matched item has is a no-op.\n\n" +
             QuerySyntaxShort;
 

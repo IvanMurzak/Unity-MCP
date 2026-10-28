@@ -45,13 +45,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public static RqlEngine Create()
         {
-            // ref("Name") hints name the finder, no-match hints the schema tool; the tools take no budgets argument (only
-            // rql-mutate's max_targets, which the mutation-limit hint names), so no hint advises raising budgets.*.
+            // ref("Name") hints name the finder, no-match hints the schema tool, permission-denied hints the mutation tool; the
+            // tools take no budgets argument (only rql-mutate's max_targets, which the mutation-limit hint names), so no hint
+            // advises raising budgets.*. Types keep their CLR names (no TypeDisplayName): they are what agents write in `is`,
+            // AddComponent and the schema, and Unity's only other name (the Inspector's "Mesh Renderer") is not an identifier.
             var engine = new RqlEngine(AccessorMode.Compiled)
             {
                 RuntimeName = "unity",
                 FindHint = "unity.find(\"…\")",
                 SchemaHint = API.Tool_Rql.SchemaToolId,
+                MutateHint = API.Tool_Rql.MutateToolId,
                 EnumAliases = UnityTypes.EnumAliases,
             };
             // Streams of components and assets are polymorphic: a member that some Unity type has is not a typo (it does not

@@ -101,7 +101,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             ? Diagnostic.Warning("play-mode", "the Editor is in Play Mode: scene changes are temporary and are lost when Play Mode exits (asset changes stay)")
             : null;
 
-        /// <summary>Hard ceiling of <c>max_targets</c> (the engine clamps a request to it).</summary>
+        /// <summary>Hard ceiling of <c>max_targets</c> (RQL refuses a request outside 1 … this).</summary>
         public static int HardMaxTargets => Engine.Mutations.HardMaxTargets;
 
         /// <summary>
