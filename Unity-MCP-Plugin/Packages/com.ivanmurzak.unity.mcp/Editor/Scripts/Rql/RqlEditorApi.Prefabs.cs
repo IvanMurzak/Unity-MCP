@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                      "e.g. InstantiatePrefab(\"Assets/Prefabs/Coin.prefab\", {position: [0, 1, 0]}); returns it (undoable)")]
         public GameObject InstantiatePrefab(string path, RqlPlacement? placement)
         {
-            if (ValidateInstantiatePrefab(path, placement) is string problem) throw new ArgumentException(problem);
+            if (!string.IsNullOrEmpty(placement?.primitive)) throw new ArgumentException(PrefabTakesNoPrimitive);
             return InstantiatePrefab(path, placement?.parent, placement?.position, placement?.rotation, placement?.scale);
         }
 
@@ -40,15 +40,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             AssetDatabase.LoadAssetAtPath<GameObject>(path) == null ? NoPrefab(path) : null;
 
         public string? ValidateInstantiatePrefab(string path, RqlPlacement? placement) =>
-            !string.IsNullOrEmpty(placement?.primitive) ? "a prefab instance takes no primitive (CreateGameObject makes primitives)"
+            !string.IsNullOrEmpty(placement?.primitive) ? PrefabTakesNoPrimitive
             : ValidateInstantiatePrefab(path, placement?.parent, placement?.position, placement?.rotation, placement?.scale);
 
         private static string NoPrefab(string path) => $"no prefab at '{path}'";
 
+        private const string PrefabTakesNoPrimitive = "a prefab instance takes no primitive (CreateGameObject makes primitives)";
+
         [RqlCallable("open a prefab asset in prefab editing mode; its contents are then the prefab source")]
         public GameObject OpenPrefab(string path)
         {
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null) throw new ArgumentException($"no prefab at '{path}'");
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null) throw new ArgumentException(NoPrefab(path));
             var stage = PrefabStageUtility.OpenPrefab(path) ?? throw new InvalidOperationException($"could not open '{path}'");
             return stage.prefabContentsRoot;
         }

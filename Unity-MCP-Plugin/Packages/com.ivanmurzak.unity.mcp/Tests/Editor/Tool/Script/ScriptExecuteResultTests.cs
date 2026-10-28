@@ -66,6 +66,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             return text;
         }
 
+        // Code-Exec's recursion guard: an error, not a stack overflow that ends the Editor.
+        [Test]
+        public void RunawayRecursionFailsWithAnError() =>
+            StringAssert.Contains("Recursion too deep",
+                Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = "int Down(int n) => Down(n + 1) + 1;\nDown(0)" }));
+
         // The skill text quotes the limits as literals (an attribute cannot format constants): keep them in step.
         [Test]
         public void TheSkillQuotesTheLimitsInForce()

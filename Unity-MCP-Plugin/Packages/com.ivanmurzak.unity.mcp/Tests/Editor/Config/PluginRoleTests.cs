@@ -32,7 +32,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             try
             {
                 Assert.AreEqual(Application.unityVersion + " (runtime)", runtime.Environment);
-                StringAssert.EndsWith("(runtime)", runtime.Environment);
             }
             finally { runtime.Dispose(); }
         }

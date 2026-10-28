@@ -59,8 +59,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             if (ValidateCreateGameObject(name, parent, primitive, position, rotation, scale) is string problem) throw new ArgumentException(problem);
             GameObject go;
-            if (string.IsNullOrEmpty(primitive)) go = new GameObject(name);
-            else { go = GameObject.CreatePrimitive(Primitive(primitive!)!.Value); go.name = name; }
+            if (Adapters.UnityEngine_Mesh_Adapter.TryParsePrimitive(primitive ?? "", out var type)) { go = GameObject.CreatePrimitive(type); go.name = name; }
+            else go = new GameObject(name);
             return Place(go, parent, position, rotation, scale, "RQL create " + name);
         }
 
@@ -76,15 +76,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         // Called by RQL for every item before the first call (and on dry runs), so a bulk create fails whole or not at all.
         public string? ValidateCreateGameObject(string name, GameObject? parent, string? primitive, Vector3? position, Vector3? rotation, Vector3? scale) =>
             Adapters.UnityEngine_GameObject_Adapter.ValidateName(name)
-            ?? (string.IsNullOrEmpty(primitive) || Primitive(primitive!) != null ? null : $"unknown primitive '{primitive}' ({PrimitiveNames})");
+            ?? (string.IsNullOrEmpty(primitive) || Adapters.UnityEngine_Mesh_Adapter.TryParsePrimitive(primitive!, out _)
+                ? null
+                : $"unknown primitive '{primitive}' ({Adapters.UnityEngine_Mesh_Adapter.Names})");
 
         public string? ValidateCreateGameObject(string name, RqlPlacement? placement) =>
             ValidateCreateGameObject(name, placement?.parent, placement?.primitive, placement?.position, placement?.rotation, placement?.scale);
-
-        private const string PrimitiveNames = "Cube, Sphere, Capsule, Cylinder, Plane, Quad";
-
-        private static PrimitiveType? Primitive(string name) =>
-            Enum.TryParse<PrimitiveType>(name, ignoreCase: true, out var type) && Enum.IsDefined(typeof(PrimitiveType), type) ? type : (PrimitiveType?)null;
 
         /// <summary>A new object under <paramref name="parent"/> at a local position / rotation / scale, registered for Undo.</summary>
         private static GameObject Place(GameObject go, GameObject? parent, Vector3? position, Vector3? rotation, Vector3? scale, string undoName)
