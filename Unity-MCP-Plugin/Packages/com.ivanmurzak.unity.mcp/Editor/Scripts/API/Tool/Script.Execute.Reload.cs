@@ -34,6 +34,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// <summary>How long the reload stays held after the snippet answered: the reply still has to leave over the connection.</summary>
         internal const int ReplyGraceMs = 1_000;
 
+        internal const string ReloadPendingMessage =
+            "Scripts are compiling and reload next, so this snippet was not run (a running snippet holds the reload back). " +
+            "Retry in a few seconds: rql-query `editor | select isCompiling` reads false once the reload is done.";
+
+        /// <summary>
+        /// A compile is waiting for its reload. A snippet started now would hold the reload again, and an agent that keeps
+        /// calling (polling for its new type) would hold it forever: each call locks the reload until 1 s after its reply.
+        /// Replaced in tests.
+        /// </summary>
+        internal static Func<bool> CompilePending = () => EditorApplication.isCompiling;
+
         internal const string ReloadStopMessage =
             "Scripts must compile and reload, which waits while a snippet runs, so the snippet was stopped to deliver this " +
             "reply (EditorApplication.isCompiling stays true until then: do not wait for it in a snippet). The compile starts " +

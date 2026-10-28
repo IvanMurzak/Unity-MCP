@@ -90,6 +90,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
                 StringAssert.Contains(phrase, body);
         }
 
+        // Wave 6: an agent polling with script-execute after writing a script kept the reload held forever (each call locks
+        // it until 1 s after its reply): isCompiling stayed true for minutes. While a compile waits, a call runs nothing.
+        [Test]
+        public void ACallMadeWhileScriptsCompileRunsNothing()
+        {
+            var saved = Tool_Script.CompilePending;
+            UnityEditor.SessionState.EraseBool("wave6.reload.ran");
+            Tool_Script.CompilePending = () => true;
+            try
+            {
+                StringAssert.Contains(Tool_Script.ReloadPendingMessage, Fails(Tool_Script.ScriptExecuteToolId,
+                    new { csharpCode = "UnityEditor.SessionState.SetBool(\"wave6.reload.ran\", true); 1" }));
+                Assert.IsFalse(UnityEditor.SessionState.GetBool("wave6.reload.ran", false), "the snippet must not run");
+            }
+            finally { Tool_Script.CompilePending = saved; }
+            Assert.AreEqual("System.Int32: 1", Run("1"), "runs again once no compile waits");
+        }
+
         [Test]
         public void ATypedNullIsNullNotTheStringNull() =>
             Assert.AreEqual("System.String: null", Run("(string)null"));
