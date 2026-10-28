@@ -113,7 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  editor | call CreateGameObject(\"Props\")                                   new root GameObject\n" +
             "  editor | call CreateGameObject(\"Crate\", ref(\"GameObject#1234\"), \"Cube\")    child of a parent, optional primitive\n" +
             "  range(0, 300) | call editor.CreateGameObject(\"Cube_\" + $, {primitive: \"Cube\", position: [($ % 15) * 2, 0, floor($ / 15) * 2]})   with max_targets=300:\n" +
-            "                         bulk create, one call per item: a 15x20 grid in ONE request and ONE Undo step; each receipt row has the new object's $ref\n" +
+            "                         bulk create, one call per item: a 15x20 grid in ONE request and ONE Undo step; the receipt lists the first 50 new objects' $refs (query the rest by name)\n" +
             "  [[\"Crate\", [0, 0, 0]], [\"Barrel\", [2, 0, 0]]] | call editor.CreateGameObject($[0], {primitive: \"Cube\", position: $[1]})   one per entry\n" +
             "                         {placement}: primitive, parent: ref(…), position / rotation (Euler degrees) / scale as [x, y, z], local to the parent\n" +
             "  editor | call CreateGameObject({name: \"Crate\", primitive: \"Cube\", position: [1, 0, 2], scale: [2, 2, 2]})   arguments by name: one literal, any order, the rest default\n" +
