@@ -26,7 +26,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Script / Read",
             ReadOnlyHint = true,
             IdempotentHint = true,
-            Enabled = false
+            Visible = false
         )]
         [AiSkillDescription("Read a `.cs` script file and return its content as a string. " +
             "Supports a 1-based `lineFrom`/`lineTo` slice for partial reads. " +

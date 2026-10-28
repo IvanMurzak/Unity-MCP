@@ -9,31 +9,65 @@
 */
 
 #nullable enable
+using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
 using NUnit.Framework;
 using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     /// <summary>
-    /// The MCP server tells a game from the Editor by the handshake environment: ending in "(runtime)" is a runtime, which
-    /// connects beside the Editor instead of replacing it (GameDev-MCP-Server plugin roles).
+    /// A player / runtime connection declares <see cref="ClientRole.Runtime"/> (McpPlugin sends it as <c>client_role</c>), so
+    /// the MCP server keeps it beside the Editor instead of letting it replace the Editor (GameDev-MCP-Server plugin roles).
     /// </summary>
     public class PluginRoleTests
     {
         private sealed class ProbeRuntime : UnityMcpPluginRuntime
         {
             public string Environment => BuildVersion().Environment;
+            public static void Declare(IMcpPluginBuilder builder) => DeclareRuntimeRole(builder);
         }
 
         [Test]
-        public void ARuntimeHandshakeEndsInRuntime()
+        public void TheRuntimeHandshakeEnvironment_IsTheUnityVersion_WithoutASuffix()
         {
             var runtime = new ProbeRuntime();
             try
             {
-                Assert.AreEqual(Application.unityVersion + " (runtime)", runtime.Environment);
+                Assert.AreEqual(Application.unityVersion, runtime.Environment);
             }
             finally { runtime.Dispose(); }
+        }
+
+        [Test]
+        public void TheRuntimeBuilder_DeclaresRuntime_EvenAfterTheDeveloperSetsEditor()
+        {
+            var config = new ConnectionConfig();
+            var builder = new McpPluginBuilder(new McpPlugin.Common.Version()).SetConfig(config);
+            builder.WithConfig(c => c.ClientRole = ClientRole.Editor);
+
+            ProbeRuntime.Declare(builder);
+
+            Assert.AreEqual(ClientRole.Runtime, config.ClientRole);
+        }
+
+        [Test]
+        public void TheRuntimeRole_SurvivesAConfigTheDeveloperSetsAfterInitialize()
+        {
+            var builder = new McpPluginBuilder(new McpPlugin.Common.Version());
+            builder.WithConfig(c => c.ClientRole = ClientRole.Editor); // before any SetConfig: an options action
+            var config = new ConnectionConfig();
+            builder.SetConfig(config);                                  // replaces the options-based config
+
+            ProbeRuntime.Declare(builder);                              // what BuildFromBuilder does last
+
+            Assert.AreEqual(ClientRole.Runtime, config.ClientRole);
+        }
+
+        [Test]
+        public void TheEditorConfig_StaysAnEditor()
+        {
+            Assert.AreEqual(ClientRole.Editor, new UnityMcpPlugin.UnityConnectionConfig().ClientRole);
         }
     }
 }

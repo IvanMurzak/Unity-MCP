@@ -11,6 +11,7 @@
 #nullable enable
 using System.Diagnostics;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
 using Microsoft.Extensions.Logging;
 using R3;
 
@@ -30,23 +31,20 @@ namespace com.IvanMurzak.Unity.MCP
         }
 
         /// <summary>
-        /// Appended to the handshake's <c>environment</c> (the Unity version): the MCP server classifies a connection whose
-        /// environment ends in <c>(runtime)</c> as a game, so a running player is kept beside the Editor instead of replacing
-        /// it (GameDev-MCP-Server plugin roles). A <c>client_role=runtime</c> hub parameter would say it at connect time, but
-        /// McpPlugin does not let a plugin add one yet.
+        /// Declares the connection a <see cref="ClientRole.Runtime"/> (McpPlugin sends it as <c>client_role</c> at connect):
+        /// the MCP server keeps a running player beside the Editor instead of letting it replace the Editor
+        /// (GameDev-MCP-Server plugin roles). Applied when the plugin is built, after everything the developer configured,
+        /// so a game never registers as the Editor.
         /// </summary>
-        public const string RuntimeEnvironmentSuffix = " (runtime)";
-
-        protected override McpPlugin.Common.Version BuildVersion()
-        {
-            var version = base.BuildVersion();
-            version.Environment += RuntimeEnvironmentSuffix;
-            return version;
-        }
+        protected static void DeclareRuntimeRole(IMcpPluginBuilder builder)
+            => builder.WithConfig(config => config.ClientRole = ClientRole.Runtime);
 
         internal IMcpPlugin BuildFromBuilder(IMcpPluginBuilder builder)
         {
             _logger.LogTrace("{method} called.", nameof(BuildFromBuilder));
+
+            // Last, so neither a WithConfig nor a SetConfig the developer made after Initialize can undo it.
+            DeclareRuntimeRole(builder);
 
             var stopwatch = Stopwatch.StartNew();
             var built = _plugin.Set(builder.Build(CreateDefaultReflector()));

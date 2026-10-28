@@ -1,0 +1,9 @@
+<Project>
+  <!-- TEMPORARY pre-release McpPlugin feed (between test waves McpPlugin is integrated without a release; the plugin's DLLs
+       under Assets/Plugins/NuGet are the same 8.14.0-dev build). Adds the repo-root prerelease-packages/ folder as an extra
+       restore source; nuget.org stays the main source. Delete this file and prerelease-packages/ when the McpPlugin pin
+       returns to a published version. -->
+  <PropertyGroup>
+    <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(MSBuildThisFileDirectory)../../../prerelease-packages</RestoreAdditionalProjectSources>
+  </PropertyGroup>
+</Project>

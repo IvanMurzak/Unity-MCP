@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PackageAddToolId,
             Title = "Package Manager / Add",
             OpenWorldHint = true,
-            Enabled = false
+            Visible = false
         )]
         [AiSkillDescription("Install a Unity package from the registry, a Git URL, or a local path. " +
             "Modifies `manifest.json` and triggers package resolution; may also trigger a domain reload — the final " +

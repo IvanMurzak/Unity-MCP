@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             SkillsCreateToolId,
             Title = "Skill (Tool) / Create",
             DestructiveHint = false,
-            Enabled = false,
+            Visible = false,
             ToolType = McpToolType.System
         )]
         [AiSkillDescription("Create a new skill (MCP tool) for the Unity Editor by writing a C# (.cs) file " +

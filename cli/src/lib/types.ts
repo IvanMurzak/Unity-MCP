@@ -282,6 +282,9 @@ export interface ConfigureOptions {
 
 export interface McpFeatureSnapshot {
   name: string;
+  /** Listed to MCP clients (tools/list). A hidden tool still runs when called by name. */
+  visible: boolean;
+  /** @deprecated Old name of {@link McpFeatureSnapshot.visible} (same value), kept for library callers. */
   enabled: boolean;
 }
 

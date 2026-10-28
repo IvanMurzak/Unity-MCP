@@ -35,7 +35,7 @@ Cross-platform CLI tool for **[Unity MCP](https://github.com/IvanMurzak/Unity-MC
 - :white_check_mark: **Install editors** — install any Unity Editor version from the command line
 - :white_check_mark: **Install plugin** — add Unity-MCP plugin to `manifest.json` with all required scoped registries
 - :white_check_mark: **Remove plugin** — remove Unity-MCP plugin from `manifest.json`
-- :white_check_mark: **Configure** — enable/disable MCP tools, prompts, and resources
+- :white_check_mark: **Configure** — show/hide MCP tools, prompts, and resources (what MCP clients see listed)
 - :white_check_mark: **Status check** — see Unity process, local server, and cloud server connection status at a glance
 - :white_check_mark: **Run tools** — execute MCP tools directly from the command line
 - :white_check_mark: **Setup MCP** — write AI agent MCP config files for any of 14 supported agents
@@ -130,18 +130,18 @@ unity-mcp-cli configure ./MyGame --list
 |---|---|---|
 | `[path]` | Yes | Path to the Unity project (positional or `--path`) |
 | `--list` | No | List current configuration and exit |
-| `--enable-tools <names>` | No | Enable specific tools (comma-separated) |
-| `--disable-tools <names>` | No | Disable specific tools (comma-separated) |
-| `--enable-all-tools` | No | Enable all tools |
-| `--disable-all-tools` | No | Disable all tools |
-| `--enable-prompts <names>` | No | Enable specific prompts (comma-separated) |
-| `--disable-prompts <names>` | No | Disable specific prompts (comma-separated) |
-| `--enable-all-prompts` | No | Enable all prompts |
-| `--disable-all-prompts` | No | Disable all prompts |
-| `--enable-resources <names>` | No | Enable specific resources (comma-separated) |
-| `--disable-resources <names>` | No | Disable specific resources (comma-separated) |
-| `--enable-all-resources` | No | Enable all resources |
-| `--disable-all-resources` | No | Disable all resources |
+| `--enable-tools <names>` | No | Show specific tools to MCP clients (comma-separated) |
+| `--disable-tools <names>` | No | Hide specific tools from MCP clients (comma-separated; a hidden tool still runs when called by name) |
+| `--enable-all-tools` | No | Show all tools |
+| `--disable-all-tools` | No | Hide all tools |
+| `--enable-prompts <names>` | No | Show specific prompts to MCP clients (comma-separated) |
+| `--disable-prompts <names>` | No | Hide specific prompts from MCP clients (comma-separated; a hidden tool still runs when called by name) |
+| `--enable-all-prompts` | No | Show all prompts |
+| `--disable-all-prompts` | No | Hide all prompts |
+| `--enable-resources <names>` | No | Show specific resources to MCP clients (comma-separated) |
+| `--disable-resources <names>` | No | Hide specific resources from MCP clients (comma-separated; a hidden tool still runs when called by name) |
+| `--enable-all-resources` | No | Show all resources |
+| `--disable-all-resources` | No | Hide all resources |
 
 **Example — enable specific tools and disable all prompts:**
 

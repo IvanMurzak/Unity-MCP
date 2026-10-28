@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PackageRemoveToolId,
             Title = "Package Manager / Remove",
             DestructiveHint = true,
-            Enabled = false
+            Visible = false
         )]
         [AiSkillDescription("Uninstall a UPM package from the Unity project. Modifies `manifest.json` and may " +
             "trigger a domain reload — the final result is delivered after the reload via the request's `requestId`. " +

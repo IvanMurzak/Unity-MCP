@@ -20,7 +20,7 @@ McpPlugin and its tool plumbing (ReflectorNet for tool parameters and the Runtim
 | `tests-run` filters | `tests` source (`fullName name fixture namespace assembly mode categories parameterized explicit ignored`); `tests-run query` runs an RQL selection as one run, `result` filters `testResults` |
 
 Kept as tools: `script-*`, `tests-run`, `screenshot-*`, `package-*`, `unity-tool-list`,
-`tool-set-enabled-state`, `ping`, skills tools.
+`tool-set-visibility` (deprecated alias `tool-set-enabled-state`), `ping`, skills tools.
 
 ## Code
 

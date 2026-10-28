@@ -221,8 +221,8 @@ namespace com.IvanMurzak.Unity.MCP
             public com.IvanMurzak.McpPlugin.ToolTextEscaping ToolTextEscaping { get; set; } = com.IvanMurzak.McpPlugin.ToolTextEscaping.Minimal;
 
             /// <summary>
-            /// When non-null, only the tools whose names appear in this list are enabled;
-            /// all others are disabled. Set by the <c>UNITY_MCP_TOOLS</c> environment variable
+            /// When non-null, only the tools whose names appear in this list are visible (listed to MCP clients);
+            /// all others are hidden. Set by the <c>UNITY_MCP_TOOLS</c> environment variable
             /// (comma-separated tool IDs). Not persisted to disk.
             /// </summary>
             [JsonIgnore]
@@ -283,16 +283,40 @@ namespace com.IvanMurzak.Unity.MCP
                 return false;
             }
 
+            /// <summary>
+            /// One tool / prompt / resource entry of the config file: whether MCP clients see it listed
+            /// (<c>tools/list</c>). Visibility is not an access control: a hidden tool still runs when called by name.
+            /// Written as <c>"visible"</c>; a file saved before the rename carries <c>"enabled"</c>, which is still
+            /// read (<see cref="LegacyEnabled"/>), and <c>"visible"</c> wins when both are present.
+            /// </summary>
             public class McpFeature
             {
+                bool? _visible;
+                bool? _legacyEnabled;
+
                 public string Name { get; set; } = string.Empty;
-                public bool Enabled { get; set; } = true;
+
+                [JsonPropertyName("visible")]
+                public bool Visible
+                {
+                    get => _visible ?? _legacyEnabled ?? true;
+                    set => _visible = value;
+                }
+
+                /// <summary>The pre-rename key <c>"enabled"</c>: read, never written (its getter returns null).</summary>
+                [JsonPropertyName("enabled")]
+                [JsonIgnore(Condition = JsonIgnoreCondition.WhenWritingNull)]
+                public bool? LegacyEnabled
+                {
+                    get => null;
+                    set => _legacyEnabled = value;
+                }
 
                 public McpFeature() { }
-                public McpFeature(string name, bool enabled)
+                public McpFeature(string name, bool visible)
                 {
                     Name = name;
-                    Enabled = enabled;
+                    Visible = visible;
                 }
             }
         }

@@ -34,7 +34,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             TestsRunToolId,
             Title = "Tests / Run",
-            Enabled = true
+            Visible = true
         )]
         [AiSkillDescription("Execute Unity tests (`EditMode` or `PlayMode`) and return per-test results. " +
             "Supports filtering by test assembly, namespace, class, and method. " +
