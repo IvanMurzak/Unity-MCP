@@ -73,6 +73,8 @@ namespace com.IvanMurzak.Unity.MCP.FilterOracle
             S("generic class", cls: "OracleGeneric"),
             S("nested class", cls: "Inner"),
             S("class = namespace segment", cls: "Widget"),
+            S("global-namespace class", cls: "OracleGlobal"),
+            S("assembly + global-namespace class", Asm, cls: "OracleGlobal"),
             S("class with an explicit test", cls: "OracleExplicit"),
             S("explicit method", method: Ns + ".OracleExplicit.ExplicitTest"),
             S("ignored class", cls: "OracleIgnored"),
