@@ -85,6 +85,11 @@
   `UNITY_MCP_KEEP_CONNECTED=false`), so `EnsureConnection … auto-reconnect disabled` is gone. The log cache flushes before it closes, so
   `BufferedFileLogStorage Flush called but already disposed` is gone too. McpPlugin 8.14.0-dev.311deec and
   ReflectorNet 5.5.1-dev.ec3702e (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_25`).
+- **No connection errors when the Editor starts or quits its own local server.** With *Keep server running* the
+  Editor now connects once the server it launched accepts connections (up to 30 s), not before, so
+  `Failed to start connection` and `Connection refused` are gone from every start. On quit it disconnects before it
+  stops the server, so `The server connection was terminated with an error` is gone too. A PlayMode test run
+  (`tests-run`) no longer logs `InternalConnect Connection was canceled`.
 - **Polling with `script-execute` no longer holds a script reload forever.** Each call holds the domain reload until
   1 s after its reply, so a client calling every half second after writing a script (waiting for its new type) kept
   `isCompiling` true for minutes. While a compile that our lock held waits, `script-execute` now answers at once that the

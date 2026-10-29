@@ -27,6 +27,7 @@ using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
+using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEditor;
@@ -1344,6 +1345,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static void OnEditorQuitting()
         {
+            // Close the hub connection first: a server killed under a live connection makes SignalR log
+            // "The server connection was terminated with an error".
+            if (UnityMcpPluginEditor.HasInstance && UnityMcpPluginEditor.Instance.McpPluginInstance is { } plugin)
+            {
+                if (UnityMcpPluginEditor.ConnectionState.CurrentValue != HubConnectionState.Disconnected)
+                    plugin.DisconnectImmediate();
+                plugin.WaitForImmediateTeardown(TimeSpan.FromSeconds(2));
+            }
             StopServer(force: true);
         }
 
@@ -2007,29 +2016,58 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </summary>
         static void CheckExternalServerAsync(int port, Action<bool> onResult)
         {
-            Task.Run(() =>
-            {
-                var result = false;
-                try
-                {
-                    using var client = new System.Net.Sockets.TcpClient();
-                    var connectTask = client.ConnectAsync("localhost", port);
-                    var completed = connectTask.Wait(500); // 500ms timeout
-
-                    if (completed && client.Connected)
-                    {
-                        _logger.LogDebug("CheckExternalServerAsync: Port {port} is in use by another process", port);
-                        result = true;
-                    }
-                }
-                catch (Exception ex)
-                {
-                    _logger.LogDebug("CheckExternalServerAsync: No server detected on port {port} ({message})", port, ex.Message);
-                }
-                return result;
-            })
-            .ContinueWith(task => onResult(task.Result), TaskScheduler.FromCurrentSynchronizationContext());
+            Task.Run(() => IsPortListening(port))
+                .ContinueWith(task => onResult(task.Result), TaskScheduler.FromCurrentSynchronizationContext());
         }
+
+        internal static bool IsPortListening(int port)
+        {
+            try
+            {
+                using var client = new System.Net.Sockets.TcpClient();
+                var connectTask = client.ConnectAsync("localhost", port);
+                var completed = connectTask.Wait(500); // 500ms timeout
+
+                if (completed && client.Connected)
+                {
+                    _logger.LogDebug("{method}: Port {port} is in use", nameof(IsPortListening), port);
+                    return true;
+                }
+            }
+            catch (Exception ex)
+            {
+                _logger.LogDebug("{method}: No server detected on port {port} ({message})", nameof(IsPortListening), port, ex.Message);
+            }
+            return false;
+        }
+
+        /// <summary>
+        /// Runs <paramref name="action"/> on the main thread once the port of the local server this editor
+        /// auto-starts accepts connections (at most <see cref="AutoStartedServerWaitTimeout"/>), or right away
+        /// when the editor starts no server. A connect before the server listens fails with errors on every
+        /// editor start.
+        /// </summary>
+        public static void WhenAutoStartedServerListening(Action action)
+        {
+            if (EnvironmentUtils.IsCi()
+                || !IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode)
+                || !UnityMcpPluginEditor.KeepServerRunning)
+            {
+                action();
+                return;
+            }
+
+            var port = UnityMcpPluginEditor.Port;
+            Task.Run(async () =>
+            {
+                var deadline = DateTime.UtcNow + AutoStartedServerWaitTimeout;
+                while (!IsPortListening(port) && DateTime.UtcNow < deadline)
+                    await Task.Delay(250);
+            })
+            .ContinueWith(_ => action(), TaskScheduler.FromCurrentSynchronizationContext());
+        }
+
+        static readonly TimeSpan AutoStartedServerWaitTimeout = TimeSpan.FromSeconds(30);
 
         #endregion // Process Lifecycle
     }

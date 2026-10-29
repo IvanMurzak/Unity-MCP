@@ -42,6 +42,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 "Custom mode targets the local MCP server, so auto-start must be allowed " +
                 "(subject to the other gates inside StartServerIfNeeded).");
         }
+
+        // The Editor connects to the server it auto-starts only once this reports the port open.
+        [Test]
+        public void IsPortListening_TracksTheListener()
+        {
+            var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
+            listener.Start();
+            var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
+            try
+            {
+                Assert.IsTrue(McpServerManager.IsPortListening(port));
+            }
+            finally
+            {
+                listener.Stop();
+            }
+            Assert.IsFalse(McpServerManager.IsPortListening(port));
+        }
     }
 
     /// <summary>
