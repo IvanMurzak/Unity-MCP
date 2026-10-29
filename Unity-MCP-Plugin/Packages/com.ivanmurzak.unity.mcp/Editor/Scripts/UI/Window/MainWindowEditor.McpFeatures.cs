@@ -177,11 +177,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         return;
                     if (t.IsCompletedSuccessfully)
                     {
-                        var clients = t.Result;
-                        var connectedAgents = clients.Where(c => c.IsConnected).ToList();
-                        var isConnected = connectedAgents.Count > 0;
+                        // No data while not connected (the query does not connect): no agent then.
+                        var connectedAgents = t.Result?.Where(c => c.IsConnected).ToList();
+                        var isConnected = connectedAgents?.Count > 0;
                         SetAiAgentStatus(isConnected, isConnected
-                            ? connectedAgents.Select(a => $"AI agent: {a.ClientName} ({a.ClientVersion})")
+                            ? connectedAgents!.Select(a => $"AI agent: {a.ClientName} ({a.ClientVersion})")
                             : null);
 
                         // If AI agent is not connected but Unity is, retry after delay.

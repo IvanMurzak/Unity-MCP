@@ -755,7 +755,7 @@ PlayerSettings:
     QNX: 
     Server: 
     Stadia: 
-    Standalone: IVAN_MURZAK_INSTALLER_PROJECT;UNITY_MCP_DEPS_26;UNITY_MCP_READY
+    Standalone: IVAN_MURZAK_INSTALLER_PROJECT;UNITY_MCP_DEPS_27;UNITY_MCP_READY
     VisionOS: 
     WebGL: 
     Windows Store Apps: 
