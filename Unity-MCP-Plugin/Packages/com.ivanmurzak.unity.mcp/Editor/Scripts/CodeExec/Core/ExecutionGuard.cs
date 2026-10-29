@@ -1,3 +1,7 @@
+// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit 2556a2f, unmodified below this header.
+// Licensed under the PolyForm Shield License 1.0.0 (https://polyformproject.org/licenses/shield/1.0.0);
+// see THIRD-PARTY-NOTICES.md in this folder. Not covered by this package's Apache-2.0 license.
+// Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
 #nullable enable
 using System;
 using System.Reflection;

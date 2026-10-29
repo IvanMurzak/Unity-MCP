@@ -43,6 +43,10 @@
   `[AiToolType(Target = ToolTarget.Runtime)]` are registered only by a runtime (player) connection, and the server
   routes their calls to the game while the Editor is connected; mark game-only tools this way. A call the plugin did
   not run (`NotExecuted`) is re-sent and runs; `string?` / `int?` parameters without a default are optional.
+- **License metadata.** Every UPM package.json (this package, the extensions and the extension template) has a
+  `license` field matching its LICENSE file. The vendored Code-Exec sources (`Editor/Scripts/CodeExec`) carry a
+  header naming their license (PolyForm Shield 1.0.0, not this package's Apache-2.0), and the folder has a
+  `THIRD-PARTY-NOTICES.md` with the source repository, commit, required notice and the license terms.
 
 ### Added
 
