@@ -130,7 +130,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             var rows = Table(Q($"console | where message contains \"{marker}\" | select logType message"));
             StringAssert.Contains("plugin error", rows);
             StringAssert.DoesNotContain("boom", rows);
-            StringAssert.DoesNotContain("bad", rows);
+            StringAssert.DoesNotContain("Parameter validation", rows);
         }
 
         // The echoes are never captured, so they cannot take the entry limit: a busy session that logged MaxLogEntries echoes

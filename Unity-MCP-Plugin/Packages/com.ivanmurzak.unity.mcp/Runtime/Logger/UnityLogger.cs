@@ -114,7 +114,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
 
             // A failed tool call: the agent has the answer already, the console source leaves both entries out
             if (UnityLogCollector.IsToolFailureEcho(text))
-                UnityLogCollector.LogUncaptured(() => Write(logLevel, message, exception));
+                UnityLogCollector.LogUncaptured(Write, logLevel, message, exception);
             else
                 Write(logLevel, message, exception);
         }
