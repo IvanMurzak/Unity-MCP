@@ -120,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
             if (connectionAllowed)
-                McpServerManager.WhenAutoStartedServerListening(() => UnityMcpPluginEditor.ConnectIfNeeded());
+                McpServerManager.WhenAutoStartSettled(() => UnityMcpPluginEditor.ConnectIfNeeded());
         }
 
         static void OnPlayModeStateChanged(PlayModeStateChange state)

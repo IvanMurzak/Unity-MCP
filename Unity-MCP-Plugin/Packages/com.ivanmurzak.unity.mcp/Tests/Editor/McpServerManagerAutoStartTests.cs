@@ -43,22 +43,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 "(subject to the other gates inside StartServerIfNeeded).");
         }
 
-        // The Editor connects to the server it auto-starts only once this reports the port open.
+        // Once the editor has loaded, its auto-start has decided, so a connect waits for nothing.
         [Test]
-        public void IsPortListening_TracksTheListener()
+        public void WhenAutoStartSettled_NoServerStarting_RunsRightAway()
         {
-            var listener = new System.Net.Sockets.TcpListener(System.Net.IPAddress.Loopback, 0);
-            listener.Start();
-            var port = ((System.Net.IPEndPoint)listener.LocalEndpoint).Port;
-            try
-            {
-                Assert.IsTrue(McpServerManager.IsPortListening(port));
-            }
-            finally
-            {
-                listener.Stop();
-            }
-            Assert.IsFalse(McpServerManager.IsPortListening(port));
+            Assume.That(McpServerManager.IsStarting, Is.False, "a local server is starting right now");
+
+            var ran = false;
+            McpServerManager.WhenAutoStartSettled(() => ran = true);
+
+            Assert.IsTrue(ran);
         }
     }
 

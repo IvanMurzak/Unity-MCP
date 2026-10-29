@@ -86,7 +86,7 @@
   `BufferedFileLogStorage Flush called but already disposed` is gone too. McpPlugin 8.14.0-dev.c0d3157 and
   ReflectorNet 5.5.1-dev.ec3702e (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_26`).
 - **No connection errors when the Editor starts or quits its own local server.** With *Keep server running* the
-  Editor now connects once the server it launched accepts connections (up to 30 s), not before, so
+  Editor now connects once the server it launched is up, not before, so
   `Failed to start connection` and `Connection refused` are gone from every start. On quit it disconnects before it
   stops the server, so `The server connection was terminated with an error` is gone too. A PlayMode test run
   (`tests-run`) no longer logs `InternalConnect Connection was canceled`.

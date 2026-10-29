@@ -27,7 +27,6 @@ using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
-using Microsoft.AspNetCore.SignalR.Client;
 using Microsoft.Extensions.Logging;
 using R3;
 using UnityEditor;
@@ -104,6 +103,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static bool IsRunning => _serverStatus.CurrentValue == McpServerStatus.Running;
         public static bool IsStarting => _serverStatus.CurrentValue == McpServerStatus.Starting;
 
+        // From editor load until the auto-start has decided: a server started, an external one found, or none.
+        static readonly ReactiveProperty<bool> _autoStartPending = new(false);
+
         /// <summary>
         /// True when a verified, version-matching server binary is present on disk and can be launched
         /// without a download. The Start path (<c>HandleServerButton</c>) uses this to decide whether to
@@ -133,6 +135,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     ServerPathEnvVar,
                     serverPathOverride);
 
+            _autoStartPending.Value = !EnvironmentUtils.IsCi()
+                && IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode)
+                && UnityMcpPluginEditor.KeepServerRunning;
+
             // Poll the download from the main thread instead of subscribing from a ContinueWith
             // (thread-pool) callback: EditorApplication.update is a plain delegate field, so a
             // background `+=` races with main-thread subscribers and can drop one of them
@@ -145,11 +151,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 EditorApplication.update -= AutoStartAfterDownload;
 
-                if (download.IsFaulted || download.IsCanceled || !download.Result)
-                    return; // No binaries available (either in CI or failed to download), skip auto-start
-
-                if (EnvironmentUtils.IsCi())
-                    return; // Skip auto-start in CI environment
+                if (download.IsFaulted || download.IsCanceled || !download.Result || EnvironmentUtils.IsCi())
+                {
+                    // No binaries available (either in CI or failed to download), or CI: skip auto-start
+                    _autoStartPending.Value = false;
+                    return;
+                }
 
                 StartServerIfNeeded();
             }
@@ -1345,15 +1352,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static void OnEditorQuitting()
         {
-            // Close the hub connection first: a server killed under a live connection makes SignalR log
-            // "The server connection was terminated with an error".
-            if (UnityMcpPluginEditor.HasInstance && UnityMcpPluginEditor.Instance.McpPluginInstance is { } plugin)
+            try
             {
-                if (UnityMcpPluginEditor.ConnectionState.CurrentValue != HubConnectionState.Disconnected)
+                // Close the hub connection before our server goes: a server killed under a live connection
+                // makes SignalR log "The server connection was terminated with an error".
+                if (_serverProcess != null && UnityMcpPluginEditor.HasInstance)
+                {
+                    var plugin = UnityMcpPluginEditor.Instance;
                     plugin.DisconnectImmediate();
-                plugin.WaitForImmediateTeardown(TimeSpan.FromSeconds(2));
+                    plugin.McpPluginInstance?.WaitForImmediateTeardown(TimeSpan.FromSeconds(2));
+                }
             }
-            StopServer(force: true);
+            finally
+            {
+                StopServer(force: true);
+            }
         }
 
         public static bool StartServer()
@@ -1971,11 +1984,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static void StartServerIfNeeded()
         {
             EditorApplication.update -= StartServerIfNeeded;
+            void Settled() => _autoStartPending.Value = false;
 
             // Skip local server auto-start in Cloud mode — Unity connects to the cloud server instead
             if (!IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
             {
                 _logger.LogDebug("StartServerIfNeeded: Cloud mode active, skipping local server auto-start");
+                Settled();
                 return;
             }
 
@@ -1983,6 +1998,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (!UnityMcpPluginEditor.KeepServerRunning)
             {
                 _logger.LogDebug("StartServerIfNeeded: KeepServerRunning is false, skipping auto-start");
+                Settled();
                 return;
             }
 
@@ -1991,6 +2007,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 _serverStatus.CurrentValue == McpServerStatus.Starting)
             {
                 _logger.LogDebug("StartServerIfNeeded: Server is already running or starting");
+                Settled();
                 return;
             }
 
@@ -2001,14 +2018,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (externalAvailable)
                 {
                     _logger.LogInformation("StartServerIfNeeded: External MCP server detected on port {port}, skipping local server start", port);
+                    Settled();
                     return;
                 }
 
                 // Start the local server
                 _logger.LogInformation("StartServerIfNeeded: Starting local MCP server (KeepServerRunning=true)");
-                StartServer();
+                StartServer(); // Starting until verified Running, or Stopped
+                Settled();
             });
         }
+
+        /// <summary>
+        /// Runs <paramref name="action"/> on the main thread once this editor is not starting a local server:
+        /// right away, or when the server it auto-starts is up (or failed). A connect before the server listens
+        /// fails with errors on every editor start.
+        /// </summary>
+        public static void WhenAutoStartSettled(Action action)
+            => _autoStartPending
+                .CombineLatest(_serverStatus, (pending, status) => pending || status == McpServerStatus.Starting)
+                .Where(starting => !starting)
+                .Take(1)
+                .Subscribe(_ => action());
 
         /// <summary>
         /// Checks if an external server is listening on the given port on a background thread,
@@ -2016,58 +2047,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </summary>
         static void CheckExternalServerAsync(int port, Action<bool> onResult)
         {
-            Task.Run(() => IsPortListening(port))
-                .ContinueWith(task => onResult(task.Result), TaskScheduler.FromCurrentSynchronizationContext());
-        }
-
-        internal static bool IsPortListening(int port)
-        {
-            try
+            Task.Run(() =>
             {
-                using var client = new System.Net.Sockets.TcpClient();
-                var connectTask = client.ConnectAsync("localhost", port);
-                var completed = connectTask.Wait(500); // 500ms timeout
-
-                if (completed && client.Connected)
+                var result = false;
+                try
                 {
-                    _logger.LogDebug("{method}: Port {port} is in use", nameof(IsPortListening), port);
-                    return true;
+                    using var client = new System.Net.Sockets.TcpClient();
+                    var connectTask = client.ConnectAsync("localhost", port);
+                    var completed = connectTask.Wait(500); // 500ms timeout
+
+                    if (completed && client.Connected)
+                    {
+                        _logger.LogDebug("CheckExternalServerAsync: Port {port} is in use by another process", port);
+                        result = true;
+                    }
                 }
-            }
-            catch (Exception ex)
-            {
-                _logger.LogDebug("{method}: No server detected on port {port} ({message})", nameof(IsPortListening), port, ex.Message);
-            }
-            return false;
-        }
-
-        /// <summary>
-        /// Runs <paramref name="action"/> on the main thread once the port of the local server this editor
-        /// auto-starts accepts connections (at most <see cref="AutoStartedServerWaitTimeout"/>), or right away
-        /// when the editor starts no server. A connect before the server listens fails with errors on every
-        /// editor start.
-        /// </summary>
-        public static void WhenAutoStartedServerListening(Action action)
-        {
-            if (EnvironmentUtils.IsCi()
-                || !IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode)
-                || !UnityMcpPluginEditor.KeepServerRunning)
-            {
-                action();
-                return;
-            }
-
-            var port = UnityMcpPluginEditor.Port;
-            Task.Run(async () =>
-            {
-                var deadline = DateTime.UtcNow + AutoStartedServerWaitTimeout;
-                while (!IsPortListening(port) && DateTime.UtcNow < deadline)
-                    await Task.Delay(250);
+                catch (Exception ex)
+                {
+                    _logger.LogDebug("CheckExternalServerAsync: No server detected on port {port} ({message})", port, ex.Message);
+                }
+                return result;
             })
-            .ContinueWith(_ => action(), TaskScheduler.FromCurrentSynchronizationContext());
+            .ContinueWith(task => onResult(task.Result), TaskScheduler.FromCurrentSynchronizationContext());
         }
-
-        static readonly TimeSpan AutoStartedServerWaitTimeout = TimeSpan.FromSeconds(30);
 
         #endregion // Process Lifecycle
     }
