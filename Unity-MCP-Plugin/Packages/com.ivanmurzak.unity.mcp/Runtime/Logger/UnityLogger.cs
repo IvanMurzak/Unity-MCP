@@ -83,6 +83,8 @@ namespace com.IvanMurzak.Unity.MCP.Utils
             if (formatter == null) throw new ArgumentNullException(nameof(formatter));
             if (state == null) throw new ArgumentNullException(nameof(state));
 
+            var text = formatter(state, exception);
+
             // Map LogLevel to short names
 #if UNITY_EDITOR
             string logLevelShort = logLevel switch
@@ -95,7 +97,7 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                 LogLevelMicrosoft.Trace => "<color=#aaaaaa>trce:</color>",
                 _ => "<color=#ffffff>none</color>"
             };
-            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] <color=#B4FF32>[AI]</color> <color={_categoryColor}><b>{_categoryName}</b></color> {formatter(state, exception)}";
+            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] <color=#B4FF32>[AI]</color> <color={_categoryColor}><b>{_categoryName}</b></color> {text}";
 #else
             string logLevelShort = logLevel switch
             {
@@ -107,9 +109,18 @@ namespace com.IvanMurzak.Unity.MCP.Utils
                 LogLevelMicrosoft.Trace => "trce:",
                 _ => "none"
             };
-            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] [AI] {_categoryName} {formatter(state, exception)}";
+            var message = $"{logLevelShort} [{DateTime.Now:HH:mm:ss:ffff}] [AI] {_categoryName} {text}";
 #endif
 
+            // A failed tool call: the agent has the answer already, the console source leaves both entries out
+            if (UnityLogCollector.IsToolFailureEcho(text))
+                UnityLogCollector.LogUncaptured(() => Write(logLevel, message, exception));
+            else
+                Write(logLevel, message, exception);
+        }
+
+        static void Write(LogLevelMicrosoft logLevel, string message, Exception? exception)
+        {
             switch (logLevel)
             {
                 case LogLevelMicrosoft.Critical:
