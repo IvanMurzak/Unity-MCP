@@ -131,7 +131,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("re-import changed files (after writing files outside the Editor)")]
         public void RefreshAssets() => AssetDatabase.Refresh();
 
-        private static Shader DefaultShader()
+        internal static Shader DefaultShader()
         {
             var pipeline = UnityEngine.Rendering.GraphicsSettings.currentRenderPipeline;
             return pipeline != null && pipeline.defaultShader != null ? pipeline.defaultShader : Shader.Find("Standard");

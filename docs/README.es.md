@@ -559,8 +559,10 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 
 Tenemos un juego de ajedrez clásico. Vamos a externalizar al LLM la lógica del bot. El bot debe hacer su turno siguiendo las reglas del juego.
 
+Marca las herramientas exclusivas del juego con `[AiToolType(Target = ToolTarget.Runtime)]` (`using com.IvanMurzak.McpPlugin.Common;`): solo el juego las registra, y el servidor MCP envía sus llamadas al juego en ejecución incluso mientras el Editor está conectado.
+
 ```csharp
-[AiToolType]
+[AiToolType(Target = ToolTarget.Runtime)]
 public static class ChessGameAI
 {
     [AiTool("chess-do-turn", Title = "Do the turn")]

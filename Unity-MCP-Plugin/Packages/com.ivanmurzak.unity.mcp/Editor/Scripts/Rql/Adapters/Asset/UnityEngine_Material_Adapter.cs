@@ -61,6 +61,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             return AdapterOutcome.Failed;
         }
 
+        /// <summary>
+        /// A Material is a value (RQL spec §4.5): a typed literal builds a new one with the render pipeline's default shader,
+        /// e.g. <c>set sharedMaterial = {$type: "Material", color: "#ff0000"}</c>; written into a scene object it is saved with
+        /// the scene. Into an asset or the open prefab it is refused: they would lose it (RqlUnity.ValidateBatch).
+        /// </summary>
+        public override LiteralKind? LiteralKindOf(Type type) => type == typeof(Material) ? LiteralKind.Value : (LiteralKind?)null;
+
+        public override object? CreateForLiteral(Type type, object? outer) =>
+            type == typeof(Material) ? RqlUnity.TrackLiteral(new Material(RqlEditorApi.DefaultShader())) : null;
+
         /// <summary>A built-in material by its name; <see cref="DefaultMaterialName"/> is the one GameObject > 3D Object gives.</summary>
         internal static Material? BuiltinMaterial(string name)
         {

@@ -11,6 +11,8 @@
 #nullable enable
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.Linq;
+using System.Threading;
 using com.IvanMurzak.CodeExec;
 using com.IvanMurzak.CodeExec.Roslyn;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -35,11 +37,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             Assert.Less(clock.ElapsedMilliseconds, 15_000, "stopped near its budget (compile time included)");
         }
 
-        [TestCase(300_000, Tool_Script.MaxSnippetTimeoutMs)]
-        [TestCase(60_000, 50_000)]
-        [TestCase(5_000, 1_000)]
-        [TestCase(0, 1_000)]
-        public void TheBudgetEndsBeforeTheToolTimeout(int toolTimeoutMs, int expected) =>
-            Assert.AreEqual(expected, Tool_Script.SnippetTimeoutMs(toolTimeoutMs));
+        // The snippet's own budget: `timeout` in seconds, 30 s by default, at most 290 s and 10 s below the tool timeout.
+        [TestCase(300_000, null, Tool_Script.DefaultSnippetTimeoutMs)]
+        [TestCase(300_000, 5.0, 5_000)]
+        [TestCase(300_000, 2.5, 2_500)]
+        [TestCase(300_000, 1000.0, Tool_Script.MaxSnippetTimeoutMs)]
+        [TestCase(600_000, 1000.0, Tool_Script.MaxSnippetTimeoutMs)]
+        [TestCase(300_000, 0.0, Tool_Script.DefaultSnippetTimeoutMs)]
+        [TestCase(300_000, -4.0, Tool_Script.DefaultSnippetTimeoutMs)]
+        [TestCase(300_000, 0.1, 1_000)]
+        [TestCase(60_000, 120.0, 50_000)]
+        [TestCase(60_000, null, Tool_Script.DefaultSnippetTimeoutMs)]
+        [TestCase(5_000, null, 1_000)]
+        [TestCase(0, null, 1_000)]
+        public void TheBudgetIsTheTimeoutArgumentCappedBelowTheToolTimeout(int toolTimeoutMs, double? timeoutSeconds, int expected) =>
+            Assert.AreEqual(expected, Tool_Script.SnippetTimeoutMs(toolTimeoutMs, timeoutSeconds));
+
+        // Code-Exec 2556a2f: a thread the snippet starts belongs to the run and stops once the run ends (before, it kept
+        // spinning until the domain reloaded), with a warning that counts it.
+        [Test]
+        public void AThreadTheSnippetStartedStopsAfterTheRun()
+        {
+            const string key = "ScriptExecuteGuardTests.thread";
+            var runner = new CodeRunner(new RoslynCSharpCompiler(), new CodeRunnerOptions { LogCaptures = new List<ILogCapture>() });
+            var result = runner.Execute(new ExecuteRequest
+            {
+                Code = "var t = new System.Threading.Thread(() => { var n = 0L; while (true) { n++; } }) { IsBackground = true };\n" +
+                       "t.Start();\n" +
+                       "System.AppDomain.CurrentDomain.SetData(\"" + key + "\", t);\n" +
+                       "1",
+                TimeoutMs = 10_000,
+            });
+            try
+            {
+                Assert.IsTrue(result.Success, result.Error);
+                var thread = (Thread)System.AppDomain.CurrentDomain.GetData(key);
+                Assert.IsTrue(thread.Join(5_000), "the snippet's thread stopped after the run");
+                Assert.IsTrue(result.Logs.Any(l => l.Level == "warning" && l.Message.Contains("had not finished when it ended")),
+                    string.Join("\n", result.Logs));
+            }
+            finally
+            {
+                System.AppDomain.CurrentDomain.SetData(key, null);
+            }
+        }
     }
 }

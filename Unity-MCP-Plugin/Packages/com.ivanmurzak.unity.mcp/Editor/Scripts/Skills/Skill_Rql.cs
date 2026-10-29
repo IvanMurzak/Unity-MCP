@@ -62,6 +62,8 @@ unity-mcp-cli run-tool rql-mutate --input '{""query"": ""objects | where name ==
 ```
 ").Append(RqlGuide.MutateStages).Append(RqlGuide.MutateExamples).Append(@"```
 
+").Append(RqlGuide.AgentRules).Append(@"
+
 ## Sources
 
 | Source | What |

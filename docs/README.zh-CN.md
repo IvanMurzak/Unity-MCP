@@ -559,8 +559,10 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 
 这是一个经典国际象棋游戏。让我们将机器人逻辑外包给 LLM。机器人应根据游戏规则进行落子。
 
+将仅用于游戏的工具标记为 `[AiToolType(Target = ToolTarget.Runtime)]`（`using com.IvanMurzak.McpPlugin.Common;`）：只有游戏会注册它们，即使 Editor 已连接，MCP 服务器也会把对它们的调用发送到正在运行的游戏。
+
 ```csharp
-[AiToolType]
+[AiToolType(Target = ToolTarget.Runtime)]
 public static class ChessGameAI
 {
     [AiTool("chess-do-turn", Title = "Do the turn")]

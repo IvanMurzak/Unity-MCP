@@ -1,3 +1,7 @@
+// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit 2556a2f, unmodified below this header.
+// Licensed under the PolyForm Shield License 1.0.0 (https://polyformproject.org/licenses/shield/1.0.0);
+// see THIRD-PARTY-NOTICES.md in this folder. Not covered by this package's Apache-2.0 license.
+// Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
 #nullable enable
 using System;
 using System.Collections.Generic;
@@ -52,7 +56,8 @@ namespace com.IvanMurzak.CodeExec
         /// <summary>
         /// The snippet's time budget in ms (spec §1): it stops with <see cref="ErrorKind.Timeout"/> once the budget is spent
         /// (execution guards, spec §3.6), and an asynchronous result is awaited no longer. 0 = the host's
-        /// <see cref="CodeRunnerOptions.DefaultTimeoutMs"/>; negative = InvalidRequest.
+        /// <see cref="CodeRunnerOptions.DefaultTimeoutMs"/>; at most <see cref="CodeRunnerOptions.MaxTimeoutMs"/>;
+        /// negative = InvalidRequest.
         /// </summary>
         public int TimeoutMs { get; set; }
 

@@ -72,6 +72,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             StringAssert.Contains("Recursion too deep",
                 Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = "int Down(int n) => Down(n + 1) + 1;\nDown(0)" }));
 
+        // Wave 6: an endless loop cost the agent the whole default budget; `timeout` (seconds) sets the call's own.
+        [Test]
+        public void TheTimeoutArgumentEndsAnEndlessLoopAtItsBudget()
+        {
+            var clock = System.Diagnostics.Stopwatch.StartNew();
+            var text = Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = "var n = 0L;\nwhile (true) { n++; }", timeout = 2 });
+            StringAssert.Contains("Execution failed (Timeout)", text);
+            StringAssert.Contains("time budget of 2000 ms", text);
+            Assert.Less(clock.ElapsedMilliseconds, 15_000, "stopped near the requested 2 s (compile time included)");
+        }
+
+        // A thread the snippet starts and leaves running is stopped after the run; the Console says so.
+        [Test]
+        public void AThreadLeftRunningIsReportedInTheConsole()
+        {
+            LogAssert.Expect(UnityEngine.LogType.Warning,
+                new System.Text.RegularExpressions.Regex(@"\[script-execute\] 1 thread\(s\) or task\(s\) the snippet started had not finished"));
+            Run("var t = new System.Threading.Thread(() => { var n = 0L; while (true) { n++; } }) { IsBackground = true };\nt.Start();\n1");
+        }
+
         // The skill text quotes the limits as literals (an attribute cannot format constants): keep them in step.
         [Test]
         public void TheSkillQuotesTheLimitsInForce()
@@ -84,7 +104,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
                          $"a collection to {Tool_Script.ResultValue.MaxItems} items",
                          $"over {Tool_Script.ResultValue.MaxSerializedChars} characters as JSON comes back as the first {OutputLimits.DefaultValueChars}",
                          $"errors to {OutputLimits.DefaultErrorChars} characters and {OutputLimits.MaxDiagnostics} compile errors",
-                         $"a time budget of {Tool_Script.MaxSnippetTimeoutMs / 1000} s",
+                         $"a time budget of {Tool_Script.DefaultSnippetTimeoutMs / 1000} s",
+                         $"at most {Tool_Script.MaxSnippetTimeoutMs / 1000} s and {Tool_Script.ToolTimeoutMarginMs / 1000} s less than the tool timeout",
                          $"running {Tool_Script.ReloadGraceMs / 1000} s after a compile is requested",
                      })
                 StringAssert.Contains(phrase, body);
