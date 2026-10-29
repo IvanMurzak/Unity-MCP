@@ -67,6 +67,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             // One mutation is one Undo step, so the limit guards breadth only (RQL spec §8: editor hosts default to ~200).
             engine.Mutations.MaxTargets = DefaultMaxTargets;
             engine.Mutations.LimitArgument = "max_targets";
+            // Scene objects and most assets are engine objects (never built from a literal; data ScriptableObjects and Materials
+            // are values, see their adapters): the refusal names Unity's ways to pass an existing one.
+            engine.Mutations.LiteralRefusalHint = Adapters.UnityEngine_Object_Adapter.RefusalHint;
             // Checks that span the targets of one set / call stage (two SaveAsPrefab to one path; a component removed with or
             // without the components that require it), before anything runs, dry runs included.
             engine.Mutations.ValidateBatch = ValidateBatch;

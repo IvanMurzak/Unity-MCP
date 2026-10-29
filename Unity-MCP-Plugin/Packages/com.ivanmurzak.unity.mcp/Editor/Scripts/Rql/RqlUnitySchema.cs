@@ -83,8 +83,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             var cache = ItemTypes.GetOrCreateValue(engine);
             if (cache.TryGetValue(source.Name, out var known)) return known;
-            Type? t;
-            try { t = source.Getter()?.GetType(); } catch { return null; }
+            Type? t = source.DeclaredType;
+            if (t == null)
+                try { t = source.Getter()?.GetType(); } catch { return null; }
             if (t == null) return null;
             var info = engine.Types.Info(t);
             if ((info.IsList || info.IsMap) && info.ElementType != null) t = info.ElementType;
@@ -97,7 +98,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>
         /// The installed Unity-MCP extension packages and what each adds (sources, functions), so an agent asked to "turn on the
         /// extensions" learns that they are already active, plus the guide topics that rql-schema "guide:&lt;topic&gt;" prints.
-        /// A source or function belongs to the package of the assembly its delegate was declared in (the module's own lambda).
+        /// A source or function belongs to the package of the module that registered it (RQL's module report).
         /// </summary>
         private static void AppendExtensions(RqlEngine engine, StringBuilder sb)
         {
@@ -112,9 +113,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var modules = engine.Modules
                 .Select(m => (report: m, package: moduleTypes.TryGetValue(m.Module, out var t) ? ExtensionOf(t.Assembly) : null))
                 .Where(m => m.package != null).ToList();
-            var adds = engine.Sources.Values.Select(src => (package: ExtensionOf(src.Getter.Method.DeclaringType?.Assembly), what: "source " + src.Name))
-                .Concat(engine.Functions.Select(f => (package: ExtensionOf(f.Value.Method.DeclaringType?.Assembly), what: "function " + f.Key)))
-                .Where(x => x.package != null).ToLookup(x => x.package!.name, x => x.what);
+            var adds = modules.SelectMany(m => m.report.Sources.Select(s => "source " + s).Concat(m.report.Functions.Select(f => "function " + f))
+                    .Select(what => (package: m.package!.name, what)))
+                .ToLookup(x => x.package, x => x.what);
             if (modules.Count > 0) sb.Append("extensions (installed packages, always active: nothing to turn on):\n");
             foreach (var group in modules.GroupBy(m => m.package!.name).OrderBy(g => g.Key, StringComparer.Ordinal))
             {

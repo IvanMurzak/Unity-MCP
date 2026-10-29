@@ -208,7 +208,111 @@ namespace com.IvanMurzak.CodeExec.Roslyn
                 case TypeDeclarationSyntax type when type.IsKind(SyntaxKind.ClassDeclaration) || type.IsKind(SyntaxKind.RecordDeclaration):
                     Initializers(type, edits);
                     break;
+                case InvocationExpressionSyntax call when semantics != null && call.ArgumentList.Arguments.Count > 0
+                    && WorkStartNames.Contains(RightmostName(call.Expression)):
+                    Workers(call, call.ArgumentList, semantics, edits);
+                    break;
+                case ObjectCreationExpressionSyntax creation when semantics != null && creation.ArgumentList != null
+                    && (RightmostName(creation.Type) == "Thread" || RightmostName(creation.Type) == "Task"):
+                    Workers(creation, creation.ArgumentList, semantics, edits);
+                    break;
+                case ImplicitObjectCreationExpressionSyntax creation when semantics != null:
+                    Workers(creation, creation.ArgumentList, semantics, edits);
+                    break;
             }
+        }
+
+        /// <summary>The methods that start work on another thread or as a task (with the constructors of Thread and Task).</summary>
+        static readonly HashSet<string> WorkStartNames = new HashSet<string> { "Run", "StartNew", "QueueUserWorkItem", "UnsafeQueueUserWorkItem" };
+
+        static string RightmostName(SyntaxNode node) => node switch
+        {
+            MemberAccessExpressionSyntax member => member.Name.Identifier.ValueText,
+            QualifiedNameSyntax qualified => qualified.Right.Identifier.ValueText,
+            AliasQualifiedNameSyntax alias => alias.Name.Identifier.ValueText,
+            SimpleNameSyntax simple => simple.Identifier.ValueText,
+            _ => "",
+        };
+
+        /// <summary>
+        /// A delegate handed to a thread start becomes <c>Worker((T)(delegate))</c> (<see cref="ExecutionGuard.Worker"/>), one
+        /// handed to a task start <c>TaskWorker((T)(delegate))</c>, cast to the delegate type it already converts to, so
+        /// overload resolution picks the same method: the work then belongs to the run and stops once the run has ended.
+        /// Not inside an expression tree or a query.
+        /// </summary>
+        static void Workers(ExpressionSyntax call, ArgumentListSyntax arguments, Semantics semantics, List<Edit> edits)
+        {
+            if (semantics.HasErrors || !(semantics.Model.GetSymbolInfo(call).Symbol is IMethodSymbol method) || !(StartsWork(method) is bool task))
+                return;
+            foreach (var outer in call.Ancestors())
+            {
+                if (outer is QueryExpressionSyntax || (outer is AnonymousFunctionExpressionSyntax function && !semantics.IsDelegate(function)))
+                    return;
+            }
+            var entry = task ? ExecutionGuard.TaskWorker : ExecutionGuard.Worker;
+            foreach (var argument in arguments.Arguments)
+            {
+                var expression = argument.Expression;
+                if (!argument.RefKindKeyword.IsKind(SyntaxKind.None) || !(semantics.Model.GetTypeInfo(expression).ConvertedType is INamedTypeSymbol type)
+                    || !IsWorkDelegate(type, task) || !CanBeNamed(type))
+                    continue;
+                var cast = type.ToDisplayString(SymbolDisplayFormat.FullyQualifiedFormat);
+                edits.Add(new Edit(expression.SpanStart, entry + "((" + cast + ")(", expression.SpanStart, edits.Count));
+                edits.Add(new Edit(expression.Span.End, "))", expression.Span.End, edits.Count, closer: true));
+            }
+        }
+
+        /// <summary>Whether the method starts work: true for a task start, false for a thread start, null for neither.</summary>
+        static bool? StartsWork(IMethodSymbol method)
+        {
+            switch (method.ContainingType?.OriginalDefinition.ToDisplayString())
+            {
+                case "System.Threading.Thread":
+                    return method.MethodKind == MethodKind.Constructor ? false : (bool?)null;
+                case "System.Threading.ThreadPool":
+                    return method.Name == "QueueUserWorkItem" || method.Name == "UnsafeQueueUserWorkItem" ? false : (bool?)null;
+                case "System.Threading.Tasks.Task<TResult>":
+                    return method.MethodKind == MethodKind.Constructor ? true : (bool?)null;
+                case "System.Threading.Tasks.Task":
+                    return method.MethodKind == MethodKind.Constructor || method.Name == "Run" ? true : (bool?)null;
+                case "System.Threading.Tasks.TaskFactory":
+                case "System.Threading.Tasks.TaskFactory<TResult>":
+                    return method.Name == "StartNew" ? true : (bool?)null;
+                default:
+                    return null;
+            }
+        }
+
+        /// <summary>The delegate types <see cref="ExecutionGuard.Worker"/> (thread starts) or <see cref="ExecutionGuard.TaskWorker"/> have an overload for.</summary>
+        static bool IsWorkDelegate(INamedTypeSymbol type, bool task)
+        {
+            switch (type.OriginalDefinition.ToDisplayString())
+            {
+                case "System.Action<T>":
+                    return true;
+                case "System.Threading.ThreadStart":
+                case "System.Threading.ParameterizedThreadStart":
+                case "System.Threading.WaitCallback":
+                    return !task;
+                case "System.Action":
+                case "System.Func<TResult>":
+                case "System.Func<T, TResult>":
+                    return task;
+                default:
+                    return false;
+            }
+        }
+
+        /// <summary>Whether the type can be written in source: no anonymous or erroneous type anywhere in it.</summary>
+        static bool CanBeNamed(ITypeSymbol type)
+        {
+            if (type.IsAnonymousType || type.TypeKind == TypeKind.Error)
+                return false;
+            if (type is IArrayTypeSymbol array)
+                return CanBeNamed(array.ElementType);
+            if (type is IPointerTypeSymbol)
+                return false;
+            return !(type is INamedTypeSymbol named) || named.TypeArguments.All(CanBeNamed);
         }
 
         /// <summary>

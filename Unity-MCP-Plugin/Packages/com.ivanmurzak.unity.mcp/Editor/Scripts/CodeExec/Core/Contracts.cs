@@ -52,7 +52,8 @@ namespace com.IvanMurzak.CodeExec
         /// <summary>
         /// The snippet's time budget in ms (spec §1): it stops with <see cref="ErrorKind.Timeout"/> once the budget is spent
         /// (execution guards, spec §3.6), and an asynchronous result is awaited no longer. 0 = the host's
-        /// <see cref="CodeRunnerOptions.DefaultTimeoutMs"/>; negative = InvalidRequest.
+        /// <see cref="CodeRunnerOptions.DefaultTimeoutMs"/>; at most <see cref="CodeRunnerOptions.MaxTimeoutMs"/>;
+        /// negative = InvalidRequest.
         /// </summary>
         public int TimeoutMs { get; set; }
 

@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using Rql.Execution;
+using UnityEngine;
 using Object = UnityEngine.Object;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
@@ -27,6 +28,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         public override string? StableId(object value) => value is Object o ? IdOf(o) : null;
 
         public override bool? IsAlive(object value) => value is Object o ? o != null : (bool?)null;
+
+        /// <summary>
+        /// Literal kinds (RQL spec §4.5): a data ScriptableObject is a value, built fresh from a typed literal
+        /// (<c>set data = {$type: "ItemData", price: 3}</c>); every other UnityEngine.Object (GameObjects, components, other
+        /// assets) stays an engine object that only a ref, <c>unity.find(…)</c> or an asset path passes. Material: its adapter.
+        /// </summary>
+        public override LiteralKind? LiteralKindOf(Type type) => IsDataScriptableObject(type) ? LiteralKind.Value : (LiteralKind?)null;
+
+        public override object? CreateForLiteral(Type type, object? outer)
+        {
+            if (!IsDataScriptableObject(type)) return null;
+            RefuseAssetOuter(type, outer, "create the asset first (e.g. script-execute AssetDatabase.CreateAsset) and pass its path");
+            return ScriptableObject.CreateInstance(type);
+        }
+
+        /// <summary>
+        /// A ScriptableObject that holds game data: not an Editor type (windows, inspectors, settings singletons) and not one
+        /// of Unity's own (Timeline, Input System, render pipeline assets …), which have dedicated creation paths.
+        /// </summary>
+        internal static bool IsDataScriptableObject(Type type)
+        {
+            if (!typeof(ScriptableObject).IsAssignableFrom(type) || type.IsAbstract || type.ContainsGenericParameters) return false;
+            if (typeof(UnityEditor.EditorWindow).IsAssignableFrom(type) || typeof(UnityEditor.Editor).IsAssignableFrom(type)) return false;
+            for (var t = type; t != null && t != typeof(ScriptableObject); t = t.BaseType)
+                if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(UnityEditor.ScriptableSingleton<>)) return false;
+            return !(type.Assembly.GetName().Name ?? "").StartsWith("Unity", StringComparison.Ordinal);
+        }
+
+        /// <summary>
+        /// A new object written into an asset (a Material into a ScriptableObject asset's field) would not be saved with it:
+        /// the asset would lose the reference on reload. Refused while the mutation is planned, so nothing changes.
+        /// </summary>
+        internal static void RefuseAssetOuter(Type type, object? outer, string advice)
+        {
+            if (outer is Object owner && owner != null && UnityEditor.EditorUtility.IsPersistent(owner))
+                throw new InvalidOperationException($"a new {type.Name} written into the asset '{owner.name}' would not be saved with it; {advice}");
+        }
+
+        /// <summary>The advice ending RQL's engine-object refusal (spec §4.5): how to pass an existing object of that type.</summary>
+        internal static string RefusalHint(Type type) =>
+            typeof(GameObject).IsAssignableFrom(type) || typeof(Component).IsAssignableFrom(type)
+                ? "use unity.find(\"Name\") or ref(\"Type#id\") for an object in the scene"
+                : "use an asset path (\"Assets/…\") or unity.asset(\"Assets/…\") for an existing asset, or ref(\"Type#id\")";
 
         /// <summary>Text naming a project asset ("Assets/…" or "Packages/…", either slash), normalized to forward slashes.</summary>
         internal static bool TryAssetPath(string text, out string path)

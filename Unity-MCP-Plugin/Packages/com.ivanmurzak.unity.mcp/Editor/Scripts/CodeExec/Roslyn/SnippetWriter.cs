@@ -39,10 +39,27 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             public bool HasOtherReturns { get; }
         }
 
-        public static Output Write(string code, IReadOnlyList<string> usings, IReadOnlyList<ParameterDeclaration> parameters, bool returnLastExpression)
+        public static Output Write(string code, IReadOnlyList<string> usings, IReadOnlyList<ParameterDeclaration> parameters, bool returnLastExpression) =>
+            Write(code, usings, parameters, returnLastExpression, findDeclarations: true);
+
+        static Output Write(string code, IReadOnlyList<string> usings, IReadOnlyList<ParameterDeclaration> parameters, bool returnLastExpression, bool findDeclarations)
         {
             var scriptOptions = new CSharpParseOptions(LanguageVersion.Latest, DocumentationMode.None, SourceCodeKind.Script);
-            var root = (CompilationUnitSyntax)CSharpSyntaxTree.ParseText(code, scriptOptions).GetRoot();
+            // Script code takes a top-level `using` as a directive: the `[await] using` of each top-level using declaration
+            // is blanked out before parsing (positions stay) and put back when its declaration is written.
+            var declarations = findDeclarations ? UsingDeclarations(code, scriptOptions) : new Dictionary<int, UsingDeclaration>();
+            var parsed = code;
+            if (declarations.Count > 0)
+            {
+                var chars = code.ToCharArray();
+                foreach (var d in declarations.Values)
+                    for (var i = d.Start; i < d.KeywordEnd; i++)
+                        if (!char.IsWhiteSpace(chars[i]))
+                            chars[i] = ' ';
+                parsed = new string(chars);
+            }
+            var tree = CSharpSyntaxTree.ParseText(parsed, scriptOptions);
+            var root = (CompilationUnitSyntax)tree.GetRoot();
 
             // Body = statements, plus members WITHOUT modifiers: `var x = 1;` (a script field) becomes a local and
             // `int F() => x;` a local function, so both see the snippet's locals. Members with modifiers become static
@@ -64,21 +81,26 @@ namespace com.IvanMurzak.CodeExec.Roslyn
                 else
                     topLevel.Add(member);
             }
+            // A declaration that did not become a statement (`using readonly T x = ...;`) keeps its `using`: its error is the agent's.
+            if (declarations.Keys.Any(start => !body.Any(b => b.Node.SpanStart == start)))
+                return Write(code, usings, parameters, returnLastExpression, findDeclarations: false);
 
             var sb = new StringBuilder();
-            foreach (var e in root.Externs) // extern aliases must precede every using
+            foreach (var e in root.Externs) // extern aliases must precede every using, global usings every other one
                 Emit(sb, e.GetLocation(), e.ToString());
+            foreach (var u in root.Usings.Where(IsGlobal))
+                Emit(sb, u.GetLocation(), u.ToString());
             // The runtime's usings (host defaults + request) map to their index, so a bad one is reported as itself.
             for (var i = 0; i < usings.Count; i++)
                 sb.Append("#line ").Append(i + 1).Append(" \"").Append(RoslynCSharpCompiler.UsingsFile).Append("\"\nusing ").Append(usings[i]).Append(";\n");
-            foreach (var u in root.Usings)
+            foreach (var u in root.Usings.Where(u => !IsGlobal(u)))
                 Emit(sb, u.GetLocation(), u.ToString());
             foreach (var t in topLevel)
                 Emit(sb, t.GetLocation(), t.ToString());
 
             // One pass over the snippet's own scope (nested functions have their own `return` / `await`): `await`
             // expressions, `await foreach` and `await using` all carry the await keyword.
-            bool isAsync = false, hasValueReturns = false, hasReturns = false;
+            bool isAsync = declarations.Values.Any(d => d.Await), hasValueReturns = false, hasReturns = false;
             foreach (var (node, _) in body)
             {
                 foreach (var item in node.DescendantNodesAndTokensAndSelf(n => !IsNestedFunction(n)))
@@ -126,6 +148,12 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             for (var i = 0; i < body.Count; i++)
             {
                 var (node, text) = body[i];
+                if (declarations.TryGetValue(node.SpanStart, out var declaration))
+                {
+                    // The agent's own text from `[await] using` on: a declaration has no `return` of its own to rewrite.
+                    Emit(sb, Location.Create(tree, new TextSpan(declaration.Start, 0)), code.Substring(declaration.Start, node.Span.End - declaration.Start));
+                    continue;
+                }
                 if (returnsValue && node is StatementSyntax statement)
                     text = new BareReturnRewriter().Visit(statement)!.ToString();
                 if (node is ExpressionStatementSyntax expression)
@@ -151,6 +179,101 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             // A bare `return;` beside a result tail is a `return null;`: the tail is not the only result either.
             return new Output(sb.ToString(), returned, hasReturns);
         }
+
+        /// <summary>A top-level <c>[await] using</c> declaration: where its keywords start and end.</summary>
+        readonly struct UsingDeclaration
+        {
+            public UsingDeclaration(int start, int keywordEnd, bool isAwait)
+            {
+                Start = start;
+                KeywordEnd = keywordEnd;
+                Await = isAwait;
+            }
+
+            public int Start { get; }
+            public int KeywordEnd { get; }
+            public bool Await { get; }
+        }
+
+        /// <summary>
+        /// The top-level using declarations (<c>using var x = ...;</c>, <c>await using T x = ...;</c>), by the position of the
+        /// declaration after their keywords. A <c>using</c> that starts a statement is a directive only as <c>using static</c>,
+        /// <c>using unsafe</c>, an alias (<c>using A = ...;</c>) or a name with no <c>=</c> before its <c>;</c>; <c>using (</c>
+        /// is a using statement, which script code already parses as one.
+        /// </summary>
+        static Dictionary<int, UsingDeclaration> UsingDeclarations(string code, CSharpParseOptions options)
+        {
+            var found = new Dictionary<int, UsingDeclaration>();
+            if (code.IndexOf("using", System.StringComparison.Ordinal) < 0)
+                return found;
+            var tokens = SyntaxFactory.ParseTokens(code, options: options).ToList();
+            var depth = 0;
+            for (var i = 0; i < tokens.Count; i++)
+            {
+                var kind = tokens[i].Kind();
+                if (kind == SyntaxKind.OpenBraceToken || kind == SyntaxKind.OpenParenToken || kind == SyntaxKind.OpenBracketToken)
+                    depth++;
+                else if (kind == SyntaxKind.CloseBraceToken || kind == SyntaxKind.CloseParenToken || kind == SyntaxKind.CloseBracketToken)
+                    depth = System.Math.Max(depth - 1, 0);
+                if (depth != 0 || kind != SyntaxKind.UsingKeyword)
+                    continue;
+                var first = i > 0 && tokens[i - 1].Text == "await" ? i - 1 : i;
+                if (first > 0 && !tokens[first - 1].IsKind(SyntaxKind.SemicolonToken) && !tokens[first - 1].IsKind(SyntaxKind.CloseBraceToken))
+                    continue; // not at the start of a statement (`global using`, ...)
+                if (i + 1 < tokens.Count && IsDeclaration(tokens, i + 1))
+                    found[tokens[i + 1].SpanStart] = new UsingDeclaration(tokens[first].SpanStart, tokens[i].Span.End, first != i);
+            }
+            return found;
+        }
+
+        /// <summary>Whether the tokens after a statement-starting <c>using</c> (from <paramref name="at"/>) declare variables.</summary>
+        /// <remarks>
+        /// <c>Type name =</c>: the variable's name right before the first <c>=</c> outside brackets, a type before it with no
+        /// two names in a row (<c>using System</c> missing its <c>;</c> before <c>var x = 1;</c> stays a directive). A keyword
+        /// other than a predefined type (<c>static</c>, <c>unsafe</c>, a modifier) means a directive or invalid code.
+        /// </remarks>
+        static bool IsDeclaration(List<SyntaxToken> tokens, int at)
+        {
+            var next = tokens[at].Kind();
+            if (next == SyntaxKind.OpenParenToken || (SyntaxFacts.IsKeywordKind(next) && !SyntaxFacts.IsPredefinedType(next)))
+                return false;
+            var depth = 0;
+            for (var i = at; i < tokens.Count; i++)
+            {
+                switch (tokens[i].Kind())
+                {
+                    case SyntaxKind.OpenParenToken:
+                    case SyntaxKind.OpenBracketToken:
+                        depth++;
+                        break;
+                    case SyntaxKind.CloseParenToken:
+                    case SyntaxKind.CloseBracketToken:
+                        depth--;
+                        break;
+                    case SyntaxKind.EqualsToken when depth == 0:
+                        return i - 1 > at && tokens[i - 1].IsKind(SyntaxKind.IdentifierToken) && !HasAdjacentNames(tokens, at, i - 1);
+                    case SyntaxKind.SemicolonToken:
+                    case SyntaxKind.OpenBraceToken:
+                    case SyntaxKind.CloseBraceToken:
+                    case SyntaxKind.EndOfFileToken:
+                        return false;
+                }
+            }
+            return false;
+        }
+
+        /// <summary>Two names in a row in tokens [<paramref name="from"/>, <paramref name="to"/>): not one type.</summary>
+        static bool HasAdjacentNames(List<SyntaxToken> tokens, int from, int to)
+        {
+            for (var i = from + 1; i < to; i++)
+                if (IsName(tokens[i - 1]) && IsName(tokens[i]))
+                    return true;
+            return false;
+        }
+
+        static bool IsName(SyntaxToken token) => token.IsKind(SyntaxKind.IdentifierToken) || SyntaxFacts.IsPredefinedType(token.Kind());
+
+        static bool IsGlobal(UsingDirectiveSyntax u) => u.GetFirstToken().IsKind(SyntaxKind.GlobalKeyword);
 
         /// <summary>
         /// Appends <paramref name="text"/> mapped to the agent's line, indented to the agent's column so diagnostics keep

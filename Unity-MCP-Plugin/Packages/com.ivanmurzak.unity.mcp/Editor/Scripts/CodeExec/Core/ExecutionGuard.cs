@@ -48,6 +48,17 @@ namespace com.IvanMurzak.CodeExec
         /// </summary>
         public const string CatchFilter = "global::" + TypeName + ".Running()";
 
+        /// <summary>
+        /// The method that wraps a delegate the agent's code hands to a thread or task start (<c>new Thread(...)</c>,
+        /// <c>ThreadPool.QueueUserWorkItem</c>, <c>Task.Run</c>, <c>Task.Factory.StartNew</c>, <c>new Task(...)</c>), cast
+        /// to its exact delegate type: <c>Worker((T)(delegate))</c>. The work then belongs to the run that started it and is
+        /// stopped once that run has ended (spec §3.6).
+        /// </summary>
+        public const string Worker = "global::" + TypeName + ".Worker";
+
+        /// <summary>Like <see cref="Worker"/>, for a task start (<c>Task.Run</c>, <c>StartNew</c>, <c>new Task</c>): the task faults with a stop.</summary>
+        public const string TaskWorker = "global::" + TypeName + ".TaskWorker";
+
         internal const int StoppedByTime = 1;
 
         /// <summary>
@@ -59,14 +70,29 @@ namespace com.IvanMurzak.CodeExec
         /// call, and on a loop's first iteration, then after 2, 4, ... up to 256 iterations while checks are less than
         /// 10 ms apart, back to every iteration when they are not: slow iterations overshoot the budget by about 20 ms,
         /// fast ones pay one clock read per 256 iterations. The statics are shared by all threads: a race only shifts a
-        /// check.
+        /// check. Work handed to a thread or task start (<see cref="Worker"/>, <see cref="TaskWorker"/>) carries its run: a
+        /// thread-static while it runs synchronously, an <c>AsyncLocal</c> for asynchronous task work (it flows into the
+        /// work's awaits); the tasks and threads it starts in turn belong to the same run. Once a run that started work has
+        /// ended, every clock check reads it, and work of an ended run stops there. A thread entry swallows the stop: an
+        /// exception left unhandled on a thread would end the process.
         /// </summary>
         public const string Source = @"#line hidden
 internal static class __CodeExecGuard
 {
     public static int Calls, Jumps;
-    static int _start, _last, _interval, _budget, _stopped, _maxStack, _baseThread;
+    static int _start, _last, _interval, _budget, _stopped, _maxStack, _baseThread, _orphans, _asyncOrphans, _asyncWork, _live;
     static long _base;
+    static Run _current;
+    // The run of the work running: synchronous work on this thread, and asynchronous task work (it flows into the work's
+    // awaits). Nothing else carries it: a timer, an async void continuation or a thread started by work keeps none of it.
+    [global::System.ThreadStatic] static Run _thread;
+    static readonly global::System.Threading.AsyncLocal<Run> _async = new global::System.Threading.AsyncLocal<Run>();
+
+    /// <summary>One run: whether it has ended, whether it started work, and how much of that work has not finished.</summary>
+    public sealed class Run
+    {
+        public int Ended, Spawned, Pending, Async;
+    }
 
     public static unsafe void Arm(int budgetMs, int maxStackBytes)
     {
@@ -82,6 +108,20 @@ internal static class __CodeExecGuard
 
     public static int Stopped() => _stopped;
 
+    public static object Begin() => _current = new Run();
+
+    /// <summary>Ends a run: its work stops at its next clock check. Returns how much of that work has not finished.</summary>
+    public static int End(object run)
+    {
+        var ended = (Run)run;
+        global::System.Threading.Interlocked.Exchange(ref ended.Ended, 1); // a full fence: Spawn sees it, or End sees Spawned
+        if (global::System.Threading.Volatile.Read(ref ended.Spawned) != 0)
+            _orphans = 1;
+        if (global::System.Threading.Volatile.Read(ref ended.Async) != 0)
+            _asyncOrphans = 1; // what its async work started unwrapped carries the run on after that work: always look
+        return global::System.Threading.Volatile.Read(ref ended.Pending);
+    }
+
     public static bool Init()
     {
         if (--Calls <= 0)
@@ -89,7 +129,133 @@ internal static class __CodeExecGuard
         return true;
     }
 
-    public static bool Running() => _stopped == 0;
+    public static bool Running() => _stopped == 0 && (_orphans == 0 || (_live == 0 && _asyncOrphans == 0) || !Orphaned());
+
+    // The AsyncLocal is slow to read: only once asynchronous task work has ever run.
+    static Run Current() => _thread ?? (_asyncWork != 0 ? _async.Value : null);
+
+    static bool Orphaned()
+    {
+        var run = Current();
+        return run != null && global::System.Threading.Volatile.Read(ref run.Ended) != 0;
+    }
+
+    /// <summary>The run new work belongs to: that of the work starting it, else the run in progress (none after it ended).</summary>
+    static Run Spawn(object work)
+    {
+        if (work == null)
+            return null;
+        var run = Current();
+        if (run == null)
+        {
+            run = _current;
+            if (run == null || global::System.Threading.Volatile.Read(ref run.Ended) != 0)
+                return null; // a callback the run left behind: its work is its own
+        }
+        global::System.Threading.Interlocked.Exchange(ref run.Spawned, 1);
+        global::System.Threading.Interlocked.Increment(ref run.Pending);
+        if (global::System.Threading.Volatile.Read(ref run.Ended) != 0)
+            _orphans = 1;
+        return run;
+    }
+
+    /// <summary>Work of a run starts: while none runs (<c>_live</c>), no check needs to look whose work it is.</summary>
+    static void Started() => global::System.Threading.Interlocked.Increment(ref _live);
+
+    static void Done(Run run)
+    {
+        global::System.Threading.Interlocked.Decrement(ref _live);
+        global::System.Threading.Interlocked.Decrement(ref run.Pending);
+    }
+
+    /// <summary>
+    /// Synchronous work of a run. A thread entry (swallow) swallows a stop: unhandled on a thread, it
+    /// would end the process; a task faults with it.
+    /// </summary>
+    static void Do(Run run, global::System.Action work, bool swallow)
+    {
+        Started();
+        var thread = _thread;
+        var flowing = _asyncWork != 0 ? _async.Value : null;
+        _thread = run;
+        if (flowing != null)
+            _async.Value = null; // what the work starts without a wrapper (a timer, an async void continuation) is not the run's
+        try { work(); }
+        catch (global::System.Exception) when (swallow && !Running()) { }
+        finally
+        {
+            _thread = thread;
+            if (flowing != null)
+                _async.Value = flowing;
+            Done(run);
+        }
+    }
+
+    /// <summary>Task work of a run: synchronous, or asynchronous (a task) carried into its awaits until the task ends.</summary>
+    static TResult Get<TResult>(Run run, global::System.Func<TResult> work)
+    {
+        if (!typeof(global::System.Threading.Tasks.Task).IsAssignableFrom(typeof(TResult)))
+        {
+            TResult value = default;
+            Do(run, () => value = work(), false);
+            return value;
+        }
+        _asyncWork = 1;
+        global::System.Threading.Interlocked.Exchange(ref run.Async, 1);
+        if (global::System.Threading.Volatile.Read(ref run.Ended) != 0)
+            _asyncOrphans = 1;
+        Started();
+        var thread = _thread;
+        var flowing = _async.Value;
+        _thread = null;
+        _async.Value = run;
+        try
+        {
+            var result = work();
+            if (result is global::System.Threading.Tasks.Task task)
+                task.ContinueWith(_ => Done(run), global::System.Threading.CancellationToken.None,
+                    global::System.Threading.Tasks.TaskContinuationOptions.ExecuteSynchronously, global::System.Threading.Tasks.TaskScheduler.Default);
+            else
+                Done(run);
+            return result;
+        }
+        catch
+        {
+            Done(run);
+            throw;
+        }
+        finally
+        {
+            _thread = thread;
+            _async.Value = flowing;
+        }
+    }
+
+    // Thread and thread-pool entries.
+    public static global::System.Threading.ThreadStart Worker(global::System.Threading.ThreadStart work) =>
+        Spawn(work) is Run run ? () => Do(run, () => work(), true) : work;
+
+    public static global::System.Threading.ParameterizedThreadStart Worker(global::System.Threading.ParameterizedThreadStart work) =>
+        Spawn(work) is Run run ? state => Do(run, () => work(state), true) : work;
+
+    public static global::System.Threading.WaitCallback Worker(global::System.Threading.WaitCallback work) =>
+        Spawn(work) is Run run ? state => Do(run, () => work(state), true) : work;
+
+    public static global::System.Action<T> Worker<T>(global::System.Action<T> work) =>
+        Spawn(work) is Run run ? state => Do(run, () => work(state), true) : work;
+
+    // Task entries.
+    public static global::System.Action TaskWorker(global::System.Action work) =>
+        Spawn(work) is Run run ? () => Do(run, work, false) : work;
+
+    public static global::System.Action<T> TaskWorker<T>(global::System.Action<T> work) =>
+        Spawn(work) is Run run ? state => Do(run, () => work(state), false) : work;
+
+    public static global::System.Func<TResult> TaskWorker<TResult>(global::System.Func<TResult> work) =>
+        Spawn(work) is Run run ? () => Get(run, work) : work;
+
+    public static global::System.Func<T, TResult> TaskWorker<T, TResult>(global::System.Func<T, TResult> work) =>
+        Spawn(work) is Run run ? state => Get(run, () => work(state)) : work;
 
     public static unsafe void Call()
     {
@@ -126,6 +292,8 @@ internal static class __CodeExecGuard
     {
         if (_stopped == 0)
         {
+            if (_orphans != 0 && (_live != 0 || _asyncOrphans != 0) && Orphaned())
+                throw new global::System.TimeoutException(""The snippet's run has ended, so this thread or task it started was stopped: work a snippet starts must finish (join or await it) before the snippet returns."");
             if (_budget <= 0 || unchecked(global::System.Environment.TickCount - _start) < _budget)
                 return;
             _stopped = 1;
@@ -147,6 +315,14 @@ internal static class __CodeExecGuard
         /// </summary>
         internal static void Arm(Type guard, int budgetMs, int maxStackBytes) =>
             guard.GetMethod("Arm", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new object[] { budgetMs, maxStackBytes });
+
+        /// <summary>Starts a run: the threads and tasks its code starts belong to it (the token for <see cref="End"/>).</summary>
+        internal static object Begin(Type guard) =>
+            guard.GetMethod("Begin", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, null)!;
+
+        /// <summary>Ends the run <paramref name="run"/>: its threads and tasks stop at their next check. Returns how many had not finished.</summary>
+        internal static int End(Type guard, object run) =>
+            (int)guard.GetMethod("End", BindingFlags.Public | BindingFlags.Static)!.Invoke(null, new[] { run })!;
 
         /// <summary><see cref="StoppedByTime"/>, 2 (stopped by the stack check) or 0 (not stopped).</summary>
         internal static int Stopped(Type guard) =>
