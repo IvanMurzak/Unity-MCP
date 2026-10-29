@@ -652,7 +652,7 @@ namespace com.IvanMurzak.Unity.MCP
 
                 try
                 {
-                    // Before the flag is set: Flush ignores a disposed storage, which dropped the buffered entries.
+                    // Flush before setting the flag: Flush is a no-op once disposed.
                     if (flush)
                         Flush();
                 }

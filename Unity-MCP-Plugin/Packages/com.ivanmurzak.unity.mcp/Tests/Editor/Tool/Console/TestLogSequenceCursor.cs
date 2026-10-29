@@ -494,13 +494,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         [TestCase(false)]
         [TestCase(true)]
-        public void Dispose_WithoutFlush_KeepsBufferedEntries(bool buffered)
+        public void Dispose_FlushesBufferedEntries(bool buffered)
         {
             // Unity-MCP#1039: Dispose marked the storage disposed before flushing, so the buffered storage
             // logged "Flush called but already disposed" and dropped what was still in its buffer.
             var directory = NewDirectory();
-            var first = Open(directory, buffered);
-            for (var i = 0; i < 3; i++) // below the flush threshold: still buffered
+            var first = Open(directory, buffered, flushEntriesThreshold: 10);
+            for (var i = 0; i < 3; i++)
                 first.Append(new LogEntry(LogType.Log, $"before dispose {i}"));
             first.Dispose();
 
