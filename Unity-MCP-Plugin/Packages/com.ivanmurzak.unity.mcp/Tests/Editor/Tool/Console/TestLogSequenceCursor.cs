@@ -492,6 +492,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             CollectionAssert.IsOrdered(everything.Select(e => e.Sequence));
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Dispose_WithoutFlush_KeepsBufferedEntries(bool buffered)
+        {
+            // Unity-MCP#1039: Dispose marked the storage disposed before flushing, so the buffered storage
+            // logged "Flush called but already disposed" and dropped what was still in its buffer.
+            var directory = NewDirectory();
+            var first = Open(directory, buffered);
+            for (var i = 0; i < 3; i++) // below the flush threshold: still buffered
+                first.Append(new LogEntry(LogType.Log, $"before dispose {i}"));
+            first.Dispose();
+
+            var reopened = Open(directory, buffered);
+            CollectionAssert.AreEquivalent(
+                new[] { "before dispose 0", "before dispose 1", "before dispose 2" },
+                reopened.Query().Select(e => e.Message));
+        }
+
         // ------------------------------------------------------------------ serialization + the tool
 
         [Test]
