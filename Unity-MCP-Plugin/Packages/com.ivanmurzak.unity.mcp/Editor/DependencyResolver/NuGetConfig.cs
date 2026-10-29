@@ -153,7 +153,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // --- Editor-only dependencies (excluded from builds) ---
             // RQL (the query language of rql-query / rql-mutate and the tools' data layer): Editor-only, so it never
             // reaches player builds. Its only dependency is System.Text.Json 8.0.5, the version pinned above.
-            new NuGetPackage("com.IvanMurzak.Rql",                                    "0.3.0-dev.2f4e263"),
+            new NuGetPackage("com.IvanMurzak.Rql",                                    "0.3.0-dev.aacfbba"),
             new NuGetPackage("Microsoft.Bcl.Memory",                                  "10.0.3"),
             // Pinned to 4.8.0 so transitive System.Collections.Immutable stays at 7.0.0
             // (forward-compatible with Unity 6.6's built-in 8.0.0). Roslyn 4.14 requires

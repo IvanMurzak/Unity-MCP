@@ -30,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
         {
             // Each source declares its type: RQL's known member names (typo warnings) never evaluate a source (spec §8), so a
             // source no query has read yet contributes only the declared type's names.
-            ctx.Engine.AddSource("objects", RqlUnity.AllGameObjects, "every GameObject in the loaded scenes, depth-first, inactive ones included", typeof(List<GameObject>))
+            ctx.AddSource("objects", RqlUnity.AllGameObjects, "every GameObject in the loaded scenes, depth-first, inactive ones included", typeof(List<GameObject>))
                .AddSource("roots", RqlUnity.RootGameObjects, "root GameObjects of the loaded scenes", typeof(List<GameObject>))
                .AddSource("scenes", RqlUnity.Scenes, "loaded scenes", typeof(List<UnityEngine.SceneManagement.Scene>))
                .AddSource("selection", RqlUnity.SelectedObjects, "objects selected in the Editor", typeof(List<UnityEngine.Object>))
@@ -52,8 +52,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
                .AddSource("testResults", RqlTests.LastResults, "results of the last tests-run: name status durationMs message stackTrace", typeof(List<RqlTestResult>))
                .AddSource("profiler", () => RqlProfiler.Instance,
                    "Unity profiler: enabled supported memory rendering script frame modules (live snapshots, MB / ms); calls Start, Stop, " +
-                   "ClearFrames, EnableModule, Save, Load (rql-schema \"profiler\" for signatures)", typeof(RqlProfiler));
-            ctx.AddFunction("unity.assets", RqlUnity.FindAssets,
+                   "ClearFrames, EnableModule, Save, Load (rql-schema \"profiler\" for signatures)", typeof(RqlProfiler))
+               .AddFunction("unity.assets", RqlUnity.FindAssets,
                    $"unity.assets(filter, folder?): AssetDatabase search, e.g. \"t:Material\", \"t:Prefab Enemy\" (at most {RqlUnity.MaxAssets}, loaded as needed)")
                .AddFunction("unity.find", RqlUnity.FindGameObject,
                    "unity.find(name): the GameObject with that unique name or hierarchy path (\"Level/Pillar_1\"), e.g. set Follow = unity.find(\"Player\")")

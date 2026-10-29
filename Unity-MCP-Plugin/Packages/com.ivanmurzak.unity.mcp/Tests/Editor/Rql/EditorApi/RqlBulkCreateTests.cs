@@ -181,7 +181,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             StringAssert.Contains("range(0, 300) | call editor.CreateGameObject(", RqlGuide.MutateDescription);
             StringAssert.Contains("transform.localScale * 1.5", RqlGuide.MutateDescription);
-            StringAssert.Contains(RqlLanguageGuide.RulesFor("editor.CreateGameObject"), RqlGuide.QueryDescription);
+            StringAssert.Contains(RqlLanguageGuide.RulesWith(RqlGuide.RuleExamples), RqlGuide.QueryDescription);
             // The shared rules replace the guide's own copy of them.
             Assert.AreEqual(1, System.Text.RegularExpressions.Regex.Matches(RqlGuide.Language, "Lists compare by value").Count);
         }

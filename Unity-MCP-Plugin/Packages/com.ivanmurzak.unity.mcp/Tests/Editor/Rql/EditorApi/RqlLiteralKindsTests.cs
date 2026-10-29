@@ -149,7 +149,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         // Tool descriptions are attribute constants, so the shared rules are a copy: it must stay the bundled runtime's text.
         [Test]
         public void TheGuideCarriesTheRuntimesRulesForUnity() =>
-            Assert.AreEqual(RqlLanguageGuide.RulesFor("editor.CreateGameObject"), RqlGuide.LanguageRules);
+            Assert.AreEqual(RqlLanguageGuide.RulesWith(RqlGuide.RuleExamples), RqlGuide.LanguageRules);
 
         // A receipt cut to its first rows does not point to a json format the tools do not have.
         [Test]

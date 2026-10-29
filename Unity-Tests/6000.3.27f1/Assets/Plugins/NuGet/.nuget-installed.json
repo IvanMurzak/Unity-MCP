@@ -19,7 +19,7 @@
       ]
     },
     "com.IvanMurzak.Rql": {
-      "version": "0.3.0-dev.2f4e263",
+      "version": "0.3.0-dev.aacfbba",
       "dlls": [
         "Rql.Contracts.dll",
         "Rql.Execution.dll",
