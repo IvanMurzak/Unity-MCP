@@ -321,9 +321,15 @@ export async function openProject(
     };
     let pid: number | undefined;
     if (options.spawnImpl) {
-      // The embedder starts the editor (and owns its failures: a rejection fails the open); its pid may come
-      // later (a promise), and is logged once known.
-      pid = await spawnedEditorPid(options.spawnImpl(editorPath, editorLaunchArgs(projectPath), editorLaunchEnv(env)));
+      // The embedder starts the editor; its pid may come later (a promise), and is logged once known.
+      try {
+        pid = await spawnedEditorPid(options.spawnImpl(editorPath, editorLaunchArgs(projectPath), editorLaunchEnv(env)));
+      } catch (err: unknown) {
+        // The editor did not start (a rejection fails the open): re-resolve the path next time, as for a
+        // failed default spawn.
+        clearCachedEditorPath(version);
+        throw err;
+      }
       editorLaunched(pid);
     } else {
       // Spawn the editor via the shared util. We capture the spawn /
@@ -716,7 +722,7 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
 /** The editor pid an `openProject` `spawnImpl` reported: the started process's `pid`, or its promise's value. */
 async function spawnedEditorPid(started: ReturnType<EditorSpawnImpl>): Promise<number | undefined> {
   const value = await started;
-  return typeof value === 'object' ? value.pid : value;
+  return value !== null && typeof value === 'object' ? value.pid : (value ?? undefined);
 }
 
 /**

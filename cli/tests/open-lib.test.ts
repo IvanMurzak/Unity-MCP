@@ -442,7 +442,7 @@ describe('openProject — explicit editor path override (mocked)', () => {
     if (unknown.kind !== 'success') return;
     expect(unknown.editorPid).toBeUndefined();
     expect(events).toContainEqual({ phase: 'editor-launched', message: 'Launched Unity Editor', pid: undefined });
-  }, 20_000);
+  }, 20_000); // two opens, each with a real process scan
 
   it('a spawnImpl that rejects fails the open (the editor did not start)', async () => {
     const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
