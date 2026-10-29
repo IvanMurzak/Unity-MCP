@@ -146,7 +146,5 @@ namespace com.IvanMurzak.Unity.MCP
             foreach (var entry in base.ReadNewestFirst(cutoffTime))
                 yield return entry;
         }
-
-        ~BufferedFileLogStorage() => Dispose();
     }
 }

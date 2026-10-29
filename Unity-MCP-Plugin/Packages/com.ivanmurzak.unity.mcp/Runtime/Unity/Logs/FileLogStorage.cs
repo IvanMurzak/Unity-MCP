@@ -636,17 +636,30 @@ namespace com.IvanMurzak.Unity.MCP
 
         public virtual void Dispose()
         {
-            if (!_isDisposed.TrySetTrue())
-                return; // already disposed
+            Dispose(flush: true);
+            GC.SuppressFinalize(this);
+        }
 
-            try
+        // No flush from the finalizer: the file stream may be finalized already.
+        ~FileLogStorage() => Dispose(flush: false);
+
+        void Dispose(bool flush)
+        {
+            lock (_fileMutex)
             {
-                Flush();
-            }
-            finally
-            {
-                lock (_fileMutex)
+                if (_isDisposed.Value)
+                    return; // already disposed
+
+                try
                 {
+                    // Flush before setting the flag: Flush is a no-op once disposed.
+                    if (flush)
+                        Flush();
+                }
+                finally
+                {
+                    _isDisposed.TrySetTrue();
+
                     fileWriteStream?.Dispose();
                     fileWriteStream = null;
 
@@ -656,10 +669,6 @@ namespace com.IvanMurzak.Unity.MCP
                         PersistSequence(_sequence);
                 }
             }
-
-            GC.SuppressFinalize(this);
         }
-
-        ~FileLogStorage() => Dispose();
     }
 }

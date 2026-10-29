@@ -103,6 +103,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static bool IsRunning => _serverStatus.CurrentValue == McpServerStatus.Running;
         public static bool IsStarting => _serverStatus.CurrentValue == McpServerStatus.Starting;
 
+        // From editor load until the auto-start has decided: a server started, an external one found, or none.
+        static readonly ReactiveProperty<bool> _autoStartPending = new(false);
+        internal static bool IsAutoStartPending => _autoStartPending.CurrentValue;
+
         /// <summary>
         /// True when a verified, version-matching server binary is present on disk and can be launched
         /// without a download. The Start path (<c>HandleServerButton</c>) uses this to decide whether to
@@ -132,6 +136,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     ServerPathEnvVar,
                     serverPathOverride);
 
+            _autoStartPending.Value = !EnvironmentUtils.IsCi()
+                && IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode)
+                && UnityMcpPluginEditor.KeepServerRunning;
+
             // Poll the download from the main thread instead of subscribing from a ContinueWith
             // (thread-pool) callback: EditorApplication.update is a plain delegate field, so a
             // background `+=` races with main-thread subscribers and can drop one of them
@@ -144,11 +152,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                 EditorApplication.update -= AutoStartAfterDownload;
 
-                if (download.IsFaulted || download.IsCanceled || !download.Result)
-                    return; // No binaries available (either in CI or failed to download), skip auto-start
-
-                if (EnvironmentUtils.IsCi())
-                    return; // Skip auto-start in CI environment
+                if (download.IsFaulted || download.IsCanceled || !download.Result || EnvironmentUtils.IsCi())
+                {
+                    // No binaries available (either in CI or failed to download), or CI: skip auto-start
+                    _autoStartPending.Value = false;
+                    return;
+                }
 
                 StartServerIfNeeded();
             }
@@ -1319,7 +1328,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         if (processName.Contains(McpServerProcessName))
                         {
                             _serverProcess = process;
-                            _serverStatus.Value = McpServerStatus.Running;
+                            // A reload right after launch: the server is still starting, so the verification
+                            // below marks it Running and the editor does not connect before it listens.
+                            _serverStatus.Value = IsYoungerThanStartupVerification(process)
+                                ? McpServerStatus.Starting
+                                : McpServerStatus.Running;
                             _logger.LogInformation("Reconnected to existing MCP server process (PID: {pid})", savedPid);
 
                             // Re-attach exit handler
@@ -1344,7 +1357,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static void OnEditorQuitting()
         {
-            StopServer(force: true);
+            try
+            {
+                // Close the hub connection before our server goes: a server killed under a live connection
+                // makes SignalR log "The server connection was terminated with an error".
+                if (_serverProcess != null && UnityMcpPluginEditor.HasInstance)
+                {
+                    var plugin = UnityMcpPluginEditor.Instance;
+                    plugin.DisconnectImmediate();
+                    plugin.McpPluginInstance?.WaitForImmediateTeardown(TimeSpan.FromSeconds(2));
+                }
+            }
+            finally
+            {
+                StopServer(force: true);
+            }
         }
 
         public static bool StartServer()
@@ -1803,10 +1830,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// If the process is still running after verification, the status is set to Running.
         /// If the process has exited and no longer exists, the status is set to Stopped.
         /// </summary>
+        const double verificationDelaySeconds = 5.0;
+
+        static bool IsYoungerThanStartupVerification(Process process)
+        {
+            try
+            {
+                return (DateTime.Now - process.StartTime).TotalSeconds < verificationDelaySeconds;
+            }
+            catch (Exception)
+            {
+                return false; // start time unavailable: treat it as running, as before
+            }
+        }
+
         static void ScheduleStartupVerification(int processId)
         {
             var startTime = DateTime.UtcNow;
-            const double verificationDelaySeconds = 5.0;
 
             void CheckProcess()
             {
@@ -1962,11 +2002,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         public static void StartServerIfNeeded()
         {
             EditorApplication.update -= StartServerIfNeeded;
+            void Settled() => _autoStartPending.Value = false;
 
             // Skip local server auto-start in Cloud mode — Unity connects to the cloud server instead
             if (!IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
             {
                 _logger.LogDebug("StartServerIfNeeded: Cloud mode active, skipping local server auto-start");
+                Settled();
                 return;
             }
 
@@ -1974,6 +2016,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (!UnityMcpPluginEditor.KeepServerRunning)
             {
                 _logger.LogDebug("StartServerIfNeeded: KeepServerRunning is false, skipping auto-start");
+                Settled();
                 return;
             }
 
@@ -1982,6 +2025,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 _serverStatus.CurrentValue == McpServerStatus.Starting)
             {
                 _logger.LogDebug("StartServerIfNeeded: Server is already running or starting");
+                Settled();
                 return;
             }
 
@@ -1992,14 +2036,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (externalAvailable)
                 {
                     _logger.LogInformation("StartServerIfNeeded: External MCP server detected on port {port}, skipping local server start", port);
+                    Settled();
                     return;
                 }
 
                 // Start the local server
                 _logger.LogInformation("StartServerIfNeeded: Starting local MCP server (KeepServerRunning=true)");
-                StartServer();
+                StartServer(); // Starting until verified Running, or Stopped
+                Settled();
             });
         }
+
+        /// <summary>
+        /// Runs <paramref name="action"/> on the main thread once this editor is not starting a local server:
+        /// right away, or when the server it auto-starts is up (or failed). A connect before the server listens
+        /// fails with errors on every editor start.
+        /// </summary>
+        public static void WhenAutoStartSettled(Action action)
+            => _autoStartPending
+                .CombineLatest(_serverStatus, (pending, status) => pending || status == McpServerStatus.Starting)
+                .Where(starting => !starting)
+                .Take(1)
+                .Subscribe(_ => action());
 
         /// <summary>
         /// Checks if an external server is listening on the given port on a background thread,

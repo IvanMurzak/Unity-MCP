@@ -42,6 +42,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 "Custom mode targets the local MCP server, so auto-start must be allowed " +
                 "(subject to the other gates inside StartServerIfNeeded).");
         }
+
+        // Once the editor has loaded, its auto-start has decided, so a connect waits for nothing.
+        [Test]
+        public void WhenAutoStartSettled_NoServerStarting_RunsRightAway()
+        {
+            Assume.That(McpServerManager.IsStarting || McpServerManager.IsAutoStartPending, Is.False,
+                "a local server is starting right now");
+
+            var ran = false;
+            McpServerManager.WhenAutoStartSettled(() => ran = true);
+
+            Assert.IsTrue(ran);
+        }
     }
 
     /// <summary>

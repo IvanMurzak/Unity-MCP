@@ -26,7 +26,7 @@
     "autoReferenced": true,
     "defineConstraints": [
         "UNITY_MCP_READY",
-        "UNITY_MCP_DEPS_25"
+        "UNITY_MCP_DEPS_26"
     ],
     "versionDefines": [],
     "noEngineReferences": false
