@@ -80,6 +80,12 @@
 
 ### Fixed
 
+- **No connection and log-storage warnings on every Editor start and recompile** (#1039). The plugin no longer tells
+  the server about tool / prompt changes while it is not connected and not reconnecting (it applies its config right
+  after each domain reload, before connecting; with `UNITY_MCP_KEEP_CONNECTED=false` it never connects), so
+  `EnsureConnection … auto-reconnect disabled` is gone. The log cache flushes before it closes, so
+  `BufferedFileLogStorage Flush called but already disposed` is gone too. McpPlugin 8.14.0-dev.311deec and
+  ReflectorNet 5.5.1-dev.ec3702e (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_25`).
 - **Polling with `script-execute` no longer holds a script reload forever.** Each call holds the domain reload until
   1 s after its reply, so a client calling every half second after writing a script (waiting for its new type) kept
   `isCompiling` true for minutes. While a compile that our lock held waits, `script-execute` now answers at once that the

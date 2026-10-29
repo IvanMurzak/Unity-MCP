@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "24";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "25";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -119,7 +119,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 8.11.0 sends a tool call to the plugin once (no re-send per plugin-timeout), adds the
             // server's `tool-timeout` arg (Consts.MCP.Server.Args/Env.ToolTimeout, DefaultToolTimeoutMs)
             // that McpServerManager passes, and the plugin-side duplicate-request guard.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.14.0-dev.e8985d5", includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.14.0-dev.311deec", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised
@@ -130,7 +130,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // main thread by its SynchronizationContext, not managed thread id 1. The plugin replaces
             // MainThread.Instance with UnityMainThread (MainThreadDispatcher.MainThreadId), so Unity's
             // main-thread detection, including Unity 7 CoreCLR's id-2 main thread, does not rely on it.
-            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.5.0",  includeInBuild: true),
+            // 5.5.1-dev.ec3702e (temporary pre-release, McpPlugin 8.14.0-dev.311deec depends on it): a nullable
+            // parameter without a default (string? x, int? x) is no longer required in the tool schema.
+            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.5.1-dev.ec3702e", includeInBuild: true),
             new NuGetPackage("System.Text.Json",                                      "8.0.5",  includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.15", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.15", includeInBuild: true),
