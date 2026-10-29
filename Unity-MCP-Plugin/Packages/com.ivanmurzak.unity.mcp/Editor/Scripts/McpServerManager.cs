@@ -105,6 +105,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         // From editor load until the auto-start has decided: a server started, an external one found, or none.
         static readonly ReactiveProperty<bool> _autoStartPending = new(false);
+        internal static bool IsAutoStartPending => _autoStartPending.CurrentValue;
 
         /// <summary>
         /// True when a verified, version-matching server binary is present on disk and can be launched
@@ -1327,7 +1328,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                         if (processName.Contains(McpServerProcessName))
                         {
                             _serverProcess = process;
-                            _serverStatus.Value = McpServerStatus.Running;
+                            // A reload right after launch: the server is still starting, so the verification
+                            // below marks it Running and the editor does not connect before it listens.
+                            _serverStatus.Value = IsYoungerThanStartupVerification(process)
+                                ? McpServerStatus.Starting
+                                : McpServerStatus.Running;
                             _logger.LogInformation("Reconnected to existing MCP server process (PID: {pid})", savedPid);
 
                             // Re-attach exit handler
@@ -1825,10 +1830,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// If the process is still running after verification, the status is set to Running.
         /// If the process has exited and no longer exists, the status is set to Stopped.
         /// </summary>
+        const double verificationDelaySeconds = 5.0;
+
+        static bool IsYoungerThanStartupVerification(Process process)
+        {
+            try
+            {
+                return (DateTime.Now - process.StartTime).TotalSeconds < verificationDelaySeconds;
+            }
+            catch (Exception)
+            {
+                return false; // start time unavailable: treat it as running, as before
+            }
+        }
+
         static void ScheduleStartupVerification(int processId)
         {
             var startTime = DateTime.UtcNow;
-            const double verificationDelaySeconds = 5.0;
 
             void CheckProcess()
             {

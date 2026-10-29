@@ -47,7 +47,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void WhenAutoStartSettled_NoServerStarting_RunsRightAway()
         {
-            Assume.That(McpServerManager.IsStarting, Is.False, "a local server is starting right now");
+            Assume.That(McpServerManager.IsStarting || McpServerManager.IsAutoStartPending, Is.False,
+                "a local server is starting right now");
 
             var ran = false;
             McpServerManager.WhenAutoStartSettled(() => ran = true);
