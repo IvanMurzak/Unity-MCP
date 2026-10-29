@@ -1,6 +1,6 @@
 # Vendored: Code-Exec (C#)
 
-`Core/` and `Roslyn/` are copied verbatim from [IvanMurzak/Code-Exec](https://github.com/IvanMurzak/Code-Exec) `main` at
+`Core/` and `Roslyn/` are copied verbatim, below a 4-line license header, from [IvanMurzak/Code-Exec](https://github.com/IvanMurzak/Code-Exec) `main` at
 commit `2556a2f` (execution guards, Code-Exec PRs #7, #8 and #9: snippet threads and tasks stop with their run, `using var`
 as a first statement, the `MaxTimeoutMs` host cap), which is **not released yet**: release **0.3.2-dev.2556a2f**, a
 pre-release on top of 0.3.1 (tag `nuget-v0.3.1`, commit `96c2919`). The release guard
@@ -9,10 +9,13 @@ from the published Code-Exec release and record that version here.
 
 Files: `dotnet/CodeExec/*.cs` and `dotnet/CodeExec.Roslyn/src/*.cs`. Source, not the NuGet DLL:
 the adapter compiles against the Roslyn 4.8 this package already installs, and no NuGet pin / DLL changes are needed in
-the test projects. Do not edit them here: change Code-Exec, then copy the files again and update this note and the
-hashes below (`sha256sum Core/*.cs Roslyn/*.cs`).
+the test projects. Do not edit them here: change Code-Exec, then copy the files again, put the same header (with the new
+commit) on top of each, and update this note, `THIRD-PARTY-NOTICES.md` and the hashes below. The hashes are of the
+upstream files, i.e. each vendored file without its first 4 lines (`for f in Core/*.cs Roslyn/*.cs; do printf '%s *%s\n'
+"$(tail -n +5 "$f" | sha256sum | cut -d' ' -f1)" "$f"; done`).
 
-License: PolyForm Shield 1.0.0 — https://polyformproject.org/licenses/shield/1.0.0
+License: PolyForm Shield 1.0.0 — https://polyformproject.org/licenses/shield/1.0.0, not this package's Apache-2.0. The
+terms and the notice are in [`THIRD-PARTY-NOTICES.md`](THIRD-PARTY-NOTICES.md); every vendored file names them in its header.
 Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
 
 ```
