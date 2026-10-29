@@ -24,7 +24,8 @@ its own (what it wraps, its invariants).
   - `Runtime/` — runtime tools and data types (no Editor API, ship in game builds).
   - `Tests/Editor/` (EditMode; RQL tests in `Tests/Editor/Rql/`) and `Tests/Runtime/` (PlayMode) — NUnit + Unity Test Framework.
 - `Unity-Tests/<unity-version>/` — one test project per supported Unity version, referencing the package via
-  `file:`. Adding a version: also add it to both `*.yml-sample` workflows and `open-all-projects-*`.
+  `file:`. Adding a version: also add it to both `*.yml-sample` workflows, `open-all-projects-unix.sh`,
+  `open_all_projects_windows.py` (`PROJECTS`) and `update_ai_game_developer.py` (`TARGET_FILES`).
 - `Installer/` — Unity project that exports the `.unitypackage` installer (`Assets/YOUR_PACKAGE_NAME Installer/`).
 - `commands/` — the scripts below, plus `open-all-projects-unix.sh` and `check-versions.py`.
 - `.github/workflows/` — `bump_version.yml`, `test_unity_plugin.yml` (reusable test job), and

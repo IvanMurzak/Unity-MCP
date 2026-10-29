@@ -92,6 +92,7 @@ def act_args(job: str, workflow: str, secrets: Dict[str, str], verbose: bool, dr
 
 
 def run_act(args: List[str], log_file: Optional[str]) -> int:
+    sys.stdout.flush()  # our header before act's own output
     if not log_file:
         return subprocess.run(["act", *args], cwd=ROOT).returncode
     # Tee: stream act's merged output to the console and to the log file.
@@ -100,8 +101,9 @@ def run_act(args: List[str], log_file: Optional[str]) -> int:
                              text=True, encoding="utf-8", errors="replace") as proc:
         assert proc.stdout is not None
         for line in proc.stdout:
-            sys.stdout.write(line)
             log.write(line)
+            sys.stdout.write(line)
+            sys.stdout.flush()
     return proc.returncode
 
 
@@ -145,7 +147,8 @@ def run(args: argparse.Namespace) -> int:
         return 1
 
     secrets = parse_env(env_file.read_text(encoding="utf-8-sig"))
-    missing = [name for name in REQUIRED_SECRETS if not secrets.get(name, "").strip()]
+    present = {key.upper() for key, value in secrets.items() if value.strip()}  # names are case-insensitive, as in the .ps1
+    missing = [name for name in REQUIRED_SECRETS if name not in present]
     if missing:
         print("Error: Missing required secrets in .env file:")
         for name in missing:
@@ -196,4 +199,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 
 if __name__ == "__main__":
+    # act prints emoji; never die on output the console code page cannot encode (Windows, piped output).
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(errors="backslashreplace")
     sys.exit(main())

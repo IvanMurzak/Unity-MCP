@@ -246,7 +246,7 @@ class InitTests(unittest.TestCase):
                 '{\r\n  "name": "YOUR_PACKAGE_ID_LOWERCASE",\r\n  "displayName": "YOUR_PACKAGE_NAME"\r\n}\r\n',
             "Unity-Package/Packages/YOUR_PACKAGE_ID_LOWERCASE/Editor/YOUR_FEATURE_NAMEModule.cs":
                 "namespace Rql.YOUR_FEATURE_NAME { // source YOUR_FEATURE_NAME_LOWERCASE\n}\n",
-            "Installer/Assets/YOUR_PACKAGE_NAME_INSTALLER/Installer.cs":
+            "Installer/Assets/YOUR_PACKAGE_NAME Installer/Installer.cs":
                 'const string Path = "Assets/YOUR_PACKAGE_NAME_INSTALLER"; // YOUR_PACKAGE_NAME_INSTALLER_FILE\n',
             "Unity-Tests/6000.3.1f1/Library/YOUR_PACKAGE_ID.txt": "YOUR_PACKAGE_ID\n",
             ".github/workflows/release.yml": "repo: YOUR_GITHUB_USERNAME_REPOSITORY\n",
@@ -255,7 +255,7 @@ class InitTests(unittest.TestCase):
             path = self.root / rel
             path.parent.mkdir(parents=True, exist_ok=True)
             path.write_bytes(text.encode("utf-8"))
-        (self.root / "Installer/Assets/YOUR_PACKAGE_NAME_INSTALLER/icon.png").write_bytes(b"\x89PNG\xff\xfe\x00")
+        (self.root / "Installer/Assets/YOUR_PACKAGE_NAME Installer/icon.png").write_bytes(b"\x89PNG\xff\xfe\x00")
 
     def tearDown(self):
         self.tmp.cleanup()
@@ -289,6 +289,7 @@ class InitTests(unittest.TestCase):
         self.assertEqual(code, 0, out)
         self.assertEqual(self.read("Installer/Assets/Editor/Cool package Installer/Installer.cs"),
                          'const string Path = "Assets/Editor/Cool package Installer"; // Cool-package-Installer\n')
+        self.assertFalse((self.root / "Installer/Assets/Cool package Installer").exists())
         self.assertTrue((self.root / "Unity-Package/Packages/com.acme.cool/Editor/CoolModule.cs").is_file())
 
     def test_invalid_feature_name_fails(self):

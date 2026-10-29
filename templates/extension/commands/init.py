@@ -85,7 +85,7 @@ def replace_content(path: Path, replacements: Dict[str, str]) -> bool:
     raw = path.read_bytes()
     # surrogateescape round-trips non-UTF-8 (binary) bytes unchanged; a BOM is dropped.
     text = raw.decode("utf-8", errors="surrogateescape")
-    if text.startswith("﻿"):
+    if text.startswith("\ufeff"):
         text = text[1:]
     new_text = replace_all(text, replacements)
     if new_text == text:
@@ -144,9 +144,11 @@ def run(root: Path, package_id: str, package_name: str, github_repository: str, 
         if not extra_dir.exists():
             extra_dir.mkdir(parents=True)
             print(f"  Created: {extra_dir}")
-        source = assets / "YOUR_PACKAGE_NAME_INSTALLER"
+        # The template folder is "YOUR_PACKAGE_NAME Installer" (the .ps1 looked for
+        # YOUR_PACKAGE_NAME_INSTALLER, so it never moved it); step 2 renames it.
+        source = assets / "YOUR_PACKAGE_NAME Installer"
         if source.exists():
-            shutil.move(str(source), str(extra_dir / "YOUR_PACKAGE_NAME_INSTALLER"))
+            shutil.move(str(source), str(extra_dir / source.name))
             print(f"  Moved installer to: {extra}/")
 
     # 2. Rename files and directories, deepest path first so a parent is renamed after its children.
@@ -179,4 +181,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 
 if __name__ == "__main__":
+    # Never die on a path or tool output the console code page cannot encode (Windows, piped output).
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(errors="backslashreplace")
     sys.exit(main())

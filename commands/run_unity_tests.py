@@ -204,4 +204,7 @@ def main(argv: Optional[List[str]] = None) -> int:
 
 
 if __name__ == "__main__":
+    # Never die on a path or tool output the console code page cannot encode (Windows, piped output).
+    for stream in (sys.stdout, sys.stderr):
+        stream.reconfigure(errors="backslashreplace")
     sys.exit(main())
