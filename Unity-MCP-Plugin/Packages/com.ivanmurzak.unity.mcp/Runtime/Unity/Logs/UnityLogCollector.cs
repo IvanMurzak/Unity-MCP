@@ -150,7 +150,8 @@ namespace com.IvanMurzak.Unity.MCP
             GC.SuppressFinalize(this);
         }
 
-        ~UnityLogCollector() => Dispose();
+        // The storage closes itself from its own finalizer, without a flush; disposing it here would flush.
+        ~UnityLogCollector() => Application.logMessageReceivedThreaded -= OnLogMessageReceived;
     }
 }
 
