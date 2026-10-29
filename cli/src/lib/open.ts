@@ -3,6 +3,7 @@ import * as path from 'path';
 import { platform as nodePlatform } from 'os';
 import {
   editorLaunchArgs,
+  editorLaunchEnv,
   findEditorPath,
   getProjectEditorVersion,
   launchEditor,
@@ -18,7 +19,7 @@ import {
   UNSUPPORTED_PLATFORM_PREFIX,
   type DismissPlatform,
 } from '../utils/launch-error-dismiss.js';
-import { emitProgress } from './progress.js';
+import { emitProgress, pidSuffix } from './progress.js';
 import type {
   EditorSpawnImpl,
   OpenEnvInputs,
@@ -314,7 +315,7 @@ export async function openProject(
     const editorLaunched = (pid: number | undefined): void => {
       emitProgress(options.onProgress, {
         phase: 'editor-launched',
-        message: `Launched Unity Editor${pid !== undefined ? ` (PID: ${pid})` : ''}`,
+        message: `Launched Unity Editor${pidSuffix(pid)}`,
         pid,
       });
     };
@@ -322,7 +323,7 @@ export async function openProject(
     if (options.spawnImpl) {
       // The embedder starts the editor (and owns its failures: a rejection fails the open); its pid may come
       // later (a promise), and is logged once known.
-      pid = await spawnedEditorPid(options.spawnImpl(editorPath, editorLaunchArgs(projectPath), { ...process.env, ...env }));
+      pid = await spawnedEditorPid(options.spawnImpl(editorPath, editorLaunchArgs(projectPath), editorLaunchEnv(env)));
       editorLaunched(pid);
     } else {
       // Spawn the editor via the shared util. We capture the spawn /

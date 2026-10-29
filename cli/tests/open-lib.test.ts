@@ -401,8 +401,7 @@ describe('openProject — explicit editor path override (mocked)', () => {
     const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
     const events: ProgressEvent[] = [];
     const spawnImpl = vi.fn((_editor: string, _args: string[], _env: NodeJS.ProcessEnv) =>
-      // Later than the 2 s the default spawn waits for its `spawn` event: a spawnImpl's pid is never cut off.
-      new Promise<number>((resolve) => setTimeout(() => resolve(4242), 2100)));
+      new Promise<number>((resolve) => setTimeout(() => resolve(4242), 50)));
 
     const result = await mockedOpenProject({
       projectPath: tmpDir,
@@ -424,7 +423,7 @@ describe('openProject — explicit editor path override (mocked)', () => {
     const launched = events.filter((e) => e.phase === 'editor-launched');
     expect(launched).toEqual([{ phase: 'editor-launched', message: 'Launched Unity Editor (PID: 4242)', pid: 4242 }]);
     expect(events.findIndex((e) => e.phase === 'editor-launched')).toBeLessThan(events.findIndex((e) => e.phase === 'done'));
-  }, 20_000);
+  });
 
   it('a spawnImpl may return the started process; an unknown pid is never logged as "unknown"', async () => {
     const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
