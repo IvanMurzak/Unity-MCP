@@ -132,7 +132,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             AssertOk(M(Bare + " | set sharedMaterial = \"default-material\"")); // any case
             Assert.AreSame(builtIn, renderer.sharedMaterial);
             AssertOk(M(Bare + " | set sharedMaterial = \"Sprites-Default\""));
-            Assert.AreEqual("Sprites-Default", renderer.sharedMaterial.name);
+            Assert.AreEqual("Sprites-Default", renderer.sharedMaterial!.name);
             AssertFails(M(Bare + " | set sharedMaterial = \"Glow\""), "coercion-failed", "Default-Material");
             Assert.AreEqual("Sprites-Default", renderer.sharedMaterial.name);
         }

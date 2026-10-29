@@ -104,6 +104,8 @@
 
 ### Fixed
 
+- **`script-execute` takes a `null` parameter** (`parameters = "{label: null}"`): it failed with a
+  NullReferenceException. The package's own C# warnings (CS0414, CS0114, CS8600, CS8602) are fixed too.
 - **No connection and log-storage warnings on every Editor start and recompile** (#1039). The plugin no longer tells
   the server about tool / prompt changes while it is not connected and not reconnecting (e.g. with
   `UNITY_MCP_KEEP_CONNECTED=false`), so `EnsureConnection … auto-reconnect disabled` is gone. The log cache flushes before it closes, so

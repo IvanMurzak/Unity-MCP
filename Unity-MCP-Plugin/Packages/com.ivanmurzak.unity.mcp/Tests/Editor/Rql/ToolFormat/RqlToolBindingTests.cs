@@ -116,6 +116,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
             StringAssert.Contains("Alpha:42", text);
         }
 
+        // A null parameter is passed as null (its JSON is "null"), not a NullReferenceException.
+        [Test]
+        public void ScriptExecuteTakesANullParameter()
+        {
+            var code = "public class Script { public static string Main(object label) { return label == null ? \"no label\" : \"label\"; } }";
+            var (r, text) = Call(Plugin, Tool_Script.ScriptExecuteToolId,
+                JsonSerializer.Serialize(new { csharpCode = code, parameters = "{label: null}" }));
+            Assert.AreEqual(ResponseStatus.Success, r.Status, text);
+            StringAssert.Contains("no label", text);
+        }
+
         // A parameter expression that names nothing (e.g. the objects source used as a value) and a list each get a reason the
         // agent can act on, not "Missing values are not supported".
         [Test]
