@@ -85,7 +85,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Physics3D
         public bool queriesHitBackfaces { get => Physics.queriesHitBackfaces; set => Physics.queriesHitBackfaces = value; }
 
         [RqlDescription("Auto Sync Transforms: Transform changes reach physics before every query")]
+#pragma warning disable CS0618 // deprecated in Unity 6.3 with no replacement setting; the project setting still applies
         public bool autoSyncTransforms { get => Physics.autoSyncTransforms; set => Physics.autoSyncTransforms = value; }
+#pragma warning restore CS0618
 
         [RqlDescription("Simulation Mode: FixedUpdate, Update or Script")]
         public SimulationMode simulationMode { get => Physics.simulationMode; set => Physics.simulationMode = value; }

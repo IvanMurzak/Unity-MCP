@@ -113,7 +113,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting
         private static void RequireBakeableDevice()
         {
             if (SystemInfo.graphicsDeviceType != UnityEngine.Rendering.GraphicsDeviceType.Null) return;
+#pragma warning disable CS0618 // ProgressiveCPU (deprecated in Unity 6.6) is the only lightmapper that bakes without a graphics device
             if (EffectiveLightmapper() == LightingSettings.Lightmapper.ProgressiveCPU) return;
+#pragma warning restore CS0618
             throw new InvalidOperationException(
                 "this Editor has no graphics device (-nographics), and the GPU lightmapper cannot bake without one. Set the CPU " +
                 "lightmapper (lighting | get settings | set lightmapper = \"ProgressiveCPU\") or start the Editor with graphics");

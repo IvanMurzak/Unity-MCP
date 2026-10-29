@@ -43,7 +43,9 @@ namespace com.IvanMurzak.Unity.MCP.Cinemachine.Installer
             }
 
             // Export the package
+#pragma warning disable CS0618 // Unity 6.6 deprecates it for AssetPackage.Package.Export, which older Unity (installers build on 2022.3) lacks
             AssetDatabase.ExportPackage(packagePath, outputPath, ExportPackageOptions.Recurse);
+#pragma warning restore CS0618
 
             Debug.Log($"Package exported to: {outputPath}");
         }

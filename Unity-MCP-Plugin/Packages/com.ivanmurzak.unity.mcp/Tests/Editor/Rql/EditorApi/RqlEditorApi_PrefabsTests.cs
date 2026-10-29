@@ -129,7 +129,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             MakePrefab();
             AssertOk(M("objects | where name == \"Crate\" | call Duplicate()"));
+#if UNITY_6000_5_OR_NEWER
+            var copies = Object.FindObjectsByType<BoxCollider>();
+#else
             var copies = Object.FindObjectsByType<BoxCollider>(FindObjectsSortMode.None);
+#endif
             Assert.AreEqual(2, copies.Length);
             foreach (var c in copies) Assert.IsTrue(PrefabUtility.IsPartOfPrefabInstance(c.gameObject), c.name);
             Assert.AreNotEqual(copies[0].name, copies[1].name);

@@ -65,8 +65,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
         /// </summary>
         protected static bool CpuLightmapperSupported()
         {
+#pragma warning disable CS0618 // ProgressiveCPU (deprecated in Unity 6.6) is the only lightmapper that bakes without a graphics device
             var settings = new LightingSettings { lightmapper = LightingSettings.Lightmapper.ProgressiveCPU };
             try { return settings.lightmapper == LightingSettings.Lightmapper.ProgressiveCPU; }
+#pragma warning restore CS0618
             finally { Object.DestroyImmediate(settings); }
         }
 

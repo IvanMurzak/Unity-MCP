@@ -59,7 +59,9 @@ namespace com.IvanMurzak.Unity.MCP.Installer
             // Use the array overload so the Tests filter is actually honored.
             // ExportPackageOptions.Default preserves the explicit path list without
             // forcing folder recursion that would re-add filtered-out assets.
+#pragma warning disable CS0618 // Unity 6.6 deprecates it for AssetPackage.Package.Export, which older Unity (installers build on 2022.3) lacks
             AssetDatabase.ExportPackage(assetPaths, OutputPath, ExportPackageOptions.Default);
+#pragma warning restore CS0618
 
             Debug.Log($"[PackageExporter] Package exported to: {OutputPath} ({assetPaths.Length} asset(s))");
         }

@@ -35,7 +35,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.AreSame(MeshOf(PrimitiveType.Cylinder), filter.sharedMesh);
             AssertOk(M(Filter + " | set sharedMesh = \"sphere\"")); // any case
             Assert.AreSame(MeshOf(PrimitiveType.Sphere), filter.sharedMesh);
+#if UNITY_6000_5_OR_NEWER
+            Assert.AreEqual(1, Object.FindObjectsByType<MeshFilter>().Length, "the probe primitive stayed in the scene");
+#else
             Assert.AreEqual(1, Object.FindObjectsByType<MeshFilter>(FindObjectsSortMode.None).Length, "the probe primitive stayed in the scene");
+#endif
         }
 
         [Test]

@@ -105,8 +105,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
                 "coercion-failed", "GameObject is an engine object and cannot be built from an object literal; use unity.find(\"Name\")");
             AssertFails(M("objects | where name == \"Holder\" | get components | where $ is DataFieldPopulationTestScript | set textureField = {}"),
                 "coercion-failed", "use an asset path (\"Assets/…\")");
+#if UNITY_6000_5_OR_NEWER
+            Assert.AreEqual(1, Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include).Length,
+                "no GameObject was built");
+#else
             Assert.AreEqual(1, Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
                 "no GameObject was built");
+#endif
         }
 
         [Test]

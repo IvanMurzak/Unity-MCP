@@ -558,8 +558,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }
             if (cfg.CookieSize.HasValue)
             {
-#if UNITY_6000_5_OR_NEWER
-                // Unity 6.5+ deprecated the float cookieSize in favour of Vector2 cookieSize2D.
+#if UNITY_6000_3_OR_NEWER
+                // Unity 6.3+ deprecated the float cookieSize in favour of Vector2 cookieSize2D.
                 // The IsolatedLightConfig wire shape stays a single float (uniform XY size) to
                 // preserve backwards-compatible JSON; expand it to (x,y) at the API boundary.
                 light.cookieSize2D = new Vector2(cfg.CookieSize.Value, cfg.CookieSize.Value);

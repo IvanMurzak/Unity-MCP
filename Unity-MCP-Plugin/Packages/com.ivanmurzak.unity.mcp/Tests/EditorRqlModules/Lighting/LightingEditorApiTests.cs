@@ -54,7 +54,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Lighting
             AssertOk(M($"lighting | call CreateSettings(\"{TestFolder}/Bake.lighting\")"));
             AssertOk(M("lighting | get settings | set lightmapper = \"ProgressiveCPU\", lightmapResolution = 7, lightmapMaxSize = 256, bakedGI = true"));
             var asset = AssetDatabase.LoadAssetAtPath<LightingSettings>(TestFolder + "/Bake.lighting");
+#pragma warning disable CS0618 // ProgressiveCPU (deprecated in Unity 6.6) is the only lightmapper that bakes without a graphics device
             if (CpuLightmapperSupported()) Assert.AreEqual(LightingSettings.Lightmapper.ProgressiveCPU, asset.lightmapper);
+#pragma warning restore CS0618
             Assert.AreEqual(7f, asset.lightmapResolution, 1e-4f);
             Assert.AreEqual(256, asset.lightmapMaxSize);
             Assert.IsTrue(asset.bakedGI);
