@@ -1,0 +1,45 @@
+.github/nuget-gate.lock
+  s_7bc72ecaebd05d::t_835dc10d8e4e0f 4,21
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_9853cdeb21bf9d 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_7bc72ecaebd05d::t_3d925c1824a19c 26-27
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_7bc72ecaebd05d::t_55556886deb28f 156
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Modules/UnityCoreModule.cs
+  s_7bc72ecaebd05d::t_4b23cd16362cab 33,55-56
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_7bc72ecaebd05d::t_1aabda6c6d400d 75-77,87,90-99
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlBulkCreateTests.cs
+  s_7bc72ecaebd05d::t_90752cb265e9d9 184
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlLiteralKindsTests.cs
+  s_7bc72ecaebd05d::t_28e4ef0a4c7c79 152
+Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_2d99ef0a036917 22
+Unity-Tests/6000.0.85f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_ea32706824e81a 22
+Unity-Tests/6000.3.27f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_4f55d09ee59529 22
+Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_3b63e05c363fbd 22
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_79c3d959724e1d 22
+Unity-Tests/6000.6.7f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_aa77cbdd54cf3e 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c1334c0029cfa0bebbee52f97a7a5b8bd506e67c",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
