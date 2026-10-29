@@ -156,22 +156,20 @@ def run(args: argparse.Namespace) -> int:
                 print("Status: ERROR")
                 print(f"Error: {parsed.error}")
                 success = False
-            elif parsed.success:
-                print("Status: PASSED")
-                print(f"Tests: {parsed.passed}/{parsed.total} passed")
-                if parsed.skipped > 0:
-                    print(f"Skipped: {parsed.skipped}")
-                total += parsed.total
-                passed += parsed.passed
-                skipped += parsed.skipped
             else:
-                print("Status: FAILED")
-                print(f"Tests: {parsed.passed}/{parsed.total} passed, {parsed.failed} failed")
+                if parsed.success:
+                    print("Status: PASSED")
+                    print(f"Tests: {parsed.passed}/{parsed.total} passed")
+                    if parsed.skipped > 0:
+                        print(f"Skipped: {parsed.skipped}")
+                else:
+                    print("Status: FAILED")
+                    print(f"Tests: {parsed.passed}/{parsed.total} passed, {parsed.failed} failed")
+                    success = False
                 total += parsed.total
                 passed += parsed.passed
-                failed += parsed.failed
+                failed += parsed.failed  # 0 when it passed
                 skipped += parsed.skipped
-                success = False
         print(f"Duration: {mmss(result.seconds)}")
         print(f"Results: {result.results_file}")
 

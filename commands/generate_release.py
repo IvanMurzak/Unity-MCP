@@ -56,16 +56,14 @@ def run(version_from: str, version_to: str) -> int:
         "",
         "## Commit Summary (Newest → Oldest)",
     ]
-    log = git("log", "--pretty=format:%H", f"{version_from}..{version_to}")
-    for sha in log.splitlines():
+    log = git("log", "--pretty=format:%H %s", f"{version_from}..{version_to}")
+    for sha, _, message in (line.partition(" ") for line in log.splitlines()):
         username = author_login(repo_path, sha)
         if not username:
             # Kept from the .ps1: a commit whose author the API cannot name is left out.
             print(f"Using git fallback for commit {sha}")
             continue
-        message = git("log", "-1", "--pretty=format:%s", sha)
-        short_sha = git("log", "-1", "--pretty=format:%h", sha)[:6]
-        lines.append(f"- [`{short_sha}`]({url}/commit/{sha}) — {message} by @{username}")
+        lines.append(f"- [`{sha[:6]}`]({url}/commit/{sha}) — {message} by @{username}")
 
     with filename.open("w", encoding="utf-8") as f:
         f.write("\n".join(lines) + "\n")

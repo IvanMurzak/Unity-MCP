@@ -65,7 +65,6 @@ VERSION_FILES = (
 @dataclass
 class Change:
     path: Path
-    description: str
     matches: int
     content: str
 
@@ -82,7 +81,7 @@ def write_text(path: Path, content: str) -> None:
 
 
 def is_semantic_version(version: str) -> bool:
-    return bool(version and version.strip()) and SEMVER_RE.match(version) is not None
+    return SEMVER_RE.match(version) is not None
 
 
 def current_version(root: Path) -> str:
@@ -109,7 +108,7 @@ def plan_changes(root: Path, new_version: str) -> List[Change]:
             print(f"[warn] No matches found in: {vf.path}")
             print(f"   Pattern: {vf.pattern.pattern}")
             continue
-        changes.append(Change(path, vf.description, count, new_content))
+        changes.append(Change(path, count, new_content))
         print(f"[edit] {vf.description}: {count} occurrence(s)")
         for match in vf.pattern.finditer(content):
             print(f"   {match.group(0)} -> {replacement}")

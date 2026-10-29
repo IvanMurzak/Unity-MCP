@@ -35,34 +35,32 @@ def probe(argv: List[str]) -> Optional[subprocess.CompletedProcess]:
         return None
 
 
+def check_tool(program: str, label: str, install_hint: str) -> bool:
+    result = probe([program, "--version"])
+    if result is None:
+        print(f"[ERROR] {label} is not installed or not in PATH")
+        print(install_hint)
+        return False
+    if result.returncode != 0:
+        print(f"[ERROR] {label} is not responding properly")
+        return False
+    print(f"[OK] {label} installed: {result.stdout.strip()}")
+    return True
+
+
 def preflight() -> bool:
     print("=== Pre-flight Checks ===\n")
-    docker = probe(["docker", "--version"])
-    if docker is None:
-        print("[ERROR] Docker is not installed or not in PATH")
-        print("Please install Docker Desktop: https://www.docker.com/products/docker-desktop")
+    if not check_tool("docker", "Docker", "Please install Docker Desktop: https://www.docker.com/products/docker-desktop"):
         return False
-    if docker.returncode != 0:
-        print("[ERROR] Docker is not responding properly")
-        return False
-    print(f"[OK] Docker installed: {docker.stdout.strip()}")
-
     daemon = probe(["docker", "ps"])
     if daemon is None or daemon.returncode != 0:
         print("[ERROR] Docker daemon is not running")
         print("Please start Docker Desktop")
         return False
     print("[OK] Docker daemon is running")
-
-    act = probe(["act", "--version"])
-    if act is None:
-        print("[ERROR] Act is not installed or not in PATH")
-        print("Please install act: https://github.com/nektos/act")
+    if not check_tool("act", "Act", "Please install act: https://github.com/nektos/act"):
         return False
-    if act.returncode != 0:
-        print("[ERROR] Act is not responding properly")
-        return False
-    print(f"[OK] Act installed: {act.stdout.strip()}\n")
+    print()
     return True
 
 

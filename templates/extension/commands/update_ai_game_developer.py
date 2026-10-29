@@ -81,7 +81,8 @@ def current_version(path: Path) -> Optional[str]:
     return match.group(1) if match else None
 
 
-def update_file(path: Path, rel: str, new_version: str, what_if: bool) -> bool:
+def update_file(root: Path, rel: str, new_version: str, what_if: bool) -> bool:
+    path = root / rel
     if not path.is_file():
         print(f"   File not found: {rel}")
         return False
@@ -115,7 +116,7 @@ def run(root: Path, what_if: bool) -> int:
     updated = 0
     for rel in TARGET_FILES:
         print(f"   Processing: {rel}")
-        if update_file(root / rel, rel, latest, what_if):
+        if update_file(root, rel, latest, what_if):
             updated += 1
             print(f"   Updated: {rel}")
 

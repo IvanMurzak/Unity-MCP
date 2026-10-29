@@ -38,8 +38,9 @@ STAGGER_SECONDS = 30
 
 
 def detect_editors_path() -> Optional[str]:
-    config = Path(os.environ.get("APPDATA", "")) / "UnityHub" / "secondaryInstallPath.json"
-    if os.environ.get("APPDATA") and config.is_file():
+    appdata = os.environ.get("APPDATA")
+    config = Path(appdata or ".") / "UnityHub" / "secondaryInstallPath.json"
+    if appdata and config.is_file():
         try:
             path = json.loads(config.read_text(encoding="utf-8-sig"))
         except ValueError:

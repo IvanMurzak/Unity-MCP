@@ -22,6 +22,7 @@ Usage:
 from __future__ import annotations
 
 import argparse
+import os
 import re
 import shutil
 import sys
@@ -64,9 +65,12 @@ def collect(root: Path, include_dirs: bool) -> List[Path]:
         if not path.is_dir():
             items.append(path)
             continue
-        for item in path.rglob("*"):
-            if (include_dirs or item.is_file()) and not is_ignored(item.relative_to(path).as_posix(), ignore):
-                items.append(item)
+        for dirpath, dirnames, filenames in os.walk(path):
+            base = Path(dirpath)
+            # Prune ignored folders (a test project's Library) instead of walking and discarding them.
+            dirnames[:] = [d for d in dirnames if not is_ignored((base / d).relative_to(path).as_posix(), ignore)]
+            names = (dirnames + filenames) if include_dirs else filenames
+            items.extend(base / n for n in names if not is_ignored((base / n).relative_to(path).as_posix(), ignore))
     return items
 
 
@@ -92,7 +96,7 @@ def replace_content(path: Path, replacements: Dict[str, str]) -> bool:
 
 def run(root: Path, package_id: str, package_name: str, github_repository: str, installer_extra_path: str,
         feature_name: Optional[str]) -> int:
-    extra = installer_extra_path.strip().replace("\\", "/").strip("/") if installer_extra_path.strip() else ""
+    extra = installer_extra_path.strip().replace("\\", "/").strip("/")
     feature = feature_name if feature_name and feature_name.strip() else feature_name_from(package_name)
     if not re.match(r"^[A-Za-z][A-Za-z0-9]*$", feature):
         print(f"FeatureName '{feature}' is not a valid identifier (letters and digits, starting with a letter). "
@@ -147,7 +151,7 @@ def run(root: Path, package_id: str, package_name: str, github_repository: str, 
 
     # 2. Rename files and directories, deepest path first so a parent is renamed after its children.
     print("Renaming files and directories...")
-    for path in sorted(set(collect(root, include_dirs=True)), key=lambda p: str(p), reverse=True):
+    for path in sorted(set(collect(root, include_dirs=True)), key=str, reverse=True):
         new_name = replace_all(path.name, rename_map)
         if new_name != path.name:
             path.rename(path.with_name(new_name))
