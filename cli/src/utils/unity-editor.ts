@@ -409,6 +409,11 @@ export interface LaunchEditorCallbacks {
   onError?: (err: Error) => void;
 }
 
+/** The editor's command-line arguments for opening `projectPath` (`launchEditor` and an `openProject` `spawnImpl`). */
+export function editorLaunchArgs(projectPath: string): string[] {
+  return ['-projectPath', path.resolve(projectPath)];
+}
+
 /**
  * Spawn the Unity Editor binary with the given project path. Returns
  * the spawned `ChildProcess` so callers can await its `spawn` /
@@ -427,7 +432,7 @@ export function launchEditor(
   env?: Record<string, string>,
   callbacks?: LaunchEditorCallbacks,
 ): import('child_process').ChildProcess {
-  const args = ['-projectPath', path.resolve(projectPath)];
+  const args = editorLaunchArgs(projectPath);
 
   const child = spawn(editorPath, args, {
     detached: true,

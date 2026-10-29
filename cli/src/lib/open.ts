@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { platform as nodePlatform } from 'os';
 import {
+  editorLaunchArgs,
   findEditorPath,
   getProjectEditorVersion,
   launchEditor,
@@ -19,6 +20,7 @@ import {
 } from '../utils/launch-error-dismiss.js';
 import { emitProgress } from './progress.js';
 import type {
+  EditorSpawnImpl,
   OpenEnvInputs,
   OpenProjectAuthOption,
   OpenProjectOptions,
@@ -309,34 +311,43 @@ export async function openProject(
       projectPath,
     });
 
-    // Spawn the editor via the shared util. We capture the spawn /
-    // error events with callbacks and bridge them to the
-    // onProgress channel.
-    const child = launchEditor(editorPath, projectPath, env, {
-      onSpawn: (pid) => {
-        emitProgress(options.onProgress, {
-          phase: 'editor-launched',
-          message: `Launched Unity Editor (PID: ${pid ?? 'unknown'})`,
-          pid,
-        });
-      },
-      onError: (err) => {
-        // Don't throw out of the event listener — the caller can't
-        // catch it. Surface the warning for diagnostics.
-        warnings.push(`Editor spawn reported error: ${err.message}`);
-        // The resolved path failed to spawn (binary corrupted,
-        // wrong arch, perms revoked, …). Drop the cache so the
-        // next invocation re-resolves from Unity Hub instead of
-        // handing back the same broken path.
-        clearCachedEditorPath(version);
-      },
-    });
+    const editorLaunched = (pid: number | undefined): void => {
+      emitProgress(options.onProgress, {
+        phase: 'editor-launched',
+        message: `Launched Unity Editor${pid !== undefined ? ` (PID: ${pid})` : ''}`,
+        pid,
+      });
+    };
+    let pid: number | undefined;
+    if (options.spawnImpl) {
+      // The embedder starts the editor (and owns its failures: a rejection fails the open); its pid may come
+      // later (a promise), and is logged once known.
+      pid = await spawnedEditorPid(options.spawnImpl(editorPath, editorLaunchArgs(projectPath), { ...process.env, ...env }));
+      editorLaunched(pid);
+    } else {
+      // Spawn the editor via the shared util. We capture the spawn /
+      // error events with callbacks and bridge them to the
+      // onProgress channel.
+      const child = launchEditor(editorPath, projectPath, env, {
+        onSpawn: editorLaunched,
+        onError: (err) => {
+          // Don't throw out of the event listener — the caller can't
+          // catch it. Surface the warning for diagnostics.
+          warnings.push(`Editor spawn reported error: ${err.message}`);
+          // The resolved path failed to spawn (binary corrupted,
+          // wrong arch, perms revoked, …). Drop the cache so the
+          // next invocation re-resolves from Unity Hub instead of
+          // handing back the same broken path.
+          clearCachedEditorPath(version);
+        },
+      });
 
-    // The `spawn` event fires asynchronously after `spawn(...)` returns.
-    // We wait briefly so the PID gets surfaced in the result. The
-    // child is already detached + unref'd, so this does NOT block
-    // process exit.
-    const pid = await waitForSpawn(child);
+      // The `spawn` event fires asynchronously after `spawn(...)` returns.
+      // We wait briefly so the PID gets surfaced in the result. The
+      // child is already detached + unref'd, so this does NOT block
+      // process exit.
+      pid = await waitForSpawn(child);
+    }
 
     // Auto-dismiss the Unity "compile errors at launch" dialog if it
     // appears. The polling loop runs synchronously inside this call
@@ -699,6 +710,12 @@ function sleep(ms: number, signal?: AbortSignal): Promise<void> {
     // is awaiting in the first place, and unref'ing would let Node
     // exit before the loop completes.
   });
+}
+
+/** The editor pid an `openProject` `spawnImpl` reported: the started process's `pid`, or its promise's value. */
+async function spawnedEditorPid(started: ReturnType<EditorSpawnImpl>): Promise<number | undefined> {
+  const value = await started;
+  return typeof value === 'object' ? value.pid : value;
 }
 
 /**

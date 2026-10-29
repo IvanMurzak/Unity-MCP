@@ -331,7 +331,7 @@ export const openCommand = new Command('open')
             break;
           }
           case 'editor-launched': {
-            ui.success(`Launched Unity Editor (PID: ${event.pid ?? 'unknown'})`);
+            ui.success(event.message);
             break;
           }
           case 'launch-errors-dismissed': {
@@ -378,7 +378,7 @@ export const openCommand = new Command('open')
     // with `alreadyRunning: true`. Preserve the original exit-0 +
     // friendly message.
     if (result.alreadyRunning) {
-      ui.success(`Unity is already running with this project (PID: ${result.editorPid ?? 'unknown'})`);
+      ui.success(`Unity is already running with this project${result.editorPid !== undefined ? ` (PID: ${result.editorPid})` : ''}`);
       ui.info('Skipping launch. Use the running instance or close it first.');
       process.exit(0);
     }

@@ -79,6 +79,7 @@ export type {
   SetupMcpFailure,
   McpTransport,
   // open-project
+  EditorSpawnImpl,
   OpenProjectOptions,
   OpenProjectResult,
   OpenProjectSuccess,

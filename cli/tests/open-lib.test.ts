@@ -397,6 +397,70 @@ describe('openProject — explicit editor path override (mocked)', () => {
     });
   });
 
+  it('a spawnImpl starts the editor instead, and a late pid is waited for and logged once known', async () => {
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+    const events: ProgressEvent[] = [];
+    const spawnImpl = vi.fn((_editor: string, _args: string[], _env: NodeJS.ProcessEnv) =>
+      // Later than the 2 s the default spawn waits for its `spawn` event: a spawnImpl's pid is never cut off.
+      new Promise<number>((resolve) => setTimeout(() => resolve(4242), 2100)));
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir,
+      editorPath,
+      url: 'http://localhost:9000',
+      autoDismissLaunchErrors: false,
+      spawnImpl,
+      onProgress: (e) => events.push(e),
+    });
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    expect(result.editorPid).toBe(4242);
+    expect(launchEditorMock).not.toHaveBeenCalled();
+    const [command, args, env] = spawnImpl.mock.calls[0];
+    expect(command).toBe(path.resolve(editorPath));
+    expect(args).toEqual(['-projectPath', path.resolve(tmpDir)]);
+    expect(env).toMatchObject({ UNITY_MCP_HOST: 'http://localhost:9000', PATH: process.env.PATH });
+    const launched = events.filter((e) => e.phase === 'editor-launched');
+    expect(launched).toEqual([{ phase: 'editor-launched', message: 'Launched Unity Editor (PID: 4242)', pid: 4242 }]);
+    expect(events.findIndex((e) => e.phase === 'editor-launched')).toBeLessThan(events.findIndex((e) => e.phase === 'done'));
+  }, 20_000);
+
+  it('a spawnImpl may return the started process; an unknown pid is never logged as "unknown"', async () => {
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+    const events: ProgressEvent[] = [];
+
+    const sync = await mockedOpenProject({
+      projectPath: tmpDir, editorPath, autoDismissLaunchErrors: false, spawnImpl: () => ({ pid: 77 }),
+    });
+    expect(sync.kind === 'success' && sync.editorPid).toBe(77);
+
+    const unknown = await mockedOpenProject({
+      projectPath: tmpDir, editorPath, autoDismissLaunchErrors: false,
+      spawnImpl: async () => undefined, onProgress: (e) => events.push(e),
+    });
+    expect(unknown.kind).toBe('success');
+    if (unknown.kind !== 'success') return;
+    expect(unknown.editorPid).toBeUndefined();
+    expect(events).toContainEqual({ phase: 'editor-launched', message: 'Launched Unity Editor', pid: undefined });
+  }, 20_000);
+
+  it('a spawnImpl that rejects fails the open (the editor did not start)', async () => {
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+    const events: ProgressEvent[] = [];
+
+    const result = await mockedOpenProject({
+      projectPath: tmpDir, editorPath, autoDismissLaunchErrors: false,
+      spawnImpl: async () => { throw new Error('Windows did not start the application (code 9).'); },
+      onProgress: (e) => events.push(e),
+    });
+
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') return;
+    expect(result.errorMessage).toBe('Windows did not start the application (code 9).');
+    expect(events.some((e) => e.phase === 'editor-launched' || e.phase === 'done')).toBe(false);
+  });
+
   // The App no longer writes `cloudToken` (the plugin stopped reading it), so the Cloud auto-setup must
   // key on the connection mode alone. Plant: re-adding a `config.cloudToken` gate reddens this test.
   it('Cloud mode WITHOUT a cloudToken enables claude-code skill auto-gen and keep-connected', async () => {

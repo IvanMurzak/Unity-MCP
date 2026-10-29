@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`openProject` `spawnImpl`** (type `EditorSpawnImpl`): an embedder starts the editor its own way. It gets the
+  editor path, arguments and full environment, and returns the started process or a promise of the editor's pid,
+  which `openProject` waits for before `editor-launched` and `editorPid`; a rejection fails the open. Not used by
+  `headless`. The `editor-launched` line (and `open`'s output) names the pid once known and never says
+  `PID: unknown`.
+
 - **Editor sessions (lease + start lock) for `exec` and `open --headless`**, on `@baizor/gamedev-cli-core`'s
   `EditorSession` (dependency bumped to `^0.7.1`). An editor the CLI starts is recorded in
   `<project>/.ai-game-dev/session.json` (PID, process start time, nonce) under the file lock
