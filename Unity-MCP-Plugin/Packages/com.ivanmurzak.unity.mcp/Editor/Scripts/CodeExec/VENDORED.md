@@ -16,15 +16,15 @@ License: PolyForm Shield 1.0.0 — https://polyformproject.org/licenses/shield/1
 Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
 
 ```
-\49ead59797d2157b79bba2f5eb4e423806493c1cbd597b05b9a49fa5d007d911 *Core\\CodeRunner.cs
-\220254baf59d469ea1c26be03a59bbd644593673c62a52dccb19553272f2808c *Core\\Compilation.cs
-\a58556a9f8871691ddab93089cfe63942f7f9c68619047735f0214dfe3988369 *Core\\Contracts.cs
-\cbc9c9f102256e0e0b265e9cac71e8e44d8d7de2966fa5507779778607118398 *Core\\ExecutionGuard.cs
-\985430e145e58227990d8f88bc451a4f806d3d72a4e1b76291b481839f67076c *Core\\Hosting.cs
-\eb6777505f7afe05cc051ecd32d97d62296ebc795dcbe611a400acff8cd4d116 *Core\\Limits.cs
-\22a082265c5180b2d2bca913efbe7580df74f27d7cf41ba4d0d19b513c084af2 *Core\\References.cs
-\3169f7daa632f51c4990d189e540f229a592db1873d87a4b442c8bf414e1c7e0 *Core\\Support.cs
-\7969275d8e4a0f979b596d38382c744b048d9fc010721929dd1be4e3da3882b3 *Roslyn\\GuardWriter.cs
-\c569f7e99ceacf8d4795a569d2b6de268cabf0c287ab5d1cb92113508b788052 *Roslyn\\RoslynCSharpCompiler.cs
-\79e1cf267745d92e087affa1d435b50b00b693d0e9927f973bfe80913d393d63 *Roslyn\\SnippetWriter.cs
+49ead59797d2157b79bba2f5eb4e423806493c1cbd597b05b9a49fa5d007d911 *Core/CodeRunner.cs
+220254baf59d469ea1c26be03a59bbd644593673c62a52dccb19553272f2808c *Core/Compilation.cs
+a58556a9f8871691ddab93089cfe63942f7f9c68619047735f0214dfe3988369 *Core/Contracts.cs
+cbc9c9f102256e0e0b265e9cac71e8e44d8d7de2966fa5507779778607118398 *Core/ExecutionGuard.cs
+985430e145e58227990d8f88bc451a4f806d3d72a4e1b76291b481839f67076c *Core/Hosting.cs
+eb6777505f7afe05cc051ecd32d97d62296ebc795dcbe611a400acff8cd4d116 *Core/Limits.cs
+22a082265c5180b2d2bca913efbe7580df74f27d7cf41ba4d0d19b513c084af2 *Core/References.cs
+3169f7daa632f51c4990d189e540f229a592db1873d87a4b442c8bf414e1c7e0 *Core/Support.cs
+7969275d8e4a0f979b596d38382c744b048d9fc010721929dd1be4e3da3882b3 *Roslyn/GuardWriter.cs
+c569f7e99ceacf8d4795a569d2b6de268cabf0c287ab5d1cb92113508b788052 *Roslyn/RoslynCSharpCompiler.cs
+79e1cf267745d92e087affa1d435b50b00b693d0e9927f973bfe80913d393d63 *Roslyn/SnippetWriter.cs
 ```

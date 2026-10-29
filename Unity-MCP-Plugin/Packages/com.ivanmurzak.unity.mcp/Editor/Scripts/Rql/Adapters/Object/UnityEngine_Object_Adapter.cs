@@ -36,16 +36,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         /// </summary>
         public override LiteralKind? LiteralKindOf(Type type) => IsDataScriptableObject(type) ? LiteralKind.Value : (LiteralKind?)null;
 
-        public override object? CreateForLiteral(Type type, object? outer)
-        {
-            if (!IsDataScriptableObject(type)) return null;
-            RefuseAssetOuter(type, outer, "create the asset first (e.g. script-execute AssetDatabase.CreateAsset) and pass its path");
-            return ScriptableObject.CreateInstance(type);
-        }
+        // Built while the mutation is planned (dry runs too): RqlUnity tracks it, refuses a write that an asset or the open
+        // prefab could not save, and destroys it when the mutation applies nothing.
+        public override object? CreateForLiteral(Type type, object? outer) =>
+            IsDataScriptableObject(type) ? RqlUnity.TrackLiteral(ScriptableObject.CreateInstance(type)) : null;
 
         /// <summary>
         /// A ScriptableObject that holds game data: not an Editor type (windows, inspectors, settings singletons) and not one
-        /// of Unity's own (Timeline, Input System, render pipeline assets …), which have dedicated creation paths.
+        /// of Unity's own (UnityEngine / UnityEditor modules, Unity.* packages: Timeline, Input System, render pipeline assets
+        /// …), which have dedicated creation paths.
         /// </summary>
         internal static bool IsDataScriptableObject(Type type)
         {
@@ -53,17 +52,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             if (typeof(UnityEditor.EditorWindow).IsAssignableFrom(type) || typeof(UnityEditor.Editor).IsAssignableFrom(type)) return false;
             for (var t = type; t != null && t != typeof(ScriptableObject); t = t.BaseType)
                 if (t.IsGenericType && t.GetGenericTypeDefinition() == typeof(UnityEditor.ScriptableSingleton<>)) return false;
-            return !(type.Assembly.GetName().Name ?? "").StartsWith("Unity", StringComparison.Ordinal);
-        }
-
-        /// <summary>
-        /// A new object written into an asset (a Material into a ScriptableObject asset's field) would not be saved with it:
-        /// the asset would lose the reference on reload. Refused while the mutation is planned, so nothing changes.
-        /// </summary>
-        internal static void RefuseAssetOuter(Type type, object? outer, string advice)
-        {
-            if (outer is Object owner && owner != null && UnityEditor.EditorUtility.IsPersistent(owner))
-                throw new InvalidOperationException($"a new {type.Name} written into the asset '{owner.name}' would not be saved with it; {advice}");
+            var assembly = type.Assembly.GetName().Name ?? "";
+            return !assembly.StartsWith("UnityEngine", StringComparison.Ordinal) && !assembly.StartsWith("UnityEditor", StringComparison.Ordinal)
+                && !assembly.StartsWith("Unity.", StringComparison.Ordinal);
         }
 
         /// <summary>The advice ending RQL's engine-object refusal (spec §4.5): how to pass an existing object of that type.</summary>

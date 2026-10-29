@@ -87,6 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             engine.Mutations.Committed = records =>
             {
                 Destroying = null;
+                KeepLiterals(); // the objects literals built are referenced now
                 if (records.Any(ChangesProjectState)) _wrote = true; // Mutate saves only after writes that change project state
                 CloseUndoGroup();
                 var scenes = new HashSet<Scene>();

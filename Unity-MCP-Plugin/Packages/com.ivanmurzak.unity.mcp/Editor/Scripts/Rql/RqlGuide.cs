@@ -175,7 +175,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             MutateStages + MutateExamples +
             "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}, and so do Materials and data ScriptableObjects " +
-            "(into a scene object; an asset cannot hold a new one: create the asset and pass its path). GameObjects, components and other " +
+            "(into a scene object; an asset or the open prefab cannot hold a new one: create the asset and pass its path). GameObjects, components and other " +
             "assets are never built from a literal: pass unity.find(\"Name\"), ref(\"Type#id\") or an asset path. At most 200 targets (or bulk-create items) per call; " +
             "max_targets raises the limit (up to 1000) for an intended bulk change. The receipt lists the assignments that change a " +
             "value; \"N unchanged\" counts the ones whose target already held it (written anyway). A misspelt member that empties the stream of set / call " +

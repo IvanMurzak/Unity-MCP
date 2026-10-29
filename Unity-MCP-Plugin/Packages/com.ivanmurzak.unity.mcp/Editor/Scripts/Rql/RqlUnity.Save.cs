@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters;
 using Rql;
 using Rql.Execution;
@@ -68,6 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 _mutating--;
                 if (_mutating == 0)
                 {
+                    DestroyUnusedLiterals(); // a dry run, or a mutation that wrote none of them
                     CloseUndoGroup(); // a mutation that failed before Committed
                     // Execute threw: nothing gets saved. Raised here, like below, once InMutation is false again.
                     if (!completed)
@@ -119,6 +121,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             Destroying = null;
             if (EditorApplication.isPlaying && WritesProjectSettings(records))
                 return "Project Settings are not changed in Play Mode (the save would keep the game's runtime values, e.g. a paused timeScale): exit Play Mode first (editor | set isPlaying = false)";
+            if (Literals.Count > 0 && UnsavableLiteral(records) is { } unsavable)
+                return unsavable;
             var prefabPaths = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
             var destroying = new HashSet<Component>();
             foreach (var record in records)
@@ -143,6 +147,58 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var refused = UnmetRequirement(destroying);
             if (refused != null) Destroying = null; // nothing will run
             return refused;
+        }
+
+        // The objects the literal factories built (a Material or data ScriptableObject literal) since the last commit: built while
+        // a stage is planned, dry runs included, so the ones no write keeps are destroyed after the mutation.
+        private static readonly List<UnityEngine.Object> Literals = new List<UnityEngine.Object>();
+
+        /// <summary>Records an object a literal factory built for the running mutation (see <see cref="Literals"/>).</summary>
+        internal static T TrackLiteral<T>(T built) where T : UnityEngine.Object
+        {
+            Literals.Add(built);
+            return built;
+        }
+
+        /// <summary>The literals are referenced now (Committed): they are the scene's, no longer the mutation's.</summary>
+        internal static void KeepLiterals() => Literals.Clear();
+
+        private static void DestroyUnusedLiterals()
+        {
+            foreach (var o in Literals)
+                if (o != null) UnityEngine.Object.DestroyImmediate(o);
+            Literals.Clear();
+        }
+
+        /// <summary>
+        /// A new object written into an asset or into the open prefab would not be saved with it (an asset file can reference
+        /// only assets): the reference would be lost on reload. The holder is the nearest Unity object enclosing the write, so a
+        /// field of a [Serializable] row inside an asset counts as the asset.
+        /// </summary>
+        private static string? UnsavableLiteral(IReadOnlyList<MutationRecord> records)
+        {
+            var built = new HashSet<UnityEngine.Object>(Literals);
+            UnityEngine.Object? Built(object? value) => value switch
+            {
+                UnityEngine.Object o => built.Contains(o) ? o : null,
+                string _ => null,
+                System.Collections.IEnumerable items => items.Cast<object?>().Select(Built).FirstOrDefault(o => o != null),
+                _ => null,
+            };
+            foreach (var record in records)
+            {
+                var literal = record.Method == null ? Built(record.New) : record.Args.Select(Built).FirstOrDefault(o => o != null);
+                if (literal == null) continue;
+                var holder = record.Method != null ? record.Item as UnityEngine.Object : record.Owners.OfType<UnityEngine.Object>().FirstOrDefault();
+                if (holder == null) continue;
+                var where = EditorUtility.IsPersistent(holder) ? $"the asset '{holder.name}'"
+                    : EditorSceneManager.IsPreviewSceneObject(holder) ? $"the open prefab ('{holder.name}')"
+                    : null;
+                if (where != null)
+                    return $"a new {literal.GetType().Name} written into {where} would not be saved with it (an asset references only assets): " +
+                           "create the asset first (editor | call CreateMaterial(path) for a material) and pass its path";
+            }
+            return null;
         }
 
         // A write into a view whose undo owners are assets (the settings source's pages: ProjectSettings/*.asset).

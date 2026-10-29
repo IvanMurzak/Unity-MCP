@@ -78,8 +78,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             var asset = ScriptableObject.CreateInstance<DataFieldPopulationTestScriptableObject>();
             var path = Folder + "/Data.asset";
             AssetDatabase.CreateAsset(asset, path);
-            AssertFails(M($"unity.asset(\"{path}\") | set materialField = {{$type: \"Material\"}}"), "coercion-failed", "would not be saved with it");
+            AssertFails(RqlUnity.Mutate($"unity.asset(\"{path}\") | set materialField = {{$type: \"Material\"}}"), "invalid-value",
+                "a new Material written into the asset 'Data' would not be saved with it");
             Assert.IsNull(asset.materialField, "nothing changed");
+            // In a list of the asset too: the nearest Unity object enclosing the write is the asset.
+            AssertFails(RqlUnity.Mutate($"unity.asset(\"{path}\") | set materialList = [{{$type: \"Material\"}}]"), "invalid-value", "would not be saved with it");
+        }
+
+        [Test]
+        public void TheOpenPrefabCannotHoldANewObject()
+        {
+            var path = Folder + "/Crate.prefab";
+            var source = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            PrefabUtility.SaveAsPrefabAsset(source, path);
+            Object.DestroyImmediate(source);
+            AssertOk(RqlUnity.Mutate($"editor | call OpenPrefab(\"{path}\")"));
+            AssertFails(RqlUnity.Mutate("prefab | get components | where $ is MeshRenderer | set sharedMaterial = {$type: \"Material\"}"),
+                "invalid-value", "written into the open prefab");
         }
 
         [Test]
@@ -95,11 +110,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         }
 
         [Test]
-        public void ADryRunBuildsNothingIntoTheScene()
+        public void ADryRunLeavesNoBuiltObjectBehind()
         {
             var holder = Holder();
-            AssertOk(M("objects | where name == \"Holder\" | get components | where $ is DataFieldPopulationTestScript | set materialField = {$type: \"Material\"}", dryRun: true));
-            Assert.IsNull(holder.materialField);
+            var before = Resources.FindObjectsOfTypeAll<DataFieldPopulationTestScriptableObject>().Length;
+            AssertOk(RqlUnity.Mutate("objects | where name == \"Holder\" | get components | where $ is DataFieldPopulationTestScript | " +
+                                     "set scriptableObjectField = {$type: \"DataFieldPopulationTestScriptableObject\"}", dryRun: true));
+            Assert.IsNull(holder.scriptableObjectField);
+            Assert.AreEqual(before, Resources.FindObjectsOfTypeAll<DataFieldPopulationTestScriptableObject>().Length, "the dry run's object was destroyed");
         }
 
         // RQL 2f4e263: list arithmetic and vector functions are core.

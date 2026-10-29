@@ -26,7 +26,7 @@
 - **RQL literal kinds, vector functions, key warnings** (RQL main 2f4e263, temporary pre-release DLLs
   0.3.0-dev.2f4e263, gate `UNITY_MCP_DEPS_25`). A Material or a data ScriptableObject is built from a typed literal:
   `set sharedMaterial = {$type: "Material", color: "#ff8800"}` (the render pipeline's default shader), `set item =
-  {$type: "ItemData", price: 3}`; written into a scene object it is saved with the scene, into an asset it is refused
+  {$type: "ItemData", price: 3}`; written into a scene object it is saved with the scene, into an asset or the open prefab it is refused
   (the asset would lose it). GameObjects, components and other assets stay refused, now with Unity's way to pass an
   existing one (`unity.find("Name")`, `ref(…)`, an asset path). Lists of numbers are vectors (`[x, 0, z] * k`), and
   `length` / `normalize` / `distance` / `dot` / `lerp` work on lists and vectors. A failing sort key and a sparse
