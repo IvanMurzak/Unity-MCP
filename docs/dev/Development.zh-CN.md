@@ -82,7 +82,7 @@
 | [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 6000.0+ | 运行和测试插件 |
 | [.NET SDK](https://dotnet.microsoft.com/download) | 9.0+ | 构建和运行 MCP Server |
 | [Node.js](https://nodejs.org/) | 18+ | 运行 MCP Inspector 进行调试 |
-| PowerShell | 7+ | 执行构建和实用脚本 |
+| Python | 3.9+ | 执行构建和实用脚本 |
 | Docker *（可选）* | 最新版 | 构建和测试 Docker 镜像 |
 
 > 免费的 Unity 个人版许可证即可用于贡献。
@@ -494,10 +494,10 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 3. 选择 **EditMode** 或 **PlayMode** 标签
 4. 点击 **Run All** 或选择特定测试后点击 **Run Selected**
 
-**PowerShell 脚本（命令行）**
-```powershell
-# 针对特定 Unity 版本和模式运行测试
-.\commands\run-unity-tests.ps1 -unityVersion "6000.3.27f1" -testMode "editmode"
+**Python 脚本（命令行）**
+```bash
+# 针对特定 Unity 编辑器和模式运行测试
+python commands/run_unity_tests.py --unity-path "<path to the Unity editor executable>" --test-mode editmode
 ```
 
 ## 测试模式

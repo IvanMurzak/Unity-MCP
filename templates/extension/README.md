@@ -24,9 +24,9 @@ This template repository is designed to be easily updated into a real Unity pack
 
 Use the initialization script to rename the package and replace all placeholders.
 
-```powershell
-./commands/init.ps1 -PackageId "com.company.package" -PackageName "My Package" -GitHubRepository "user/repo"
-# optional: -FeatureName "MyFeature"  (C# identifier for the RQL module; default: the package name without spaces)
+```bash
+python commands/init.py --package-id "com.company.package" --package-name "My Package" --github-repository "user/repo"
+# optional: --feature-name "MyFeature"  (C# identifier for the RQL module; default: the package name without spaces)
 ```
 
 This script will:
@@ -57,7 +57,7 @@ Open `Unity-Package/Packages/YOUR_PACKAGE_ID_LOWERCASE/package.json` and update:
    ```
    **On Windows**:
    ```bash
-   ./commands/open-all-projects-windows.ps1
+   python commands/open_all_projects_windows.py
    ```
 #### OR Manually
    You may open the projects manually to achieve the same result.
@@ -94,7 +94,7 @@ What to add, in this order:
 Name-clash rule: code in `com.IvanMurzak.Unity.MCP.Editor.Rql.*` resolves simple names against the enclosing namespaces
 (other extensions add `...Rql.Animation`, `...Rql.Terrains` …) before the file's `using` directives. Declare aliases for the
 Unity types you use inside the namespace block (`using Light = UnityEngine.Light;`), and do not name the feature namespace
-after a Unity type you reference. `init.ps1 -FeatureName` sets the identifier (default: the package name without spaces).
+after a Unity type you reference. `init.py --feature-name` sets the identifier (default: the package name without spaces).
 
 Tests live in `Tests/Editor/Rql/`: a base class (fresh scene, `RqlUnity.Reset()`, `Q()` for queries, `M()` for mutations),
 one test file per adapter / source, and module tests (discovery, the guide in `Skill_Rql.Render()`, every guide example,
@@ -141,8 +141,8 @@ public partial class Tool_MyFeature
 
 To update the package version across all files (package.json, Installer.cs, etc.), use the bump version script:
 
-```powershell
-.\commands\bump-version.ps1 -NewVersion "1.0.1"
+```bash
+python commands/bump_version.py --new-version 1.0.1
 ```
 
 ### 2. Setup CI/CD

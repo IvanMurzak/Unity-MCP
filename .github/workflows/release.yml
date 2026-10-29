@@ -103,7 +103,7 @@ jobs:
             if [ "$DRY_RUN" = "true" ]; then
               echo "::warning::Tag $VERSION already exists. Dry run: continuing with tests and builds; nothing will be published."
             else
-              echo "::error::Tag $VERSION already exists - this version is already released. Bump the version (commands/bump-version.ps1) and merge it to main before dispatching a release."
+              echo "::error::Tag $VERSION already exists - this version is already released. Bump the version (commands/bump_version.py) and merge it to main before dispatching a release."
               exit 1
             fi
           fi
