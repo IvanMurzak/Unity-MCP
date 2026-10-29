@@ -74,8 +74,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             }
         }
 
-        // A source's item type: learned by calling its getter once (some walk the whole scene, read the log file or list every
-        // shader), then cached per engine and source; a source that returned nothing is asked again next time.
+        // A source's item type: the type it declares, else learned by calling its getter once (an extension source may walk the
+        // scene), then cached per engine and source; a source that returned nothing is asked again next time.
         private static readonly System.Runtime.CompilerServices.ConditionalWeakTable<RqlEngine, Dictionary<string, Type>> ItemTypes =
             new System.Runtime.CompilerServices.ConditionalWeakTable<RqlEngine, Dictionary<string, Type>>();
 
@@ -113,17 +113,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var modules = engine.Modules
                 .Select(m => (report: m, package: moduleTypes.TryGetValue(m.Module, out var t) ? ExtensionOf(t.Assembly) : null))
                 .Where(m => m.package != null).ToList();
-            var adds = modules.SelectMany(m => m.report.Sources.Select(s => "source " + s).Concat(m.report.Functions.Select(f => "function " + f))
-                    .Select(what => (package: m.package!.name, what)))
-                .ToLookup(x => x.package, x => x.what);
             if (modules.Count > 0) sb.Append("extensions (installed packages, always active: nothing to turn on):\n");
             foreach (var group in modules.GroupBy(m => m.package!.name).OrderBy(g => g.Key, StringComparer.Ordinal))
             {
                 var package = group.First().package!;
                 var failed = group.Where(m => !m.report.Ok).Select(m => m.report.Error).ToList();
+                var added = group.SelectMany(m => m.report.Sources.Select(s => "source " + s)
+                    .Concat(m.report.Functions.Select(f => "function " + f))).ToList();
                 sb.Append("  ").Append(package.displayName).Append(" (").Append(package.name).Append(' ').Append(package.version).Append("): ")
                   .Append(failed.Count > 0 ? "FAILED to load: " + string.Join("; ", failed)
-                        : adds[package.name].Any() ? string.Join(", ", adds[package.name])
+                        : added.Count > 0 ? string.Join(", ", added)
                         : "types and value formats only (its components: objects | get components | where $ is …)")
                   .Append('\n');
             }
