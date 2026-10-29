@@ -114,6 +114,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             StringAssert.DoesNotContain("McpToolManager", rows);
         }
 
+        // McpPlugin logs a failed tool call as the exception plus an error line ("Tool execution failed for '…'"): both stay
+        // out of the console source (the agent got that answer already); other plugin errors stay.
+        [Test]
+        public void ConsoleLeavesOutTheToolFailureEchoes()
+        {
+            var marker = System.Guid.NewGuid().ToString("N");
+            UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
+            var logger = new com.IvanMurzak.Unity.MCP.Utils.UnityLogger("com.IvanMurzak.McpPlugin.ToolRunnerCollection");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, new System.InvalidOperationException($"boom {marker}"),
+                $"Tool execution failed for 'Script / Execute': boom {marker}");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, $"Parameter validation failed for tool 'RQL / Query': bad {marker}");
+            Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, $"plugin error {marker}");
+            UnityMcpPluginEditor.Instance.LogCollector!.Save();
+            var rows = Table(Q($"console | where message contains \"{marker}\" | select logType message"));
+            StringAssert.Contains("plugin error", rows);
+            StringAssert.DoesNotContain("boom", rows);
+            StringAssert.DoesNotContain("Parameter validation", rows);
+        }
+
         // The echoes are never captured, so they cannot take the entry limit: a busy session that logged MaxLogEntries echoes
         // after a real entry still returns it.
         [Test]

@@ -116,10 +116,38 @@ namespace com.IvanMurzak.Unity.MCP
         internal static bool IsToolResponseEcho(string? message) =>
             message != null && message.Contains("McpToolManager ") && message.Contains(" Response to AI:");
 
+        /// <summary>
+        /// McpPlugin also logs every tool (and prompt) call that fails (RunTool: "Tool execution failed for '…'" and the other refusals
+        /// below), as an error line preceded by the exception itself. The agent already has that answer: like the response
+        /// echoes, neither entry is captured (an agent reading "errors after my change" found dozens of its own retries).
+        /// </summary>
+        internal static bool IsToolFailureEcho(string? message) =>
+            message != null && ToolFailureEchoRegex.IsMatch(message);
+
+        static readonly Regex ToolFailureEchoRegex = new Regex(
+            @"^(Tool execution failed for '|Prompt execution failed for '|Parameter validation failed for (tool|prompt) '|JSON parameter parsing failed for (tool|prompt) '|Parameter count mismatch for (tool|prompt) ')",
+            RegexOptions.Compiled);
+
+        // Debug.Log* raises logMessageReceivedThreaded synchronously on the logging thread: a flag set around the calls marks
+        // their entries (the exception entry carries no text that would identify it).
+        [ThreadStatic] static bool notCaptured;
+
+        /// <summary>Runs <paramref name="log"/> (Debug.Log* calls) without capturing what it logs (no closure: logging is hot).</summary>
+        internal static void LogUncaptured<T1, T2, T3>(Action<T1, T2, T3> log, T1 a, T2 b, T3 c)
+        {
+            var was = notCaptured;
+            notCaptured = true;
+            try { log(a, b, c); }
+            finally { notCaptured = was; }
+        }
+
         void OnLogMessageReceived(string message, string stackTrace, LogType type)
         {
             try
             {
+                if (notCaptured)
+                    return;
+
                 // Strip rich text tags
                 var cleanMessage = RichTextRegex.Replace(message, string.Empty);
 
