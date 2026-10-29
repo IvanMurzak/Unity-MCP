@@ -17,6 +17,7 @@
   ],
   "version": "2.0.3",
   "unity": "2022.3",
+  "license": "MIT",
   "description": "MCP Tools for Unity Splines - Author and edit Splines with AI through the MCP framework. Create SplineContainers, add/insert/remove knots, set knot position/tangents/rotation and tangent modes, toggle closed loops, evaluate points/tangents along a spline, and read or modify any spline component via natural language.",
   "dependencies": {
     "com.ivanmurzak.unity.mcp": "1.5.0",
