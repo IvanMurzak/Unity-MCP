@@ -110,8 +110,10 @@
   the server about tool / prompt changes while it is not connected and not reconnecting (e.g. with
   `UNITY_MCP_KEEP_CONNECTED=false`), so `EnsureConnection … auto-reconnect disabled` is gone. The log cache flushes before it closes, so
   `BufferedFileLogStorage Flush called but already disposed` is gone too. A PlayMode test run (`tests-run`) no longer
-  logs `InternalConnect Connection was canceled`. McpPlugin 8.14.0-dev.c0d3157 and
-  ReflectorNet 5.5.1-dev.ec3702e (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_26`).
+  logs `InternalConnect Connection was canceled`. With the AI Game Developer window open, toggling Play Mode no longer
+  logs `EnsureConnection Failed to establish connection`: the window's server and agent status queries do not
+  connect. McpPlugin 8.14.0-dev.71fa5c1 and ReflectorNet 5.5.1-dev.ec3702e (temporary pre-release DLLs, gate
+  `UNITY_MCP_DEPS_27`).
 - **No connection errors when the Editor starts or quits its own local server.** With *Keep server running* the
   Editor now connects once the server it launched has passed its startup check, not before, so
   `Failed to start connection` and `Connection refused` are gone from every start. On quit it disconnects before it
