@@ -1,0 +1,61 @@
+commands/extensions.py
+  s_7bc72ecaebd05d::t_2986ae9af23013 63-66
+commands/tests/test_extensions.py
+  s_7bc72ecaebd05d::t_8886a3c0a2c5de 55-61
+extensions/Animation/Packages/com.ivanmurzak.unity.mcp.animation/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_d44cdcabd4aacb 1-14
+extensions/Animation/Packages/com.ivanmurzak.unity.mcp.animation/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_522d553b47fa00 1-2
+extensions/Cinemachine/Packages/com.ivanmurzak.unity.mcp.cinemachine/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_59fc7cb70c6144 1-14
+extensions/Cinemachine/Packages/com.ivanmurzak.unity.mcp.cinemachine/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_0421ba94918ade 1-2
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_44c4bed064dc45 1-14
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_bb992912051967 1-2
+extensions/Navigation/Packages/com.ivanmurzak.unity.mcp.navigation/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_fc4c401bf74466 1-14
+extensions/Navigation/Packages/com.ivanmurzak.unity.mcp.navigation/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_b2d0baf3c95b2c 1-2
+extensions/ParticleSystem/Packages/com.ivanmurzak.unity.mcp.particlesystem/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_6be61e4acd274f 1-14
+extensions/ParticleSystem/Packages/com.ivanmurzak.unity.mcp.particlesystem/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_2ea40ddda6fe17 1-2
+extensions/ProBuilder/Packages/com.ivanmurzak.unity.mcp.probuilder/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_5692a2a499e3e5 1-14
+extensions/ProBuilder/Packages/com.ivanmurzak.unity.mcp.probuilder/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_9a2a1ca641d2b2 1-2
+extensions/Splines/Packages/com.ivanmurzak.unity.mcp.splines/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_78927f2639bee5 1-14
+extensions/Splines/Packages/com.ivanmurzak.unity.mcp.splines/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_96d88140d4f725 1-2
+extensions/Terrain/Packages/com.ivanmurzak.unity.mcp.terrain/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_a300cc4cb7346c 1-14
+extensions/Terrain/Packages/com.ivanmurzak.unity.mcp.terrain/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_ff13765738d776 1-2
+extensions/Tilemap/Packages/com.ivanmurzak.unity.mcp.tilemap/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_98c9b95d5a95c6 1-14
+extensions/Tilemap/Packages/com.ivanmurzak.unity.mcp.tilemap/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_8efd7614f86758 1-2
+extensions/Timeline/Packages/com.ivanmurzak.unity.mcp.timeline/Runtime/AssemblyInfo.cs
+  s_7bc72ecaebd05d::t_626f54982e674b 1-14
+extensions/Timeline/Packages/com.ivanmurzak.unity.mcp.timeline/Runtime/AssemblyInfo.cs.meta
+  s_7bc72ecaebd05d::t_af2a7624d45462 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6ea027da670dc956530cb4fb0ae59551caab68e3",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

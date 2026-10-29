@@ -1,0 +1,41 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.Isolated.cs
+  s_7bc72ecaebd05d::t_d2a77c480120cf 238-239,244,399-412,416,420,425
+tests/chain-fixtures/6000.3.27f1/tools.jsonl
+  s_7bc72ecaebd05d::t_6ecd31918f4558 8,24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/com.IvanMurzak.Unity.MCP.Editor.asmdef
+  s_7bc72ecaebd05d::t_56cb6497f773d5 37-43
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnitySchema.cs
+  s_7bc72ecaebd05d::t_17a59cd4454bb0 39,92-135,138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_7bc72ecaebd05d::t_d7be4b5ad220e9 166-168
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotIsolatedTests.cs
+  s_7bc72ecaebd05d::t_1472496b1dd387 59-81
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/RqlSchemaModuleTypesTests.cs
+  s_7bc72ecaebd05d::t_34f16fc744eac8 50-77
+tests/chain-fixtures/6000.0.85f1/tools.jsonl
+  s_7bc72ecaebd05d::t_d7d387b2f63e04 8,24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/com.IvanMurzak.Unity.MCP.Editor.Tests.asmdef
+  s_7bc72ecaebd05d::t_5020831aa8214a 39-45
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_7bc72ecaebd05d::t_138857ed444e5f 29-35
+tests/chain-fixtures/2022.3.62f3/tools.jsonl
+  s_7bc72ecaebd05d::t_6a9acca0a66984 8,24
+tests/chain-fixtures/6000.6.7f1/tools.jsonl
+  s_7bc72ecaebd05d::t_78bd1532697c2a 8,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4d45cca5a423711e7dddcbe18b258556b4421749",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": null
+    }
+  }
+}

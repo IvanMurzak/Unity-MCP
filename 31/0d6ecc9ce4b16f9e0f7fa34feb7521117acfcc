@@ -1,0 +1,54 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/VisualStudioCopilotConfigurator.cs
+  s_e0e482beb79118::t_120c9fc19cec0d 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UnityMcpPluginEditor.Static.cs
+  s_e0e482beb79118::t_2f6e1bd4daf967 13,259-260
+  s_e0e482beb79118::t_ec1a611fb57ed2 213,218-258
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/AntigravityConfigurator.cs
+  s_e0e482beb79118::t_2228fb2973ab96 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/CodexConfigurator.cs
+  s_e0e482beb79118::t_dcf8d1a77371fb 28
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/ClaudeCodeConfigurator.cs
+  s_e0e482beb79118::t_b428305cfcaa87 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/OpenCodeConfigurator.cs
+  s_e0e482beb79118::t_53fe90985599b6 28
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/CustomConfigurator.cs
+  s_e0e482beb79118::t_dac912b7fa099a 138-141
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/GitHubCopilotCliConfigurator.cs
+  s_e0e482beb79118::t_c9c0277bcdecda 31
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/RiderConfigurator.cs
+  s_e0e482beb79118::t_662b5bee740499 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/CursorConfigurator.cs
+  s_e0e482beb79118::t_0205708233dbec 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/ClineConfigurator.cs
+  s_e0e482beb79118::t_9d70a3706899be 30
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/GeminiConfigurator.cs
+  s_e0e482beb79118::t_4d380f9e459f56 28
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/VisualStudioCodeCopilotConfigurator.cs
+  s_e0e482beb79118::t_c39a2bb7c55c7e 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UnityMcpPluginEditor.Config.cs
+  s_e0e482beb79118::t_46831393d3c7cd 116-135
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/Impl/KiloCodeConfigurator.cs
+  s_e0e482beb79118::t_ad1b007ac81343 28
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/AiAgentConfigurator.cs
+  s_e0e482beb79118::t_76a05d73202f61 578-585
+  s_e0e482beb79118::t_c6e30179c6caf0 157-174
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Skills/SkillsPathNormalizationTests.cs
+  s_e0e482beb79118::t_93a53b0df3e401 1-176,198-222
+  s_e0e482beb79118::t_839ea3194e45ff 177-197
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "310d6ecc9ce4b16f9e0f7fa34feb7521117acfcc",
+  "prompts": {},
+  "sessions": {
+    "s_e0e482beb79118": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "4e9b3851-07f3-4dab-968f-af35848a2368",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,29 @@
+docs/claude/ci-unity-license.md
+  s_d3cd27dd45e300::t_2ba73ed9baac6f 57-64,66-69
+  s_d3cd27dd45e300::t_f930dc0aa1eeb1 44-45
+  s_d3cd27dd45e300::t_89f643bd1ffa15 137-139
+  s_d3cd27dd45e300::t_8ace77760f8565 96
+  s_d3cd27dd45e300::t_be2e3771bdd523 78-82
+  s_d3cd27dd45e300::t_a2216aa01825d9 92-95
+  s_d3cd27dd45e300::t_c336a44c7c12a7 98-100
+  s_d3cd27dd45e300::t_3fc7a32930eb33 104-106
+  s_d3cd27dd45e300::t_07671cf4e45fe9 113
+.github/workflows/test_unity_plugin.yml
+  s_d3cd27dd45e300::t_9f7630a3c9ac78 27-32
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.0",
+  "base_commit_sha": "44a17660f5d9013713e895ac26f3e2b4fedb8613",
+  "prompts": {},
+  "sessions": {
+    "s_d3cd27dd45e300": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "761519e4-ddc0-4406-bb0a-a2e5515622e0",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

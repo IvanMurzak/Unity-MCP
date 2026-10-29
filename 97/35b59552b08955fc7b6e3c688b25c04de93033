@@ -1,0 +1,79 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Asset/UnityEngine_Material_Adapter.cs
+  s_7bc72ecaebd05d::t_d1e7b4ba6760dc 67,69,71-72
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlLiteralKindsTests.cs
+  s_7bc72ecaebd05d::t_6877fd7090044e 113,116-120
+  s_7bc72ecaebd05d::t_4218d9442d7c5b 81-82,84-97
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Object/UnityEngine_Object_Adapter.cs
+  s_7bc72ecaebd05d::t_90ae85f29d1940 39-42,46-47,55-57
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnity.Save.cs
+  s_7bc72ecaebd05d::t_1d572b33f3a0be 124-125
+  s_7bc72ecaebd05d::t_c013bb3737d782 152-203
+  s_7bc72ecaebd05d::t_a371e304df84cc 72
+  s_7bc72ecaebd05d::t_97faec863f722c 14
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_7bc72ecaebd05d::t_94967c0d3e9ace 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/antigravity-64.png.meta
+  s_7bc72ecaebd05d::t_7322c41c74f707 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/claude-64.png.meta
+  s_7bc72ecaebd05d::t_e33d721bfdbee1 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/codex-64.png.meta
+  s_7bc72ecaebd05d::t_a0b9257499c998 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/cursor-64.png.meta
+  s_7bc72ecaebd05d::t_d82b6b858ba31b 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/gemini-64.png.meta
+  s_7bc72ecaebd05d::t_0698b398115a59 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/github-copilot-64.png.meta
+  s_7bc72ecaebd05d::t_0b41d2e6bb80b2 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/kilo-code-64.png.meta
+  s_7bc72ecaebd05d::t_a694d80e7f4ff7 4-7,59,61,75,88,101-102,114,127,142-164,166,176-177
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/open-code-64.png.meta
+  s_7bc72ecaebd05d::t_ae49407b04279d 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/rider-64.png.meta
+  s_7bc72ecaebd05d::t_b30a5e301a7e27 4-7,59,61,75,88,101,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/unity-64.png.meta
+  s_7bc72ecaebd05d::t_f6fb17c9976bc2 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/visual-studio-64.png.meta
+  s_7bc72ecaebd05d::t_b839a723761a55 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/vs-code-64.png.meta
+  s_7bc72ecaebd05d::t_7660c6f0ffe1f2 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/zoo-code-64.png.meta
+  s_7bc72ecaebd05d::t_e278c73fa55b68 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/discord_icon.png.meta
+  s_7bc72ecaebd05d::t_df0611de4fdfaa 4-7,59,61,75,88,103-125,127,137-138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/github_icon.png.meta
+  s_7bc72ecaebd05d::t_516925ed3848ba 4-7,59,61,75,88,103-125,127,137-138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo.png.meta
+  s_7bc72ecaebd05d::t_6c54a4b29a287b 4-7,59,61,75,88,101-102,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_305.png.meta
+  s_7bc72ecaebd05d::t_e4c28cf5c3464c 4-7,59,61,75,88,103-125,127,137-138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_512.png.meta
+  s_7bc72ecaebd05d::t_8fe511906fb1f9 4-7,59,61,75,88,101-102,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_script_icon.png.meta
+  s_7bc72ecaebd05d::t_69c2c84fb24c38 4-7,59,61,75,88,101,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_window_icon.png.meta
+  s_7bc72ecaebd05d::t_aa765401420d19 4-7,59,61,75,88,101,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/star_icon.png.meta
+  s_7bc72ecaebd05d::t_37b0b822ad8350 4-7,59,61,75,88,103-125,127,137-138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/VENDORED.md
+  s_7bc72ecaebd05d::t_3c4807ebd2d95e 19-29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_7bc72ecaebd05d::t_b94540f9e39563 178
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnity.cs
+  s_7bc72ecaebd05d::t_5fe15628f544d3 90
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "9735b59552b08955fc7b6e3c688b25c04de93033",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
