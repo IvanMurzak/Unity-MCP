@@ -83,8 +83,8 @@
 - **No connection and log-storage warnings on every Editor start and recompile** (#1039). The plugin no longer tells
   the server about tool / prompt changes while it is not connected and not reconnecting (e.g. with
   `UNITY_MCP_KEEP_CONNECTED=false`), so `EnsureConnection … auto-reconnect disabled` is gone. The log cache flushes before it closes, so
-  `BufferedFileLogStorage Flush called but already disposed` is gone too. McpPlugin 8.14.0-dev.311deec and
-  ReflectorNet 5.5.1-dev.ec3702e (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_25`).
+  `BufferedFileLogStorage Flush called but already disposed` is gone too. McpPlugin 8.14.0-dev.c0d3157 and
+  ReflectorNet 5.5.1-dev.ec3702e (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_26`).
 - **No connection errors when the Editor starts or quits its own local server.** With *Keep server running* the
   Editor now connects once the server it launched accepts connections (up to 30 s), not before, so
   `Failed to start connection` and `Connection refused` are gone from every start. On quit it disconnects before it
