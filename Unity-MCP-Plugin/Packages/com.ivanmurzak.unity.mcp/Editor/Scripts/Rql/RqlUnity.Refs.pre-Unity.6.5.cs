@@ -21,7 +21,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private static object? ResolveStableRef(string type, string id)
         {
             if (!int.TryParse(id, NumberStyles.Integer, CultureInfo.InvariantCulture, out var instanceId)) return null;
+#if UNITY_6000_3_OR_NEWER
+            var o = EditorUtility.EntityIdToObject((UnityEngine.EntityId)instanceId);
+#else
             var o = EditorUtility.InstanceIDToObject(instanceId);
+#endif
             return o == null ? null : o;
         }
     }

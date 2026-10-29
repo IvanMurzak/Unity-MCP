@@ -104,6 +104,10 @@
 
 ### Fixed
 
+- **No obsolete-API (CS0618) compiler warnings in Unity 6.3–6.6.** `Light.cookieSize2D` and
+  `EditorUtility.EntityIdToObject` are used from Unity 6.3 (where they appeared), `FindObjectsByType` without a sort
+  mode from 6.5. `Physics.autoSyncTransforms` and the CPU lightmapper (the only one that bakes without a graphics
+  device) keep working; their deprecation warning is silenced, as for `AssetDatabase.ExportPackage` in the installers.
 - **`script-execute` takes a `null` parameter** (`parameters = "{label: null}"`): it failed with a
   NullReferenceException. The package's own C# warnings (CS0414, CS0114, CS8600, CS8602) are fixed too.
 - **No connection and log-storage warnings on every Editor start and recompile** (#1039). The plugin no longer tells
