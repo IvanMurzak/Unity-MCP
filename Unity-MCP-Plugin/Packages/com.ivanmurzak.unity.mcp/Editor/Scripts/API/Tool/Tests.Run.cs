@@ -364,12 +364,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// <summary>
         /// Creates a regex pattern for class filtering that matches Unity's Filter.groupNames behavior.
         /// Pattern: "^(?:.*\.)?{className}\.[^\.]+$" - matches any test class with the specified name followed by a method name,
-        /// in a namespace or in the global namespace (nothing before the class name).
+        /// in a namespace or in the global namespace (nothing before the class name). "(?!dll$)": an assembly file named
+        /// "{className}.dll" is not the class (matching it would select the whole assembly).
         /// </summary>
         /// <param name="className">The class name to filter by</param>
         /// <returns>Regex pattern for Unity's Filter.groupNames field</returns>
         static string CreateClassRegexPattern(string className)
-            => $"^(?:.*\\.)?{EscapeRegex(className)}\\.[^\\.]+$";
+            => $"^(?:.*\\.)?{EscapeRegex(className)}\\.(?!dll$)[^\\.]+$";
 
         /// <summary>
         /// Escapes special regex characters to ensure literal string matching.
