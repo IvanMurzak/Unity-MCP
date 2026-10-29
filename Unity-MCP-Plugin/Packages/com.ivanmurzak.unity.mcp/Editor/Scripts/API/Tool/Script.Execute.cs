@@ -46,21 +46,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             IncludeRoot = Path.GetFullPath(Path.Combine(".ai-game-dev", "snippets")),
             ValueConverter = value => value, // Mono keeps the assembly loaded: the reflector serializes the live value
             LogCaptures = new List<ILogCapture>(), // Debug.Log stays in the Unity console
-            DefaultTimeoutMs = MaxSnippetTimeoutMs, // never "no bound": every request also sets its own budget
+            DefaultTimeoutMs = DefaultSnippetTimeoutMs, // never "no bound": every request also sets its own budget
+            MaxTimeoutMs = MaxSnippetTimeoutMs,
         }));
 
-        /// <summary>The longest a snippet runs (its loops, calls and awaits) before Code-Exec stops it with Timeout.</summary>
-        internal const int MaxSnippetTimeoutMs = 120_000;
+        /// <summary>How long a snippet runs (its loops, calls and awaits) when the call sets no <c>timeout</c>.</summary>
+        internal const int DefaultSnippetTimeoutMs = 30_000;
+
+        /// <summary>The longest a snippet runs before Code-Exec stops it with Timeout, whatever <c>timeout</c> asks for.</summary>
+        internal const int MaxSnippetTimeoutMs = 290_000;
 
         /// <summary>How much earlier than the server's tool timeout the snippet's budget ends, so its Timeout reaches the agent.</summary>
         internal const int ToolTimeoutMarginMs = 10_000;
 
         /// <summary>
-        /// The snippet's time budget: <see cref="MaxSnippetTimeoutMs"/>, or less when the server's tool timeout is shorter, so
-        /// the guard's Timeout answers before the server gives up on the call. Never 0, which Code-Exec reads as the default.
+        /// The snippet's time budget: <paramref name="timeoutSeconds"/> (<see cref="DefaultSnippetTimeoutMs"/> when it is not set
+        /// or not positive), capped at <see cref="MaxSnippetTimeoutMs"/> and at <see cref="ToolTimeoutMarginMs"/> below the
+        /// server's tool timeout, so the guard's Timeout answers before the server gives up on the call. At least 1 s: never 0,
+        /// which Code-Exec reads as the default.
         /// </summary>
-        internal static int SnippetTimeoutMs(int toolTimeoutMs) =>
-            Math.Max(1_000, Math.Min(MaxSnippetTimeoutMs, toolTimeoutMs - ToolTimeoutMarginMs));
+        internal static int SnippetTimeoutMs(int toolTimeoutMs, double? timeoutSeconds = null)
+        {
+            double requested = timeoutSeconds is double seconds && seconds > 0 ? seconds * 1000 : DefaultSnippetTimeoutMs;
+            var cap = Math.Min(MaxSnippetTimeoutMs, toolTimeoutMs - ToolTimeoutMarginMs);
+            return Math.Max(1_000, (int)Math.Min(requested, cap));
+        }
 
         [AiTool
         (
@@ -86,9 +96,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "compile errors (a note says what was cut). Return a selection or a summary instead of everything.\n" +
             "- `Debug.Log` / `Console.WriteLine` output is not part of the result: `Debug.Log` goes to the Unity Console " +
             "(read it with rql-query `console | sort sequence desc | first 10 | select logType message`).\n" +
-            "- Code runs on the main thread with a time budget of 120 s (less when the tool timeout is shorter): an endless loop " +
-            "or a long `await` stops with `Execution failed (Timeout)` and the Editor carries on; runaway recursion fails with " +
-            "`Recursion too deep`. Code blocked inside one Unity call stops only once that call returns.\n" +
+            "- Code runs on the main thread with a time budget of 30 s; `timeout` (in seconds) sets another one, at most 290 s and " +
+            "10 s less than the tool timeout. An endless loop or a long `await` stops with `Execution failed (Timeout)` and the " +
+            "Editor carries on; runaway recursion fails with `Recursion too deep`. Code blocked inside one Unity call stops only " +
+            "once that call returns.\n" +
+            "- Threads and tasks the code starts (`new Thread`, `Task.Run`, `ThreadPool.QueueUserWorkItem`, `Task.Factory.StartNew`, " +
+            "`new Task`) belong to the run: once it ends (finished or timed out) they stop at their next loop iteration or call, and " +
+            "a warning in the Unity Console counts the ones still running. Join or await work you start. Not stopped: timers, " +
+            "`async void` code after its first `await`, work blocked in a wait or a Unity call (it stops once the call returns), " +
+            "and threads that Unity or other libraries start.\n" +
             "- A `.cs` file written in a snippet compiles once imported (`AssetDatabase.ImportAsset` / `Refresh`); the scripts " +
             "reload after the call: the reload waits while a snippet runs, so its reply arrives, but the snippet cannot use the new " +
             "types and must not wait for the compile (`EditorApplication.isCompiling` stays true until the reload; a snippet still " +
@@ -131,7 +147,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Extra namespaces for snippet mode, e.g. [\"MyGame.Gameplay\"].")]
             string[]? usings = null,
             [Description("Helper .cs files or folders (recursive) compiled with the code, relative to <Project>/.ai-game-dev/snippets.")]
-            string[]? include = null
+            string[]? include = null,
+            [Description("Time budget in seconds (default 30, at most 290 and 10 less than the tool timeout): the code stops with " +
+                "Timeout once it is spent. Raise it for long work, lower it to fail fast.")]
+            double? timeout = null
         )
         {
             if (string.IsNullOrEmpty(csharpCode))
@@ -146,7 +165,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 Include = include ?? Array.Empty<string>(),
                 Parameters = parameters?.Select((p, i) => new SnippetParameter(ParameterName(p, i), ParameterType(p, i), null)).ToList()
                     ?? (IReadOnlyList<SnippetParameter>)Array.Empty<SnippetParameter>(),
-                TimeoutMs = SnippetTimeoutMs(UnityMcpPluginEditor.EffectiveToolTimeoutMs),
+                TimeoutMs = SnippetTimeoutMs(UnityMcpPluginEditor.EffectiveToolTimeoutMs, timeout),
             };
             if (!isMethodBody && FullSourceEntryType(csharpCode, className, methodName) is { } entryType)
             {
@@ -173,6 +192,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var (result, stoppedForReload) = await RunHoldingReload(prepared);
             if (stoppedForReload)
                 throw new Exception(ReloadStopMessage);
+            // Code-Exec's warnings (threads or tasks the snippet started that were still running) have no place in the result.
+            foreach (var log in result.Logs)
+                if (log.Level == "warning")
+                    UnityEngine.Debug.LogWarning($"[{ScriptExecuteToolId}] {log.Message}");
             if (!result.Success)
                 throw new Exception(Describe(result));
 

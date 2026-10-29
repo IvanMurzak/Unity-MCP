@@ -23,6 +23,26 @@
   literal is reported against the placement overload. Unity objects are never built from object literals; RQL now
   refuses that itself (`… is an engine object …`), so the plugin's own refusal is gone. Receipts of 2 or more rows
   print a shared method once, drop a `$ref` column equal to the result, and list 50 rows plus a count.
+- **RQL literal kinds, vector functions, key warnings** (RQL main aacfbba, temporary pre-release DLLs
+  0.3.0-dev.aacfbba, gate `UNITY_MCP_DEPS_25`). A Material or a data ScriptableObject is built from a typed literal:
+  `set sharedMaterial = {$type: "Material", color: "#ff8800"}` (the render pipeline's default shader), `set item =
+  {$type: "ItemData", price: 3}`; written into a scene object it is saved with the scene, into an asset or the open prefab it is refused
+  (the asset would lose it). GameObjects, components and other assets stay refused, now with Unity's way to pass an
+  existing one (`unity.find("Name")`, `ref(…)`, an asset path). Lists of numbers are vectors (`[x, 0, z] * k`), and
+  `length` / `normalize` / `distance` / `dot` / `lerp` work on lists and vectors. A failing sort key and a sparse
+  group-by key warn; a misspelt parameter name gets a suggestion. Sources declare their types, so typo warnings never
+  read a source the query does not name. A cut receipt ends with a note that the rest was applied, not a pointer to a
+  json format the tools do not have. The guide adds the agent rules: delete in two steps (list, then remove what was
+  shown), say when a misspelt name was mapped, Unity units.
+- **`script-execute` takes a `timeout` (seconds) and stops the threads a snippet starts.** The default budget is 30 s
+  (was 120 s), `timeout` sets another, at most 290 s and 10 s below the tool timeout. Threads and tasks the code starts
+  (`new Thread`, `Task.Run`, `ThreadPool`, `TaskFactory.StartNew`) stop at their next loop iteration or call once the
+  run ends, with a Console warning that counts them; a `using var x = …;` first statement compiles. Vendored Code-Exec
+  main 2556a2f.
+- **McpPlugin 8.14.0-dev.42786f9 and ReflectorNet 5.5.1-dev.ec3702e** (temporary pre-release DLLs). Tools marked
+  `[AiToolType(Target = ToolTarget.Runtime)]` are registered only by a runtime (player) connection, and the server
+  routes their calls to the game while the Editor is connected; mark game-only tools this way. A call the plugin did
+  not run (`NotExecuted`) is re-sent and runs; `string?` / `int?` parameters without a default are optional.
 
 ### Added
 

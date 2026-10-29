@@ -559,8 +559,10 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 
 古典的なチェスゲームがあります。ボットのロジックを LLM に委託しましょう。ボットはゲームルールに従ってターンを実行する必要があります。
 
+ゲーム専用のツールには `[AiToolType(Target = ToolTarget.Runtime)]` (`using com.IvanMurzak.McpPlugin.Common;`) を付けてください。ゲームだけがそれらを登録し、Editor が接続中でも MCP サーバーはその呼び出しを実行中のゲームへ送ります。
+
 ```csharp
-[AiToolType]
+[AiToolType(Target = ToolTarget.Runtime)]
 public static class ChessGameAI
 {
     [AiTool("chess-do-turn", Title = "Do the turn")]

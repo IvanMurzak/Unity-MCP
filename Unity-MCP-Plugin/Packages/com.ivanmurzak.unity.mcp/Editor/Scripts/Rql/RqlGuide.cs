@@ -68,9 +68,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "null; a GameObject's missingReferences lists references to deleted assets or objects (where missingReferences.count() > 0). Navigate with paths or get; select only projects output columns.\n" +
             "Results come back as compact rows (header line, then col|col). Long results are truncated — refine with where/first or use count. " +
             "Unknown members produce warnings with suggestions; rql-schema(type) lists a type's members.\n" +
-            // The rules every RQL host shares (conditions, ?:, list equality, group items, receipts, call, bulk create, vectors,
-            // missing map entries): kept in step with the bundled runtime instead of copied here.
-            RqlLanguageGuide.Rules;
+            LanguageRules;
+
+        /// <summary>
+        /// The rules every RQL host shares (conditions, ?:, list equality, group items, receipts, call, bulk create, vectors and
+        /// vector functions, missing map entries, typed literals), with Unity's own example calls:
+        /// <c>RqlLanguageGuide.RulesWith(RuleExamples)</c> of the bundled runtime. A copy only because tool descriptions are
+        /// attribute constants; RqlLiteralKindsTests fails when it differs from the runtime's text.
+        /// </summary>
+        public const string LanguageRules =
+            "Language rules:\n" +
+            "- Conditions are booleans. where, and / or / not, ?: and the predicates of .any() .all() .count() .first() take a comparison or has(), never a bare value: where material != null (or has(material)), where count > 0, where name != \"\", where len(tags) > 0. A number, string, object or list there fails with type-mismatch; null counts as false.\n" +
+            "- cond ? a : b (the same as if(cond, a, b)) picks a value and evaluates only the taken branch: set y = (y < 0 ? 0 : y). Inside select, wrap computed values in parentheses: select kind = (intensity > 2 ? \"bright\" : \"dim\").\n" +
+            "- Lists compare by value, in order: tags == [\"a\", \"b\"], x in [[1, 2], [3, 4]]; distinct and group-by merge equal lists.\n" +
+            "- group-by gives rows with key (or one column per key), count and the group's items: group-by kind | select key, count, avg = items.avg(weight); also items.sum(e), items.min(e), items.max(e), items.count(pred), items.first().name. Group by the item's type with $type (group-by $type); a bare type is a member that most items do not have.\n" +
+            "- Receipts list only real changes: a set row whose value stayed the same is left out and counted as unchanged, so no rows with N unchanged means the values already matched.\n" +
+            "- call Method(args) runs the method of each item (the items must be objects). call source.Method(args) runs the method of that one source object once per stream item, with $, $index, $path and $depth in the arguments being the item's; every call counts against the target limit, and every argument is checked before the first call (a dry run checks without calling).\n" +
+            "- Bulk create: range(start, end[, step]) streams numbers (end excluded), and a list literal streams its elements, so one call creates many objects: range(0, 300) | call editor.CreateGameObject(\"Cube_\" + $, {primitive: \"Cube\", position: [($ % 15) * 2, 0, floor($ / 15) * 2]}) builds a 15-wide grid, [[\"Crate\", [0, 0, 0]], [\"Barrel\", [2, 0, 0]]] | call editor.CreateGameObject($[0], {primitive: \"Cube\", position: $[1]}) one object per entry. The receipt has one row per call with the $ref of the created object.\n" +
+            "- Vectors and colors the host marks as component-wise compute component by component: set Scale = Scale * 1.5, Position + [0, 1, 0], Position - Offset, -Velocity, v / 2. Adding a number to a vector is a type-mismatch (add [x, y, z] instead); quaternions and other types without that mark stay type-mismatch. Lists of numbers are vectors too: [x, 0, z] * k, [1, 2] + [3, 4]. Vector functions work on both: length(v) (or v.length(), magnitude), normalize(v), distance(a, b), dot(a, b), lerp(a, b, t); len(x) stays the size of a string or list.\n" +
+            "- A missing map entry reads as null: props[\"k\"] == null and props[\"k\"] is null are true without the entry, and has(props[\"k\"]) tests whether it exists. A misspelt member is not null: it stays unknown and is reported.\n" +
+            "- Arguments by name: call Method({name: value, ...}) with one object literal that no overload takes as a whole binds each key to the parameter of that name; parameters left out keep their defaults, and an unknown name fails listing the parameters: range(0, 10) | call editor.CreateGameObject({name: \"Tile\" + $, primitive: \"Cube\", position: [$ * 2, 0, 0]}). Engine objects (scene objects, nodes, actors) are never built from an object literal: pass an existing one, e.g. ref(\"Type#id\"). Value-like assets and owned subobjects that the host marks are built from a typed literal: set mesh = {$type: \"TypeName\", size: 2}.\n";
+
+        /// <summary>The example calls of <see cref="LanguageRules"/>: calls that work in Unity (CreateGameObject takes a name first).</summary>
+        public static RqlRuleExamples RuleExamples => new RqlRuleExamples
+        {
+            CreateCall = "editor.CreateGameObject",
+            Grid = "editor.CreateGameObject(\"Cube_\" + $, {primitive: \"Cube\", position: [($ % 15) * 2, 0, floor($ / 15) * 2]})",
+            PerEntry = "[[\"Crate\", [0, 0, 0]], [\"Barrel\", [2, 0, 0]]] | call editor.CreateGameObject($[0], {primitive: \"Cube\", position: $[1]})",
+            Named = "editor.CreateGameObject({name: \"Tile\" + $, primitive: \"Cube\", position: [$ * 2, 0, 0]})",
+        };
 
         public const string QueryExamplesExtra =
             "  console | where logType == \"Error\" | sort sequence desc | first 5 | select message\n" +
@@ -101,12 +127,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name starts-with \"Crate\" | sort name | set transform.position.x = $index * 2   spread along x\n" +
             "  objects | where name starts-with \"Coin\" | set transform.localScale = transform.localScale * 1.5   vectors / colors compute per component (a color's alpha too)\n" +
             "  objects | where name starts-with \"Lamp\" | set transform.position = transform.position + [0, 2.5, 0]\n" +
+            "  objects | where name starts-with \"Rock\" | set transform.position = [transform.position.x, 0, transform.position.z] * 2   lists of numbers are vectors\n" +
+            "  objects | where name starts-with \"Enemy\" and distance(transform.position, unity.find(\"Player\").transform.position) < 10 | set active = false   (units: meters)\n" +
+            "  objects | where name == \"Drone\" | set transform.position = transform.position + normalize(transform.forward) * 3   also length(v), dot(a, b), lerp(a, b, t)\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | get properties | where Key ends-with \"Color\" | set Value = \"#ffffff\"   map entries write through\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set properties[\"_Color\"] = \"(1, 0, 0, 1)\"\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set parent = unity.asset(\"Assets/Mats/Base.mat\")   make it a Material Variant of Base\n" +
             "  unity.asset(\"Assets/Data/Items.asset\") | get rows | where Category == \"Tool\" | set Price = round(Price * 1.15)   data asset (ScriptableObject list rows)\n" +
             "  objects | where name starts-with \"Pillar\" | get components | where $ is MeshFilter | set sharedMesh = \"Cylinder\"   built-in mesh\n" +
             "  objects | get components | where $ is MeshRenderer and sharedMaterial == null | set sharedMaterial = \"Default-Material\"   built-in material\n" +
+            "  objects | where name == \"Crate\" | get components | where $ is MeshRenderer | set sharedMaterial = {$type: \"Material\", color: \"#ff8800\"}   a new material (saved with the scene)\n" +
+            "  objects | where name == \"Shop\" | get components | where $ is ShopStock | set item = {$type: \"ItemData\", price: 3}   a new data ScriptableObject\n" +
             "  unity.asset(\"Assets/Art/hero.png\") | get importer | set textureType = \"Sprite\", spriteImportMode = \"Single\"   import settings (reimported)\n" +
             "  objects | where name == \"Spawner\" | set targets = append(targets, ref(\"GameObject#1234\"))\n" +
             "Create / add / remove (call; the receipt's result column holds the new object's $ref for follow-up queries):\n" +
@@ -138,6 +169,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  settings | set physics.gravity = \"(0, -12, 0)\", time.fixedDeltaTime = 0.01   Project Settings (saved, undoable)\n" +
             "  settings | set build.scenes = append(build.scenes, \"Assets/Scenes/Level2.unity\")   scenes in the build\n";
 
+        /// <summary>How an agent changes things safely and transparently (wave 6 findings).</summary>
+        public const string AgentRules =
+            "Agent rules: delete or destroy in two steps: first list what matches (rql-query, or dry_run=true) and show it, then remove " +
+            "only that in a second call. When you map a name the user misspelt to a real one (an object, component or member), say so. " +
+            "Unity units are meters, degrees (rotation) and seconds.\n";
+
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
             "value is checked before anything is written; a failure changes nothing. Undoable: one Undo step per call (Ctrl+Z; from an " +
@@ -146,10 +183,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; " +
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             MutateStages + MutateExamples +
-            "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}. At most 200 targets (or bulk-create items) per call; " +
+            "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}, and so do Materials and data ScriptableObjects " +
+            "(into a scene object; an asset or the open prefab cannot hold a new one: create the asset and pass its path). GameObjects, components and other " +
+            "assets are never built from a literal: pass unity.find(\"Name\"), ref(\"Type#id\") or an asset path. At most 200 targets (or bulk-create items) per call; " +
             "max_targets raises the limit (up to 1000) for an intended bulk change. The receipt lists the assignments that change a " +
             "value; \"N unchanged\" counts the ones whose target already held it (written anyway). A misspelt member that empties the stream of set / call " +
-            "fails with unknown-member (nothing changed); a real member that no matched item has is a no-op.\n\n" +
+            "fails with unknown-member (nothing changed); a real member that no matched item has is a no-op.\n" +
+            AgentRules + "\n" +
             QuerySyntaxShort;
 
         /// <summary>

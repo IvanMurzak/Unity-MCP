@@ -10,6 +10,7 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters;
 using Rql.Execution;
 using UnityEngine;
@@ -27,29 +28,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Modules
 
         public void Configure(RqlModuleContext ctx)
         {
-            ctx.AddSource("objects", RqlUnity.AllGameObjects, "every GameObject in the loaded scenes, depth-first, inactive ones included")
-               .AddSource("roots", RqlUnity.RootGameObjects, "root GameObjects of the loaded scenes")
-               .AddSource("scenes", RqlUnity.Scenes, "loaded scenes")
-               .AddSource("selection", RqlUnity.SelectedObjects, "objects selected in the Editor")
+            // Each source declares its type: RQL's known member names (typo warnings) never evaluate a source (spec §8), so a
+            // source no query has read yet contributes only the declared type's names.
+            ctx.AddSource("objects", RqlUnity.AllGameObjects, "every GameObject in the loaded scenes, depth-first, inactive ones included", typeof(List<GameObject>))
+               .AddSource("roots", RqlUnity.RootGameObjects, "root GameObjects of the loaded scenes", typeof(List<GameObject>))
+               .AddSource("scenes", RqlUnity.Scenes, "loaded scenes", typeof(List<UnityEngine.SceneManagement.Scene>))
+               .AddSource("selection", RqlUnity.SelectedObjects, "objects selected in the Editor", typeof(List<UnityEngine.Object>))
                .AddSource("editor", () => RqlEditorApi.Instance,
                    "Editor state (isPlaying, isPaused, selection …) and operations: CreateGameObject, OpenScene, NewScene, SaveScenes, " +
                    "InstantiatePrefab, OpenPrefab / SavePrefab / ClosePrefab, CopyAsset / MoveAsset / DeleteAsset / CreateFolder, " +
-                   "CreateMaterial, SaveAssets, RefreshAssets, AddTag / AddLayer, ClearConsole, ExecuteMenuItem (rql-schema \"editor\" for signatures)")
+                   "CreateMaterial, SaveAssets, RefreshAssets, AddTag / AddLayer, ClearConsole, ExecuteMenuItem (rql-schema \"editor\" for signatures)", typeof(RqlEditorApi))
                .AddSource("settings", () => RqlProjectSettings.Instance,
                    "Project Settings pages, writable and undoable, saved to ProjectSettings/: physics (gravity, defaultContactOffset, solver " +
                    "iterations …), time (fixedDeltaTime, timeScale …), quality (levels, currentLevel, vSyncCount, shadows …), player " +
-                   "(productName, companyName, bundleVersion, colorSpace …), build (scenes in the build), e.g. settings | select physics.gravity time.fixedDeltaTime")
-               .AddSource("prefab", RqlEditorApi.OpenPrefabRoot, "root GameObject of the prefab open in prefab editing mode (none otherwise)")
-               .AddSource("console", RqlEditorApi.ConsoleEntries, $"captured Editor log entries, oldest first (last {RqlEditorApi.MaxLogEntries}): logType message timestamp stackTrace sequence")
-               .AddSource("shaders", RqlEditorApi.Shaders, "every shader the Editor knows (built-in and project): name supported hasErrors")
-               .AddSource("componentTypes", RqlEditorApi.ComponentTypes, "component types that can be added (name fullName namespace)")
+                   "(productName, companyName, bundleVersion, colorSpace …), build (scenes in the build), e.g. settings | select physics.gravity time.fixedDeltaTime", typeof(RqlProjectSettings))
+               .AddSource("prefab", RqlEditorApi.OpenPrefabRoot, "root GameObject of the prefab open in prefab editing mode (none otherwise)", typeof(GameObject))
+               .AddSource("console", RqlEditorApi.ConsoleEntries, $"captured Editor log entries, oldest first (last {RqlEditorApi.MaxLogEntries}): logType message timestamp stackTrace sequence", typeof(List<LogEntry>))
+               .AddSource("shaders", RqlEditorApi.Shaders, "every shader the Editor knows (built-in and project): name supported hasErrors", typeof(UnityEditor.ShaderInfo[]))
+               .AddSource("componentTypes", RqlEditorApi.ComponentTypes, "component types that can be added (name fullName namespace)", typeof(List<RqlComponentType>))
                .AddSource("tests", RqlTests.All,
                    "test methods (fullName name fixture namespace assembly mode categories parameterized explicit ignored); run a selection " +
-                   "with tests-run query, e.g. tests | where fixture == \"PlayerTests\"")
-               .AddSource("testResults", RqlTests.LastResults, "results of the last tests-run: name status durationMs message stackTrace")
+                   "with tests-run query, e.g. tests | where fixture == \"PlayerTests\"", typeof(List<RqlTest>))
+               .AddSource("testResults", RqlTests.LastResults, "results of the last tests-run: name status durationMs message stackTrace", typeof(List<RqlTestResult>))
                .AddSource("profiler", () => RqlProfiler.Instance,
                    "Unity profiler: enabled supported memory rendering script frame modules (live snapshots, MB / ms); calls Start, Stop, " +
-                   "ClearFrames, EnableModule, Save, Load (rql-schema \"profiler\" for signatures)")
+                   "ClearFrames, EnableModule, Save, Load (rql-schema \"profiler\" for signatures)", typeof(RqlProfiler))
                .AddFunction("unity.assets", RqlUnity.FindAssets,
                    $"unity.assets(filter, folder?): AssetDatabase search, e.g. \"t:Material\", \"t:Prefab Enemy\" (at most {RqlUnity.MaxAssets}, loaded as needed)")
                .AddFunction("unity.find", RqlUnity.FindGameObject,
