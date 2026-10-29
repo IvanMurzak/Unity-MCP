@@ -106,12 +106,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertFails(M("objects | where name == \"Holder\" | get components | where $ is DataFieldPopulationTestScript | set textureField = {}"),
                 "coercion-failed", "use an asset path (\"Assets/…\")");
 #if UNITY_6000_5_OR_NEWER
-            Assert.AreEqual(1, Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include).Length,
-                "no GameObject was built");
+            var all = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include);
 #else
-            Assert.AreEqual(1, Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None).Length,
-                "no GameObject was built");
+            var all = Object.FindObjectsByType<GameObject>(FindObjectsInactive.Include, FindObjectsSortMode.None);
 #endif
+            Assert.AreEqual(1, all.Length, "no GameObject was built");
         }
 
         [Test]
