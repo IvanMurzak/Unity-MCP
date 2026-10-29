@@ -41,8 +41,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         }
 
         /// <summary>
-        /// The <c>console</c> source: captured Editor log entries, oldest first. The plugin's echo of its own tool responses is
-        /// never captured (<see cref="UnityLogCollector.IsToolResponseEcho"/>), so all of them are real entries.
+        /// The <c>console</c> source: captured Editor log entries, oldest first. The plugin's echo of its own tool responses and
+        /// failed tool calls is never captured (<see cref="UnityLogCollector.IsToolResponseEcho"/>,
+        /// <see cref="UnityLogCollector.IsToolFailureEcho"/>), so all of them are real entries.
         /// </summary>
         public static IReadOnlyList<LogEntry> ConsoleEntries() =>
             UnityMcpPluginEditor.HasInstance && UnityMcpPluginEditor.Instance.LogCollector is { } logs
