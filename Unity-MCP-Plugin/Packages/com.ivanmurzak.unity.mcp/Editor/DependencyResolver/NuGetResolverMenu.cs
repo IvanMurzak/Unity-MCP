@@ -41,7 +41,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 var changed = NuGetPackageRestorer.Restore();
                 NuGetPluginConfigurator.ConfigureAll();
 
-                if (changed)
+                if (NuGetPackageRestorer.LastFailures.Count > 0)
+                {
+                    Debug.LogError($"{Tag} {NuGetPackageRestorer.FailureMessage(NuGetPackageRestorer.LastFailures)}");
+                }
+                else if (changed)
                 {
                     Debug.Log($"{Tag} Force resolve complete. Refreshing AssetDatabase...");
                     AssetDatabase.Refresh();

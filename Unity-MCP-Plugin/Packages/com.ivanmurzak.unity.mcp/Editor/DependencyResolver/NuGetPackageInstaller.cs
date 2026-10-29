@@ -44,6 +44,66 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         public static IReadOnlyDictionary<string, string> InstalledThisSession => installedThisSession;
 
         /// <summary>
+        /// The version each package Id resolves to (the highest any chain asks for), computed by
+        /// <see cref="PlanClosure"/> before anything is installed. Install() skips a lower version instead of
+        /// extracting it first and replacing it a moment later: with a first-come order, a graph whose highest
+        /// request comes late (or never, when the chain that asks for it failed to download) removed and
+        /// re-extracted the same DLLs on every pass, and every pass then asked for a refresh (a reload loop).
+        /// </summary>
+        static readonly Dictionary<string, string> plannedVersions = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Fetches a package's .nupkg and returns its local path (test seam: a fake feed).</summary>
+        internal static Func<NuGetPackage, string> DownloadPackage = NuGetDownloader.Download;
+
+        /// <summary>
+        /// Walks the whole dependency graph of <paramref name="roots"/> (downloading each .nupkg into the cache, which
+        /// Install() reads again) and records the version every Id resolves to. Returns the packages that could not be
+        /// fetched; when there are any, the graph is partial and the caller must not install or remove anything from it.
+        /// </summary>
+        internal static IReadOnlyList<string> PlanClosure(IEnumerable<NuGetPackage> roots)
+        {
+            plannedVersions.Clear();
+            var failures = new List<string>();
+            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (var root in roots)
+                Plan(root, visited, failures);
+            return failures;
+        }
+
+        static void Plan(NuGetPackage package, HashSet<string> visited, List<string> failures)
+        {
+            if (IsSkipped(package.Id) || !visited.Add($"{package.Id}:{package.Version}"))
+                return;
+            string nupkgPath;
+            try
+            {
+                nupkgPath = DownloadPackage(package);
+            }
+            catch (Exception ex)
+            {
+                failures.Add($"{package} ({(ex.InnerException ?? ex).Message})");
+                return;
+            }
+            if (!plannedVersions.TryGetValue(package.Id, out var known) || CompareVersions(package.Version, known) > 0)
+                plannedVersions[package.Id] = package.Version;
+            foreach (var dep in NuGetExtractor.GetDependencies(nupkgPath))
+                Plan(dep, visited, failures);
+        }
+
+        /// <summary>
+        /// Installs every planned package that the configured roots did not reach at its planned version (a package
+        /// whose highest request comes only through a lower version of another package, which Install() skips).
+        /// </summary>
+        internal static bool InstallRemainingPlanned(string installPath, InstallManifest? manifest = null)
+        {
+            var any = false;
+            foreach (var planned in plannedVersions.ToList())
+                if (!installedThisSession.ContainsKey(planned.Key))
+                    any |= Install(new NuGetPackage(planned.Key, planned.Value), installPath, visitedIds: null, manifest);
+            return any;
+        }
+
+        /// <summary>
         /// Installs a package and its transitive dependencies.
         /// Returns true if any new DLLs were extracted, OR if any stale-version DLLs of this
         /// package's Id were removed from the install path (both require a domain reload).
@@ -93,9 +153,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
                 }
 
+                // A higher version of this Id is planned (another chain asks for it): never extract this one first.
+                if (plannedVersions.TryGetValue(package.Id, out var plannedVersion)
+                    && CompareVersions(plannedVersion, package.Version) > 0)
+                {
+                    return false;
+                }
+
                 // Download (cached in Library/NuGetCache across sessions). Needed even when
                 // the package is already on disk, so GetDependencies() can build the full closure.
-                var nupkgPath = NuGetDownloader.Download(package);
+                var nupkgPath = DownloadPackage(package);
 
                 var dependencies = NuGetExtractor.GetDependencies(nupkgPath);
                 foreach (var dep in dependencies)
@@ -530,6 +597,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         public static void ResetSession()
         {
             installedThisSession.Clear();
+            plannedVersions.Clear();
         }
 
         static bool IsSkipped(string packageId)

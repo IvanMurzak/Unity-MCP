@@ -68,9 +68,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 }
                 Debug.Log($"{Tag} Downloaded {package.Id} {package.Version} ({new FileInfo(cachedPath).Length / 1024} KB)");
             }
-            catch (Exception ex)
+            catch (Exception)
             {
-                Debug.LogError($"{Tag} Failed to download {package}: {ex.Message}");
+                // No log here: the caller reports every failed package in one message (NuGetPackageRestorer.FailureMessage).
                 if (File.Exists(cachedPath))
                     File.Delete(cachedPath);
                 throw;
