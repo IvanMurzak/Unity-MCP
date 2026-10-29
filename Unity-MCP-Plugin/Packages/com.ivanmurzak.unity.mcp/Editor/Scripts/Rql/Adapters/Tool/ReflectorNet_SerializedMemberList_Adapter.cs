@@ -52,10 +52,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             if (value is List<object?> items && items.All(i => i is ObjectValue o && o.ContainsKey("typeName")))
             {
                 var list = new SerializedMemberList();
-                foreach (ObjectValue o in items)
+                foreach (var o in items.Cast<ObjectValue>())
                 {
                     var member = new SerializedMember { name = o.TryGetValue("name", out var n) ? n as string : null, typeName = o["typeName"] as string ?? "" };
-                    if (o.TryGetValue("value", out var v)) member.SetJsonValue(ToJson(v).ToJsonString());
+                    if (o.TryGetValue("value", out var v)) member.SetJsonValue(JsonText(v));
                     list.Add(member);
                 }
                 result = list;
@@ -89,9 +89,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 return false;
             }
             member = new SerializedMember { name = name, typeName = typeName };
-            member.SetJsonValue(ToJson(value).ToJsonString());
+            member.SetJsonValue(JsonText(value));
             return true;
         }
+
+        private static string JsonText(object? v) => ToJson(v)?.ToJsonString() ?? "null";
 
         // JSON in the form script-execute's ReflectorNet deserialization expects; Unity objects as {"instanceID": N}.
         private static JsonNode? ToJson(object? v) => v switch

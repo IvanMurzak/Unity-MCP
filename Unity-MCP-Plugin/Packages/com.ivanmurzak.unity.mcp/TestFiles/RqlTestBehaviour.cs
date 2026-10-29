@@ -23,7 +23,9 @@ namespace com.IvanMurzak.Unity.MCP.TestFiles
     /// <summary>A script with the member kinds the adapters handle (in its own file so Unity can serialize it).</summary>
     public class RqlTestBehaviour : MonoBehaviour
     {
+#pragma warning disable CS0414 // read only through serialization: the adapters' private serialized member case
         [SerializeField] private int secret = 7;
+#pragma warning restore CS0414
         [System.NonSerialized] public int transient = 3;
         [System.Obsolete("use speed")] public int legacy;
         public float speed = 1;

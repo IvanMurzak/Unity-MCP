@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         protected override void Members(MemberTable<GameObject> m)
         {
-            m.Add("components", g => Components(g),
+            m.Add("components", g => ComponentList(g),
                     description: "attached components (filter with $ is Light etc.)", owning: true)
              .Add("children", g => Children(g), description: "direct child GameObjects", owning: true)
              .Add<bool>("active", g => g.activeSelf, (g, v) => g.SetActive(v), description: "activeSelf; assigning calls SetActive")
@@ -348,7 +348,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             GameObjectUtility.SetStaticEditorFlags(g, value);
         }
 
-        private static List<Component> Components(GameObject g)
+        private static List<Component> ComponentList(GameObject g)
         {
             var list = new List<Component>();
             g.GetComponents(list);
