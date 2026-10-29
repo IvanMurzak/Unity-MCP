@@ -30,6 +30,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.FilterMatchData.FilterWidget
     public class Thing { [Test] public void T() { } }
 }
 
+// A fixture in the global namespace: its tests are named "FilterGlobalFixture.Plain", no dot before the class name.
+public class FilterGlobalFixture { [Test] public void Plain() { } }
+
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
     /// <summary>
@@ -65,6 +68,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(2, Count(root, ns: Ns, method: Param), "a parameterized method selects its cases");
             Assert.AreEqual(0, Count(root, method: Param.ToLowerInvariant()), "test names are case-sensitive");
             Assert.AreEqual(1, Count(root, cls: "FilterWidget"), "the class pattern also matches a namespace segment");
+            Assert.AreEqual(1, Count(root, cls: "FilterGlobalFixture"), "a class in the global namespace");
+            Assert.AreEqual(1, Count(root, Asm, cls: "FilterGlobalFixture"), "a class in the global namespace, with its assembly");
             Assert.AreEqual(4, Count(root, ns: Ns, method: "!" + Other), "'!' excludes");
             Assert.AreEqual(3, Count(root, query: new[] { Param, Other }), "RQL selection");
             Assert.AreEqual(Count(root, Asm), Count(root, Asm, Asm), "a namespace pattern also matches the assembly's file name");
