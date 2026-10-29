@@ -11,22 +11,22 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-This project uses an automated PowerShell script to handle version bumping across multiple files (C# constants, JSON manifests, README links).
+This project uses an automated Python script (stdlib only, Python 3.9+) to handle version bumping across multiple files (C# constants, JSON manifests, README links).
 
 ## The Bump Script
 
-Located at: `commands/bump-version.ps1`
+Located at: `commands/bump_version.py`
 
 ### Usage
 
 **Preview changes (Dry Run):**
-```powershell
-.\commands\bump-version.ps1 -NewVersion "0.36.0" -WhatIf
+```bash
+python commands/bump_version.py --new-version 0.36.0 --what-if
 ```
 
 **Apply changes:**
-```powershell
-.\commands\bump-version.ps1 -NewVersion "0.36.0"
+```bash
+python commands/bump_version.py --new-version 0.36.0
 ```
 
 ### What gets updated?
@@ -36,6 +36,7 @@ The script automatically finds and replaces version strings in:
 2.  **`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json`**: Updates the Unity Package version (this file is also the source of the current version).
 3.  **`Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs`**: Updates the runtime plugin version constant.
 4.  **`cli/package.json`**: Updates the `unity-mcp-cli` npm package version.
+5.  **`cli/package-lock.json`**: Updates the two root-level `unity-mcp-cli` version fields.
 
 > **MCP server version is separate.** The MCP server is no longer part of this repo and is NOT
 > bumped with the plugin. The plugin consumes the shared
@@ -48,10 +49,8 @@ The script automatically finds and replaces version strings in:
 ## Workflow for Release
 
 1.  **Commit** all current changes.
-2.  Run the bump script: `.\commands\bump-version.ps1 -NewVersion "X.Y.Z"`
+2.  Run the bump script: `python commands/bump_version.py --new-version X.Y.Z`
 3.  **Verify** the changes (git diff).
-4.  **Commit** the version bump: `git commit -am "chore: bump version to X.Y.Z"`
-5.  **Tag** the release: `git tag X.Y.Z`
-6.  **Push**: `git push && git push --tags`
-
-> The GitHub Actions workflow will automatically build the Release and Unity Package when a new Tag is pushed.
+4.  **Commit** the version bump, open a PR and merge it to `main` (or dispatch `bump_version.yml`, which opens the PR).
+5.  **Release** by manually dispatching `.github/workflows/release.yml`; merging the bump publishes nothing,
+    and the workflow refuses a version whose tag already exists.

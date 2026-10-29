@@ -82,7 +82,7 @@ Before contributing, ensure the following tools are installed:
 | [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 6000.0+ | Run and test the plugin |
 | [.NET SDK](https://dotnet.microsoft.com/download) | 9.0+ | Build and run the MCP Server |
 | [Node.js](https://nodejs.org/) | 18+ | Run MCP Inspector for debugging |
-| PowerShell | 7+ | Execute build and utility scripts |
+| Python | 3.9+ | Execute build and utility scripts |
 | Docker *(optional)* | Latest | Build and test Docker images |
 
 > A free Unity Personal license works for contribution.
@@ -502,10 +502,10 @@ Tests cover three modes across four Unity versions (2022.3, 6000.0, 6000.3, 6000
 3. Select **EditMode** or **PlayMode** tab
 4. Click **Run All** or select specific tests and **Run Selected**
 
-**PowerShell script (command line)**
-```powershell
-# Run tests for a specific Unity version and mode
-.\commands\run-unity-tests.ps1 -unityVersion "6000.3.27f1" -testMode "editmode"
+**Python script (command line)**
+```bash
+# Run tests for a specific Unity editor and mode
+python commands/run_unity_tests.py --unity-path "<path to the Unity editor executable>" --test-mode editmode
 ```
 
 ## Test modes

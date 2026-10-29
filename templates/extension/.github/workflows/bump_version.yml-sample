@@ -31,8 +31,7 @@ jobs:
           git checkout -b release/${{ github.event.inputs.version }}
 
       - name: Run bump-version script
-        shell: pwsh
-        run: ./commands/bump-version.ps1 -NewVersion "${{ github.event.inputs.version }}"
+        run: python3 commands/bump_version.py --new-version "${{ github.event.inputs.version }}"
 
       - name: Commit and push version bump
         run: |

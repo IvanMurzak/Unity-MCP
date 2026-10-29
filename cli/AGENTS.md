@@ -2,7 +2,7 @@
 
 `unity-mcp-cli` npm package (TypeScript, ESM): CLI binary plus a programmatic library.
 Published only as part of the plugin release (`release.yml` job `deploy-cli-to-npm`); its version
-is bumped together with the plugin's by `commands/bump-version.ps1`.
+is bumped together with the plugin's by `commands/bump_version.py`.
 
 - `src/cli.ts`, `bin/` — CLI entry (commander).
 - `src/commands/` — one file per CLI command; parse args, delegate the work to `src/lib/`.

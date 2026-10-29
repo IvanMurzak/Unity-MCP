@@ -27,7 +27,7 @@ Before performing any code review, you **MUST** read the project constitution: [
 - **C#**: Use 4 spaces indentation. PascalCase for classes/methods/properties, `_camelCase` for private readonly fields.
     - Namespace: `com.IvanMurzak.Unity.MCP`.
     - Example: [UnityMcpPlugin.cs](Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs).
-- **PowerShell**: Use K&R brace style.
+- **Python** (`commands/`): stdlib only, Python 3.9+.
 
 ## Architecture
 - **Unity-MCP-Plugin**: Main Unity package.
@@ -41,7 +41,7 @@ Before performing any code review, you **MUST** read the project constitution: [
 ## Build and Test
 - **Plugin**:
     - Auto-compiles in Unity.
-    - Run tests: [commands/run-unity-tests.ps1](commands/run-unity-tests.ps1).
+    - Run tests: [commands/run_unity_tests.py](commands/run_unity_tests.py).
     - Editor Tests: `Packages/com.ivanmurzak.unity.mcp/Tests/Editor`.
 - **Server**: built and released from the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repo — not from this repo.
 - **Commands**: See [commands/](commands/) for utility scripts (release, tests).

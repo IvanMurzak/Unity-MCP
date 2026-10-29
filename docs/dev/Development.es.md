@@ -82,7 +82,7 @@ Antes de contribuir, asegúrate de tener instaladas las siguientes herramientas:
 | [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 6000.0+ | Ejecutar y probar el plugin |
 | [.NET SDK](https://dotnet.microsoft.com/download) | 9.0+ | Compilar y ejecutar el servidor MCP |
 | [Node.js](https://nodejs.org/) | 18+ | Ejecutar MCP Inspector para depuración |
-| PowerShell | 7+ | Ejecutar scripts de compilación y utilidades |
+| Python | 3.9+ | Ejecutar scripts de compilación y utilidades |
 | Docker *(opcional)* | Latest | Compilar y probar imágenes Docker |
 
 > Una licencia personal gratuita de Unity es suficiente para contribuir.
@@ -494,10 +494,10 @@ Las pruebas cubren tres modos en cuatro versiones de Unity (2022.3, 6000.0, 6000
 3. Selecciona la pestaña **EditMode** o **PlayMode**
 4. Haz clic en **Run All** o selecciona pruebas específicas y usa **Run Selected**
 
-**Script de PowerShell (línea de comandos)**
-```powershell
-# Ejecutar pruebas para una versión de Unity y modo específicos
-.\commands\run-unity-tests.ps1 -unityVersion "6000.3.27f1" -testMode "editmode"
+**Script de Python (línea de comandos)**
+```bash
+# Ejecutar pruebas para un editor de Unity y modo específicos
+python commands/run_unity_tests.py --unity-path "<path to the Unity editor executable>" --test-mode editmode
 ```
 
 ## Modos de prueba

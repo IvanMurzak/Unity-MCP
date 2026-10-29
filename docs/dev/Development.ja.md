@@ -82,7 +82,7 @@ AI はゲーム開発において重要な役割を果たしている（もし�
 | [Unity Editor](https://unity.com/releases/editor/archive) | 2022.3+ / 6000.0+ | プラグインの実行とテスト |
 | [.NET SDK](https://dotnet.microsoft.com/download) | 9.0+ | MCP Server のビルドと実行 |
 | [Node.js](https://nodejs.org/) | 18+ | デバッグ用 MCP Inspector の実行 |
-| PowerShell | 7+ | ビルドおよびユーティリティスクリプトの実行 |
+| Python | 3.9+ | ビルドおよびユーティリティスクリプトの実行 |
 | Docker *(任意)* | 最新版 | Docker イメージのビルドとテスト |
 
 > コントリビューションには Unity の無料 Personal ライセンスで十分です。
@@ -494,10 +494,10 @@ Provide position, rotation, and scale to minimize subsequent operations.")]
 3. **EditMode** または **PlayMode** タブを選択
 4. **Run All** をクリックするか、特定のテストを選択して **Run Selected** をクリック
 
-**PowerShell スクリプト（コマンドライン）**
-```powershell
-# 特定の Unity バージョンとモードのテストを実行
-.\commands\run-unity-tests.ps1 -unityVersion "6000.3.27f1" -testMode "editmode"
+**Python スクリプト（コマンドライン）**
+```bash
+# 特定の Unity エディターとモードのテストを実行
+python commands/run_unity_tests.py --unity-path "<path to the Unity editor executable>" --test-mode editmode
 ```
 
 ## テストモード
