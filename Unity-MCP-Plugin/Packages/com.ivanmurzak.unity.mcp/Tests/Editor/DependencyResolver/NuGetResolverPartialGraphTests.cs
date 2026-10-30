@@ -80,6 +80,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             Publish("Fake.Lib", "1.0.0");
             Publish("Fake.App", "1.0.0", ("Fake.Missing", "1.0.0"), ("Fake.Lib", "1.0.0"));
             Assert.IsFalse(Pass(P("Fake.Lib", "2.0.0")).failures.Any());
+            foreach (var dll in Directory.GetFiles(_installDir, "*.dll"))
+                File.SetLastWriteTimeUtc(dll, new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc));
             var before = Snapshot();
 
             var (changed, failures) = Pass(P("Fake.App", "1.0.0"), P("Fake.Lib", "2.0.0"));
@@ -109,6 +111,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             Assert.IsTrue(first.changed);
             Assert.IsTrue(NuGetPackageRestorer.ShouldRefresh(first.changed, first.failures), "a successful change refreshes once");
             Assert.AreEqual("2.0.0", InstalledVersion("Fake.Lib"));
+            // A sentinel timestamp: any delete + re-extract of the same version shows (zip entry times would not).
+            foreach (var dll in Directory.GetFiles(_installDir, "*.dll"))
+                File.SetLastWriteTimeUtc(dll, new DateTime(2000, 1, 1, 0, 0, 0, DateTimeKind.Utc));
             var after = Snapshot();
 
             var second = Pass(roots);
@@ -119,20 +124,52 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
         }
 
         [Test]
-        public void HighestVersionReachedOnlyThroughASkippedChain_IsStillInstalled()
+        public void ALosingVersion_ContributesNoDependencies_AndIsNotEvenFetched()
         {
-            // Fake.Tool 1.0.0 asks for Fake.Lib 2.0.0, but Fake.Tool resolves to 1.1.0, which asks for Fake.Lib 1.0.0.
+            // As in NuGet: Fake.Tool resolves to 1.1.0, so only 1.1.0's dependency counts (Fake.Lib 1.0.0); the 2.0.0
+            // that losing Fake.Tool 1.0.0 asks for is not installed, and 1.0.0 is not downloaded at all (offline it
+            // would otherwise fail a restore that does not need it).
             Publish("Fake.Lib", "1.0.0");
             Publish("Fake.Lib", "2.0.0");
-            Publish("Fake.Tool", "1.0.0", ("Fake.Lib", "2.0.0"));
             Publish("Fake.Tool", "1.1.0", ("Fake.Lib", "1.0.0"));
 
             var (changed, failures) = Pass(P("Fake.Tool", "1.0.0"), P("Fake.Tool", "1.1.0"));
 
-            Assert.IsEmpty(failures);
+            Assert.IsEmpty(failures, string.Join("; ", failures));
             Assert.IsTrue(changed);
             Assert.AreEqual("1.1.0", InstalledVersion("Fake.Tool"));
-            Assert.AreEqual("2.0.0", InstalledVersion("Fake.Lib"), "the planned version is installed even when no installed chain reaches it");
+            Assert.AreEqual("1.0.0", InstalledVersion("Fake.Lib"));
+            CollectionAssert.DoesNotContain(_requests, "Fake.Tool 1.0.0");
+            CollectionAssert.DoesNotContain(_requests, "Fake.Lib 2.0.0");
+        }
+
+        [Test]
+        public void ADependencyOfTheSelectedVersion_RaisesTheVersionOverALowerRequest()
+        {
+            // Fake.App asks for Fake.Lib 1.0.0, the selected Fake.Plugin 2.0.0 asks for Fake.Lib 2.0.0: 2.0.0 wins.
+            Publish("Fake.Lib", "1.0.0");
+            Publish("Fake.Lib", "2.0.0");
+            Publish("Fake.App", "1.0.0", ("Fake.Lib", "1.0.0"), ("Fake.Plugin", "2.0.0"));
+            Publish("Fake.Plugin", "2.0.0", ("Fake.Lib", "2.0.0"));
+
+            var (changed, failures) = Pass(P("Fake.App", "1.0.0"));
+
+            Assert.IsEmpty(failures);
+            Assert.IsTrue(changed);
+            Assert.AreEqual("2.0.0", InstalledVersion("Fake.Lib"));
+            Assert.AreEqual("2.0.0", InstalledVersion("Fake.Plugin"));
+        }
+
+        [TestCase("1.10.0", "1.9.0", 1)]
+        [TestCase("8.14.0", "8.14.0-dev.c0d3157", 1)]
+        [TestCase("8.14.0-dev.a", "8.14.0-dev.b", -1)]
+        [TestCase("10.0.0-preview.1", "9.0.0", 1)]
+        [TestCase("1.0.0+build.7", "1.0.0", 0)]
+        [TestCase("8.0.3", "8.0.3", 0)]
+        public void CompareVersions_NumericCoreThenReleaseOverPrerelease(string a, string b, int expected)
+        {
+            Assert.AreEqual(expected, NuGetPackageInstaller.CompareVersions(a, b));
+            Assert.AreEqual(-expected, NuGetPackageInstaller.CompareVersions(b, a));
         }
 
         [Test]

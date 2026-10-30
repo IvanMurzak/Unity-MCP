@@ -44,61 +44,111 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         public static IReadOnlyDictionary<string, string> InstalledThisSession => installedThisSession;
 
         /// <summary>
-        /// The version each package Id resolves to (the highest any chain asks for), computed by
-        /// <see cref="PlanClosure"/> before anything is installed. Install() skips a lower version instead of
-        /// extracting it first and replacing it a moment later: with a first-come order, a graph whose highest
-        /// request comes late (or never, when the chain that asks for it failed to download) removed and
-        /// re-extracted the same DLLs on every pass, and every pass then asked for a refresh (a reload loop).
+        /// The version each package Id resolves to, computed by <see cref="PlanClosure"/> before anything is installed.
+        /// Install() skips a lower version instead of extracting it first and replacing it a moment later: with a
+        /// first-come order, a graph whose highest request comes late (or never, when the chain that asks for it failed
+        /// to download) removed and re-extracted the same DLLs on every pass, and every pass then asked for a refresh
+        /// (a reload loop).
         /// </summary>
         static readonly Dictionary<string, string> plannedVersions = new(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Ids Install() has worked on this session (installed or failed), so nothing is attempted twice.</summary>
+        static readonly HashSet<string> attemptedThisSession = new(StringComparer.OrdinalIgnoreCase);
 
         /// <summary>Fetches a package's .nupkg and returns its local path (test seam: a fake feed).</summary>
         internal static Func<NuGetPackage, string> DownloadPackage = NuGetDownloader.Download;
 
         /// <summary>
-        /// Walks the whole dependency graph of <paramref name="roots"/> (downloading each .nupkg into the cache, which
-        /// Install() reads again) and records the version every Id resolves to. Returns the packages that could not be
-        /// fetched; when there are any, the graph is partial and the caller must not install or remove anything from it.
+        /// Resolves the dependency graph of <paramref name="roots"/> to one version per Id, the way NuGet does: an Id
+        /// resolves to the highest version requested by the roots or by the SELECTED versions of the packages that
+        /// depend on it (a version that loses does not contribute its dependencies). Iterates to a fixed point; each
+        /// .nupkg is fetched into the cache, which Install() reads again. Returns the selected packages that could not
+        /// be fetched or read; when there are any, the graph is partial and the caller must not install or remove
+        /// anything from it.
         /// </summary>
         internal static IReadOnlyList<string> PlanClosure(IEnumerable<NuGetPackage> roots)
         {
             plannedVersions.Clear();
-            var failures = new List<string>();
-            var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var root in roots)
-                Plan(root, visited, failures);
-            return failures;
+            var rootList = roots.Where(r => !IsSkipped(r.Id)).ToList();
+            var deps = new Dictionary<string, List<NuGetPackage>>(StringComparer.OrdinalIgnoreCase);
+            var failed = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+            var selection = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+            for (var round = 0; round < 32; round++)
+            {
+                var requested = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+                var order = new List<string>();
+                void Request(NuGetPackage p)
+                {
+                    if (IsSkipped(p.Id))
+                        return;
+                    if (!requested.TryGetValue(p.Id, out var known))
+                    {
+                        requested[p.Id] = p.Version;
+                        order.Add(p.Id);
+                    }
+                    else if (CompareVersions(p.Version, known) > 0)
+                    {
+                        requested[p.Id] = p.Version;
+                    }
+                }
+
+                foreach (var root in rootList)
+                    Request(root);
+                for (var i = 0; i < order.Count; i++)
+                {
+                    var id = order[i];
+                    var version = selection.TryGetValue(id, out var selected) ? selected : requested[id];
+                    foreach (var dep in Dependencies(new NuGetPackage(id, version), deps, failed))
+                        Request(dep);
+                }
+
+                var stable = requested.Count == selection.Count
+                    && requested.All(r => selection.TryGetValue(r.Key, out var v) && string.Equals(v, r.Value, StringComparison.OrdinalIgnoreCase));
+                selection = requested;
+                if (stable)
+                    break;
+            }
+
+            foreach (var entry in selection)
+                plannedVersions[entry.Key] = entry.Value;
+            return selection.Select(e => $"{e.Key}:{e.Value}").Where(failed.ContainsKey).Select(k => failed[k]).ToList();
         }
 
-        static void Plan(NuGetPackage package, HashSet<string> visited, List<string> failures)
+        static List<NuGetPackage> Dependencies(NuGetPackage package, Dictionary<string, List<NuGetPackage>> deps, Dictionary<string, string> failed)
         {
-            if (IsSkipped(package.Id) || !visited.Add($"{package.Id}:{package.Version}"))
-                return;
-            string nupkgPath;
+            var key = $"{package.Id}:{package.Version}";
+            if (deps.TryGetValue(key, out var known))
+                return known;
+            var list = new List<NuGetPackage>();
             try
             {
-                nupkgPath = DownloadPackage(package);
+                list = NuGetExtractor.GetDependencies(DownloadPackage(package));
             }
             catch (Exception ex)
             {
-                failures.Add($"{package} ({(ex.InnerException ?? ex).Message})");
-                return;
+                failed[key] = $"{package} ({(ex.InnerException ?? ex).Message})";
+                // A truncated download (the Editor quit mid-copy) stays in the cache and would fail every retry.
+                var cached = NuGetCache.GetCachedPath(package);
+                if (File.Exists(cached))
+                {
+                    try { File.Delete(cached); }
+                    catch { /* the next retry reports it again */ }
+                }
             }
-            if (!plannedVersions.TryGetValue(package.Id, out var known) || CompareVersions(package.Version, known) > 0)
-                plannedVersions[package.Id] = package.Version;
-            foreach (var dep in NuGetExtractor.GetDependencies(nupkgPath))
-                Plan(dep, visited, failures);
+            deps[key] = list;
+            return list;
         }
 
         /// <summary>
-        /// Installs every planned package that the configured roots did not reach at its planned version (a package
-        /// whose highest request comes only through a lower version of another package, which Install() skips).
+        /// Installs every planned package the configured roots did not reach (a package whose selected version is
+        /// requested only through a lower version of another package, which Install() skips).
         /// </summary>
         internal static bool InstallRemainingPlanned(string installPath, InstallManifest? manifest = null)
         {
             var any = false;
             foreach (var planned in plannedVersions.ToList())
-                if (!installedThisSession.ContainsKey(planned.Key))
+                if (!attemptedThisSession.Contains(planned.Key))
                     any |= Install(new NuGetPackage(planned.Key, planned.Value), installPath, visitedIds: null, manifest);
             return any;
         }
@@ -162,6 +212,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
                 // Download (cached in Library/NuGetCache across sessions). Needed even when
                 // the package is already on disk, so GetDependencies() can build the full closure.
+                attemptedThisSession.Add(package.Id);
                 var nupkgPath = DownloadPackage(package);
 
                 var dependencies = NuGetExtractor.GetDependencies(nupkgPath);
@@ -584,11 +635,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// <summary>
         /// Compares two version strings. Returns -1, 0, or 1.
         /// </summary>
-        static int CompareVersions(string a, string b)
+        internal static int CompareVersions(string a, string b)
         {
-            if (System.Version.TryParse(a, out var va) && System.Version.TryParse(b, out var vb))
-                return va.CompareTo(vb);
-            return string.Compare(a, b, StringComparison.OrdinalIgnoreCase);
+            // Numeric core first (1.9.0 < 1.10.0), then a release above its prereleases (8.14.0-dev.x < 8.14.0), then
+            // the prerelease labels; build metadata (+...) is ignored, as in SemVer.
+            var (coreA, preA) = SplitVersion(a);
+            var (coreB, preB) = SplitVersion(b);
+            if (System.Version.TryParse(coreA, out var va) && System.Version.TryParse(coreB, out var vb))
+            {
+                var byCore = va.CompareTo(vb);
+                if (byCore != 0)
+                    return Math.Sign(byCore);
+                if (preA == null || preB == null)
+                    return preA == null ? (preB == null ? 0 : 1) : -1;
+                return Math.Sign(string.Compare(preA, preB, StringComparison.OrdinalIgnoreCase));
+            }
+            return Math.Sign(string.Compare(a, b, StringComparison.OrdinalIgnoreCase));
+        }
+
+        static (string core, string? pre) SplitVersion(string version)
+        {
+            var plus = version.IndexOf('+');
+            if (plus >= 0)
+                version = version.Substring(0, plus);
+            var dash = version.IndexOf('-');
+            return dash < 0 ? (version, null) : (version.Substring(0, dash), version.Substring(dash + 1));
         }
 
         /// <summary>
@@ -598,6 +669,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         {
             installedThisSession.Clear();
             plannedVersions.Clear();
+            attemptedThisSession.Clear();
         }
 
         static bool IsSkipped(string packageId)

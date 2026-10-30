@@ -62,6 +62,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             {
                 NuGetPackageInstaller.ResetSession();
 
+                // Resolve the whole graph first. A package that cannot be fetched (offline, a proxy, a version not on
+                // the feed) leaves the graph partial: installing or removing anything from it would churn DLLs that a
+                // complete pass keeps, and every such pass asked for a refresh (an endless domain-reload loop). Change
+                // nothing on disk instead (planning only reads the cache and the feed, so it runs before the migration);
+                // the caller reports the failures once and does not refresh.
+                LastFailures = NuGetPackageInstaller.PlanClosure(packages);
+                if (LastFailures.Count > 0)
+                    return false;
+
                 // Ensure install directory exists
                 if (!Directory.Exists(installPath))
                     Directory.CreateDirectory(installPath);
@@ -88,14 +97,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                         NuGetInstallManifest.Save(installPath, rebuilt);
                     }
                 }
-
-                // Resolve the whole graph first. A package that cannot be fetched (offline, a proxy, a version not on
-                // the feed) leaves the graph partial: installing or removing anything from it would churn DLLs that a
-                // complete pass keeps, and every such pass asked for a refresh (an endless domain-reload loop). Change
-                // nothing on disk instead; the caller reports the failures once and does not refresh.
-                LastFailures = NuGetPackageInstaller.PlanClosure(packages);
-                if (LastFailures.Count > 0)
-                    return anyChanged;
 
                 // Install configured packages. Install() populates InstalledThisSession with the
                 // full resolved closure (direct + transitive) by always reading the dep graph,

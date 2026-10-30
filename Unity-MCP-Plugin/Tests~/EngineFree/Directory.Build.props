@@ -2,7 +2,10 @@
   <!-- TEMPORARY pre-release McpPlugin + ReflectorNet feed (between test waves McpPlugin is integrated without a release; the plugin's DLLs
        under Assets/Plugins/NuGet are the same 8.14.0-dev / 5.5.1-dev builds). Adds the repo-root prerelease-packages/ folder as an extra
        restore source; nuget.org stays the main source. Delete this file and prerelease-packages/ when the McpPlugin and ReflectorNet pins
-       return to published versions. -->
+       return to published versions.
+       prerelease-packages/ also holds com.IvanMurzak.Rql 0.3.0-dev.aacfbba (Editor-only, not referenced here) so a project without the
+       committed DLLs can seed Library/NuGetCache with every pinned dev package; its DLLs are a rebuild of the same commit, so they
+       differ byte-wise from the committed Rql.*.dll. Delete it with the others when the Rql pin is published. -->
   <PropertyGroup>
     <RestoreAdditionalProjectSources>$(RestoreAdditionalProjectSources);$(MSBuildThisFileDirectory)../../../prerelease-packages</RestoreAdditionalProjectSources>
   </PropertyGroup>
