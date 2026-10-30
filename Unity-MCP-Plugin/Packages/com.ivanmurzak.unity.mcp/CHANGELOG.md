@@ -4,8 +4,10 @@
 
 ### Changed
 
-- **RQL trigonometry, `$count`, `$type` suggestions, list coercion** (RQL main 3602d6a, temporary pre-release DLLs
-  0.3.0-dev.3602d6a, gate `UNITY_MCP_DEPS_28`). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
+- **RQL 0.3.0 and Code-Exec 0.4.0, the published releases.** `com.IvanMurzak.Rql` 0.3.0 from nuget.org replaces the
+  temporary pre-release DLLs (same source as RQL main 3602d6a; gate `UNITY_MCP_DEPS_29`), and the vendored Code-Exec sources
+  are recorded as release 0.4.0 (commit 58ef3ed, the same C# as main 54d527b). No behaviour change.
+- **RQL trigonometry, `$count`, `$type` suggestions, list coercion** (RQL 0.3.0). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
   same digits) and `$count`, the number of items entering a `set` / `call` stage: `selection | set transform.position =
   [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)]` lays them out on a circle. The bulk-create
   rule example carries its own range (`range(0, 150)`, within the default target limit). A misspelt `$type` names the

@@ -1,12 +1,10 @@
 # Vendored: Code-Exec (C#)
 
-`Core/` and `Roslyn/` are copied verbatim, below a 4-line license header, from [IvanMurzak/Code-Exec](https://github.com/IvanMurzak/Code-Exec) `main` at
-commit `54d527b` (execution guards, Code-Exec PRs #7 to #11: snippet threads and tasks stop with their run, `using var`
-as a first statement, the `MaxTimeoutMs` host cap, blocking waits stop at the budget, an overrun is a Timeout, and a sliced
-wait still runs a queued task inline), which is **not released yet**: release **0.3.2-dev.54d527b**, a
-pre-release on top of 0.3.1 (tag `nuget-v0.3.1`, commit `96c2919`). The release guard
-(`commands/release_dependency_guard.py`) refuses this marker on purpose: before a Unity-MCP release, copy the files again
-from the published Code-Exec release and record that version here.
+`Core/` and `Roslyn/` are copied verbatim, below a 4-line license header, from [IvanMurzak/Code-Exec](https://github.com/IvanMurzak/Code-Exec)
+release **0.4.0** (tag `nuget-v0.4.0`, commit `58ef3ed`), published on NuGet as `com.IvanMurzak.CodeExec` 0.4.0. Its
+C# sources are identical to `main` at `54d527b` (execution guards, Code-Exec PRs #7 to #11: snippet threads and tasks stop
+with their run, `using var` as a first statement, the `MaxTimeoutMs` host cap, blocking waits stop at the budget, an
+overrun is a Timeout, and a sliced wait still runs a queued task inline), so the hashes below did not change.
 
 Files: `dotnet/CodeExec/*.cs` and `dotnet/CodeExec.Roslyn/src/*.cs`. Source, not the NuGet DLL:
 the adapter compiles against the Roslyn 4.8 this package already installs, and no NuGet pin / DLL changes are needed in
