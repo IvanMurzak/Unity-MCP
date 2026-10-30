@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Cinemachine.Installer
     public static partial class Installer
     {
         public const string PackageId = "com.ivanmurzak.unity.mcp.cinemachine";
-        public const string Version = "2.0.3";
+        public const string Version = "2.1.0";
 
         static Installer()
         {
