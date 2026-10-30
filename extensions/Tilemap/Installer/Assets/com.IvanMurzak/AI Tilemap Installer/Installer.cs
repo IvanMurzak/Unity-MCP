@@ -19,7 +19,7 @@ namespace com.IvanMurzak.Unity.MCP.Tilemap.Installer
     public static partial class Installer
     {
         public const string PackageId = "com.ivanmurzak.unity.mcp.tilemap";
-        public const string Version = "2.0.3";
+        public const string Version = "2.1.0";
 
         static Installer()
         {

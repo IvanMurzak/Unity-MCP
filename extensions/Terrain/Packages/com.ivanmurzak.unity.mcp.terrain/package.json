@@ -15,12 +15,12 @@
     "MCP",
     "Unity MCP"
   ],
-  "version": "2.0.3",
+  "version": "2.1.0",
   "unity": "2022.3",
   "license": "MIT",
   "description": "MCP Tools for Unity Terrain - Enhance your Unity projects with AI-powered terrain authoring tools using the MCP framework. Create Terrain GameObjects and TerrainData, set heightmap resolution and size, set/sample heights, manage TerrainLayers, paint texture layers, configure detail/tree prototypes, place trees, set neighbors, and generically get/modify any terrain component via natural language.",
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "1.5.0",
+    "com.ivanmurzak.unity.mcp": "1.6.0",
     "com.unity.modules.terrain": "1.0.0",
     "com.unity.modules.terrainphysics": "1.0.0"
   },

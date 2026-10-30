@@ -23,7 +23,7 @@ AI-powered tools for the Unity [Cinemachine](https://docs.unity3d.com/Packages/c
 - [Video Tutorial for Visual Studio Code](https://www.youtube.com/watch?v=ZhP7Ju91mOE)
 - [Video Tutorial for Visual Studio](https://www.youtube.com/watch?v=RGdak4T69mc)
 
-[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.cinemachine%2F2.0.3/AI-Cinemachine-Installer.unitypackage)
+[![DOWNLOAD INSTALLER](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.cinemachine%2F2.1.0/AI-Cinemachine-Installer.unitypackage)
 
 ### Stability status
 
@@ -57,7 +57,7 @@ With Unity-MCP 1.0.0 this package adds no MCP tools: it contributes an RQL modul
 
 ### Option 1 - Installer
 
-- **[Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.cinemachine%2F2.0.3/AI-Cinemachine-Installer.unitypackage)**
+- **[Download Installer](https://github.com/IvanMurzak/Unity-MCP/releases/download/com.ivanmurzak.unity.mcp.cinemachine%2F2.1.0/AI-Cinemachine-Installer.unitypackage)**
 - **Import installer into Unity project**
   > - You can double-click on the file - Unity will open it automatically
   > - OR: Open Unity Editor first, then click on `Assets/Import Package/Custom Package`, and choose the file

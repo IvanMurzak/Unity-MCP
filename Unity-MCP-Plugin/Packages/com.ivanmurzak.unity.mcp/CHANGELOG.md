@@ -4,6 +4,9 @@
 
 ### Changed
 
+- **McpPlugin 8.14.0, ReflectorNet 5.5.1, GameDev-MCP-Server 9.3.0** (published releases; gate
+  `UNITY_MCP_DEPS_30`). The bundled DLLs and resolver pins replace the 8.14.0-dev / 5.5.1-dev pre-release builds
+  that several entries below were integrated on, and the plugin downloads server 9.3.0.
 - **RQL trigonometry, `$count`, `$type` suggestions, list coercion** (RQL 0.3.0). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
   same digits) and `$count`, the number of items entering a `set` / `call` stage: `selection | set transform.position =
   [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)]` lays them out on a circle. The bulk-create
@@ -39,7 +42,7 @@
   drops those entries when it edits the file, and an older plugin ignores entries a new CLI wrote.
 - **A player connects as a runtime.** `UnityMcpPluginRuntime` declares McpPlugin's `ClientRole.Runtime` (sent at
   connect), so GameDev-MCP-Server keeps a running player beside the Editor. The `" (runtime)"` handshake suffix is
-  gone. McpPlugin 8.14.0-dev.e8985d5 (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_23`).
+  gone. McpPlugin 8.14.0.
 - **RQL arguments by name, side-effect-free overloads, compact receipts** (RQL 0.3.0).
   A lone object literal binds parameters by name:
   `editor | call CreateGameObject({name: "Crate", primitive: "Cube", position: [1, 0, 2]})`, also in a bulk create
@@ -64,7 +67,7 @@
   (`new Thread`, `Task.Run`, `ThreadPool`, `TaskFactory.StartNew`) stop at their next loop iteration or call once the
   run ends, with a Console warning that counts them; a `using var x = …;` first statement compiles. Vendored Code-Exec
   0.4.0 (above).
-- **McpPlugin 8.14.0-dev.42786f9 and ReflectorNet 5.5.1-dev.ec3702e** (temporary pre-release DLLs). Tools marked
+- **McpPlugin 8.14.0 and ReflectorNet 5.5.1**. Tools marked
   `[AiToolType(Target = ToolTarget.Runtime)]` are registered only by a runtime (player) connection, and the server
   routes their calls to the game while the Editor is connected; mark game-only tools this way. A call the plugin did
   not run (`NotExecuted`) is re-sent and runs; `string?` / `int?` parameters without a default are optional.
@@ -141,8 +144,7 @@
   `BufferedFileLogStorage Flush called but already disposed` is gone too. A PlayMode test run (`tests-run`) no longer
   logs `InternalConnect Connection was canceled`. With the AI Game Developer window open, toggling Play Mode no longer
   logs `EnsureConnection Failed to establish connection`: the window's server and agent status queries do not
-  connect. McpPlugin 8.14.0-dev.71fa5c1 and ReflectorNet 5.5.1-dev.ec3702e (temporary pre-release DLLs, gate
-  `UNITY_MCP_DEPS_27`).
+  connect. McpPlugin 8.14.0 and ReflectorNet 5.5.1.
 - **No connection errors when the Editor starts or quits its own local server.** With *Keep server running* the
   Editor now connects once the server it launched has passed its startup check, not before, so
   `Failed to start connection` and `Connection refused` are gone from every start. On quit it disconnects before it
