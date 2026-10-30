@@ -99,7 +99,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         }
 
         [RqlCallable("move an asset (or folder) to the OS trash, so it can be recovered; refuses while objects in the open scenes or prefab use it, unless force = true (their references become missing). " +
-                     "Unless the user named these exact assets: list the candidates first, show them, end your turn, and delete only after the user confirms")]
+                     RqlGuide.DeleteRule)]
         public void DeleteAsset(string path, bool force = false)
         {
             path = Normalize(path);

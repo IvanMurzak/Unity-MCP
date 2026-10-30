@@ -136,22 +136,72 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             StringAssert.Contains("m_Name: ChangedOutside", File.ReadAllText(path)); // no save after the call wrote over it
         }
 
+        // The first of two scenes, and the active one: reloaded at its place in the Hierarchy and active again.
         [Test]
         public void RefreshAssetsReloadsAnAdditiveSceneInPlace()
         {
-            var main = SavedSceneWith("ExtMain", "MainObject");
-            var extra = SavedSceneWith("ExtExtra", "Before", additive: true);
+            var main = SavedSceneWith("ExtMain", "Before");
+            var extra = SavedSceneWith("ExtExtra", "ExtraObject", additive: true);
             SceneManager.SetActiveScene(SceneManager.GetSceneByPath(main));
-            RenameOnDisk(extra, "Before", "ChangedOutside");
+            RenameOnDisk(main, "Before", "ChangedOutside");
 
             var r = M("editor | call RefreshAssets()");
             AssertOk(r);
-            StringAssert.Contains($"reloaded '{extra}'", Table(r));
-            StringAssert.DoesNotContain(main, Table(r));
+            StringAssert.Contains($"reloaded '{main}'", Table(r));
+            StringAssert.DoesNotContain(extra, Table(r));
             Assert.AreEqual(2, SceneManager.sceneCount);
-            Assert.AreEqual(extra, SceneManager.GetSceneAt(1).path); // its place in the Hierarchy
+            Assert.AreEqual(main, SceneManager.GetSceneAt(0).path); // its place in the Hierarchy
             Assert.AreEqual(main, SceneManager.GetActiveScene().path);
             Assert.IsNotNull(GameObject.Find("ChangedOutside"));
+            Assert.IsNotNull(GameObject.Find("ExtraObject"));
+        }
+
+        // Another tool's refresh (script-update-or-create, tests-run …) imported the changed file first: RefreshAssets still
+        // reloads the scene, because it compares the file with what the Editor loaded, not with the last import.
+        [Test]
+        public void RefreshAssetsReloadsASceneAnEarlierRefreshAlreadyImported()
+        {
+            var path = SavedSceneWith("ExtEarlier", "Before");
+            RenameOnDisk(path, "Before", "ChangedOutside");
+            AssetDatabase.Refresh();
+            Assert.IsNotNull(GameObject.Find("Before")); // Unity imported the file but kept the open scene
+
+            var r = M("editor | call RefreshAssets()");
+            AssertOk(r);
+            StringAssert.Contains($"reloaded '{path}'", Table(r));
+            Assert.IsNotNull(GameObject.Find("ChangedOutside"));
+        }
+
+        // One loaded scene next to an unloaded one in the Hierarchy: reloaded, and the unloaded scene stays listed.
+        [Test]
+        public void RefreshAssetsReloadsTheOnlyLoadedSceneAndKeepsUnloadedOnes()
+        {
+            var main = SavedSceneWith("ExtLoaded", "Before");
+            var extra = SavedSceneWith("ExtUnloaded", "ExtraObject", additive: true);
+            Assert.IsTrue(EditorSceneManager.CloseScene(SceneManager.GetSceneByPath(extra), removeScene: false));
+            RenameOnDisk(main, "Before", "ChangedOutside");
+
+            var r = M("editor | call RefreshAssets()");
+            AssertOk(r);
+            StringAssert.Contains($"reloaded '{main}'", Table(r));
+            Assert.AreEqual(2, SceneManager.sceneCount);
+            Assert.IsFalse(SceneManager.GetSceneByPath(extra).isLoaded);
+            Assert.IsNotNull(GameObject.Find("ChangedOutside"));
+        }
+
+        [Test]
+        public void RefreshAssetsKeepsASceneWhoseFileWasDeleted()
+        {
+            var main = SavedSceneWith("ExtMain2", "MainObject");
+            var gone = SavedSceneWith("ExtGone", "Kept", additive: true);
+            File.Delete(gone);
+            File.Delete(gone + ".meta");
+
+            var r = M("editor | call RefreshAssets()");
+            AssertOk(r);
+            StringAssert.Contains($"'{gone}' was deleted or moved on disk", Table(r));
+            Assert.AreEqual(2, SceneManager.sceneCount);
+            Assert.IsNotNull(GameObject.Find("Kept"));
             Assert.IsNotNull(GameObject.Find("MainObject"));
         }
 

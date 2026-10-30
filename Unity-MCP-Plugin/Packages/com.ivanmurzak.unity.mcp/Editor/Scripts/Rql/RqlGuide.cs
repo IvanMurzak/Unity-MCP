@@ -182,13 +182,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// </summary>
         public const string DeleteRule =
             "Deleting (DeleteAsset, Destroy, script-delete, or AssetDatabase / File deletes in script-execute) takes two turns unless the " +
-            "user named the exact items: first list the exact candidates (rql-query, or dry_run=true), show them and end your turn; " +
-            "delete only that list, in a separate call, after the user confirms. Never find and delete candidates in the same turn.";
+            "user named the exact items or you created them yourself in this task: first list the exact candidates (rql-query, a " +
+            "dry_run=true mutation or a read-only snippet), show them and end your turn; delete only that list, in a separate call, " +
+            "after the user confirms. Otherwise never find and delete candidates in the same turn.";
 
         /// <summary>Unity sees a file changed on disk (by the agent or the user) only after a refresh (wave 7: batchmode never refreshes).</summary>
         public const string ExternalEditsRule =
             "After project files change outside the Editor (written to disk by you, a script or the user), run editor | call RefreshAssets() " +
-            "before reading or changing them: it imports them and reloads an open scene whose file changed.";
+            "before reading or changing them: it imports them and reloads an open scene whose file changed (changed .cs files recompile and " +
+            "the scripts reload: retry a call that fails right after).";
 
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
