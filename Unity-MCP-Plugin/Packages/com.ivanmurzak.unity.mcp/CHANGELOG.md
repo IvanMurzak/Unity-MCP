@@ -4,9 +4,6 @@
 
 ### Changed
 
-- **RQL 0.3.0 and Code-Exec 0.4.0, the published releases.** `com.IvanMurzak.Rql` 0.3.0 from nuget.org replaces the
-  temporary pre-release DLLs (same source as RQL main 3602d6a; gate `UNITY_MCP_DEPS_29`), and the vendored Code-Exec sources
-  are recorded as release 0.4.0 (commit 58ef3ed, the same C# as main 54d527b). No behaviour change.
 - **RQL trigonometry, `$count`, `$type` suggestions, list coercion** (RQL 0.3.0). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
   same digits) and `$count`, the number of items entering a `set` / `call` stage: `selection | set transform.position =
   [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)]` lays them out on a circle. The bulk-create
@@ -25,14 +22,13 @@
   confirms" (unless the user named the exact items) is now in the descriptions of `script-execute`, `script-delete` and
   RQL's `DeleteAsset`, not only rql-mutate's: in wave 7 an agent asked to "delete only after showing me" found and deleted
   unused assets in one turn through `script-execute`.
-- **`script-execute`: a blocking wait stops at the budget** (vendored Code-Exec main affe6ef). `Thread.Sleep`,
+- **`script-execute`: a blocking wait stops at the budget** (vendored Code-Exec 0.4.0). `Thread.Sleep`,
   `Task.Wait` / `.Result` / `GetAwaiter().GetResult()`, `SemaphoreSlim` / `ManualResetEventSlim` / `CountdownEvent`
   `.Wait`, `Monitor.Wait`, `WaitHandle.WaitOne` and `Thread.Join` in the snippet wait in slices and stop with Timeout at
   the budget (before, `SemaphoreSlim(0).Wait()` hung the Editor for good); a snippet that returns only after its budget
   (blocked in a call the guards cannot interrupt) is reported as Timeout. A no-timeout wait on a task queued to the main
-  thread (`Task.Factory.StartNew(..., TaskScheduler.FromCurrentSynchronizationContext()).Result`) still runs it inline
-  (Code-Exec main 54d527b); an `async` method awaited on the main thread and read with `.Result` stops with Timeout at
-  the budget.
+  thread (`Task.Factory.StartNew(..., TaskScheduler.FromCurrentSynchronizationContext()).Result`) still runs it inline;
+  an `async` method awaited on the main thread and read with `.Result` stops with Timeout at the budget.
 - **Tools, prompts and resources are "Visible", not "Enabled".** The switch only decides whether MCP clients see
   an item listed (`tools/list`, which keeps their context small); it is not an access control: a hidden tool still
   runs when called by name. The Tools / Prompts / Resources windows filter All / Visible / Hidden. The config file
@@ -67,7 +63,7 @@
   (was 120 s), `timeout` sets another, at most 290 s and 10 s below the tool timeout. Threads and tasks the code starts
   (`new Thread`, `Task.Run`, `ThreadPool`, `TaskFactory.StartNew`) stop at their next loop iteration or call once the
   run ends, with a Console warning that counts them; a `using var x = …;` first statement compiles. Vendored Code-Exec
-  main 2556a2f (now affe6ef, above).
+  0.4.0 (above).
 - **McpPlugin 8.14.0-dev.42786f9 and ReflectorNet 5.5.1-dev.ec3702e** (temporary pre-release DLLs). Tools marked
   `[AiToolType(Target = ToolTarget.Runtime)]` are registered only by a runtime (player) connection, and the server
   routes their calls to the game while the Editor is connected; mark game-only tools this way. A call the plugin did

@@ -4,7 +4,7 @@
 release **0.4.0** (tag `nuget-v0.4.0`, commit `58ef3ed`), published on NuGet as `com.IvanMurzak.CodeExec` 0.4.0. Its
 C# sources are identical to `main` at `54d527b` (execution guards, Code-Exec PRs #7 to #11: snippet threads and tasks stop
 with their run, `using var` as a first statement, the `MaxTimeoutMs` host cap, blocking waits stop at the budget, an
-overrun is a Timeout, and a sliced wait still runs a queued task inline), so the hashes below did not change.
+overrun is a Timeout, and a sliced wait still runs a queued task inline).
 
 Files: `dotnet/CodeExec/*.cs` and `dotnet/CodeExec.Roslyn/src/*.cs`. Source, not the NuGet DLL:
 the adapter compiles against the Roslyn 4.8 this package already installs, and no NuGet pin / DLL changes are needed in
