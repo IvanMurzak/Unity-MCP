@@ -84,8 +84,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "- group-by gives rows with key (or one column per key), count and the group's items: group-by kind | select key, count, avg = items.avg(weight); also items.sum(e), items.min(e), items.max(e), items.count(pred), items.first().name. Group by the item's type with $type (group-by $type); a bare type is a member that most items do not have.\n" +
             "- Receipts list only real changes: a set row whose value stayed the same is left out and counted as unchanged, so no rows with N unchanged means the values already matched.\n" +
             "- call Method(args) runs the method of each item (the items must be objects). call source.Method(args) runs the method of that one source object once per stream item, with $, $index, $path and $depth in the arguments being the item's; every call counts against the target limit, and every argument is checked before the first call (a dry run checks without calling).\n" +
-            "- Bulk create: range(start, end[, step]) streams numbers (end excluded), and a list literal streams its elements, so one call creates many objects: range(0, 300) | call editor.CreateGameObject(\"Cube_\" + $, {primitive: \"Cube\", position: [($ % 15) * 2, 0, floor($ / 15) * 2]}) builds a 15-wide grid, [[\"Crate\", [0, 0, 0]], [\"Barrel\", [2, 0, 0]]] | call editor.CreateGameObject($[0], {primitive: \"Cube\", position: $[1]}) one object per entry. The receipt has one row per call with the $ref of the created object.\n" +
+            "- Bulk create: range(start, end[, step]) streams numbers (end excluded), and a list literal streams its elements, so one call creates many objects: range(0, 150) | call editor.CreateGameObject(\"Cube_\" + $, {primitive: \"Cube\", position: [($ % 15) * 2, 0, floor($ / 15) * 2]}) builds a 15-wide grid, [[\"Crate\", [0, 0, 0]], [\"Barrel\", [2, 0, 0]]] | call editor.CreateGameObject($[0], {primitive: \"Cube\", position: $[1]}) one object per entry. The receipt has one row per call with the $ref of the created object.\n" +
             "- Vectors and colors the host marks as component-wise compute component by component: set Scale = Scale * 1.5, Position + [0, 1, 0], Position - Offset, -Velocity, v / 2. Adding a number to a vector is a type-mismatch (add [x, y, z] instead); quaternions and other types without that mark stay type-mismatch. Lists of numbers are vectors too: [x, 0, z] * k, [1, 2] + [3, 4]. Vector functions work on both: length(v) (or v.length(), magnitude), normalize(v), distance(a, b), dot(a, b), lerp(a, b, t); len(x) stays the size of a string or list.\n" +
+            "- Trigonometry is in radians: sin, cos, tan, asin, acos, atan, atan2(y, x), pi(), deg(x), rad(x); trigonometric results are rounded (sin(pi()) is 0). In a set value or call argument $count is the number of items entering the stage ($index runs 0 to $count - 1), so set position = [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)] lays the items out on a circle of radius 5.\n" +
             "- A missing map entry reads as null: props[\"k\"] == null and props[\"k\"] is null are true without the entry, and has(props[\"k\"]) tests whether it exists. A misspelt member is not null: it stays unknown and is reported.\n" +
             "- Arguments by name: call Method({name: value, ...}) with one object literal that no overload takes as a whole binds each key to the parameter of that name; parameters left out keep their defaults, and an unknown name fails listing the parameters: range(0, 10) | call editor.CreateGameObject({name: \"Tile\" + $, primitive: \"Cube\", position: [$ * 2, 0, 0]}). Engine objects (scene objects, nodes, actors) are never built from an object literal: pass an existing one, e.g. ref(\"Type#id\"). Value-like assets and owned subobjects that the host marks are built from a typed literal: set mesh = {$type: \"TypeName\", size: 2}.\n";
 
@@ -93,7 +94,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public static RqlRuleExamples RuleExamples => new RqlRuleExamples
         {
             CreateCall = "editor.CreateGameObject",
-            Grid = "editor.CreateGameObject(\"Cube_\" + $, {primitive: \"Cube\", position: [($ % 15) * 2, 0, floor($ / 15) * 2]})",
+            Grid = "range(0, 150) | call editor.CreateGameObject(\"Cube_\" + $, {primitive: \"Cube\", position: [($ % 15) * 2, 0, floor($ / 15) * 2]})",
             PerEntry = "[[\"Crate\", [0, 0, 0]], [\"Barrel\", [2, 0, 0]]] | call editor.CreateGameObject($[0], {primitive: \"Cube\", position: $[1]})",
             Named = "editor.CreateGameObject({name: \"Tile\" + $, primitive: \"Cube\", position: [$ * 2, 0, 0]})",
         };
@@ -162,6 +163,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name == \"Coin_3\" | call RevertPrefabOverrides()   or ApplyPrefabOverrides() (read: select prefabSource prefabOverrides)\n" +
             "  editor | call OpenPrefab(\"Assets/Prefabs/Enemy.prefab\")  then  prefab | recurse children | …  then  editor | call ClosePrefab()\n" +
             "  editor | call CreateMaterial(\"Assets/Mats/Glow.mat\")        editor | call MoveAsset(\"Assets/A.mat\", \"Assets/Mats/A.mat\")\n" +
+            "  editor | call RefreshAssets()   after files changed on disk: imports them, reloads a changed open scene (keeps one with unsaved edits and says so)\n" +
             "  editor | set selection = [ref(\"GameObject#1234\")]         editor | set isPlaying = true   (scripts reload: retry a call that fails right after)\n" +
             "  editor | call AddLayer(\"Pickups\")  then  objects | where name starts-with \"Pickup\" | set layerName = \"Pickups\"   (read: editor | select layers tags)\n" +
             "  editor | call AddTag(\"Interactive\")  then  objects | where name starts-with \"Barrel\" | set tag = \"Interactive\"\n" +
@@ -171,9 +173,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         /// <summary>How an agent changes things safely and transparently (wave 6 findings).</summary>
         public const string AgentRules =
-            "Agent rules: delete or destroy in two steps: first list what matches (rql-query, or dry_run=true) and show it, then remove " +
-            "only that in a second call. When you map a name the user misspelt to a real one (an object, component or member), say so. " +
-            "Unity units are meters, degrees (rotation) and seconds.\n";
+            "Agent rules: " + DeleteRule + " " + ExternalEditsRule + " When you map a name the user misspelt to a real one (an object, " +
+            "component or member), say so. Unity units are meters, degrees (rotation) and seconds.\n";
+
+        /// <summary>
+        /// The two-step delete (wave 6/7 P15: agents asked to "delete only after showing me" deleted in the same turn, through
+        /// script-execute). Shared by rql-mutate, DeleteAsset, script-execute and script-delete, whichever the agent picks.
+        /// </summary>
+        public const string DeleteRule =
+            "Deleting (DeleteAsset, Destroy, script-delete, or AssetDatabase / File deletes in script-execute) takes two turns unless the " +
+            "user named the exact items or you created them yourself in this task: first list the exact candidates (rql-query, a " +
+            "dry_run=true mutation or a read-only snippet), show them and end your turn; delete only that list, in a separate call, " +
+            "after the user confirms. Otherwise never find and delete candidates in the same turn.";
+
+        /// <summary>Unity sees a file changed on disk (by the agent or the user) only after a refresh (wave 7: batchmode never refreshes).</summary>
+        public const string ExternalEditsRule =
+            "After project files change outside the Editor (written to disk by you, a script or the user), run editor | call RefreshAssets() " +
+            "before reading or changing them: it imports them and reloads an open scene whose file changed (changed .cs files recompile and " +
+            "the scripts reload: retry a call that fails right after).";
 
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +

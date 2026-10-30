@@ -46,7 +46,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "notification — the final response is delivered after Unity finishes the recompile triggered by the delete.")]
         [Description("Delete the script file(s). " +
             "Does AssetDatabase.Refresh() and waits for Unity compilation to complete before reporting results. " +
-            "Use '" + ScriptReadToolId + "' tool to read existing script files first.")]
+            "Use '" + ScriptReadToolId + "' tool to read existing script files first. " +
+            com.IvanMurzak.Unity.MCP.Editor.Rql.RqlGuide.DeleteRule)]
         public static ResponseCallTool Delete
         (
             [Description("File paths to the files. Sample: \"Assets/Scripts/MyScript.cs\".")]

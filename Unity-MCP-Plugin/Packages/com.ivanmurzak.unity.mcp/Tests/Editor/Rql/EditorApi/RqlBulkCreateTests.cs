@@ -49,6 +49,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsFalse(Roots().Any(g => g.name.StartsWith("Cube_")), "one Undo step removes all 30");
         }
 
+        // RQL 544a247: trigonometry and $count (the number of items entering the stage) lay objects out on a circle, in a
+        // bulk create and in a set over existing objects.
+        [Test]
+        public void TrigonometryAndCountLayOutACircle()
+        {
+            AssertOk(M("range(0, 4) | call editor.CreateGameObject(\"Ring_\" + $, " +
+                       "{position: [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)]})"));
+            var ring = Roots().Where(g => g.name.StartsWith("Ring_")).OrderBy(g => g.name).ToList();
+            Assert.AreEqual(4, ring.Count);
+            Assert.AreEqual(new Vector3(5, 0, 0), ring[0].transform.localPosition);
+            Assert.AreEqual(new Vector3(0, 0, 5), ring[1].transform.localPosition); // cos(pi / 2) is rounded to 0
+            Assert.AreEqual(new Vector3(-5, 0, 0), ring[2].transform.localPosition);
+
+            AssertOk(M("objects | where name starts-with \"Ring_\" | sort name | set transform.position = [$count * 1.0, deg(atan2(1, 1)), $index]"));
+            Assert.AreEqual(new Vector3(4, 45, 3), ring[3].transform.position);
+        }
+
         [Test]
         public void ListLiteralItemsAndPlacementMembers()
         {

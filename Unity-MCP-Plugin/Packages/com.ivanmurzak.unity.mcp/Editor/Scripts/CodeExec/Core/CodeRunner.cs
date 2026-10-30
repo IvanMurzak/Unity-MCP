@@ -1,4 +1,4 @@
-// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit 2556a2f, unmodified below this header.
+// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit affe6ef, unmodified below this header.
 // Licensed under the PolyForm Shield License 1.0.0 (https://polyformproject.org/licenses/shield/1.0.0);
 // see THIRD-PARTY-NOTICES.md in this folder. Not covered by this package's Apache-2.0 license.
 // Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
@@ -691,6 +691,7 @@ namespace com.IvanMurzak.CodeExec
             Type? _guard;
             object? _run;
             int _budgetMs;
+            readonly Stopwatch _running = new Stopwatch();
             public bool Guarded => _guard != null;
 
             /// <summary>Starts the guard's time budget for this run (0 = none).</summary>
@@ -702,6 +703,7 @@ namespace com.IvanMurzak.CodeExec
                 ExecutionGuard.Arm(_guard, budgetMs, Math.Max(_runner._options.MaxStackBytes, 0));
                 _run = ExecutionGuard.Begin(_guard);
                 _budgetMs = budgetMs;
+                _running.Start();
             }
 
             /// <summary>
@@ -750,6 +752,7 @@ namespace com.IvanMurzak.CodeExec
             /// <summary>Records the invocation result, judged by the DECLARED return type: awaitables become the task to await.</summary>
             public void SetResult(DeclaredResult declared, object? raw)
             {
+                _running.Stop(); // the synchronous part ended here: awaiting a pending task is RunAsync's budget
                 if (raw != null && declared.IsValueTask)
                     raw = declared.Declared.GetMethod("AsTask", Type.EmptyTypes)!.Invoke(raw, null);
                 if (raw is Task task && declared.IsTask)
@@ -789,6 +792,10 @@ namespace com.IvanMurzak.CodeExec
                     else if (stopped != 0)
                         Fail(ErrorKind.Runtime, "System.InsufficientExecutionStackException: Recursion too deep in a thread the snippet started: "
                             + "it was stopped before a stack overflow could end the host process; bound the recursion depth or use a loop.");
+                    else if (_errorKind == ErrorKind.None && _budgetMs > 0 && _running.ElapsedMilliseconds > _budgetMs
+                        && (_task == null || _task.Status == TaskStatus.RanToCompletion)) // a faulted task reports its own error
+                        Fail(ErrorKind.Timeout, $"System.TimeoutException: The snippet ran longer than its time budget of {_budgetMs} ms (timeoutMs): "
+                            + $"it finished only after {_running.ElapsedMilliseconds} ms, blocked in a call the guards cannot interrupt (a lock, a host or engine call).");
                     if (_errorKind == ErrorKind.None)
                         value = _runner._options.ValueConverter(Result());
                 }

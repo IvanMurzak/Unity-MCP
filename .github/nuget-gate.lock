@@ -1,7 +1,7 @@
 {
   "_comment": "Blessed pairing of the pinned NuGet set and the asmdef gate generation. Regenerate with: python .github/scripts/check_nuget_gate.py --write  (see issue #957).",
-  "dependencyGenerationDefine": "UNITY_MCP_DEPS_27",
-  "pinsSha256": "09f7d07a9e7f8914387a0619a776782ad993f722f12d1b7e02f95d65f5e99fba",
+  "dependencyGenerationDefine": "UNITY_MCP_DEPS_28",
+  "pinsSha256": "9380205036b4e9d506add0d55492a1c7fc1a495776bfe83e2c82128587185174",
   "pins": [
     "Microsoft.AspNetCore.SignalR.Client@8.0.15",
     "Microsoft.AspNetCore.SignalR.Protocols.Json@8.0.15",
@@ -18,6 +18,6 @@
     "System.Text.Json@8.0.5",
     "com.IvanMurzak.McpPlugin@8.14.0-dev.71fa5c1",
     "com.IvanMurzak.ReflectorNet@5.5.1-dev.ec3702e",
-    "com.IvanMurzak.Rql@0.3.0-dev.aacfbba"
+    "com.IvanMurzak.Rql@0.3.0-dev.3602d6a"
   ]
 }
