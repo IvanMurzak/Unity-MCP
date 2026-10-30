@@ -55,6 +55,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
 
         // Code-Exec 2556a2f: a thread the snippet starts belongs to the run and stops once the run ends (before, it kept
         // spinning until the domain reloaded), with a warning that counts it.
+        // Code-Exec 54d527b: under a budget, .Result on a task queued to the main thread's UnitySynchronizationContext runs it
+        // inline again (affe6ef sliced the wait, so the queue never ran and the snippet timed out). Needs Mono's
+        // Task.WrappedTryRunInline, which Code-Exec finds by reflection.
+        [Test]
+        public void AResultOnATaskQueuedToTheMainThreadRunsItInline()
+        {
+            Assert.IsNotNull(SynchronizationContext.Current, "EditMode tests run on the main thread with Unity's context");
+            var runner = new CodeRunner(new RoslynCSharpCompiler(), new CodeRunnerOptions { LogCaptures = new List<ILogCapture>() });
+            var result = runner.Execute(new ExecuteRequest
+            {
+                Code = "System.Threading.Tasks.Task.Factory.StartNew(() => 5, System.Threading.CancellationToken.None, " +
+                       "System.Threading.Tasks.TaskCreationOptions.None, System.Threading.Tasks.TaskScheduler.FromCurrentSynchronizationContext()).Result",
+                TimeoutMs = 5_000,
+            });
+            Assert.IsTrue(result.Success, result.Error);
+            Assert.AreEqual(5, System.Convert.ToInt32(result.Value));
+        }
+
         [Test]
         public void AThreadTheSnippetStartedStopsAfterTheRun()
         {
