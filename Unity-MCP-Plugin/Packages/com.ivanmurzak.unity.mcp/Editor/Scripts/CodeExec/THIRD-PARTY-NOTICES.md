@@ -3,7 +3,7 @@
 The C# files under `Core/` and `Roslyn/` in this folder are vendored from Code-Exec:
 
 - Source: https://github.com/IvanMurzak/Code-Exec (`dotnet/CodeExec/*.cs`, `dotnet/CodeExec.Roslyn/src/*.cs`)
-- Commit: `54d527b` (see `VENDORED.md` for the release it belongs to and the file hashes)
+- Release: 0.4.0 (tag `nuget-v0.4.0`), commit `58ef3ed` (see `VENDORED.md` for the file hashes)
 - License: PolyForm Shield License 1.0.0 (https://polyformproject.org/licenses/shield/1.0.0), not the Apache-2.0
   license of the rest of this package. Each file starts with a header that names this license.
 

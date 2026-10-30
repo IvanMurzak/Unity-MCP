@@ -4,8 +4,7 @@
 
 ### Changed
 
-- **RQL trigonometry, `$count`, `$type` suggestions, list coercion** (RQL main 3602d6a, temporary pre-release DLLs
-  0.3.0-dev.3602d6a, gate `UNITY_MCP_DEPS_28`). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
+- **RQL trigonometry, `$count`, `$type` suggestions, list coercion** (RQL 0.3.0). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
   same digits) and `$count`, the number of items entering a `set` / `call` stage: `selection | set transform.position =
   [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)]` lays them out on a circle. The bulk-create
   rule example carries its own range (`range(0, 150)`, within the default target limit). A misspelt `$type` names the
@@ -23,14 +22,13 @@
   confirms" (unless the user named the exact items) is now in the descriptions of `script-execute`, `script-delete` and
   RQL's `DeleteAsset`, not only rql-mutate's: in wave 7 an agent asked to "delete only after showing me" found and deleted
   unused assets in one turn through `script-execute`.
-- **`script-execute`: a blocking wait stops at the budget** (vendored Code-Exec main affe6ef). `Thread.Sleep`,
+- **`script-execute`: a blocking wait stops at the budget** (vendored Code-Exec 0.4.0). `Thread.Sleep`,
   `Task.Wait` / `.Result` / `GetAwaiter().GetResult()`, `SemaphoreSlim` / `ManualResetEventSlim` / `CountdownEvent`
   `.Wait`, `Monitor.Wait`, `WaitHandle.WaitOne` and `Thread.Join` in the snippet wait in slices and stop with Timeout at
   the budget (before, `SemaphoreSlim(0).Wait()` hung the Editor for good); a snippet that returns only after its budget
   (blocked in a call the guards cannot interrupt) is reported as Timeout. A no-timeout wait on a task queued to the main
-  thread (`Task.Factory.StartNew(..., TaskScheduler.FromCurrentSynchronizationContext()).Result`) still runs it inline
-  (Code-Exec main 54d527b); an `async` method awaited on the main thread and read with `.Result` stops with Timeout at
-  the budget.
+  thread (`Task.Factory.StartNew(..., TaskScheduler.FromCurrentSynchronizationContext()).Result`) still runs it inline;
+  an `async` method awaited on the main thread and read with `.Result` stops with Timeout at the budget.
 - **Tools, prompts and resources are "Visible", not "Enabled".** The switch only decides whether MCP clients see
   an item listed (`tools/list`, which keeps their context small); it is not an access control: a hidden tool still
   runs when called by name. The Tools / Prompts / Resources windows filter All / Visible / Hidden. The config file
@@ -42,16 +40,16 @@
 - **A player connects as a runtime.** `UnityMcpPluginRuntime` declares McpPlugin's `ClientRole.Runtime` (sent at
   connect), so GameDev-MCP-Server keeps a running player beside the Editor. The `" (runtime)"` handshake suffix is
   gone. McpPlugin 8.14.0-dev.e8985d5 (temporary pre-release DLLs, gate `UNITY_MCP_DEPS_23`).
-- **RQL arguments by name, side-effect-free overloads, compact receipts** (RQL main 2877579, temporary
-  pre-release DLLs 0.3.0-dev.2877579, gate `UNITY_MCP_DEPS_24`). A lone object literal binds parameters by name:
+- **RQL arguments by name, side-effect-free overloads, compact receipts** (RQL 0.3.0).
+  A lone object literal binds parameters by name:
   `editor | call CreateGameObject({name: "Crate", primitive: "Cube", position: [1, 0, 2]})`, also in a bulk create
   (`range(0, 300) | call editor.CreateGameObject({name: "C" + $, ...})`), validated before the first call and undone
   as one step. Trying an overload no longer creates anything, dry runs included, and a typo inside a placement
   literal is reported against the placement overload. Unity objects are never built from object literals; RQL now
   refuses that itself (`… is an engine object …`), so the plugin's own refusal is gone. Receipts of 2 or more rows
   print a shared method once, drop a `$ref` column equal to the result, and list 50 rows plus a count.
-- **RQL literal kinds, vector functions, key warnings** (RQL main aacfbba, temporary pre-release DLLs
-  0.3.0-dev.aacfbba, gate `UNITY_MCP_DEPS_25`). A Material or a data ScriptableObject is built from a typed literal:
+- **RQL literal kinds, vector functions, key warnings** (RQL 0.3.0).
+  A Material or a data ScriptableObject is built from a typed literal:
   `set sharedMaterial = {$type: "Material", color: "#ff8800"}` (the render pipeline's default shader), `set item =
   {$type: "ItemData", price: 3}`; written into a scene object it is saved with the scene, into an asset or the open prefab it is refused
   (the asset would lose it). GameObjects, components and other assets stay refused, now with Unity's way to pass an
@@ -65,7 +63,7 @@
   (was 120 s), `timeout` sets another, at most 290 s and 10 s below the tool timeout. Threads and tasks the code starts
   (`new Thread`, `Task.Run`, `ThreadPool`, `TaskFactory.StartNew`) stop at their next loop iteration or call once the
   run ends, with a Console warning that counts them; a `using var x = …;` first statement compiles. Vendored Code-Exec
-  main 2556a2f (now affe6ef, above).
+  0.4.0 (above).
 - **McpPlugin 8.14.0-dev.42786f9 and ReflectorNet 5.5.1-dev.ec3702e** (temporary pre-release DLLs). Tools marked
   `[AiToolType(Target = ToolTarget.Runtime)]` are registered only by a runtime (player) connection, and the server
   routes their calls to the game while the Editor is connected; mark game-only tools this way. A call the plugin did
