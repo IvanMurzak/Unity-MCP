@@ -41,6 +41,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `install-plugin --with-server` fetches GameDev-MCP-Server 9.3.0 by default (`DEFAULT_SERVER_VERSION`, was
+  9.2.17), in lockstep with the plugin's `ServerVersion`: built on McpPlugin 8.14.0 / ReflectorNet 5.5.1.
+
 - `install-plugin --with-server` fetches GameDev-MCP-Server 9.2.14 by default (`DEFAULT_SERVER_VERSION`, was
   9.2.13), in lockstep with the plugin's `ServerVersion`: a rebuild on ReflectorNet 5.5.0.
 

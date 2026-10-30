@@ -6,7 +6,7 @@
 
 - **McpPlugin 8.14.0, ReflectorNet 5.5.1, GameDev-MCP-Server 9.3.0** (published releases; gate
   `UNITY_MCP_DEPS_30`). The bundled DLLs and resolver pins replace the 8.14.0-dev / 5.5.1-dev pre-release builds
-  the entries below were integrated on, and the plugin downloads server 9.3.0.
+  that several entries below were integrated on, and the plugin downloads server 9.3.0.
 - **RQL trigonometry, `$count`, `$type` suggestions, list coercion** (RQL 0.3.0). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
   same digits) and `$count`, the number of items entering a `set` / `call` stage: `selection | set transform.position =
   [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)]` lays them out on a circle. The bulk-create
