@@ -1,0 +1,43 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlLiteralKindsTests.cs
+  s_7bc72ecaebd05d::t_db5551eedd09ec 75-96
+.github/nuget-gate.lock
+  s_7bc72ecaebd05d::t_967a8ce1612aa8 4,21
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_28991bf3f8094b 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_7bc72ecaebd05d::t_e5bdc86e6fe9f1 7-8,11-13,16-19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_7bc72ecaebd05d::t_a4fd33a25dea96 156
+Unity-MCP-Plugin/ProjectSettings/ProjectSettings.asset
+  s_7bc72ecaebd05d::t_47631409bf72e5 770,772-774,776-777,779-790
+Unity-MCP-Plugin/Tests~/EngineFree/Directory.Build.props
+  s_7bc72ecaebd05d::t_cf23597b837774 6
+Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_543221f3bbbbf0 22
+Unity-Tests/6000.0.85f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_3c723b351d58e9 22
+Unity-Tests/6000.3.27f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_655da56dce5006 22
+Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_d7c8e1141c0cff 22
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_32ba870442dd0e 22
+Unity-Tests/6000.6.7f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_b0be98a52ae83f 22
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2d024fe156d4644b302203a666aca849435e7c4c",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
