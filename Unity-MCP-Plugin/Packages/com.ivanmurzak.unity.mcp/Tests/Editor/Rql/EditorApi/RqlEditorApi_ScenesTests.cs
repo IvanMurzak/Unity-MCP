@@ -216,6 +216,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.AreSame(kept, GameObject.Find("Kept")); // the same object: the scene was not loaded again
         }
 
+        // An edit saved in the Editor is no outside change; and a reload records the new file, so the next call reloads nothing.
+        [Test]
+        public void RefreshAssetsIgnoresEditorSavesAndReloadsOnce()
+        {
+            var path = SavedSceneWith("ExtSaves", "Kept");
+            new GameObject("SavedInEditor");
+            Assert.IsTrue(EditorSceneManager.SaveScene(SceneManager.GetActiveScene()));
+            var kept = GameObject.Find("Kept");
+            Assert.AreEqual("refreshed", Cell(M("editor | call RefreshAssets()"), 0, 2), "after a save in the Editor");
+            Assert.AreSame(kept, GameObject.Find("Kept"));
+
+            RenameOnDisk(path, "Kept", "ChangedOutside");
+            StringAssert.Contains("reloaded", Table(M("editor | call RefreshAssets()")));
+            var reloaded = GameObject.Find("ChangedOutside");
+            Assert.AreEqual("refreshed", Cell(M("editor | call RefreshAssets()"), 0, 2), "after a reload");
+            Assert.AreSame(reloaded, GameObject.Find("ChangedOutside"));
+        }
+
+        // Saving a copy elsewhere writes another file: an outside change of the scene's own file is still reloaded.
+        [Test]
+        public void RefreshAssetsStillSeesAChangeAfterASaveAsCopy()
+        {
+            var path = SavedSceneWith("ExtCopy", "Before");
+            RenameOnDisk(path, "Before", "ChangedOutside");
+            Assert.IsTrue(EditorSceneManager.SaveScene(SceneManager.GetActiveScene(), $"{Folder}/ExtCopy2.unity", saveAsCopy: true));
+            StringAssert.Contains($"reloaded '{path}'", Table(M("editor | call RefreshAssets()")));
+            Assert.IsNotNull(GameObject.Find("ChangedOutside"));
+        }
+
         [Test]
         public void SaveScenesSavesEveryModifiedScene()
         {

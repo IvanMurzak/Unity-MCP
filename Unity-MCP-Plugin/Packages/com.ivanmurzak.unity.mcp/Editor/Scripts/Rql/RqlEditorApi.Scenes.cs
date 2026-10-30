@@ -65,7 +65,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private static void TrackSceneFiles()
         {
             EditorSceneManager.sceneOpened += (scene, _) => RememberSceneFile(scene);
-            EditorSceneManager.sceneSaved += RememberSceneFile;
+            // A save to another path (Save As, a copy) does not write the scene's own file: its recorded hash stays.
+            EditorSceneManager.sceneSaving += (scene, path) => _savingTo = path;
+            EditorSceneManager.sceneSaved += scene =>
+            {
+                if (_savingTo == null || _savingTo == scene.path) RememberSceneFile(scene);
+                _savingTo = null;
+            };
             // Scenes the Editor opened before this domain registered the callbacks (Editor start): their file as it is now.
             EditorApplication.delayCall += () =>
             {
@@ -74,6 +80,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                         RememberSceneFile(scene);
             };
         }
+
+        private static string? _savingTo;
 
         private static Dictionary<string, string> SceneFileHashes()
         {
@@ -87,16 +95,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         {
             if (string.IsNullOrEmpty(scene.path)) return;
             var hashes = SceneFileHashes();
-            hashes[scene.path] = FileHash(scene.path) ?? "";
+            if (FileHash(scene.path) is string hash) hashes[scene.path] = hash;
+            else hashes.Remove(scene.path); // unreadable: the import hash decides
             SessionState.SetString(SceneFileHashesKey, string.Join("\n", hashes.Select(p => p.Key + "\t" + p.Value)));
+        }
+
+        // The content hash of a scene asset's file (streamed: scenes can be large), or null when it is missing or unreadable. A
+        // Packages/ path is resolved to the package's folder on disk.
+        // A reloaded scene's file is the new baseline (whether or not Unity raised sceneOpened for the reload).
+        private static bool Remembered(string path)
+        {
+            RememberSceneFile(SceneManager.GetSceneByPath(path));
+            return true;
         }
 
         private static string? FileHash(string path)
         {
-            if (!File.Exists(path)) return null;
-            using var sha = SHA256.Create();
-            return Convert.ToBase64String(sha.ComputeHash(File.ReadAllBytes(path)));
+            try
+            {
+                var file = SceneFile(path);
+                if (!File.Exists(file)) return null;
+                using var stream = File.OpenRead(file);
+                using var sha = SHA256.Create();
+                return Convert.ToBase64String(sha.ComputeHash(stream));
+            }
+            catch (Exception e) when (e is IOException || e is UnauthorizedAccessException)
+            {
+                return null;
+            }
         }
+
+        private static string SceneFile(string path) => FileUtil.GetPhysicalPath(path);
 
         // The import hash of each open scene's file: the fallback for a scene with no recorded file hash. Unity imports a scene
         // file again when its content changed, so a hash that differs after this call's AssetDatabase.Refresh means the file changed.
@@ -126,27 +155,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 if (!changed) continue;
                 var scene = SceneManager.GetSceneByPath(path);
                 if (!scene.IsValid() || !scene.isLoaded) continue;
-                if (!File.Exists(path))
-                    notes.Add($"'{path}' was deleted or moved on disk: kept the open scene (scenes | where path == \"{path}\" | call SaveAs(path) keeps it)");
+                if (!File.Exists(SceneFile(path)))
+                    notes.Add($"'{path}' was deleted or moved on disk: kept the open scene (scenes | where path == \"{path}\" | call SaveAs(\"{path}\") " +
+                              "writes it again, as a new asset)");
                 else if (scene.isDirty)
                     notes.Add($"'{path}' changed on disk but has unsaved changes in the Editor: kept the Editor's version (saving it " +
                               $"overwrites the file); {LoadFileHint(path)} loads the file instead and drops those changes");
                 else if (EditorApplication.isPlaying)
                     notes.Add($"'{path}' changed on disk: exit Play Mode, then call RefreshAssets() again");
                 else if (PrefabStageUtility.GetCurrentPrefabStage() != null)
-                    notes.Add($"'{path}' changed on disk: close the open prefab (editor | call ClosePrefab()), then call RefreshAssets() again");
+                    notes.Add($"'{path}' changed on disk: close the open prefab (editor | call ClosePrefab(), which saves it; ClosePrefab(false) " +
+                              "drops its unsaved edits), then call RefreshAssets() again");
                 else
-                    notes.Add(Reload(scene)
+                    notes.Add(Reload(scene) && Remembered(path)
                         ? $"reloaded '{path}' (its file changed on disk)"
                         : $"'{path}' changed on disk but could not be reloaded: {LoadFileHint(path)} loads it");
             }
             return notes.Count == 0 ? "refreshed" : "refreshed; " + string.Join("; ", notes);
         }
 
-        // The call that loads a scene's file: OpenScene alone when it is the only scene (Single mode closes the others).
-        private static string LoadFileHint(string path) => SceneManager.sceneCount == 1
-            ? $"editor | call OpenScene(\"{path}\")"
-            : $"scenes | where path == \"{path}\" | call Close(), then editor | call OpenScene(\"{path}\", true),";
+        // The call that loads a scene's file: OpenScene when it is the only loaded scene (Single mode closes the others), else
+        // Close and an additive OpenScene (the scene then comes last in the Hierarchy).
+        private static string LoadFileHint(string path) => SceneManager.loadedSceneCount == 1
+            ? $"editor | call OpenScene(\"{path}\")" + (SceneManager.sceneCount > 1 ? " (it also removes the unloaded scenes)" : "")
+            : $"scenes | where path == \"{path}\" | call Close() and then editor | call OpenScene(\"{path}\", true)";
 
         // Loads the scene's file again in place: the only loaded scene through the scene setup (unloaded scenes in the Hierarchy
         // stay); one of several is unloaded and loaded again, keeping its place in the Hierarchy and the active scene.
@@ -155,8 +187,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             var path = scene.path;
             if (SceneManager.loadedSceneCount == 1)
             {
-                var setup = EditorSceneManager.GetSceneManagerSetup();
-                EditorSceneManager.RestoreSceneManagerSetup(setup);
+                try { EditorSceneManager.RestoreSceneManagerSetup(EditorSceneManager.GetSceneManagerSetup()); }
+                catch (Exception e) when (e is ArgumentException || e is InvalidOperationException) { return false; }
                 return SceneManager.GetSceneByPath(path).isLoaded;
             }
             var active = SceneManager.GetActiveScene() == scene;
