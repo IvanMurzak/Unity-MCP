@@ -72,6 +72,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsFalse(UnityEngine_Object_Adapter.IsDataScriptableObject(typeof(GameObject)));
         }
 
+        // RQL 3602d6a: a host array (another member's value) converts element by element into a typed List<T> member; before,
+        // only RQL list literals did.
+        [Test]
+        public void AHostArrayIsAssignedToAListMember()
+        {
+            var a = new Material(Shader.Find("Standard")) { name = "A" };
+            var b = new Material(Shader.Find("Standard")) { name = "B" };
+            var holder = new GameObject("ListHolder").AddComponent<DataFieldPopulationTestScript>();
+            holder.materialArray = new[] { a, b };
+            AssertOk(M("objects | where name == \"ListHolder\" | get components | where $ is DataFieldPopulationTestScript | set materialList = materialArray"));
+            CollectionAssert.AreEqual(new[] { a, b }, holder.materialList);
+        }
+
+        // RQL 3602d6a: a misspelt $type names the closest type.
+        [Test]
+        public void AMisspeltTypeNameGetsASuggestion()
+        {
+            new GameObject("Crate2", typeof(MeshRenderer));
+            AssertFails(M("objects | where name == \"Crate2\" | get components | where $ is MeshRenderer | set sharedMaterial = {$type: \"Materal\"}"),
+                "coercion-failed", "did you mean 'Material'");
+        }
+
         [Test]
         public void AnAssetCannotHoldANewObject()
         {

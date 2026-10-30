@@ -4,15 +4,19 @@
 
 ### Changed
 
-- **RQL trigonometry and `$count`** (RQL main 544a247, temporary pre-release DLLs 0.3.0-dev.544a247, gate
-  `UNITY_MCP_DEPS_28`). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
+- **RQL trigonometry, `$count`, `$type` suggestions, list coercion** (RQL main 3602d6a, temporary pre-release DLLs
+  0.3.0-dev.3602d6a, gate `UNITY_MCP_DEPS_28`). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
   same digits) and `$count`, the number of items entering a `set` / `call` stage: `selection | set transform.position =
   [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)]` lays them out on a circle. The bulk-create
-  rule example carries its own range.
+  rule example carries its own range (`range(0, 150)`, within the default target limit). A misspelt `$type` names the
+  closest type (`{$type: "Materal"}`: did you mean 'Material'?), and a list or array member takes any list value element
+  by element, e.g. `set materialList = materialArray` (before, only RQL list literals).
 - **`RefreshAssets()` reloads an open scene whose file changed on disk.** Before, a scene file edited outside the Editor
   stayed stale in the open scene even after `editor | call RefreshAssets()` (only `OpenScene` loaded it). Now the call
-  reloads it in place (an additive scene keeps its place and the active scene), keeps a scene with unsaved Editor
-  changes and says so (with the `OpenScene` call that loads the file instead), and returns what it did. It no longer
+  compares each open scene's file with what the Editor last loaded or saved (so a refresh by another tool in between
+  does not hide the change) and reloads it in place (an additive scene keeps its place and the active scene), keeps a scene with unsaved Editor
+  changes, a scene whose file was deleted, and one in Play Mode or behind an open prefab, and says so (with the call
+  that loads the file instead), and returns what it did. It no longer
   saves the open scenes afterwards, which wrote a dirty scene over the changed file. The agent rules say to call it
   after files change outside the Editor.
 - **Deletes take two turns.** The rule "list the exact candidates, show them, end your turn, delete only after the user
