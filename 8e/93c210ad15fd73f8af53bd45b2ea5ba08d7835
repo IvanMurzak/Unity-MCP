@@ -1,0 +1,34 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetDependencyResolver.cs
+  s_7bc72ecaebd05d::t_117e7842ca3e50 146-149,152-153,156-158
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetDownloader.cs
+  s_7bc72ecaebd05d::t_d835cb50b0492b 71,73
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageInstaller.cs
+  s_7bc72ecaebd05d::t_1e67c7b8967db6 46-105
+  s_7bc72ecaebd05d::t_2d426051fe9a56 156-162,165,600
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetResolverMenu.cs
+  s_7bc72ecaebd05d::t_ddc93aaae3f122 44-48
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetPackageRestorer.cs
+  s_7bc72ecaebd05d::t_49c2f717c8f3a5 36-48,53-56,59,66-67,71,82,84,88,92-99,103-105
+  s_7bc72ecaebd05d::t_8617626fd79196 115
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetResolverPartialGraphTests.cs
+  s_7bc72ecaebd05d::t_4cd840e396e9bb 66,69-70
+  s_7bc72ecaebd05d::t_08dc09c99197e3 1-65,67-68,71-172
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/DependencyResolver/NuGetResolverPartialGraphTests.cs.meta
+  s_7bc72ecaebd05d::t_ef3e0228a24685 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8e93c210ad15fd73f8af53bd45b2ea5ba08d7835",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": null
+    }
+  }
+}

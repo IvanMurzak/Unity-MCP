@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Unity/Logs/UnityLogCollector.cs
+  s_7bc72ecaebd05d::t_e220d10628fa58 119-143,148-150
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Logger/UnityLogger.cs
+  s_7bc72ecaebd05d::t_dca04f45e3e06c 86-87,100,112,115-123
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_StateTests.cs
+  s_7bc72ecaebd05d::t_466dc360751f19 117-135
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ea762d5335ad64bc89dfbe016b61c9140aba6876",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
