@@ -1,9 +1,9 @@
 # Vendored: Code-Exec (C#)
 
 `Core/` and `Roslyn/` are copied verbatim, below a 4-line license header, from [IvanMurzak/Code-Exec](https://github.com/IvanMurzak/Code-Exec) `main` at
-commit `affe6ef` (execution guards, Code-Exec PRs #7, #8, #9 and #10: snippet threads and tasks stop with their run, `using var`
-as a first statement, the `MaxTimeoutMs` host cap, blocking waits stop at the budget and an overrun is a Timeout), which is
-**not released yet**: release **0.3.2-dev.affe6ef**, a
+commit `54d527b` (execution guards, Code-Exec PRs #7 to #11: snippet threads and tasks stop with their run, `using var`
+as a first statement, the `MaxTimeoutMs` host cap, blocking waits stop at the budget, an overrun is a Timeout, and a sliced
+wait still runs a queued task inline), which is **not released yet**: release **0.3.2-dev.54d527b**, a
 pre-release on top of 0.3.1 (tag `nuget-v0.3.1`, commit `96c2919`). The release guard
 (`commands/release_dependency_guard.py`) refuses this marker on purpose: before a Unity-MCP release, copy the files again
 from the published Code-Exec release and record that version here.
@@ -23,7 +23,7 @@ Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
 880027ea76fb25cbcb8c8abeb9f0aaf095e845628e6a7cd1e048069dfcf5de25 *Core/CodeRunner.cs
 220254baf59d469ea1c26be03a59bbd644593673c62a52dccb19553272f2808c *Core/Compilation.cs
 a58556a9f8871691ddab93089cfe63942f7f9c68619047735f0214dfe3988369 *Core/Contracts.cs
-c66fb45247604c3aa98f097328e16c27a045b555d9185b928b0a68a365c64e56 *Core/ExecutionGuard.cs
+ac42954288bf128b16fa697e70d45b81f10f7e22139a0d819deb8434b2cb0319 *Core/ExecutionGuard.cs
 985430e145e58227990d8f88bc451a4f806d3d72a4e1b76291b481839f67076c *Core/Hosting.cs
 eb6777505f7afe05cc051ecd32d97d62296ebc795dcbe611a400acff8cd4d116 *Core/Limits.cs
 22a082265c5180b2d2bca913efbe7580df74f27d7cf41ba4d0d19b513c084af2 *Core/References.cs

@@ -1,4 +1,4 @@
-// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit affe6ef, unmodified below this header.
+// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit 54d527b, unmodified below this header.
 // Licensed under the PolyForm Shield License 1.0.0 (https://polyformproject.org/licenses/shield/1.0.0);
 // see THIRD-PARTY-NOTICES.md in this folder. Not covered by this package's Apache-2.0 license.
 // Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
@@ -314,7 +314,12 @@ internal static class __CodeExecGuard
     public static bool TaskWait(global::System.Threading.Tasks.Task task, int millisecondsTimeout) => TaskWait(task, millisecondsTimeout, default);
     public static bool TaskWait(global::System.Threading.Tasks.Task task, global::System.TimeSpan timeout) => TaskWait(task, Ms(timeout), default);
     public static void TaskWait(global::System.Threading.Tasks.Task task, global::System.Threading.CancellationToken cancellationToken) => TaskWait(task, -1, cancellationToken);
-    public static bool TaskWait(global::System.Threading.Tasks.Task task, int millisecondsTimeout, global::System.Threading.CancellationToken cancellationToken) => Sliced(millisecondsTimeout, ms => task.Wait(ms, cancellationToken));
+    public static bool TaskWait(global::System.Threading.Tasks.Task task, int millisecondsTimeout, global::System.Threading.CancellationToken cancellationToken)
+    {
+        if (millisecondsTimeout == -1 && !cancellationToken.CanBeCanceled)
+            Inline(task);
+        return Sliced(millisecondsTimeout, ms => task.Wait(ms, cancellationToken));
+    }
 
     public static void TaskWaitAll(params global::System.Threading.Tasks.Task[] tasks) => TaskWaitAll(tasks, -1, default);
     public static void TaskWaitAll(global::System.Collections.Generic.IEnumerable<global::System.Threading.Tasks.Task> tasks, global::System.Threading.CancellationToken cancellationToken = default) =>
@@ -322,7 +327,13 @@ internal static class __CodeExecGuard
     public static bool TaskWaitAll(global::System.Threading.Tasks.Task[] tasks, int millisecondsTimeout) => TaskWaitAll(tasks, millisecondsTimeout, default);
     public static bool TaskWaitAll(global::System.Threading.Tasks.Task[] tasks, global::System.TimeSpan timeout) => TaskWaitAll(tasks, Ms(timeout), default);
     public static void TaskWaitAll(global::System.Threading.Tasks.Task[] tasks, global::System.Threading.CancellationToken cancellationToken) => TaskWaitAll(tasks, -1, cancellationToken);
-    public static bool TaskWaitAll(global::System.Threading.Tasks.Task[] tasks, int millisecondsTimeout, global::System.Threading.CancellationToken cancellationToken) => Sliced(millisecondsTimeout, ms => global::System.Threading.Tasks.Task.WaitAll(tasks, ms, cancellationToken));
+    public static bool TaskWaitAll(global::System.Threading.Tasks.Task[] tasks, int millisecondsTimeout, global::System.Threading.CancellationToken cancellationToken)
+    {
+        if (millisecondsTimeout == -1 && !cancellationToken.CanBeCanceled && tasks != null)
+            for (var i = tasks.Length - 1; i >= 0; i--) // the framework's order
+                Inline(tasks[i]);
+        return Sliced(millisecondsTimeout, ms => global::System.Threading.Tasks.Task.WaitAll(tasks, ms, cancellationToken));
+    }
 
     public static int TaskWaitAny(params global::System.Threading.Tasks.Task[] tasks) => TaskWaitAny(tasks, -1, default);
     public static int TaskWaitAny(global::System.Threading.Tasks.Task[] tasks, int millisecondsTimeout) => TaskWaitAny(tasks, millisecondsTimeout, default);
@@ -335,9 +346,40 @@ internal static class __CodeExecGuard
         return index;
     }
 
+    // A wait without bound or token first offers a task that is still queued to its scheduler to run inline on this thread,
+    // as the framework's own wait does (Task.WrappedTryRunInline): the scheduler decides whether this thread may run it (a
+    // synchronization-context task waited on from that context's thread may). A task it declines (the thread pool's from
+    // another thread) or one with no body to run (an async method's) is waited for in slices. Not on a thread-pool thread:
+    // there the pool's scheduler could hand it any task from the thread's local queue (not necessarily the snippet's), which
+    // other pool threads run anyway. Where the runtime lacks that method, every wait is sliced.
+    static readonly global::System.Reflection.MethodInfo _tryRunInline = FindTryRunInline();
+
+    static global::System.Reflection.MethodInfo FindTryRunInline()
+    {
+        try
+        {
+            return typeof(global::System.Threading.Tasks.Task).GetMethod(""WrappedTryRunInline"",
+                global::System.Reflection.BindingFlags.Instance | global::System.Reflection.BindingFlags.NonPublic, null, global::System.Type.EmptyTypes, null);
+        }
+        catch (global::System.Exception) { return null; } // never a failing type initializer: that would break every guarded snippet
+    }
+
+    static void Inline(global::System.Threading.Tasks.Task task)
+    {
+        if (task == null || task.Status != global::System.Threading.Tasks.TaskStatus.WaitingToRun || _tryRunInline == null
+            || global::System.Threading.Thread.CurrentThread.IsThreadPoolThread)
+            return;
+        try { _tryRunInline.Invoke(task, null); }
+        catch (global::System.Reflection.TargetInvocationException e) when (e.InnerException != null)
+        {
+            global::System.Runtime.ExceptionServices.ExceptionDispatchInfo.Capture(e.InnerException).Throw(); // the scheduler's own failure, as the framework's wait throws it
+        }
+    }
+
     /// <summary>The task once it has completed (<c>.Result</c>, <c>.GetAwaiter().GetResult()</c> then return at once).</summary>
     public static T Ready<T>(T task) where T : global::System.Threading.Tasks.Task
     {
+        Inline(task);
         if (task != null)
             Sliced(-1, ms =>
             {

@@ -27,7 +27,10 @@
   `Task.Wait` / `.Result` / `GetAwaiter().GetResult()`, `SemaphoreSlim` / `ManualResetEventSlim` / `CountdownEvent`
   `.Wait`, `Monitor.Wait`, `WaitHandle.WaitOne` and `Thread.Join` in the snippet wait in slices and stop with Timeout at
   the budget (before, `SemaphoreSlim(0).Wait()` hung the Editor for good); a snippet that returns only after its budget
-  (blocked in a call the guards cannot interrupt) is reported as Timeout.
+  (blocked in a call the guards cannot interrupt) is reported as Timeout. A no-timeout wait on a task queued to the main
+  thread (`Task.Factory.StartNew(..., TaskScheduler.FromCurrentSynchronizationContext()).Result`) still runs it inline
+  (Code-Exec main 54d527b); an `async` method awaited on the main thread and read with `.Result` stops with Timeout at
+  the budget.
 - **Tools, prompts and resources are "Visible", not "Enabled".** The switch only decides whether MCP clients see
   an item listed (`tools/list`, which keeps their context small); it is not an access control: a hidden tool still
   runs when called by name. The Tools / Prompts / Resources windows filter All / Visible / Hidden. The config file
