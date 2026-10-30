@@ -53,8 +53,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         public void TheBudgetIsTheTimeoutArgumentCappedBelowTheToolTimeout(int toolTimeoutMs, double? timeoutSeconds, int expected) =>
             Assert.AreEqual(expected, Tool_Script.SnippetTimeoutMs(toolTimeoutMs, timeoutSeconds));
 
-        // Code-Exec 2556a2f: a thread the snippet starts belongs to the run and stops once the run ends (before, it kept
-        // spinning until the domain reloaded), with a warning that counts it.
         // Code-Exec 54d527b: under a budget, .Result on a task queued to the main thread's UnitySynchronizationContext runs it
         // inline again (affe6ef sliced the wait, so the queue never ran and the snippet timed out). Needs Mono's
         // Task.WrappedTryRunInline, which Code-Exec finds by reflection.
@@ -73,6 +71,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             Assert.AreEqual(5, System.Convert.ToInt32(result.Value));
         }
 
+        // Code-Exec 2556a2f: a thread the snippet starts belongs to the run and stops once the run ends (before, it kept
+        // spinning until the domain reloaded), with a warning that counts it.
         [Test]
         public void AThreadTheSnippetStartedStopsAfterTheRun()
         {
