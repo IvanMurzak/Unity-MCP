@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.Linq;
+using com.IvanMurzak.Unity.MCP.Editor.API;
 using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters;
 using NUnit.Framework;
@@ -83,6 +84,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             StringAssert.Contains("set sharedMaterial = \"Default-Material\"", RqlGuide.MutateDescription);
             StringAssert.Contains("| get rows |", RqlGuide.MutateDescription);
             StringAssert.Contains("AddTag", RqlUnitySchema.Render(RqlUnity.Engine, null));
+        }
+
+        // Wave 6/7 P15: asked to "delete only after showing me", agents deleted in the same turn, through script-execute.
+        // Every way to delete carries the two-turn rule, not only rql-mutate.
+        [Test]
+        public void EveryDeleteToolSaysListShowEndTheTurnThenDelete()
+        {
+            StringAssert.Contains("end your turn", RqlGuide.DeleteRule);
+            StringAssert.Contains(RqlGuide.DeleteRule, RqlGuide.MutateDescription);
+            foreach (var method in new[] { nameof(Tool_Script.Execute), nameof(Tool_Script.Delete) })
+            {
+                var description = typeof(Tool_Script).GetMethod(method)!
+                    .GetCustomAttributes(typeof(System.ComponentModel.DescriptionAttribute), false)
+                    .Cast<System.ComponentModel.DescriptionAttribute>().Single().Description;
+                StringAssert.Contains(RqlGuide.DeleteRule, description, method);
+            }
+            var deleteAsset = typeof(RqlEditorApi).GetMethod(nameof(RqlEditorApi.DeleteAsset))!
+                .GetCustomAttributes(typeof(global::Rql.RqlCallableAttribute), false).Cast<global::Rql.RqlCallableAttribute>().Single();
+            StringAssert.Contains("end your turn", deleteAsset.Description);
+        }
+
+        // Wave 7: batchmode never refreshes, so files written outside the Editor stayed invisible until RefreshAssets.
+        [Test]
+        public void TheGuideSaysRefreshAssetsAfterOutsideEdits()
+        {
+            StringAssert.Contains(RqlGuide.ExternalEditsRule, RqlGuide.MutateDescription);
+            StringAssert.Contains("editor | call RefreshAssets()", RqlGuide.ExternalEditsRule);
         }
     }
 }

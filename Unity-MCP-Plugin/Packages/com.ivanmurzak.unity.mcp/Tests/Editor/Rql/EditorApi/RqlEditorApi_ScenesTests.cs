@@ -87,6 +87,85 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsFalse(r.Ok, Table(r));
         }
 
+        // Wave 7: a scene file edited outside the Editor stayed stale in the open scene even after RefreshAssets.
+        static string SavedSceneWith(string name, string objectName, bool additive = false)
+        {
+            var path = $"{Folder}/{name}.unity";
+            AssertOk(M($"editor | call NewScene(\"{path}\", true, {(additive ? "true" : "false")})"));
+            var scene = SceneManager.GetSceneByPath(path);
+            SceneManager.MoveGameObjectToScene(new GameObject(objectName), scene);
+            Assert.IsTrue(EditorSceneManager.SaveScene(scene));
+            return path;
+        }
+
+        static void RenameOnDisk(string path, string from, string to)
+        {
+            var text = File.ReadAllText(path);
+            StringAssert.Contains("m_Name: " + from, text);
+            File.WriteAllText(path, text.Replace("m_Name: " + from, "m_Name: " + to));
+        }
+
+        [Test]
+        public void RefreshAssetsReloadsAnOpenSceneChangedOnDisk()
+        {
+            var path = SavedSceneWith("Ext", "Before");
+            RenameOnDisk(path, "Before", "ChangedOutside");
+
+            var r = M("editor | call RefreshAssets()");
+            AssertOk(r);
+            StringAssert.Contains($"reloaded '{path}'", Table(r));
+            Assert.IsNotNull(GameObject.Find("ChangedOutside"));
+            Assert.IsNull(GameObject.Find("Before"));
+            Assert.AreEqual(path, SceneManager.GetActiveScene().path);
+        }
+
+        [Test]
+        public void RefreshAssetsKeepsADirtySceneAndDoesNotSaveItOverTheFile()
+        {
+            var path = SavedSceneWith("ExtDirty", "Before");
+            RenameOnDisk(path, "Before", "ChangedOutside");
+            new GameObject("UnsavedEdit");
+            EditorSceneManager.MarkSceneDirty(SceneManager.GetActiveScene());
+
+            var r = M("editor | call RefreshAssets()");
+            AssertOk(r);
+            StringAssert.Contains("unsaved changes in the Editor", Table(r));
+            Assert.IsNotNull(GameObject.Find("UnsavedEdit"));
+            Assert.IsNotNull(GameObject.Find("Before"));
+            Assert.IsTrue(SceneManager.GetActiveScene().isDirty);
+            StringAssert.Contains("m_Name: ChangedOutside", File.ReadAllText(path)); // no save after the call wrote over it
+        }
+
+        [Test]
+        public void RefreshAssetsReloadsAnAdditiveSceneInPlace()
+        {
+            var main = SavedSceneWith("ExtMain", "MainObject");
+            var extra = SavedSceneWith("ExtExtra", "Before", additive: true);
+            SceneManager.SetActiveScene(SceneManager.GetSceneByPath(main));
+            RenameOnDisk(extra, "Before", "ChangedOutside");
+
+            var r = M("editor | call RefreshAssets()");
+            AssertOk(r);
+            StringAssert.Contains($"reloaded '{extra}'", Table(r));
+            StringAssert.DoesNotContain(main, Table(r));
+            Assert.AreEqual(2, SceneManager.sceneCount);
+            Assert.AreEqual(extra, SceneManager.GetSceneAt(1).path); // its place in the Hierarchy
+            Assert.AreEqual(main, SceneManager.GetActiveScene().path);
+            Assert.IsNotNull(GameObject.Find("ChangedOutside"));
+            Assert.IsNotNull(GameObject.Find("MainObject"));
+        }
+
+        [Test]
+        public void RefreshAssetsWithNoChangeReloadsNothing()
+        {
+            SavedSceneWith("ExtSame", "Kept");
+            var kept = GameObject.Find("Kept");
+            var r = M("editor | call RefreshAssets()");
+            AssertOk(r);
+            StringAssert.DoesNotContain("reloaded", Table(r));
+            Assert.AreSame(kept, GameObject.Find("Kept")); // the same object: the scene was not loaded again
+        }
+
         [Test]
         public void SaveScenesSavesEveryModifiedScene()
         {

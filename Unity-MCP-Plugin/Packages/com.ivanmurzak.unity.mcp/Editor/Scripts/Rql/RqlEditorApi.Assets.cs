@@ -98,7 +98,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
                 AssetDatabase.MoveAsset(path, newPath) is { Length: > 0 } error ? throw new ArgumentException(error) : newPath);
         }
 
-        [RqlCallable("move an asset (or folder) to the OS trash, so it can be recovered; refuses while objects in the open scenes or prefab use it, unless force = true (their references become missing)")]
+        [RqlCallable("move an asset (or folder) to the OS trash, so it can be recovered; refuses while objects in the open scenes or prefab use it, unless force = true (their references become missing). " +
+                     "Unless the user named these exact assets: list the candidates first, show them, end your turn, and delete only after the user confirms")]
         public void DeleteAsset(string path, bool force = false)
         {
             path = Normalize(path);
@@ -128,8 +129,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [RqlCallable("write every modified asset to disk")]
         public void SaveAssets() => AssetDatabase.SaveAssets();
 
-        [RqlCallable("re-import changed files (after writing files outside the Editor)")]
-        public void RefreshAssets() => AssetDatabase.Refresh();
+        [RqlCallable("import the files changed outside the Editor (call it after editing project files on disk); an open scene whose " +
+                     "file changed is reloaded, one with unsaved changes in the Editor is kept and reported; returns what it did")]
+        [RqlNoAutoSave] // the save after a mutation would write a dirty scene over the file that changed on disk
+        public string RefreshAssets()
+        {
+            var before = OpenSceneHashes();
+            AssetDatabase.Refresh();
+            return ReloadChangedScenes(before);
+        }
 
         internal static Shader DefaultShader()
         {

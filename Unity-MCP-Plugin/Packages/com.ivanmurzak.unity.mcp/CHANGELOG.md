@@ -4,6 +4,26 @@
 
 ### Changed
 
+- **RQL trigonometry and `$count`** (RQL main 544a247, temporary pre-release DLLs 0.3.0-dev.544a247, gate
+  `UNITY_MCP_DEPS_28`). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
+  same digits) and `$count`, the number of items entering a `set` / `call` stage: `selection | set transform.position =
+  [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)]` lays them out on a circle. The bulk-create
+  rule example carries its own range.
+- **`RefreshAssets()` reloads an open scene whose file changed on disk.** Before, a scene file edited outside the Editor
+  stayed stale in the open scene even after `editor | call RefreshAssets()` (only `OpenScene` loaded it). Now the call
+  reloads it in place (an additive scene keeps its place and the active scene), keeps a scene with unsaved Editor
+  changes and says so (with the `OpenScene` call that loads the file instead), and returns what it did. It no longer
+  saves the open scenes afterwards, which wrote a dirty scene over the changed file. The agent rules say to call it
+  after files change outside the Editor.
+- **Deletes take two turns.** The rule "list the exact candidates, show them, end your turn, delete only after the user
+  confirms" (unless the user named the exact items) is now in the descriptions of `script-execute`, `script-delete` and
+  RQL's `DeleteAsset`, not only rql-mutate's: in wave 7 an agent asked to "delete only after showing me" found and deleted
+  unused assets in one turn through `script-execute`.
+- **`script-execute`: a blocking wait stops at the budget** (vendored Code-Exec main affe6ef). `Thread.Sleep`,
+  `Task.Wait` / `.Result` / `GetAwaiter().GetResult()`, `SemaphoreSlim` / `ManualResetEventSlim` / `CountdownEvent`
+  `.Wait`, `Monitor.Wait`, `WaitHandle.WaitOne` and `Thread.Join` in the snippet wait in slices and stop with Timeout at
+  the budget (before, `SemaphoreSlim(0).Wait()` hung the Editor for good); a snippet that returns only after its budget
+  (blocked in a call the guards cannot interrupt) is reported as Timeout.
 - **Tools, prompts and resources are "Visible", not "Enabled".** The switch only decides whether MCP clients see
   an item listed (`tools/list`, which keeps their context small); it is not an access control: a hidden tool still
   runs when called by name. The Tools / Prompts / Resources windows filter All / Visible / Hidden. The config file
@@ -38,7 +58,7 @@
   (was 120 s), `timeout` sets another, at most 290 s and 10 s below the tool timeout. Threads and tasks the code starts
   (`new Thread`, `Task.Run`, `ThreadPool`, `TaskFactory.StartNew`) stop at their next loop iteration or call once the
   run ends, with a Console warning that counts them; a `using var x = …;` first statement compiles. Vendored Code-Exec
-  main 2556a2f.
+  main 2556a2f (now affe6ef, above).
 - **McpPlugin 8.14.0-dev.42786f9 and ReflectorNet 5.5.1-dev.ec3702e** (temporary pre-release DLLs). Tools marked
   `[AiToolType(Target = ToolTarget.Runtime)]` are registered only by a runtime (player) connection, and the server
   routes their calls to the game while the Editor is connected; mark game-only tools this way. A call the plugin did

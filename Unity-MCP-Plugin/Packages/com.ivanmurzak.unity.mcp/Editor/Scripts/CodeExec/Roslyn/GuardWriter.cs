@@ -1,4 +1,4 @@
-// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit 2556a2f, unmodified below this header.
+// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit affe6ef, unmodified below this header.
 // Licensed under the PolyForm Shield License 1.0.0 (https://polyformproject.org/licenses/shield/1.0.0);
 // see THIRD-PARTY-NOTICES.md in this folder. Not covered by this package's Apache-2.0 license.
 // Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
@@ -223,8 +223,178 @@ namespace com.IvanMurzak.CodeExec.Roslyn
                 case ImplicitObjectCreationExpressionSyntax creation when semantics != null:
                     Workers(creation, creation.ArgumentList, semantics, edits);
                     break;
+                case InvocationExpressionSyntax call when semantics != null && WaitNames.Contains(RightmostName(call.Expression)):
+                    Wait(call, semantics, edits);
+                    break;
+                case MemberAccessExpressionSyntax access when semantics != null && access.Name.Identifier.ValueText == "Result":
+                    Result(access, semantics, edits);
+                    break;
             }
         }
+
+        const string Ms = "int", Span = "System.TimeSpan", Token = "System.Threading.CancellationToken";
+        const string TaskArray = "System.Threading.Tasks.Task[]", HandleArray = "System.Threading.WaitHandle[]";
+
+        /// <summary>.NET 9+ <c>Task.WaitAll(params ReadOnlySpan&lt;Task&gt;)</c>: rewritten only in its expanded form (see <see cref="Wait"/>).</summary>
+        const string WaitAllSpan = "System.Threading.Tasks.Task.WaitAll(System.ReadOnlySpan<System.Threading.Tasks.Task>)";
+
+        /// <summary>
+        /// Each blocking wait the guard has a sliced stand-in for (<c>Type.Method(parameter types)</c> → guard method): the
+        /// stand-in takes the receiver first, then the same parameters.
+        /// </summary>
+        static readonly Dictionary<string, string> WaitTargets = BuildWaitTargets();
+
+        /// <summary>The method names of <see cref="WaitTargets"/>, and <c>GetResult</c> (<c>x.GetAwaiter().GetResult()</c>).</summary>
+        static readonly HashSet<string> WaitNames = new HashSet<string>(
+            WaitTargets.Keys.Select(k => k.Substring(0, k.IndexOf('(')).Substring(k.LastIndexOf('.', k.IndexOf('(')) + 1)).Concat(new[] { "GetResult" }));
+
+        static Dictionary<string, string> BuildWaitTargets()
+        {
+            var targets = new Dictionary<string, string>();
+            void Add(string type, string method, string guard, params string[][] overloads)
+            {
+                foreach (var parameters in overloads)
+                    targets[type + "." + method + "(" + string.Join(",", parameters) + ")"] = guard;
+            }
+            var none = new string[0];
+            Add("System.Threading.Thread", "Join", "Join", none, new[] { Ms }, new[] { Span });
+            Add("System.Threading.Thread", "Sleep", "Sleep", new[] { Ms }, new[] { Span });
+            Add("System.Threading.Tasks.Task", "Wait", "TaskWait", none, new[] { Ms }, new[] { Span }, new[] { Token }, new[] { Ms, Token });
+            Add("System.Threading.Tasks.Task", "WaitAll", "TaskWaitAll", new[] { TaskArray }, new[] { TaskArray, Ms }, new[] { TaskArray, Span },
+                new[] { TaskArray, Token }, new[] { TaskArray, Ms, Token },
+                new[] { "System.Collections.Generic.IEnumerable<System.Threading.Tasks.Task>", Token }); // .NET 9+, the token optional
+            targets[WaitAllSpan] = "TaskWaitAll";
+            Add("System.Threading.Tasks.Task", "WaitAny", "TaskWaitAny", new[] { TaskArray }, new[] { TaskArray, Ms }, new[] { TaskArray, Span },
+                new[] { TaskArray, Token }, new[] { TaskArray, Ms, Token });
+            foreach (var pair in new[] { new[] { "SemaphoreSlim", "SemaphoreWait" }, new[] { "ManualResetEventSlim", "EventWait" }, new[] { "CountdownEvent", "CountdownWait" } })
+                Add("System.Threading." + pair[0], "Wait", pair[1], none, new[] { Ms }, new[] { Span }, new[] { Token }, new[] { Ms, Token }, new[] { Span, Token });
+            Add("System.Threading.Monitor", "Wait", "MonitorWait", new[] { "object" }, new[] { "object", Ms }, new[] { "object", Span });
+            Add("System.Threading.WaitHandle", "WaitOne", "WaitOne", none, new[] { Ms }, new[] { Span });
+            Add("System.Threading.WaitHandle", "WaitAll", "WaitAll", new[] { HandleArray }, new[] { HandleArray, Ms }, new[] { HandleArray, Span });
+            Add("System.Threading.WaitHandle", "WaitAny", "WaitAny", new[] { HandleArray }, new[] { HandleArray, Ms }, new[] { HandleArray, Span });
+            return targets;
+        }
+
+        static string Signature(IMethodSymbol method) =>
+            method.ContainingType.OriginalDefinition.ToDisplayString() + "." + method.Name + "("
+            + string.Join(",", method.Parameters.Select(p => p.Type.ToDisplayString())) + ")";
+
+        /// <summary>
+        /// A blocking wait (<see cref="WaitTargets"/>) becomes the guard's sliced stand-in, which checks the guard between
+        /// slices: <c>t.Join()</c> → <c>Join(t)</c>, <c>Thread.Sleep(n)</c> → <c>Sleep(n)</c>; <c>x.GetAwaiter().GetResult()</c>
+        /// of a task becomes <c>Ready(x).GetAwaiter().GetResult()</c>. Arguments stay as written (none named), so they bind
+        /// the same way. Not inside an expression tree or a query.
+        /// </summary>
+        static void Wait(InvocationExpressionSyntax call, Semantics semantics, List<Edit> edits)
+        {
+            if (call.ArgumentList.Arguments.Any(a => a.NameColon != null || !a.RefKindKeyword.IsKind(SyntaxKind.None))
+                || semantics.HasErrors || !(semantics.Model.GetSymbolInfo(call).Symbol is IMethodSymbol method) || InExpressionTree(call, semantics))
+                return;
+            if (method.Name == "GetResult")
+            {
+                // x.GetAwaiter().GetResult() and x.ConfigureAwait(b).GetAwaiter().GetResult() of a Task / Task<T>.
+                if (call.Expression is MemberAccessExpressionSyntax outer && outer.Expression is InvocationExpressionSyntax awaiter
+                    && awaiter.ArgumentList.Arguments.Count == 0 && awaiter.Expression is MemberAccessExpressionSyntax getAwaiter
+                    && getAwaiter.Name.Identifier.ValueText == "GetAwaiter" && !(getAwaiter.Expression is BaseExpressionSyntax))
+                {
+                    var awaited = getAwaiter.Expression;
+                    var task = TaskCalled(awaited, "ConfigureAwait", semantics) ?? (IsTask(semantics.Model.GetTypeInfo(awaited).Type) ? awaited : null);
+                    if (task != null)
+                        Ready(task, edits);
+                }
+                return;
+            }
+            var signature = Signature(method);
+            if (!WaitTargets.TryGetValue(signature, out var guard))
+                return;
+            var arguments = call.ArgumentList.Arguments;
+            if (signature == WaitAllSpan
+                && arguments.Any(a => !IsTask(semantics.Model.GetTypeInfo(a.Expression).Type)))
+                return; // only the expanded form (`WaitAll(a, b)`): its tasks bind to the stand-in's `params Task[]`
+            var target = ExecutionGuard.QualifiedName + "." + guard;
+            if (method.IsStatic)
+            {
+                edits.Add(new Edit(call.Expression.SpanStart, target, call.Expression.SpanStart, edits.Count, remove: call.Expression.Span.Length));
+                return;
+            }
+            if (!(call.Expression is MemberAccessExpressionSyntax access) || access.Expression is BaseExpressionSyntax || InConditionalAccess(access.Expression))
+                return;
+            // `x.Wait(args)` → `Guard.TaskWait(x, args)`: `.Wait(` gives way to `, ` (to nothing without arguments).
+            var receiver = access.Expression;
+            var open = call.ArgumentList.OpenParenToken.Span.End;
+            edits.Add(new Edit(receiver.SpanStart, target + "(", receiver.SpanStart, edits.Count));
+            edits.Add(new Edit(receiver.Span.End, arguments.Count > 0 ? ", " : "", open, edits.Count, closer: true, remove: open - receiver.Span.End));
+        }
+
+        /// <summary><c>x.Result</c> of a <c>Task&lt;T&gt;</c> becomes <c>Ready(x).Result</c>: a sliced wait, then the result.</summary>
+        static void Result(MemberAccessExpressionSyntax access, Semantics semantics, List<Edit> edits)
+        {
+            if (semantics.HasErrors || access.Expression is BaseExpressionSyntax
+                || !(semantics.Model.GetSymbolInfo(access).Symbol is IPropertySymbol property) || property.IsStatic
+                || property.ContainingType.OriginalDefinition.ToDisplayString() != "System.Threading.Tasks.Task<TResult>"
+                || access.Ancestors().Any(a => a is SubpatternSyntax // `x is { Task.Result: 3 }` (C# 10): a property path
+                    || (a is InvocationExpressionSyntax nameOf && nameOf.Expression is IdentifierNameSyntax name && name.Identifier.ValueText == "nameof"))
+                || InExpressionTree(access, semantics))
+                return;
+            Ready(access.Expression, edits);
+        }
+
+        /// <summary>The task <c>x</c> of <paramref name="call"/> when it is <c>x.Name(...)</c> on a Task / Task&lt;T&gt;, else null.</summary>
+        static ExpressionSyntax? TaskCalled(ExpressionSyntax call, string name, Semantics semantics) =>
+            call is InvocationExpressionSyntax invocation && invocation.Expression is MemberAccessExpressionSyntax member
+            && member.Name.Identifier.ValueText == name && !(member.Expression is BaseExpressionSyntax)
+            && semantics.Model.GetSymbolInfo(invocation).Symbol is IMethodSymbol method && !method.IsStatic && IsTask(method.ContainingType)
+                ? member.Expression : null;
+
+        /// <summary>
+        /// Whether the expression starts inside a conditional access (<c>a?.Task.Result</c>, <c>a?[0].Wait()</c>): no code
+        /// can be put in front of it there.
+        /// </summary>
+        static bool InConditionalAccess(ExpressionSyntax expression)
+        {
+            while (true)
+            {
+                switch (expression)
+                {
+                    case MemberAccessExpressionSyntax member:
+                        expression = member.Expression;
+                        break;
+                    case InvocationExpressionSyntax invocation:
+                        expression = invocation.Expression;
+                        break;
+                    case ElementAccessExpressionSyntax element:
+                        expression = element.Expression;
+                        break;
+                    case PostfixUnaryExpressionSyntax postfix: // `a?.b!.Result`
+                        expression = postfix.Operand;
+                        break;
+                    default:
+                        return expression is MemberBindingExpressionSyntax || expression is ElementBindingExpressionSyntax;
+                }
+            }
+        }
+
+        static void Ready(ExpressionSyntax task, List<Edit> edits)
+        {
+            if (InConditionalAccess(task))
+                return;
+            edits.Add(new Edit(task.SpanStart, ExecutionGuard.QualifiedName + ".Ready(", task.SpanStart, edits.Count));
+            edits.Add(new Edit(task.Span.End, ")", task.Span.End, edits.Count, closer: true));
+        }
+
+        static bool IsTask(ITypeSymbol? type)
+        {
+            for (; type != null; type = type.BaseType)
+            {
+                if (type.ToDisplayString() == "System.Threading.Tasks.Task")
+                    return true;
+            }
+            return false;
+        }
+
+        /// <summary>Inside an expression tree (a lambda that is not a delegate) or a query, which may be one.</summary>
+        static bool InExpressionTree(SyntaxNode node, Semantics semantics) =>
+            node.Ancestors().Any(outer => outer is QueryExpressionSyntax || (outer is AnonymousFunctionExpressionSyntax function && !semantics.IsDelegate(function)));
 
         /// <summary>The methods that start work on another thread or as a task (with the constructors of Thread and Task).</summary>
         static readonly HashSet<string> WorkStartNames = new HashSet<string> { "Run", "StartNew", "QueueUserWorkItem", "UnsafeQueueUserWorkItem" };
@@ -246,13 +416,9 @@ namespace com.IvanMurzak.CodeExec.Roslyn
         /// </summary>
         static void Workers(ExpressionSyntax call, ArgumentListSyntax arguments, Semantics semantics, List<Edit> edits)
         {
-            if (semantics.HasErrors || !(semantics.Model.GetSymbolInfo(call).Symbol is IMethodSymbol method) || !(StartsWork(method) is bool task))
+            if (semantics.HasErrors || !(semantics.Model.GetSymbolInfo(call).Symbol is IMethodSymbol method) || !(StartsWork(method) is bool task)
+                || InExpressionTree(call, semantics))
                 return;
-            foreach (var outer in call.Ancestors())
-            {
-                if (outer is QueryExpressionSyntax || (outer is AnonymousFunctionExpressionSyntax function && !semantics.IsDelegate(function)))
-                    return;
-            }
             var entry = task ? ExecutionGuard.TaskWorker : ExecutionGuard.Worker;
             foreach (var argument in arguments.Arguments)
             {
