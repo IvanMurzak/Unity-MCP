@@ -4,6 +4,12 @@
 
 ### Changed
 
+- **McpPlugin 8.15.0** (gate `UNITY_MCP_DEPS_31`). A tool that throws a plain, `InvalidOperationException` or
+  other non-fault exception now answers the server's direct endpoint `POST /api/tools/{name}` with HTTP 422 and the
+  same message, not 500: every `script-execute` failure ("Compilation failed", "Execution failed", the snippet
+  timeout, the reload-pending messages) and the tools' "not available" errors. Fault types
+  (`NullReferenceException`, `IndexOutOfRangeException`, `InvalidCastException`, `TimeoutException`, load errors
+  and similar) stay 500. The MCP channel is unchanged.
 - **McpPlugin 8.14.0, ReflectorNet 5.5.1, GameDev-MCP-Server 9.3.0** (published releases; gate
   `UNITY_MCP_DEPS_30`). The bundled DLLs and resolver pins replace the 8.14.0-dev / 5.5.1-dev pre-release builds
   that several entries below were integrated on, and the plugin downloads server 9.3.0.
