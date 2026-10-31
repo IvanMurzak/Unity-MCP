@@ -110,8 +110,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "types and must not wait for the compile (`EditorApplication.isCompiling` stays true until the reload; a snippet still " +
             "running 10 s after a compile is requested is stopped). A call made while the scripts compile is not run (it would hold " +
             "the reload back): the server sends it again after the reload, or it says so: retry it after a few seconds, or wait with " +
-            "rql-query `editor | select isCompiling`. Use the " +
-            "new types in a later call (retry one that fails during the reload).\n" +
+            "rql-query `editor | select isCompiling`. Use the new types in a later call (retry one that fails during the reload).\n" +
             "- Every run starts fresh: static fields of your own types do not keep values from an earlier call, except a " +
             "`static readonly` field of an immutable type (string, number, enum, read-only collection): identical code sets it " +
             "once per domain, so read live Editor state in a method or property, not in such an initializer.\n\n" +

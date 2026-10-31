@@ -378,10 +378,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             => Regex.Escape(input);
 
         /// <summary>
-        /// Unity's own test tree for the filter's mode: how many tests <paramref name="filter"/> (the run's own filter) selects, and which of the RQL selection's names (<see cref="TestFilterParameters.SelectedNames"/>) match
-        /// no test there (a fixture with arguments, a generic fixture: the tests source names them differently).
-        /// </summary>
-        /// <summary>
         /// Another run holds the Test Runner: the Editor cannot take this call now and started nothing, so it is
         /// <see cref="ResponseErrorKind.Unavailable"/> (HTTP 503 on the direct endpoint), not the agent's error. No
         /// not-executed status: the server must not send it again on its own, the other run may last minutes.
@@ -393,6 +389,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return response.SetRequestID(requestId);
         }
 
+        /// <summary>
+        /// Unity's own test tree for the filter's mode: how many tests <paramref name="filter"/> (the run's own filter) selects, and which of the RQL selection's names (<see cref="TestFilterParameters.SelectedNames"/>) match
+        /// no test there (a fixture with arguments, a generic fixture: the tests source names them differently).
+        /// </summary>
         static async Task<(int count, List<string> unmatched)> MatchTestTree(TestRunnerApi testRunnerApi, Filter filter, TestFilterParameters filterParams)
         {
             var testMode = filter.testMode;
