@@ -115,14 +115,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return await MainThread.Instance.RunAsync(() =>
             {
                 if (IsTestRunActive(out var activeRequestId))
-                    return TestsBusy(activeRequestId, requestId);
+                    return EditorBusy(Error.TestsAlreadyRunning(activeRequestId), requestId);
 
                 // Also covers a run not started by this tool (the Test Runner window): Unity's own window refuses to start
                 // one in Play Mode too.
                 if (UnityEditor.EditorApplication.isPlayingOrWillChangePlaymode)
-                    return ResponseCallValueTool<TestRunResponse>
-                        .Error(Error.EditorInPlayMode)
-                        .SetRequestID(requestId);
+                    return EditorBusy(Error.EditorInPlayMode, requestId);
 
                 // Abort before any state mutation if any open scene has unsaved changes.
                 // Running tests against a dirty scene is unsafe: Unity may reload the scene on
@@ -142,7 +140,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         .SetRequestID(requestId);
 
                 if (!TryBeginTestRun(requestId, out activeRequestId))
-                    return TestsBusy(activeRequestId, requestId);
+                    return EditorBusy(Error.TestsAlreadyRunning(activeRequestId), requestId);
 
                 // Save display options to SessionState BEFORE AssetDatabase.Refresh —
                 // these must be persisted before a potential domain reload
@@ -378,13 +376,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             => Regex.Escape(input);
 
         /// <summary>
-        /// Another run holds the Test Runner: the Editor cannot take this call now and started nothing, so it is
-        /// <see cref="ResponseErrorKind.Unavailable"/> (HTTP 503 on the direct endpoint), not the agent's error. No
-        /// not-executed status: the server must not send it again on its own, the other run may last minutes.
+        /// The Editor cannot take this call now (another run holds the Test Runner, Play Mode or a run still finishing) and
+        /// started nothing, so it is <see cref="ResponseErrorKind.Unavailable"/> (HTTP 503 on the direct endpoint), not the
+        /// agent's error. No not-executed status: the server must not send it again on its own, the state may last minutes.
         /// </summary>
-        internal static ResponseCallValueTool<TestRunResponse> TestsBusy(string activeRequestId, string requestId)
+        internal static ResponseCallValueTool<TestRunResponse> EditorBusy(string message, string requestId)
         {
-            var response = ResponseCallValueTool<TestRunResponse>.Error(Error.TestsAlreadyRunning(activeRequestId));
+            var response = ResponseCallValueTool<TestRunResponse>.Error(message);
             response.ErrorKind = ResponseErrorKind.Unavailable;
             return response.SetRequestID(requestId);
         }
