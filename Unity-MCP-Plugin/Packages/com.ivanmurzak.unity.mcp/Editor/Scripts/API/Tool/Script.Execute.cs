@@ -109,7 +109,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "reload after the call: the reload waits while a snippet runs, so its reply arrives, but the snippet cannot use the new " +
             "types and must not wait for the compile (`EditorApplication.isCompiling` stays true until the reload; a snippet still " +
             "running 10 s after a compile is requested is stopped). A call made while the scripts compile is not run (it would hold " +
-            "the reload back) and says so: retry it after a few seconds, or wait with rql-query `editor | select isCompiling`. Use the " +
+            "the reload back): the server sends it again after the reload, or it says so: retry it after a few seconds, or wait with " +
+            "rql-query `editor | select isCompiling`. Use the " +
             "new types in a later call (retry one that fails during the reload).\n" +
             "- Every run starts fresh: static fields of your own types do not keep values from an earlier call, except a " +
             "`static readonly` field of an immutable type (string, number, enum, read-only collection): identical code sets it " +
@@ -185,9 +186,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         static async Task<SerializedMember?> RunOnMainThread(PreparedSnippet prepared, SerializedMemberList? parameters)
         {
             if (DeferForReload())
-                throw new Exception(ReloadPendingMessage); // run nothing: the reload goes first
+                throw ReloadPending(); // run nothing: the reload goes first
             var logger = UnityLoggerFactory.LoggerFactory.CreateLogger("Tool_Script.Execute");
-            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new Exception("Reflector is not available.");
+            var reflector = UnityMcpPluginEditor.Instance.Reflector ?? throw new ToolUnavailableException("Reflector is not available.");
             if (parameters != null)
                 prepared = prepared.WithValues(parameters.Select(p => reflector.Deserialize(data: p, logger: logger)).ToList());
 

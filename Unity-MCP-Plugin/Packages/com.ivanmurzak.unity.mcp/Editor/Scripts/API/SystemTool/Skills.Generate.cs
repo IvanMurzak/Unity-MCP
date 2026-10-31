@@ -79,7 +79,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             logger.LogInformation("Generating all skills in folder: {Path}", path);
 
             var mcpPlugin = UnityMcpPluginEditor.Instance.McpPluginInstance
-                ?? throw new InvalidOperationException(
+                ?? throw new ToolUnavailableException(
                     "McpPluginInstance is null. The Unity-MCP plugin may not be fully initialized. " +
                     "Ensure the plugin has completed startup before calling unity-skill-generate.");
 

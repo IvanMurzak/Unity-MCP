@@ -115,9 +115,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return await MainThread.Instance.RunAsync(() =>
             {
                 if (IsTestRunActive(out var activeRequestId))
-                    return ResponseCallValueTool<TestRunResponse>
-                        .Error(Error.TestsAlreadyRunning(activeRequestId))
-                        .SetRequestID(requestId);
+                    return TestsBusy(activeRequestId, requestId);
 
                 // Also covers a run not started by this tool (the Test Runner window): Unity's own window refuses to start
                 // one in Play Mode too.
@@ -144,9 +142,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         .SetRequestID(requestId);
 
                 if (!TryBeginTestRun(requestId, out activeRequestId))
-                    return ResponseCallValueTool<TestRunResponse>
-                        .Error(Error.TestsAlreadyRunning(activeRequestId))
-                        .SetRequestID(requestId);
+                    return TestsBusy(activeRequestId, requestId);
 
                 // Save display options to SessionState BEFORE AssetDatabase.Refresh —
                 // these must be persisted before a potential domain reload
@@ -385,6 +381,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// Unity's own test tree for the filter's mode: how many tests <paramref name="filter"/> (the run's own filter) selects, and which of the RQL selection's names (<see cref="TestFilterParameters.SelectedNames"/>) match
         /// no test there (a fixture with arguments, a generic fixture: the tests source names them differently).
         /// </summary>
+        /// <summary>
+        /// Another run holds the Test Runner: the Editor cannot take this call now and started nothing, so it is
+        /// <see cref="ResponseErrorKind.Unavailable"/> (HTTP 503 on the direct endpoint), not the agent's error. No
+        /// not-executed status: the server must not send it again on its own, the other run may last minutes.
+        /// </summary>
+        internal static ResponseCallValueTool<TestRunResponse> TestsBusy(string activeRequestId, string requestId)
+        {
+            var response = ResponseCallValueTool<TestRunResponse>.Error(Error.TestsAlreadyRunning(activeRequestId));
+            response.ErrorKind = ResponseErrorKind.Unavailable;
+            return response.SetRequestID(requestId);
+        }
+
         static async Task<(int count, List<string> unmatched)> MatchTestTree(TestRunnerApi testRunnerApi, Filter filter, TestFilterParameters filterParams)
         {
             var testMode = filter.testMode;
