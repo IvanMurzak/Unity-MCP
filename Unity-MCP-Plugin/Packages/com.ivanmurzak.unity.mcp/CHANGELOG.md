@@ -4,6 +4,10 @@
 
 ### Changed
 
+- **McpPlugin 8.15.0** (gate `UNITY_MCP_DEPS_31`). A tool that throws because of what the agent sent (e.g.
+  `script-execute`'s "Compilation failed" / "Execution failed") now answers the server's direct endpoint
+  `POST /api/tools/{name}` with HTTP 422 and the same message, not 500; a fault in the plugin
+  (`NullReferenceException` and similar) stays 500. The MCP channel is unchanged.
 - **McpPlugin 8.14.0, ReflectorNet 5.5.1, GameDev-MCP-Server 9.3.0** (published releases; gate
   `UNITY_MCP_DEPS_30`). The bundled DLLs and resolver pins replace the 8.14.0-dev / 5.5.1-dev pre-release builds
   that several entries below were integrated on, and the plugin downloads server 9.3.0.

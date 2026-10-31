@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "30";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "31";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -119,7 +119,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 8.11.0 sends a tool call to the plugin once (no re-send per plugin-timeout), adds the
             // server's `tool-timeout` arg (Consts.MCP.Server.Args/Env.ToolTimeout, DefaultToolTimeoutMs)
             // that McpServerManager passes, and the plugin-side duplicate-request guard.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.14.0", includeInBuild: true),
+            // 8.15.0: a tool body that throws on the request's content answers the server's direct endpoint
+            // with HTTP 422 (BadRequest + HttpStatusCode 422) instead of 500; fault types stay 500.
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.15.0", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised
