@@ -120,6 +120,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsFalse(Tool_Tests.IsTestRunActive(out _));
         }
 
+        // Another run holds the Test Runner: the Editor cannot take the call now (503), not the agent's error; nothing is
+        // started, and it is not marked not-executed (the server must not keep re-sending it while the other run lasts).
+        [UnityTest]
+        public IEnumerator Run_WhileAnotherRunIsActive_IsUnavailable()
+        {
+            Assert.IsTrue(Tool_Tests.TryBeginTestRun("request-other", out _));
+
+            var task = Tool_Tests.Run(requestId: "request-busy");
+            while (!task.IsCompleted)
+                yield return null;
+            var response = task.Result;
+
+            Assert.AreEqual(ResponseStatus.Error, response.Status);
+            Assert.AreEqual(ResponseErrorKind.Unavailable, response.ErrorKind);
+            Assert.IsNull(response.HttpStatusCode);
+            Assert.AreEqual("request-busy", response.RequestID);
+            StringAssert.Contains("another test run is already in progress", response.GetMessage());
+            Assert.IsTrue(Tool_Tests.IsTestRunActive(out var activeRequestId));
+            Assert.AreEqual("request-other", activeRequestId);
+        }
+
         [Test]
         public void RunErrorMessage_ListsTheErrorsLoggedDuringTheRun()
         {

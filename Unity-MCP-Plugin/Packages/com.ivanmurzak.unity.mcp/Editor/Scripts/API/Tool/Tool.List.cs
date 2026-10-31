@@ -87,7 +87,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return MainThread.Instance.Run(() =>
             {
                 var toolManager = UnityMcpPluginEditor.Instance.Tools
-                    ?? throw new InvalidOperationException(Error.ToolManagerNotAvailable());
+                    ?? throw new ToolUnavailableException(Error.ToolManagerNotAvailable());
 
                 var allTools = toolManager.GetAllTools();
                 if (allTools == null)

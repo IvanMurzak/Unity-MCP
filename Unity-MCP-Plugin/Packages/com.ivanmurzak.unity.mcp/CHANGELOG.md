@@ -4,10 +4,24 @@
 
 ### Changed
 
+- **McpPlugin 8.16.0** (gate `UNITY_MCP_DEPS_32`): an Editor that cannot serve a call right now answers **HTTP 503**,
+  not 422, on the server's direct endpoint `POST /api/tools/{name}` (the tools throw McpPlugin's new
+  `ToolUnavailableException`; the MCP channel still shows the tool's message as an error result):
+  - `script-execute` called while scripts compile for a reload its own lock held back: nothing ran, so the refusal is
+    "not executed" and a server with the call guard (GameDev-MCP-Server 9.3.0+) sends the call again once the
+    reloaded plugin is back; an older server returns the refusal as a 503.
+  - `script-execute` "Reflector is not available.", `unity-tool-list` / `tool-set-visibility` /
+    `tool-set-enabled-state` "Tool manager is not available", `unity-skill-generate` "McpPluginInstance is null":
+    503, never sent again automatically.
+  - `tests-run` while another test run is in progress, or in Play Mode (or while a run is still finishing): 503
+    (was 400), never sent again automatically.
+  - Unchanged: a snippet stopped to let the reload start (it already ran part of its code) and the snippet's compile
+    and runtime errors stay 422; `tests-run` with dirty scenes stays 422.
 - **McpPlugin 8.15.0** (gate `UNITY_MCP_DEPS_31`). A tool that throws a plain, `InvalidOperationException` or
   other non-fault exception now answers the server's direct endpoint `POST /api/tools/{name}` with HTTP 422 and the
   same message, not 500: every `script-execute` failure ("Compilation failed", "Execution failed", the snippet
-  timeout, the reload-pending messages) and the tools' "not available" errors. Fault types
+  timeout, the reload-stop message). (The reload-pending refusal and the tools' "not available" errors became 503
+  with McpPlugin 8.16.0, above.) Fault types
   (`NullReferenceException`, `IndexOutOfRangeException`, `InvalidCastException`, `TimeoutException`, load errors
   and similar) stay 500. The MCP channel is unchanged.
 - **McpPlugin 8.14.0, ReflectorNet 5.5.1, GameDev-MCP-Server 9.3.0** (published releases; gate
