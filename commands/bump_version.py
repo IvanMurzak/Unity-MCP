@@ -33,11 +33,11 @@ PACKAGE_JSON = "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json"
 LOCK_FILE = "cli/package-lock.json"
 SEMVER_SUFFIX = r"(-[a-zA-Z0-9\-\.]+)?(\+[a-zA-Z0-9\-\.]+)?"
 SEMVER_RE = re.compile(r"^\d+\.\d+\.\d+" + SEMVER_SUFFIX + r"$")
-CURRENT_VERSION_RE = re.compile(r'"version":\s*"([\d\.]+)"', re.IGNORECASE)
+CURRENT_VERSION_RE = re.compile(r'"version":\s*"([\d\.]+' + SEMVER_SUFFIX + ')"', re.IGNORECASE)
 # Only the two root-level version fields that follow "name": "unity-mcp-cli"; dependency versions
 # are not touched. Case-sensitive, like the .ps1's [regex]::Replace (its -replace edits were not).
 LOCK_RE = re.compile(r'("name":\s*"unity-mcp-cli",\s+"version":\s*")[\d\.]+' + SEMVER_SUFFIX)
-CS_VERSION_RE = re.compile(r'public const string Version = "[\d\.]+";', re.IGNORECASE)
+CS_VERSION_RE = re.compile(r'public const string Version = "[\d\.]+' + SEMVER_SUFFIX + '";', re.IGNORECASE)
 CS_VERSION = 'public const string Version = "{VERSION}";'
 
 
@@ -53,8 +53,8 @@ class VersionFile:
 VERSION_FILES = (
     VersionFile("Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs", CS_VERSION_RE, CS_VERSION,
                 "Installer C# version constant"),
-    VersionFile(PACKAGE_JSON, re.compile(r'"version":\s*"[\d\.]+"', re.IGNORECASE), '"version": "{VERSION}"',
-                "Unity package version"),
+    VersionFile(PACKAGE_JSON, re.compile(r'"version":\s*"[\d\.]+' + SEMVER_SUFFIX + '"', re.IGNORECASE),
+                '"version": "{VERSION}"', "Unity package version"),
     VersionFile("Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs", CS_VERSION_RE,
                 CS_VERSION, "Plugin C# version constant"),
     VersionFile("cli/package.json", re.compile(r'"version":\s*"[\d\.]+' + SEMVER_SUFFIX + '"', re.IGNORECASE),
