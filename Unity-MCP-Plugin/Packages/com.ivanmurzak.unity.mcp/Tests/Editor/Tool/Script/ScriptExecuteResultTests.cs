@@ -137,18 +137,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         public void ADeferredCallIsNotExecutedUnavailable()
         {
             var tool = RunTool.CreateFromStaticMethod(UnityMcpPluginEditor.Instance.Reflector!, null, "deferred",
-                typeof(ScriptExecuteResultTests).GetMethod(nameof(DeferredForReload), System.Reflection.BindingFlags.NonPublic | System.Reflection.BindingFlags.Static)!);
+                typeof(ScriptExecuteResultTests).GetMethod(nameof(DeferredForReload))!);
 
             var response = tool.Run("request-1", new Dictionary<string, JsonElement>()).GetAwaiter().GetResult();
 
             Assert.AreEqual(ResponseStatus.Error, response.Status);
-            Assert.AreEqual(ResponseErrorKind.Unavailable, response.ErrorKind);
+            Assert.AreEqual(ResponseErrorKind.Unavailable, response.ErrorKind, response.GetMessage());
             Assert.AreEqual(ResponseCallTool.NotExecutedStatusCode, response.HttpStatusCode);
             StringAssert.EndsWith(Tool_Script.ReloadPendingMessage, response.GetMessage());
             Assert.IsTrue(ResponseCallTool.IsNotExecuted(response.Pack("request-1")));
         }
 
-        static string DeferredForReload() => throw Tool_Script.ReloadPending();
+        // A tool method throws the refusal script-execute throws for a deferred call (RunTool needs a public method).
+        public static string DeferredForReload() => throw Tool_Script.ReloadPending();
 
         [Test]
         public void ATypedNullIsNullNotTheStringNull() =>
