@@ -46,14 +46,10 @@ namespace com.IvanMurzak.Unity.MCP
 
         public void Validate()
         {
-            var changed = false;
             var data = unityConnectionConfig ??= new UnityConnectionConfig();
 
-            if (RepairLocalHost(data, RuntimeOverrides))
-                changed = true;
-
             // Data was changed during validation, need to notify subscribers
-            if (changed)
+            if (RepairLocalHost(data, RuntimeOverrides))
                 NotifyChanged(data);
         }
 

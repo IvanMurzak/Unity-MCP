@@ -51,7 +51,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private AlertPanel? _alertPanel;
         private AlertPanel? _reconfigureAlertPanel;
-        private AlertPanel? _transportUnsupportedAlertPanel;
 
         public AiAgentConfiguratorView(AgentConfig.AiAgentConfigurator configurator)
         {
@@ -572,7 +571,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // Never write an entry the agent rejects (Claude Desktop skips an HTTP entry in its config file).
             if (!_configurator.SupportsTransport(transport))
             {
-                Debug.LogWarning($"[AI Game Developer] {AgentName} does not support the {transport} transport; its MCP config was not written. Select the Custom connection and the stdio transport, then press Configure.");
+                Debug.LogWarning($"[AI Game Developer] {AgentName} does not support the {transport} transport; its MCP config was not written.");
                 RefreshConfigurationUI();
                 return;
             }
@@ -797,14 +796,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _reconfigureAlertPanel.SetButton("Reconfigure", ReconfigureActiveTransport);
             ContainerAlert.Add(_reconfigureAlertPanel.Root);
 
-            // The active transport cannot be configured for this agent (e.g. Claude Desktop over HTTP, Cloud included):
-            // the shared Describe() alert, shown at the top instead of only inside the transport section. A transport
-            // switch rebuilds the whole view, so the panel is created for the transport active now.
+            // The active transport cannot be configured for this agent (e.g. Claude Desktop over HTTP, Cloud included).
+            // The transport section below holds the shared Describe() alert with the working setup. A transport switch
+            // rebuilds the whole view, so the panel is added only for the transport active now.
             if (!_configurator.SupportsTransport(ActiveTransport))
-            {
-                _transportUnsupportedAlertPanel = new AlertPanel("Transport Not Supported", TransportNotSupportedText(ActiveTransport));
-                ContainerAlert.Add(_transportUnsupportedAlertPanel.Root);
-            }
+                ContainerAlert.Add(new AlertPanel("Transport Not Supported",
+                    $"{AgentName} cannot use the selected transport. See the transport section below for the setup that works.").Root);
 
             UpdateAlertPanel();
         }
@@ -833,25 +830,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // "Setup Required" offers Configure, which an unsupported transport cannot do: the unsupported alert replaces it.
             _alertPanel.SetVisible(!isSetupComplete && transportSupported);
             _reconfigureAlertPanel?.SetVisible(needsReconfigure);
-            _transportUnsupportedAlertPanel?.SetVisible(!transportSupported);
 
             if (ContainerAlert != null)
-                ContainerAlert.style.display = ((!isSetupComplete && transportSupported) || needsReconfigure || !transportSupported)
+                ContainerAlert.style.display = (!isSetupComplete || needsReconfigure || !transportSupported)
                     ? DisplayStyle.Flex
                     : DisplayStyle.None;
-        }
-
-        /// <summary>
-        /// The alert text the shared <see cref="AgentConfig.AiAgentConfigurator.Describe"/> emits for an unsupported
-        /// transport (its first Alert item), so the top panel and the transport section say the same thing.
-        /// </summary>
-        private string TransportNotSupportedText(TransportMethod transport)
-        {
-            foreach (var section in _configurator.Describe(CurrentSettings(), transport).Sections)
-                foreach (var item in section.Items)
-                    if (item.Kind == AgentConfig.ConfigurationItemKind.Alert && item.Text != null)
-                        return item.Text;
-            return $"{AgentName} does not support the selected transport.";
         }
 
         private void ConfigureActiveTransport() => ConfigureTransport(ActiveTransport);
