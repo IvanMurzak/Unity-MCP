@@ -81,6 +81,10 @@ describe('setup-mcp command — credential line', () => {
     expect(describeCredential({ ...none, transport: 'http' }, 'http://0.0.0.0:26587')).toBe('none (local server — no sign-in needed)');
   });
 
+  it('keeps the sign-in wording for --oauth, even with a local --url', () => {
+    expect(describeCredential({ ...none, transport: 'http' }, 'http://localhost:26587', true)).toBe('none (URL-only — the agent signs in itself)');
+  });
+
   it('keeps the URL-only wording for a Cloud config without a credential', () => {
     expect(describeCredential({ ...none, transport: 'http' })).toBe('none (URL-only — the agent signs in itself)');
     expect(describeCredential({ ...none, transport: 'http' }, 'https://ai-game.dev/mcp')).toBe('none (URL-only — the agent signs in itself)');

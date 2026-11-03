@@ -311,7 +311,7 @@ unity-mcp-cli run-tool rql-mutate ./MyGame --input '{"query":"editor | call Crea
 **例 — ツールを呼び出す（URLと認証は設定から取得）：**
 
 ```bash
-unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select $path name active"}'
+unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select path name active"}'
 ```
 
 **例 — URLを明示的にオーバーライド：**

@@ -94,7 +94,7 @@ Eso es todo. Pídele a tu IA *"Crea 3 cubos en un círculo con radio 2"* y obser
 
 # Referencia de Skills y herramientas
 
-Desde la versión 1.0.1 el plugin expone un conjunto reducido de herramientas, y la mayor parte del trabajo en el Editor pasa por **RQL**, un lenguaje de consultas sobre los datos del Editor: `rql-query` lee, `rql-mutate` modifica y `rql-schema` describe las fuentes, tipos y llamadas (empieza por ahí si tienes dudas). Las herramientas de una acción por herramienta de versiones anteriores (`gameobject-create`, `scene-save`, `console-get-logs` y otras) fueron reemplazadas por RQL en [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017). Consulta [docs/default-mcp-tools.md](docs/default-mcp-tools.md) para la referencia completa.
+Desde la versión 1.0.0 el plugin expone un conjunto reducido de herramientas, y la mayor parte del trabajo en el Editor pasa por **RQL**, un lenguaje de consultas sobre los datos del Editor: `rql-query` lee, `rql-mutate` modifica y `rql-schema` describe las fuentes, tipos y llamadas (empieza por ahí si tienes dudas). Las herramientas de una acción por herramienta de versiones anteriores (`gameobject-create`, `scene-save`, `console-get-logs` y otras) fueron reemplazadas por RQL en [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017). Consulta [docs/default-mcp-tools.md](default-mcp-tools.md) para la referencia completa.
 
 > 🧰 Explora el registro completo de herramientas MCP en línea: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
@@ -225,7 +225,7 @@ Instala extensiones cuando necesites más herramientas o [crea tus propias herra
 
 | Documento | Descripción |
 | -------- | ----------- |
-| [Herramientas MCP predeterminadas](docs/default-mcp-tools.md) | Referencia completa de todas las herramientas integradas con descripciones |
+| [Herramientas MCP predeterminadas](default-mcp-tools.md) | Referencia completa de todas las herramientas integradas con descripciones |
 | [Configuración del MCP Server](docs/mcp-server.md) | Configuración del servidor, variables de entorno, hosting remoto |
 | [Despliegue con Docker](docs/DOCKER_DEPLOYMENT.md) | Guía paso a paso para despliegue con Docker |
 | [Guía de desarrollo](docs/dev/Development.md) | Arquitectura, estilo de código, CI/CD — para contribuidores |
@@ -579,7 +579,7 @@ Independientemente de la opción de ejecución que elijas, todas soportan config
 
 ## Variables del Plugin
 
-El Unity MCP Plugin lee las siguientes variables de entorno (y argumentos de línea de comandos) al iniciar para sobrescribir los valores del archivo de configuración guardado. Las sobrescrituras se aplican solo en memoria y **nunca se escriben en el archivo de configuración** (`UserSettings/AI-Game-Developer-Config.json`), por lo que los valores guardados (por ejemplo `connectionMode` o `transportMethod`) siguen mostrando lo que se eligió en la ventana de AI Game Developer. Para cambiar un ajuste de forma permanente, cámbialo en la ventana.
+El Unity MCP Plugin lee las siguientes variables de entorno (y argumentos de línea de comandos) al iniciar para sobrescribir los valores del archivo de configuración guardado. Las sobrescrituras se aplican solo en memoria y **nunca se escriben en el archivo de configuración** (`UserSettings/AI-Game-Developer-Config.json`), por lo que los valores guardados (por ejemplo `connectionMode` o `transportMethod`) siguen mostrando lo que se eligió en la ventana de AI Game Developer. Para cambiar un ajuste de forma permanente, cámbialo en la ventana, en un Editor iniciado sin esa sobrescritura (mientras una sobrescritura está activa, un cambio del mismo ajuste en la ventana no se conserva).
 
 | Variable de entorno         | Arg de línea de comandos    | Valores              | Descripción                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |

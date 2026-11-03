@@ -650,7 +650,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 // copy intact.
                 var serverWasRunning = WasServerRunningForUpdate(_serverStatus.CurrentValue);
                 var restartAfterPublish = ShouldRestartAfterUpdate(
-                    previousKeepServerRunning, UnityMcpPluginEditor.ConnectionMode);
+                    previousKeepServerRunning, UnityMcpPluginEditor.ConnectionMode, UnityMcpPluginEditor.TransportMethod);
 
                 // Capture the live PID/port BEFORE the stop (StopServer nulls _serverProcess) so a stop failure can
                 // name them in a single actionable error.
@@ -798,12 +798,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         /// <summary>
         /// True when the server should be auto-restarted after a binary update (Fix A): the user kept the server
-        /// running AND the connection mode auto-starts the local server. When false (autostart-false) the update
+        /// running AND the connection mode and transport auto-start the local server (with stdio the AI agent
+        /// owns the port, see <see cref="IsAutoStartAllowedForTransport"/>). When false (autostart-false) the update
         /// flow never calls StartServer(), so its "MCP server is already Running" path is unreachable. Pure —
         /// unit-testable without a running Editor.
         /// </summary>
-        internal static bool ShouldRestartAfterUpdate(bool previousKeepServerRunning, ConnectionMode mode)
-            => previousKeepServerRunning && IsAutoStartAllowedForMode(mode);
+        internal static bool ShouldRestartAfterUpdate(
+            bool previousKeepServerRunning,
+            ConnectionMode mode,
+            TransportMethod transport = TransportMethod.streamableHttp)
+            => previousKeepServerRunning && IsAutoStartAllowedForMode(mode) && IsAutoStartAllowedForTransport(transport);
 
         /// <summary>The result of <see cref="OrchestrateServerBinaryUpdate"/> (Fix A).</summary>
         internal enum ServerUpdateRestartOutcome

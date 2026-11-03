@@ -94,7 +94,7 @@ unity-mcp-cli open ./MyUnityProject
 
 # スキルとツールリファレンス
 
-バージョン 1.0.1 以降、プラグインが公開するツールは少数に絞られ、Editor での作業のほとんどは Editor のデータを対象とするクエリ言語 **RQL** を通じて行います。`rql-query` は読み取り、`rql-mutate` は変更、`rql-schema` はソース・型・呼び出しを説明します（迷ったらここから始めてください）。以前のバージョンの「1アクション1ツール」型のツール（`gameobject-create`、`scene-save`、`console-get-logs` など）は [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017) で RQL に置き換えられました。完全なリファレンスは [docs/default-mcp-tools.md](docs/default-mcp-tools.md) をご覧ください。
+バージョン 1.0.0 以降、プラグインが公開するツールは少数に絞られ、Editor での作業のほとんどは Editor のデータを対象とするクエリ言語 **RQL** を通じて行います。`rql-query` は読み取り、`rql-mutate` は変更、`rql-schema` はソース・型・呼び出しを説明します（迷ったらここから始めてください）。以前のバージョンの「1アクション1ツール」型のツール（`gameobject-create`、`scene-save`、`console-get-logs` など）は [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017) で RQL に置き換えられました。完全なリファレンスは [docs/default-mcp-tools.md](default-mcp-tools.md) をご覧ください。
 
 > 🧰 MCP ツールレジストリの全体をオンラインで閲覧: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
@@ -225,7 +225,7 @@ unity-mcp-cli open ./MyUnityProject
 
 | ドキュメント | 説明 |
 | -------- | ----------- |
-| [デフォルト MCP ツール](docs/default-mcp-tools.md) | すべての組み込みツールの詳細な説明付き完全リファレンス |
+| [デフォルト MCP ツール](default-mcp-tools.md) | すべての組み込みツールの詳細な説明付き完全リファレンス |
 | [MCP Server セットアップ](docs/mcp-server.md) | サーバー設定、環境変数、リモートホスティング |
 | [Docker デプロイ](docs/DOCKER_DEPLOYMENT.md) | ステップバイステップの Docker デプロイガイド |
 | [開発ガイド](docs/dev/Development.md) | アーキテクチャ、コードスタイル、CI/CD — コントリビューター向け |
@@ -579,7 +579,7 @@ public static class ChessGameAI
 
 ## プラグイン変数
 
-Unity MCP Plugin は起動時に以下の環境変数（およびコマンドライン引数）を読み込み、保存された設定ファイルの値を上書きします。上書きはメモリ内でのみ適用され、**設定ファイル（`UserSettings/AI-Game-Developer-Config.json`）には一切書き込まれません**。そのため、保存された値（例: `connectionMode` や `transportMethod`）は AI Game Developer ウィンドウで選択した内容を示したままです。設定を恒久的に変更するには、ウィンドウで変更してください。
+Unity MCP Plugin は起動時に以下の環境変数（およびコマンドライン引数）を読み込み、保存された設定ファイルの値を上書きします。上書きはメモリ内でのみ適用され、**設定ファイル（`UserSettings/AI-Game-Developer-Config.json`）には一切書き込まれません**。そのため、保存された値（例: `connectionMode` や `transportMethod`）は AI Game Developer ウィンドウで選択した内容を示したままです。設定を恒久的に変更するには、その上書きなしで起動した Editor のウィンドウで変更してください（上書きが有効な間は、同じ設定をウィンドウで変更しても保持されません）。
 
 | 環境変数                      | コマンドライン引数              | 値                    | 説明                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |

@@ -477,7 +477,7 @@ unity-mcp-cli run-tool rql-mutate ./MyGame --input '{"query":"editor | call Crea
 **Example — call a tool (URL and auth from config):**
 
 ```bash
-unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select $path name active"}'
+unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select path name active"}'
 ```
 
 **Example — explicit URL override:**

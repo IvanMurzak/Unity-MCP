@@ -94,7 +94,7 @@ unity-mcp-cli open ./MyUnityProject
 
 # 技能和工具参考
 
-自 1.0.1 起，插件只公开少量工具，大部分编辑器工作都通过 **RQL** 完成——一种针对编辑器数据的查询语言：`rql-query` 用于读取，`rql-mutate` 用于修改，`rql-schema` 用于描述数据源、类型和调用（不确定时从这里开始）。早期版本中"一个操作一个工具"的工具（`gameobject-create`、`scene-save`、`console-get-logs` 等）已在 [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017) 中被 RQL 取代。完整参考请见 [docs/default-mcp-tools.md](docs/default-mcp-tools.md)。
+自 1.0.0 起，插件只公开少量工具，大部分编辑器工作都通过 **RQL** 完成——一种针对编辑器数据的查询语言：`rql-query` 用于读取，`rql-mutate` 用于修改，`rql-schema` 用于描述数据源、类型和调用（不确定时从这里开始）。早期版本中"一个操作一个工具"的工具（`gameobject-create`、`scene-save`、`console-get-logs` 等）已在 [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017) 中被 RQL 取代。完整参考请见 [docs/default-mcp-tools.md](default-mcp-tools.md)。
 
 > 🧰 在线浏览完整的 MCP 工具注册表：[ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
@@ -225,7 +225,7 @@ unity-mcp-cli open ./MyUnityProject
 
 | 文档 | 描述 |
 | -------- | ----------- |
-| [默认 MCP 工具](docs/default-mcp-tools.md) | 所有内置工具的完整参考及描述 |
+| [默认 MCP 工具](default-mcp-tools.md) | 所有内置工具的完整参考及描述 |
 | [MCP 服务器设置](docs/mcp-server.md) | 服务器配置、环境变量、远程托管 |
 | [Docker 部署](docs/DOCKER_DEPLOYMENT.md) | 分步 Docker 部署指南 |
 | [开发指南](docs/dev/Development.md) | 架构、代码风格、CI/CD — 面向贡献者 |
@@ -579,7 +579,7 @@ public static class ChessGameAI
 
 ## 插件变量
 
-Unity MCP 插件在启动时读取以下环境变量（及命令行参数），用于覆盖已保存配置文件中的值。覆盖仅在内存中生效，**永远不会写入配置文件**（`UserSettings/AI-Game-Developer-Config.json`），因此已保存的值（例如 `connectionMode` 或 `transportMethod`）仍反映在 AI Game Developer 窗口中所做的选择。如需永久更改某项设置，请在该窗口中修改。
+Unity MCP 插件在启动时读取以下环境变量（及命令行参数），用于覆盖已保存配置文件中的值。覆盖仅在内存中生效，**永远不会写入配置文件**（`UserSettings/AI-Game-Developer-Config.json`），因此已保存的值（例如 `connectionMode` 或 `transportMethod`）仍反映在 AI Game Developer 窗口中所做的选择。如需永久更改某项设置，请在未使用该覆盖启动的编辑器中，于该窗口中修改（覆盖生效期间，在窗口中对同一设置所做的更改不会被保留）。
 
 | 环境变量                    | 命令行参数                  | 值                  | 描述                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |

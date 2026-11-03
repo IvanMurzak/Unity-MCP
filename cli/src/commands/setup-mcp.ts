@@ -30,6 +30,7 @@ interface SetupMcpCliOptions {
 export function describeCredential(
   result: Pick<SetupMcpSuccess, 'credential' | 'projectKeyId' | 'projectKeySource' | 'transport'>,
   url?: string,
+  oauth?: boolean,
 ): string {
   switch (result.credential) {
     case 'project-key': {
@@ -43,8 +44,9 @@ export function describeCredential(
       if (result.transport === 'stdio') {
         return 'none (local stdio server — no sign-in needed)';
       }
-      // The same test cli-core uses to decide that a config gets no credential.
-      if (url && !isCloudUrl(url)) {
+      // The same test cli-core uses to decide that a config gets no credential. With --oauth the
+      // agent does sign in (a local server running auth=oauth).
+      if (!oauth && url && !isCloudUrl(url)) {
         return 'none (local server — no sign-in needed)';
       }
       return 'none (URL-only — the agent signs in itself)';
@@ -153,7 +155,7 @@ export const setupMcpCommand = new Command('setup-mcp')
       labelEach('Moved to new key', result.rewrittenConfigPaths ?? []);
       ui.label('Transport', result.transport);
       ui.label('Server name', MCP_SERVER_NAME);
-      ui.label('Credential', describeCredential(result, options.url));
+      ui.label('Credential', describeCredential(result, options.url, options.oauth));
 
       printWarnings(result.warnings);
     },

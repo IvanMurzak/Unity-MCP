@@ -122,8 +122,12 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
         keepConnected: true,
         url: options.overrideUrl,
         token: options.overrideToken,
-        // A local server is only reachable if someone starts it; the plugin does when asked.
-        ...(options.overrideUrl && isLoopbackUrl(options.overrideUrl) ? { startServer: true } : {}),
+        // A local server is only reachable if someone starts it; the plugin does when asked. exec talks
+        // HTTP to it, so it also asks for the http transport (in memory only): with a project saved on
+        // stdio the plugin would otherwise leave the port to the AI agent and start nothing.
+        ...(options.overrideUrl && isLoopbackUrl(options.overrideUrl)
+          ? { startServer: true, transport: 'streamableHttp' as const }
+          : {}),
       }),
       idleSeconds: options.idleTimeoutSeconds ?? DEFAULT_SESSION_IDLE_SECONDS,
       ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),

@@ -311,7 +311,7 @@ unity-mcp-cli run-tool rql-mutate ./MyGame --input '{"query":"editor | call Crea
 **Ejemplo — llamar a una herramienta (URL y autenticacion desde la configuracion):**
 
 ```bash
-unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select $path name active"}'
+unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select path name active"}'
 ```
 
 **Ejemplo — URL explicita:**

@@ -311,7 +311,7 @@ unity-mcp-cli run-tool rql-mutate ./MyGame --input '{"query":"editor | call Crea
 **示例 — 调用工具（URL 和认证来自配置）：**
 
 ```bash
-unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select $path name active"}'
+unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select path name active"}'
 ```
 
 **示例 — 显式覆盖 URL：**

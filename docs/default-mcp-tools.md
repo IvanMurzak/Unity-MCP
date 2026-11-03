@@ -11,7 +11,7 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-Unity-MCP gives AI models a small set of tools for the Unity Editor and Runtime. Most Editor work goes through **RQL**, a query language over the Editor's data: `rql-query` reads, `rql-mutate` changes, `rql-schema` describes the sources, types and calls. Since 1.0.1 RQL replaces the one-tool-per-action tools of earlier versions ([#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017)); the table at the end maps the old IDs to RQL.
+Unity-MCP gives AI models a small set of tools for the Unity Editor and Runtime. Most Editor work goes through **RQL**, a query language over the Editor's data: `rql-query` reads, `rql-mutate` changes, `rql-schema` describes the sources, types and calls. Since 1.0.0 RQL replaces the one-tool-per-action tools of earlier versions ([#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017)); the table at the end maps the old IDs to RQL.
 
 > **Note**: IDs are kebab-case. *Default* tools are shown to the AI agent after installation; *hidden* tools are installed and run when called by name, and are shown with `tool-set-visibility`, in the AI Game Developer window, or with `unity-mcp-cli configure <path> --enable-tools <ids>`.
 
@@ -68,22 +68,31 @@ RQL sources: `scenes`, `roots`, `objects` (every GameObject in the loaded scenes
 | **Light probes (RQL)** | `call PlaceGrid(size, spacing)` on a `LightProbeGroup` | Fill a box around the group with evenly spaced probes. |
 | **Reflection probes (RQL)** | `call Bake()` on a `ReflectionProbe` | Bake a Custom probe into a texture next to its scene, re-render a Realtime one (Baked probes bake with the lighting). |
 
-## 🔁 Tools removed in 1.0.1 and their RQL equivalents
+## 🔁 Tools removed in 1.0.0 and their RQL equivalents
 Tutorials written for earlier versions use these IDs. They no longer exist; use RQL (exact signatures: `rql-schema`).
 
 | Old ID | Now |
 | :--- | :--- |
 | `scene-list-opened`, `scene-get-data` | `rql-query`: `scenes`, `roots`, `objects` |
-| `scene-create`, `scene-open`, `scene-save` | `rql-mutate`: `editor \| call NewScene(…)`, `OpenScene(…)`, `SaveScenes()` |
-| `gameobject-create`, `gameobject-duplicate` | `rql-mutate`: `editor \| call CreateGameObject({name, primitive, position, rotation, scale})` |
-| `gameobject-find`, `gameobject-component-get` | `rql-query`: `objects \| where name == "…" \| select …` |
-| `gameobject-modify`, `gameobject-component-modify`, `object-modify` | `rql-mutate`: `… \| set <member> = <value>` |
+| `scene-create`, `scene-open`, `scene-save` | `rql-mutate`: `editor \| call NewScene(…)`, `OpenScene(…)`, `SaveScenes()`; an untitled scene: `scenes \| where … \| call SaveAs("Assets/….unity")` |
+| `scene-set-active`, `scene-unload` | `rql-mutate`: `scenes \| where … \| call SetActive()`, `Close()` |
+| `gameobject-create` | `rql-mutate`: `editor \| call CreateGameObject({name, primitive, position, rotation, scale})` |
+| `gameobject-duplicate` | `rql-mutate`: `objects \| where name == "…" \| call Duplicate()` |
+| `gameobject-destroy` | `rql-mutate`: `objects \| where name == "…" \| call Destroy()` |
+| `gameobject-find` | `rql-query`: `objects \| where name == "…" \| select path name active`, or `unity.find("Level/Player")` |
+| `gameobject-set-parent` | `rql-mutate`: `… \| set transform.parent = ref(…)` |
+| `gameobject-modify`, `object-modify` | `rql-mutate`: `… \| set <member> = <value>` |
+| `gameobject-component-add` | `rql-mutate`: `… \| call AddComponent("Rigidbody")` |
+| `gameobject-component-get`, `gameobject-component-modify`, `gameobject-component-destroy` | `… \| get components \| where $ is Rigidbody \| select …` / `set …` / `call Destroy()` |
+| `gameobject-component-list-all` | `rql-query`: `componentTypes` |
+| `assets-find`, `assets-get-data`, `assets-modify` | `unity.assets("t:Material")`; `unity.asset("Assets/…") \| select …` / `set …` |
 | `assets-material-create` | `rql-mutate`: `editor \| call CreateMaterial("Assets/….mat")` |
 | `assets-create-folder`, `assets-copy`, `assets-move`, `assets-delete`, `assets-refresh` | `rql-mutate`: `editor \| call CreateFolder(…)`, `CopyAsset(…)`, `MoveAsset(…)`, `DeleteAsset(…)`, `RefreshAssets()`; save with `SaveAssets()` |
+| `assets-prefab-create` | `rql-mutate`: `… \| call SaveAsPrefab("Assets/….prefab")` |
 | `assets-prefab-open`, `assets-prefab-save`, `assets-prefab-close`, `assets-prefab-instantiate` | `rql-mutate`: `editor \| call OpenPrefab(…)`, `SavePrefab()`, `ClosePrefab()`, `InstantiatePrefab(…)`; source `prefab` |
 | `assets-shader-list-all` | `rql-query`: `shaders` |
 | `console-get-logs`, `console-clear-logs` | `rql-query`: `console`; `rql-mutate`: `editor \| call ClearConsole()` |
-| `editor-selection-get` | `rql-query`: `selection` |
-| `gameobject-component-list-all` | `rql-query`: `componentTypes` |
+| `editor-application-get-state`, `editor-application-set-state` | `editor \| select isPlaying isPaused isCompiling`; `editor \| set isPlaying = true` |
+| `editor-selection-get`, `editor-selection-set` | `rql-query`: `selection`; `rql-mutate`: `editor \| set selection = [ref(…)]` |
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

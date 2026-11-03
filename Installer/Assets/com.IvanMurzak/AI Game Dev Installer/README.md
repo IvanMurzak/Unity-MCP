@@ -94,7 +94,7 @@ That's it. Ask your AI *"Create 3 cubes in a circle with radius 2"* and watch it
 
 # Skills and Tools Reference
 
-Since 1.0.1 the plugin exposes a small set of tools, and most Editor work goes through **RQL**, a query language over the Editor's data: `rql-query` reads, `rql-mutate` changes, and `rql-schema` describes the sources, types and calls (start there when unsure). The one-tool-per-action tools of earlier versions (`gameobject-create`, `scene-save`, `console-get-logs` and others) were replaced by RQL in [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017). See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference.
+Since 1.0.0 the plugin exposes a small set of tools, and most Editor work goes through **RQL**, a query language over the Editor's data: `rql-query` reads, `rql-mutate` changes, and `rql-schema` describes the sources, types and calls (start there when unsure). The one-tool-per-action tools of earlier versions (`gameobject-create`, `scene-save`, `console-get-logs` and others) were replaced by RQL in [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017). See [docs/default-mcp-tools.md](docs/default-mcp-tools.md) for the full reference.
 
 > 🧰 Browse the full MCP tools registry online: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
@@ -581,7 +581,7 @@ Doesn't matter what launch option you choose, all of them support custom configu
 
 ## Plugin Variables
 
-The Unity MCP Plugin reads the following environment variables (and command-line arguments) on startup to override values from the saved config file. Overrides are applied in memory only and are **never written to the config file** (`UserSettings/AI-Game-Developer-Config.json`), so the saved values (for example `connectionMode` or `transportMethod`) still show what was chosen in the AI Game Developer window. To change a setting permanently, change it in the window.
+The Unity MCP Plugin reads the following environment variables (and command-line arguments) on startup to override values from the saved config file. Overrides are applied in memory only and are **never written to the config file** (`UserSettings/AI-Game-Developer-Config.json`), so the saved values (for example `connectionMode` or `transportMethod`) still show what was chosen in the AI Game Developer window. To change a setting permanently, change it in the window, in an Editor started without that override (while an override is active, a change to the same setting in the window is not kept).
 
 | Environment Variable        | Command Line Arg            | Values              | Description                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |
