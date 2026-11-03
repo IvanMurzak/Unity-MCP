@@ -128,9 +128,16 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                 // unset hint goes out as null. The EditMode ToolParameterTests sweep covers every family.
                 Assert.False(string.IsNullOrWhiteSpace(attribute.Title),
                     $"{type.Name}.{method.Name} declares no Title.");
-                Assert.True(attribute.ReadOnlyHintValue.HasValue && attribute.DestructiveHintValue.HasValue
-                        && attribute.IdempotentHintValue.HasValue && attribute.OpenWorldHintValue.HasValue,
-                    $"{type.Name}.{method.Name} leaves an annotation hint unset.");
+                foreach (var (hint, value) in new[]
+                {
+                    (nameof(AiToolAttribute.ReadOnlyHint), attribute.ReadOnlyHintValue),
+                    (nameof(AiToolAttribute.DestructiveHint), attribute.DestructiveHintValue),
+                    (nameof(AiToolAttribute.IdempotentHint), attribute.IdempotentHintValue),
+                    (nameof(AiToolAttribute.OpenWorldHint), attribute.OpenWorldHintValue)
+                })
+                    Assert.True(value.HasValue, $"{type.Name}.{method.Name} leaves {hint} unset.");
+                Assert.False(attribute.ReadOnlyHintValue == true && attribute.DestructiveHintValue == true,
+                    $"{type.Name}.{method.Name} is both read-only and destructive.");
             }
 
             // Tool ids are the protocol's primary key — a duplicate silently shadows one of them.
