@@ -155,6 +155,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var field = rootVisualElement.Q<TextField>("InputServerURL")
                 ?? throw new InvalidOperationException("InputServerURL field not found (Custom mode may be hidden).");
 
+            // Mirrors the field's FocusOut handler: an unchanged value (also an env / CLI host override) commits nothing.
+            if (UnityMcpPluginEditor.LocalHost == url)
+            {
+                field.value = url;
+                return;
+            }
+
             var newValue = UnityMcpPluginEditor.NormalizeLocalHost(url);
             field.value = newValue;
 

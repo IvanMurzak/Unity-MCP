@@ -521,14 +521,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             btnRemove.RegisterCallback<ClickEvent>(_ =>
             {
                 var freshConfig = GetConfig(CurrentSettings(), transport);
+                // Removing a stale entry of an unsupported transport still changes the file the agent reads at startup.
                 if (freshConfig.Unconfigure())
-                    NotifyRestart(transport);
+                    NotifyRestart(_configurator.SupportsTransport(transport) ? transport : TransportMethod.stdio);
                 RefreshConfigurationUI();
             });
 
             // Cloud HTTP only: which credential the config carries + "Regenerate key" (project-keys contract §7).
             // stdio and the local server are unchanged, so they keep the row hidden.
-            if (transport == TransportMethod.streamableHttp && IsCloud(settings))
+            if (transport == TransportMethod.streamableHttp && IsCloud(settings) && transportSupported)
                 ShowProjectKeyRow(keyRow, keyStatusText, btnRegenerate, settings);
 
             return root;
@@ -693,7 +694,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // Detect against the SAME config the Configure button writes (token/key-aware) so a Bearer config
             // reads back as Configured, not spuriously reconfigure-needed. An unsupported transport is never Configured.
             var isConfigured = transportSupported && GetConfig(settings, transport).IsConfigured();
-            var anyConfigured = _configurator.IsDetected(settings);
+            // Unconfigure removes the agent's entry whatever transport wrote it, so an unsupported transport's row offers
+            // Remove only for a stale entry, never for the working stdio one.
+            var anyConfigured = _configurator.IsDetected(settings)
+                && (transportSupported || !_configurator.GetStdioConfig(settings).IsConfigured());
 
             statusText.text = ComputeStatusText(_busyText, transportSupported, isConfigured, transport);
             btnConfigure.text = isConfigured ? "Reconfigure" : "Configure";
@@ -800,8 +804,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // The transport section below holds the shared Describe() alert with the working setup. A transport switch
             // rebuilds the whole view, so the panel is added only for the transport active now.
             if (!_configurator.SupportsTransport(ActiveTransport))
-                ContainerAlert.Add(new AlertPanel("Transport Not Supported",
-                    $"{AgentName} cannot use the selected transport. See the transport section below for the setup that works.").Root);
+            {
+                var unsupportedPanel = new AlertPanel("Transport Not Supported",
+                    $"{AgentName} cannot use the selected transport. See the transport section below for the setup that works.");
+                unsupportedPanel.Show(); // the template starts hidden
+                ContainerAlert.Add(unsupportedPanel.Root);
+            }
 
             UpdateAlertPanel();
         }
