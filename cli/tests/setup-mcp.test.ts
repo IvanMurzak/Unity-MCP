@@ -5,7 +5,7 @@ import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { setupMcp } from '../src/lib/setup-mcp.js';
+import { setupMcp, stdioTransportMismatchWarning } from '../src/lib/setup-mcp.js';
 import { getAgentById, MCP_SERVER_NAME } from '../src/utils/agents.js';
 import { derivePinV2, type ProjectKeyRequest, type ProjectKeyResolver } from '@baizor/gamedev-cli-core';
 import type { UnityConnectionConfig } from '../src/utils/config.js';
@@ -442,5 +442,41 @@ describe('setup-mcp — multi-file agents (Antigravity) and configPaths', () => 
       expect(raw).toContain(`Bearer ${PROJECT_KEY}`);
       expect(raw).not.toContain(OLD_KEY);
     }
+  });
+});
+
+describe('setupMcp — stdio vs the plugin transport', () => {
+  let dir: string;
+  beforeEach(() => { dir = fs.mkdtempSync(path.join(os.tmpdir(), 'setup-mcp-stdio-')); });
+  afterEach(() => { fs.rmSync(dir, { recursive: true, force: true }); });
+
+  function writePluginSettings(content: string): void {
+    fs.mkdirSync(path.join(dir, 'UserSettings'), { recursive: true });
+    fs.writeFileSync(path.join(dir, 'UserSettings', 'AI-Game-Developer-Config.json'), content, 'utf-8');
+  }
+
+  it('warns when the plugin still starts its own http server on the port', async () => {
+    writePluginSettings(JSON.stringify({ transportMethod: 'streamableHttp' }));
+    const result = await setupMcp({ agentId: 'cursor', unityProjectPath: dir, transport: 'stdio' });
+    expect(result.kind).toBe('success');
+    expect(result.warnings.join(' ')).toContain('address already in use');
+  });
+
+  it('does not warn when the plugin is set to stdio, or has no settings yet, or for http configs', async () => {
+    expect(stdioTransportMismatchWarning('stdio')).toBeNull();
+    expect(stdioTransportMismatchWarning(undefined)).toBeNull();
+
+    const noSettings = await setupMcp({ agentId: 'cursor', unityProjectPath: dir, transport: 'stdio' });
+    expect(noSettings.warnings.join(' ')).not.toContain('address already in use');
+
+    writePluginSettings(JSON.stringify({ transportMethod: 'streamableHttp' }));
+    const http = await setupMcp({ agentId: 'cursor', unityProjectPath: dir, transport: 'http', url: 'http://localhost:23456' });
+    expect(http.warnings.join(' ')).not.toContain('address already in use');
+  });
+
+  it('a malformed plugin settings file does not fail setup-mcp', async () => {
+    writePluginSettings('{ not json');
+    const result = await setupMcp({ agentId: 'cursor', unityProjectPath: dir, transport: 'stdio' });
+    expect(result.kind).toBe('success');
   });
 });

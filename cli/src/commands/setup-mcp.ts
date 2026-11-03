@@ -8,6 +8,7 @@ import {
   MCP_SERVER_NAME,
 } from '../utils/agents.js';
 import { setupMcp } from '../lib/setup-mcp.js';
+import { isCloudUrl } from '@baizor/gamedev-cli-core';
 import type { McpTransport, SetupMcpSuccess } from '../lib/types.js';
 
 interface SetupMcpCliOptions {
@@ -21,9 +22,15 @@ interface SetupMcpCliOptions {
   pin?: boolean;
 }
 
-/** Which credential the written config carries — never the key itself, only its server-side id. */
-function describeCredential(
-  result: Pick<SetupMcpSuccess, 'credential' | 'projectKeyId' | 'projectKeySource'>,
+/**
+ * Which credential the written config carries — never the key itself, only its server-side id.
+ * `url` is the `--url` override, if any: a config for a local server (stdio, or http to a
+ * non-Cloud URL such as localhost) needs no credential and nobody signs in, so it must not say the agent will.
+ */
+export function describeCredential(
+  result: Pick<SetupMcpSuccess, 'credential' | 'projectKeyId' | 'projectKeySource' | 'transport'>,
+  url?: string,
+  oauth?: boolean,
 ): string {
   switch (result.credential) {
     case 'project-key': {
@@ -34,6 +41,14 @@ function describeCredential(
     case 'token':
       return 'access token (--token)';
     default:
+      if (result.transport === 'stdio') {
+        return 'none (local stdio server — no sign-in needed)';
+      }
+      // The same test cli-core uses to decide that a config gets no credential. With --oauth the
+      // agent does sign in (a local server running auth=oauth).
+      if (!oauth && url && !isCloudUrl(url)) {
+        return 'none (local server — no sign-in needed)';
+      }
       return 'none (URL-only — the agent signs in itself)';
   }
 }
@@ -140,7 +155,7 @@ export const setupMcpCommand = new Command('setup-mcp')
       labelEach('Moved to new key', result.rewrittenConfigPaths ?? []);
       ui.label('Transport', result.transport);
       ui.label('Server name', MCP_SERVER_NAME);
-      ui.label('Credential', describeCredential(result));
+      ui.label('Credential', describeCredential(result, options.url, options.oauth));
 
       printWarnings(result.warnings);
     },

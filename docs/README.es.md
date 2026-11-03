@@ -94,84 +94,50 @@ Eso es todo. Pídele a tu IA *"Crea 3 cubos en un círculo con radio 2"* y obser
 
 # Referencia de Skills y herramientas
 
-El plugin incluye más de 70 herramientas integradas en cuatro categorías. Cada herramienta aporta una habilidad a la IA. Todas las herramientas están disponibles inmediatamente después de la instalación — no se requiere configuración adicional. Consulta [docs/default-mcp-tools.md](docs/default-mcp-tools.md) para la referencia completa con descripciones detalladas.
+Desde la versión 1.0.0 el plugin expone un conjunto reducido de herramientas, y la mayor parte del trabajo en el Editor pasa por **RQL**, un lenguaje de consultas sobre los datos del Editor: `rql-query` lee, `rql-mutate` modifica y `rql-schema` describe las fuentes, tipos y llamadas (empieza por ahí si tienes dudas). Las herramientas de una acción por herramienta de versiones anteriores (`gameobject-create`, `scene-save`, `console-get-logs` y otras) fueron reemplazadas por RQL en [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017). Consulta [docs/default-mcp-tools.md](default-mcp-tools.md) para la referencia completa.
 
 > 🧰 Explora el registro completo de herramientas MCP en línea: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
-<details>
-  <summary>Proyecto y assets</summary>
+Visibles para el agente de IA por defecto: `rql-query`, `rql-mutate`, `rql-schema`, `screenshot-isolated`, `script-execute`, `tests-run`, `unity-tool-list`. Las demás herramientas están instaladas pero ocultas en la lista de herramientas del agente (una herramienta oculta se sigue ejecutando si se la llama por su nombre). Muéstralas con `tool-set-visibility`, en la ventana de AI Game Developer o con `unity-mcp-cli configure <path> --enable-tools <ids>`.
 
-- `assets-copy` - Copia el asset en la ruta indicada y lo almacena en la nueva ruta
-- `assets-create-folder` - Crea una nueva carpeta en la carpeta padre especificada
-- `assets-delete` - Elimina los assets en las rutas indicadas del proyecto
-- `assets-find` - Busca en la base de datos de assets usando la cadena de filtro de búsqueda
-- `assets-find-built-in` - Busca los assets integrados del Unity Editor
-- `assets-get-data` - Obtiene datos del asset incluyendo todos los campos y propiedades serializables
-- `assets-material-create` - Crea un nuevo asset de material con parámetros predeterminados
-- `assets-modify` - Modifica un archivo de asset en el proyecto
-- `assets-move` - Mueve los assets en las rutas del proyecto (también se usa para renombrar)
-- `assets-prefab-close` - Cierra el prefab abierto actualmente
-- `assets-prefab-create` - Crea un prefab a partir de un GameObject en la escena activa actual
-- `assets-prefab-instantiate` - Instancia un prefab en la escena activa actual
-- `assets-prefab-open` - Abre el modo de edición de prefab para un GameObject específico
-- `assets-prefab-save` - Guarda un prefab en modo de edición de prefab
-- `assets-refresh` - Actualiza el AssetDatabase
-- `assets-shader-get-data` - Obtiene datos detallados sobre un asset de shader (propiedades, subshaders, pasadas)
-- `assets-shader-list-all` - Lista todos los shaders disponibles en los assets del proyecto y paquetes
-- `package-add` - Instala un paquete del registro de Unity Package Manager, URL de Git o ruta local
-- `package-list` - Lista todos los paquetes instalados en el proyecto de Unity (paquetes UPM)
-- `package-remove` - Elimina (desinstala) un paquete del proyecto de Unity
-- `package-search` - Busca paquetes tanto en el registro de Unity Package Manager como en los paquetes instalados
+<details>
+  <summary>RQL (escenas, GameObjects, componentes, assets, consola, editor)</summary>
+
+- `rql-query` - Lee datos del Editor con una consulta RQL, p. ej. `roots | recurse children | select name active`
+- `rql-mutate` - Modifica datos del Editor o llama a operaciones del Editor, p. ej. `editor | call CreateGameObject({name: "Ground", primitive: "Plane"})`
+- `rql-schema` - Describe las fuentes, tipos, miembros y llamadas que RQL puede usar, y muestra las guías temáticas
+- Fuentes: `scenes`, `roots`, `objects` (todos los GameObjects de las escenas cargadas), `selection`, `prefab` (el prefab abierto en modo prefab), `editor` (crear GameObjects, materiales, carpetas y escenas; abrir y guardar escenas y prefabs; copiar, mover y eliminar assets; ejecutar elementos de menú; …), `settings`, `console` (entradas de log del Editor capturadas), `shaders`, `componentTypes`, `tests`, `testResults`, `profiler`, `lighting`; assets por ruta con `unity.asset("Assets/…")`
 
 </details>
 
 <details>
-  <summary>Escena y jerarquía</summary>
+  <summary>Capturas de pantalla</summary>
 
-- `gameobject-component-add` - Añade un Component a un GameObject
-- `gameobject-component-destroy` - Destruye uno o varios componentes del GameObject objetivo
-- `gameobject-component-get` - Obtiene información detallada sobre un Component específico de un GameObject
-- `gameobject-component-list-all` - Lista los nombres de clases C# que extienden de UnityEngine.Component
-- `gameobject-component-modify` - Modifica un Component específico de un GameObject
-- `gameobject-create` - Crea un nuevo GameObject en un Prefab abierto o en una escena
-- `gameobject-destroy` - Destruye un GameObject y todos los GameObjects anidados recursivamente
-- `gameobject-duplicate` - Duplica GameObjects en un Prefab abierto o en una escena
-- `gameobject-find` - Encuentra un GameObject específico por la información proporcionada
-- `gameobject-modify` - Modifica GameObjects y/o los campos y propiedades de los componentes adjuntos
-- `gameobject-set-parent` - Establece el GameObject padre para una lista de GameObjects
-- `object-get-data` - Obtiene datos del Unity Object especificado
-- `object-modify` - Modifica el Unity Object especificado
-- `scene-create` - Crea una nueva escena en los assets del proyecto
-- `scene-get-data` - Recupera la lista de GameObjects raíz en la escena especificada
-- `scene-list-opened` - Devuelve la lista de escenas abiertas actualmente en Unity Editor
-- `scene-open` - Abre una escena desde el archivo de asset del proyecto
-- `scene-save` - Guarda la escena abierta en el archivo de asset
-- `scene-set-active` - Establece la escena abierta especificada como la escena activa
-- `scene-unload` - Descarga una escena de las escenas abiertas en Unity Editor
-- `screenshot-camera` - Captura una captura de pantalla desde una cámara y la devuelve como imagen
-- `screenshot-game-view` - Captura una captura de pantalla de la vista de juego del Unity Editor
 - `screenshot-isolated` - Renderiza un GameObject de forma aislada desde un ángulo elegido (vista compuesta 2x2 opcional)
-- `screenshot-scene-view` - Captura una captura de pantalla de la vista de escena del Unity Editor
+- `screenshot-scene-view` - Captura una captura de pantalla de la vista de escena del Unity Editor (oculta por defecto)
+- `screenshot-game-view` - Captura una captura de pantalla de la vista de juego del Unity Editor (oculta por defecto)
+- `screenshot-camera` - Captura una captura de pantalla desde una cámara y la devuelve como imagen (oculta por defecto)
 
 </details>
 
 <details>
-  <summary>Scripting y Editor</summary>
+  <summary>Scripting, pruebas y paquetes</summary>
 
-- `console-clear-logs` - Limpia la caché de registros de MCP y la ventana de Consola del Unity Editor
-- `console-get-logs` - Recupera los registros del Unity Editor con opciones de filtrado
-- `editor-application-get-state` - Devuelve información sobre el estado de la aplicación Unity Editor (modo de juego, pausado, compilación)
-- `editor-application-set-state` - Controla el estado de la aplicación Unity Editor (iniciar/detener/pausar modo de juego)
-- `editor-selection-get` - Obtiene información sobre la selección actual en Unity Editor
-- `editor-selection-set` - Establece la selección actual en Unity Editor
-- `reflection-method-call` - Llama a cualquier método C# con parámetros de entrada y devuelve resultados
-- `reflection-method-find` - Encuentra métodos en el proyecto usando C# Reflection (incluso métodos privados)
-- `script-delete` - Elimina el/los archivo(s) de script
 - `script-execute` - Compila y ejecuta código C# dinámicamente usando Roslyn
-- `script-read` - Lee el contenido de un archivo de script
-- `script-update-or-create` - Actualiza o crea un archivo de script con el código C# proporcionado
+- `script-read` - Lee el contenido de un archivo de script (oculta por defecto)
+- `script-update-or-create` - Actualiza o crea un archivo de script con el código C# proporcionado (oculta por defecto)
+- `script-delete` - Elimina el/los archivo(s) de script (oculta por defecto)
 - `tests-run` - Ejecuta pruebas de Unity (EditMode/PlayMode): cualquier selección RQL sobre la fuente `tests` en una sola ejecución, resultados filtrados con RQL
-- `type-get-json-schema` - Genera un JSON Schema para un tipo C# mediante reflexión
+- `package-list`, `package-search`, `package-add`, `package-remove` - Paquetes de Unity Package Manager (ocultas por defecto)
+
+</details>
+
+<details>
+  <summary>Gestión de herramientas</summary>
+
+- `unity-tool-list` - Lista todas las herramientas e indica si el agente las ve
+- `tool-set-visibility` - Muestra u oculta herramientas en la lista de herramientas del agente (oculta por defecto)
+- `tool-set-enabled-state` - Alias obsoleto de `tool-set-visibility` (oculta por defecto)
 
 </details>
 
@@ -259,7 +225,7 @@ Instala extensiones cuando necesites más herramientas o [crea tus propias herra
 
 | Documento | Descripción |
 | -------- | ----------- |
-| [Herramientas MCP predeterminadas](docs/default-mcp-tools.md) | Referencia completa de todas las herramientas integradas con descripciones |
+| [Herramientas MCP predeterminadas](default-mcp-tools.md) | Referencia completa de todas las herramientas integradas con descripciones |
 | [Configuración del MCP Server](docs/mcp-server.md) | Configuración del servidor, variables de entorno, hosting remoto |
 | [Despliegue con Docker](docs/DOCKER_DEPLOYMENT.md) | Guía paso a paso para despliegue con Docker |
 | [Guía de desarrollo](docs/dev/Development.md) | Arquitectura, estilo de código, CI/CD — para contribuidores |
@@ -613,7 +579,7 @@ Independientemente de la opción de ejecución que elijas, todas soportan config
 
 ## Variables del Plugin
 
-El Unity MCP Plugin lee las siguientes variables de entorno (y argumentos de línea de comandos) al iniciar para sobrescribir los valores del archivo de configuración guardado. Las sobrescrituras se aplican en tiempo de ejecución; en la primera ejecución o cuando se genera un nuevo token de autenticación, los valores sobrescritos se **guardan en el archivo de configuración**. En ejecuciones posteriores, las sobrescrituras se aplican en memoria pero no se guardan automáticamente. La excepción es `UNITY_MCP_TOOLS`, que usa `[JsonIgnore]` y **nunca se persiste** — es solo para tiempo de ejecución.
+El Unity MCP Plugin lee las siguientes variables de entorno (y argumentos de línea de comandos) al iniciar para sobrescribir los valores del archivo de configuración guardado. Las sobrescrituras se aplican solo en memoria y **nunca se escriben en el archivo de configuración** (`UserSettings/AI-Game-Developer-Config.json`), por lo que los valores guardados (por ejemplo `connectionMode` o `transportMethod`) siguen mostrando lo que se eligió en la ventana de AI Game Developer. Para cambiar un ajuste de forma permanente, cámbialo en la ventana, en un Editor iniciado sin esa sobrescritura (mientras una sobrescritura está activa, un cambio del mismo ajuste en la ventana no se conserva).
 
 | Variable de entorno         | Arg de línea de comandos    | Valores              | Descripción                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |

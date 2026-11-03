@@ -6,6 +6,7 @@ import { fileURLToPath } from 'url';
 import {
   getProjectEditorVersion,
   getSecondaryInstallPathFile,
+  listEditorsByCommonLocations,
   readSecondaryInstallPaths,
   resolveEditorPath,
 } from '../src/utils/unity-editor.js';
@@ -630,4 +631,64 @@ describe('getProjectEditorVersion (real projects)', () => {
       expect(result).toBe(expected);
     });
   }
+});
+
+// ---------------------------------------------------------------------------
+// listEditorsByCommonLocations — filesystem-only discovery (no Unity Hub process)
+// ---------------------------------------------------------------------------
+describe('listEditorsByCommonLocations', () => {
+  const saved: Record<string, string | undefined> = {};
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-list-editors-'));
+    for (const key of ['APPDATA', 'PROGRAMFILES', 'HOME']) saved[key] = process.env[key];
+    // Point every root the platform reads into the temp dir, so real installs never leak in.
+    process.env['APPDATA'] = tmpDir;
+    process.env['PROGRAMFILES'] = path.join(tmpDir, 'pf');
+    process.env['HOME'] = tmpDir;
+  });
+
+  afterEach(() => {
+    for (const [key, value] of Object.entries(saved)) {
+      if (value === undefined) delete process.env[key];
+      else process.env[key] = value;
+    }
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+  });
+
+  function binaryUnder(root: string, version: string): string {
+    switch (process.platform) {
+      case 'win32': return path.join(root, version, 'Editor', 'Unity.exe');
+      case 'darwin': return path.join(root, version, 'Unity.app', 'Contents', 'MacOS', 'Unity');
+      default: return path.join(root, version, 'Editor', 'Unity');
+    }
+  }
+
+  function install(root: string, version: string): string {
+    const binary = binaryUnder(root, version);
+    fs.mkdirSync(path.dirname(binary), { recursive: true });
+    fs.writeFileSync(binary, '');
+    return binary;
+  }
+
+  it('lists editors from the secondaryInstallPath root, newest first, with executable paths', () => {
+    const root = path.join(tmpDir, 'UnityEditor');
+    const older = install(root, '2022.3.62f3');
+    const newer = install(root, '6000.3.1f1');
+    fs.mkdirSync(path.join(root, '6000.9.0f1'), { recursive: true }); // folder without a binary
+    const file = getSecondaryInstallPathFile(process.platform);
+    if (!file) throw new Error('unsupported platform for this test');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(root), 'utf-8');
+
+    expect(listEditorsByCommonLocations()).toEqual([
+      { version: '6000.3.1f1', path: newer },
+      { version: '2022.3.62f3', path: older },
+    ]);
+  });
+
+  it('returns [] when no root exists', () => {
+    expect(listEditorsByCommonLocations()).toEqual([]);
+  });
 });

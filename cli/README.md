@@ -147,7 +147,7 @@ unity-mcp-cli configure ./MyGame --list
 
 ```bash
 unity-mcp-cli configure ./MyGame \
-  --enable-tools gameobject-create,gameobject-find \
+  --enable-tools screenshot-scene-view,script-read \
   --disable-all-prompts
 ```
 
@@ -399,7 +399,7 @@ unity-mcp-cli open ./MyGame \
   --url http://my-server:8080 \
   --token my-secret-token \
   --auth token \
-  --tools gameobject-create,gameobject-find
+  --tools rql-query,rql-mutate,rql-schema
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -453,7 +453,7 @@ unity-mcp-cli close ./MyGame
 Execute an MCP tool directly via the HTTP API. The server URL and authorization token are **automatically resolved** from the project's config file (`UserSettings/AI-Game-Developer-Config.json`), based on the current connection mode (Custom or Cloud).
 
 ```bash
-unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
+unity-mcp-cli run-tool rql-mutate ./MyGame --input '{"query":"editor | call CreateGameObject({name: \"Cube\", primitive: \"Cube\"})"}'
 ```
 
 | Option | Required | Description |
@@ -477,19 +477,19 @@ unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 **Example — call a tool (URL and auth from config):**
 
 ```bash
-unity-mcp-cli run-tool gameobject-find ./MyGame --input '{"query":"Player"}'
+unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select path name active"}'
 ```
 
 **Example — explicit URL override:**
 
 ```bash
-unity-mcp-cli run-tool scene-save --url http://localhost:8080
+unity-mcp-cli run-tool rql-mutate --url http://localhost:8080 --input '{"query":"editor | call SaveScenes()"}'
 ```
 
 **Example — pipe raw JSON output:**
 
 ```bash
-unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
+unity-mcp-cli run-tool unity-tool-list ./MyGame --raw | jq .
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

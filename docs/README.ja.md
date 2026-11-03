@@ -94,84 +94,50 @@ unity-mcp-cli open ./MyUnityProject
 
 # スキルとツールリファレンス
 
-このプラグインには4つのカテゴリにまたがる70以上の組み込みツールが付属しています。各ツールが AI スキルを提供します。すべてのツールはインストール直後に利用可能で、追加の設定は不要です。詳細な説明付きの完全なリファレンスは [docs/default-mcp-tools.md](docs/default-mcp-tools.md) をご覧ください。
+バージョン 1.0.0 以降、プラグインが公開するツールは少数に絞られ、Editor での作業のほとんどは Editor のデータを対象とするクエリ言語 **RQL** を通じて行います。`rql-query` は読み取り、`rql-mutate` は変更、`rql-schema` はソース・型・呼び出しを説明します（迷ったらここから始めてください）。以前のバージョンの「1アクション1ツール」型のツール（`gameobject-create`、`scene-save`、`console-get-logs` など）は [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017) で RQL に置き換えられました。完全なリファレンスは [docs/default-mcp-tools.md](default-mcp-tools.md) をご覧ください。
 
 > 🧰 MCP ツールレジストリの全体をオンラインで閲覧: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
-<details>
-  <summary>プロジェクト＆アセット</summary>
+デフォルトで AI エージェントに表示されるツール: `rql-query`、`rql-mutate`、`rql-schema`、`screenshot-isolated`、`script-execute`、`tests-run`、`unity-tool-list`。その他のツールはインストール済みですが、エージェントのツール一覧からは非表示になっています（非表示のツールも名前で呼び出せば実行されます）。表示するには `tool-set-visibility`、AI Game Developer ウィンドウ、または `unity-mcp-cli configure <path> --enable-tools <ids>` を使用します。
 
-- `assets-copy` - 指定パスのアセットをコピーし、新しいパスに保存
-- `assets-create-folder` - 指定された親フォルダに新しいフォルダを作成
-- `assets-delete` - プロジェクトから指定パスのアセットを削除
-- `assets-find` - 検索フィルター文字列を使用してアセットデータベースを検索
-- `assets-find-built-in` - Unity Editor の組み込みアセットを検索
-- `assets-get-data` - すべてのシリアライズ可能なフィールドとプロパティを含むアセットデータを取得
-- `assets-material-create` - デフォルトパラメータで新しいマテリアルアセットを作成
-- `assets-modify` - プロジェクト内のアセットファイルを変更
-- `assets-move` - プロジェクト内のアセットを移動（名前変更にも使用）
-- `assets-prefab-close` - 現在開いているプレハブを閉じる
-- `assets-prefab-create` - 現在のアクティブシーン内のGameObjectからプレハブを作成
-- `assets-prefab-instantiate` - 現在のアクティブシーンにプレハブをインスタンス化
-- `assets-prefab-open` - 特定のGameObjectのプレハブ編集モードを開く
-- `assets-prefab-save` - プレハブ編集モードでプレハブを保存
-- `assets-refresh` - AssetDatabaseを更新
-- `assets-shader-get-data` - シェーダーアセットの詳細データを取得（プロパティ、サブシェーダー、パス）
-- `assets-shader-list-all` - プロジェクトアセットとパッケージ内のすべてのシェーダーを一覧表示
-- `package-add` - Unity Package Managerレジストリ、Git URL、またはローカルパスからパッケージをインストール
-- `package-list` - Unityプロジェクトにインストールされたすべてのパッケージを一覧表示（UPMパッケージ）
-- `package-remove` - Unityプロジェクトからパッケージを削除（アンインストール）
-- `package-search` - Unity Package Managerレジストリとインストール済みパッケージの両方でパッケージを検索
+<details>
+  <summary>RQL（シーン、GameObject、コンポーネント、アセット、コンソール、エディター）</summary>
+
+- `rql-query` - RQL クエリで Editor のデータを読み取る。例: `roots | recurse children | select name active`
+- `rql-mutate` - Editor のデータを変更、または Editor の操作を呼び出す。例: `editor | call CreateGameObject({name: "Ground", primitive: "Plane"})`
+- `rql-schema` - RQL で使えるソース、型、メンバー、呼び出しを説明し、トピックガイドを表示
+- ソース: `scenes`、`roots`、`objects`（読み込まれたシーン内のすべての GameObject）、`selection`、`prefab`（プレハブモードで開いているプレハブ）、`editor`（GameObject・マテリアル・フォルダー・シーンの作成、シーンとプレハブを開く・保存、アセットのコピー・移動・削除、メニュー項目の実行など）、`settings`、`console`（キャプチャされた Editor のログエントリ）、`shaders`、`componentTypes`、`tests`、`testResults`、`profiler`、`lighting`。パス指定のアセットは `unity.asset("Assets/…")`
 
 </details>
 
 <details>
-  <summary>シーン＆ヒエラルキー</summary>
+  <summary>スクリーンショット</summary>
 
-- `gameobject-component-add` - GameObjectにコンポーネントを追加
-- `gameobject-component-destroy` - 対象GameObjectからコンポーネントを削除
-- `gameobject-component-get` - GameObject上の特定コンポーネントの詳細情報を取得
-- `gameobject-component-list-all` - UnityEngine.Componentを継承したC#クラス名を一覧表示
-- `gameobject-component-modify` - GameObject上の特定コンポーネントを変更
-- `gameobject-create` - 開いているプレハブまたはシーンに新しいGameObjectを作成
-- `gameobject-destroy` - GameObjectと入れ子のすべてのGameObjectを再帰的に削除
-- `gameobject-duplicate` - 開いているプレハブまたはシーンでGameObjectを複製
-- `gameobject-find` - 提供された情報で特定のGameObjectを検索
-- `gameobject-modify` - GameObjectやアタッチされたコンポーネントのフィールドとプロパティを変更
-- `gameobject-set-parent` - GameObjectのリストに親GameObjectを設定
-- `object-get-data` - 指定されたUnity Objectのデータを取得
-- `object-modify` - 指定されたUnity Objectを変更
-- `scene-create` - プロジェクトアセットに新しいシーンを作成
-- `scene-get-data` - 指定されたシーンのルートGameObjectリストを取得
-- `scene-list-opened` - Unity Editorで現在開かれているシーンのリストを返す
-- `scene-open` - プロジェクトアセットファイルからシーンを開く
-- `scene-save` - 開いているシーンをアセットファイルに保存
-- `scene-set-active` - 指定された開いているシーンをアクティブシーンとして設定
-- `scene-unload` - Unity Editorで開かれているシーンをアンロード
-- `screenshot-camera` - カメラからスクリーンショットをキャプチャし、画像として返す
-- `screenshot-game-view` - Unity Editor Game Viewからスクリーンショットをキャプチャ
 - `screenshot-isolated` - GameObjectを選択した角度から分離してレンダリング（オプションで2x2の合成ビュー）
-- `screenshot-scene-view` - Unity Editor Scene Viewからスクリーンショットをキャプチャ
+- `screenshot-scene-view` - Unity Editor Scene Viewからスクリーンショットをキャプチャ（デフォルトで非表示）
+- `screenshot-game-view` - Unity Editor Game Viewからスクリーンショットをキャプチャ（デフォルトで非表示）
+- `screenshot-camera` - カメラからスクリーンショットをキャプチャし、画像として返す（デフォルトで非表示）
 
 </details>
 
 <details>
-  <summary>スクリプティング＆エディター</summary>
+  <summary>スクリプティング＆テスト＆パッケージ</summary>
 
-- `console-clear-logs` - MCP ログキャッシュと Unity Editor のコンソールウィンドウをクリア
-- `console-get-logs` - フィルタリングオプション付きでUnity Editorのログを取得
-- `editor-application-get-state` - Unity Editorアプリケーションの状態情報を返す（再生モード、一時停止、コンパイル）
-- `editor-application-set-state` - Unity Editorアプリケーションの状態を制御（再生モードの開始/停止/一時停止）
-- `editor-selection-get` - Unity Editorでの現在の選択情報を取得
-- `editor-selection-set` - Unity Editorでの現在の選択を設定
-- `reflection-method-call` - 入力パラメータ付きで任意のC#メソッドを呼び出し、結果を返す
-- `reflection-method-find` - C# Reflectionを使用してプロジェクト内のメソッドを検索（プライベートメソッドも含む）
-- `script-delete` - スクリプトファイルを削除
 - `script-execute` - Roslynを使用してC#コードを動的にコンパイル・実行
-- `script-read` - スクリプトファイルの内容を読み取る
-- `script-update-or-create` - 提供されたC#コードでスクリプトファイルを更新または作成
+- `script-read` - スクリプトファイルの内容を読み取る（デフォルトで非表示）
+- `script-update-or-create` - 提供されたC#コードでスクリプトファイルを更新または作成（デフォルトで非表示）
+- `script-delete` - スクリプトファイルを削除（デフォルトで非表示）
 - `tests-run` - Unityテスト（EditMode/PlayMode）を実行：`tests` ソースに対する任意のRQL選択を1回の実行で、結果はRQLで絞り込み
-- `type-get-json-schema` - リフレクションを使用してC#型のJSON Schemaを生成
+- `package-list`、`package-search`、`package-add`、`package-remove` - Unity Package Manager のパッケージ（デフォルトで非表示）
+
+</details>
+
+<details>
+  <summary>ツール管理</summary>
+
+- `unity-tool-list` - すべてのツールと、エージェントから見えるかどうかを一覧表示
+- `tool-set-visibility` - エージェントのツール一覧でツールを表示または非表示にする（デフォルトで非表示）
+- `tool-set-enabled-state` - `tool-set-visibility` の非推奨エイリアス（デフォルトで非表示）
 
 </details>
 
@@ -259,7 +225,7 @@ unity-mcp-cli open ./MyUnityProject
 
 | ドキュメント | 説明 |
 | -------- | ----------- |
-| [デフォルト MCP ツール](docs/default-mcp-tools.md) | すべての組み込みツールの詳細な説明付き完全リファレンス |
+| [デフォルト MCP ツール](default-mcp-tools.md) | すべての組み込みツールの詳細な説明付き完全リファレンス |
 | [MCP Server セットアップ](docs/mcp-server.md) | サーバー設定、環境変数、リモートホスティング |
 | [Docker デプロイ](docs/DOCKER_DEPLOYMENT.md) | ステップバイステップの Docker デプロイガイド |
 | [開発ガイド](docs/dev/Development.md) | アーキテクチャ、コードスタイル、CI/CD — コントリビューター向け |
@@ -613,7 +579,7 @@ public static class ChessGameAI
 
 ## プラグイン変数
 
-Unity MCP Plugin は起動時に以下の環境変数（およびコマンドライン引数）を読み込み、保存された設定ファイルの値を上書きします。上書きはランタイム時に適用されます。初回起動時または新しい認証トークンが生成された際、上書きされた値は**設定ファイルに書き込まれます**。以降の起動では、上書きはメモリ内で適用されますが自動的には保存されません。例外は `UNITY_MCP_TOOLS` で、`[JsonIgnore]` を使用しているため**永続化されません** — ランタイム専用です。
+Unity MCP Plugin は起動時に以下の環境変数（およびコマンドライン引数）を読み込み、保存された設定ファイルの値を上書きします。上書きはメモリ内でのみ適用され、**設定ファイル（`UserSettings/AI-Game-Developer-Config.json`）には一切書き込まれません**。そのため、保存された値（例: `connectionMode` や `transportMethod`）は AI Game Developer ウィンドウで選択した内容を示したままです。設定を恒久的に変更するには、その上書きなしで起動した Editor のウィンドウで変更してください（上書きが有効な間は、同じ設定をウィンドウで変更しても保持されません）。
 
 | 環境変数                      | コマンドライン引数              | 値                    | 説明                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |

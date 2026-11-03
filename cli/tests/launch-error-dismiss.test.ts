@@ -5,14 +5,14 @@ import { describe, it, expect } from 'vitest';
 import {
   parseDismissOutput,
   LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS,
-  WINDOWS_DISMISS_PS_SCRIPT,
-  MACOS_DISMISS_APPLESCRIPT,
   DISMISS_BUTTON_LABEL,
   LINUX_XDOTOOL_MISSING_PREFIX,
   UNSUPPORTED_PLATFORM_PREFIX,
   tryDismissLaunchErrorsDialog,
   _resetXdotoolPresenceForTests,
   regexEscapeForXdotool,
+  windowsDismissScript,
+  macosDismissAppleScript,
 } from '../src/utils/launch-error-dismiss.js';
 
 describe('parseDismissOutput', () => {
@@ -132,7 +132,10 @@ describe('LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS', () => {
   });
 });
 
-describe('WINDOWS_DISMISS_PS_SCRIPT', () => {
+const WINDOWS_DISMISS_PS_SCRIPT = windowsDismissScript();
+const MACOS_DISMISS_APPLESCRIPT = macosDismissAppleScript();
+
+describe('windowsDismissScript', () => {
   it('mentions the Ignore button label so the matcher will click it', () => {
     expect(WINDOWS_DISMISS_PS_SCRIPT).toContain(DISMISS_BUTTON_LABEL);
   });
@@ -163,7 +166,7 @@ describe('WINDOWS_DISMISS_PS_SCRIPT', () => {
   });
 });
 
-describe('MACOS_DISMISS_APPLESCRIPT', () => {
+describe('macosDismissAppleScript', () => {
   it('clicks the Ignore button on a Unity process window', () => {
     expect(MACOS_DISMISS_APPLESCRIPT).toContain('process "Unity"');
     expect(MACOS_DISMISS_APPLESCRIPT).toContain('button "Ignore"');
@@ -254,5 +257,34 @@ describe('permanent-error message constants', () => {
     expect(result.kind).toBe('error');
     if (result.kind !== 'error') return;
     expect(result.message.startsWith(UNSUPPORTED_PLATFORM_PREFIX)).toBe(true);
+  });
+});
+
+describe('dismiss scripts — only the launched editor', () => {
+  it('Windows: a target pid replaces the "every Unity process" list', () => {
+    const script = windowsDismissScript(4242);
+    expect(script).toContain('$unityPids = @(4242)');
+    expect(script).not.toContain("Get-Process -Name 'Unity'");
+    expect(script).not.toContain('__UNITY_PIDS__');
+  });
+
+  it('Windows: no pid (or an invalid one) keeps the every-Unity-process behaviour', () => {
+    for (const pid of [undefined, 0, -3, 1.5, Number.NaN]) {
+      const script = windowsDismissScript(pid);
+      expect(script).toContain("Get-Process -Name 'Unity'");
+      expect(script).toBe(windowsDismissScript());
+    }
+  });
+
+  it('macOS: a target pid addresses the process by unix id', () => {
+    const script = macosDismissAppleScript(4242);
+    expect(script).toContain('exists (first process whose unix id is 4242)');
+    expect(script).toContain('tell (first process whose unix id is 4242)');
+    expect(script).not.toContain('process "Unity"');
+    expect(script).not.toContain('__UNITY_PROCESS__');
+  });
+
+  it('macOS: no pid keeps the process "Unity" behaviour', () => {
+    expect(MACOS_DISMISS_APPLESCRIPT).toContain('tell process "Unity"');
   });
 });

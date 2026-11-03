@@ -93,17 +93,23 @@ export const UNSUPPORTED_PLATFORM_PREFIX =
  *   dependency; `wmctrl` is acceptable as an alternative window
  *   enumerator). Wayland is deferred — call out explicitly in the
  *   error message so the user does not waste time debugging.
+ *
+ * `targetPid` is the editor the caller launched. When given, only a dialog
+ * owned by that process is clicked, so another Unity project open on the
+ * same machine (whose "Enter Safe Mode?" choice belongs to its user) is left
+ * alone. Without it, any running Unity editor's dialog matches.
  */
 export async function tryDismissLaunchErrorsDialog(
   platform: DismissPlatform = nodePlatform() as DismissPlatform,
+  targetPid?: number,
 ): Promise<DismissOutcome> {
   switch (platform) {
     case 'win32':
-      return tryDismissWindows();
+      return tryDismissWindows(targetPid);
     case 'darwin':
-      return tryDismissMacOS();
+      return tryDismissMacOS(targetPid);
     case 'linux':
-      return tryDismissLinuxX11();
+      return tryDismissLinuxX11(targetPid);
     default:
       return {
         kind: 'error',
@@ -118,8 +124,8 @@ export async function tryDismissLaunchErrorsDialog(
 
 /**
  * The PowerShell payload that probes for the Unity launch-errors
- * dialog and clicks `Ignore` if found. Exported as a string (not a
- * function) so tests can assert the script shape without launching
+ * dialog and clicks `Ignore` if found. Built as a string so tests can
+ * assert the script shape without launching
  * PowerShell.
  *
  * Strategy:
@@ -138,7 +144,11 @@ export async function tryDismissLaunchErrorsDialog(
  *   - `not-found` when no dialog was matched
  *   - `error:<message>` on an unexpected exception
  */
-export const WINDOWS_DISMISS_PS_SCRIPT = `
+export function windowsDismissScript(targetPid?: number): string {
+  const pidSource = isValidPid(targetPid)
+    ? `@(${targetPid})`
+    : `@(Get-Process -Name 'Unity' -ErrorAction SilentlyContinue | ForEach-Object { [int]$_.Id })`;
+  return `
 $ErrorActionPreference = 'Stop'
 try {
   if (-not ([System.Management.Automation.PSTypeName]'UnityMcp.LaunchErrors.Dismisser').Type) {
@@ -205,19 +215,25 @@ namespace UnityMcp.LaunchErrors {
 }
 "@
   }
-  $unityPids = @(Get-Process -Name 'Unity' -ErrorAction SilentlyContinue | ForEach-Object { [int]$_.Id })
+  $unityPids = ${pidSource}
   if ($unityPids.Count -eq 0) { Write-Output 'not-found'; return }
   Write-Output ([UnityMcp.LaunchErrors.Dismisser]::TryDismiss([int[]]$unityPids))
 } catch {
   Write-Output ('error:' + $_.Exception.Message)
 }
 `;
+}
 
-async function tryDismissWindows(): Promise<DismissOutcome> {
+/** `true` for a pid the scripts may embed: a positive safe integer (never text from elsewhere). */
+function isValidPid(pid: number | undefined): pid is number {
+  return pid !== undefined && Number.isSafeInteger(pid) && pid > 0;
+}
+
+async function tryDismissWindows(targetPid?: number): Promise<DismissOutcome> {
   return new Promise<DismissOutcome>((resolve) => {
     execFile(
       'powershell',
-      ['-NoProfile', '-NonInteractive', '-Command', WINDOWS_DISMISS_PS_SCRIPT],
+      ['-NoProfile', '-NonInteractive', '-Command', windowsDismissScript(targetPid)],
       { timeout: 5000, windowsHide: true },
       (err, stdout) => {
         if (err) {
@@ -239,8 +255,8 @@ async function tryDismissWindows(): Promise<DismissOutcome> {
 // ---------------------------------------------------------------------------
 
 /**
- * The AppleScript snippet used for the macOS dismiss path. Exposed as
- * a string for testability.
+ * The AppleScript snippet used for the macOS dismiss path. Built as a
+ * string for testability.
  *
  * Strategy: iterate every window of the Unity application process and
  * click the first button titled `Ignore`. If the Unity process is not
@@ -253,14 +269,18 @@ async function tryDismissWindows(): Promise<DismissOutcome> {
  * Accessibility permission in System Settings → Privacy & Security →
  * Accessibility. Documented in the README.
  */
-export const MACOS_DISMISS_APPLESCRIPT = `
+export function macosDismissAppleScript(targetPid?: number): string {
+  const processRef = isValidPid(targetPid)
+    ? `(first process whose unix id is ${targetPid})`
+    : `process "Unity"`;
+  return `
 on run
   try
     tell application "System Events"
-      if not (exists process "Unity") then
+      if not (exists ${processRef}) then
         return "not-found"
       end if
-      tell process "Unity"
+      tell ${processRef}
         repeat with w in windows
           try
             if exists (button "${DISMISS_BUTTON_LABEL}" of w) then
@@ -277,12 +297,13 @@ on run
   end try
 end run
 `;
+}
 
-async function tryDismissMacOS(): Promise<DismissOutcome> {
+async function tryDismissMacOS(targetPid?: number): Promise<DismissOutcome> {
   return new Promise<DismissOutcome>((resolve) => {
     execFile(
       'osascript',
-      ['-e', MACOS_DISMISS_APPLESCRIPT],
+      ['-e', macosDismissAppleScript(targetPid)],
       { timeout: 5000 },
       (err, stdout) => {
         if (err) {
@@ -373,7 +394,7 @@ function getUnityPidsLinux(): readonly number[] {
   }
 }
 
-async function tryDismissLinuxX11(): Promise<DismissOutcome> {
+async function tryDismissLinuxX11(targetPid?: number): Promise<DismissOutcome> {
   if (!isXdotoolAvailable()) {
     return {
       kind: 'error',
@@ -381,7 +402,7 @@ async function tryDismissLinuxX11(): Promise<DismissOutcome> {
         `${LINUX_XDOTOOL_MISSING_PREFIX}. Install it (e.g. \`sudo apt-get install xdotool\`) to enable Unity launch-errors auto-dismiss on Linux/X11. Wayland is not yet supported.`,
     };
   }
-  const unityPids = new Set(getUnityPidsLinux());
+  const unityPids = new Set(isValidPid(targetPid) ? [targetPid] : getUnityPidsLinux());
   if (unityPids.size === 0) {
     return { kind: 'not-found' };
   }
