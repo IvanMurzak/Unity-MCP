@@ -160,8 +160,9 @@
   configurations"). The panel no longer writes one:
   - Custom connection + stdio: Configure writes the stdio entry, as before.
   - Cloud mode: the panel shows how to add the project as a Claude custom connector (Customize > Connectors in
-    Claude, link included), with the project's Cloud URL to copy, and a "Manual setup" status without Configure or
-    Remove. The connector works in Claude Desktop and in Claude in the browser.
+    Claude, link included), with the project's Cloud URL to copy, and a "Manual setup" status without Configure.
+    Remove appears only to delete an old HTTP entry an earlier version wrote. The connector works in Claude Desktop
+    and in Claude in the browser.
   - Custom connection + HTTP: "Transport Not Supported" names the setups that work and offers no Configure; Remove
     still deletes an old HTTP entry (never the working stdio one), and "Regenerate key" no longer rewrites one.
 - **Restart notice.** After Configure, Reconfigure or Remove for an agent that reads its MCP config only at startup
