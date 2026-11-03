@@ -43,6 +43,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 "(subject to the other gates inside StartServerIfNeeded).");
         }
 
+        [Test]
+        public void IsAutoStartAllowedForTransport_Stdio_ReturnsFalse()
+        {
+            Assert.IsFalse(
+                McpServerManager.IsAutoStartAllowedForTransport(Consts.MCP.Server.TransportMethod.stdio),
+                "With stdio the AI agent launches the server on the project's port; an Editor-started " +
+                "server there makes the agent's fail with 'address already in use'.");
+        }
+
+        [Test]
+        public void IsAutoStartAllowedForTransport_StreamableHttp_ReturnsTrue()
+        {
+            Assert.IsTrue(
+                McpServerManager.IsAutoStartAllowedForTransport(Consts.MCP.Server.TransportMethod.streamableHttp),
+                "With streamableHttp the AI agent connects to the Editor-started local server.");
+        }
+
         // Once the editor has loaded, its auto-start has decided, so a connect waits for nothing.
         [Test]
         public void WhenAutoStartSettled_NoServerStarting_RunsRightAway()

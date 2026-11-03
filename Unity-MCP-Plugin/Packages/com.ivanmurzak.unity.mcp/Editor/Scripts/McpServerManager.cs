@@ -138,6 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
             _autoStartPending.Value = !EnvironmentUtils.IsCi()
                 && IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode)
+                && IsAutoStartAllowedForTransport(UnityMcpPluginEditor.TransportMethod)
                 && UnityMcpPluginEditor.KeepServerRunning;
 
             // Poll the download from the main thread instead of subscribing from a ContinueWith
@@ -1995,6 +1996,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             => mode == ConnectionMode.Custom;
 
         /// <summary>
+        /// With the <c>stdio</c> transport the AI agent launches its own server process on the
+        /// project's port, so the Editor must not start one there: the agent's server would then fail
+        /// with "address already in use". The window's transport switch already stops the server
+        /// when stdio is picked; this gate covers the other ways stdio is selected
+        /// (<c>UNITY_MCP_TRANSPORT=stdio</c>, <c>unity-mcp-cli open --transport stdio</c>, a saved
+        /// config). Pure (no Unity API access) so it can be unit-tested in EditMode.
+        /// </summary>
+        public static bool IsAutoStartAllowedForTransport(TransportMethod transport)
+            => transport != TransportMethod.stdio;
+
+        /// <summary>
         /// Starts the MCP server if KeepServerRunning is enabled and no external server is detected.
         /// This method is called during Unity Editor startup to auto-start the server based on user preference.
         /// The external server check is performed asynchronously to avoid blocking the main thread.
@@ -2008,6 +2020,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             if (!IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
             {
                 _logger.LogDebug("StartServerIfNeeded: Cloud mode active, skipping local server auto-start");
+                Settled();
+                return;
+            }
+
+            // stdio: the AI agent starts the server on this port itself
+            if (!IsAutoStartAllowedForTransport(UnityMcpPluginEditor.TransportMethod))
+            {
+                _logger.LogDebug("StartServerIfNeeded: stdio transport, the AI agent launches the server; skipping local server auto-start");
                 Settled();
                 return;
             }

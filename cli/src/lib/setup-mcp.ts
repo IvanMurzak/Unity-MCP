@@ -6,6 +6,7 @@ import {
   getAgentIds,
 } from '@baizor/gamedev-cli-core';
 import { requireExistingPath } from './validation.js';
+import { readConfig } from '../utils/config.js';
 import type {
   SetupMcpOptions,
   SetupMcpResult,
@@ -89,12 +90,15 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
     // downloads the server binary when Unity opens, so a stdio config written before that is valid
     // but not yet runnable.
     if (transport === 'stdio') {
-      const serverPath = unityAdapter.serverBinaryPath(projectPath ?? path.resolve(process.cwd()));
+      const root = projectPath ?? path.resolve(process.cwd());
+      const serverPath = unityAdapter.serverBinaryPath(root);
       if (!fs.existsSync(serverPath)) {
         result.warnings.push(
           'Server binary not found. Open Unity with the MCP plugin to download it automatically.',
         );
       }
+      const warning = stdioTransportMismatchWarning(readPluginTransport(root));
+      if (warning) result.warnings.push(warning);
     }
 
     return {
@@ -120,6 +124,32 @@ export async function setupMcp(opts: SetupMcpOptions): Promise<SetupMcpResult> {
       error: err instanceof Error ? err : new Error(String(err)),
     };
   }
+}
+
+/** The plugin's saved transport, or `undefined` when the settings are missing or unreadable (never throws). */
+function readPluginTransport(projectPath: string): string | undefined {
+  try {
+    return readConfig(projectPath)?.transportMethod;
+  } catch {
+    return undefined;
+  }
+}
+
+/**
+ * With a stdio config the AI agent launches its own server on the project's port. A project whose
+ * plugin settings still say `streamableHttp` makes the Editor start its own server on that port
+ * first, and the agent's then fails with "address already in use". Returns the warning for that
+ * case, or `null` (stdio already selected, or no settings yet: a missing value is not a conflict
+ * the user caused).
+ */
+export function stdioTransportMismatchWarning(pluginTransport: string | undefined): string | null {
+  if (pluginTransport === undefined || pluginTransport === 'stdio') return null;
+  return (
+    'The Unity plugin in this project is set to the "' + pluginTransport + '" transport, so the Editor ' +
+    "starts its own MCP server on the project's port and the agent's stdio server cannot start " +
+    '("address already in use"). Switch the transport to stdio in Window > AI Game Developer, or open ' +
+    'the project with `unity-mcp-cli open --transport stdio`.'
+  );
 }
 
 /**

@@ -13,6 +13,8 @@ import {
   tryDismissLaunchErrorsDialog,
   _resetXdotoolPresenceForTests,
   regexEscapeForXdotool,
+  windowsDismissScript,
+  macosDismissAppleScript,
 } from '../src/utils/launch-error-dismiss.js';
 
 describe('parseDismissOutput', () => {
@@ -254,5 +256,35 @@ describe('permanent-error message constants', () => {
     expect(result.kind).toBe('error');
     if (result.kind !== 'error') return;
     expect(result.message.startsWith(UNSUPPORTED_PLATFORM_PREFIX)).toBe(true);
+  });
+});
+
+describe('dismiss scripts — only the launched editor', () => {
+  it('Windows: a target pid replaces the "every Unity process" list', () => {
+    const script = windowsDismissScript(4242);
+    expect(script).toContain('$unityPids = @(4242)');
+    expect(script).not.toContain("Get-Process -Name 'Unity'");
+    expect(script).not.toContain('__UNITY_PIDS__');
+  });
+
+  it('Windows: no pid (or an invalid one) keeps the every-Unity-process behaviour', () => {
+    for (const pid of [undefined, 0, -3, 1.5, Number.NaN]) {
+      const script = windowsDismissScript(pid);
+      expect(script).toContain("Get-Process -Name 'Unity'");
+      expect(script).toBe(WINDOWS_DISMISS_PS_SCRIPT);
+    }
+  });
+
+  it('macOS: a target pid addresses the process by unix id', () => {
+    const script = macosDismissAppleScript(4242);
+    expect(script).toContain('exists (first process whose unix id is 4242)');
+    expect(script).toContain('tell (first process whose unix id is 4242)');
+    expect(script).not.toContain('process "Unity"');
+    expect(script).not.toContain('__UNITY_PROCESS__');
+  });
+
+  it('macOS: no pid keeps the process "Unity" behaviour', () => {
+    expect(macosDismissAppleScript()).toBe(MACOS_DISMISS_APPLESCRIPT);
+    expect(MACOS_DISMISS_APPLESCRIPT).toContain('tell process "Unity"');
   });
 });

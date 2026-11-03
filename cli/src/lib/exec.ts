@@ -129,7 +129,7 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
       ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
       ...(options.foreignReadyTimeoutMs !== undefined ? { foreignReadyTimeoutMs: options.foreignReadyTimeoutMs } : {}),
       ...(options.onStatus ? { onStatus: options.onStatus } : {}),
-      ...(options.window ? { onLaunched: () => { dismissing = dismissLaunchErrorsUntil(ready.signal, []); } } : {}),
+      ...(options.window ? { onLaunched: (pid: number) => { dismissing = dismissLaunchErrorsUntil(ready.signal, [], pid); } } : {}),
     });
     baseUrl = (await session.ensure({ mode: options.window ? 'window' : 'headless' })).ready;
   } catch (err) {

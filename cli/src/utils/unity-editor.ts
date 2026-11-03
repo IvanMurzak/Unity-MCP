@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { spawn } from 'child_process';
 import { homedir, platform } from 'os';
-import { findUnityHub, ensureUnityHub, listInstalledEditors } from './unity-hub.js';
+import { findUnityHub, ensureUnityHub, listInstalledEditors, type InstalledEditor } from './unity-hub.js';
 import { readCachedEditorPath, writeCachedEditorPath } from './editor-cache.js';
 import * as ui from './ui.js';
 import { verbose } from './ui.js';
@@ -243,34 +243,28 @@ function normalizeRootForDedup(root: string, os: NodeJS.Platform): string {
 }
 
 /**
- * Find editor by checking common installation directories.
- *
- * Scans, in order:
+ * The directories Unity Hub installs editors into ("editor roots") for the
+ * current platform, plus the per-platform shape of an editor binary under a
+ * root. Roots, in order:
  *   1. The platform's default Unity Hub editor root
  *      (e.g. `%PROGRAMFILES%\Unity\Hub\Editor` on Windows).
  *   2. Every root listed in Unity Hub's `secondaryInstallPath.json`
- *      (e.g. `C:\UnityEditor\` if the user moved their installs).
- *
- * Reading `secondaryInstallPath.json` keeps cache-miss latency in the
- * sub-100ms range for users whose editors live outside the default Hub root,
- * avoiding the ~14s Unity Hub Electron probe (issue #784).
+ *      (e.g. `C:\UnityEditor\` if the user moved their installs), minus
+ *      duplicates of a default root.
+ * Returns `null` on an unsupported platform.
  */
-function findEditorPathByCommonLocations(version?: string): string | null {
-  const startedAt = Date.now();
+function getEditorRootLayout(): {
+  defaultRoots: string[];
+  secondaryRoots: string[];
+  buildBinaryPath: (root: string, ver: string) => string;
+} | null {
   const os = platform();
-  const candidates: string[] = [];
-
-  // Layout per platform: a `defaultRoots` list of "Hub editor root"
-  // directories (e.g. `<programFiles>/Unity/Hub/Editor`) and a per-platform
-  // builder that turns "(root, version)" into the binary path under it.
-  // We append the same shapes for every root, default + secondary, so the
-  // candidate list is uniform regardless of where the install lives.
   const defaultRoots: string[] = [];
   let buildBinaryPath: (root: string, ver: string) => string;
 
   switch (os) {
     case 'win32': {
-      const programFiles = process.env['PROGRAMFILES'] ?? 'C:\\Program Files';
+      const programFiles = process.env['PROGRAMFILES'] ?? 'C:\Program Files';
       defaultRoots.push(path.join(programFiles, 'Unity', 'Hub', 'Editor'));
       buildBinaryPath = (root, ver) => path.join(root, ver, 'Editor', 'Unity.exe');
       break;
@@ -288,25 +282,72 @@ function findEditorPathByCommonLocations(version?: string): string | null {
       break;
     }
     default:
-      verbose(`findEditorPathByCommonLocations unsupported platform ${os} after ${Date.now() - startedAt}ms`);
       return null;
   }
 
-  // Secondary roots: read `secondaryInstallPath.json`. On every supported
-  // platform Unity Hub stores them as a single JSON string (or, defensively,
-  // an array of strings). Missing/malformed → empty array, no crash.
-  const secondaryRootsBeforeFiltering = readSecondaryInstallPaths(os);
-  // Drop duplicates that already appear in `defaultRoots` so the candidate
-  // list doesn't double-stat them. Compare via `normalizeRootForDedup` so a
-  // user-typed trailing separator (e.g. `C:\Program Files\Unity\Hub\Editor\`)
-  // or, on Windows, a drive-letter case difference (`c:\...` vs `C:\...`)
-  // still dedupes against the default root. The original string is kept for
-  // downstream `existsSync` and verbose logs — only the comparison key is
-  // normalized.
+  // Secondary roots: `secondaryInstallPath.json` (a JSON string or,
+  // defensively, an array). Missing/malformed → empty array, no crash.
+  // Duplicates of a default root are dropped, compared via
+  // `normalizeRootForDedup` so a trailing separator or (on Windows) a
+  // drive-letter case difference still dedupes. The original string is kept
+  // for `existsSync` and verbose logs.
   const defaultRootKeys = new Set(defaultRoots.map((r) => normalizeRootForDedup(r, os)));
-  const secondaryRoots = secondaryRootsBeforeFiltering.filter(
+  const secondaryRoots = readSecondaryInstallPaths(os).filter(
     (r) => !defaultRootKeys.has(normalizeRootForDedup(r, os)),
   );
+  return { defaultRoots, secondaryRoots, buildBinaryPath };
+}
+
+/**
+ * List every editor installed under the Unity Hub editor roots (see
+ * {@link getEditorRootLayout}) by reading the filesystem only — no Unity Hub
+ * process is started. Each entry is `{ version, path }` with `path` pointing
+ * at the editor executable, the same shape `queryInstalledEditors` returns.
+ * Editors the Hub knows about outside these roots (e.g. ones added with
+ * "Locate") are not found here; callers fall back to the Hub CLI for those.
+ * The first root that holds a version wins.
+ */
+export function listEditorsByCommonLocations(): InstalledEditor[] {
+  const layout = getEditorRootLayout();
+  if (!layout) return [];
+  const editors: InstalledEditor[] = [];
+  const seen = new Set<string>();
+  for (const root of [...layout.defaultRoots, ...layout.secondaryRoots]) {
+    let versions: string[];
+    try {
+      versions = fs.readdirSync(root);
+    } catch {
+      continue;
+    }
+    for (const version of versions) {
+      if (seen.has(version)) continue;
+      const binary = layout.buildBinaryPath(root, version);
+      if (fs.existsSync(binary)) {
+        seen.add(version);
+        editors.push({ version, path: binary });
+      }
+    }
+  }
+  return editors.sort((a, b) => compareUnityVersions(b.version, a.version));
+}
+
+/**
+ * Find editor by checking common installation directories
+ * (see {@link getEditorRootLayout}).
+ *
+ * Reading `secondaryInstallPath.json` keeps cache-miss latency in the
+ * sub-100ms range for users whose editors live outside the default Hub root,
+ * avoiding the ~14s Unity Hub Electron probe (issue #784).
+ */
+function findEditorPathByCommonLocations(version?: string): string | null {
+  const startedAt = Date.now();
+  const layout = getEditorRootLayout();
+  if (!layout) {
+    verbose(`findEditorPathByCommonLocations unsupported platform ${platform()} after ${Date.now() - startedAt}ms`);
+    return null;
+  }
+  const { defaultRoots, secondaryRoots, buildBinaryPath } = layout;
+  const candidates: string[] = [];
   if (secondaryRoots.length > 0) {
     verbose(`findEditorPathByCommonLocations including ${secondaryRoots.length} secondary root(s): ${secondaryRoots.join(', ')}`);
   }

@@ -27,6 +27,10 @@ const FAKE_HUB = '/hub/Unity Hub.exe';
 function makeOptions(overrides: Partial<CreateProjectOptions> = {}): CreateProjectOptions {
   return {
     projectPath: 'some/new-project',
+    // No editor in the Unity Hub editor folders unless a test says so, so the
+    // Unity Hub CLI path below is exercised and the machine's real installs
+    // never leak in.
+    listLocalEditorsImpl: () => [],
     findHubImpl: () => FAKE_HUB,
     listEditorsImpl: () => EDITORS,
     resolveEditorExecutableImpl: (installPath) => `${installPath}/Editor/Unity.exe`,
@@ -92,6 +96,59 @@ describe('createProject — Unity Hub resolution', () => {
 
     expect(result.kind).toBe('success');
     expect(findHub).not.toHaveBeenCalled();
+    expect(listEditors).toHaveBeenCalledWith(FAKE_HUB);
+  });
+});
+
+// ---------------------------------------------------------------------------
+// Editor folders first, Unity Hub CLI only on a miss
+// ---------------------------------------------------------------------------
+
+describe('createProject — editor folders before the Unity Hub CLI', () => {
+  const LOCAL: CreateProjectEditorInfo[] = [
+    { version: '6000.3.1f1', path: '/local/6000.3.1f1/Editor/Unity.exe' },
+  ];
+
+  it('does not start the Unity Hub CLI when the requested version is in the editor folders', async () => {
+    const findHub = vi.fn(() => FAKE_HUB);
+    const listEditors = vi.fn(() => EDITORS);
+    const runEditor = vi.fn(async () => {});
+    const result = await createProject(
+      makeOptions({
+        editorVersion: '6000.3.1f1',
+        listLocalEditorsImpl: () => LOCAL,
+        findHubImpl: findHub,
+        listEditorsImpl: listEditors,
+        resolveEditorExecutableImpl: (p) => p,
+        runEditorImpl: runEditor,
+      }),
+    );
+
+    expect(result.kind).toBe('success');
+    expect(findHub).not.toHaveBeenCalled();
+    expect(listEditors).not.toHaveBeenCalled();
+    expect(runEditor).toHaveBeenCalledWith('/local/6000.3.1f1/Editor/Unity.exe', expect.any(String), expect.any(Number));
+  });
+
+  it('does not need Unity Hub at all when no version is requested and an editor is found locally', async () => {
+    const listEditors = vi.fn(() => EDITORS);
+    const result = await createProject(
+      makeOptions({ listLocalEditorsImpl: () => LOCAL, findHubImpl: () => null, listEditorsImpl: listEditors }),
+    );
+
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') throw new Error('expected success kind');
+    expect(result.editorVersion).toBe('6000.3.1f1');
+    expect(listEditors).not.toHaveBeenCalled();
+  });
+
+  it('asks the Unity Hub CLI when the requested version is not in the editor folders', async () => {
+    const listEditors = vi.fn(() => EDITORS);
+    const result = await createProject(
+      makeOptions({ editorVersion: '2022.3.62f3', listLocalEditorsImpl: () => LOCAL, listEditorsImpl: listEditors }),
+    );
+
+    expect(result.kind).toBe('success');
     expect(listEditors).toHaveBeenCalledWith(FAKE_HUB);
   });
 });

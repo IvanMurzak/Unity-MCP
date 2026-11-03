@@ -12,7 +12,7 @@ import type { SetupMcpResult } from '../src/lib/types.js';
 const setupMcpMock = vi.fn<(opts: unknown) => Promise<SetupMcpResult>>();
 vi.mock('../src/lib/setup-mcp.js', () => ({ setupMcp: (opts: unknown) => setupMcpMock(opts) }));
 
-const { setupMcpCommand } = await import('../src/commands/setup-mcp.js');
+const { setupMcpCommand, describeCredential } = await import('../src/commands/setup-mcp.js');
 
 describe('setup-mcp command — result rendering', () => {
   let out: string[];
@@ -65,5 +65,23 @@ describe('setup-mcp command — result rendering', () => {
     const text = out.join('\n');
     expect(text).toContain('Could not write the Cursor config');
     expect(text).toContain(warning);
+  });
+});
+
+describe('setup-mcp command — credential line', () => {
+  const none = { credential: 'none' as const };
+
+  it('says no sign-in is needed for a stdio config (a local server the agent launches)', () => {
+    expect(describeCredential({ ...none, transport: 'stdio' })).toBe('none (local stdio server — no sign-in needed)');
+  });
+
+  it('says no sign-in is needed for an http config to a loopback --url', () => {
+    expect(describeCredential({ ...none, transport: 'http' }, 'http://localhost:26587')).toBe('none (local server — no sign-in needed)');
+    expect(describeCredential({ ...none, transport: 'http' }, 'http://127.0.0.1:26587/p/ebff34c8')).toBe('none (local server — no sign-in needed)');
+  });
+
+  it('keeps the URL-only wording for a Cloud config without a credential', () => {
+    expect(describeCredential({ ...none, transport: 'http' })).toBe('none (URL-only — the agent signs in itself)');
+    expect(describeCredential({ ...none, transport: 'http' }, 'https://ai-game.dev/mcp')).toBe('none (URL-only — the agent signs in itself)');
   });
 });

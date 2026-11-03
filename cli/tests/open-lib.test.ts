@@ -974,3 +974,25 @@ describe('openProject — library-safety', () => {
     exitSpy.mockRestore();
   });
 });
+
+describe('pollAndDismissLaunchErrors — target pid', () => {
+  it('hands the launched editor pid to every probe call', async () => {
+    const seen: Array<number | undefined> = [];
+    const probe = async (_platform: DismissPlatform, targetPid?: number): Promise<DismissOutcome> => {
+      seen.push(targetPid);
+      return { kind: 'not-found' };
+    };
+    await _pollAndDismissLaunchErrorsForTests({
+      timeoutMs: 200,
+      intervalMs: 50,
+      onProgress: undefined,
+      warnings: [],
+      platform: 'win32',
+      probe,
+      noDialogGraceMs: 0,
+      targetPid: 4242,
+    });
+    expect(seen.length).toBeGreaterThan(0);
+    expect(seen.every((pid) => pid === 4242)).toBe(true);
+  });
+});
