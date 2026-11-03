@@ -506,11 +506,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var keyStatusText = root.Q<Label>("projectKeyStatusText") ?? throw new NullReferenceException("Label 'projectKeyStatusText' not found in UI.");
             var btnRegenerate = root.Q<Button>("btnRegenerateKey") ?? throw new NullReferenceException("Button 'btnRegenerateKey' not found in UI.");
 
+            // Manual setup (steps in the agent's own UI) writes no file: a neutral status, no path, buttons or key row.
+            if (setupKind == AgentConfig.AgentSetupKind.Manual)
+            {
+                statusText.text = ComputeStatusText(_busyText, setupKind, isConfigured: false, transport);
+                btnConfigure.style.display = DisplayStyle.None;
+                btnRemove.style.display = DisplayStyle.None;
+                return root;
+            }
+
             var config = GetConfig(settings, transport);
 
             var pathLabel = root.Q<Label>("labelConfigPath");
-            // Manual setup writes no file, so there is no config path to show.
-            if (pathLabel != null && setupKind != AgentConfig.AgentSetupKind.Manual)
+            if (pathLabel != null)
             {
                 pathLabel.text = ToDisplayPath(config.ConfigPath);
                 pathLabel.tooltip = config.ConfigPath;
@@ -699,9 +707,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // reads back as Configured, not spuriously reconfigure-needed. An unsupported transport is never Configured.
             var isConfigured = transportSupported && GetConfig(settings, transport).IsConfigured();
             // Unconfigure removes the agent's entry whatever transport wrote it, so an unsupported transport's row offers
-            // Remove only for a stale entry, never for the working stdio one. Manual setup offers no buttons at all.
-            var anyConfigured = setupKind != AgentConfig.AgentSetupKind.Manual
-                && _configurator.IsDetected(settings)
+            // Remove only for a stale entry, never for the working stdio one.
+            var anyConfigured = _configurator.IsDetected(settings)
                 && (transportSupported || !_configurator.GetStdioConfig(settings).IsConfigured());
 
             statusText.text = ComputeStatusText(_busyText, setupKind, isConfigured, transport);
@@ -811,7 +818,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // holds the shared Describe() alert with the setup that does. A Manual setup (Claude Desktop in Cloud mode:
             // add a Claude connector) is a normal setup, so it gets no alert. A transport or mode switch rebuilds the
             // whole view, so the panel is added only for the setup kind active now.
-            if (ActiveSetupKind(CurrentSettings()) == AgentConfig.AgentSetupKind.Unsupported)
+            if (!_configurator.SupportsTransport(ActiveTransport)
+                && ActiveSetupKind(CurrentSettings()) == AgentConfig.AgentSetupKind.Unsupported)
             {
                 var unsupportedPanel = new AlertPanel("Transport Not Supported",
                     $"{AgentName} cannot use the selected transport. See the transport section below for the setup that works.");
@@ -847,10 +855,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // section and the Unsupported alert replaces it.
             var showSetupRequired = !isSetupComplete && setupKind == AgentConfig.AgentSetupKind.ConfigFile;
             _alertPanel.SetVisible(showSetupRequired);
+            var unsupported = setupKind == AgentConfig.AgentSetupKind.Unsupported;
             _reconfigureAlertPanel?.SetVisible(needsReconfigure);
 
             if (ContainerAlert != null)
-                ContainerAlert.style.display = (showSetupRequired || needsReconfigure || setupKind == AgentConfig.AgentSetupKind.Unsupported)
+                ContainerAlert.style.display = (showSetupRequired || needsReconfigure || unsupported)
                     ? DisplayStyle.Flex
                     : DisplayStyle.None;
         }
