@@ -49,15 +49,29 @@ namespace com.IvanMurzak.Unity.MCP
             var changed = false;
             var data = unityConnectionConfig ??= new UnityConnectionConfig();
 
-            if (string.IsNullOrEmpty(data.LocalHost))
-            {
-                data.LocalHost = UnityConnectionConfig.DefaultHost;
+            if (RepairLocalHost(data, RuntimeOverrides))
                 changed = true;
-            }
 
             // Data was changed during validation, need to notify subscribers
             if (changed)
                 NotifyChanged(data);
+        }
+
+        /// <summary>
+        /// Repairs <paramref name="config"/>'s <see cref="UnityConnectionConfig.LocalHost"/> with
+        /// <see cref="NormalizeLocalHost"/>; returns whether it changed. A host set by an env var / CLI flag is left as
+        /// is: <see cref="Save"/> restores the recorded override value after writing the disk baseline, so repairing
+        /// only the in-memory copy would not last, and the override is the caller's explicit choice.
+        /// </summary>
+        internal static bool RepairLocalHost(UnityConnectionConfig config, EnvironmentUtils.OverrideRecord? overrides)
+        {
+            if (overrides != null && overrides.Contains(EnvironmentUtils.FieldHost))
+                return false;
+            var normalized = NormalizeLocalHost(config.LocalHost);
+            if (string.Equals(normalized, config.LocalHost, System.StringComparison.Ordinal))
+                return false;
+            config.LocalHost = normalized;
+            return true;
         }
 
         public override void Dispose()

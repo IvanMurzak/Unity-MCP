@@ -104,15 +104,30 @@ namespace com.IvanMurzak.Unity.MCP
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
+        /// <summary>
+        /// The Custom-mode server URL. A value set here is repaired by <see cref="NormalizeLocalHost"/>, so an empty or
+        /// portless loopback URL becomes <c>http://localhost:{project port}</c>.
+        /// </summary>
         public static string LocalHost
         {
             get => Instance.unityConnectionConfig.LocalHost;
             set
             {
-                Instance.unityConnectionConfig.LocalHost = value;
+                Instance.unityConnectionConfig.LocalHost = NormalizeLocalHost(value);
                 NotifyChanged(Instance.unityConnectionConfig);
             }
         }
+
+        /// <summary>
+        /// Repairs a Custom-mode server URL (<see cref="AgentConfiguratorSettings.NormalizeLocalHost"/>): an empty value
+        /// or a loopback URL without an explicit port (e.g. <c>http://localhost/mcp</c>) becomes
+        /// <c>{scheme}://{host}:{port}</c> with the project's derived port, the port <see cref="Port"/> then binds and
+        /// the agent configs write (<see cref="AgentConfiguratorSettings.PinnedPort"/>). Without it Unity dialed the
+        /// scheme default (80) while the agent configs used the derived port. An explicit port, a non-loopback URL
+        /// and a non-absolute value are kept (trimmed).
+        /// </summary>
+        public static string NormalizeLocalHost(string? host)
+            => AgentConfiguratorSettings.NormalizeLocalHost(host, GeneratePortFromDirectory());
         public static bool KeepConnected
         {
             get => Instance.unityConnectionConfig.KeepConnected;

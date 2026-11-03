@@ -4,6 +4,8 @@
 
 ### Changed
 
+- **McpPlugin 8.17.0** (gate `UNITY_MCP_DEPS_33`): agent configurators say which transports an agent supports and
+  when it must be restarted, and repair a portless local Server URL (see Fixed).
 - **McpPlugin 8.16.0** (gate `UNITY_MCP_DEPS_32`): an Editor that cannot serve a call right now answers **HTTP 503**,
   not 422, on the server's direct endpoint `POST /api/tools/{name}` (the tools throw McpPlugin's new
   `ToolUnavailableException`; the MCP channel still shows the tool's message as an error result):
@@ -152,6 +154,18 @@
 
 ### Fixed
 
+- **Claude Desktop is configured over stdio only.** Claude Desktop starts only stdio servers from
+  `claude_desktop_config.json` and skipped the HTTP entry the AI agent panel wrote ("not valid MCP server
+  configurations"). With the HTTP transport (and in Cloud mode) the panel now shows "Transport Not Supported" with the
+  working setup (Custom connection, stdio transport, Configure) and offers no Configure; Remove still deletes an old
+  HTTP entry, and "Regenerate key" no longer rewrites one.
+- **Restart notice.** After Configure, Reconfigure or Remove for an agent that reads its MCP config only at startup
+  (stdio agents; Claude Desktop must be fully quit, also from the tray or menu bar), a dialog says to restart it (in
+  batch mode the notice is logged), and the stdio panel keeps the hint.
+- **Portless local Server URL.** An empty or portless loopback Custom Server URL (e.g. a saved `http://localhost/mcp`)
+  made Unity dial port 80 while the agent configs used the project port. It is repaired to
+  `http://localhost:<project port>` on load, on save and when the field is edited; a URL with an explicit port, a
+  remote URL, and a URL set by `UNITY_MCP_HOST` / `UNITY_MCP_CLOUD_URL` / `--url` are kept.
 - **No obsolete-API (CS0618) compiler warnings in Unity 6.3–6.6.** `Light.cookieSize2D` and
   `EditorUtility.EntityIdToObject` are used from Unity 6.3 (where they appeared), `FindObjectsByType` without a sort
   mode from 6.5. `Physics.autoSyncTransforms` and the CPU lightmapper (the only one that bakes without a graphics

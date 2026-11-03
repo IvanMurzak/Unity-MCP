@@ -57,7 +57,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _inputFieldHost.value = UnityMcpPluginEditor.LocalHost;
             _inputFieldHost.RegisterCallback<FocusOutEvent>(evt =>
             {
-                var newValue = _inputFieldHost.value;
+                // Show the repaired URL (an empty or portless loopback URL gets the project port) — the one Unity dials.
+                var newValue = UnityMcpPluginEditor.NormalizeLocalHost(_inputFieldHost.value);
+                _inputFieldHost.SetValueWithoutNotify(newValue);
                 if (UnityMcpPluginEditor.LocalHost == newValue)
                     return;
 
