@@ -1,0 +1,55 @@
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Tests/Files/scopes_partial_3.json"
+  77972c95b98742db 14
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Tests/Files/scopes_partial_1.json"
+  77972c95b98742db 13
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Tests/Files/Correct/correct_manifest.json"
+  77972c95b98742db 14
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Tests/ManifestInstallerTests.cs"
+  77972c95b98742db 10,24-27,29-30,33-35,39-42,45-46,48-52,54,56-58,60-61,63-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.3.0",
+  "base_commit_sha": "9593ccc0ba32952d3b95d68c7235f014bb255ede",
+  "prompts": {
+    "77972c95b98742db": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "32533728-86af-4ad0-88b8-2459a0b622f6",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 201,
+      "total_deletions": 237,
+      "accepted_lines": 34,
+      "overriden_lines": 0
+    },
+    "bb2cf3afe0082aa3": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7c97240d-7ea0-4b7e-bc0b-7284560a2708",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 21,
+      "overriden_lines": 0
+    },
+    "d73b5a9fcb246df7": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9fa2eb9c-f863-4e53-af3d-044644714422",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 0,
+      "total_deletions": 0,
+      "accepted_lines": 7161,
+      "overriden_lines": 0
+    }
+  }
+}

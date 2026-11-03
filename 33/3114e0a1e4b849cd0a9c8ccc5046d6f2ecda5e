@@ -1,0 +1,45 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.CreateGUI.cs
+  fd2f06962167b434 324-326,368-369,438,461,470-471,485,490-499,501-531,535-536,538-557,559,571-573,615-617
+  c5ba8d0ff12fbd7e 537,558
+Unity-MCP-Plugin/Assets/root/Editor/UI/uss/common/_buttons.uss
+  fd2f06962167b434 98-110
+Unity-MCP-Plugin/Assets/root/Editor/UI/uss/MainWindow.uss
+  fd2f06962167b434 193-197
+Unity-MCP-Plugin/Assets/root/Editor/UI/uxml/MainWindow.uxml
+  fd2f06962167b434 30
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.cs
+  fd2f06962167b434 16,24-27,72-96
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "333114e0a1e4b849cd0a9c8ccc5046d6f2ecda5e",
+  "prompts": {
+    "c5ba8d0ff12fbd7e": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ba617303-dd01-4435-b022-ec6bee737737",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 6,
+      "total_deletions": 6,
+      "accepted_lines": 2,
+      "overriden_lines": 0
+    },
+    "fd2f06962167b434": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "604f06b2-e978-469c-93c7-8a8d8d2bda05",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 2067,
+      "total_deletions": 1938,
+      "accepted_lines": 462,
+      "overriden_lines": 0
+    }
+  }
+}

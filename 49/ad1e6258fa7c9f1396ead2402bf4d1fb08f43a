@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Assets.Prefab.Create.cs
+  abe60fa860234cf2 87
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.8",
+  "base_commit_sha": "49ad1e6258fa7c9f1396ead2402bf4d1fb08f43a",
+  "prompts": {
+    "abe60fa860234cf2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ea288b12-a57f-449b-8d41-3fbbd3651131",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 10267,
+      "total_deletions": 10267,
+      "accepted_lines": 130,
+      "overriden_lines": 0
+    }
+  }
+}
