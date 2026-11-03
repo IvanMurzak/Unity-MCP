@@ -264,7 +264,7 @@ function getEditorRootLayout(): {
 
   switch (os) {
     case 'win32': {
-      const programFiles = process.env['PROGRAMFILES'] ?? 'C:\Program Files';
+      const programFiles = process.env['PROGRAMFILES'] ?? 'C:\\Program Files';
       defaultRoots.push(path.join(programFiles, 'Unity', 'Hub', 'Editor'));
       buildBinaryPath = (root, ver) => path.join(root, ver, 'Editor', 'Unity.exe');
       break;
@@ -305,7 +305,8 @@ function getEditorRootLayout(): {
  * at the editor executable, the same shape `queryInstalledEditors` returns.
  * Editors the Hub knows about outside these roots (e.g. ones added with
  * "Locate") are not found here; callers fall back to the Hub CLI for those.
- * The first root that holds a version wins.
+ * Order: the default root first, then secondary roots; newest first within a
+ * root. The first root that holds a version wins.
  */
 export function listEditorsByCommonLocations(): InstalledEditor[] {
   const layout = getEditorRootLayout();
@@ -319,7 +320,7 @@ export function listEditorsByCommonLocations(): InstalledEditor[] {
     } catch {
       continue;
     }
-    for (const version of versions) {
+    for (const version of versions.sort((a, b) => compareUnityVersions(b, a))) {
       if (seen.has(version)) continue;
       const binary = layout.buildBinaryPath(root, version);
       if (fs.existsSync(binary)) {
@@ -328,7 +329,7 @@ export function listEditorsByCommonLocations(): InstalledEditor[] {
       }
     }
   }
-  return editors.sort((a, b) => compareUnityVersions(b.version, a.version));
+  return editors;
 }
 
 /**
@@ -343,61 +344,32 @@ function findEditorPathByCommonLocations(version?: string): string | null {
   const startedAt = Date.now();
   const layout = getEditorRootLayout();
   if (!layout) {
-    verbose(`findEditorPathByCommonLocations unsupported platform ${platform()} after ${Date.now() - startedAt}ms`);
+    verbose(`findEditorPathByCommonLocations unsupported platform ${platform()}`);
     return null;
   }
   const { defaultRoots, secondaryRoots, buildBinaryPath } = layout;
-  const candidates: string[] = [];
   if (secondaryRoots.length > 0) {
     verbose(`findEditorPathByCommonLocations including ${secondaryRoots.length} secondary root(s): ${secondaryRoots.join(', ')}`);
   }
 
-  // Build the candidate list. When the caller requested a specific version we
-  // ONLY emit the version-specific candidate under each root — never the
-  // sorted-directory fallback. Falling through to "any installed editor"
-  // inside a version-specific lookup is what produced the cache-poisoning
-  // failure mode in issue #784 (the fast path silently returned a wrong-
-  // version editor and the caller cached it under the requested key). When
-  // the caller did NOT supply a version, we DO emit the sorted directory
-  // listing — that's a legitimate "highest installed" lookup. The default
-  // root is scanned before any secondary root, preserving the previous
-  // behaviour for users without secondary roots.
-  const allRoots = [...defaultRoots, ...secondaryRoots];
-  const rootIsSecondary = new Map<string, boolean>(
-    allRoots.map((r) => [r, secondaryRoots.includes(r)] as const),
-  );
-
-  for (const root of allRoots) {
-    if (version) {
-      candidates.push(buildBinaryPath(root, version));
-      continue;
-    }
-    if (fs.existsSync(root)) {
-      try {
-        const versions = fs.readdirSync(root).sort((a, b) => compareUnityVersions(b, a));
-        for (const v of versions) {
-          candidates.push(buildBinaryPath(root, v));
-        }
-      } catch { /* ignore */ }
-    }
+  // A requested version ONLY matches that version under each root — never
+  // "any installed editor". Falling through to another version inside a
+  // version-specific lookup is what produced the cache-poisoning failure mode
+  // in issue #784 (the fast path silently returned a wrong-version editor and
+  // the caller cached it under the requested key). Without a version, the
+  // first editor of `listEditorsByCommonLocations` is a legitimate "highest
+  // installed" lookup (the default root is scanned before any secondary root).
+  let hit: string | null = null;
+  if (version) {
+    hit = [...defaultRoots, ...secondaryRoots]
+      .map((root) => buildBinaryPath(root, version))
+      .find((candidate) => fs.existsSync(candidate)) ?? null;
+  } else {
+    hit = listEditorsByCommonLocations()[0]?.path ?? null;
   }
 
-  for (const candidate of candidates) {
-    if (fs.existsSync(candidate)) {
-      // Identify which root the hit came from so verbose logs distinguish a
-      // default-root hit from a `secondaryInstallPath` hit — useful when
-      // debugging users who report slow opens. Candidates are always built via
-      // `buildBinaryPath(root, ver)` which joins extra segments under `root`,
-      // so `startsWith(root + path.sep)` is the only reachable case.
-      const fromRoot = allRoots.find((root) => candidate.startsWith(root + path.sep));
-      const origin = fromRoot && rootIsSecondary.get(fromRoot) ? 'secondaryInstallPath' : 'default Hub root';
-      verbose(`findEditorPathByCommonLocations hit ${candidate} (${origin}) after ${Date.now() - startedAt}ms (${candidates.length} candidates)`);
-      return candidate;
-    }
-  }
-
-  verbose(`findEditorPathByCommonLocations miss after ${Date.now() - startedAt}ms (${candidates.length} candidates)`);
-  return null;
+  verbose(`findEditorPathByCommonLocations ${hit ? `hit ${hit}` : 'miss'} after ${Date.now() - startedAt}ms`);
+  return hit;
 }
 
 /**

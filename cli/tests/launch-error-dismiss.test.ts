@@ -5,8 +5,6 @@ import { describe, it, expect } from 'vitest';
 import {
   parseDismissOutput,
   LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS,
-  WINDOWS_DISMISS_PS_SCRIPT,
-  MACOS_DISMISS_APPLESCRIPT,
   DISMISS_BUTTON_LABEL,
   LINUX_XDOTOOL_MISSING_PREFIX,
   UNSUPPORTED_PLATFORM_PREFIX,
@@ -134,7 +132,10 @@ describe('LAUNCH_ERROR_DIALOG_TITLE_FRAGMENTS', () => {
   });
 });
 
-describe('WINDOWS_DISMISS_PS_SCRIPT', () => {
+const WINDOWS_DISMISS_PS_SCRIPT = windowsDismissScript();
+const MACOS_DISMISS_APPLESCRIPT = macosDismissAppleScript();
+
+describe('windowsDismissScript', () => {
   it('mentions the Ignore button label so the matcher will click it', () => {
     expect(WINDOWS_DISMISS_PS_SCRIPT).toContain(DISMISS_BUTTON_LABEL);
   });
@@ -165,7 +166,7 @@ describe('WINDOWS_DISMISS_PS_SCRIPT', () => {
   });
 });
 
-describe('MACOS_DISMISS_APPLESCRIPT', () => {
+describe('macosDismissAppleScript', () => {
   it('clicks the Ignore button on a Unity process window', () => {
     expect(MACOS_DISMISS_APPLESCRIPT).toContain('process "Unity"');
     expect(MACOS_DISMISS_APPLESCRIPT).toContain('button "Ignore"');
@@ -271,7 +272,7 @@ describe('dismiss scripts — only the launched editor', () => {
     for (const pid of [undefined, 0, -3, 1.5, Number.NaN]) {
       const script = windowsDismissScript(pid);
       expect(script).toContain("Get-Process -Name 'Unity'");
-      expect(script).toBe(WINDOWS_DISMISS_PS_SCRIPT);
+      expect(script).toBe(windowsDismissScript());
     }
   });
 
@@ -284,7 +285,6 @@ describe('dismiss scripts — only the launched editor', () => {
   });
 
   it('macOS: no pid keeps the process "Unity" behaviour', () => {
-    expect(macosDismissAppleScript()).toBe(MACOS_DISMISS_APPLESCRIPT);
     expect(MACOS_DISMISS_APPLESCRIPT).toContain('tell process "Unity"');
   });
 });

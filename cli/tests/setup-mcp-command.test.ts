@@ -75,9 +75,10 @@ describe('setup-mcp command — credential line', () => {
     expect(describeCredential({ ...none, transport: 'stdio' })).toBe('none (local stdio server — no sign-in needed)');
   });
 
-  it('says no sign-in is needed for an http config to a loopback --url', () => {
+  it('says no sign-in is needed for an http config to a local --url', () => {
     expect(describeCredential({ ...none, transport: 'http' }, 'http://localhost:26587')).toBe('none (local server — no sign-in needed)');
     expect(describeCredential({ ...none, transport: 'http' }, 'http://127.0.0.1:26587/p/ebff34c8')).toBe('none (local server — no sign-in needed)');
+    expect(describeCredential({ ...none, transport: 'http' }, 'http://0.0.0.0:26587')).toBe('none (local server — no sign-in needed)');
   });
 
   it('keeps the URL-only wording for a Cloud config without a credential', () => {

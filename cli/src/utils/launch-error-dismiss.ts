@@ -124,8 +124,8 @@ export async function tryDismissLaunchErrorsDialog(
 
 /**
  * The PowerShell payload that probes for the Unity launch-errors
- * dialog and clicks `Ignore` if found. Exported as a string (not a
- * function) so tests can assert the script shape without launching
+ * dialog and clicks `Ignore` if found. Built as a string so tests can
+ * assert the script shape without launching
  * PowerShell.
  *
  * Strategy:
@@ -148,17 +148,7 @@ export function windowsDismissScript(targetPid?: number): string {
   const pidSource = isValidPid(targetPid)
     ? `@(${targetPid})`
     : `@(Get-Process -Name 'Unity' -ErrorAction SilentlyContinue | ForEach-Object { [int]$_.Id })`;
-  return WINDOWS_DISMISS_PS_TEMPLATE.replace(PID_SOURCE_PLACEHOLDER, pidSource);
-}
-
-/** `true` for a pid the scripts may embed: a positive safe integer (never text from elsewhere). */
-function isValidPid(pid: number | undefined): pid is number {
-  return pid !== undefined && Number.isSafeInteger(pid) && pid > 0;
-}
-
-const PID_SOURCE_PLACEHOLDER = '__UNITY_PIDS__';
-
-const WINDOWS_DISMISS_PS_TEMPLATE = `
+  return `
 $ErrorActionPreference = 'Stop'
 try {
   if (-not ([System.Management.Automation.PSTypeName]'UnityMcp.LaunchErrors.Dismisser').Type) {
@@ -225,16 +215,19 @@ namespace UnityMcp.LaunchErrors {
 }
 "@
   }
-  $unityPids = __UNITY_PIDS__
+  $unityPids = ${pidSource}
   if ($unityPids.Count -eq 0) { Write-Output 'not-found'; return }
   Write-Output ([UnityMcp.LaunchErrors.Dismisser]::TryDismiss([int[]]$unityPids))
 } catch {
   Write-Output ('error:' + $_.Exception.Message)
 }
 `;
+}
 
-/** The Windows script for "any Unity editor" (no target pid). Kept for callers and tests that use the constant. */
-export const WINDOWS_DISMISS_PS_SCRIPT = windowsDismissScript();
+/** `true` for a pid the scripts may embed: a positive safe integer (never text from elsewhere). */
+function isValidPid(pid: number | undefined): pid is number {
+  return pid !== undefined && Number.isSafeInteger(pid) && pid > 0;
+}
 
 async function tryDismissWindows(targetPid?: number): Promise<DismissOutcome> {
   return new Promise<DismissOutcome>((resolve) => {
@@ -262,8 +255,8 @@ async function tryDismissWindows(targetPid?: number): Promise<DismissOutcome> {
 // ---------------------------------------------------------------------------
 
 /**
- * The AppleScript snippet used for the macOS dismiss path. Exposed as
- * a string for testability.
+ * The AppleScript snippet used for the macOS dismiss path. Built as a
+ * string for testability.
  *
  * Strategy: iterate every window of the Unity application process and
  * click the first button titled `Ignore`. If the Unity process is not
@@ -280,19 +273,14 @@ export function macosDismissAppleScript(targetPid?: number): string {
   const processRef = isValidPid(targetPid)
     ? `(first process whose unix id is ${targetPid})`
     : `process "Unity"`;
-  return MACOS_DISMISS_APPLESCRIPT_TEMPLATE.split(MAC_PROCESS_PLACEHOLDER).join(processRef);
-}
-
-const MAC_PROCESS_PLACEHOLDER = '__UNITY_PROCESS__';
-
-const MACOS_DISMISS_APPLESCRIPT_TEMPLATE = `
+  return `
 on run
   try
     tell application "System Events"
-      if not (exists __UNITY_PROCESS__) then
+      if not (exists ${processRef}) then
         return "not-found"
       end if
-      tell __UNITY_PROCESS__
+      tell ${processRef}
         repeat with w in windows
           try
             if exists (button "${DISMISS_BUTTON_LABEL}" of w) then
@@ -309,9 +297,7 @@ on run
   end try
 end run
 `;
-
-/** The macOS script for "any Unity editor" (no target pid). Kept for callers and tests that use the constant. */
-export const MACOS_DISMISS_APPLESCRIPT = macosDismissAppleScript();
+}
 
 async function tryDismissMacOS(targetPid?: number): Promise<DismissOutcome> {
   return new Promise<DismissOutcome>((resolve) => {

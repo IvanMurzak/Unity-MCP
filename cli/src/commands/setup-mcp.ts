@@ -8,7 +8,7 @@ import {
   MCP_SERVER_NAME,
 } from '../utils/agents.js';
 import { setupMcp } from '../lib/setup-mcp.js';
-import { isLoopbackUrl } from '../lib/editor-session.js';
+import { isCloudUrl } from '@baizor/gamedev-cli-core';
 import type { McpTransport, SetupMcpSuccess } from '../lib/types.js';
 
 interface SetupMcpCliOptions {
@@ -24,8 +24,8 @@ interface SetupMcpCliOptions {
 
 /**
  * Which credential the written config carries — never the key itself, only its server-side id.
- * `url` is the `--url` override, if any: a config for a local server (stdio, or http to a loopback
- * URL) needs no credential and nobody signs in, so it must not say the agent will.
+ * `url` is the `--url` override, if any: a config for a local server (stdio, or http to a
+ * non-Cloud URL such as localhost) needs no credential and nobody signs in, so it must not say the agent will.
  */
 export function describeCredential(
   result: Pick<SetupMcpSuccess, 'credential' | 'projectKeyId' | 'projectKeySource' | 'transport'>,
@@ -43,7 +43,8 @@ export function describeCredential(
       if (result.transport === 'stdio') {
         return 'none (local stdio server — no sign-in needed)';
       }
-      if (url && isLoopbackUrl(url)) {
+      // The same test cli-core uses to decide that a config gets no credential.
+      if (url && !isCloudUrl(url)) {
         return 'none (local server — no sign-in needed)';
       }
       return 'none (URL-only — the agent signs in itself)';
