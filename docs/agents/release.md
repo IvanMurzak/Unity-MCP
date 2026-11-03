@@ -17,8 +17,9 @@ gate generation) before releasing. Tests: `commands/tests/test_release_dependenc
 
 ## MCP registry listing
 
-`server.json` at the repo root is the one universal registry listing (`io.github.IvanMurzak/Unity-MCP`,
-plan M21) for Unity, Unreal and Godot. To refresh it: bump `version` (one publish per version), merge,
-then dispatch `.github/workflows/publish_mcp_registry.yml`. It lists the hosted remote and the
-GameDev-MCP-Server NuGet package. Its `version` follows the GameDev-MCP-Server release it lists: copy
-`packages` and `version` from that repo's `server.json` after its release is on nuget.org.
+`server.json` at the repo root is the one universal registry listing (`io.github.IvanMurzak/Unity-MCP`)
+for Unity, Unreal and Godot. To refresh it: bump `version` (one publish per version), merge,
+then dispatch `.github/workflows/publish_mcp_registry.yml` on `main` (its ref guard rejects other refs).
+It lists the hosted remote and the GameDev-MCP-Server NuGet package. Its `version` follows the
+GameDev-MCP-Server release it lists: copy `packages` and `version` from that repo's `server.json`
+after its release is on nuget.org.
