@@ -14,3 +14,10 @@ pre-release (any `-` suffix) or missing from nuget.org: the resolver pins in `Nu
 them from nuget.org), the vendored Code-Exec release in `Editor/Scripts/CodeExec/VENDORED.md`, and the UPM / npm
 dependencies of the core, extension and CLI packages. Switch the pins back to published releases (and move the
 gate generation) before releasing. Tests: `commands/tests/test_release_dependency_guard.py`.
+
+## MCP registry listing
+
+`server.json` at the repo root is the one universal registry listing (`io.github.IvanMurzak/Unity-MCP`,
+plan M21) for Unity, Unreal and Godot. To refresh it: bump `version` (one publish per version), merge,
+then dispatch `.github/workflows/publish_mcp_registry.yml`. It lists the hosted remote only: add
+`packages` once a GameDev-MCP-Server release carries the matching `mcp-name` and Docker label.

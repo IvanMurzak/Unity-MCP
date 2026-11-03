@@ -1,0 +1,18 @@
+{
+  "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
+  "name": "io.github.IvanMurzak/Unity-MCP",
+  "title": "AI Game Developer: MCP for Unity, Unreal and Godot",
+  "description": "Make games with AI: one MCP server that connects your agent to Unity, Unreal and Godot editors.",
+  "version": "9.3.1",
+  "websiteUrl": "https://ai-game.dev",
+  "repository": {
+    "url": "https://github.com/IvanMurzak/Unity-MCP",
+    "source": "github"
+  },
+  "remotes": [
+    {
+      "type": "streamable-http",
+      "url": "https://ai-game.dev/mcp"
+    }
+  ]
+}
