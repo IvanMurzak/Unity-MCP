@@ -307,7 +307,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // (the Custom configurator's GetStatus is always NotConfigured and it has no
             // writable config file, so it gets no status row, matching the old behaviour).
             if (HasDetectableConfig)
-                container.Add(BuildConfigureStatusRow(transport, settings, description.TransportSupported));
+                container.Add(BuildConfigureStatusRow(transport, settings, description.SetupKind));
 
             // Inline hint for agents that read their MCP config only at startup (stdio, Claude Desktop).
             if (description.RestartNotice != null)
@@ -492,9 +492,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         /// <param name="settings">The container's snapshot (<see cref="CurrentSettings"/>), passed down so one refresh
         /// reads the project-key cache once per container instead of once per element.</param>
-        /// <param name="transportSupported">False when the agent cannot use <paramref name="transport"/>
-        /// (<see cref="AgentConfig.AiAgentConfigurator.SupportsTransport"/>): Configure is hidden, Remove of a stale entry stays.</param>
-        private VisualElement BuildConfigureStatusRow(TransportMethod transport, AgentConfig.AgentConfiguratorSettings settings, bool transportSupported)
+        /// <param name="setupKind">How the user sets the agent up for <paramref name="transport"/>
+        /// (<see cref="AgentConfig.AgentConfiguratorDescription.SetupKind"/>): only <c>ConfigFile</c> offers Configure;
+        /// <c>Unsupported</c> keeps Remove for a stale entry; <c>Manual</c> (steps in the agent's own UI) shows a neutral
+        /// status and no buttons.</param>
+        private VisualElement BuildConfigureStatusRow(TransportMethod transport, AgentConfig.AgentConfiguratorSettings settings, AgentConfig.AgentSetupKind setupKind)
         {
             var root = new UITemplate<VisualElement>("Editor/UI/uxml/agents/elements/TemplateConfigureStatus.uxml").Value;
             var statusText = root.Q<Label>("configureStatusText") ?? throw new NullReferenceException("Label 'configureStatusText' not found in UI.");
@@ -507,13 +509,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var config = GetConfig(settings, transport);
 
             var pathLabel = root.Q<Label>("labelConfigPath");
-            if (pathLabel != null)
+            // Manual setup writes no file, so there is no config path to show.
+            if (pathLabel != null && setupKind != AgentConfig.AgentSetupKind.Manual)
             {
                 pathLabel.text = ToDisplayPath(config.ConfigPath);
                 pathLabel.tooltip = config.ConfigPath;
             }
 
-            UpdateStatusRow(statusText, btnConfigure, btnRemove, transport, settings, transportSupported);
+            UpdateStatusRow(statusText, btnConfigure, btnRemove, transport, settings, setupKind);
 
             btnConfigure.tooltip = $"Write the MCP entry into {AgentName}'s config file";
             btnRemove.tooltip = $"Remove the MCP entry from {AgentName}'s config file";
@@ -529,7 +532,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // Cloud HTTP only: which credential the config carries + "Regenerate key" (project-keys contract §7).
             // stdio and the local server are unchanged, so they keep the row hidden.
-            if (transport == TransportMethod.streamableHttp && IsCloud(settings) && transportSupported)
+            if (transport == TransportMethod.streamableHttp && IsCloud(settings) && setupKind == AgentConfig.AgentSetupKind.ConfigFile)
                 ShowProjectKeyRow(keyRow, keyStatusText, btnRegenerate, settings);
 
             return root;
@@ -689,17 +692,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             });
         }
 
-        private void UpdateStatusRow(Label statusText, Button btnConfigure, Button btnRemove, TransportMethod transport, AgentConfig.AgentConfiguratorSettings settings, bool transportSupported)
+        private void UpdateStatusRow(Label statusText, Button btnConfigure, Button btnRemove, TransportMethod transport, AgentConfig.AgentConfiguratorSettings settings, AgentConfig.AgentSetupKind setupKind)
         {
+            var transportSupported = setupKind == AgentConfig.AgentSetupKind.ConfigFile;
             // Detect against the SAME config the Configure button writes (token/key-aware) so a Bearer config
             // reads back as Configured, not spuriously reconfigure-needed. An unsupported transport is never Configured.
             var isConfigured = transportSupported && GetConfig(settings, transport).IsConfigured();
             // Unconfigure removes the agent's entry whatever transport wrote it, so an unsupported transport's row offers
-            // Remove only for a stale entry, never for the working stdio one.
-            var anyConfigured = _configurator.IsDetected(settings)
+            // Remove only for a stale entry, never for the working stdio one. Manual setup offers no buttons at all.
+            var anyConfigured = setupKind != AgentConfig.AgentSetupKind.Manual
+                && _configurator.IsDetected(settings)
                 && (transportSupported || !_configurator.GetStdioConfig(settings).IsConfigured());
 
-            statusText.text = ComputeStatusText(_busyText, transportSupported, isConfigured, transport);
+            statusText.text = ComputeStatusText(_busyText, setupKind, isConfigured, transport);
             btnConfigure.text = isConfigured ? "Reconfigure" : "Configure";
             btnConfigure.EnableInClassList("btn-primary", !isConfigured);
             btnConfigure.SetEnabled(_busyText == null);
@@ -709,7 +714,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
 
         /// <summary>The status-row text: the busy text, else whether the config for <paramref name="transport"/> is written.</summary>
-        internal static string ComputeStatusText(string? busyText, bool transportSupported, bool isConfigured, TransportMethod transport)
+        internal static string ComputeStatusText(string? busyText, AgentConfig.AgentSetupKind setupKind, bool isConfigured, TransportMethod transport)
         {
             if (busyText != null)
                 return busyText;
@@ -719,7 +724,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 TransportMethod.streamableHttp => "http",
                 _ => "unknown"
             };
-            if (!transportSupported)
+            if (setupKind == AgentConfig.AgentSetupKind.Manual)
+                return "Manual setup (follow the steps below)";
+            if (setupKind == AgentConfig.AgentSetupKind.Unsupported)
                 return $"Not supported ({transportText})";
             return isConfigured ? $"Configured ({transportText})" : "Not configured";
         }
@@ -800,10 +807,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _reconfigureAlertPanel.SetButton("Reconfigure", ReconfigureActiveTransport);
             ContainerAlert.Add(_reconfigureAlertPanel.Root);
 
-            // The active transport cannot be configured for this agent (e.g. Claude Desktop over HTTP, Cloud included).
-            // The transport section below holds the shared Describe() alert with the working setup. A transport switch
-            // rebuilds the whole view, so the panel is added only for the transport active now.
-            if (!_configurator.SupportsTransport(ActiveTransport))
+            // No setup works for the active transport (e.g. Claude Desktop over local HTTP). The transport section below
+            // holds the shared Describe() alert with the setup that does. A Manual setup (Claude Desktop in Cloud mode:
+            // add a Claude connector) is a normal setup, so it gets no alert. A transport or mode switch rebuilds the
+            // whole view, so the panel is added only for the setup kind active now.
+            if (ActiveSetupKind(CurrentSettings()) == AgentConfig.AgentSetupKind.Unsupported)
             {
                 var unsupportedPanel = new AlertPanel("Transport Not Supported",
                     $"{AgentName} cannot use the selected transport. See the transport section below for the setup that works.");
@@ -833,17 +841,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var hasSkills = SupportsSkills && UnityMcpPluginEditor.IsAutoGenerateSkills(AgentId);
             var isSetupComplete = isMcpConfigured || hasSkills;
             var needsReconfigure = _configurator.GetStatus(settings, ActiveTransport) == AgentConfig.ConfiguratorStatus.ReconfigureNeeded;
-            var transportSupported = _configurator.SupportsTransport(ActiveTransport);
+            var setupKind = ActiveSetupKind(settings);
 
-            // "Setup Required" offers Configure, which an unsupported transport cannot do: the unsupported alert replaces it.
-            _alertPanel.SetVisible(!isSetupComplete && transportSupported);
+            // "Setup Required" offers Configure, which only a config-file setup can do: Manual steps live in the transport
+            // section and the Unsupported alert replaces it.
+            var showSetupRequired = !isSetupComplete && setupKind == AgentConfig.AgentSetupKind.ConfigFile;
+            _alertPanel.SetVisible(showSetupRequired);
             _reconfigureAlertPanel?.SetVisible(needsReconfigure);
 
             if (ContainerAlert != null)
-                ContainerAlert.style.display = (!isSetupComplete || needsReconfigure || !transportSupported)
+                ContainerAlert.style.display = (showSetupRequired || needsReconfigure || setupKind == AgentConfig.AgentSetupKind.Unsupported)
                     ? DisplayStyle.Flex
                     : DisplayStyle.None;
         }
+
+        private AgentConfig.AgentSetupKind ActiveSetupKind(AgentConfig.AgentConfiguratorSettings settings)
+            => _configurator.GetSetupKind(settings, ActiveTransport);
 
         private void ConfigureActiveTransport() => ConfigureTransport(ActiveTransport);
 

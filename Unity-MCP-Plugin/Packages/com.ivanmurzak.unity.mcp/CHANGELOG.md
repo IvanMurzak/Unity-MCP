@@ -4,8 +4,9 @@
 
 ### Changed
 
-- **McpPlugin 8.17.0** (gate `UNITY_MCP_DEPS_33`): agent configurators say which transports an agent supports and
-  when it must be restarted, and repair a portless local Server URL (see Fixed).
+- **McpPlugin 8.18.0** (gate `UNITY_MCP_DEPS_34`): agent configurators say how an agent is set up for a transport
+  (config file, manual steps such as a Claude connector, or not at all) and when it must be restarted, and repair a
+  portless local Server URL (see Fixed).
 - **McpPlugin 8.16.0** (gate `UNITY_MCP_DEPS_32`): an Editor that cannot serve a call right now answers **HTTP 503**,
   not 422, on the server's direct endpoint `POST /api/tools/{name}` (the tools throw McpPlugin's new
   `ToolUnavailableException`; the MCP channel still shows the tool's message as an error result):
@@ -154,11 +155,15 @@
 
 ### Fixed
 
-- **Claude Desktop is configured over stdio only.** Claude Desktop starts only stdio servers from
-  `claude_desktop_config.json` and skipped the HTTP entry the AI agent panel wrote ("not valid MCP server
-  configurations"). With the HTTP transport (and in Cloud mode) the panel now shows "Transport Not Supported" with the
-  working setup (Custom connection, stdio transport, Configure) and offers no Configure; Remove still deletes an old
-  HTTP entry, and "Regenerate key" no longer rewrites one.
+- **Claude Desktop: stdio config file or a Claude connector, never an HTTP entry.** Claude Desktop starts only stdio
+  servers from `claude_desktop_config.json` and skipped the HTTP entry the AI agent panel wrote ("not valid MCP server
+  configurations"). The panel no longer writes one:
+  - Custom connection + stdio: Configure writes the stdio entry, as before.
+  - Cloud mode: the panel shows how to add the project as a Claude custom connector (Customize > Connectors in
+    Claude, link included), with the project's Cloud URL to copy, and a "Manual setup" status without Configure or
+    Remove. The connector works in Claude Desktop and in Claude in the browser.
+  - Custom connection + HTTP: "Transport Not Supported" names the setups that work and offers no Configure; Remove
+    still deletes an old HTTP entry (never the working stdio one), and "Regenerate key" no longer rewrites one.
 - **Restart notice.** After Configure, Reconfigure or Remove for an agent that reads its MCP config only at startup
   (stdio agents; Claude Desktop must be fully quit, also from the tray or menu bar), a dialog says to restart it (in
   batch mode the notice is logged), and the stdio panel keeps the hint.

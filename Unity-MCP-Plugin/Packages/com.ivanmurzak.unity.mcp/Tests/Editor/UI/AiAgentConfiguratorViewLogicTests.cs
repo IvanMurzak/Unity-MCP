@@ -206,7 +206,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         #endregion
 
-        #region Claude Desktop is stdio-only; stdio agents get a restart notice (McpPlugin 8.17.0)
+        #region Claude Desktop: stdio config file, Cloud = Claude connector steps, local HTTP unsupported; restart notice (McpPlugin 8.17/8.18)
 
         private static AiAgentConfigurator ClaudeDesktop()
         {
@@ -215,16 +215,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             return configurator!;
         }
 
-        [TestCase(AgentConnectionMode.Local)]
-        [TestCase(AgentConnectionMode.Cloud)]
-        public void ClaudeDesktop_Http_IsNotSupported_DescribeHoldsOnlyTheAlert(AgentConnectionMode connectionMode)
+        [Test]
+        public void ClaudeDesktop_LocalHttp_IsUnsupported_DescribeHoldsOnlyTheAlert()
         {
             var configurator = ClaudeDesktop();
-            var settings = MakeSettings(connectionMode, AuthOption.none);
+            var settings = MakeSettings(AgentConnectionMode.Local, AuthOption.none);
             Assert.IsFalse(configurator.SupportsTransport(TransportMethod.streamableHttp));
+            Assert.AreEqual(AgentSetupKind.Unsupported, configurator.GetSetupKind(settings, TransportMethod.streamableHttp));
 
             var description = configurator.Describe(settings, TransportMethod.streamableHttp);
-            Assert.IsFalse(description.TransportSupported, "the view hides Configure on this flag");
+            Assert.AreEqual(AgentSetupKind.Unsupported, description.SetupKind, "the view shows the alert panel and no Configure");
+            Assert.IsFalse(description.TransportSupported);
             Assert.IsFalse(description.IsConfigured);
             Assert.AreEqual(ConfiguratorStatus.NotConfigured, description.Status);
             Assert.IsNull(description.RestartNotice);
@@ -233,6 +234,35 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var alert = description.Sections[0].Items[0];
             Assert.AreEqual(ConfigurationItemKind.Alert, alert.Kind);
             StringAssert.Contains("stdio", alert.Text);
+        }
+
+        [Test]
+        public void ClaudeDesktop_CloudHttp_IsManual_ConnectorStepsWithLinkAndPinnedUrl()
+        {
+            var configurator = ClaudeDesktop();
+            var settings = CloudWithKey(ProjectKey);
+            // Nothing is written for a connector: the write guards keep refusing HTTP.
+            Assert.IsFalse(configurator.SupportsTransport(TransportMethod.streamableHttp));
+            Assert.AreEqual(AgentSetupKind.Manual, configurator.GetSetupKind(settings, TransportMethod.streamableHttp));
+
+            var description = configurator.Describe(settings, TransportMethod.streamableHttp);
+            Assert.AreEqual(AgentSetupKind.Manual, description.SetupKind, "the view renders the steps, no Configure / Remove / alert");
+            Assert.IsFalse(description.TransportSupported);
+            Assert.IsFalse(description.IsConfigured);
+            Assert.IsNull(description.RestartNotice, "a connector needs no restart");
+
+            var steps = description.Sections[0];
+            Assert.IsTrue(steps.ExpandedFirst);
+            var link = System.Linq.Enumerable.Single(steps.Items, i => i.Kind == ConfigurationItemKind.Link);
+            Assert.AreEqual("https://claude.ai/customize/connectors", link.Url);
+            var url = System.Linq.Enumerable.Single(steps.Items, i => i.Kind == ConfigurationItemKind.ReadOnlyField);
+            StringAssert.EndsWith("/p/" + settings.ProjectPin, url.Text);
+            foreach (var section in description.Sections)
+                foreach (var item in section.Items)
+                {
+                    Assert.AreNotEqual(ConfigurationItemKind.Alert, item.Kind);
+                    StringAssert.DoesNotContain(ProjectKey, item.Text ?? string.Empty);
+                }
         }
 
         [Test]
@@ -260,13 +290,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                     Assert.IsNull(configurator.GetRestartNotice(TransportMethod.stdio), "Custom writes no config file");
         }
 
-        [TestCase(null, true, true, TransportMethod.stdio, "Configured (stdio)")]
-        [TestCase(null, true, false, TransportMethod.streamableHttp, "Not configured")]
-        [TestCase(null, false, false, TransportMethod.streamableHttp, "Not supported (http)")]
-        [TestCase("Obtaining the project key...", false, false, TransportMethod.streamableHttp, "Obtaining the project key...")]
-        public void ComputeStatusText_SaysWhenTheTransportIsNotSupported(string? busyText, bool transportSupported, bool isConfigured, TransportMethod transport, string expected)
+        [TestCase(null, AgentSetupKind.ConfigFile, true, TransportMethod.stdio, "Configured (stdio)")]
+        [TestCase(null, AgentSetupKind.ConfigFile, false, TransportMethod.streamableHttp, "Not configured")]
+        [TestCase(null, AgentSetupKind.Unsupported, false, TransportMethod.streamableHttp, "Not supported (http)")]
+        [TestCase(null, AgentSetupKind.Manual, false, TransportMethod.streamableHttp, "Manual setup (follow the steps below)")]
+        [TestCase("Obtaining the project key...", AgentSetupKind.ConfigFile, false, TransportMethod.streamableHttp, "Obtaining the project key...")]
+        public void ComputeStatusText_FollowsTheSetupKind(string? busyText, AgentSetupKind setupKind, bool isConfigured, TransportMethod transport, string expected)
         {
-            Assert.AreEqual(expected, AiAgentConfiguratorView.ComputeStatusText(busyText, transportSupported, isConfigured, transport));
+            Assert.AreEqual(expected, AiAgentConfiguratorView.ComputeStatusText(busyText, setupKind, isConfigured, transport));
         }
 
         [Test]
