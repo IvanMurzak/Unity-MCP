@@ -56,7 +56,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ReadOnlyHint = true,
             DestructiveHint = false,
             IdempotentHint = true,
-            OpenWorldHint = false,
+            OpenWorldHint = true,
             Visible = false
         )]
         [AiSkillDescription("List all UPM packages installed in the Unity project — name, version, source, " +

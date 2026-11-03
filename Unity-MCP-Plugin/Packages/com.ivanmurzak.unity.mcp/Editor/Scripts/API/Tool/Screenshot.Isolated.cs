@@ -93,7 +93,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ScreenshotIsolatedToolId,
             Title = "Screenshot / Isolated GameObject",
-            ReadOnlyHint = true,
+            ReadOnlyHint = false,
             DestructiveHint = false,
             IdempotentHint = true,
             OpenWorldHint = false,

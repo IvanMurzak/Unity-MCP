@@ -69,7 +69,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void AllMcpTools_ShouldDeclareTitleAndExplicitAnnotationHints()
         {
             var problems = new List<string>();
-            foreach (var method in FindToolMethods())
+            // Only this plugin's and its extensions' tools: a consumer project that marks the package testable may
+            // declare its own tools, which this rule does not govern.
+            var ownTools = FindToolMethods()
+                .Where(method => method.DeclaringType?.Assembly.GetName().Name?.StartsWith("com.IvanMurzak.Unity.MCP") == true)
+                .ToList();
+            Assert.IsNotEmpty(ownTools, "Should find this plugin's MCP tool methods");
+
+            foreach (var method in ownTools)
             {
                 var attr = method.GetCustomAttribute<AiToolAttribute>()!;
                 var missing = new List<string>();

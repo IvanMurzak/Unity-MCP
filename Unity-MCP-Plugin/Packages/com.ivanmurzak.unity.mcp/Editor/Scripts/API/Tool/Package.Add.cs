@@ -28,7 +28,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Package Manager / Add",
             ReadOnlyHint = false,
             DestructiveHint = true,
-            IdempotentHint = true,
+            IdempotentHint = false,
             OpenWorldHint = true,
             Visible = false
         )]

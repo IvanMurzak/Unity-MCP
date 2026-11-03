@@ -35,9 +35,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             TestsRunToolId,
             Title = "Tests / Run",
             ReadOnlyHint = false,
-            DestructiveHint = false,
+            DestructiveHint = true,
             IdempotentHint = false,
-            OpenWorldHint = false,
+            OpenWorldHint = true,
             Visible = true
         )]
         [AiSkillDescription("Execute Unity tests (`EditMode` or `PlayMode`) and return per-test results. " +
