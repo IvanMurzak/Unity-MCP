@@ -144,7 +144,7 @@ unity-mcp-cli configure ./MyGame --list
 
 ```bash
 unity-mcp-cli configure ./MyGame \
-  --enable-tools gameobject-create,gameobject-find \
+  --enable-tools screenshot-scene-view,script-read \
   --disable-all-prompts
 ```
 
@@ -277,7 +277,7 @@ unity-mcp-cli open ./MyGame \
   --url http://my-server:8080 \
   --token my-secret-token \
   --auth required \
-  --tools gameobject-create,gameobject-find
+  --tools rql-query,rql-mutate,rql-schema
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -287,7 +287,7 @@ unity-mcp-cli open ./MyGame \
 Ejecuta una herramienta MCP directamente a traves de la API HTTP. La URL del servidor y el token de autorizacion se **resuelven automaticamente** desde el archivo de configuracion del proyecto (`UserSettings/AI-Game-Developer-Config.json`), basandose en el modo de conexion actual (Custom o Cloud).
 
 ```bash
-unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
+unity-mcp-cli run-tool rql-mutate ./MyGame --input '{"query":"editor | call CreateGameObject({name: \"Cube\", primitive: \"Cube\"})"}'
 ```
 
 | Opcion | Requerido | Descripcion |
@@ -311,19 +311,19 @@ unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 **Ejemplo — llamar a una herramienta (URL y autenticacion desde la configuracion):**
 
 ```bash
-unity-mcp-cli run-tool gameobject-find ./MyGame --input '{"query":"Player"}'
+unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select $path name active"}'
 ```
 
 **Ejemplo — URL explicita:**
 
 ```bash
-unity-mcp-cli run-tool scene-save --url http://localhost:8080
+unity-mcp-cli run-tool rql-mutate --url http://localhost:8080 --input '{"query":"editor | call SaveScenes()"}'
 ```
 
 **Ejemplo — redirigir salida JSON sin formato:**
 
 ```bash
-unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
+unity-mcp-cli run-tool unity-tool-list ./MyGame --raw | jq .
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

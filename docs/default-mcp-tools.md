@@ -11,120 +11,50 @@
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
-Unity-MCP comes with a comprehensive suite of built-in tools that allow AI models to interact with the Unity Editor and Runtime.
+Unity-MCP gives AI models a small set of tools for the Unity Editor and Runtime. Most Editor work goes through **RQL**, a query language over the Editor's data: `rql-query` reads, `rql-mutate` changes, `rql-schema` describes the sources, types and calls. Since 1.0.1 RQL replaces the one-tool-per-action tools of earlier versions ([#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017)); the table at the end maps the old IDs to RQL.
 
-> **Note**: Tool names below are the *Titles* displayed in AI clients. Internal IDs are in kebab-case (e.g., `assets-create-folder`).
+> **Note**: IDs are kebab-case. *Default* tools are shown to the AI agent after installation; *hidden* tools are installed and run when called by name, and are shown with `tool-set-visibility`, in the AI Game Developer window, or with `unity-mcp-cli configure <path> --enable-tools <ids>`.
 
-## 📂 Asset Management
-Manage files, folders, and project resources.
+## 🔎 RQL
+| Tool | ID | Default | Description |
+| :--- | :--- | :--- | :--- |
+| **RQL / Query** | `rql-query` | shown | Read Editor data, e.g. `roots \| recurse children \| select name active`. |
+| **RQL / Mutate** | `rql-mutate` | shown | Change Editor data or call Editor operations, e.g. `editor \| call CreateGameObject({name: "Ground", primitive: "Plane"})`. |
+| **RQL / Schema** | `rql-schema` | shown | Describe sources, types, members and calls; `rql-schema "guide:<topic>"` prints a guide. |
 
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Assets / Create Folder** | `assets-create-folder` | Create new directories (supports nested paths). |
-| **Assets / Delete** | `assets-delete` | Delete a specific asset or file. |
-| **Assets / Find** | `assets-find` | Find assets using search filters (e.g., `t:Texture`). |
-| **Assets / Find (Built-in)** | `assets-find-built-in` | Search built-in Unity Editor assets. |
-| **Assets / Copy** | `assets-copy` | Duplicate an asset. |
-| **Assets / Move** | `assets-move` | Move or rename an asset. |
-| **Assets / Get Data** | `assets-get-data` | Retrieve metadata or content of an asset. |
-| **Assets / Modify** | `assets-modify` | Modify an asset file in the project. |
-| **Assets / Refresh** | `assets-refresh` | Force an Asset Database refresh. |
+RQL sources: `scenes`, `roots`, `objects` (every GameObject in the loaded scenes), `selection`, `prefab` (the prefab open in prefab mode), `editor` (create GameObjects, materials, folders and scenes; open and save scenes and prefabs; copy, move and delete assets; execute menu items), `settings`, `console` (captured Editor log entries), `shaders`, `componentTypes`, `tests`, `testResults`, `profiler`, `lighting`. Assets are addressed by path with `unity.asset("Assets/…")`.
 
-### Materials & Shaders
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Assets / Create Material** | `assets-material-create` | Create a new Material asset. |
-| **Assets / List Shaders** | `assets-shader-list-all` | List all available shaders in the project. |
-| **Assets / Shader / Get Data** | `assets-shader-get-data` | Get shader data — properties, subshaders, passes, and compilation messages. |
+## 📸 Screenshots
+| Tool | ID | Default | Description |
+| :--- | :--- | :--- | :--- |
+| **Screenshot / Isolated** | `screenshot-isolated` | shown | Render a GameObject in isolation from a chosen angle (optional composite 2x2 view). |
+| **Screenshot / Scene View** | `screenshot-scene-view` | hidden | Capture the Unity Editor Scene View. |
+| **Screenshot / Game View** | `screenshot-game-view` | hidden | Capture the Unity Editor Game View. |
+| **Screenshot / Camera** | `screenshot-camera` | hidden | Capture a camera's view as an image. |
 
-### Prefabs
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Assets / Prefab / Instantiate** | `assets-prefab-instantiate` | Spawn a prefab into the active scene. |
-| **Assets / Prefab / Create** | `assets-prefab-create` | Create a prefab from a scene object. |
-| **Assets / Prefab / Open** | `assets-prefab-open` | Open Prefab Mode. |
-| **Assets / Prefab / Close** | `assets-prefab-close` | Exit Prefab Mode. |
-| **Assets / Prefab / Save** | `assets-prefab-save` | Save changes in Prefab Mode. |
+## 📜 Scripting & Tests
+| Tool | ID | Default | Description |
+| :--- | :--- | :--- | :--- |
+| **Script / Execute** | `script-execute` | shown | Compile and execute C# code dynamically using Roslyn. |
+| **Script / Read** | `script-read` | hidden | Read the content of a script file. |
+| **Script / Update or Create** | `script-update-or-create` | hidden | Update or create a script file with the provided C# code. |
+| **Script / Delete** | `script-delete` | hidden | Delete script file(s). |
+| **Tests / Run** | `tests-run` | shown | Run Unity tests (EditMode/PlayMode): any RQL selection over the `tests` source as one run, results filtered with RQL. |
 
-## 🎮 GameObject
-Manage scene objects and hierarchy.
+## 📦 Packages
+| Tool | ID | Default | Description |
+| :--- | :--- | :--- | :--- |
+| **Package / List** | `package-list` | hidden | List the packages installed in the project. |
+| **Package / Search** | `package-search` | hidden | Search the Unity Package Manager registry and installed packages. |
+| **Package / Add** | `package-add` | hidden | Install a package from the registry, a Git URL or a local path. |
+| **Package / Remove** | `package-remove` | hidden | Uninstall a package. |
 
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **GameObject / Create** | `gameobject-create` | Create a new GameObject (Empty or Primitive). |
-| **GameObject / Destroy** | `gameobject-destroy` | Remove a GameObject. |
-| **GameObject / Duplicate** | `gameobject-duplicate` | Clone a GameObject. |
-| **GameObject / Find** | `gameobject-find` | Find objects by Name, Tag, or Type. |
-| **GameObject / Modify** | `gameobject-modify` | Update Transform, Name, Tag, Layer, Active state. |
-| **GameObject / Set Parent** | `gameobject-set-parent` | Change hierarchy parent. |
-
-### Components
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **GameObject / Component / Add** | `gameobject-component-add` | Add a component (e.g., `Rigidbody`). |
-| **GameObject / Component / Destroy** | `gameobject-component-destroy` | Remove a component. |
-| **GameObject / Component / Get** | `gameobject-component-get` | Get details of a component. |
-| **GameObject / Component / Modify** | `gameobject-component-modify` | Set fields, properties, or object references. |
-| **GameObject / Component / List All** | `gameobject-component-list-all` | List available Component types. |
-
-## 🎬 Scene Management
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Scene / Create** | `scene-create` | Create a new Scene asset. |
-| **Scene / Open** | `scene-open` | Open a scene in the Editor. |
-| **Scene / Save** | `scene-save` | Save the current scene. |
-| **Scene / Unload** | `scene-unload` | Unload an additive scene. |
-| **Scene / Set Active** | `scene-set-active` | Set the active scene. |
-| **Scene / Get Data** | `scene-get-data` | Get list of root objects in a scene. |
-| **Scene / List Opened** | `scene-list-opened` | List currently open scenes. |
-
-## 📝 Scripting
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Script / Update or Create** | `script-update-or-create` | Create or update a C# script file. |
-| **Script / Read** | `script-read` | Read the content of a `.cs` file. |
-| **Script / Delete** | `script-delete` | Delete a script file. |
-| **Script / Execute** | `script-execute` | Compile and run C# code snippet dynamically. |
-
-## 📦 Package Manager
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Package Manager / List Installed** | `package-list` | List installed packages. |
-| **Package Manager / Add** | `package-add` | Install package (Registry, Git, Local). |
-| **Package Manager / Remove** | `package-remove` | Uninstall a package. |
-| **Package Manager / Search** | `package-search` | Search Unity Registry. |
-
-## 🧩 Object
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Object / Get Data** | `object-get-data` | Get serialized data of a Unity Object including properties and fields. |
-| **Object / Modify** | `object-modify` | Directly modify fields and properties of a Unity Object. |
-
-## 📸 Screenshot
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Screenshot / Camera** | `screenshot-camera` | Capture a screenshot from a camera (defaults to Main Camera). |
-| **Screenshot / Game View** | `screenshot-game-view` | Capture a screenshot from the Unity Editor Game View. |
-| **Screenshot / Scene View** | `screenshot-scene-view` | Capture a screenshot from the Unity Editor Scene View. |
-| **Screenshot / Isolated GameObject** | `screenshot-isolated` | Render a target GameObject in isolation from a chosen angle, with optional Composite (2x2) view. |
-
-## 🧪 Testing
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Tests / Run** | `tests-run` | Execute Unity tests (EditMode/PlayMode): filters or an RQL `query` over the `tests` source (one run), results optionally filtered with an RQL `result` over `testResults`. |
-
-## 💡 Advanced & Editor
-| Tool | ID | Description |
-| :--- | :--- | :--- |
-| **Console / Get Logs** | `console-get-logs` | Retrieve Unity Console logs. |
-| **Console / Clear Logs** | `console-clear-logs` | Clear the MCP log cache and the Unity Editor Console window. |
-| **Editor / Application / Get State** | `editor-application-get-state` | Check Play/Pause/Edit mode status. |
-| **Editor / Application / Set State** | `editor-application-set-state` | Set Play/Pause status. |
-| **Editor / Selection / Get** | `editor-selection-get` | Get current selection. |
-| **Editor / Selection / Set** | `editor-selection-set` | Set current selection. |
-| **Method C# / Find** | `reflection-method-find` | Find any C# method (public/private). |
-| **Method C# / Call** | `reflection-method-call` | Execute any found method. |
-| **Type / Get Json Schema** | `type-get-json-schema` | Generate a JSON Schema for a C# type via reflection. |
+## 🧰 Tool management
+| Tool | ID | Default | Description |
+| :--- | :--- | :--- | :--- |
+| **Tool / List** | `unity-tool-list` | shown | List every tool and whether the agent sees it. |
+| **Tool / Set Visibility** | `tool-set-visibility` | hidden | Show or hide tools in the agent's tool list. |
+| **Tool / Set Enabled State** | `tool-set-enabled-state` | hidden | Deprecated alias of `tool-set-visibility`. |
 
 ## 📊 Profiling & Diagnostics
 | Tool | ID | Description |
@@ -137,5 +67,23 @@ Manage scene objects and hierarchy.
 | **Lighting (RQL)** | `rql-query` / `rql-mutate` on source `lighting` | The active scene's environment (ambient, fog, skybox, sun, reflections; undoable), Lighting Settings asset and the bake; calls `CreateSettings`, `UseSettings`, `Bake`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`. |
 | **Light probes (RQL)** | `call PlaceGrid(size, spacing)` on a `LightProbeGroup` | Fill a box around the group with evenly spaced probes. |
 | **Reflection probes (RQL)** | `call Bake()` on a `ReflectionProbe` | Bake a Custom probe into a texture next to its scene, re-render a Realtime one (Baked probes bake with the lighting). |
+
+## 🔁 Tools removed in 1.0.1 and their RQL equivalents
+Tutorials written for earlier versions use these IDs. They no longer exist; use RQL (exact signatures: `rql-schema`).
+
+| Old ID | Now |
+| :--- | :--- |
+| `scene-list-opened`, `scene-get-data` | `rql-query`: `scenes`, `roots`, `objects` |
+| `scene-create`, `scene-open`, `scene-save` | `rql-mutate`: `editor \| call NewScene(…)`, `OpenScene(…)`, `SaveScenes()` |
+| `gameobject-create`, `gameobject-duplicate` | `rql-mutate`: `editor \| call CreateGameObject({name, primitive, position, rotation, scale})` |
+| `gameobject-find`, `gameobject-component-get` | `rql-query`: `objects \| where name == "…" \| select …` |
+| `gameobject-modify`, `gameobject-component-modify`, `object-modify` | `rql-mutate`: `… \| set <member> = <value>` |
+| `assets-material-create` | `rql-mutate`: `editor \| call CreateMaterial("Assets/….mat")` |
+| `assets-create-folder`, `assets-copy`, `assets-move`, `assets-delete`, `assets-refresh` | `rql-mutate`: `editor \| call CreateFolder(…)`, `CopyAsset(…)`, `MoveAsset(…)`, `DeleteAsset(…)`, `RefreshAssets()`; save with `SaveAssets()` |
+| `assets-prefab-open`, `assets-prefab-save`, `assets-prefab-close`, `assets-prefab-instantiate` | `rql-mutate`: `editor \| call OpenPrefab(…)`, `SavePrefab()`, `ClosePrefab()`, `InstantiatePrefab(…)`; source `prefab` |
+| `assets-shader-list-all` | `rql-query`: `shaders` |
+| `console-get-logs`, `console-clear-logs` | `rql-query`: `console`; `rql-mutate`: `editor \| call ClearConsole()` |
+| `editor-selection-get` | `rql-query`: `selection` |
+| `gameobject-component-list-all` | `rql-query`: `componentTypes` |
 
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
