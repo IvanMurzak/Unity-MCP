@@ -28,7 +28,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScreenshotGameViewToolId,
             Title = "Screenshot / Game View",
             ReadOnlyHint = true,
+            DestructiveHint = false,
             IdempotentHint = true,
+            OpenWorldHint = false,
             Visible = false
         )]
         [AiSkillDescription("Capture a screenshot of the Unity Editor's Game View by reading its internal " +

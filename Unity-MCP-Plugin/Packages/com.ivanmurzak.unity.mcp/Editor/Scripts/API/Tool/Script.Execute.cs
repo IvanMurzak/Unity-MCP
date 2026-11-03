@@ -76,6 +76,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ScriptExecuteToolId,
             Title = "Script / Execute",
+            ReadOnlyHint = false,
+            DestructiveHint = true,
+            IdempotentHint = false,
             OpenWorldHint = true
         )]
         [AiSkillDescription("Compiles and runs C# in the Unity Editor (Roslyn): plain statements with the last expression as the result, " +

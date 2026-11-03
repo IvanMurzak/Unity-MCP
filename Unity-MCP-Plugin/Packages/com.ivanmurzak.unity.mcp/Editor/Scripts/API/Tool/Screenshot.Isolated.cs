@@ -94,7 +94,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScreenshotIsolatedToolId,
             Title = "Screenshot / Isolated GameObject",
             ReadOnlyHint = true,
+            DestructiveHint = false,
             IdempotentHint = true,
+            OpenWorldHint = false,
             Visible = true
         )]
         [AiSkillDescription("Render a target GameObject from a chosen camera angle with optional layer-based " +

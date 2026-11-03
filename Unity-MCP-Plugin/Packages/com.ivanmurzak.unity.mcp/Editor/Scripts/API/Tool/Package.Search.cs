@@ -30,6 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PackageSearchToolId,
             Title = "Package Manager / Search",
             ReadOnlyHint = true,
+            DestructiveHint = false,
             IdempotentHint = true,
             OpenWorldHint = true,
             Visible = false

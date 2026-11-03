@@ -123,6 +123,14 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                     $"{type.Name}.{method.Name} registers an unnamed tool.");
                 Assert.True(Enum.IsDefined(typeof(McpToolType), attribute.ToolType),
                     $"{type.Name}.{method.Name} declares an unknown ToolType.");
+
+                // MCP server directories reject a tool without a title or explicit annotation hints; an
+                // unset hint goes out as null. The EditMode ToolParameterTests sweep covers every family.
+                Assert.False(string.IsNullOrWhiteSpace(attribute.Title),
+                    $"{type.Name}.{method.Name} declares no Title.");
+                Assert.True(attribute.ReadOnlyHintValue.HasValue && attribute.DestructiveHintValue.HasValue
+                        && attribute.IdempotentHintValue.HasValue && attribute.OpenWorldHintValue.HasValue,
+                    $"{type.Name}.{method.Name} leaves an annotation hint unset.");
             }
 
             // Tool ids are the protocol's primary key — a duplicate silently shadows one of them.

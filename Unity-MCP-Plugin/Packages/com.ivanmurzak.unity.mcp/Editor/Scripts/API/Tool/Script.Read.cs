@@ -25,7 +25,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScriptReadToolId,
             Title = "Script / Read",
             ReadOnlyHint = true,
+            DestructiveHint = false,
             IdempotentHint = true,
+            OpenWorldHint = false,
             Visible = false
         )]
         [AiSkillDescription("Read a `.cs` script file and return its content as a string. " +
