@@ -1,0 +1,31 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tool.SetEnabledState.cs
+  s_7bc72ecaebd05d::t_2877ac99abb06c 16,62
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tool.SetVisibility.cs
+  s_7bc72ecaebd05d::t_ec81a651990ae2 16,62,66
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.Build.cs
+  s_7bc72ecaebd05d::t_ca3445a3935ede 225-228,239-242
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPluginRuntime.cs
+  s_7bc72ecaebd05d::t_1aaa21a2473eb8 39
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Config/PluginRoleTests.cs
+  s_7bc72ecaebd05d::t_943f573554f509 32
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Tool/ToolSetEnabledStateTests.cs
+  s_7bc72ecaebd05d::t_8a38938cd68937 73
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Tool/ToolSetVisibilityTests.cs
+  s_7bc72ecaebd05d::t_e93c988912ad22 72,78,106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2f8e3a2bbc760e13a601542aef8f523a79c583db",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,68 @@
+cli/src/lib/open.ts
+  s_a4bd5ddb53fd2d::t_a87dd4bd60e640 128-134,349,368
+  s_a4bd5ddb53fd2d::t_4164929ad95d58 185-186
+cli/docs/README.ja.md
+  s_a4bd5ddb53fd2d::t_63fc85b01ff624 100,254-255,331-360
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.cs
+  s_a4bd5ddb53fd2d::t_5edec736df1b11 54
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.IdleShutdown.cs
+  s_a4bd5ddb53fd2d::t_c562fe71d1c694 1-119
+cli/src/lib/wait-for-ready.ts
+  s_a4bd5ddb53fd2d::t_cdab936a82a9ae 1-55
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Environment/IdleShutdownTests.cs.meta
+  s_a4bd5ddb53fd2d::t_e72fc37aa7554d 1-11
+cli/docs/README.zh-CN.md
+  s_a4bd5ddb53fd2d::t_63fc85b01ff624 100,254-255,331-360
+cli/src/commands/run-tool-builder.ts
+  s_a4bd5ddb53fd2d::t_f9f366e46277fb 41,100-102,128-172,178
+cli/README.md
+  s_a4bd5ddb53fd2d::t_63fc85b01ff624 103,360-361,492-521
+cli/tests/exec.test.ts
+  s_a4bd5ddb53fd2d::t_383f36f658ff41 1-3,5-51,64-96,107-155
+  s_a4bd5ddb53fd2d::t_cf09b127b65c4d 4,52-63,97-106
+cli/src/utils/unity-editor.ts
+  s_a4bd5ddb53fd2d::t_a87dd4bd60e640 429,431
+cli/src/commands/exec.ts
+  s_a4bd5ddb53fd2d::t_748568f2878b09 1-46,50-76,81-106,116-162,164,168-198,201-246
+  s_a4bd5ddb53fd2d::t_cf09b127b65c4d 47-49,77-80,107-115,199-200
+  s_a4bd5ddb53fd2d::t_25f3fcb823b4d7 163
+  s_a4bd5ddb53fd2d::t_d06669f88ae8e8 165-167
+cli/src/commands/wait-for-ready.ts
+  s_a4bd5ddb53fd2d::t_286aed69741748 4-5,46-58,60-61
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Startup.IdleShutdown.cs.meta
+  s_a4bd5ddb53fd2d::t_5edec736df1b11 1-11
+cli/CHANGELOG.md
+  s_a4bd5ddb53fd2d::t_32c8f9787b4730 12-21
+cli/src/commands/open.ts
+  s_a4bd5ddb53fd2d::t_685f480bd84603 131-132,159-160,264-265
+cli/tests/cli.test.ts
+  s_a4bd5ddb53fd2d::t_8355698c8fb8a8 56
+  s_a4bd5ddb53fd2d::t_6c1da0883b50bc 57
+cli/src/utils/connection.ts
+  s_a4bd5ddb53fd2d::t_376fb866dbec98 129-142
+  s_a4bd5ddb53fd2d::t_a466bcde934c2e 127-128,143
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Environment/IdleShutdownTests.cs
+  s_a4bd5ddb53fd2d::t_e72fc37aa7554d 1-74
+cli/docs/README.es.md
+  s_a4bd5ddb53fd2d::t_63fc85b01ff624 100,254-255,331-360
+cli/src/lib/types.ts
+  s_a4bd5ddb53fd2d::t_a87dd4bd60e640 456-465,587
+cli/src/index.ts
+  s_a4bd5ddb53fd2d::t_8355698c8fb8a8 6,41
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "2ee83209bc6a24abf89d0658987d823fd82189d3",
+  "prompts": {},
+  "sessions": {
+    "s_a4bd5ddb53fd2d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "97ee1b50-e171-4dcb-8ce1-b70a7701b61f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,33 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnity.Save.cs
+  s_7bc72ecaebd05d::t_04f6d6c6098ee9 73-77,206
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.cs
+  s_7bc72ecaebd05d::t_04f6d6c6098ee9 32-33
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/Adapters/Asset/UnityEngine_Material_AdapterTests.cs
+  s_7bc72ecaebd05d::t_90d1ddebf85e9b 102-103
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Execute.cs
+  s_7bc72ecaebd05d::t_04f6d6c6098ee9 169-172,177-187
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Asset/UnityEngine_Material_Adapter.cs
+  s_7bc72ecaebd05d::t_04f6d6c6098ee9 41,44
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Object/UnityEngine_GameObject_Adapter.cs
+  s_7bc72ecaebd05d::t_04f6d6c6098ee9 67,70,85,112
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Asset/UnityEngine_Mesh_Adapter.cs
+  s_7bc72ecaebd05d::t_90d1ddebf85e9b 27,31-39,46,48
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/UnityTypes.cs
+  s_7bc72ecaebd05d::t_04f6d6c6098ee9 63-66,68-69
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "ccdf0928517e0af170e6ba3541771968246e9ade",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
