@@ -1,0 +1,146 @@
+name: test-unity-plugin
+
+##############################################################################
+# 1. Triggers
+##############################################################################
+on:
+  workflow_dispatch:
+  workflow_call:
+    inputs:
+      projectPath: { required: true, type: string }
+      unityVersion: { required: true, type: string }
+      testMode: { required: true, type: string }
+    secrets:
+      UNITY_LICENSE: { required: true }
+      UNITY_EMAIL: { required: true }
+      UNITY_PASSWORD: { required: true }
+
+##############################################################################
+# 2. Job – runs only after a maintainer applies the `ci-ok` label
+##############################################################################
+jobs:
+  # --------------------------------------------------------------------------- #
+  # Version-consistency gate - secretless. Runs the a2 checker synced into this
+  # repo (commands/check-versions.py) so version skew (the extension core pin vs
+  # every packages-lock.json vs the vendored NuGet DLLs) becomes a RED build on
+  # every PR. Design: unity-extensions-maintain f1 / 04-version-sync section 4.3.
+  #
+  # T1 supply-chain invariant (design 09-security): this job runs ONLY under plain
+  # unprivileged `pull_request` (the caller trigger). It takes no credentials, reads
+  # none, and needs none - the checker is offline and Python-stdlib only. Never move
+  # it under `pull_request_target`.
+  # --------------------------------------------------------------------------- #
+  consistency:
+    name: version-consistency
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+      - uses: actions/setup-python@v6
+        with:
+          python-version: '3.12'
+      - name: Check version consistency
+        run: python commands/check-versions.py .
+  test:
+    if: |
+      github.event_name != 'pull_request_target' ||
+      contains(github.event.pull_request.labels.*.name,'ci-ok')
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest]
+        platform: [base, windows-mono]
+
+    name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
+    runs-on: ${{ matrix.os }}
+
+    steps:
+      # --------------------------------------------------------------------- #
+      # 2-a. (PR only) abort if the contributor also changed workflow files
+      # --------------------------------------------------------------------- #
+      - name: Abort if workflow files modified
+        if: ${{ github.event_name == 'pull_request_target' }}
+        run: |
+          git fetch --depth=1 origin "${{ github.base_ref }}"
+          if git diff --name-only HEAD origin/${{ github.base_ref }} | grep -q '^\.github/workflows/'; then
+            echo "::error::This PR edits workflow files – refusing to run with secrets"; exit 1;
+          fi
+
+      # --------------------------------------------------------------------- #
+      # 2-b. Checkout the contributor’s commit safely
+      # --------------------------------------------------------------------- #
+      - uses: actions/checkout@v6
+        with:
+          lfs: false
+
+      # --------------------------------------------------------------------- #
+      # 2-c. Free disk space
+      # --------------------------------------------------------------------- #
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      # --------------------------------------------------------------------- #
+      # 2-d. Cache & run the Unity test-runner
+      # --------------------------------------------------------------------- #
+      - uses: actions/cache@v5
+        with:
+          path: |
+            ${{ inputs.projectPath }}/Library
+            ~/.cache/unity3d
+          key: ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
+
+      # --------------------------------------------------------------------- #
+      - name: Generate custom image name
+        id: custom_image
+        run: echo "image=unityci/editor:ubuntu-${{ inputs.unityVersion }}-${{ matrix.platform }}-3" >> $GITHUB_OUTPUT
+        shell: bash
+
+      - uses: game-ci/unity-test-runner@08fd329f00a18efa297140b14ac28ebce742759e # node24 runtime (PR #304); revert to @v4 once game-ci moves the tag
+        id: tests
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+        with:
+          projectPath: ${{ inputs.projectPath }}
+          unityVersion: ${{ inputs.unityVersion }}
+          testMode: ${{ inputs.testMode }}
+          customImage: ${{ steps.custom_image.outputs.image }}
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: ${{ inputs.unityVersion }} ${{ inputs.testMode }} ${{ matrix.platform }} Test Results
+          artifactsPath: artifacts-${{ inputs.unityVersion }}-${{ inputs.testMode }}-${{ matrix.platform }}
+          customParameters: -CI true -GITHUB_ACTIONS true
+
+      # --------------------------------------------------------------------- #
+      - uses: actions/upload-artifact@v6
+        if: always()
+        with:
+          name: Test results for ${{ inputs.unityVersion }} ${{ inputs.testMode }} on ${{ matrix.platform }}
+          path: ${{ steps.tests.outputs.artifactsPath }}
+
+      # --------------------------------------------------------------------- #
+      - name: Publish Test Results
+        uses: EnricoMi/publish-unit-test-result-action@v2
+        if: always()
+        with:
+          github_token: ${{ secrets.GITHUB_TOKEN }}
+          files: ${{ steps.tests.outputs.artifactsPath }}/**/*.xml
+          check_name: ${{ inputs.unityVersion }} ${{ inputs.testMode }} ${{ matrix.platform }} Results
+          comment_mode: failures
+          # Disable build-over-build comparison: it triggers a paginated GET on
+          # /repos/{owner}/{repo}/commits/{before_sha}/check-runs that
+          # intermittently returns 401 ("Bad credentials") even with valid
+          # GITHUB_TOKEN + correct permissions. The first probe call with
+          # per_page=1 succeeds; the immediately following per_page=100 fetch
+          # 401s on the same URL with the same token. Disabling compare_to_
+          # earlier_commit skips the problematic call entirely.
+          compare_to_earlier_commit: false

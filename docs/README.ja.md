@@ -182,22 +182,30 @@ unity-mcp-cli open ./MyUnityProject
 
 </details>
 
+<details>
+  <summary>ライティング</summary>
+
+- RQLソース `lighting`（`rql-query` / `rql-mutate` 経由）- アクティブシーンの環境（アンビエント、フォグ、スカイボックス、太陽、反射。元に戻せる）、Lighting Settings アセットとベイク：`CreateSettings`、`UseSettings`、`Bake`、`CancelBake`、`ClearBakedData`、`BakeReflectionProbes`
+- `LightProbeGroup.PlaceGrid(size, spacing)` - ボックス内に等間隔でライトプローブを配置。`ReflectionProbe.Bake()` - Custom プローブをシーンの横にベイク
+
+</details>
+
 ## 追加のスキルとツールをインストール
 
 さらに多くのツールが必要な場合は拡張機能をインストールするか、[独自のツールを作成](#add-custom-tool)してください。
 
 | 拡張機能 | 説明 |
 | --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Unity アニメーション用の追加ツールセット |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | Cinemachine 用の MCP ツール |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | Unity Input System 用の MCP ツール |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | AI ナビゲーション用の MCP ツール（NavMesh サーフェス、ベイク、エージェント、リンク） |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Unity パーティクルシステム用の追加ツールセット |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 用の追加ツールセット |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | Unity Splines 用の MCP ツール |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Unity Terrain 用の追加ツールセット |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | Unity 2D タイルマップ用の MCP ツール |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | Unity Timeline のカットシーンとシーケンス用の MCP ツール |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | Unity アニメーション用の追加ツールセット |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | Cinemachine 用の MCP ツール |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | Unity Input System 用の MCP ツール |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | AI ナビゲーション用の MCP ツール（NavMesh サーフェス、ベイク、エージェント、リンク） |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | Unity パーティクルシステム用の追加ツールセット |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | Unity ProBuilder 用の追加ツールセット |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | Unity Splines 用の MCP ツール |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | Unity Terrain 用の追加ツールセット |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | Unity 2D タイルマップ用の MCP ツール |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | Unity Timeline のカットシーンとシーケンス用の MCP ツール |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -551,8 +559,10 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 
 古典的なチェスゲームがあります。ボットのロジックを LLM に委託しましょう。ボットはゲームルールに従ってターンを実行する必要があります。
 
+ゲーム専用のツールには `[AiToolType(Target = ToolTarget.Runtime)]` (`using com.IvanMurzak.McpPlugin.Common;`) を付けてください。ゲームだけがそれらを登録し、Editor が接続中でも MCP サーバーはその呼び出しを実行中のゲームへ送ります。
+
 ```csharp
-[AiToolType]
+[AiToolType(Target = ToolTarget.Runtime)]
 public static class ChessGameAI
 {
     [AiTool("chess-do-turn", Title = "Do the turn")]
@@ -589,6 +599,7 @@ public static class ChessGameAI
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`             | **Client** -> **Server** <- **Plugin** 接続ポート（デフォルト: 8080）       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **Plugin** -> **Server** 接続タイムアウト（ミリ秒）（デフォルト: 10000）            |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`     | **Server** が1回のツール呼び出しを待つ時間（ミリ秒）。ツール呼び出しは **Plugin** に1回だけ送信され、再送されません（デフォルト: 300000、`--plugin-timeout` の方が大きい場合はその値。McpPlugin 8.11.0 以降のサーバー） |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **Client** -> **Server** トランスポートタイプ: `stdio` または `streamableHttp`（デフォルト: `streamableHttp`） |
 | `MCP_AUTHORIZATION`           | `--authorization`        | 受信する **Client** 接続の認証モード: `none` または `required`（デフォルト: `none`） |
 | `MCP_PLUGIN_TOKEN`            | `--token`                | `--authorization=required` の場合に **Client** から要求される Bearer トークン（デフォルト: 未設定） |
@@ -613,7 +624,7 @@ Unity MCP Plugin は起動時に以下の環境変数（およびコマンドラ
 | `UNITY_MCP_TOKEN`           | `-token`                    | string                        | 認証トークンの強制設定                                  |
 | `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | プラグインが設定するクライアントトランスポートを強制                    |
 | `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | プラグインがローカルサーバープロセスを起動し続けるかどうかを強制       |
-| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | comma-separated tool IDs      | リストされたツールのみを有効化し、その他はすべて無効化。不明な ID はエラーとしてログに記録されます。 |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | comma-separated tool IDs      | リストされたツールのみを MCP クライアントに表示し（tools/list）、その他はすべて非表示にします（非表示のツールも名前で呼び出せば実行されます）。不明な ID はエラーとしてログに記録されます。 |
 
 > コマンドライン引数は環境変数よりも優先されます。両方とも保存された設定ファイルの値を上書きします。短縮フラグ `-url`、`-token`、`-auth` はエイリアスです。完全な `-UNITY_MCP_*` 引数名も受け付けられます。
 

@@ -335,7 +335,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                 sb.Append(items.Count).Append(" results");
                 if (r.Total is long total && total > items.Count) sb.Append(" (of ").Append(total).Append(')');
                 sb.Append('\n').Append(string.Join("|", columns));
-                foreach (JsonObject row in items)
+                foreach (var row in items.Cast<JsonObject>())
                     sb.Append('\n').Append(string.Join("|", columns.Select(c => row.TryGetPropertyValue(c, out var v) ? _compact.RowCell(v) : "")));
                 return sb.ToString();
             }

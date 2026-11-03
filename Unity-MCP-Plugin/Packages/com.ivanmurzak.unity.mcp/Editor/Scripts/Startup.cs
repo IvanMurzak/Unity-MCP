@@ -11,6 +11,7 @@
 #nullable enable
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using com.IvanMurzak.Unity.MCP.Utils;
 using UnityEditor;
 using UnityEngine;
@@ -26,6 +27,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static Startup()
         {
+            // Asset import workers load these editor assemblies too; they must not build, connect or quit: a no-auth
+            // server keeps one plugin connection, so a worker's replaced the editor's (#1050). Not isBatchMode:
+            // headless CLI/CI editors still need MCP.
+            if (AssetDatabase.IsAssetImportWorkerProcess())
+                return;
+
+            // Install the Unity main-thread implementation BEFORE building the plugin. Building reflects over
+            // every [AiSkill] member, and Skill_Rql.Markdown runs its renderer through MainThread.Instance.Run.
+            // [InitializeOnLoad] static constructors always run before [InitializeOnLoadMethod], so here
+            // MainThread.Instance is still ReflectorNet's default, which treats only ManagedThreadId == 1 as the
+            // main thread. That holds on Mono, but on the Unity 7 CoreCLR editor on Windows the main thread's id
+            // is 2: Run() then dispatched the work to the main thread, which is blocked right here in the
+            // constructor, and the editor hung forever in "Initializing InitializeOnLoad Types". With the Unity
+            // implementation installed, Run() on the main thread executes inline.
+            // Idempotent: InstallPump re-subscribes safely and Init runs again from its own attribute.
+            MainThreadInstaller.Init();
+
             UnityMcpPluginEditor.Instance.BuildMcpPluginIfNeeded();
             UnityMcpPluginEditor.Instance.AddUnityLogCollectorIfNeeded(() => new BufferedFileLogStorage());
 
@@ -51,6 +69,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // DEV-ONLY: start the 127.0.0.1 inject/control bridge, gated on UNITY_MCP_DEV_CONTROL=1
             // (process env > project-root .env > default). No-op / never listens in a shipped plugin.
             StartDevControlIfEnabled();
+            StartCliSessionIfRequested();
         }
     }
 }

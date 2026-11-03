@@ -1,0 +1,35 @@
+{
+  "name": "com.ivanmurzak.unity.mcp.inputsystem",
+  "displayName": "AI InputSystem",
+  "author": {
+    "name": "Ivan Murzak",
+    "url": "https://github.com/IvanMurzak"
+  },
+  "keywords": [
+    "Input System",
+    "InputSystem",
+    "Input",
+    "AI",
+    "AI Integration",
+    "MCP",
+    "Unity MCP"
+  ],
+  "version": "2.1.0",
+  "unity": "2022.3",
+  "license": "MIT",
+  "description": "MCP Tools for the Unity Input System - Enhance your Unity projects with AI-powered Input System tools using the MCP framework. Create InputActionAssets, manage ActionMaps, Actions, Bindings (including composites), control schemes, paths, groups, interactions and processors via natural language.",
+  "dependencies": {
+    "com.ivanmurzak.unity.mcp": "1.6.0",
+    "com.unity.inputsystem": "1.8.2"
+  },
+  "scopedRegistries": [
+    {
+      "name": "package.openupm.com",
+      "url": "https://package.openupm.com",
+      "scopes": [
+        "extensions.unity",
+        "com.ivanmurzak"
+      ]
+    }
+  ]
+}

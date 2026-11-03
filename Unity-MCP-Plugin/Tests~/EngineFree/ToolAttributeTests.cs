@@ -79,13 +79,13 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         }
 
         [Fact]
-        public void PingCarriesTheReadOnlyAndIdempotentHints_AndStaysEnabled()
+        public void PingCarriesTheReadOnlyAndIdempotentHints_AndStaysVisible()
         {
             // A pure echo: an agent may call it freely and repeatedly. These hints are what tell a
-            // client that, and `Enabled` is what keeps it in the listing at all.
+            // client that, and `Visible` is what keeps it in the listing at all.
             Assert.True(PingAttribute.ReadOnlyHint);
             Assert.True(PingAttribute.IdempotentHint);
-            Assert.True(PingAttribute.Enabled);
+            Assert.True(PingAttribute.Visible);
             Assert.Equal("Ping", PingAttribute.Title);
         }
 

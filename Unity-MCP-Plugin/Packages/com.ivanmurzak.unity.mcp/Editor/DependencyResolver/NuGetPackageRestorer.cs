@@ -33,25 +33,51 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     {
         const string Tag = NuGetConfig.LogTag;
 
+        /// <summary>Packages the last <see cref="Restore"/> could not fetch ("Id Version (reason)"); empty when it could.</summary>
+        public static IReadOnlyList<string> LastFailures { get; private set; } = Array.Empty<string>();
+
+        /// <summary>A restore pass refreshes the AssetDatabase only when it changed the DLL set and fetched everything.</summary>
+        internal static bool ShouldRefresh(bool changed, IReadOnlyCollection<string> failures) => changed && failures.Count == 0;
+
+        /// <summary>The one Console message for a restore that could not fetch every package: what failed and how to retry.</summary>
+        internal static string FailureMessage(IReadOnlyList<string> failures) =>
+            $"Unity-MCP could not download {failures.Count} NuGet package(s): {string.Join("; ", failures)}. Nothing was changed in " +
+            $"{NuGetConfig.InstallPath} and the AssetDatabase was not refreshed. Unity-MCP stays disabled until every package " +
+            "installs: check the network / proxy access to api.nuget.org, then use Tools > AI Game Developer > Dependencies > " +
+            "Force Resolve NuGet DLLs (the next domain reload also retries).";
+
         /// <summary>
         /// Performs a full package restore. Returns true if any packages were installed
         /// or removed (meaning a domain reload is needed).
         /// </summary>
-        public static bool Restore()
+        public static bool Restore() => Restore(NuGetConfig.InstallPath, NuGetConfig.Packages);
+
+        /// <summary>Test seam: <see cref="Restore()"/> against another install path and package list.</summary>
+        internal static bool Restore(string installPath, IReadOnlyList<NuGetPackage> packages)
         {
             var anyChanged = false;
+            LastFailures = Array.Empty<string>();
 
             try
             {
                 NuGetPackageInstaller.ResetSession();
 
+                // Resolve the whole graph first. A package that cannot be fetched (offline, a proxy, a version not on
+                // the feed) leaves the graph partial: installing or removing anything from it would churn DLLs that a
+                // complete pass keeps, and every such pass asked for a refresh (an endless domain-reload loop). Change
+                // nothing on disk instead (planning only reads the cache and the feed, so it runs before the migration);
+                // the caller reports the failures once and does not refresh.
+                LastFailures = NuGetPackageInstaller.PlanClosure(packages);
+                if (LastFailures.Count > 0)
+                    return false;
+
                 // Ensure install directory exists
-                if (!Directory.Exists(NuGetConfig.InstallPath))
-                    Directory.CreateDirectory(NuGetConfig.InstallPath);
+                if (!Directory.Exists(installPath))
+                    Directory.CreateDirectory(installPath);
 
                 // Best-effort: continue past AbortedFileLock so extraction can proceed
                 // on what the migration freed up; the rest finishes on the next reload.
-                var migration = NuGetLegacyMigration.Run(NuGetConfig.InstallPath);
+                var migration = NuGetLegacyMigration.Run(installPath);
                 if (migration.Outcome != NuGetLegacyMigration.Outcome.NoLegacyState)
                     anyChanged = true;
 
@@ -62,21 +88,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 // steady state, so Install()'s alreadyOnDisk check then short-
                 // circuits and no re-extraction churn happens. Persist the
                 // rebuilt manifest immediately so subsequent passes see it.
-                if (!File.Exists(NuGetInstallManifest.GetPath(NuGetConfig.InstallPath)))
+                if (!File.Exists(NuGetInstallManifest.GetPath(installPath)))
                 {
-                    var rebuilt = NuGetInstallManifest.TryRebuildFromDisk(NuGetConfig.InstallPath);
+                    var rebuilt = NuGetInstallManifest.TryRebuildFromDisk(installPath);
                     if (rebuilt.Packages.Count > 0)
                     {
                         Debug.Log($"{Tag} Manifest missing — rebuilt {rebuilt.Packages.Count} entries from on-disk filenames.");
-                        NuGetInstallManifest.Save(NuGetConfig.InstallPath, rebuilt);
+                        NuGetInstallManifest.Save(installPath, rebuilt);
                     }
                 }
 
                 // Install configured packages. Install() populates InstalledThisSession with the
                 // full resolved closure (direct + transitive) by always reading the dep graph,
                 // including for packages already on disk from a previous session.
-                foreach (var package in NuGetConfig.Packages)
-                    anyChanged |= NuGetPackageInstaller.Install(package);
+                foreach (var package in packages)
+                    anyChanged |= NuGetPackageInstaller.Install(package, installPath, visitedIds: null, manifest: null);
+                anyChanged |= NuGetPackageInstaller.InstallRemainingPlanned(installPath);
 
                 // Invalidate assembly cache only after packages may have changed,
                 // so RemoveUnnecessaryPackages sees the current state.
@@ -86,7 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 // Remove stale-version manifest entries for anything in the closure
                 // and packages whose DLLs are now all provided by Unity.
                 var anyRemoved = NuGetPackageInstaller.RemoveUnnecessaryPackages(
-                    NuGetPackageInstaller.InstalledThisSession);
+                    NuGetPackageInstaller.InstalledThisSession, installPath, manifest: null);
                 anyChanged |= anyRemoved;
 
                 if (anyChanged)

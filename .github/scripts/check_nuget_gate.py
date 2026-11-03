@@ -29,7 +29,11 @@ That only works if nobody ever changes a pin without bumping the define. This sc
      too. (fbbf3dab — "chore: bump McpPlugin to 8.1.0" — would have failed here.)
   2. Every asmdef gated on the ready define must ALSO be gated on the current generation define,
      and every ProjectSettings.asset scripting-define entry carrying the ready define must carry the
-     current generation define — so a half-finished bump cannot ship either.
+     current generation define — so a half-finished bump cannot ship either. That includes the
+     extension modules and their template: an extension assembly references the main Editor/Runtime
+     assemblies, so if it compiled while those are skipped (stale generation) its CS0246 errors would
+     block the domain reload exactly like #957. The price: a generation bump must update and
+     re-release every extension (an extension built for an older generation is skipped, not broken).
 
 Usage:
     python .github/scripts/check_nuget_gate.py           # verify (CI)
@@ -49,8 +53,10 @@ NUGET_CONFIG = os.path.join(
     "Editor", "DependencyResolver", "NuGetConfig.cs")
 LOCK_PATH = os.path.join(REPO_ROOT, ".github", "nuget-gate.lock")
 
-# Directories that hold a Unity project whose ProjectSettings must carry the gate defines.
-SCAN_ROOTS = ["Unity-MCP-Plugin", "Unity-Tests"]
+# Where gated asmdefs and ProjectSettings.asset files live: the plugin and test projects, the extension
+# modules and their template.
+SCAN_ROOTS = ["Unity-MCP-Plugin", "Unity-Tests", "extensions", "templates"]
+CORE_PACKAGE = os.path.join(REPO_ROOT, "Unity-MCP-Plugin", "Packages", "com.ivanmurzak.unity.mcp")
 
 PIN_RE = re.compile(r'new\s+NuGetPackage\(\s*"([^"]+)"\s*,\s*"([^"]+)"')
 READY_RE = re.compile(r'ReadyDefine\s*=\s*"([^"]+)"')
@@ -100,21 +106,60 @@ def iter_files(suffixes):
                     yield os.path.join(dirpath, name)
 
 
+def migration_pinned_asmdefs():
+    """Extension test asmdefs the migration guard (`commands/extensions.py validate`) pins byte-for-byte to
+    `migration-source.json`. They are not checked: they compile only where the extension is `testable`, i.e. the
+    Unity-Tests projects, which `commands/extensions.py prepare` gives the current generation define."""
+    pinned = set()
+    extensions = os.path.join(REPO_ROOT, "extensions")
+    if not os.path.isdir(extensions):
+        return pinned
+    for module in os.listdir(extensions):
+        source = os.path.join(extensions, module, "migration-source.json")
+        packages = os.path.join(extensions, module, "Packages")
+        if not (os.path.isfile(source) and os.path.isdir(packages)):
+            continue
+        names = [n for n in json.loads(read(source)).get("sourceFiles", {})
+                 if n.startswith("Tests/") and n.endswith(".asmdef")]
+        for package in os.listdir(packages):
+            pinned.update(os.path.normcase(os.path.join(packages, package, *n.split("/"))) for n in names)
+    return pinned
+
+
+def load_asmdef(path):
+    try:
+        return json.loads(read(path))
+    except ValueError:
+        return None  # not our business to police unrelated malformed asmdefs
+
+
 def check_propagation(ready_define, generation_define):
-    """Every place gated on the ready define must also carry the current generation define."""
+    """Every place gated on the ready define must also carry the current generation define, and every asmdef
+    that references a gated core assembly must be gated too (else it compiles while the core is skipped)."""
     problems = []
+    gate = (ready_define, generation_define)
+    gated_core = set()
+    for dirpath, _, filenames in os.walk(CORE_PACKAGE):
+        for name in filenames:
+            data = load_asmdef(os.path.join(dirpath, name)) if name.endswith(".asmdef") else None
+            if data and ready_define in (data.get("defineConstraints") or []):
+                gated_core.add(data.get("name"))
+    pinned = migration_pinned_asmdefs()
 
     for path in iter_files((".asmdef",)):
-        try:
-            data = json.loads(read(path))
-        except ValueError:
-            continue  # not our business to police unrelated malformed asmdefs
-        constraints = data.get("defineConstraints") or []
-        if ready_define not in constraints:
+        if os.path.normcase(path) in pinned:
             continue
-        if generation_define not in constraints:
-            problems.append("%s: defineConstraints has %r but not %r"
-                            % (os.path.relpath(path, REPO_ROOT), ready_define, generation_define))
+        data = load_asmdef(path)
+        if data is None:
+            continue
+        constraints = data.get("defineConstraints") or []
+        references = gated_core.intersection(data.get("references") or [])
+        if ready_define in constraints or references:
+            missing = [d for d in gate if d not in constraints]
+            if missing:
+                problems.append("%s: defineConstraints lacks %s%s"
+                                % (os.path.relpath(path, REPO_ROOT), ", ".join(repr(d) for d in missing),
+                                   " (it references gated %s)" % ", ".join(sorted(references)) if references else ""))
 
     for path in iter_files(("ProjectSettings.asset",)):
         for lineno, line in enumerate(read(path).splitlines(), 1):

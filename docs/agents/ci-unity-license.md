@@ -39,18 +39,20 @@ gh secret set UNITY_PASSWORD --repo IvanMurzak/Unity-MCP
 ## Fork pull requests get no secrets (read this before "the license is broken")
 
 GitHub withholds repository secrets from a `pull_request` run whose head repository is a
-**fork**. `secrets: inherit` still resolves — to empty strings. So on a fork PR
-`game-ci/unity-test-runner` receives an empty `UNITY_LICENSE` and aborts before it pulls an
-image or contacts Unity, and **all 12 `test-unity-*` legs go red at once** (6 caller jobs in
-`test_pull_request.yml` × the 2-way `platform: [base, windows-mono]` matrix).
+**fork**. `secrets: inherit` still resolves — to empty strings. **This is the expected behaviour
+of an unlicensed run.** The license, the secrets and the workflow are all fine; a fork simply
+cannot see them, and re-issuing the `.ulf` will not change it.
 
-**This is the expected behaviour of an unlicensed run.** The license, the secrets and the
-workflow are all fine; a fork simply cannot see them. Nothing here needs fixing, and
-re-issuing the `.ulf` will not change it.
+Since PR #971, `test_unity_plugin.yml` **skips** its `test` job (game-ci) on a fork PR: nothing
+is compiled, and the run's summary (the `save-event-file` job of `test_pull_request.yml`) says how
+to get the suite run. On any other run an empty license still fails game-ci, as before. The signal
+that the suite really ran is the `unity-tests-licensed` commit status (below), the required check.
 
-### How to tell it apart from a real license failure
+### Runs from before #971: how to tell no-secrets from a real license failure
 
-The tell is **duration**, and it survives log expiry — job metadata outlives logs, so
+Before #971 game-ci ran on fork PRs, received the empty `UNITY_LICENSE` and aborted, so **every
+leg went red at once**. Runs from that time (and re-runs of them) still look like that. The tell
+is **duration**, and it survives log expiry — job metadata outlives logs, so
 `gh api repos/IvanMurzak/Unity-MCP/actions/runs/<run-id>/jobs` answers it even when the log
 download returns HTTP 410:
 
@@ -63,10 +65,7 @@ download returns HTTP 410:
   long — image pull, then activation inside the container — is unverified here: no bad-`.ulf`
   run is on record. If you hit one, record its run id in this section.)
 
-Duration separates *empty* from *bad*. It does **not** separate a fork PR from a
-same-repository run whose `UNITY_LICENSE` was deleted or never set — the secret is declared
-`required: false`, so both deliver an empty string and both fail identically. Settle that with
-the head-repository check, not the clock:
+On any run, old or new, settle "fork or not" with the head repository, not the clock:
 
 ```bash
 gh api repos/IvanMurzak/Unity-MCP/actions/runs/<run-id> \
@@ -75,29 +74,57 @@ gh api repos/IvanMurzak/Unity-MCP/actions/runs/<run-id> \
 
 A `full_name` other than `IvanMurzak/Unity-MCP` means the run had no secrets.
 
-One more fork-PR shape to expect, with a different signature: a run stuck at
-`action_required` has **not started at all** — GitHub holds a first-time contributor's workflow
-for maintainer approval. There is then no red to diagnose and `conclusion` comes back `null`.
-Approve the run first; the no-secrets shape above is what you should see once it does start.
+One more fork-PR shape to expect: a run stuck at `action_required` has **not started at all** —
+GitHub holds an outside contributor's workflow for maintainer approval, and `conclusion` comes
+back `null`. Approve the run first.
 
 ### How to run the licensed suite against a fork PR's code
 
-`test_pull_request_manual.yml` is `workflow_dispatch`-only, so it runs with full secrets:
+Review the PR, take its exact head commit, and dispatch `test_pull_request_manual.yml` (it runs
+with full secrets) **on the `fork-tests` branch**:
 
 ```bash
-gh workflow run test_pull_request_manual.yml --repo IvanMurzak/Unity-MCP --ref main
+gh pr view <n> --repo IvanMurzak/Unity-MCP --json headRefOid --jq .headRefOid
+gh workflow run test_pull_request_manual.yml --repo IvanMurzak/Unity-MCP --ref fork-tests \
+  -f pr=<n> -f sha=<that head commit>
 ```
 
-Reviewing a fork PR's actual code this way needs a ref the maintainer picks — a fork PR's
-commits are fetchable from this repository as `refs/pull/<n>/head` (always) and
-`refs/pull/<n>/merge` (only while GitHub can compute a clean test-merge, so absent on a
-conflicting PR). Neither is fetched by default — `git fetch origin refs/pull/<n>/head` — and
-neither can be dispatched: `workflow_dispatch` takes only a branch or tag as its ref, so
-`--ref refs/pull/<n>/head` is rejected.
-Wiring that into the dispatch (and deciding whether a fork's Unity checks should be allowed to
-pass at all, given the required-status-check ruleset) is a **policy decision** — deliberately not
-settled by this document. It is open in **PR #971**; issue #543, which first asked for it, was
-closed as completed back in 2026-03, so follow the PR, not the issue.
+The fork PR's `test-pull-request` run summary prints this command with both values filled in. The `resolve` job:
+
+- refuses any branch but `fork-tests`, and refuses `fork-tests` while its `.github/` differs from
+  `main`'s (the error prints the one command that fast-forwards it);
+- fails without testing anything if the PR is closed or its head is no longer `sha`, so code
+  pushed after your review never runs with the secrets. Review the new commits and dispatch again;
+- tests GitHub's test merge only if that merge commit's second parent is `sha` (the merge ref is
+  rebuilt asynchronously and can lag the head), otherwise the head itself, with a warning. The run
+  summary shows the reviewed head and the commit tested;
+- pins that one SHA for every job, so a push during the run changes nothing.
+
+**Why a separate branch.** Fork code runs on the runner host (chain feed scripts, `npm ci`
+install scripts, Editor scripts), and anything there can write cache entries into the scope of the
+ref the run was dispatched on. `main`'s scope is what `release.yml` and every PR run restore;
+`fork-tests`' scope is read by nothing else. On top of that, a run given a ref never saves the
+Unity cache itself, runs on `fork-tests` are serialised, and `resolve` and `report` delete every
+cache entry under `fork-tests` before and after each run, so no fork's run reads what another
+left. The jobs that run fork code get a read-only token and a checkout without credentials.
+
+One-time setup: create the branch from `main`
+(`gh api -X POST repos/IvanMurzak/Unity-MCP/git/refs -f ref=refs/heads/fork-tests -f sha=<main sha>`).
+Nothing is ever committed to it; it only follows `main`.
+
+### The `unity-tests-licensed` status
+
+One commit status on the PR head says whether the licensed suite ran on that exact commit. It is
+set only through `.github/actions/unity-tests-licensed`:
+
+- same-repository PR: `publish_test_results.yml` sets it from the `test-pull-request` run;
+- fork PR: nothing sets it until the manual run above does (`pending`, then `success`, `failure`
+  or `error`). Until then GitHub shows it as *Expected — waiting for status*, which blocks the
+  merge. A new push is a new head commit, so it has no status again.
+
+It replaces the twelve `test-unity-* / …` contexts as the required check in the **"Required
+status checks (no bypass)"** ruleset, with GitHub Actions as its required source. The
+`test-unity-*` jobs are skipped on a fork PR and so cannot be required.
 
 ### Measured, 2026-09-03 (issue #973)
 

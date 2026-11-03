@@ -10,7 +10,10 @@
 
 #nullable enable
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common.Model;
+using UnityEditor;
 using UnityEngine;
+using UnityEngine.Rendering;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
@@ -32,6 +35,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         // value: Claude's vision downsamples images to ~1568 px on the longest edge before the
         // model sees them, so extra resolution past ~4K only inflates the payload.
         private const int MaxScreenshotDimension = 3840;
+
+        // `-nographics` (no graphics device) renders nothing yet raises no error: every capture would come back as a
+        // blank gray image that looks like a valid screenshot. Fail loudly instead.
+        // The device never changes during a session; read once on the main thread (tools may run off it).
+        // volatile: written on the main thread, read on tool threads. internal: tests force it to cover the guard
+        // in editors that do have a device.
+        internal static volatile bool NoGraphicsDevice;
+
+        [InitializeOnLoadMethod]
+        private static void ReadGraphicsDevice() => NoGraphicsDevice = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
+
+        private static ResponseCallTool? NoGraphicsError() =>
+            NoGraphicsDevice
+                ? ResponseCallTool.Error("Screenshots need a graphics device, but the editor has none " +
+                    "(GraphicsDeviceType.Null, e.g. started with -nographics). " +
+                    "Start it with a graphics device: drop -nographics (headless -batchmode keeps rendering).")
+                : null;
 
         // Scale (width, height) so the longest edge is at most MaxScreenshotDimension, preserving
         // aspect ratio. Returns the input unchanged when it is already within the limit.

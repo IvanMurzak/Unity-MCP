@@ -35,8 +35,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var toolManager = UnityMcpPluginEditor.Instance.Tools;
             Assert.IsNotNull(toolManager, "ToolManager should not be null");
 
-            _originalToolListEnabled = toolManager!.IsToolEnabled(Tool_Tool.ToolListId);
-            toolManager.SetToolEnabled(Tool_Tool.ToolListId, true);
+            _originalToolListEnabled = toolManager!.IsToolVisible(Tool_Tool.ToolListId);
+            toolManager.SetToolVisible(Tool_Tool.ToolListId, true);
             UnityMcpPluginEditor.Instance.Save();
         }
 
@@ -46,11 +46,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var toolManager = UnityMcpPluginEditor.Instance.Tools;
             if (toolManager != null && _originalToolListEnabled.HasValue)
             {
-                toolManager.SetToolEnabled(Tool_Tool.ToolListId, _originalToolListEnabled.Value);
+                toolManager.SetToolVisible(Tool_Tool.ToolListId, _originalToolListEnabled.Value);
                 UnityMcpPluginEditor.Instance.Save();
             }
 
             yield return base.TearDown();
+        }
+
+        // Wave 6: asked which tools are hidden, an agent read the plugin's config file through script-execute; the list says it.
+        [UnityTest]
+        public IEnumerator List_ReportsVisibility()
+        {
+            yield return null;
+
+            var toolManager = UnityMcpPluginEditor.Instance.Tools!;
+            var hidden = Tool_Tool.ToolSetEnabledStateId;
+            var wasVisible = toolManager.IsToolVisible(hidden);
+            toolManager.SetToolVisible(hidden, false);
+            try
+            {
+                var json = RunTool(Tool_Tool.ToolListId, "{}").Value!.ToolResultJson();
+                using var doc = JsonDocument.Parse(json);
+                bool? VisibleOf(string name)
+                {
+                    foreach (var t in GetResultArray(doc).EnumerateArray())
+                        if (t.TryGetPropertyCI("name", out var n) && n.GetString() == name)
+                            return t.TryGetPropertyCI("visible", out var v) ? v.GetBoolean() : (bool?)null;
+                    return null;
+                }
+                Assert.AreEqual(false, VisibleOf(hidden), json);
+                Assert.AreEqual(true, VisibleOf(Tool_Tool.ToolListId), json);
+                var listTool = toolManager.GetAllTools().First(t => t.Name == Tool_Tool.ToolListId);
+                StringAssert.Contains(Tool_Tool.HiddenToolHint, listTool.Description);
+            }
+            finally { toolManager.SetToolVisible(hidden, wasVisible); }
         }
 
         [UnityTest]
@@ -218,7 +247,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return null;
 
             var json = RunTool(Tool_Tool.ToolListId, @"{
-                ""regexSearch"": ""Enable or disable MCP tools""
+                ""regexSearch"": ""Show or hide MCP tools""
             }").Value!.ToolResultJson();
 
             using var doc = JsonDocument.Parse(json);
@@ -229,8 +258,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var names = Enumerable.Range(0, arr.GetArrayLength())
                 .Select(i => arr[i].GetPropertyCI("name").GetString())
                 .ToList();
-            Assert.Contains("tool-set-enabled-state", names,
-                "tool-set-enabled-state description contains 'Enable or disable MCP tools'");
+            Assert.Contains("tool-set-visibility", names,
+                "tool-set-visibility description contains 'Show or hide MCP tools'");
         }
 
         [UnityTest]

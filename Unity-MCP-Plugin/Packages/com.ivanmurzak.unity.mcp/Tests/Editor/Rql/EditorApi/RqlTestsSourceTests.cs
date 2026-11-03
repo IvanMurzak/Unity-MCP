@@ -21,7 +21,6 @@ using NUnit.Framework;
 using UnityEditor.TestTools.TestRunner.Api;
 using UnityEngine;
 using UnityTest = UnityEngine.TestTools.UnityTestAttribute;
-using Object = UnityEngine.Object;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 {
@@ -117,18 +116,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             // The patterns are what Unity receives as Filter.groupNames: they must hit exactly the probe's cases in Unity's
             // own test tree (Plain, Cases(1), Cases(2); the explicit test is filtered out by the query).
             Assert.IsTrue(Tool_Tests.TrySelectTests("tests | where fixture == \"RqlTestsProbe\" and explicit == false", out var groups, out _, out var error), error);
-            var api = ScriptableObject.CreateInstance<TestRunnerApi>();
-            ITestAdaptor? root = null;
-            api.RetrieveTestList(TestMode.EditMode, r => root = r);
-            var deadline = DateTime.UtcNow.AddSeconds(30);
-            while (root == null && DateTime.UtcNow < deadline) yield return null;
-            Assert.IsNotNull(root, "Unity's test tree was not retrieved");
-            var hits = Leaves(root!).Where(t => groups!.Any(g => Regex.IsMatch(t.FullName, g))).Select(t => t.FullName).OrderBy(n => n).ToList();
-            CollectionAssert.AreEqual(new[] { Probe + ".Cases(1)", Probe + ".Cases(2)", Probe + ".Plain" }, hits);
-            // tests-run refuses a selection whose names are missing from Unity's tree instead of running a subset.
-            CollectionAssert.AreEqual(new[] { "No.Such.Fixture.Test" },
-                Tool_Tests.UnmatchedNames(root!, new[] { Probe + ".Plain", Probe + ".Cases", "No.Such.Fixture.Test" }));
-            Object.DestroyImmediate(api);
+            return UnityTestTree.EditMode(root =>
+            {
+                var hits = Leaves(root).Where(t => groups!.Any(g => Regex.IsMatch(t.FullName, g))).Select(t => t.FullName).OrderBy(n => n).ToList();
+                CollectionAssert.AreEqual(new[] { Probe + ".Cases(1)", Probe + ".Cases(2)", Probe + ".Plain" }, hits);
+                // tests-run refuses a selection whose names are missing from Unity's tree instead of running a subset.
+                CollectionAssert.AreEqual(new[] { "No.Such.Fixture.Test" },
+                    Tool_Tests.UnmatchedNames(root, new[] { Probe + ".Plain", Probe + ".Cases", "No.Such.Fixture.Test" }));
+            });
         }
 
         static System.Collections.Generic.IEnumerable<ITestAdaptor> Leaves(ITestAdaptor t) =>

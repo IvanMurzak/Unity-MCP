@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             allItems = refreshed;
         }
 
-        protected override void OnItemToggleChanged(ToolViewModel viewModel, bool isEnabled)
+        protected override void OnItemToggleChanged(ToolViewModel viewModel, bool isVisible)
         {
             var toolManager = UnityMcpPluginEditor.Instance.Tools;
             if (toolManager == null)
@@ -74,12 +74,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-            viewModel.IsEnabled = isEnabled;
+            viewModel.IsVisible = isVisible;
             if (!string.IsNullOrWhiteSpace(viewModel.Name))
             {
-                Logger.LogTrace("{method} Setting tool '{name}' enabled state to {enabled}.",
-                    nameof(OnItemToggleChanged), viewModel.Name, isEnabled);
-                toolManager.SetToolEnabled(viewModel.Name, isEnabled);
+                Logger.LogTrace("{method} Setting tool '{name}' visibility to {visible}.",
+                    nameof(OnItemToggleChanged), viewModel.Name, isVisible);
+                toolManager.SetToolVisible(viewModel.Name, isVisible);
                 UnityMcpPluginEditor.Instance.Save();
             }
         }
@@ -158,7 +158,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             public string Name { get; set; }
             public string? Title { get; set; }
             public string? Description { get; set; }
-            public bool IsEnabled { get; set; }
+            public bool IsVisible { get; set; }
             public IReadOnlyList<ArgumentData> Inputs { get; set; }
             public IReadOnlyList<ArgumentData> Outputs { get; set; }
             public string TokenCount { get; set; }
@@ -171,7 +171,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Name = tool.Name;
                 Title = tool.Title;
                 Description = tool.Description;
-                IsEnabled = toolManager?.IsToolEnabled(tool.Name) == true;
+                IsVisible = toolManager?.IsToolVisible(tool.Name) == true;
                 Inputs = ParseSchemaArguments(tool.InputSchema);
                 Outputs = ParseSchemaArguments(tool.OutputSchema);
                 TokenCount = UIMcpUtils.FormatTokenCount(tool.TokenCount);

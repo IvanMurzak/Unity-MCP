@@ -1,0 +1,16 @@
+{
+    "name": "YOUR_PACKAGE_ID.Installer",
+    "rootNamespace": "YOUR_PACKAGE_ID.Installer",
+    "references": [],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

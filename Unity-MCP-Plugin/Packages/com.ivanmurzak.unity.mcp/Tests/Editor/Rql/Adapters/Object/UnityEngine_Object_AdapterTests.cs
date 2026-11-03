@@ -65,5 +65,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             new GameObject("Shown");
             StringAssert.Contains("Shown", Table(Q("objects | where name == \"Shown\" | select $")));
         }
+
+        // assetPath: the file of an asset (Material keeps a member whitelist and lists it too), null for a scene object.
+        [Test]
+        public void AssetPathIsTheAssetFileAndNullForSceneObjects()
+        {
+            const string Path = "Assets/RqlAssetPathTest.mat";
+            AssetDatabase.CreateAsset(new Material(Shader.Find("Standard")), Path);
+            try
+            {
+                Assert.AreEqual(Path, Cell(Q($"unity.asset(\"{Path}\") | select assetPath")));
+                new GameObject("Scene");
+                Assert.AreEqual("null", Cell(Q("objects | where name == \"Scene\" | select assetPath")));
+            }
+            finally { AssetDatabase.DeleteAsset(Path); }
+        }
     }
 }

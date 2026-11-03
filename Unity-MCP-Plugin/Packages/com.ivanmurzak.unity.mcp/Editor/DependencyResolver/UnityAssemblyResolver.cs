@@ -30,6 +30,51 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
     {
         static HashSet<string>? cachedUnityAssemblies;
 
+        // CoreCLR editors (Unity 7+) report ".NET ..."; Mono reports "Mono ...".
+        static readonly bool isCoreClrEditor = System.Runtime.InteropServices.RuntimeInformation.FrameworkDescription
+            .StartsWith(".NET", System.StringComparison.Ordinal);
+
+        /// <summary>
+        /// True when <paramref name="assemblyName"/> can actually be loaded by the EDITOR runtime from somewhere
+        /// other than our NuGet install folder.
+        ///
+        /// <para>On Mono editors this always returns true, keeping the player-reference based decision of
+        /// <see cref="IsAlreadyImported"/> unchanged. On CoreCLR editors (Unity 7+, where
+        /// <c>RuntimeInformation.FrameworkDescription</c> starts with ".NET") the player-profile BCLExtensions
+        /// (<c>Editor/Data/BCLExtensions/runtime/netstandard2.1/*.dll</c>) that satisfy the player reference check
+        /// are not part of the editor's load context. Marking our copy "Exclude Editor" then leaves the editor
+        /// without the assembly at all: <c>Microsoft.Bcl.AsyncInterfaces, Version=8.0.0.0</c> (required by R3)
+        /// threw <c>FileNotFoundException</c> while constructing <c>McpPlugin</c> on Unity 7000.0.0a7.</para>
+        ///
+        /// <para>When <paramref name="dllPath"/> is given, the probe asks for at least the assembly version of that
+        /// DLL: a lower-versioned runtime copy cannot satisfy references compiled against ours.</para>
+        /// </summary>
+        public static bool IsResolvableInEditorRuntime(string assemblyName, string? dllPath = null)
+        {
+            if (!isCoreClrEditor)
+                return true; // Mono: original behaviour
+
+            try
+            {
+                var requested = new System.Reflection.AssemblyName(assemblyName);
+                if (dllPath != null && File.Exists(dllPath))
+                {
+                    try { requested.Version = System.Reflection.AssemblyName.GetAssemblyName(Path.GetFullPath(dllPath)).Version; }
+                    catch { /* unreadable metadata: fall back to a name-only probe */ }
+                }
+
+                var location = System.Reflection.Assembly.Load(requested).Location;
+                if (string.IsNullOrEmpty(location))
+                    return true; // in-memory / platform assembly without a path: provided by the runtime
+
+                return !IsUnderInstallRoot(location, GetInstallRootPrefix());
+            }
+            catch
+            {
+                return false; // not loadable in the editor runtime: our copy must stay enabled for the Editor
+            }
+        }
+
         /// <summary>
         /// Returns true if the given assembly name is already provided by Unity
         /// (either as a BCL assembly or from another installed package).
@@ -67,9 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // paths are typically absolute, while NuGetConfig.InstallPath is project-relative,
             // so a plain StartsWith comparison would never match for our own NuGet DLLs —
             // we'd incorrectly record them as Unity-provided and later disable them.
-            var installRootAbs = Path.GetFullPath(NuGetConfig.InstallPath).Replace('\\', '/');
-            if (!installRootAbs.EndsWith("/"))
-                installRootAbs += "/";
+            var installRootAbs = GetInstallRootPrefix();
 
             foreach (var assembly in playerAssemblies)
             {
@@ -82,8 +125,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     // If the reference path points into our NuGet install folder we skip it here —
                     // but we still want to detect the *name* as Unity-provided if any other
                     // reference resolves the same name outside our install folder.
-                    var fullRef = Path.GetFullPath(reference).Replace('\\', '/');
-                    if (fullRef.StartsWith(installRootAbs, System.StringComparison.OrdinalIgnoreCase))
+                    if (IsUnderInstallRoot(reference, installRootAbs))
                         continue;
 
                     unityProvided.Add(name);
@@ -105,6 +147,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             cachedUnityAssemblies = unityProvided;
             return unityProvided;
         }
+
+        /// <summary>
+        /// Absolute NuGet install root, forward-slashed, with a trailing '/' so sibling folders don't match.
+        /// </summary>
+        static string GetInstallRootPrefix()
+        {
+            var root = Path.GetFullPath(NuGetConfig.InstallPath).Replace('\\', '/');
+            return root.EndsWith("/") ? root : root + "/";
+        }
+
+        static bool IsUnderInstallRoot(string path, string installRootPrefix)
+            => Path.GetFullPath(path).Replace('\\', '/')
+                .StartsWith(installRootPrefix, System.StringComparison.OrdinalIgnoreCase);
 
     }
 }

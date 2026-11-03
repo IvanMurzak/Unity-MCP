@@ -36,6 +36,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         protected static QueryResult M(string rql, bool dryRun = false) =>
             RqlUnity.Engine.Execute(rql, null, new QueryOptions { AllowMutation = true, DryRun = dryRun });
 
+        /// <summary>A script line as a mutation when it sets or calls, else as a query (RQL 0.2 refuses a read-only mutation: invalid-plan).</summary>
+        protected static QueryResult Run(string rql) =>
+            System.Text.RegularExpressions.Regex.IsMatch(rql, @"\|\s*(set|call)\b") ? M(rql) : Q(rql);
+
         protected static string Table(QueryResult r) => AgentFormat.Render(r, OutputFormat.Table);
 
         /// <summary>A cell of a successful result as text (JSON strings unquoted).</summary>

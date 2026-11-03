@@ -58,6 +58,13 @@ jobs:
           fetch-depth: 0
           fetch-tags: true
 
+      # Dependency guard: every NuGet pin the resolver installs in consumer projects (NuGetConfig.cs),
+      # the vendored Code-Exec release and the UPM/npm dependencies of the core, extension and CLI
+      # packages must be published releases. FAILS every run (dry runs too) while main consumes a
+      # pre-release dependency, e.g. RQL 0.3.0-dev.<sha>.
+      - name: Release dependency guard (no pre-release / unpublished pins)
+        run: python3 commands/release_dependency_guard.py
+
       - name: Get version from package.json
         id: get_version
         uses: martinbeentjes/npm-get-version-action@v1.3.1
@@ -66,7 +73,12 @@ jobs:
 
       - name: Find previous version tag
         id: prev_tag
-        uses: WyriHaximus/github-action-get-previous-tag@v2
+        shell: bash
+        run: |
+          set -euo pipefail
+          # Component tags belong to other packages; compare core releases only.
+          previous=$(git tag --list | awk '/^[0-9]+\.[0-9]+\.[0-9]+$/' | sort -V | tail -n 1)
+          echo "tag=$previous" >> "$GITHUB_OUTPUT"
 
       - name: Check if tag exists
         id: tag_exists
@@ -91,7 +103,7 @@ jobs:
             if [ "$DRY_RUN" = "true" ]; then
               echo "::warning::Tag $VERSION already exists. Dry run: continuing with tests and builds; nothing will be published."
             else
-              echo "::error::Tag $VERSION already exists - this version is already released. Bump the version (commands/bump-version.ps1) and merge it to main before dispatching a release."
+              echo "::error::Tag $VERSION already exists - this version is already released. Bump the version (commands/bump_version.py) and merge it to main before dispatching a release."
               exit 1
             fi
           fi
@@ -372,70 +384,70 @@ jobs:
       testMode: "editmode"
     secrets: inherit
 
-  test-unity-2023-2-22f1-editmode:
+  test-unity-6000-0-85f1-editmode:
     needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-Tests/2023.2.22f1"
-      unityVersion: "2023.2.22f1"
+      projectPath: "./Unity-Tests/6000.0.85f1"
+      unityVersion: "6000.0.85f1"
       testMode: "editmode"
     secrets: inherit
 
-  test-unity-6000-3-1f1-editmode:
+  test-unity-6000-3-27f1-editmode:
     needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-Tests/6000.3.1f1"
-      unityVersion: "6000.3.1f1"
+      projectPath: "./Unity-Tests/6000.3.27f1"
+      unityVersion: "6000.3.27f1"
       testMode: "editmode"
     secrets: inherit
 
-  test-unity-6000-6-3f1-editmode:
+  test-unity-6000-6-7f1-editmode:
     needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-Tests/6000.6.3f1"
-      unityVersion: "6000.6.3f1"
+      projectPath: "./Unity-Tests/6000.6.7f1"
+      unityVersion: "6000.6.7f1"
       testMode: "editmode"
     secrets: inherit
 
-  # --- PLAY MODE ---
+  # --- PLAY MODE (preserve the original extension matrix) ---
 
-  # test-unity-2022-3-62f3-playmode:
-  #   needs: [build-unity-installer]
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2022.3.62f3'
-  #     unityVersion: '2022.3.62f3'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-2022-3-62f3-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "playmode"
+    secrets: inherit
 
-  # test-unity-2023-2-22f1-playmode:
-  #   needs: [build-unity-installer]
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/2023.2.22f1'
-  #     unityVersion: '2023.2.22f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-0-85f1-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.0.85f1"
+      unityVersion: "6000.0.85f1"
+      testMode: "playmode"
+    secrets: inherit
 
-  # test-unity-6000-3-1f1-playmode:
-  #   needs: [build-unity-installer]
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.3.1f1'
-  #     unityVersion: '6000.3.1f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-3-27f1-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.3.27f1"
+      unityVersion: "6000.3.27f1"
+      testMode: "playmode"
+    secrets: inherit
 
-  # test-unity-6000-6-3f1-playmode:
-  #   needs: [build-unity-installer]
-  #   uses: ./.github/workflows/test_unity_plugin.yml
-  #   with:
-  #     projectPath: './Unity-Tests/6000.6.3f1'
-  #     unityVersion: '6000.6.3f1'
-  #     testMode: 'playmode'
-  #   secrets: inherit
+  test-unity-6000-6-7f1-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.6.7f1"
+      unityVersion: "6000.6.7f1"
+      testMode: "playmode"
+    secrets: inherit
 
   # --- STANDALONE ---
 
@@ -448,30 +460,30 @@ jobs:
       testMode: "standalone"
     secrets: inherit
 
-  test-unity-2023-2-22f1-standalone:
+  test-unity-6000-0-85f1-standalone:
     needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-Tests/2023.2.22f1"
-      unityVersion: "2023.2.22f1"
+      projectPath: "./Unity-Tests/6000.0.85f1"
+      unityVersion: "6000.0.85f1"
       testMode: "standalone"
     secrets: inherit
 
-  test-unity-6000-3-1f1-standalone:
+  test-unity-6000-3-27f1-standalone:
     needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-Tests/6000.3.1f1"
-      unityVersion: "6000.3.1f1"
+      projectPath: "./Unity-Tests/6000.3.27f1"
+      unityVersion: "6000.3.27f1"
       testMode: "standalone"
     secrets: inherit
 
-  test-unity-6000-6-3f1-standalone:
+  test-unity-6000-6-7f1-standalone:
     needs: [build-unity-installer]
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
-      projectPath: "./Unity-Tests/6000.6.3f1"
-      unityVersion: "6000.6.3f1"
+      projectPath: "./Unity-Tests/6000.6.7f1"
+      unityVersion: "6000.6.7f1"
       testMode: "standalone"
     secrets: inherit
 
@@ -496,17 +508,17 @@ jobs:
         build-unity-installer,
         build-signed-upm-package,
         test-unity-2022-3-62f3-editmode,
-        # test-unity-2022-3-62f3-playmode,
+        test-unity-2022-3-62f3-playmode,
         test-unity-2022-3-62f3-standalone,
-        test-unity-2023-2-22f1-editmode,
-        # test-unity-2023-2-22f1-playmode,
-        test-unity-2023-2-22f1-standalone,
-        test-unity-6000-3-1f1-editmode,
-        # test-unity-6000-3-1f1-playmode,
-        test-unity-6000-3-1f1-standalone,
-        test-unity-6000-6-3f1-editmode,
-        # test-unity-6000-6-3f1-playmode,
-        test-unity-6000-6-3f1-standalone,
+        test-unity-6000-0-85f1-editmode,
+        test-unity-6000-0-85f1-playmode,
+        test-unity-6000-0-85f1-standalone,
+        test-unity-6000-3-27f1-editmode,
+        test-unity-6000-3-27f1-playmode,
+        test-unity-6000-3-27f1-standalone,
+        test-unity-6000-6-7f1-editmode,
+        test-unity-6000-6-7f1-playmode,
+        test-unity-6000-6-7f1-standalone,
       ]
     if: inputs.dry_run != true
     permissions:
@@ -580,17 +592,17 @@ jobs:
         build-unity-installer,
         build-signed-upm-package,
         test-unity-2022-3-62f3-editmode,
-        # test-unity-2022-3-62f3-playmode,
+        test-unity-2022-3-62f3-playmode,
         test-unity-2022-3-62f3-standalone,
-        test-unity-2023-2-22f1-editmode,
-        # test-unity-2023-2-22f1-playmode,
-        test-unity-2023-2-22f1-standalone,
-        test-unity-6000-3-1f1-editmode,
-        # test-unity-6000-3-1f1-playmode,
-        test-unity-6000-3-1f1-standalone,
-        test-unity-6000-6-3f1-editmode,
-        # test-unity-6000-6-3f1-playmode,
-        test-unity-6000-6-3f1-standalone,
+        test-unity-6000-0-85f1-editmode,
+        test-unity-6000-0-85f1-playmode,
+        test-unity-6000-0-85f1-standalone,
+        test-unity-6000-3-27f1-editmode,
+        test-unity-6000-3-27f1-playmode,
+        test-unity-6000-3-27f1-standalone,
+        test-unity-6000-6-7f1-editmode,
+        test-unity-6000-6-7f1-playmode,
+        test-unity-6000-6-7f1-standalone,
         deploy-cli-to-npm,
       ]
     if: inputs.dry_run != true

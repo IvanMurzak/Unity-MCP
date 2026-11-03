@@ -19,17 +19,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
     public sealed partial class RqlEditorApi
     {
-        [RqlCallable("instantiate a prefab asset (path \"Assets/…/X.prefab\") as a linked instance, optionally under a parent at a local position; returns it (undoable)")]
-        public GameObject InstantiatePrefab(string path, GameObject? parent = null, Vector3? position = null)
+        [RqlCallable("instantiate a prefab asset (path \"Assets/…/X.prefab\") as a linked instance, optionally under a parent at a local position, " +
+                     "rotation (Euler degrees) and scale; returns it (undoable)")]
+        public GameObject InstantiatePrefab(string path, GameObject? parent = null, Vector3? position = null, Vector3? rotation = null, Vector3? scale = null)
         {
-            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path) ?? throw new ArgumentException($"no prefab at '{path}'");
-            return Place((GameObject)PrefabUtility.InstantiatePrefab(prefab), parent, position, "RQL instantiate " + prefab.name);
+            var prefab = AssetDatabase.LoadAssetAtPath<GameObject>(path) ?? throw new ArgumentException(NoPrefab(path));
+            return Place((GameObject)PrefabUtility.InstantiatePrefab(prefab), parent, position, rotation, scale, "RQL instantiate " + prefab.name);
         }
+
+        [RqlCallable("instantiate a prefab asset placed by an object literal {parent, position, rotation (Euler degrees), scale}, " +
+                     "e.g. InstantiatePrefab(\"Assets/Prefabs/Coin.prefab\", {position: [0, 1, 0]}); returns it (undoable)")]
+        public GameObject InstantiatePrefab(string path, RqlPlacement? placement)
+        {
+            if (!string.IsNullOrEmpty(placement?.primitive)) throw new ArgumentException(PrefabTakesNoPrimitive);
+            return InstantiatePrefab(path, placement?.parent, placement?.position, placement?.rotation, placement?.scale);
+        }
+
+        // Checked for every item before the first call (and on dry runs).
+        public string? ValidateInstantiatePrefab(string path, GameObject? parent, Vector3? position, Vector3? rotation, Vector3? scale) =>
+            AssetDatabase.LoadAssetAtPath<GameObject>(path) == null ? NoPrefab(path) : null;
+
+        public string? ValidateInstantiatePrefab(string path, RqlPlacement? placement) =>
+            !string.IsNullOrEmpty(placement?.primitive) ? PrefabTakesNoPrimitive
+            : ValidateInstantiatePrefab(path, placement?.parent, placement?.position, placement?.rotation, placement?.scale);
+
+        private static string NoPrefab(string path) => $"no prefab at '{path}'";
+
+        private const string PrefabTakesNoPrimitive = "a prefab instance takes no primitive (CreateGameObject makes primitives)";
 
         [RqlCallable("open a prefab asset in prefab editing mode; its contents are then the prefab source")]
         public GameObject OpenPrefab(string path)
         {
-            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null) throw new ArgumentException($"no prefab at '{path}'");
+            if (AssetDatabase.LoadAssetAtPath<GameObject>(path) == null) throw new ArgumentException(NoPrefab(path));
             var stage = PrefabStageUtility.OpenPrefab(path) ?? throw new InvalidOperationException($"could not open '{path}'");
             return stage.prefabContentsRoot;
         }
@@ -42,7 +63,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return stage.assetPath;
         }
 
-        [RqlCallable("leave the prefab being edited, back to the previous stage (save = true saves first, false discards the changes)")]
+        // Every rql-mutate already saved the open prefab when it finished, so save = false only drops changes made outside RQL.
+        [RqlCallable("leave the prefab being edited, back to the previous stage (save = true saves first; false drops unsaved changes, " +
+                     "but each rql-mutate has already saved its own edits to the prefab: undo them first to revert)")]
         public void ClosePrefab(bool save = true)
         {
             var stage = PrefabStageUtility.GetCurrentPrefabStage() ?? throw new InvalidOperationException("no prefab is open");

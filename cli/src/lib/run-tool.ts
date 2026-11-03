@@ -188,7 +188,7 @@ async function resolveConnection(
       kind: 'success',
       url: opts.url.replace(/\/$/, ''),
       token: opts.token,
-      tokenFromCloudStore: false,
+      tokenFromCloudStore: opts.tokenFromCloudStore === true && opts.token !== undefined,
     };
   }
 

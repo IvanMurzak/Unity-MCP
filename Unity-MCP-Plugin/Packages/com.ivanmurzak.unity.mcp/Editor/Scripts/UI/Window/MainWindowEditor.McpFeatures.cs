@@ -12,6 +12,7 @@
 using System;
 using System.Linq;
 using System.Threading;
+using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.McpPlugin.Common.Utils;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Editor.UI.Controls;
@@ -177,8 +178,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         return;
                     if (t.IsCompletedSuccessfully)
                     {
-                        var clients = t.Result;
-                        var connectedAgents = clients.Where(c => c.IsConnected).ToList();
+                        // No data while not connected (the query does not connect): no agent then.
+                        var connectedAgents = (t.Result ?? Array.Empty<McpClientData>()).Where(c => c.IsConnected).ToList();
                         var isConnected = connectedAgents.Count > 0;
                         SetAiAgentStatus(isConnected, isConnected
                             ? connectedAgents.Select(a => $"AI agent: {a.ClientName} ({a.ClientVersion})")
@@ -223,9 +224,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                     if (manager == null) return (0, 0, 0);
                     var all = manager.GetAllTools();
                     var totalCount = all.Count();
-                    var enabledCount = all.Count(t => manager.IsToolEnabled(t.Name));
-                    var totalTokens = all.Where(t => manager.IsToolEnabled(t.Name)).Sum(t => t.TokenCount);
-                    return (totalCount, enabledCount, totalTokens);
+                    var visibleCount = all.Count(t => manager.IsToolVisible(t.Name));
+                    var totalTokens = all.Where(t => manager.IsToolVisible(t.Name)).Sum(t => t.TokenCount);
+                    return (totalCount, visibleCount, totalTokens);
                 },
                 getOnUpdated: plugin => plugin.McpManager.ToolManager?.OnToolsUpdated,
                 tokenLabel: tokenLabel);

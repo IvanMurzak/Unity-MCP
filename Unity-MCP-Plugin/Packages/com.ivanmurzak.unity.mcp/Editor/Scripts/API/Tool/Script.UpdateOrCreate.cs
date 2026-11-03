@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Script / Update or Create",
             DestructiveHint = true,
             OpenWorldHint = false,
-            Enabled = false
+            Visible = false
         )]
         [AiSkillDescription("Write a `.cs` script file (create or overwrite) with the provided C# code. " +
             "Validates syntax via Roslyn before write — invalid code is rejected with error details and the file is left " +

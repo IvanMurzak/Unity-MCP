@@ -170,28 +170,28 @@ namespace com.IvanMurzak.Unity.MCP
 
                 if (captureCurrentToolStates)
                 {
-                    var enabledToolNames = Tools?.GetAllTools()
-                        ?.Select(t => new UnityConnectionConfig.McpFeature(t.Name, Tools.IsToolEnabled(t.Name)))
+                    var toolStates = Tools?.GetAllTools()
+                        ?.Select(t => new UnityConnectionConfig.McpFeature(t.Name, Tools.IsToolVisible(t.Name)))
                         ?.ToList();
 
-                    var enabledPromptNames = Prompts?.GetAllPrompts()
+                    var promptStates = Prompts?.GetAllPrompts()
                         ?.Select(p => new UnityConnectionConfig.McpFeature(p.Name, Prompts.IsPromptEnabled(p.Name)))
                         ?.ToList();
 
-                    var enabledResourceNames = Resources?.GetAllResources()
+                    var resourceStates = Resources?.GetAllResources()
                         ?.Select(r => new UnityConnectionConfig.McpFeature(r.Name, Resources.IsResourceEnabled(r.Name)))
                         ?.ToList();
 
-                    unityConnectionConfig.Tools = enabledToolNames != null && enabledToolNames.Count > 0
-                        ? enabledToolNames
+                    unityConnectionConfig.Tools = toolStates != null && toolStates.Count > 0
+                        ? toolStates
                         : UnityConnectionConfig.DefaultTools;
 
-                    unityConnectionConfig.Prompts = enabledPromptNames != null && enabledPromptNames.Count > 0
-                        ? enabledPromptNames
+                    unityConnectionConfig.Prompts = promptStates != null && promptStates.Count > 0
+                        ? promptStates
                         : UnityConnectionConfig.DefaultPrompts;
 
-                    unityConnectionConfig.Resources = enabledResourceNames != null && enabledResourceNames.Count > 0
-                        ? enabledResourceNames
+                    unityConnectionConfig.Resources = resourceStates != null && resourceStates.Count > 0
+                        ? resourceStates
                         : UnityConnectionConfig.DefaultResources;
                 }
 

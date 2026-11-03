@@ -11,9 +11,13 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Linq;
+using com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters;
 using Rql;
+using Rql.Execution;
 using UnityEditor;
 using UnityEditor.SceneManagement;
+using UnityEngine;
 using UnityEngine.SceneManagement;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
@@ -46,34 +50,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// applied nothing (a parse error, no matching items, a set the engine rolled back) saves nothing, so it never
         /// persists unrelated unsaved edits. Untitled scenes (no path yet) stay in memory and are reported as a warning.
         /// </summary>
-        public static QueryResult Mutate(string query, bool dryRun = false)
+        public static QueryResult Mutate(string query, bool dryRun = false, int? maxTargets = null)
         {
             if (_mutating == 0) _wrote = false;
             _mutating++;
             QueryResult result;
             var completed = false;
+            var outerDestroying = Destroying; // a Mutate nested in a call of an outer one leaves the outer stage's set in place
             try
             {
-                result = Engine.Execute(query, null, new QueryOptions { AllowMutation = true, DryRun = dryRun });
+                var budgets = maxTargets.HasValue ? new Budgets { MaxMutationTargets = maxTargets.Value } : null;
+                result = Engine.Execute(query, budgets, new QueryOptions { AllowMutation = true, DryRun = dryRun });
                 completed = true;
             }
             finally
             {
+                Destroying = outerDestroying; // after a dry run, or a stage that failed before its calls
                 _mutating--;
                 if (_mutating == 0)
                 {
+                    DestroyUnusedLiterals(); // a dry run, or a mutation that wrote none of them
                     CloseUndoGroup(); // a mutation that failed before Committed
                     // Execute threw: nothing gets saved. Raised here, like below, once InMutation is false again.
-                    if (!completed) Raise(Discarded);
+                    if (!completed)
+                    {
+                        Reimports.Clear();
+                        Raise(Discarded);
+                    }
                 }
             }
             if (_mutating > 0) return result;
             if (dryRun || !_wrote)
             {
+                Reimports.Clear();
                 foreach (var problem in Raise(Discarded))
                     result.Diagnostics.Add(Diagnostic.Warning("not-discarded", problem));
                 return result;
             }
+            if (PlayModeNotice(EditorApplication.isPlaying) is { } notice)
+                result.Diagnostics.Add(notice);
             List<string> problems;
             // The changes are applied: a save that throws must not turn the receipt into a tool error.
             try { problems = SaveChanges(); }
@@ -81,6 +96,158 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             foreach (var problem in problems)
                 result.Diagnostics.Add(Diagnostic.Warning("not-saved", problem));
             return result;
+        }
+
+        // Play Mode changes look applied (and are, until Play Mode exits): the receipt says they will not last.
+        internal static Diagnostic? PlayModeNotice(bool isPlaying) => isPlaying
+            ? Diagnostic.Warning("play-mode", "the Editor is in Play Mode: scene changes are temporary and are lost when Play Mode exits (asset changes stay)")
+            : null;
+
+        /// <summary>Hard ceiling of <c>max_targets</c> (RQL refuses a request outside 1 … this).</summary>
+        public static int HardMaxTargets => Engine.Mutations.HardMaxTargets;
+
+        /// <summary>
+        /// The components the running call stage destroys, known to <see cref="ValidateBatch"/> before the first call (null
+        /// otherwise): Destroy removes the ones that require a target first, and a requirement they meet does not block.
+        /// </summary>
+        internal static HashSet<Component>? Destroying { get; private set; }
+
+        /// <summary>
+        /// RQL's batch check (<see cref="MutationPolicy.ValidateBatch"/>): every planned change of a set / call stage, after each
+        /// target passed its own validator and before anything runs, dry runs included. A reason refuses the whole stage.
+        /// </summary>
+        internal static string? ValidateBatch(IReadOnlyList<MutationRecord> records)
+        {
+            Destroying = null;
+            if (EditorApplication.isPlaying && WritesProjectSettings(records))
+                return "Project Settings are not changed in Play Mode (the save would keep the game's runtime values, e.g. a paused timeScale): exit Play Mode first (editor | set isPlaying = false)";
+            if (Literals.Count > 0 && UnsavableLiteral(records) is { } unsavable)
+                return unsavable;
+            var prefabPaths = new Dictionary<string, object>(StringComparer.OrdinalIgnoreCase);
+            var destroying = new HashSet<Component>();
+            foreach (var record in records)
+            {
+                switch (record.Method?.Name)
+                {
+                    // Two targets saving to one prefab path (one GameObject reached twice included): the second save would fail
+                    // after the first one happened.
+                    case "SaveAsPrefab" when record.Item is GameObject && record.Args[0] is string text:
+                        var path = UnityEngine_GameObject_Adapter.PrefabPath(text);
+                        if (prefabPaths.TryGetValue(path, out var earlier))
+                            return $"'{path}' is also the path of {Engine.RefOf(earlier)} in this call: give each GameObject its own prefab path";
+                        prefabPaths[path] = record.Item;
+                        break;
+                    case "Destroy" when record.Item is Component component && component != null: // a Transform never passed its validator
+                        destroying.Add(component);
+                        break;
+                }
+            }
+            if (destroying.Count == 0) return null;
+            Destroying = destroying;
+            var refused = UnmetRequirement(destroying);
+            if (refused != null) Destroying = null; // nothing will run
+            return refused;
+        }
+
+        // The objects the literal factories built (a Material or data ScriptableObject literal) since the last commit: built while
+        // a stage is planned, dry runs included, so the ones no write keeps are destroyed after the mutation.
+        private static readonly List<UnityEngine.Object> Literals = new List<UnityEngine.Object>();
+
+        /// <summary>Records an object a literal factory built for the running mutation (see <see cref="Literals"/>).</summary>
+        internal static T TrackLiteral<T>(T built) where T : UnityEngine.Object
+        {
+            Literals.Add(built);
+            return built;
+        }
+
+        /// <summary>The literals are referenced now (Committed): they are the scene's, no longer the mutation's.</summary>
+        internal static void KeepLiterals() => Literals.Clear();
+
+        private static void DestroyUnusedLiterals()
+        {
+            foreach (var o in Literals)
+                if (o != null) UnityEngine.Object.DestroyImmediate(o);
+            Literals.Clear();
+        }
+
+        /// <summary>
+        /// A new object written into an asset or into the open prefab would not be saved with it (an asset file can reference
+        /// only assets): the reference would be lost on reload. The holder is the nearest Unity object enclosing the write, so a
+        /// field of a [Serializable] row inside an asset counts as the asset.
+        /// </summary>
+        private static string? UnsavableLiteral(IReadOnlyList<MutationRecord> records)
+        {
+            var built = new HashSet<UnityEngine.Object>(Literals);
+            UnityEngine.Object? Built(object? value) => value switch
+            {
+                UnityEngine.Object o => built.Contains(o) ? o : null,
+                string _ => null,
+                System.Collections.IEnumerable items => items.Cast<object?>().Select(Built).FirstOrDefault(o => o != null),
+                _ => null,
+            };
+            foreach (var record in records)
+            {
+                var literal = record.Method == null ? Built(record.New) : record.Args.Select(Built).FirstOrDefault(o => o != null);
+                if (literal == null) continue;
+                var holder = record.Method != null ? record.Item as UnityEngine.Object : record.Owners.OfType<UnityEngine.Object>().FirstOrDefault();
+                if (holder == null) continue;
+                var where = EditorUtility.IsPersistent(holder) ? $"the asset '{holder.name}'"
+                    : EditorSceneManager.IsPreviewSceneObject(holder) ? $"the open prefab ('{holder.name}')"
+                    : null;
+                if (where != null)
+                    return $"a new {literal.GetType().Name} written into {where} would not be saved with it (an asset references only assets): " +
+                           "create the asset first (editor | call CreateMaterial(path) for a material) and pass its path";
+            }
+            return null;
+        }
+
+        // A write into a view whose undo owners are assets (the settings source's pages: ProjectSettings/*.asset).
+        private static bool WritesProjectSettings(IReadOnlyList<MutationRecord> records)
+        {
+            foreach (var record in records)
+                foreach (var owner in record.Owners)
+                {
+                    if (owner is UnityEngine.Object) break; // the nearest owner decides, as in Owners()
+                    if (owner is IRqlUndoOwners view)
+                    {
+                        foreach (var o in view.UndoOwners)
+                            if (o != null && EditorUtility.IsPersistent(o)) return true;
+                        break;
+                    }
+                }
+            return false;
+        }
+
+        // A component the call removes while another one that requires it stays, or components that require each other (no
+        // order removes them; Unity keeps both): the reason, or null.
+        private static string? UnmetRequirement(HashSet<Component> destroying)
+        {
+            static string Refused(Component target, string why) => $"cannot call Destroy() on {Engine.RefOf(target)}: {why}";
+            var pending = new List<(Component Target, List<(Component Blocker, string Reason)> Blockers)>();
+            var removed = new HashSet<Component>();
+            foreach (var target in destroying)
+            {
+                var blockers = UnityEngine_Component_Adapter.Blockers(target);
+                foreach (var (blocker, reason) in blockers)
+                    if (!destroying.Contains(blocker))
+                        return Refused(target, reason + " (or in the same call)");
+                if (blockers.Count > 0) pending.Add((target, blockers));
+                else removed.Add(target);
+            }
+            // Every blocker is a target too: replay the removal order (dependents first); what never frees up is a cycle.
+            for (var progress = true; progress && pending.Count > 0;)
+            {
+                progress = false;
+                for (int i = pending.Count - 1; i >= 0; i--)
+                {
+                    if (!pending[i].Blockers.TrueForAll(b => removed.Contains(b.Blocker))) continue;
+                    removed.Add(pending[i].Target);
+                    pending.RemoveAt(i);
+                    progress = true;
+                }
+            }
+            return pending.Count == 0 ? null
+                : Refused(pending[0].Target, pending[0].Blockers[0].Reason + " and they require each other: destroy their GameObject instead");
         }
 
         /// <summary>Invoke every handler of <paramref name="handlers"/>, even after one threw; returns the messages of those that did.</summary>
@@ -96,10 +263,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             return problems;
         }
 
+        // Importers written by the running Mutate: their settings reach the asset only through a reimport.
+        internal static readonly HashSet<AssetImporter> Reimports = new HashSet<AssetImporter>();
+
         /// <summary>Write every pending change to disk; returns what could not be saved.</summary>
         public static List<string> SaveChanges()
         {
             var problems = Raise(Saving);
+            foreach (var importer in Reimports)
+            {
+                if (importer == null) continue;
+                try { importer.SaveAndReimport(); }
+                catch (Exception ex) { problems.Add($"'{importer.assetPath}' was not reimported: {ex.Message}"); }
+            }
+            Reimports.Clear();
             AssetDatabase.SaveAssets();
             if (EditorApplication.isPlaying) return problems; // play mode scene changes are temporary by design
 

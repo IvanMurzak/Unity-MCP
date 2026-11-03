@@ -216,6 +216,136 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             Assert.AreEqual(ResponseStatus.Success, schema.Value!.Status, schema.ToJson(UnityMcpPluginEditor.Instance.Reflector));
         }
 
+        // $index in a set value is the target's position in the stream entering set; text functions as methods;
+        // group-by with two keys gives one column per key.
+        [Test]
+        public void SpreadsWithIndexRenamesWithReplaceAndGroupsByTwoKeys()
+        {
+            var c = new GameObject("Crate_C");
+            var a = new GameObject("Crate_A");
+            var b = new GameObject("Crate_B");
+            AssertOk(M("objects | where name starts-with \"Crate_\" | sort name | set transform.position.x = $index * 2"));
+            Assert.AreEqual(0f, a.transform.position.x);
+            Assert.AreEqual(2f, b.transform.position.x);
+            Assert.AreEqual(4f, c.transform.position.x);
+
+            AssertOk(M("objects | where name starts-with \"Crate_\" | set name = name.replace(\"Crate_\", \"Box_\")"));
+            CollectionAssert.AreEquivalent(new[] { "Box_A", "Box_B", "Box_C" }, new[] { a.name, b.name, c.name });
+
+            var groups = Q("objects | where name starts-with \"Box_\" | group-by $type, far=(transform.position.x > 1)");
+            Assert.IsTrue(groups.Ok, Table(groups));
+            CollectionAssert.AreEqual(new[] { "$type", "far", "count" }, groups.Columns);
+            Assert.AreEqual(2, groups.Rows!.Count, Table(groups));
+        }
+
+        // The host's hint: ref() given a name points at unity.find (the mutation-limit hint is MaxTargetsRaisesTheMutationLimit's).
+        [Test]
+        public void RefHintNamesTheFinder()
+        {
+            var byName = Q("ref(\"Alpha\") | select name");
+            Assert.IsFalse(byName.Ok);
+            StringAssert.Contains("unity.find(", Table(byName));
+        }
+
+        // Hints name what this host has: the schema tool, a real source, and the source that has an unknown call method.
+        [Test]
+        public void HintsNameTheHostsToolsAndSources()
+        {
+            var noSource = Q("\"text\" | select $"); // (a list literal is a source since RQL 5ea1377)
+            AssertFails(noSource, "unknown-source", "(e.g. objects)");
+            StringAssert.DoesNotContain("e.g. world", Table(noSource)); // (an extension may add tilemap.worldToCell)
+            AssertFails(M("objects | where name == \"Alpha\" | call CreateGameObject(\"Made\")"), "unknown-function",
+                "editor | call CreateGameObject");
+        }
+
+        // Members of any Unity type count as known (internal scripts and adapter members too): a polymorphic set that no item
+        // reaches stays a no-op; a name no type has is a typo that fails.
+        [Test]
+        public void KnownMembersCoverEveryUnityType()
+        {
+            Assert.IsTrue(UnityTypes.IsKnownMember(RqlUnity.Engine, "orthographicSize"));
+            Assert.IsTrue(UnityTypes.IsKnownMember(RqlUnity.Engine, "rqlInternalOnlyMember"), "internal MonoBehaviour field");
+            Assert.IsTrue(UnityTypes.IsKnownMember(RqlUnity.Engine, "prefabSource"), "adapter member");
+            Assert.IsFalse(UnityTypes.IsKnownMember(RqlUnity.Engine, "transfrom"));
+            AssertOk(M("objects | get components | where rqlInternalOnlyMember > 1 | set rqlInternalOnlyMember = 2"));
+            AssertFails(M("objects | get components | where rqlInternalOnlyMembr > 1 | set rqlInternalOnlyMembr = 2"), "unknown-member");
+        }
+
+        // c ? a : b and if(c, a, b); only the taken branch runs.
+        [Test]
+        public void ConditionalsPickABranch()
+        {
+            var r = Q("objects | where name in [\"Alpha\", \"Lamp\"] | get components | where not ($ is Transform) | select k = ($ is Light ? \"light\" : \"other\")");
+            Assert.AreEqual("light", Cell(r), Table(r));
+            Assert.AreEqual("on", Cell(Q("objects | where name == \"Alpha\" | select k = if(active, \"on\", \"off\")")));
+        }
+
+        // Enum values also take the Inspector's names (nicified or [InspectorName]).
+        [Test]
+        public void EnumsAcceptInspectorNames()
+        {
+            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.name = "Cube";
+            AssertOk(M("objects | where name == \"Cube\" | get components | where $ is MeshRenderer | set shadowCastingMode = \"Two Sided\""));
+            Assert.AreEqual(UnityEngine.Rendering.ShadowCastingMode.TwoSided, cube.GetComponent<MeshRenderer>().shadowCastingMode);
+            Assert.AreEqual("Cube", Cell(Q("objects | get components | where $ is MeshRenderer and shadowCastingMode == \"Two Sided\" | select gameObject.name")));
+            var aliases = UnityTypes.EnumAliases(typeof(UnityEngine.Rendering.ShadowCastingMode))!;
+            Assert.AreEqual("ShadowsOnly", aliases["Shadows Only"]);
+            Assert.IsFalse(aliases.ContainsKey("On"), "an entry's own name is never an alias");
+        }
+
+        // Conditions must be booleans (RQL spec §1.2): an object in a where fails with a hint showing the test to write.
+        [Test]
+        public void ConditionsMustBeBoolean()
+        {
+            GameObject.CreatePrimitive(PrimitiveType.Cube).name = "Cube";
+            const string Renderers = "objects | get components | where $ is MeshRenderer";
+            AssertFails(Q(Renderers + " | where sharedMaterial | select gameObject.name"), "type-mismatch", "sharedMaterial != null");
+            Assert.AreEqual("Cube", Cell(Q(Renderers + " | where sharedMaterial != null | select gameObject.name")));
+            Assert.AreEqual("Cube", Cell(Q(Renderers + " | where has(sharedMaterial) | select gameObject.name")));
+            AssertFails(Q("objects | where name == \"Alpha\" and children.count() | select name"), "type-mismatch");
+        }
+
+        // Group rows carry their items; float members aggregate as their shortest decimal (2.5 and 2.7 average to 2.6).
+        [Test]
+        public void GroupItemsAggregateFloatMembers()
+        {
+            new GameObject("Lamp2").AddComponent<Light>().intensity = 2.7f;
+            var r = Q("objects | get components | where $ is Light | group-by type | select key, count, avg = items.avg(intensity)");
+            Assert.AreEqual("Point", Cell(r, 0, 0), Table(r));
+            Assert.AreEqual("2", Cell(r, 0, 1));
+            Assert.AreEqual("2.6", Cell(r, 0, 2));
+            Assert.AreEqual("2.6", Q("objects | get components | where $ is Light | avg intensity").Value!.ToJsonString());
+        }
+
+        // Lists compare by value: equal lists are equal and merge in group-by.
+        [Test]
+        public void ListsCompareByValue()
+        {
+            Assert.AreEqual("1", Cell(Q("objects | where name == \"Alpha\" | select ok = ([1, 2] == [1, 2] ? 1 : 0)")));
+            Assert.AreEqual(1L, Count("objects | where name in [\"Alpha\", \"Beta\"] | group-by [1, 2] | count"));
+        }
+
+        // A set from rql-query: the permission-denied hint names rql-mutate.
+        [Test]
+        public void PermissionDeniedNamesTheMutateTool()
+        {
+            AssertFails(Q("objects | where name == \"Alpha\" | set name = \"X\""), "permission-denied", Tool_Rql.MutateToolId);
+            Assert.AreEqual("Alpha", _a.name);
+        }
+
+        // Receipts leave out assignments that keep the old value and count them as unchanged (the writes still happen).
+        [Test]
+        public void NoOpAssignmentsAreCountedAsUnchanged()
+        {
+            var r = RqlUnity.Mutate("objects | where name in [\"Alpha\", \"Beta\", \"Lamp\"] | set name = (name == \"Beta\" ? \"Gamma\" : name)");
+            AssertOk(r);
+            Assert.AreEqual(1, r.Rows!.Count, Table(r));
+            Assert.AreEqual(2L, r.Unchanged, Table(r));
+            StringAssert.Contains("2 unchanged", Table(r));
+            Assert.AreEqual("Gamma", _b.name);
+        }
+
         [Test]
         public void ToolsReturnTextResults()
         {
@@ -227,5 +357,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             var schema = tool.Schema("Transform");
             Assert.AreEqual(ResponseStatus.Success, schema.Status);
         }
+    }
+
+    // Only for KnownMembersCoverEveryUnityType: an internal script type whose member no other type declares.
+    internal sealed class RqlInternalOnlyBehaviour : MonoBehaviour
+    {
+        public int rqlInternalOnlyMember;
     }
 }

@@ -42,7 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
             if (items.Count < 2 || !items.All(x => x is JsonObject xo && xo.All(kv => !(kv.Value is JsonObject) && !(kv.Value is JsonArray))))
                 return null;
             var columns = new List<string>();
-            foreach (JsonObject row in items)
+            foreach (var row in items.Cast<JsonObject>())
                 foreach (var kv in row)
                     if (keep(kv.Value) && !columns.Contains(kv.Key)) columns.Add(kv.Key);
             return columns;
@@ -81,7 +81,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
             if (!(node is JsonArray a) || !(FlatColumns(a, v => !IsEmpty(v)) is List<string> columns))
                 return null;
             var sb = new StringBuilder(string.Join(" | ", columns.Select(Key)));
-            foreach (JsonObject row in a)
+            foreach (var row in a.Cast<JsonObject>())
                 sb.Append('\n').Append(string.Join(" | ", columns.Select(c => row.TryGetPropertyValue(c, out var v) && !IsEmpty(v) ? Inline(v) : "")));
             return sb.ToString();
         }

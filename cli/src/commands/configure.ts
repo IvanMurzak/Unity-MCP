@@ -31,18 +31,18 @@ export const configureCommand = new Command('configure')
   .option('--path <path>', 'Path to the Unity project')
   .option('--agent <id>', 'Write an AI agent MCP config by proxying to the managed GameDev-MCP-Server configurator')
   .option('--url <url>', 'Explicit server URL forwarded to the managed configurator (with --agent)')
-  .option('--enable-tools <names>', 'Enable specific tools (comma-separated)', parseCommaSeparated)
-  .option('--disable-tools <names>', 'Disable specific tools (comma-separated)', parseCommaSeparated)
-  .option('--enable-all-tools', 'Enable all tools')
-  .option('--disable-all-tools', 'Disable all tools')
-  .option('--enable-prompts <names>', 'Enable specific prompts (comma-separated)', parseCommaSeparated)
-  .option('--disable-prompts <names>', 'Disable specific prompts (comma-separated)', parseCommaSeparated)
-  .option('--enable-all-prompts', 'Enable all prompts')
-  .option('--disable-all-prompts', 'Disable all prompts')
-  .option('--enable-resources <names>', 'Enable specific resources (comma-separated)', parseCommaSeparated)
-  .option('--disable-resources <names>', 'Disable specific resources (comma-separated)', parseCommaSeparated)
-  .option('--enable-all-resources', 'Enable all resources')
-  .option('--disable-all-resources', 'Disable all resources')
+  .option('--enable-tools <names>', 'Show specific tools to MCP clients (comma-separated)', parseCommaSeparated)
+  .option('--disable-tools <names>', 'Hide specific tools from MCP clients (comma-separated; still callable by name)', parseCommaSeparated)
+  .option('--enable-all-tools', 'Show all tools')
+  .option('--disable-all-tools', 'Hide all tools')
+  .option('--enable-prompts <names>', 'Show specific prompts to MCP clients (comma-separated)', parseCommaSeparated)
+  .option('--disable-prompts <names>', 'Hide specific prompts from MCP clients (comma-separated; still callable by name)', parseCommaSeparated)
+  .option('--enable-all-prompts', 'Show all prompts')
+  .option('--disable-all-prompts', 'Hide all prompts')
+  .option('--enable-resources <names>', 'Show specific resources to MCP clients (comma-separated)', parseCommaSeparated)
+  .option('--disable-resources <names>', 'Hide specific resources from MCP clients (comma-separated; still callable by name)', parseCommaSeparated)
+  .option('--enable-all-resources', 'Show all resources')
+  .option('--disable-all-resources', 'Hide all resources')
   .option('--list', 'List current configuration')
   .action(async (positionalPath: string | undefined, options: {
     path?: string;
@@ -132,14 +132,14 @@ export const configureCommand = new Command('configure')
       ui.label('Transport', result.snapshot.transportMethod ?? 'streamableHttp');
       ui.label('Auth', result.snapshot.authOption ?? 'none');
 
-      const printFeatures = (featureLabel: string, features: { name: string; enabled: boolean }[]) => {
+      const printFeatures = (featureLabel: string, features: { name: string; visible: boolean }[]) => {
         ui.heading(featureLabel);
         if (features.length === 0) {
-          ui.info('(none configured - all enabled by default)');
+          ui.info('(none configured - all visible by default)');
           return;
         }
         for (const f of features) {
-          ui.featureRow(f.name, f.enabled);
+          ui.featureRow(f.name, f.visible);
         }
       };
 

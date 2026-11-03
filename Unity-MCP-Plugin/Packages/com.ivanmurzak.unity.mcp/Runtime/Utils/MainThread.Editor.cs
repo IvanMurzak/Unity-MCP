@@ -22,6 +22,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         [InitializeOnLoadMethod]
         public static void Init()
         {
+            // Init runs on the main thread (Startup's static constructor, then [InitializeOnLoadMethod]). Seed the
+            // dispatcher's id here: Startup installs UnityMainThread before MainThreadDispatcher.EditorInitialize
+            // runs, so the id must not depend on which thread first touches MainThreadDispatcher.
+            MainThreadDispatcher.MainThreadId = System.Threading.Thread.CurrentThread.ManagedThreadId;
             UnityMainThread.InstallPump();
             MainThread.Instance = new UnityMainThread();
         }

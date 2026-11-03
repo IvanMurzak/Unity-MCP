@@ -14,7 +14,7 @@ from the plugin version). Bumping the consumed server = changing that constant; 
 
 ## Build / run
 
-- Bump version: `.\commands\bump-version.ps1 <version>`.
+- Bump version: `python commands/bump_version.py --new-version <version>` (`--what-if` to preview).
 - Releases happen only by manually dispatching `.github/workflows/release.yml`; merging a version
   bump publishes nothing.
 - Unity `.meta` files: never hand-write them; Unity generates them on asset refresh.
@@ -24,12 +24,15 @@ from the plugin version). Bumping the consumed server = changing that constant; 
 - `Unity-MCP-Plugin/` — the Unity project holding the UPM package `com.ivanmurzak.unity.mcp`
   (all plugin code and its tests); see its `AGENTS.md`.
 - `cli/` — `unity-mcp-cli` npm package (TypeScript); see its `AGENTS.md`.
+- `extensions/` — ten optional UPM modules, independent component versions and signed releases.
+- `templates/extension/` — inert scaffold; shared tests/releases live in `commands/extensions.py` and `docs/dev/extensions.md`.
 - `Installer/` — Unity project that builds the installer `.unitypackage`.
 - `Unity-Tests/<unity-version>/` — per-Unity-version test projects referencing the plugin package
-  via `file:`; add a folder here to cover a new Unity version.
+  and all extension packages via `file:`; prepare with `commands/extensions.py` before opening.
 - `tests/chain-fixtures/` — recorded tool-call fixtures for chain tests, compared byte-for-byte
   (LF); re-recorded by the plugin's `Tests/Editor/Chain/ChainRecordTests.cs`, never hand-edited.
-- `commands/` — PowerShell/Python utility scripts (version bump, Unity tests, release notes).
+- `tests/filter-oracle/` — checks the `tests-run` filter count against what Unity runs; see its `AGENTS.md`.
+- `commands/` — Python utility scripts (stdlib only, 3.9+) (version bump, Unity tests, release notes).
 - `docs/` — README translations, dev docs (`docs/dev/`), agent detail docs (`docs/agents/`).
 - `memory/` — durable agent lessons (`memory/MEMORY.md` is the index).
 - `.github/workflows/`, `.github/scripts/` — CI/CD and its helper scripts.

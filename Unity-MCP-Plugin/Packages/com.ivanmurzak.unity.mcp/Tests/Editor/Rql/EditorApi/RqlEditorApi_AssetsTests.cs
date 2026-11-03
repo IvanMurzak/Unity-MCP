@@ -9,9 +9,11 @@
 */
 
 #nullable enable
+using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
 {
@@ -42,6 +44,99 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             Assert.IsFalse(M("editor | call MoveAsset(\"Assets/NoSuch.mat\", \"Assets/X.mat\")").Ok);
             Assert.IsFalse(M("editor | call CreateMaterial(\"Assets/RqlEditorApiTests/X.mat\", \"No/Such/Shader\")").Ok);
+        }
+
+        // A move that cannot work is rejected before it creates the missing folders of its new path (on a dry run too).
+        [Test]
+        public void AFailedMoveLeavesNoNewFolders()
+        {
+            const string Missing = "editor | call MoveAsset(\"" + Folder + "/NoSuch.mat\", \"" + Folder + "/New/Deep/NoSuch.mat\")";
+            AssertFails(RqlUnity.Mutate(Missing, dryRun: true), "invalid-value", "no asset at");
+            AssertFails(M(Missing), "invalid-value", "no asset at");
+            AssertOk(M($"editor | call CreateFolder(\"{Folder}/Src\")"));
+            AssertFails(M($"editor | call MoveAsset(\"{Folder}/Src\", \"{Folder}/Src/New/Src\")"), "invalid-value", "into itself");
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/New"));
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/Src/New"));
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Src"));
+        }
+
+        // The helper behind CopyAsset / MoveAsset / CreateMaterial / NewScene / SaveAs / SaveAsPrefab: the outermost folder it
+        // created goes when the write throws; existing folders and a successful write's folders stay.
+        [Test]
+        public void InFolderOfRemovesOnlyTheFoldersItCreatedWhenTheWriteFails()
+        {
+            AssetDatabase.CreateFolder(Folder, "Old");
+            Assert.Throws<System.InvalidOperationException>(() =>
+                RqlEditorApi.InFolderOf<int>($"{Folder}/Old/New/Deep/X.asset", () => throw new System.InvalidOperationException("write failed")));
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/Old/New"));
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Old"));
+            Assert.AreEqual(1, RqlEditorApi.InFolderOf($"{Folder}/Old/Kept/X.asset", () => 1));
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Old/Kept"));
+        }
+
+        // A folder on disk that Unity has not imported: CreateFolder would make "Ghost 1" instead. The calls refuse it before
+        // they create anything (dry runs report it) and leave the one on disk alone (a rollback by the requested path would
+        // delete it).
+        [Test]
+        public void AFolderInTheWayIsNeitherReplacedNorDeleted()
+        {
+            var ghost = $"{Folder}/Ghost";
+            System.IO.Directory.CreateDirectory(ghost);
+            try
+            {
+                foreach (var call in new[]
+                {
+                    $"editor | call CreateFolder(\"{ghost}/Sub\")",
+                    $"editor | call CreateMaterial(\"{ghost}/Sub/X.mat\")",
+                    $"editor | call NewScene(\"{ghost}/X.unity\", true, true)",
+                })
+                {
+                    AssertFails(RqlUnity.Mutate(call, dryRun: true), "invalid-value", "has not imported");
+                    AssertFails(M(call), "invalid-value", "has not imported");
+                }
+                Assert.IsTrue(System.IO.Directory.Exists(ghost));
+                Assert.IsFalse(System.IO.Directory.Exists($"{ghost} 1"));
+                Assert.IsFalse(System.IO.Directory.Exists($"{ghost}/Sub"));
+                Assert.Throws<System.ArgumentException>(() => RqlEditorApi.EnsureFolder($"{ghost}/Sub")); // a C# caller skips the validator
+                Assert.IsFalse(System.IO.Directory.Exists($"{ghost} 1"));
+            }
+            finally { System.IO.Directory.Delete(ghost, true); }
+        }
+
+        // A file where a folder is needed is refused the same way.
+        [Test]
+        public void AFileInTheWayIsRefused()
+        {
+            var file = $"{Folder}/Taken";
+            System.IO.File.WriteAllText(file, "");
+            try
+            {
+                AssertFails(RqlUnity.Mutate($"editor | call CreateMaterial(\"{file}/X.mat\")", dryRun: true), "invalid-value", "by a file");
+                Assert.IsFalse(System.IO.Directory.Exists($"{file} 1"));
+            }
+            finally { System.IO.File.Delete(file); }
+        }
+
+        // SaveNewAsset (CreateMaterial and the modules' create calls): when Unity cannot create the asset (here a file name
+        // longer than any file system allows), the folders the call created are removed again.
+        [Test]
+        public void AFailedCreateMaterialLeavesNoNewFolders()
+        {
+            LogAssert.ignoreFailingMessages = true; // Unity logs why it could not write the asset
+            AssertFails(M($"editor | call CreateMaterial(\"{Folder}/New/Deep/{new string('x', 300)}.mat\")"), "call-threw");
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/New"), "the folders the failed call created must be removed");
+            AssertOk(M($"editor | call CreateMaterial(\"{Folder}/New/Deep/X.mat\")")); // the same folders with a valid name stay
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/New/Deep"));
+        }
+
+        // Unity copies a folder into its own subfolder (and the new subfolder into the copy): rejected before anything is made.
+        [Test]
+        public void AFolderIsNotCopiedIntoItself()
+        {
+            AssertOk(M($"editor | call CreateFolder(\"{Folder}/Src\")"));
+            AssertFails(RqlUnity.Mutate($"editor | call CopyAsset(\"{Folder}/Src\", \"{Folder}/Src/Sub/Src\")", dryRun: true), "invalid-value", "into itself");
+            AssertFails(M($"editor | call CopyAsset(\"{Folder}/Src\", \"{Folder}/Src/Sub/Src\")"), "invalid-value", "into itself");
+            Assert.IsFalse(AssetDatabase.IsValidFolder($"{Folder}/Src/Sub"));
         }
 
         [Test]
@@ -75,6 +170,77 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             AssertOk(M($"objects | get components | where $ is SpriteRenderer | set sprite = unity.asset(\"{path}\")"));
             Assert.IsNotNull(sr.sprite);
             AssertFails(M($"objects | get components | where $ is SpriteRenderer | set sprite = \"{path}#nope\""), "coercion-failed", "has no sprite 'nope'");
+        }
+
+        // Unity's CreateAsset / CopyAsset replace an existing asset silently: references to it break.
+        [Test]
+        public void CreateAndCopyNeverReplaceAnExistingAsset()
+        {
+            AssertOk(M($"editor | call CreateMaterial(\"{Folder}/A.mat\")"));
+            var renderer = GameObject.CreatePrimitive(PrimitiveType.Cube).GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Folder}/A.mat");
+            AssertFails(M($"editor | call CreateMaterial(\"{Folder}/A.mat\")"), "invalid-value", "already exists");
+            AssertOk(M($"editor | call CreateMaterial(\"{Folder}/B.mat\")"));
+            AssertFails(M($"editor | call CopyAsset(\"{Folder}/B.mat\", \"{Folder}/A.mat\")"), "invalid-value", "already exists");
+            Assert.IsNotNull(renderer.sharedMaterial, "the existing material (and the reference to it) must survive");
+            AssertFails(M($"editor | call CreateMaterial(\"{Folder}/C.txt\")"), "invalid-value", "must end with .mat");
+            AssertFails(M($"editor | call CopyAsset(\"{Folder}/B.mat\", \"{Folder}/C.txt\")"), "invalid-value", "must end with .mat");
+        }
+
+        [Test]
+        public void DeletingAnAssetInUseNeedsForce()
+        {
+            AssertOk(M($"editor | call CreateMaterial(\"{Folder}/Used.mat\")"));
+            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            cube.name = "UsesIt";
+            var renderer = cube.GetComponent<MeshRenderer>();
+            renderer.sharedMaterial = AssetDatabase.LoadAssetAtPath<Material>($"{Folder}/Used.mat");
+            AssertFails(M($"editor | call DeleteAsset(\"{Folder}/Used.mat\")"), "invalid-value", "used by 1 object(s) in the open scenes: UsesIt");
+            AssertFails(M($"editor | call DeleteAsset(\"{Folder}\")"), "invalid-value", "UsesIt"); // a folder holding it, too
+            Assert.IsNotNull(AssetDatabase.LoadAssetAtPath<Material>($"{Folder}/Used.mat"));
+            AssertOk(M($"editor | call DeleteAsset(\"{Folder}/Used.mat\", true)"));
+            Assert.IsNull(AssetDatabase.LoadAssetAtPath<Material>($"{Folder}/Used.mat"));
+        }
+
+        [Test]
+        public void AFolderWithADotInItsNameIsCopied()
+        {
+            AssertOk(M($"editor | call CreateFolder(\"{Folder}/com.foo\")"));
+            AssertOk(M($"editor | call CopyAsset(\"{Folder}/com.foo\", \"{Folder}/Copy\")"));
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/Copy"));
+        }
+
+        [Test]
+        public void FolderPathsAreNormalized()
+        {
+            // The RQL string "Assets\\RqlEditorApiTests\\N\\M\\" is Assets\RqlEditorApiTests\N\M\ (backslashes, a trailing one).
+            Assert.AreEqual($"{Folder}/N/M", Cell(M("editor | call CreateFolder(\"Assets\\\\RqlEditorApiTests\\\\N\\\\M\\\\\")"), 0, 2));
+            Assert.IsTrue(AssetDatabase.IsValidFolder($"{Folder}/N/M"));
+        }
+
+        // AssetDatabase.FindAssets("t:Material") also finds files that only embed a material (a model, a font, a shader
+        // graph): unity.assets gives the materials, never such a main asset of another type.
+        [Test]
+        public void AssetsOfATypeAreThatTypeEvenWhenEmbedded()
+        {
+            AssertOk(M($"editor | call CreateMaterial(\"{Folder}/Plain.mat\")"));
+            var mesh = new Mesh { name = "Holder" };
+            AssetDatabase.CreateAsset(mesh, $"{Folder}/Holder.asset");
+            AssetDatabase.AddObjectToAsset(new Material(Shader.Find("Hidden/Internal-Colored")) { name = "Embedded" }, mesh);
+            AssetDatabase.SaveAssets();
+            AssetDatabase.ImportAsset($"{Folder}/Holder.asset", ImportAssetOptions.ForceUpdate);
+            var rows = Table(Q($"unity.assets(\"t:Material\", \"{Folder}\") | sort name | select name $type"));
+            StringAssert.Contains("Embedded|Material", rows);
+            StringAssert.Contains("Plain|Material", rows);
+            StringAssert.DoesNotContain("Holder", rows);
+            // a main asset of the requested type is itself the result
+            Assert.AreEqual("Holder", Cell(Q($"unity.assets(\"t:Mesh\", \"{Folder}\") | select name")));
+        }
+
+        [Test]
+        public void AssetsInAMissingFolderIsAnError()
+        {
+            AssertFails(Q("unity.assets(\"t:Material\", \"Assets/NoSuchFolder\") | count"), "not-found", "no folder 'Assets/NoSuchFolder'");
         }
 
         [Test]

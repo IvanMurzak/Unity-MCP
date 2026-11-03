@@ -1,0 +1,476 @@
+name: release
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - main
+
+# Serialises release runs per ref so two releases can never publish concurrently.
+# `cancel-in-progress` is deliberately UNSET: an in-flight release must finish
+# (it may already have created the tag/Release). `queue: max` raises the pending
+# queue from the default 1 to 100 — without it, a queued release is silently
+# cancelled and replaced by the next push, which is how a version bump can be
+# published while an earlier one never runs.
+# NOTE: `queue: max` and `cancel-in-progress: true` together are a validation error.
+concurrency:
+  group: release-${{ github.ref }}
+  queue: max
+
+env:
+  INSTALLER_UNITY_VERSION: 2022.3.62f3
+
+jobs:
+  check-version-tag:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    outputs:
+      version: ${{ steps.get_version.outputs.current-version }}
+      prev_tag: ${{ steps.prev_tag.outputs.tag }}
+      tag_exists: ${{ steps.tag_exists.outputs.exists }}
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Get version from package.json
+        id: get_version
+        uses: martinbeentjes/npm-get-version-action@v1.3.1
+        with:
+          path: Unity-Package/Packages/YOUR_PACKAGE_ID_LOWERCASE
+
+      - name: Find previous version tag
+        id: prev_tag
+        uses: WyriHaximus/github-action-get-previous-tag@v2
+
+      - name: Check if tag exists
+        id: tag_exists
+        uses: mukunku/tag-exists-action@v1.7.0
+        with:
+          tag: ${{ steps.get_version.outputs.current-version }}
+
+  # Generates release notes (release.md) in parallel with tests/builds.
+  # The artifact is consumed by release-unity-plugin's atomic publish step.
+  prepare-release-notes:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [check-version-tag]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+        with:
+          fetch-depth: 0
+          fetch-tags: true
+
+      - name: Generate release description
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -e
+          version=${{ needs.check-version-tag.outputs.version }}
+          prev_tag=${{ needs.check-version-tag.outputs.prev_tag }}
+          repo_url="https://github.com/${GITHUB_REPOSITORY}"
+          today=$(date +'%B %e, %Y')
+
+          echo "repo_url: $repo_url"
+          echo "today: $today"
+
+          echo "# Package $version" > release.md
+          echo "**Released:** *$today*" >> release.md
+
+          echo "" >> release.md
+          echo "---" >> release.md
+          echo "" >> release.md
+
+          if [ -n "$prev_tag" ]; then
+            echo "## Comparison" >> release.md
+            echo "See every change: [Compare $prev_tag...$version]($repo_url/compare/$prev_tag...$version)" >> release.md
+
+            echo "" >> release.md
+            echo "---" >> release.md
+            echo "" >> release.md
+
+            echo "## Commit Summary (Newest → Oldest)" >> release.md
+            for sha in $(git log --pretty=format:'%H' $prev_tag..HEAD); do
+              username=$(gh api repos/${GITHUB_REPOSITORY}/commits/$sha --jq '.author.login // .commit.author.name' 2>/dev/null || true)
+              if [ -z "$username" ]; then
+                username=$(git log -1 --pretty=format:'%an' $sha)
+              fi
+              message=$(git log -1 --pretty=format:'%s' $sha)
+              short_sha=$(git log -1 --pretty=format:'%h' $sha)
+              echo "- [\`$short_sha\`]($repo_url/commit/$sha) — $message by @$username" >> release.md
+            done
+          fi
+
+      - name: Upload release notes as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: release-notes
+          path: ./release.md
+
+  build-unity-installer:
+    runs-on: ubuntu-latest
+    # Unity-editor job (EditMode test + package export in the Unity image).
+    # Observed 4m29s-7m24s; generous headroom for image pull / licence activation.
+    timeout-minutes: 30
+    needs: [check-version-tag]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Free disk space
+        uses: jlumbroso/free-disk-space@v1.3.1
+        with:
+          tool-cache: false
+          android: true
+          dotnet: true
+          haskell: true
+          large-packages: true
+          swap-storage: true
+
+      - name: Cache Unity Library
+        uses: actions/cache@v5
+        with:
+          path: ./Installer/Library
+          key: Library-Unity-Installer
+
+      - name: Test Unity Installer (EditMode)
+        uses: game-ci/unity-test-runner@08fd329f00a18efa297140b14ac28ebce742759e # node24 runtime (PR #304); revert to @v4 once game-ci moves the tag
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+          FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: true
+        with:
+          projectPath: ./Installer
+          unityVersion: ${{ env.INSTALLER_UNITY_VERSION }}
+          customImage: "unityci/editor:ubuntu-${{ env.INSTALLER_UNITY_VERSION }}-base-3"
+          testMode: editmode
+          githubToken: ${{ secrets.GITHUB_TOKEN }}
+          checkName: Unity Installer EditMode Test Results
+          artifactsPath: artifacts-installer-editmode
+          customParameters: -CI true -GITHUB_ACTIONS true
+
+      - name: Clean Unity artifacts and reset git state
+        run: |
+          # Force remove Unity generated files with restricted permissions
+          sudo rm -rf ./Installer/Logs/ || true
+          sudo rm -rf ./Installer/Temp/ || true
+          sudo rm -rf ./artifacts-installer-editmode/ || true
+
+          # Reset only tracked files to their committed state
+          git reset --hard HEAD
+          echo "Cleaned Unity artifacts and reset tracked files"
+
+      - name: Export Unity Package
+        uses: game-ci/unity-builder@v5
+        env:
+          UNITY_LICENSE: ${{ secrets.UNITY_LICENSE }}
+          UNITY_EMAIL: ${{ secrets.UNITY_EMAIL }}
+          UNITY_PASSWORD: ${{ secrets.UNITY_PASSWORD }}
+        with:
+          projectPath: ./Installer
+          unityVersion: ${{ env.INSTALLER_UNITY_VERSION }}
+          customImage: "unityci/editor:ubuntu-${{ env.INSTALLER_UNITY_VERSION }}-base-3"
+          buildName: YOUR_PACKAGE_NAME_INSTALLER_FILE
+          buildsPath: build
+          buildMethod: YOUR_PACKAGE_ID.Installer.PackageExporter.ExportPackage
+          customParameters: -CI true -GITHUB_ACTIONS true
+
+      - name: Upload Unity Package as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: unity-installer-package
+          path: ./Installer/build/YOUR_PACKAGE_NAME_INSTALLER_FILE.unitypackage
+
+  # Builds the signed UPM package (.tgz with package/.attestation.p7m) in parallel
+  # with tests/builds and uploads it as a `signed-upm-package` artifact for the
+  # atomic release publish in release-unity-plugin.
+  #
+  # HARD-GATE: this job is NOT continue-on-error. Missing UPM signing secrets fail
+  # fast and the release pipeline halts — no GitHub Release is created without a
+  # signed UPM tarball (see docs/openupm-signing.md for the blocking-semantics
+  # rationale).
+  #
+  # Required repo secrets (configure via `gh secret set --repo IvanMurzak/YOUR_REPO <NAME>`):
+  #   - UPM_SERVICE_ACCOUNT_KEY_ID
+  #   - UPM_SERVICE_ACCOUNT_KEY_SECRET
+  #   - UPM_ORG_ID
+  # See https://openupm.com/docs/signing-upm-packages.html for the procedure.
+  build-signed-upm-package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [check-version-tag]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    env:
+      UPM_SERVICE_ACCOUNT_KEY_ID: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_ID }}
+      UPM_SERVICE_ACCOUNT_KEY_SECRET: ${{ secrets.UPM_SERVICE_ACCOUNT_KEY_SECRET }}
+      UPM_ORG_ID: ${{ secrets.UPM_ORG_ID }}
+      PACKAGE_DIR: Unity-Package/Packages/YOUR_PACKAGE_ID_LOWERCASE
+      DIST_DIR: /tmp/signed-upm-dist
+    steps:
+      - name: Verify signing secrets are configured
+        run: |
+          missing=()
+          [ -z "$UPM_SERVICE_ACCOUNT_KEY_ID" ]     && missing+=("UPM_SERVICE_ACCOUNT_KEY_ID")
+          [ -z "$UPM_SERVICE_ACCOUNT_KEY_SECRET" ] && missing+=("UPM_SERVICE_ACCOUNT_KEY_SECRET")
+          [ -z "$UPM_ORG_ID" ]                     && missing+=("UPM_ORG_ID")
+          if [ "${#missing[@]}" -ne 0 ]; then
+            printf '::error::UPM signing secrets are not configured (%s). The release pipeline is hard-gated on signing — see docs/openupm-signing.md for setup.\n' "${missing[*]}"
+            exit 1
+          fi
+
+      - name: Checkout repository
+        uses: actions/checkout@v6
+
+      - name: Log package metadata
+        run: |
+          package_name="$(jq -r '.name' "$PACKAGE_DIR/package.json")"
+          package_version="$(jq -r '.version' "$PACKAGE_DIR/package.json")"
+
+          printf 'Package name: %s\n' "$package_name"
+          printf 'Package version: %s\n' "$package_version"
+
+      - name: Install Unity UPM CLI
+        run: |
+          curl -fsSL https://cdn.packages.unity.com/upm-cli/install.sh -o install.sh
+          bash install.sh
+          echo "$HOME/.upm/bin" >> "$GITHUB_PATH"
+
+      - name: Verify Unity UPM CLI
+        run: upm --help
+
+      - name: Sign package
+        run: |
+          mkdir -p "$DIST_DIR"
+          upm pack "./$PACKAGE_DIR" --organization-id "$UPM_ORG_ID" --destination "$DIST_DIR"
+
+      - name: Verify signed package contains attestation
+        run: |
+          shopt -s nullglob
+          archives=("$DIST_DIR"/*.tgz "$DIST_DIR"/*.tar.gz)
+          if [ "${#archives[@]}" -ne 1 ]; then
+            printf 'Expected exactly one signed package archive, found %s: %s\n' "${#archives[@]}" "${archives[*]:-<none>}" >&2
+            exit 1
+          fi
+
+          archive="${archives[0]}"
+          archive_basename="$(basename "$archive")"
+          # OpenUPM consumes the asset via the `githubReleaseAssetName: 'YOUR_PACKAGE_ID-'`
+          # prefix documented in docs/openupm-signing.md. Enforce the contract here so a future
+          # `upm pack` naming change fails CI loudly instead of silently breaking OpenUPM pickup.
+          # NOTE: replace `YOUR_PACKAGE_ID` below with your real package id (e.g. com.company.package)
+          # when you adopt this sample as release.yml.
+          if [[ "$archive_basename" != YOUR_PACKAGE_ID-* ]]; then
+            printf 'Signed archive basename %q does not begin with the OpenUPM-expected prefix YOUR_PACKAGE_ID- (see docs/openupm-signing.md)\n' "$archive_basename" >&2
+            exit 1
+          fi
+
+          archive_entries="$(tar -tzf "$archive")"
+          grep -qx 'package/package.json'      <<<"$archive_entries"
+          grep -qx 'package/.attestation.p7m'  <<<"$archive_entries"
+
+          printf 'Signed archive: %s\n' "$archive_basename"
+          tar -xOzf "$archive" package/package.json | jq '{name, version}'
+
+      - name: Upload signed UPM package as artifact
+        uses: actions/upload-artifact@v6
+        with:
+          name: signed-upm-package
+          path: /tmp/signed-upm-dist/*.tgz
+
+  # --- UNITY TESTS ---
+  # -------------------
+
+  # --- EDIT MODE ---
+
+  test-unity-2022-3-62f3-editmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "editmode"
+    secrets: inherit
+
+  test-unity-2023-2-22f1-editmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2023.2.22f1"
+      unityVersion: "2023.2.22f1"
+      testMode: "editmode"
+    secrets: inherit
+
+  test-unity-6000-3-1f1-editmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.3.1f1"
+      unityVersion: "6000.3.1f1"
+      testMode: "editmode"
+    secrets: inherit
+
+  # --- PLAY MODE ---
+
+  test-unity-2022-3-62f3-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "playmode"
+    secrets: inherit
+
+  test-unity-2023-2-22f1-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2023.2.22f1"
+      unityVersion: "2023.2.22f1"
+      testMode: "playmode"
+    secrets: inherit
+
+  test-unity-6000-3-1f1-playmode:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.3.1f1"
+      unityVersion: "6000.3.1f1"
+      testMode: "playmode"
+    secrets: inherit
+
+  # --- STANDALONE ---
+
+  test-unity-2022-3-62f3-standalone:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2022.3.62f3"
+      unityVersion: "2022.3.62f3"
+      testMode: "standalone"
+    secrets: inherit
+
+  test-unity-2023-2-22f1-standalone:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/2023.2.22f1"
+      unityVersion: "2023.2.22f1"
+      testMode: "standalone"
+    secrets: inherit
+
+  test-unity-6000-3-1f1-standalone:
+    needs: [build-unity-installer]
+    uses: ./.github/workflows/test_unity_plugin.yml
+    with:
+      projectPath: "./Unity-Tests/6000.3.1f1"
+      unityVersion: "6000.3.1f1"
+      testMode: "standalone"
+    secrets: inherit
+
+  # -------------------
+
+  # Atomic publish point — gated on EVERY prerequisite (tests, installer build,
+  # signed UPM package, release notes). Downloads all asset artifacts and creates
+  # the GitHub Release + tag with the full asset set in a SINGLE
+  # softprops/action-gh-release@v2 call so a failed upload cannot strand the
+  # release with incomplete assets. Signing failure → no release (hard gate).
+  release-unity-plugin:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs:
+      [
+        check-version-tag,
+        prepare-release-notes,
+        build-unity-installer,
+        build-signed-upm-package,
+        test-unity-2022-3-62f3-editmode,
+        test-unity-2022-3-62f3-playmode,
+        test-unity-2022-3-62f3-standalone,
+        test-unity-2023-2-22f1-editmode,
+        test-unity-2023-2-22f1-playmode,
+        test-unity-2023-2-22f1-standalone,
+        test-unity-6000-3-1f1-editmode,
+        test-unity-6000-3-1f1-playmode,
+        test-unity-6000-3-1f1-standalone,
+      ]
+    if: needs.check-version-tag.outputs.tag_exists == 'false'
+    outputs:
+      version: ${{ needs.check-version-tag.outputs.version }}
+    steps:
+      - name: Download release notes artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: release-notes
+          path: ./release-notes
+
+      - name: Download Unity installer artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: unity-installer-package
+          path: ./assets
+
+      - name: Download signed UPM package artifact
+        uses: actions/download-artifact@v7
+        with:
+          name: signed-upm-package
+          path: ./assets
+
+      - name: List assembled release assets
+        run: |
+          set -e
+          echo "Release notes:"
+          ls -la ./release-notes
+          echo ""
+          echo "Release assets:"
+          ls -la ./assets
+
+      - name: Create Tag and Release with all assets
+        uses: softprops/action-gh-release@v3
+        with:
+          tag_name: ${{ needs.check-version-tag.outputs.version }}
+          name: ${{ needs.check-version-tag.outputs.version }}
+          body_path: ./release-notes/release.md
+          draft: false
+          prerelease: false
+          fail_on_unmatched_files: true
+          files: |
+            ./assets/YOUR_PACKAGE_NAME_INSTALLER_FILE.unitypackage
+            ./assets/YOUR_PACKAGE_ID-*.tgz
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+  # Cleanup job to remove build artifacts after the atomic publish.
+  # Re-pointed at release-unity-plugin (was: publish-unity-installer) since that
+  # post-release publish job collapsed into release-unity-plugin.
+  cleanup-artifacts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    needs: [release-unity-plugin]
+    if: always()
+    steps:
+      - name: Delete Unity Package artifacts
+        uses: geekyeggo/delete-artifact@v6
+        with:
+          name: unity-installer-package
+          failOnError: false
+        continue-on-error: true
+
+      - name: Delete signed UPM package artifacts
+        uses: geekyeggo/delete-artifact@v6
+        with:
+          name: signed-upm-package
+          failOnError: false
+        continue-on-error: true
+
+      - name: Delete release notes artifacts
+        uses: geekyeggo/delete-artifact@v6
+        with:
+          name: release-notes
+          failOnError: false
+        continue-on-error: true

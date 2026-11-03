@@ -11,6 +11,7 @@
 #nullable enable
 using System.Diagnostics;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
 using Microsoft.Extensions.Logging;
 using R3;
 
@@ -29,9 +30,21 @@ namespace com.IvanMurzak.Unity.MCP
             IncrementSingletonCount();
         }
 
+        /// <summary>
+        /// Declares the connection a <see cref="ClientRole.Runtime"/> (McpPlugin sends it as <c>client_role</c> at connect):
+        /// the MCP server keeps a running player beside the Editor instead of letting it replace the Editor
+        /// (GameDev-MCP-Server plugin roles). Applied when the plugin is built, after everything the developer configured,
+        /// so a game never registers as the Editor.
+        /// </summary>
+        protected static void DeclareRuntimeRole(IMcpPluginBuilder builder)
+            => builder.WithConfig(config => config.ClientRole = ClientRole.Runtime);
+
         internal IMcpPlugin BuildFromBuilder(IMcpPluginBuilder builder)
         {
             _logger.LogTrace("{method} called.", nameof(BuildFromBuilder));
+
+            // Last, so neither a WithConfig nor a SetConfig the developer made after Initialize can undo it.
+            DeclareRuntimeRole(builder);
 
             var stopwatch = Stopwatch.StartNew();
             var built = _plugin.Set(builder.Build(CreateDefaultReflector()));

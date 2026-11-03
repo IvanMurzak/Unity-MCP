@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public static class Error
         {
             public static string ToolsArrayIsNullOrEmpty()
-                => "Tools array is null or empty. Please provide at least one tool to enable or disable.";
+                => "Tools array is null or empty. Please provide at least one tool to show or hide.";
 
             public static string ToolManagerNotAvailable()
                 => "Tool manager is not available. UnityMcpPluginEditor may not be initialized.";

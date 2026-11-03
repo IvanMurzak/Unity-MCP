@@ -21,7 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         static MainWindowInitializer()
         {
-            if (isInitialized.Value)
+            // An asset import worker shares these prefs but has no window to open; opening it would connect (#1050).
+            if (AssetDatabase.IsAssetImportWorkerProcess() || isInitialized.Value)
                 return;
 
             EditorApplication.update += PerformInitialization;

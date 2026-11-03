@@ -13,3 +13,8 @@ export function emitProgress(onProgress: ProgressCallback | undefined, event: Pr
     // Intentionally ignored — see doc comment.
   }
 }
+
+/** ` (PID: n)` when the pid is known, else nothing: a log line never says "PID: unknown". */
+export function pidSuffix(pid: number | undefined): string {
+  return pid !== undefined ? ` (PID: ${pid})` : '';
+}

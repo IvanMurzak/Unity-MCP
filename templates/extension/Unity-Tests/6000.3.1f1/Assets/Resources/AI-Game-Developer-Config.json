@@ -1,0 +1,15 @@
+{
+  "logLevel": 3,
+  "enabledTools": [
+    "*"
+  ],
+  "enabledPrompts": [
+    "*"
+  ],
+  "enabledResources": [
+    "GameObject_CurrentScene"
+  ],
+  "host": "http://localhost:50888",
+  "timeoutMs": 10000,
+  "keepConnected": false
+}

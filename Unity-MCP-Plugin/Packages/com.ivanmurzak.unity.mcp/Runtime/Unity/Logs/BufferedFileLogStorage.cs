@@ -126,16 +126,8 @@ namespace com.IvanMurzak.Unity.MCP
             }
             lock (_fileMutex)
             {
-                fileWriteStream?.Close();
-                fileWriteStream?.Dispose();
-                fileWriteStream = null;
                 _logEntriesBufferLength = 0;
-
-                if (File.Exists(filePath))
-                    File.Delete(filePath);
-
-                if (File.Exists(filePath))
-                    _logger.LogError("Failed to delete cache file: {file}", filePath);
+                base.Clear();
             }
         }
 
@@ -154,7 +146,5 @@ namespace com.IvanMurzak.Unity.MCP
             foreach (var entry in base.ReadNewestFirst(cutoffTime))
                 yield return entry;
         }
-
-        ~BufferedFileLogStorage() => Dispose();
     }
 }

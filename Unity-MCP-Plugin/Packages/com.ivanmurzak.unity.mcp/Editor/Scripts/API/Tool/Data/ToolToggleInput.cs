@@ -19,12 +19,13 @@ using AIGD;
 
 namespace AIGD
 {
+    /// <summary>Input of the deprecated <c>tool-set-enabled-state</c>; <see cref="ToolVisibilityInput"/> is the current one.</summary>
     public class ToolToggleInput
     {
-        [Description("Name of the MCP tool to enable or disable.")]
+        [Description("Name of the MCP tool to show or hide.")]
         public string Name { get; set; } = string.Empty;
 
-        [Description("Whether the tool should be enabled (true) or disabled (false).")]
+        [Description("Whether the tool is listed to MCP clients (true) or hidden from tools/list (false). A hidden tool still runs when called by name.")]
         public bool Enabled { get; set; }
     }
 }

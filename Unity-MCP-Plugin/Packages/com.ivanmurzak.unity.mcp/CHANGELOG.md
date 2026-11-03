@@ -2,7 +2,133 @@
 
 ## [Unreleased]
 
+### Changed
+
+- **McpPlugin 8.16.0** (gate `UNITY_MCP_DEPS_32`): an Editor that cannot serve a call right now answers **HTTP 503**,
+  not 422, on the server's direct endpoint `POST /api/tools/{name}` (the tools throw McpPlugin's new
+  `ToolUnavailableException`; the MCP channel still shows the tool's message as an error result):
+  - `script-execute` called while scripts compile for a reload its own lock held back: nothing ran, so the refusal is
+    "not executed" and a server with the call guard (GameDev-MCP-Server 9.3.0+) sends the call again once the
+    reloaded plugin is back; an older server returns the refusal as a 503.
+  - `script-execute` "Reflector is not available.", `unity-tool-list` / `tool-set-visibility` /
+    `tool-set-enabled-state` "Tool manager is not available", `unity-skill-generate` "McpPluginInstance is null":
+    503, never sent again automatically.
+  - `tests-run` while another test run is in progress, or in Play Mode (or while a run is still finishing): 503
+    (was 400), never sent again automatically.
+  - Unchanged: a snippet stopped to let the reload start (it already ran part of its code) and the snippet's compile
+    and runtime errors stay 422; `tests-run` with dirty scenes stays 422.
+- **McpPlugin 8.15.0** (gate `UNITY_MCP_DEPS_31`). A tool that throws a plain, `InvalidOperationException` or
+  other non-fault exception now answers the server's direct endpoint `POST /api/tools/{name}` with HTTP 422 and the
+  same message, not 500: every `script-execute` failure ("Compilation failed", "Execution failed", the snippet
+  timeout, the reload-stop message). (The reload-pending refusal and the tools' "not available" errors became 503
+  with McpPlugin 8.16.0, above.) Fault types
+  (`NullReferenceException`, `IndexOutOfRangeException`, `InvalidCastException`, `TimeoutException`, load errors
+  and similar) stay 500. The MCP channel is unchanged.
+- **McpPlugin 8.14.0, ReflectorNet 5.5.1, GameDev-MCP-Server 9.3.0** (published releases; gate
+  `UNITY_MCP_DEPS_30`). The bundled DLLs and resolver pins replace the 8.14.0-dev / 5.5.1-dev pre-release builds
+  that several entries below were integrated on, and the plugin downloads server 9.3.0.
+- **RQL trigonometry, `$count`, `$type` suggestions, list coercion** (RQL 0.3.0). `sin cos tan asin acos atan atan2 deg rad pi` (radians, rounded so every RQL host prints the
+  same digits) and `$count`, the number of items entering a `set` / `call` stage: `selection | set transform.position =
+  [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)]` lays them out on a circle. The bulk-create
+  rule example carries its own range (`range(0, 150)`, within the default target limit). A misspelt `$type` names the
+  closest type (`{$type: "Materal"}`: did you mean 'Material'?), and a list or array member takes any list value element
+  by element, e.g. `set materialList = materialArray` (before, only RQL list literals).
+- **`RefreshAssets()` reloads an open scene whose file changed on disk.** Before, a scene file edited outside the Editor
+  stayed stale in the open scene even after `editor | call RefreshAssets()` (only `OpenScene` loaded it). Now the call
+  compares each open scene's file with what the Editor last loaded or saved (so a refresh by another tool in between
+  does not hide the change) and reloads it in place (an additive scene keeps its place and the active scene), keeps a scene with unsaved Editor
+  changes, a scene whose file was deleted, and one in Play Mode or behind an open prefab, and says so (with the call
+  that loads the file instead), and returns what it did. It no longer
+  saves the open scenes afterwards, which wrote a dirty scene over the changed file. The agent rules say to call it
+  after files change outside the Editor.
+- **Deletes take two turns.** The rule "list the exact candidates, show them, end your turn, delete only after the user
+  confirms" (unless the user named the exact items) is now in the descriptions of `script-execute`, `script-delete` and
+  RQL's `DeleteAsset`, not only rql-mutate's: in wave 7 an agent asked to "delete only after showing me" found and deleted
+  unused assets in one turn through `script-execute`.
+- **`script-execute`: a blocking wait stops at the budget** (vendored Code-Exec 0.4.0). `Thread.Sleep`,
+  `Task.Wait` / `.Result` / `GetAwaiter().GetResult()`, `SemaphoreSlim` / `ManualResetEventSlim` / `CountdownEvent`
+  `.Wait`, `Monitor.Wait`, `WaitHandle.WaitOne` and `Thread.Join` in the snippet wait in slices and stop with Timeout at
+  the budget (before, `SemaphoreSlim(0).Wait()` hung the Editor for good); a snippet that returns only after its budget
+  (blocked in a call the guards cannot interrupt) is reported as Timeout. A no-timeout wait on a task queued to the main
+  thread (`Task.Factory.StartNew(..., TaskScheduler.FromCurrentSynchronizationContext()).Result`) still runs it inline;
+  an `async` method awaited on the main thread and read with `.Result` stops with Timeout at the budget.
+- **Tools, prompts and resources are "Visible", not "Enabled".** The switch only decides whether MCP clients see
+  an item listed (`tools/list`, which keeps their context small); it is not an access control: a hidden tool still
+  runs when called by name. The Tools / Prompts / Resources windows filter All / Visible / Hidden. The config file
+  writes `"visible"`; a file saved with `"enabled"` still loads. The `tool-set-visibility` tool (input
+  `{ Name, Visible }`) replaces `tool-set-enabled-state`, which keeps working as a deprecated alias until the next
+  major release. `unity-mcp-cli configure` reads both keys and writes `visible`; `--list` prints `[visible]` /
+  `[hidden]`. Use a `unity-mcp-cli` of this release with this plugin: an older CLI does not know `"visible"` and
+  drops those entries when it edits the file, and an older plugin ignores entries a new CLI wrote.
+- **A player connects as a runtime.** `UnityMcpPluginRuntime` declares McpPlugin's `ClientRole.Runtime` (sent at
+  connect), so GameDev-MCP-Server keeps a running player beside the Editor. The `" (runtime)"` handshake suffix is
+  gone. McpPlugin 8.14.0.
+- **RQL arguments by name, side-effect-free overloads, compact receipts** (RQL 0.3.0).
+  A lone object literal binds parameters by name:
+  `editor | call CreateGameObject({name: "Crate", primitive: "Cube", position: [1, 0, 2]})`, also in a bulk create
+  (`range(0, 300) | call editor.CreateGameObject({name: "C" + $, ...})`), validated before the first call and undone
+  as one step. Trying an overload no longer creates anything, dry runs included, and a typo inside a placement
+  literal is reported against the placement overload. Unity objects are never built from object literals; RQL now
+  refuses that itself (`… is an engine object …`), so the plugin's own refusal is gone. Receipts of 2 or more rows
+  print a shared method once, drop a `$ref` column equal to the result, and list 50 rows plus a count.
+- **RQL literal kinds, vector functions, key warnings** (RQL 0.3.0).
+  A Material or a data ScriptableObject is built from a typed literal:
+  `set sharedMaterial = {$type: "Material", color: "#ff8800"}` (the render pipeline's default shader), `set item =
+  {$type: "ItemData", price: 3}`; written into a scene object it is saved with the scene, into an asset or the open prefab it is refused
+  (the asset would lose it). GameObjects, components and other assets stay refused, now with Unity's way to pass an
+  existing one (`unity.find("Name")`, `ref(…)`, an asset path). Lists of numbers are vectors (`[x, 0, z] * k`), and
+  `length` / `normalize` / `distance` / `dot` / `lerp` work on lists and vectors. A failing sort key and a sparse
+  group-by key warn; a misspelt parameter name gets a suggestion. Sources declare their types, so typo warnings never
+  read a source the query does not name. A cut receipt ends with a note that the rest was applied, not a pointer to a
+  json format the tools do not have. The guide adds the agent rules: delete in two steps (list, then remove what was
+  shown), say when a misspelt name was mapped, Unity units.
+- **`script-execute` takes a `timeout` (seconds) and stops the threads a snippet starts.** The default budget is 30 s
+  (was 120 s), `timeout` sets another, at most 290 s and 10 s below the tool timeout. Threads and tasks the code starts
+  (`new Thread`, `Task.Run`, `ThreadPool`, `TaskFactory.StartNew`) stop at their next loop iteration or call once the
+  run ends, with a Console warning that counts them; a `using var x = …;` first statement compiles. Vendored Code-Exec
+  0.4.0 (above).
+- **McpPlugin 8.14.0 and ReflectorNet 5.5.1**. Tools marked
+  `[AiToolType(Target = ToolTarget.Runtime)]` are registered only by a runtime (player) connection, and the server
+  routes their calls to the game while the Editor is connected; mark game-only tools this way. A call the plugin did
+  not run (`NotExecuted`) is re-sent and runs; `string?` / `int?` parameters without a default are optional.
+- **License metadata.** Every UPM package.json (this package, the extensions and the extension template) has a
+  `license` field matching its LICENSE file. The vendored Code-Exec sources (`Editor/Scripts/CodeExec`) carry a
+  header naming their license (PolyForm Shield 1.0.0, not this package's Apache-2.0), and the folder has a
+  `THIRD-PARTY-NOTICES.md` with the source repository, commit, required notice and the license terms.
+
 ### Added
+
+- **`rql-schema` lists the installed extensions and their guides.** Without a type it now names every installed
+  Unity-MCP extension package (always active: there is nothing to turn on) with the sources and functions it adds,
+  and the guide topics; `rql-schema "guide:<topic>"` prints that guide (the text the unity-rql skill carries). In
+  wave-6 testing an agent asked to "turn on every extension" spent 60 turns reflecting over assemblies instead.
+- **`unity-tool-list` shows `Visible`.** Hidden tools are listed with `Visible: false`, and the tool says plainly that
+  they are not offered to MCP clients: ask the user to show one in the MCP Tools window (or with
+  `unity-mcp-cli configure --enable-tools <name>`).
+- **`screenshot-isolated` frames a Terrain.** A Terrain has no Renderer component, so the tool reported "No Renderers
+  found"; its TerrainData bounds now count (when the Terrain module is present).
+
+- **`staticFlags` on GameObject (RQL).** The per-flag Static Editor Flags behind `isStatic`
+  (ContributeGI, OccluderStatic, OccludeeStatic, BatchingStatic, ReflectionProbeStatic): filter with
+  `where staticFlags contains "ContributeGI"`, assign a list (`set staticFlags = ["ContributeGI"]`);
+  validated all-or-nothing and undoable; obsolete flags a GameObject still carries are kept.
+
+- **Lighting RQL module.** The `lighting` source reads and edits the active scene's environment (ambient,
+  fog, skybox, sun, default reflections; undoable) and its Lighting Settings asset (`CreateSettings`,
+  `UseSettings`; undoable) and drives the bake (`Bake` in the background or blocking, `isBaking` /
+  `bakeProgress`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`; refused without a graphics device
+  unless the CPU lightmapper is set, instead of crashing the Editor). `LightProbeGroup` gains
+  `PlaceGrid(size, spacing)`, `ReflectionProbe` gains `Bake()` (Custom probes; Baked ones bake with the lighting). The `unity-rql` skill lists the source in one
+  line; members and calls are read on demand with `rql-schema "lighting"`.
+
+- **Editor-session contract shared by the engine CLIs.** An editor started by a CLI session
+  (`AIGD_SESSION_OWNER=cli`) quits after `AIGD_SESSION_IDLE_SECONDS` without tool calls
+  (`UNITY_MCP_IDLE_TIMEOUT` still works and is the fallback), saving changed scenes and assets first. The
+  editor leaves the CLI's session lease `<project>/.ai-game-dev/session.json` to the CLI, which removes it once
+  the editor's process is gone: removed earlier, the still-exiting editor looked like one the CLI did not start.
+- **`editor-session-quit` system tool.** Saves and quits an editor a CLI session started, when the caller
+  passes the lease nonce; any other editor refuses. `unity-mcp-cli close` uses it, because the Windows
+  polite quit (`WM_CLOSE`) never reaches a headless (`-batchmode`) editor.
 
 - **`UNITY_MCP_SERVER_PATH` — dev/CI override for the launched MCP server binary.** When the
   variable resolves to a file that exists, the Editor launches that binary instead of the
@@ -14,7 +140,63 @@
   `Tools/AI Game Developer/Server/Download Binaries` still downloads into `Library/mcp-server/<rid>/`
   regardless of the override. See `docs/mcp-server.md`.
 
+- **Tool timeout for the MCP server (McpPlugin 8.11.0).** McpPlugin 8.11.0 servers send a tool call to the
+  plugin once (older servers re-sent it up to 10 times, one per `plugin-timeout`, which could run a long tool
+  such as `script-execute` or `tests-run` several times) and wait `tool-timeout` for it. The new **Tool timeout
+  (ms)** setting in the AI Game Developer window (`ToolTimeoutMs` in the config, default 300000) is passed as
+  `tool-timeout=<ms>` when the editor starts the local server, in the Docker command
+  (`MCP_PLUGIN_TOOL_TIMEOUT`) and in `McpServerManager.RawJsonConfigurationStdio`; it is never below **Timeout**,
+  so a Timeout raised for long tools before this setting existed still applies. **Timeout (ms)** stays
+  `plugin-timeout`, the connection timeout, and is passed unchanged, so an older server (which ignores
+  `tool-timeout`) behaves as before. The `tests-run` stale-run lease now follows the tool timeout.
+
 ### Fixed
+
+- **No obsolete-API (CS0618) compiler warnings in Unity 6.3–6.6.** `Light.cookieSize2D` and
+  `EditorUtility.EntityIdToObject` are used from Unity 6.3 (where they appeared), `FindObjectsByType` without a sort
+  mode from 6.5. `Physics.autoSyncTransforms` and the CPU lightmapper (the only one that bakes without a graphics
+  device) keep working; their deprecation warning is silenced, as for `AssetDatabase.ExportPackage` in the installers.
+- **`script-execute` takes a `null` parameter** (`parameters = "{label: null}"`): it failed with a
+  NullReferenceException. The package's own C# warnings (CS0414, CS0114, CS8600, CS8602) are fixed too.
+- **No connection and log-storage warnings on every Editor start and recompile** (#1039). The plugin no longer tells
+  the server about tool / prompt changes while it is not connected and not reconnecting (e.g. with
+  `UNITY_MCP_KEEP_CONNECTED=false`), so `EnsureConnection … auto-reconnect disabled` is gone. The log cache flushes before it closes, so
+  `BufferedFileLogStorage Flush called but already disposed` is gone too. A PlayMode test run (`tests-run`) no longer
+  logs `InternalConnect Connection was canceled`. With the AI Game Developer window open, toggling Play Mode no longer
+  logs `EnsureConnection Failed to establish connection`: the window's server and agent status queries do not
+  connect. McpPlugin 8.14.0 and ReflectorNet 5.5.1.
+- **No connection errors when the Editor starts or quits its own local server.** With *Keep server running* the
+  Editor now connects once the server it launched has passed its startup check, not before, so
+  `Failed to start connection` and `Connection refused` are gone from every start. On quit it disconnects before it
+  stops the server, so `The server connection was terminated with an error` is gone too.
+- **Polling with `script-execute` no longer holds a script reload forever.** Each call holds the domain reload until
+  1 s after its reply, so a client calling every half second after writing a script (waiting for its new type) kept
+  `isCompiling` true for minutes. While a compile that our lock held waits, `script-execute` now answers at once that the
+  snippet did not run (for at most 60 s; never in Play Mode), and `unity-mcp-cli exec` re-sends it after the reload.
+- **The Input System extension compiles on Unity 6.6.** Its native floor `com.unity.inputsystem` 1.8.2 fails there
+  (`CS0619`: `TreeViewState` / `TreeViewItem` are obsolete as errors, about 260 errors; a batchmode editor exits).
+  On Unity 6000.6 and later, the editor's extension panel, `unity-mcp-cli`, the self-contained installer and
+  `commands/extensions.py prepare` now raise an older Input System pin to 1.19.0, as they already did for Navigation,
+  ProBuilder and Tilemap. Newer or custom pins are kept.
+- **`tests-run` filters: the check before the run now counts exactly what Unity runs** (#969). It matched any one
+  filter while Unity requires all of them, so a filter selecting nothing (an assembly with a class that is not in it)
+  answered with the summary of an empty run instead of "no tests found"; a parameterized `testMethod`, a
+  wrong-case `testMethod` and a class name equal to a namespace segment were also miscounted. The check now
+  matches the very filter Unity runs, the way Unity's Test Runner matches it, and a run that executes no test is
+  answered with an error.
+- **`tests-run` answered before Unity's run was over, and never when the run failed** (#1049). The answer and
+  the run lock now wait until Unity has left Play Mode and restored the scenes, so the next `tests-run` cannot
+  start on top of the previous run; `tests-run` also refuses to start while the Editor is in Play Mode. A run
+  Unity aborts with an error (a throwing `IPrebuildSetup`, a failing test-runner task) is answered with the
+  error and the errors logged during the run, and frees the lock, instead of holding it for the whole lease.
+
+- **Asset import workers disconnected the Editor from MCP** (#1050). Every `AssetImportWorker` process
+  (model and texture imports, Entities SubScene baking) ran the plugin's startup and connected to the same
+  server; with no-auth, which keeps one plugin connection, a worker could replace the Editor's connection.
+  Workers now skip the plugin startup and the server manager; headless CLI/CI editors are unaffected.
+
+- **Changing Timeout in the AI Game Developer window threw a `NullReferenceException`** before saving: it
+  refreshed a stdio-config text field the window no longer has.
 
 - **`EntityId` wire format moved from JSON number to JSON string of decimal digits**
   (Unity 6.5+ paths only). Closes #759, resolves #754. JS-based MCP clients
@@ -30,6 +212,15 @@
   `AssetObjectRefConverter`, `ComponentRefConverter`, `SceneRefConverter`,
   and the `Tool_Assets.Modify` `instanceID` injection. Pre-Unity-6.5 paths
   (legacy `int InstanceID`, safely inside the JS-safe range) are untouched.
+
+### Changed
+
+- **McpPlugin 8.9.0 -> 8.11.1** (`com.IvanMurzak.McpPlugin` / `.Common`), **ReflectorNet 5.4.2 -> 5.5.0**, local
+  MCP server pin (`McpServerManager.ServerVersion`) **9.2.14**. ReflectorNet 5.5.0's default `MainThread`
+  recognizes the main thread by its `SynchronizationContext` instead of managed thread id 1 (Unity 7 CoreCLR on
+  Windows runs the main thread with id 2); the plugin keeps its own `UnityMainThread`, so editor behavior does not
+  change. McpPlugin 8.11.1 and GameDev-MCP-Server 9.2.14 are rebuilds on it. The NuGet gate generation moves to
+  `UNITY_MCP_DEPS_14`.
 
 ### Changed (BREAKING)
 

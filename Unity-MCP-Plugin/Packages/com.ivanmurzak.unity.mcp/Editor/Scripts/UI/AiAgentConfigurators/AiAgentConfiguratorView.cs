@@ -383,7 +383,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <summary>
         /// An editable value field. Used by the Custom agent's editable skills path: edits are
         /// normalised + persisted through the same <see cref="UnityMcpPluginEditor.SkillsPath"/>
-        /// setter the dedicated skills section uses, and reflected back onto the shared
+        /// setter the dedicated skills section uses, which also mirrors it onto the shared
         /// configurator so a later <c>Describe()</c> renders the persisted value.
         /// </summary>
         private VisualElement BuildEditableField(string value)
@@ -398,9 +398,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 UnityMcpPluginEditor.Instance.Save();
 
                 var normalized = UnityMcpPluginEditor.SkillsPath;
-                if (_configurator is AgentConfig.Impl.CustomConfigurator custom)
-                    custom.EditableSkillsPath = normalized;
-
                 if (normalized != evt.newValue)
                     field.SetValueWithoutNotify(normalized);
             });
@@ -887,8 +884,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 UnityMcpPluginEditor.Instance.Save();
 
                 var normalized = UnityMcpPluginEditor.SkillsPath;
-                if (_configurator is AgentConfig.Impl.CustomConfigurator custom)
-                    custom.EditableSkillsPath = normalized;
                 if (normalized != evt.newValue)
                     inputPath.SetValueWithoutNotify(normalized);
             });

@@ -143,14 +143,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // Restore() logs and swallows a failed download (offline, a proxy, nuget.org down). Opening the gate then
             // would compile the plugin against missing DLLs (CS0246, Safe Mode): keep it closed until every package is
             // on disk. The next domain reload, or Tools > AI Game Developer > Dependencies > Force Resolve, retries.
-            if (NuGetPackageRestorer.AllPackagesInstalled())
+            var failures = NuGetPackageRestorer.LastFailures;
+            if (failures.Count > 0)
+                Debug.LogError($"{Tag} {NuGetPackageRestorer.FailureMessage(failures)}");
+            else if (NuGetPackageRestorer.AllPackagesInstalled())
                 RecompileGate.EnsureReadyDefine();
             else
-                Debug.LogError($"{Tag} Not every NuGet package could be installed (check the network / proxy access to " +
-                    "api.nuget.org). Unity-MCP stays disabled until they are; it retries on the next domain reload, or use " +
+                Debug.LogError($"{Tag} Not every NuGet package could be installed (see the errors above). Unity-MCP stays " +
+                    "disabled until they are; it retries on the next domain reload, or use " +
                     "Tools > AI Game Developer > Dependencies > Force Resolve NuGet DLLs.");
 
-            if (changed)
+            // No refresh after a failed fetch: a refresh reloads the domain, the reload runs this again, and offline that
+            // repeated forever. The next real reload or Force Resolve retries.
+            if (NuGetPackageRestorer.ShouldRefresh(changed, failures))
             {
                 Debug.Log($"{Tag} Packages restored. Refreshing AssetDatabase...");
                 AssetDatabase.Refresh();

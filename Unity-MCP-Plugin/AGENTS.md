@@ -14,8 +14,9 @@ Open this folder in Unity (2022.3+ minimum; compiles automatically).
 - `Tests~/EngineFree/` — Unity-free xUnit project over selected plugin sources (`dotnet test`).
 - `Assets/` — demo setup and bundled NuGet DLLs; `Commands/` — helper scripts
   (`start_mcp_inspector.bat`, needs Node.js).
-- `.claude/skills/` — generated from `[AiSkillDescription]`/`[AiSkillBody]` by the
-  `unity-skill-generate` tool; regenerate, don't hand-edit.
+- `.claude/skills/` (and the other agents' skill folders) — gitignored output of the plugin's skill
+  generator (`[AiSkillDescription]`/`[AiSkillBody]`; auto-generate in `Window/AI Game Developer`,
+  `unity-skill-generate`). It depends on the OS, enabled tools and extensions: never commit it.
 
 ## Critical invariants
 

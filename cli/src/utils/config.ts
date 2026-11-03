@@ -4,9 +4,32 @@ import { generatePortFromDirectory } from './port.js';
 
 const CONFIG_RELATIVE_PATH = 'UserSettings/AI-Game-Developer-Config.json';
 
+/**
+ * A tool / prompt / resource entry of the plugin's config file: whether MCP clients see it listed (tools/list).
+ * Visibility is not an access control: a hidden tool still runs when called by name. The plugin writes `visible`;
+ * a file saved before the rename carries `enabled`, which {@link readFeatures} still reads.
+ */
 export interface McpFeature {
   name: string;
-  enabled: boolean;
+  visible: boolean;
+}
+
+/**
+ * The well-formed entries of a feature group, as `{ name, visible }`. Accepts the pre-rename key `enabled`;
+ * `visible` wins when both are present. Anything else (non-objects, a non-string name, no boolean flag) is dropped.
+ */
+export function readFeatures(raw: unknown): McpFeature[] {
+  if (!Array.isArray(raw)) return [];
+  const features: McpFeature[] = [];
+  for (const entry of raw as unknown[]) {
+    if (typeof entry !== 'object' || entry === null) continue;
+    const { name, visible, enabled } = entry as { name?: unknown; visible?: unknown; enabled?: unknown };
+    if (typeof name !== 'string') continue;
+    const flag = typeof visible === 'boolean' ? visible : typeof enabled === 'boolean' ? enabled : undefined;
+    if (flag === undefined) continue;
+    features.push({ name, visible: flag });
+  }
+  return features;
 }
 
 export interface UnityConnectionConfig {
@@ -98,8 +121,8 @@ export function getOrCreateConfig(projectPath: string): UnityConnectionConfig {
 
 /**
  * Update features (tools, prompts, or resources) in the config.
- * - enableNames: set these to enabled=true
- * - disableNames: set these to enabled=false
+ * - enableNames: set these to visible=true
+ * - disableNames: set these to visible=false (hidden from tools/list; still callable by name)
  * - enableAll/disableAll: override all features
  */
 export function updateFeatures(
@@ -112,22 +135,16 @@ export function updateFeatures(
     disableAll?: boolean;
   }
 ): void {
-  const rawFeatures = config[featureType];
-  const features: McpFeature[] = Array.isArray(rawFeatures)
-    ? rawFeatures.filter(
-        (f): f is McpFeature =>
-          typeof f === 'object' && f !== null && typeof f.name === 'string' && typeof f.enabled === 'boolean'
-      )
-    : [];
+  const features = readFeatures(config[featureType]);
 
   if (options.enableAll) {
-    for (const f of features) f.enabled = true;
+    for (const f of features) f.visible = true;
     config[featureType] = features;
     return;
   }
 
   if (options.disableAll) {
-    for (const f of features) f.enabled = false;
+    for (const f of features) f.visible = false;
     config[featureType] = features;
     return;
   }
@@ -136,9 +153,9 @@ export function updateFeatures(
     for (const name of options.enableNames) {
       const existing = features.find((f) => f.name === name);
       if (existing) {
-        existing.enabled = true;
+        existing.visible = true;
       } else {
-        features.push({ name, enabled: true });
+        features.push({ name, visible: true });
       }
     }
   }
@@ -147,9 +164,9 @@ export function updateFeatures(
     for (const name of options.disableNames) {
       const existing = features.find((f) => f.name === name);
       if (existing) {
-        existing.enabled = false;
+        existing.visible = false;
       } else {
-        features.push({ name, enabled: false });
+        features.push({ name, visible: false });
       }
     }
   }

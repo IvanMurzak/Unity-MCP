@@ -2,6 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { isNewerVersion, isValidVersion } from './semver.js';
 import { silentLogger, type LibLogger } from '../lib/logger.js';
+import { unityExtensionDependencies } from './extension-compatibility.js';
 
 const PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
 const REGISTRY_NAME = 'package.openupm.com';
@@ -231,6 +232,20 @@ export function addPackageToManifest(
     logger.info(
       `${packageId} already at version ${currentVersion} (>= ${version}). Skipping version update. Pass an explicit version to force a specific version.`
     );
+  }
+
+  // UPM dependencies cannot vary by editor version. Select compatible external packages
+  // before Unity imports an extension; old package floors retain Unity 2022/2023 support.
+  const editorVersionPath = path.join(projectPath, 'ProjectSettings', 'ProjectVersion.txt');
+  const editorVersion = fs.existsSync(editorVersionPath)
+    ? /^m_EditorVersion:\s*(\S+)/m.exec(fs.readFileSync(editorVersionPath, 'utf8'))?.[1] ?? ''
+    : '';
+  for (const [dependency, required] of Object.entries(unityExtensionDependencies(packageId, editorVersion))) {
+    const existing = manifest.dependencies[dependency];
+    if (!existing || (isValidVersion(existing) && shouldUpdateVersion(existing, required))) {
+      manifest.dependencies[dependency] = required;
+      modified = true;
+    }
   }
 
   // --- Write back

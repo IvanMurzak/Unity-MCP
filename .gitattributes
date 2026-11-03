@@ -4,3 +4,9 @@
 /tests/chain-fixtures/** text eol=lf
 /.github/scripts/chain_fixture.py text eol=lf
 /.github/scripts/chain_feed.py text eol=lf
+
+# Imported modules retain their original source/test/meta bytes on every host.
+/extensions/** -text whitespace=cr-at-eol
+/templates/** -text whitespace=cr-at-eol
+# Vendored Code-Exec sources: hashes in its VENDORED.md are over LF bytes.
+/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/** text eol=lf

@@ -182,22 +182,30 @@ unity-mcp-cli open ./MyUnityProject
 
 </details>
 
+<details>
+  <summary>光照</summary>
+
+- RQL 数据源 `lighting`（通过 `rql-query` / `rql-mutate`）— 活动场景的环境（环境光、雾、天空盒、太阳、反射；可撤销）、其 Lighting Settings 资源与烘焙：`CreateSettings`、`UseSettings`、`Bake`、`CancelBake`、`ClearBakedData`、`BakeReflectionProbes`
+- `LightProbeGroup.PlaceGrid(size, spacing)` — 在盒形区域内均匀放置光照探针；`ReflectionProbe.Bake()` — 将单个 Custom 反射探针烘焙到其场景旁
+
+</details>
+
 ## 安装更多技能和工具
 
 如需更多工具，可安装扩展或[创建自定义工具](#add-custom-tool)。
 
 | 扩展 | 描述 |
 | --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Unity 动画附加工具集 |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | 用于 Cinemachine 的 MCP 工具 |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | 用于 Unity 输入系统的 MCP 工具 |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | 用于 AI 导航的 MCP 工具（NavMesh 表面、烘焙、智能体与链接） |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Unity 粒子系统附加工具集 |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Unity ProBuilder 附加工具集 |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | 用于 Unity Splines 的 MCP 工具 |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Unity 地形附加工具集 |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | 用于 Unity 2D 瓦片地图的 MCP 工具 |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | 用于 Unity Timeline 过场动画和序列的 MCP 工具 |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | Unity 动画附加工具集 |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | 用于 Cinemachine 的 MCP 工具 |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | 用于 Unity 输入系统的 MCP 工具 |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | 用于 AI 导航的 MCP 工具（NavMesh 表面、烘焙、智能体与链接） |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | Unity 粒子系统附加工具集 |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | Unity ProBuilder 附加工具集 |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | 用于 Unity Splines 的 MCP 工具 |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | Unity 地形附加工具集 |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | 用于 Unity 2D 瓦片地图的 MCP 工具 |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | 用于 Unity Timeline 过场动画和序列的 MCP 工具 |
 
 ![AI 游戏开发者 — Unity SKILLS 和 MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -551,8 +559,10 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 
 这是一个经典国际象棋游戏。让我们将机器人逻辑外包给 LLM。机器人应根据游戏规则进行落子。
 
+将仅用于游戏的工具标记为 `[AiToolType(Target = ToolTarget.Runtime)]`（`using com.IvanMurzak.McpPlugin.Common;`）：只有游戏会注册它们，即使 Editor 已连接，MCP 服务器也会把对它们的调用发送到正在运行的游戏。
+
 ```csharp
-[AiToolType]
+[AiToolType(Target = ToolTarget.Runtime)]
 public static class ChessGameAI
 {
     [AiTool("chess-do-turn", Title = "Do the turn")]
@@ -589,6 +599,7 @@ public static class ChessGameAI
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`             | **客户端** -> **服务器** <- **插件** 连接端口（默认：8080）       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | **插件** -> **服务器** 连接超时（毫秒）（默认：10000）            |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`     | **服务器** 等待单次工具调用的时间（毫秒）。工具调用只发送给 **插件** 一次，不会重发（默认：300000，若 `--plugin-timeout` 更大则取其值；基于 McpPlugin 8.11.0+ 的服务器） |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | **客户端** -> **服务器** 传输类型：`stdio` 或 `streamableHttp`（默认：`streamableHttp`） |
 | `MCP_AUTHORIZATION`           | `--authorization`        | 传入**客户端**连接的认证模式：`none` 或 `required`（默认：`none`） |
 | `MCP_PLUGIN_TOKEN`            | `--token`                | 当 `--authorization=required` 时，**客户端**需提供的 Bearer 令牌（默认：未设置） |
@@ -613,7 +624,7 @@ Unity MCP 插件在启动时读取以下环境变量（及命令行参数），�
 | `UNITY_MCP_TOKEN`           | `-token`                    | string                        | 强制设置认证令牌                                  |
 | `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | 强制设置插件配置的客户端传输方式                    |
 | `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | 强制设置插件是否保持本地服务器进程运行       |
-| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | 逗号分隔的工具 ID      | 仅启用列出的工具，其余全部禁用。未知 ID 将记录为错误日志。 |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | 逗号分隔的工具 ID      | 仅向 MCP 客户端显示列出的工具（tools/list），其余全部隐藏（隐藏的工具按名称调用时仍会运行）。未知 ID 将记录为错误日志。 |
 
 > 命令行参数优先于环境变量。两者均会覆盖已保存的配置文件值。短标志 `-url`、`-token` 和 `-auth` 是别名；完整的 `-UNITY_MCP_*` 参数名也被接受。
 

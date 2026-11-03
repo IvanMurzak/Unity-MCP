@@ -131,4 +131,11 @@ Manage scene objects and hierarchy.
 | :--- | :--- | :--- |
 | **Profiler (RQL)** | `rql-query` / `rql-mutate` on source `profiler` | Memory, rendering, script and frame snapshots and module flags; calls `Start`, `Stop`, `ClearFrames`, `EnableModule`, `Save`, `Load`. |
 
+## 💡 Lighting
+| Tool | ID | Description |
+| :--- | :--- | :--- |
+| **Lighting (RQL)** | `rql-query` / `rql-mutate` on source `lighting` | The active scene's environment (ambient, fog, skybox, sun, reflections; undoable), Lighting Settings asset and the bake; calls `CreateSettings`, `UseSettings`, `Bake`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`. |
+| **Light probes (RQL)** | `call PlaceGrid(size, spacing)` on a `LightProbeGroup` | Fill a box around the group with evenly spaced probes. |
+| **Reflection probes (RQL)** | `call Bake()` on a `ReflectionProbe` | Bake a Custom probe into a texture next to its scene, re-render a Realtime one (Baked probes bake with the lighting). |
+
 ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

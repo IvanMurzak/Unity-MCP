@@ -9,7 +9,9 @@
 // and cannot introduce a side effect. `ExtensionDescriptor` is the catalogue entry
 // shape, needed by `InstallExtensionOptions.catalog`.
 import type { ExtensionDescriptor } from '../utils/extensions-catalog.js';
+import type { UnitySessionOptions } from './editor-session.js';
 import type {
+  EditorSession,
   ProjectKeyResolver,
   SetupMcpCredential,
   SetupMcpResult as CoreSetupMcpResult,
@@ -59,6 +61,8 @@ export type ProgressEvent =
       /** Platform on which the dismiss was performed (`win32` | `darwin` | `linux`). */
       platform: string;
     }
+  // openProject `headless`: editor-session progress ("Starting the editor (headless)...").
+  | { phase: 'session-status'; message: string }
   | { phase: 'done'; message: string };
 
 export type ProgressCallback = (event: ProgressEvent) => void;
@@ -278,6 +282,9 @@ export interface ConfigureOptions {
 
 export interface McpFeatureSnapshot {
   name: string;
+  /** Listed to MCP clients (tools/list). A hidden tool still runs when called by name. */
+  visible: boolean;
+  /** @deprecated Old name of {@link McpFeatureSnapshot.visible} (same value), kept for library callers. */
   enabled: boolean;
 }
 
@@ -454,6 +461,26 @@ export interface OpenProjectOptions {
    */
   startServer?: boolean;
   /**
+   * Launch the editor without a window (`-batchmode`, graphics kept so camera screenshots still render) and wait
+   * until its MCP server answers. Implies `keepConnected`. A running editor of the project is reused; one started
+   * here is recorded in the project's session lease (`.ai-game-dev/session.json`), so `close --owned-only` may close
+   * it, and parallel calls start only one editor.
+   *
+   * Without `headless`, a headless editor this CLI started for the project is closed first (it saves), so the
+   * window can open.
+   */
+  headless?: boolean;
+  /**
+   * Quit the editor after this many seconds without an MCP tool call. Headless: sent as
+   * `AIGD_SESSION_IDLE_SECONDS`; with a window: as `UNITY_MCP_IDLE_TIMEOUT`. Meant for an editor the CLI starts for
+   * itself (e.g. `exec`); an editor opened by the user is never given one.
+   */
+  idleTimeoutSeconds?: number;
+  /** `headless` only: how long to wait for the MCP server. Default 300000. */
+  readyTimeoutMs?: number;
+  /** Test seam: builds the project's editor session (default `createUnitySession`). */
+  sessionFactory?: (options: UnitySessionOptions) => EditorSession<string>;
+  /**
    * If `true` (the default), poll for the Unity Editor's
    * "compile errors at launch" dialog after the editor process has
    * been spawned and click `Ignore` (or the platform-equivalent
@@ -498,6 +525,11 @@ export interface OpenProjectOptions {
    */
   launchDismissAbortSignal?: AbortSignal;
   /**
+   * Starts the editor in place of the default detached `child_process.spawn` (an embedder that launches processes
+   * its own way). Not used by `headless`. See {@link EditorSpawnImpl}.
+   */
+  spawnImpl?: EditorSpawnImpl;
+  /**
    * Optional progress callback — fires for `start`,
    * `detecting-editor-version`, `editors-located`, `editor-resolved`,
    * `connection-details`, `launching-editor`, `editor-launched`,
@@ -506,6 +538,19 @@ export interface OpenProjectOptions {
    */
   onProgress?: ProgressCallback;
 }
+
+/**
+ * Starts the editor for `openProject`: `editorPath` with `args`, detached, in `env` (the full environment:
+ * `process.env` plus the MCP variables). Returns the started process (its `pid` is read once) or a promise of the
+ * editor's pid, which `openProject` waits for before it reports `editor-launched` and returns `editorPid`
+ * (`undefined`: started, pid unknown). A rejection, or a throw, fails the open: the editor did not start.
+ * The promise must settle: `openProject` sets no deadline of its own, the implementation owns it.
+ */
+export type EditorSpawnImpl = (
+  editorPath: string,
+  args: string[],
+  env: NodeJS.ProcessEnv,
+) => { pid?: number } | Promise<number | undefined>;
 
 /** Successful `openProject` outcome. Narrow with `kind === 'success'`. */
 export interface OpenProjectSuccess {
@@ -533,6 +578,8 @@ export interface OpenProjectSuccess {
    * `editorPid` will be the existing process's PID in that case.
    */
   alreadyRunning?: boolean;
+  /** `headless` only: the server URL that answered. */
+  baseUrl?: string;
 }
 
 /** Failed `openProject` outcome. Narrow with `kind === 'failure'`. */
@@ -574,6 +621,8 @@ export interface OpenEnvInputs {
   keepConnected?: OpenProjectOptions['keepConnected'];
   transport?: OpenProjectOptions['transport'];
   startServer?: OpenProjectOptions['startServer'];
+  idleTimeoutSeconds?: OpenProjectOptions['idleTimeoutSeconds'];
+  headless?: OpenProjectOptions['headless'];
 }
 
 // ---------------------------------------------------------------------------
@@ -771,6 +820,11 @@ export interface RunToolOptions {
    * consulted for an explicit `token` / `url` override.
    */
   refreshCloudToken?: () => Promise<string | undefined> | string | undefined;
+  /**
+   * Set when `url` + `token` were resolved by the caller from the shared machine store (Cloud mode): a 401 then
+   * refreshes that credential once, as when the lib resolves the connection itself.
+   */
+  tokenFromCloudStore?: boolean;
 }
 
 /** Successful `runTool` / `runSystemTool` outcome. Narrow with `kind === 'success'`. */

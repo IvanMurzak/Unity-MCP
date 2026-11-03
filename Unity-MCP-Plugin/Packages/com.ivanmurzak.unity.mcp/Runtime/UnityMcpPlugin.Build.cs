@@ -172,7 +172,7 @@ namespace com.IvanMurzak.Unity.MCP
         {
             _logger.LogTrace("{method} called.", nameof(ApplyConfigToMcpPlugin));
 
-            // Enable/Disable tools based on config
+            // Show/hide tools based on config (visibility only: hidden tools still run when called by name)
             var toolManager = mcpPlugin.McpManager.ToolManager;
             if (toolManager != null)
             {
@@ -193,13 +193,13 @@ namespace com.IvanMurzak.Unity.MCP
                                 EnvironmentUtils.EnvTools, requestedId);
                     }
 
-                    // Apply: enable only tools in the override list, disable all others
+                    // Apply: show only tools in the override list, hide all others
                     foreach (var tool in allTools)
                     {
-                        var isEnabled = enabledSet.Contains(tool.Name!);
-                        toolManager.SetToolEnabled(tool.Name!, isEnabled);
-                        _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled} (env override)",
-                            nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
+                        var isVisible = enabledSet.Contains(tool.Name!);
+                        toolManager.SetToolVisible(tool.Name!, isVisible);
+                        _logger.LogDebug("{method}: Tool '{tool}' visible: {isVisible} (env override)",
+                            nameof(ApplyConfigToMcpPlugin), tool.Name, isVisible);
                     }
                 }
                 else
@@ -207,10 +207,10 @@ namespace com.IvanMurzak.Unity.MCP
                     foreach (var tool in toolManager.GetAllTools())
                     {
                         var toolFeature = unityConnectionConfig.Tools.FirstOrDefault(t => t.Name == tool.Name!);
-                        var isEnabled = toolFeature?.Enabled ?? tool.Enabled;
-                        toolManager.SetToolEnabled(tool.Name!, isEnabled);
-                        _logger.LogDebug("{method}: Tool '{tool}' enabled: {isEnabled}",
-                            nameof(ApplyConfigToMcpPlugin), tool.Name, isEnabled);
+                        var isVisible = toolFeature?.Visible ?? tool.Visible;
+                        toolManager.SetToolVisible(tool.Name!, isVisible);
+                        _logger.LogDebug("{method}: Tool '{tool}' visible: {isVisible}",
+                            nameof(ApplyConfigToMcpPlugin), tool.Name, isVisible);
                     }
                 }
             }
@@ -222,10 +222,10 @@ namespace com.IvanMurzak.Unity.MCP
                 foreach (var prompt in promptManager.GetAllPrompts())
                 {
                     var promptFeature = unityConnectionConfig.Prompts.FirstOrDefault(p => p.Name == prompt.Name);
-                    var isEnabled = promptFeature?.Enabled ?? prompt.Enabled;
-                    promptManager.SetPromptEnabled(prompt.Name, isEnabled);
-                    _logger.LogDebug("{method}: Prompt '{prompt}' enabled: {isEnabled}",
-                        nameof(ApplyConfigToMcpPlugin), prompt.Name, isEnabled);
+                    var isVisible = promptFeature?.Visible ?? prompt.Enabled;
+                    promptManager.SetPromptEnabled(prompt.Name, isVisible);
+                    _logger.LogDebug("{method}: Prompt '{prompt}' visible: {isVisible}",
+                        nameof(ApplyConfigToMcpPlugin), prompt.Name, isVisible);
                 }
             }
 
@@ -236,10 +236,10 @@ namespace com.IvanMurzak.Unity.MCP
                 foreach (var resource in resourceManager.GetAllResources())
                 {
                     var resourceFeature = unityConnectionConfig.Resources.FirstOrDefault(r => r.Name == resource.Name);
-                    var isEnabled = resourceFeature?.Enabled ?? resource.Enabled;
-                    resourceManager.SetResourceEnabled(resource.Name, isEnabled);
-                    _logger.LogDebug("{method}: Resource '{resource}' enabled: {isEnabled}",
-                        nameof(ApplyConfigToMcpPlugin), resource.Name, isEnabled);
+                    var isVisible = resourceFeature?.Visible ?? resource.Enabled;
+                    resourceManager.SetResourceEnabled(resource.Name, isVisible);
+                    _logger.LogDebug("{method}: Resource '{resource}' visible: {isVisible}",
+                        nameof(ApplyConfigToMcpPlugin), resource.Name, isVisible);
                 }
             }
 

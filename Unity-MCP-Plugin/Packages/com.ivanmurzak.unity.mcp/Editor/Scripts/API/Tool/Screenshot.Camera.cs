@@ -29,7 +29,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Screenshot / Camera",
             ReadOnlyHint = true,
             IdempotentHint = true,
-            Enabled = false
+            Visible = false
         )]
         [AiSkillDescription("Capture a screenshot from a Unity `Camera` and return it as a PNG image " +
             "for direct LLM inspection. Falls back to `Camera.main` (then any active camera) when `cameraRef` is null. " +
@@ -58,6 +58,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             int height = 1080
         )
         {
+            if (NoGraphicsError() is { } noGraphics)
+                return noGraphics;
+
             if (width <= 0 || height <= 0)
                 return ResponseCallTool.Error($"Width and height must be greater than 0. Got {width}x{height}.");
             if (width > MaxDimension || height > MaxDimension)

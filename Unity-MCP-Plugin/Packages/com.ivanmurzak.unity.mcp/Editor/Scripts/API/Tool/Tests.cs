@@ -43,10 +43,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         const string PendingTestClassKey = "MCP_PendingTestRun_TestClass";
         const string PendingTestMethodKey = "MCP_PendingTestRun_TestMethod";
         const string PendingTestQueryKey = "MCP_PendingTestRun_TestQuery";
-        const string ActiveTestRunStartedUtcTicksKey = "Unity_MCP_TestRunner_ActiveStartedUtcTicks";
+        internal const string ActiveTestRunStartedUtcTicksKey = "Unity_MCP_TestRunner_ActiveStartedUtcTicks";
+        internal const string RunSceneSetupKey = "Unity_MCP_TestRunner_RunSceneSetup";
 
         static readonly TimeSpan ActiveTestRunTimeoutGrace = TimeSpan.FromMinutes(1);
         static readonly TimeSpan MinimumActiveTestRunLease = TimeSpan.FromMinutes(10);
+        internal static readonly TimeSpan TeardownTimeout = TimeSpan.FromSeconds(60);
+
+        // The request CompleteTestRunAfterTeardown is waiting to answer.
+        static string? _waitingRequestId;
 
         static Tool_Tests()
         {
@@ -108,7 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             get
             {
-                var configuredTimeout = TimeSpan.FromMilliseconds(Math.Max(1000, UnityMcpPluginEditor.TimeoutMs));
+                var configuredTimeout = TimeSpan.FromMilliseconds(Math.Max(1000, UnityMcpPluginEditor.EffectiveToolTimeoutMs));
                 var staleAfter = configuredTimeout + ActiveTestRunTimeoutGrace;
                 return staleAfter < MinimumActiveTestRunLease ? MinimumActiveTestRunLease : staleAfter;
             }
@@ -149,6 +154,87 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 TestResultCollector.TestCallRequestID.Value = string.Empty;
                 SessionState.EraseString(ActiveTestRunStartedUtcTicksKey);
             }
+        }
+
+        /// <summary>
+        /// Starts Unity's run, first recording the open scenes: Unity restores exactly these when its run is over
+        /// (see <see cref="CompleteTestRunAfterTeardown"/>).
+        /// </summary>
+        static void ExecuteTestRun(Filter filter)
+        {
+            SessionState.SetString(RunSceneSetupKey, OpenScenePaths());
+            var testRunnerApi = TestRunnerApi; // creates the collector if needed
+            _resultCollector?.StartLogCapture();
+            try
+            {
+                testRunnerApi.Execute(new ExecutionSettings(filter));
+            }
+            catch
+            {
+                // No run, so no RunFinished / OnError to stop the capture: it would collect every Editor log until the next run.
+                _resultCollector?.StopLogCapture();
+                throw;
+            }
+        }
+
+        internal static string OpenScenePaths()
+            => string.Join("\n", Enumerable.Range(0, SceneManager.sceneCount).Select(i => SceneManager.GetSceneAt(i).path));
+
+        /// <summary>
+        /// Unity's run is over once the Editor has left Play Mode and the scenes open when the run started are open again
+        /// (Unity's RestoreSceneSetupTask, near the end of its teardown). The test runner's own "run active" flag is internal.
+        /// </summary>
+        internal static bool IsTestRunTeardownComplete(bool isPlayingOrWillChangePlaymode, Func<string> openScenePaths, string runScenePaths)
+            => !isPlayingOrWillChangePlaymode && openScenePaths() == runScenePaths;
+
+        /// <summary>
+        /// Delivers <paramref name="response"/> to <paramref name="requestId"/> and frees the test-run lock once Unity's run
+        /// is over. Unity raises RunFinished (and OnError) before that: leaving Play Mode, the post-build cleanup and the
+        /// scene restore follow over the next frames, and a run started meanwhile runs on top of this one (#1049).
+        /// Gives up waiting after <paramref name="timeout"/> (default <see cref="TeardownTimeout"/>).
+        /// </summary>
+        internal static void CompleteTestRunAfterTeardown(string requestId, ResponseCallTool response, TimeSpan? timeout = null)
+        {
+            // OnError can follow RunFinished (a teardown task failing): the request is answered once.
+            if (_waitingRequestId == requestId)
+                return;
+            _waitingRequestId = requestId;
+
+            var runScenePaths = SessionState.GetString(RunSceneSetupKey, string.Empty);
+            if (string.IsNullOrEmpty(runScenePaths))
+                runScenePaths = OpenScenePaths();
+            var waitFor = timeout ?? TeardownTimeout;
+            var deadline = DateTime.UtcNow + waitFor;
+
+            void WaitForTeardown()
+            {
+                var complete = IsTestRunTeardownComplete(EditorApplication.isPlayingOrWillChangePlaymode, OpenScenePaths, runScenePaths);
+                if (!complete && DateTime.UtcNow < deadline)
+                    return;
+
+                EditorApplication.update -= WaitForTeardown;
+                if (_waitingRequestId == requestId)
+                    _waitingRequestId = null;
+                if (!complete)
+                    UnityMcpPluginEditor.Instance.LogWarn("Unity's test run did not finish its teardown within {timeout} s; answering anyway.",
+                        typeof(Tool_Tests), waitFor.TotalSeconds);
+
+                SessionState.EraseString(RunSceneSetupKey);
+                CompleteTestRun(requestId, response);
+            }
+
+            EditorApplication.update += WaitForTeardown;
+        }
+
+        /// <summary>Frees the test-run lock and delivers <paramref name="response"/> to <paramref name="requestId"/>.</summary>
+        static void CompleteTestRun(string requestId, ResponseCallTool response)
+        {
+            ClearActiveTestRun(requestId);
+            _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
+            {
+                RequestId = requestId,
+                Result = response.SetRequestID(requestId)
+            });
         }
 
         internal static void SetActiveTestRunStartedUtc(DateTime utcStarted)
@@ -249,8 +335,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (UnityMcpPlugin.IsLogEnabled(LogLevel.Info))
                 Debug.Log($"[TestRunner] Resuming test run after recompilation. Mode: {testMode}, Filters: {filterParams}");
 
-            var filter = CreateTestFilter(testMode, filterParams);
-            TestRunnerApi.Execute(new ExecutionSettings(filter));
+            // Started in this tick, before anything can reload the domain again; an empty run is answered as an error.
+            ExecuteTestRun(CreateTestFilter(testMode, filterParams));
         }
 
         /// <summary>
@@ -261,14 +347,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             try
             {
-                var validation = await ValidateTestFilters(TestRunnerApi, testMode, filterParams);
+                // One filter for the check and the run: the check counts exactly what Unity will run.
+                var filter = CreateTestFilter(testMode, filterParams);
+                var validation = await ValidateTestFilters(TestRunnerApi, filter, filterParams);
                 if (validation != null)
                 {
                     FailDeferredTestRun(requestId, validation);
                     return;
                 }
 
-                TestRunnerApi.Execute(new ExecutionSettings(CreateTestFilter(testMode, filterParams)));
+                ExecuteTestRun(filter);
             }
             catch (Exception ex)
             {
@@ -288,11 +376,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return;
             }
 
-            _ = UnityMcpPluginEditor.NotifyToolRequestCompleted(new RequestToolCompletedData
-            {
-                RequestId = requestId,
-                Result = ResponseCallValueTool<TestRunResponse>.Error(message).SetRequestID(requestId)
-            });
+            CompleteTestRun(requestId, ResponseCallValueTool<TestRunResponse>.Error(message));
         }
 
         /// <summary>
@@ -369,6 +453,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 return $"Cannot run tests: another test run is already in progress.{suffix} Wait for it to finish and try again.";
             }
+
+            public const string EditorInPlayMode =
+                "Cannot run tests: the Editor is in Play Mode (or a previous test run is still finishing). " +
+                "Exit Play Mode or wait a few seconds and try again.";
 
             public static string NoTestsFound(TestFilterParameters filterParams)
             {

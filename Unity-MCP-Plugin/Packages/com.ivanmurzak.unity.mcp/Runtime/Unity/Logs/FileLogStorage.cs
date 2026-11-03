@@ -384,7 +384,7 @@ namespace com.IvanMurzak.Unity.MCP
         }
 
         /// <summary>
-        /// Closes and disposes the current file stream if open. Clears the log cache file.
+        /// Closes the writer and clears the cache. Readers may keep the file open on Windows.
         /// </summary>
         public virtual void Clear()
         {
@@ -400,7 +400,17 @@ namespace com.IvanMurzak.Unity.MCP
                 fileWriteStream = null;
 
                 if (File.Exists(filePath))
-                    File.Delete(filePath);
+                {
+                    try { File.Delete(filePath); }
+                    catch (IOException exception) when ((exception.HResult & 0xffff) == 32 || (exception.HResult & 0xffff) == 33)
+                    {
+                        // Query readers share read/write access, but not deletion. CoreCLR enforces
+                        // that Windows restriction: truncate without closing someone else's reader.
+                        using var clear = new FileStream(filePath, FileMode.Open, FileAccess.Write, FileShare.ReadWrite);
+                        clear.SetLength(0);
+                        return;
+                    }
+                }
 
                 if (File.Exists(filePath))
                     _logger.LogError("Failed to delete cache file: {file}", filePath);
@@ -626,17 +636,30 @@ namespace com.IvanMurzak.Unity.MCP
 
         public virtual void Dispose()
         {
-            if (!_isDisposed.TrySetTrue())
-                return; // already disposed
+            Dispose(flush: true);
+            GC.SuppressFinalize(this);
+        }
 
-            try
+        // No flush from the finalizer: the file stream may be finalized already.
+        ~FileLogStorage() => Dispose(flush: false);
+
+        void Dispose(bool flush)
+        {
+            lock (_fileMutex)
             {
-                Flush();
-            }
-            finally
-            {
-                lock (_fileMutex)
+                if (_isDisposed.Value)
+                    return; // already disposed
+
+                try
                 {
+                    // Flush before setting the flag: Flush is a no-op once disposed.
+                    if (flush)
+                        Flush();
+                }
+                finally
+                {
+                    _isDisposed.TrySetTrue();
+
                     fileWriteStream?.Dispose();
                     fileWriteStream = null;
 
@@ -646,10 +669,6 @@ namespace com.IvanMurzak.Unity.MCP
                         PersistSequence(_sequence);
                 }
             }
-
-            GC.SuppressFinalize(this);
         }
-
-        ~FileLogStorage() => Dispose();
     }
 }

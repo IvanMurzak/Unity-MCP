@@ -52,10 +52,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             if (value is List<object?> items && items.All(i => i is ObjectValue o && o.ContainsKey("typeName")))
             {
                 var list = new SerializedMemberList();
-                foreach (ObjectValue o in items)
+                foreach (var o in items.Cast<ObjectValue>())
                 {
                     var member = new SerializedMember { name = o.TryGetValue("name", out var n) ? n as string : null, typeName = o["typeName"] as string ?? "" };
-                    if (o.TryGetValue("value", out var v)) member.SetJsonValue(ToJson(v).ToJsonString());
+                    if (o.TryGetValue("value", out var v)) member.SetJsonValue(JsonText(v));
                     list.Add(member);
                 }
                 result = list;
@@ -80,13 +80,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             member = null;
             if (typeName == null)
             {
-                reason = $"parameter '{name}': {value!.GetType().Name} values are not supported (use a GameObject / Component reference, text, a number or a bool)";
+                reason = value is System.Collections.IEnumerable && !(value is string) && !(value is ObjectValue)
+                    ? $"parameter '{name}': lists are not supported (pass each value as its own parameter, or text to split in the code)"
+                    : value is Missing
+                        // A name RQL cannot resolve here, e.g. a source (objects, scenes) used as a value.
+                        ? $"parameter '{name}' has no value: its expression names nothing (sources such as objects are not values; use unity.find(\"Name\"), ref(\"GameObject#12\") or a literal)"
+                        : $"parameter '{name}': {value!.GetType().Name} values are not supported (use a GameObject / Component reference, text, a number or a bool)";
                 return false;
             }
             member = new SerializedMember { name = name, typeName = typeName };
-            member.SetJsonValue(ToJson(value).ToJsonString());
+            member.SetJsonValue(JsonText(value));
             return true;
         }
+
+        private static string JsonText(object? v) => ToJson(v)?.ToJsonString() ?? "null";
 
         // JSON in the form script-execute's ReflectorNet deserialization expects; Unity objects as {"instanceID": N}.
         private static JsonNode? ToJson(object? v) => v switch

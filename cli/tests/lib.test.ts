@@ -346,8 +346,8 @@ describe('configure', () => {
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') throw new Error('expected success kind');
     const tools = result.snapshot.tools;
-    expect(tools).toContainEqual({ name: 'tool-a', enabled: true });
-    expect(tools).toContainEqual({ name: 'tool-b', enabled: true });
+    expect(tools).toContainEqual({ name: 'tool-a', visible: true, enabled: true });
+    expect(tools).toContainEqual({ name: 'tool-b', visible: true, enabled: true });
   });
 
   it('disables a previously-enabled tool', async () => {
@@ -363,8 +363,8 @@ describe('configure', () => {
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') throw new Error('expected success kind');
     const tools = result.snapshot.tools;
-    expect(tools).toContainEqual({ name: 'tool-a', enabled: false });
-    expect(tools).toContainEqual({ name: 'tool-b', enabled: true });
+    expect(tools).toContainEqual({ name: 'tool-a', visible: false, enabled: false });
+    expect(tools).toContainEqual({ name: 'tool-b', visible: true, enabled: true });
   });
 
   it('returns kind:"failure" when the project path does not exist', async () => {
@@ -391,8 +391,8 @@ describe('configure', () => {
     });
     expect(result.kind).toBe('success');
     if (result.kind !== 'success') throw new Error('expected success kind');
-    expect(result.snapshot.prompts).toContainEqual({ name: 'p1', enabled: true });
-    expect(result.snapshot.resources).toContainEqual({ name: 'r1', enabled: false });
+    expect(result.snapshot.prompts).toContainEqual({ name: 'p1', visible: true, enabled: true });
+    expect(result.snapshot.resources).toContainEqual({ name: 'r1', visible: false, enabled: false });
     expect(result.snapshot.tools).toEqual([]);
   });
 

@@ -45,6 +45,7 @@ The server can be configured using environment variables.
 | `MCP_PLUGIN_PORT`             | `8080`           | The port the server listens on for both Client (HTTP) and Plugin (SignalR) connections. |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `streamableHttp` | Transport for the Client connection: `streamableHttp` or `stdio`.                       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `10000`          | Timeout in milliseconds for Plugin responses.                                           |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `300000`         | How long the server waits for one tool call, in milliseconds. A tool call is sent to the Plugin once and never re-sent; when unset, `MCP_PLUGIN_CLIENT_TIMEOUT` if larger. Servers built on McpPlugin 8.11.0+. |
 | `MCP_AUTHORIZATION`           | `none`           | Authentication mode for incoming Client connections: `none` or `required`.              |
 | `MCP_PLUGIN_TOKEN`            | *(unset)*        | Bearer token is optional. If set - server accept only connection with this exact token. Works only with `MCP_AUTHORIZATION=required`. |
 

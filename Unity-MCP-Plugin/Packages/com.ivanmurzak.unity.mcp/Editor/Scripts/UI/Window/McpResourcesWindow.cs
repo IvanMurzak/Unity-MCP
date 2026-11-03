@@ -63,7 +63,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             allItems = refreshed;
         }
 
-        protected override void OnItemToggleChanged(ResourceViewModel viewModel, bool isEnabled)
+        protected override void OnItemToggleChanged(ResourceViewModel viewModel, bool isVisible)
         {
             var resourceManager = UnityMcpPluginEditor.Instance.Resources;
             if (resourceManager == null)
@@ -72,12 +72,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-            viewModel.IsEnabled = isEnabled;
+            viewModel.IsVisible = isVisible;
             if (!string.IsNullOrWhiteSpace(viewModel.Name))
             {
-                Logger.LogTrace("{method} Setting resource '{name}' enabled state to {enabled}.",
-                    nameof(OnItemToggleChanged), viewModel.Name, isEnabled);
-                resourceManager.SetResourceEnabled(viewModel.Name, isEnabled);
+                Logger.LogTrace("{method} Setting resource '{name}' visibility to {visible}.",
+                    nameof(OnItemToggleChanged), viewModel.Name, isVisible);
+                resourceManager.SetResourceEnabled(viewModel.Name, isVisible);
                 UnityMcpPluginEditor.Instance.Save();
             }
         }
@@ -126,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             public string? Description { get; set; }
             public string? Uri { get; set; }
             public string? MimeType { get; set; }
-            public bool IsEnabled { get; set; }
+            public bool IsVisible { get; set; }
             public PlayerPrefsBool descriptionExpanded;
 
             public ResourceViewModel(IResourceManager resourceManager, IRunResource resource)
@@ -135,7 +135,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 Description = resource.Description;
                 Uri = resource.Route;
                 MimeType = resource.MimeType;
-                IsEnabled = resourceManager?.IsResourceEnabled(resource.Name) == true;
+                IsVisible = resourceManager?.IsResourceEnabled(resource.Name) == true;
                 descriptionExpanded = new PlayerPrefsBool(GetFoldoutKey(resource.Name, "description-foldout"));
             }
 

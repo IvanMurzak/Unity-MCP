@@ -97,6 +97,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-unity`](#install-unity)
   - [`open`](#open)
   - [`run-tool`](#run-tool)
+  - [`exec`](#exec)
   - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
   - [`setup-skills`](#setup-skills)
@@ -250,6 +251,8 @@ unity-mcp-cli open ./MyGame
 | `--tools <names>` | `UNITY_MCP_TOOLS` | 否 | 要启用的工具列表（逗号分隔） |
 | `--transport <method>` | `UNITY_MCP_TRANSPORT` | 否 | 传输方式：`streamableHttp` 或 `stdio` |
 | `--start-server <value>` | `UNITY_MCP_START_SERVER` | 否 | 设置为 `true` 或 `false` 以控制 MCP 服务器自动启动 |
+| `--headless` | — | 否 | 无窗口启动编辑器（`-batchmode`；图形保持开启，相机仍可渲染），并等待其 MCP 服务器响应。隐含 `--keep-connected`。复用项目已运行的编辑器；在此启动的编辑器归 CLI 所有（`close --owned-only`），并行调用只启动一个。 |
+| `--idle-timeout <seconds>` | `AIGD_SESSION_IDLE_SECONDS`（headless）/ `UNITY_MCP_IDLE_TIMEOUT`（窗口） | 否 | 在这么多秒内没有工具调用时退出编辑器（先保存已修改的场景和资源） |
 
 编辑器进程以分离模式启动 — CLI 将立即返回。
 
@@ -324,6 +327,36 @@ unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `exec`
+
+在 Unity Editor 中运行 C# 并输出结果。如果项目已打开（有窗口或 headless），`exec` 会使用该编辑器且绝不关闭它。否则它会启动一个 headless 编辑器，为后续调用保持预热，并在 `--idle` 秒内没有工具调用时自动退出（会保存已修改的场景和资源）。它启动的编辑器记录在项目的会话租约（`.ai-game-dev/session.json`）中，并在文件锁下启动，因此并行的 `exec` 调用共享一个编辑器；`close --owned-only` 会关闭它，`open`（带窗口）会在打开窗口前先关闭它。这些会话文件仅属于本机：`.ai-game-dev/.gitignore` 会将它们排除在 git 之外。如果项目在一个并非由 CLI 启动的编辑器中打开，且其插件在 60 秒内没有响应（未连接，或连接到 ai-game.dev 云端），`exec` 会给出提示并停止，而不是一直等待：请连接插件、将其连接切换为 Custom（本地服务器），或传入 `--url`。
+
+```bash
+# 最后一个表达式即为结果
+unity-mcp-cli exec 'GameObject.FindObjectsOfType<Camera>().Length'
+
+# 从文件或 stdin 读取，附加命名空间和辅助文件
+unity-mcp-cli exec -f ./snippet.cs --using MyGame.Gameplay --include Helpers/
+echo 'Application.unityVersion' | unity-mcp-cli exec
+```
+
+| 选项 | 必需 | 描述 |
+|---|---|---|
+| `[code]` | 否 | C# 片段：普通语句，最后一个表达式即为结果。也可用 `-f` 或 stdin。 |
+| `--path <path>` | 否 | Unity 项目路径（默认：当前目录） |
+| `-f, --file <file>` | 否 | 从文件读取代码（`-` 表示 stdin） |
+| `--using <namespace>` | 否 | 额外的命名空间，可重复 |
+| `--include <path>` | 否 | 辅助 `.cs` 文件或文件夹（递归），相对于 `<Project>/.ai-game-dev/snippets`，可重复 |
+| `--window` | 否 | 以窗口方式而非 headless 启动编辑器（仅在尚未运行时） |
+| `--idle <seconds>` | 否 | 由 `exec` 启动的编辑器空闲这么多秒后退出（默认：300） |
+| `--ready-timeout <ms>` | 否 | 等待编辑器就绪的最长时间（默认：300000） |
+| `--timeout <ms>` | 否 | 工具调用超时（默认：310000） |
+| `--raw` | 否 | 输出原始工具响应 JSON |
+| `--url <url>` | 否 | 服务器 URL 覆盖；本地 URL 会让新启动的编辑器启动该服务器 |
+| `--token <token>` | 否 | Bearer 令牌覆盖 |
+
+`exec` 调用 `script-execute` 工具，因此片段、`usings` 和 `include` 需要支持 Code-Exec 的插件版本。编译错误会以退出码 1 结束，并指向你自己的代码行。
 
 ## `wait-for-ready`
 

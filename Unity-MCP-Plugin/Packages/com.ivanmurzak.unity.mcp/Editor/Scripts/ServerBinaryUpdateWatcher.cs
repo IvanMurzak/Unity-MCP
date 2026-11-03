@@ -50,6 +50,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static ServerBinaryUpdateWatcher()
         {
+            // The server binary belongs to the main editor, not to an asset import worker (#1050).
+            if (AssetDatabase.IsAssetImportWorkerProcess())
+                return;
+
             // -= before += guards against double-subscription if this constructor ever re-runs without a full
             // domain swap (mirrors NuGetDependencyResolver).
             PackageManagerEvents.registeredPackages -= OnRegisteredPackages;

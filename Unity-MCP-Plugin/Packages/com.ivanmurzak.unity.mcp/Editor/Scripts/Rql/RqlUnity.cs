@@ -33,6 +33,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>Most assets <c>unity.assets(...)</c> loads per call (loading assets is expensive).</summary>
         public const int MaxAssets = 200;
 
+        /// <summary>Targets one rql-mutate call may change without <c>max_targets</c>.</summary>
+        public const int DefaultMaxTargets = 200;
+
         private static RqlEngine? _engine;
 
         public static RqlEngine Engine => _engine ??= Create();
@@ -42,32 +45,65 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public static RqlEngine Create()
         {
-            var engine = new RqlEngine(AccessorMode.Compiled) { RuntimeName = "unity" };
+            // ref("Name") hints name the finder, no-match hints the schema tool, permission-denied hints the mutation tool; the
+            // tools take no budgets argument (only rql-mutate's max_targets, which the mutation-limit hint names), so no hint
+            // advises raising budgets.*. Types keep their CLR names (no TypeDisplayName): they are what agents write in `is`,
+            // AddComponent and the schema, and Unity's only other name (the Inspector's "Mesh Renderer") is not an identifier.
+            var engine = new RqlEngine(AccessorMode.Compiled)
+            {
+                RuntimeName = "unity",
+                FindHint = "unity.find(\"…\")",
+                SchemaHint = API.Tool_Rql.SchemaToolId,
+                MutateHint = API.Tool_Rql.MutateToolId,
+                EnumAliases = UnityTypes.EnumAliases,
+            };
+            // Streams of components and assets are polymorphic: a member that some Unity type has is not a typo (it does not
+            // fail an empty mutation), even when the types reachable from the sources (GameObject, Component …) lack it.
+            engine.IsKnownMember = name => UnityTypes.IsKnownMember(engine, name);
+            engine.Defaults.BudgetsAdjustable = false;
             engine.ResolveStableRef = ResolveStableRef;
 
             engine.Mutations.Enabled = true;
+            // One mutation is one Undo step, so the limit guards breadth only (RQL spec §8: editor hosts default to ~200).
+            engine.Mutations.MaxTargets = DefaultMaxTargets;
+            engine.Mutations.LimitArgument = "max_targets";
+            // Scene objects and most assets are engine objects (never built from a literal; data ScriptableObjects and Materials
+            // are values, see their adapters): the refusal names Unity's ways to pass an existing one.
+            engine.Mutations.LiteralRefusalHint = Adapters.UnityEngine_Object_Adapter.RefusalHint;
+            // Checks that span the targets of one set / call stage (two SaveAsPrefab to one path; a component removed with or
+            // without the components that require it), before anything runs, dry runs included.
+            engine.Mutations.ValidateBatch = ValidateBatch;
             // One Undo group per mutation: recorded owners, created / destroyed objects and added components undo together.
             engine.Mutations.BeforeWrite = records =>
             {
                 Undo.IncrementCurrentGroup();
                 Undo.SetCurrentGroupName("RQL mutation");
                 _undoGroup = Undo.GetCurrentGroup();
-                var owners = Owners(records);
+                var owners = Owners(records, out _);
                 if (owners.Count > 0) Undo.RecordObjects(owners.ToArray(), "RQL mutation");
             };
             // Committed gets exactly the applied records: every set after all writes succeeded, the completed calls when a
             // later call threw. A set the engine rolled back never gets here, so it does not trigger Mutate's save.
             engine.Mutations.Committed = records =>
             {
+                Destroying = null;
+                KeepLiterals(); // the objects literals built are referenced now
                 if (records.Any(ChangesProjectState)) _wrote = true; // Mutate saves only after writes that change project state
                 CloseUndoGroup();
                 var scenes = new HashSet<Scene>();
-                foreach (var o in Owners(records))
+                var owners = Owners(records, out var sceneSettings);
+                foreach (var o in owners)
                 {
+                    if (sceneSettings != null && sceneSettings.Contains(o)) continue; // written through the active scene below
                     EditorUtility.SetDirty(o);
+                    if (o is AssetImporter importer && InMutation) Reimports.Add(importer); // import settings apply on reimport (SaveChanges)
                     var scene = o is GameObject go ? go.scene : o is Component c ? c.gameObject.scene : default;
                     if (scene.IsValid() && scenes.Add(scene) && !EditorApplication.isPlaying) EditorSceneManager.MarkSceneDirty(scene);
                 }
+                // Scene-level settings (IRqlUndoOwners) are written on the active scene only; the other loaded scenes' objects are
+                // recorded for Undo but not dirtied, so their scenes are not saved for nothing.
+                var active = SceneManager.GetActiveScene();
+                if (sceneSettings != null && active.IsValid() && scenes.Add(active) && !EditorApplication.isPlaying) EditorSceneManager.MarkSceneDirty(active);
             };
 
             // Everything else — sources, adapters, exclusions — comes from modules: the core module in this package plus any
@@ -129,20 +165,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         private static readonly System.Collections.Concurrent.ConcurrentDictionary<(Type type, string? member, bool isCall), bool> NoAutoSave =
             new System.Collections.Concurrent.ConcurrentDictionary<(Type, string?, bool), bool>();
 
-        private static List<Object> Owners(IReadOnlyList<MutationRecord> records)
+        /// <param name="sceneSettings">The scene-level owners named by an <see cref="IRqlUndoOwners"/> (not assets), or null.</param>
+        private static List<Object> Owners(IReadOnlyList<MutationRecord> records, out HashSet<Object>? sceneSettings)
         {
             var owners = new List<Object>();
             var seen = new HashSet<Object>();
+            HashSet<IRqlUndoOwners>? views = null;
+            sceneSettings = null;
             // The nearest Unity object enclosing each change: a write into a plain view object (e.g. a spline knot view) is
-            // recorded on the component or asset that holds it.
+            // recorded on the component or asset that holds it, a write into an IRqlUndoOwners on the objects it names.
             foreach (var r in records)
                 foreach (var candidate in r.Owners)
+                {
                     if (candidate is Object o)
                     {
                         if (o != null && seen.Add(o)) owners.Add(o);
                         break;
                     }
+                    if (candidate is IRqlUndoOwners settings)
+                    {
+                        // Once per view object, not per written member: naming the objects may scan (FindObjectsOfTypeAll).
+                        if ((views ??= new HashSet<IRqlUndoOwners>()).Add(settings))
+                            foreach (var s in settings.UndoOwners)
+                            {
+                                if (s == null || !seen.Add(s)) continue;
+                                owners.Add(s);
+                                // A Project Settings asset (ProjectSettings/*.asset) is dirtied and saved itself; scene-level
+                                // settings (RenderSettings) are written through the active scene.
+                                if (!EditorUtility.IsPersistent(s)) (sceneSettings ??= new HashSet<Object>()).Add(s);
+                            }
+                        break;
+                    }
+                }
             return owners;
+        }
+
+        /// <summary>
+        /// Destroy <paramref name="o"/> undoably; Unity logs instead of throwing when it keeps the object (a Transform, a
+        /// component another one requires), so a survivor fails with <paramref name="failure"/>.
+        /// </summary>
+        internal static void DestroyUndoable(Object o, string failure)
+        {
+            Undo.DestroyObjectImmediate(o);
+            if (o != null) throw new InvalidOperationException(failure + " (the Console has the reason)");
         }
 
         // ------------------------------------------------------------ sources
@@ -177,18 +242,64 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public static object? FindAssets(object?[] args)
         {
             if (args.Length < 1 || !(args[0] is string filter)) return new RqlError("type-mismatch", "unity.assets(filter, folder?) expects a filter string such as \"t:Material\"");
-            var folders = args.Length > 1 && args[1] is string folder ? new[] { folder } : null;
+            var folders = args.Length > 1 && args[1] is string folder ? new[] { RqlEditorApi.Normalize(folder) } : null;
+            // FindAssets only logs a missing folder and finds nothing, which reads as "no such assets".
+            if (folders != null && !AssetDatabase.IsValidFolder(folders[0])) return new RqlError("not-found", $"unity.assets: no folder '{folders[0]}'");
             var guids = folders == null ? AssetDatabase.FindAssets(filter) : AssetDatabase.FindAssets(filter, folders);
-            return Load(guids);
+            return Load(guids, FilterTypes(filter));
         }
 
-        // Lazy: a query that needs only a few assets (… | first 3) loads only those.
-        private static IEnumerable<Object> Load(string[] guids)
+        // AssetDatabase kinds, not types: t:Prefab finds GameObject main assets, t:Scene SceneAssets.
+        private static readonly string[] AssetKinds = { "Prefab", "Scene", "Model", "Folder" };
+
+        /// <summary>
+        /// The types named by the filter's <c>t:</c> terms (any of them matches), or null when there are none or one is not a
+        /// UnityEngine.Object type (AssetDatabase kinds such as t:Prefab; a Component type, which finds prefabs): then the found
+        /// main assets are kept as they are.
+        /// </summary>
+        internal static List<Type>? FilterTypes(string filter)
         {
-            foreach (var guid in guids.Take(MaxAssets))
+            var types = new List<Type>();
+            foreach (var term in filter.Split((char[]?)null, StringSplitOptions.RemoveEmptyEntries))
             {
-                var asset = AssetDatabase.LoadMainAssetAtPath(AssetDatabase.GUIDToAssetPath(guid));
-                if (asset != null) yield return asset;
+                if (!term.StartsWith("t:", StringComparison.OrdinalIgnoreCase)) continue;
+                var name = term.Substring(2);
+                if (Array.Exists(AssetKinds, k => string.Equals(k, name, StringComparison.OrdinalIgnoreCase))) return null;
+                // Every type of that short name: FindAssets matches them all (UnityEngine.Tilemaps.Tile and a project's Tile).
+                var named = UnityTypes.Candidates(name).Where(t => typeof(Object).IsAssignableFrom(t)).ToList();
+                if (named.Count == 0 || named.Any(t => typeof(Component).IsAssignableFrom(t))) return null;
+                types.AddRange(named);
+            }
+            return types.Count > 0 ? types : null;
+        }
+
+        // Lazy: a query that needs only a few assets (… | first 3) loads only those. AssetDatabase.FindAssets("t:Material")
+        // returns every file holding a Material, so a font, model or shader graph with an embedded material is found too:
+        // with t: types, a main asset of another type is replaced by its visible sub-assets of those types (none for most).
+        private static IEnumerable<Object> Load(string[] guids, List<Type>? types)
+        {
+            bool Matches(Object o) => types == null || types.Any(t => t.IsInstanceOfType(o));
+            var count = 0;
+            foreach (var guid in guids)
+            {
+                var path = AssetDatabase.GUIDToAssetPath(guid);
+                // The main asset's type first: only matching main assets are loaded, and a scene file is never opened as assets.
+                var mainType = AssetDatabase.GetMainAssetTypeAtPath(path);
+                if (mainType == null) continue;
+                IEnumerable<Object> found;
+                if (types == null || types.Any(t => t.IsAssignableFrom(mainType)))
+                {
+                    var asset = AssetDatabase.LoadMainAssetAtPath(path);
+                    if (asset == null) continue;
+                    found = new[] { asset };
+                }
+                else if (typeof(SceneAsset).IsAssignableFrom(mainType)) continue;
+                else found = AssetDatabase.LoadAllAssetRepresentationsAtPath(path).Where(o => o != null && Matches(o));
+                foreach (var o in found)
+                {
+                    if (count++ >= MaxAssets) yield break;
+                    yield return o;
+                }
             }
         }
 
@@ -207,14 +318,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             if (hits.Count == 1) return hits[0];
             return hits.Count == 0
                 ? new RqlError("not-found", $"no GameObject named '{key}' in the loaded scenes")
-                : new RqlError("ambiguous", $"{hits.Count} GameObjects are named '{key}': use the hierarchy path, e.g. \"{hits[0].GetPath()}\", or a ref");
+                : new RqlError("ambiguous", $"{hits.Count} GameObjects are named '{key}': use one of them {Candidates(hits)}");
         }
 
-        /// <summary><c>unity.asset("Assets/…/Red.mat")</c>: the main asset at a path, or null.</summary>
+        // The ambiguous hits as follow-up arguments: their hierarchy path where it is unique, else their ref.
+        private static string Candidates(List<GameObject> hits)
+        {
+            const int Shown = 5;
+            var paths = hits.Select(g => g.GetPath() ?? g.name).ToList();
+            var parts = hits.Take(Shown).Select((g, i) =>
+                paths.Count(p => p == paths[i]) == 1 ? $"unity.find(\"{paths[i]}\")" : $"ref(\"{Engine.RefOf(g)}\") ({paths[i]})");
+            return string.Join(", ", parts) + (hits.Count > Shown ? $" … (+{hits.Count - Shown})" : "");
+        }
+
+        /// <summary><c>unity.asset("Assets/…/Red.mat")</c>: the main asset at a path; an error when there is none.</summary>
         public static object? LoadAsset(object?[] args)
         {
             if (args.Length != 1 || !(args[0] is string path)) return new RqlError("type-mismatch", "unity.asset(path) expects an asset path");
-            return AssetDatabase.LoadMainAssetAtPath(path);
+            // A missing asset as null would let `set sharedMaterial = unity.asset(<typo>)` clear the field silently.
+            var asset = AssetDatabase.LoadMainAssetAtPath(path);
+            return asset != null
+                ? asset
+                : new RqlError("not-found", $"no asset at '{path}' (a project path such as \"Assets/…/Red.mat\"; search with unity.assets(\"t:Material Red\"))");
         }
 
     }

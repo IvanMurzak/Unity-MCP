@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         public const string MutateToolId = "rql-mutate";
 
-        [AiTool(MutateToolId, Title = "RQL / Mutate", Enabled = true, DestructiveHint = true, OpenWorldHint = false)]
+        [AiTool(MutateToolId, Title = "RQL / Mutate", Visible = true, DestructiveHint = true, OpenWorldHint = false)]
         [AiSkillDescription(RqlGuide.MutateBlurb)]
         [AiSkillBody(RqlGuide.MutateDescription)]
         [Description(RqlGuide.MutateDescription)]
@@ -30,10 +30,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("RQL query ending with a set or call stage, e.g. objects | where name == \"Player\" | set active = false")]
             string query,
             [Description("true = preview the receipt without changing anything")]
-            bool dry_run = false
+            bool dry_run = false,
+            [Description("Raise the limit of 200 targets per call for an intended bulk change (1 to 1000); omit it for the default 200")]
+            int? max_targets = null
         )
         {
-            return Run(() => RqlUnity.Mutate(query, dry_run));
+            return Run(() => RqlUnity.Mutate(query, dry_run, max_targets));
         }
     }
 }

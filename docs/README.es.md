@@ -182,22 +182,30 @@ El plugin incluye más de 70 herramientas integradas en cuatro categorías. Cada
 
 </details>
 
+<details>
+  <summary>Iluminación</summary>
+
+- Fuente RQL `lighting` (con `rql-query` / `rql-mutate`) - el entorno de la escena activa (ambiente, niebla, skybox, sol, reflejos; se puede deshacer), su asset Lighting Settings y el bake: `CreateSettings`, `UseSettings`, `Bake`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`
+- `LightProbeGroup.PlaceGrid(size, spacing)` - llena una caja con sondas de luz espaciadas uniformemente; `ReflectionProbe.Bake()` - hace el bake de una sonda Custom junto a su escena
+
+</details>
+
 ## Instalar skills y herramientas adicionales
 
 Instala extensiones cuando necesites más herramientas o [crea tus propias herramientas](#add-custom-tool).
 
 | Extensión | Descripción |
 | --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-AI-Animation/)** | Conjunto de herramientas adicionales para animaciones de Unity |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-AI-Cinemachine/)** | Herramientas MCP para Cinemachine |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-AI-InputSystem/)** | Herramientas MCP para el Input System de Unity |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-AI-Navigation/)** | Herramientas MCP para AI Navigation (superficies NavMesh, horneado, agentes y enlaces) |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-AI-ParticleSystem/)** | Conjunto de herramientas adicionales para el sistema de partículas de Unity |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-AI-ProBuilder/)** | Conjunto de herramientas adicionales para Unity ProBuilder |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-AI-Splines/)** | Herramientas MCP para Unity Splines |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-AI-Terrain/)** | Conjunto de herramientas adicionales para el Terreno de Unity |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-AI-Tilemap/)** | Herramientas MCP para Tilemaps 2D de Unity |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-AI-Timeline/)** | Herramientas MCP para escenas y secuencias de Unity Timeline |
+| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | Conjunto de herramientas adicionales para animaciones de Unity |
+| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | Herramientas MCP para Cinemachine |
+| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | Herramientas MCP para el Input System de Unity |
+| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | Herramientas MCP para AI Navigation (superficies NavMesh, horneado, agentes y enlaces) |
+| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | Conjunto de herramientas adicionales para el sistema de partículas de Unity |
+| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | Conjunto de herramientas adicionales para Unity ProBuilder |
+| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | Herramientas MCP para Unity Splines |
+| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | Conjunto de herramientas adicionales para el Terreno de Unity |
+| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | Herramientas MCP para Tilemaps 2D de Unity |
+| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | Herramientas MCP para escenas y secuencias de Unity Timeline |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
@@ -551,8 +559,10 @@ await mcpPlugin.Disconnect(); // Stop active connection and close existed connec
 
 Tenemos un juego de ajedrez clásico. Vamos a externalizar al LLM la lógica del bot. El bot debe hacer su turno siguiendo las reglas del juego.
 
+Marca las herramientas exclusivas del juego con `[AiToolType(Target = ToolTarget.Runtime)]` (`using com.IvanMurzak.McpPlugin.Common;`): solo el juego las registra, y el servidor MCP envía sus llamadas al juego en ejecución incluso mientras el Editor está conectado.
+
 ```csharp
-[AiToolType]
+[AiToolType(Target = ToolTarget.Runtime)]
 public static class ChessGameAI
 {
     [AiTool("chess-do-turn", Title = "Do the turn")]
@@ -589,6 +599,7 @@ Independientemente de la opción de ejecución que elijas, todas soportan config
 | ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
 | `MCP_PLUGIN_PORT`            | `--port`             | Puerto de conexión **Client** -> **Server** <- **Plugin** (por defecto: 8080)       |
 | `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | Tiempo de espera de conexión **Plugin** -> **Server** (ms) (por defecto: 10000)            |
+| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`     | Tiempo que el **Server** espera una llamada a herramienta (ms). La llamada se envía al **Plugin** una sola vez, sin reenvíos (por defecto: 300000, o `--plugin-timeout` si es mayor; servidores basados en McpPlugin 8.11.0+) |
 | `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | Tipo de transporte **Client** -> **Server**: `stdio` o `streamableHttp` (por defecto: `streamableHttp`) |
 | `MCP_AUTHORIZATION`           | `--authorization`        | Modo de autenticación para conexiones entrantes del **Client**: `none` o `required` (por defecto: `none`) |
 | `MCP_PLUGIN_TOKEN`            | `--token`                | Token Bearer requerido del **Client** cuando `--authorization=required` (por defecto: sin definir) |
@@ -613,7 +624,7 @@ El Unity MCP Plugin lee las siguientes variables de entorno (y argumentos de lí
 | `UNITY_MCP_TOKEN`           | `-token`                    | string                        | Fuerza el token de autenticación                                  |
 | `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | Fuerza el transporte de cliente que configura el plugin                    |
 | `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | Fuerza si el plugin mantiene un proceso de servidor local en ejecución       |
-| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | IDs de herramientas separados por comas      | Habilita solo las herramientas listadas; todas las demás se desactivan. Los IDs desconocidos se registran como errores. |
+| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | IDs de herramientas separados por comas      | Muestra a los clientes MCP solo las herramientas listadas (tools/list); las demás se ocultan (una herramienta oculta sigue ejecutándose si se llama por su nombre). Los IDs desconocidos se registran como errores. |
 
 > Los argumentos de línea de comandos tienen prioridad sobre las variables de entorno. Ambos sobrescriben el valor del archivo de configuración guardado. Las banderas cortas `-url`, `-token` y `-auth` son alias; los nombres de argumento completos `-UNITY_MCP_*` también se aceptan.
 

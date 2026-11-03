@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Screenshot / Isolated GameObject",
             ReadOnlyHint = true,
             IdempotentHint = true,
-            Enabled = true
+            Visible = true
         )]
         [AiSkillDescription("Render a target GameObject from a chosen camera angle with optional layer-based " +
             "isolation, configurable background (solid/skybox/transparent), multi-light setup via JSON, and Composite " +
@@ -165,6 +165,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             int? resolution = 512
         )
         {
+            if (NoGraphicsError() is { } noGraphics)
+                return noGraphics;
+
             var resolvedResolution = resolution ?? 512;
             if (resolvedResolution < MinResolution || resolvedResolution > MaxResolution)
                 return ResponseCallTool.Error(
@@ -231,13 +234,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         : $"[Error] GameObject not found: {findError}");
                 }
 
-                var renderers = CollectRenderers(target, resolvedIncludeChildren);
-                if (renderers.Count == 0)
+                var drawn = CollectDrawnBounds(target, resolvedIncludeChildren);
+                if (drawn.Count == 0)
                     return ResponseCallTool.Error(resolvedIncludeChildren
-                        ? "[Error] No Renderers found on target GameObject or its children. Cannot compute bounds."
-                        : "[Error] No Renderers found on target GameObject (includeChildren=false). Set includeChildren=true if renderers live on child objects.");
+                        ? "[Error] No Renderers or Terrains found on target GameObject or its children. Cannot compute bounds."
+                        : "[Error] No Renderers or Terrains found on target GameObject (includeChildren=false). Set includeChildren=true if renderers live on child objects.");
 
-                var bounds = ComputeBounds(renderers);
+                var bounds = ComputeBounds(drawn);
 
                 var targetGameObjects = CollectAllGameObjects(target, resolvedIncludeChildren);
 
@@ -362,19 +365,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }
         };
 
-        private static List<Renderer> CollectRenderers(GameObject target, bool includeChildren)
+        // World bounds of what draws the target: its Renderers and, as a Terrain has no Renderer component, its Terrains'
+        // TerrainData bounds.
+        private static List<Bounds> CollectDrawnBounds(GameObject target, bool includeChildren)
         {
-            var list = new List<Renderer>();
-            if (includeChildren)
-            {
-                list.AddRange(target.GetComponentsInChildren<Renderer>(includeInactive: true));
-            }
-            else
-            {
-                var ownRenderers = target.GetComponents<Renderer>();
-                if (ownRenderers != null)
-                    list.AddRange(ownRenderers);
-            }
+            var renderers = includeChildren ? target.GetComponentsInChildren<Renderer>(includeInactive: true) : target.GetComponents<Renderer>();
+            var list = renderers.Where(r => r != null).Select(r => r.bounds).ToList();
+#if UNITY_MCP_TERRAIN_MODULE
+            var terrains = includeChildren ? target.GetComponentsInChildren<Terrain>(includeInactive: true) : target.GetComponents<Terrain>();
+            foreach (var t in terrains)
+                if (t != null && t.terrainData != null)
+                    list.Add(new Bounds(t.transform.position + t.terrainData.bounds.center, t.terrainData.bounds.size));
+#endif
             return list;
         }
 
@@ -392,21 +394,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return list;
         }
 
-        private static Bounds ComputeBounds(List<Renderer> renderers)
+        private static Bounds ComputeBounds(List<Bounds> drawn)
         {
             var initialised = false;
             var bounds = new Bounds();
-            foreach (var r in renderers)
+            foreach (var b in drawn)
             {
-                if (r == null) continue;
                 if (!initialised)
                 {
-                    bounds = r.bounds;
+                    bounds = b;
                     initialised = true;
                 }
                 else
                 {
-                    bounds.Encapsulate(r.bounds);
+                    bounds.Encapsulate(b);
                 }
             }
 
@@ -482,6 +483,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // so no defensive clamp is needed here.
             var fovRad = fov * 0.5f * Mathf.Deg2Rad;
             var distance = (radius * padding) / Mathf.Sin(fovRad);
+            // The camera stands back by the bounding radius: a large target (a default 1000 m terrain) would otherwise lie past
+            // the far plane and render as background only.
+            cam.farClipPlane = Mathf.Max(far, distance + radius * 1.1f);
 
             var (dir, up) = GetViewDirectionAndUp(view);
             cameraGo.transform.position = bounds.center + dir * distance;
@@ -554,8 +558,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             }
             if (cfg.CookieSize.HasValue)
             {
-#if UNITY_6000_5_OR_NEWER
-                // Unity 6.5+ deprecated the float cookieSize in favour of Vector2 cookieSize2D.
+#if UNITY_6000_3_OR_NEWER
+                // Unity 6.3+ deprecated the float cookieSize in favour of Vector2 cookieSize2D.
                 // The IsolatedLightConfig wire shape stays a single float (uniform XY size) to
                 // preserve backwards-compatible JSON; expand it to (x,y) at the API boundary.
                 light.cookieSize2D = new Vector2(cfg.CookieSize.Value, cfg.CookieSize.Value);

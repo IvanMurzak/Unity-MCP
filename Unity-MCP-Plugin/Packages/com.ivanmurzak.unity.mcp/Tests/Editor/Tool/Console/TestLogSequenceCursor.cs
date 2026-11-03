@@ -79,6 +79,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             return storage;
         }
 
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Clear_WithSharedQueryReader_RemovesEntriesAndRemainsWritable(bool buffered)
+        {
+            var directory = NewDirectory();
+            var storage = Open(directory, buffered);
+            var before = new LogEntry(LogType.Log, "before-clear");
+            storage.Append(before);
+            storage.Flush();
+            using var reader = new FileStream(Path.Combine(directory, LogFileName),
+                FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+
+            Assert.DoesNotThrow(storage.Clear);
+            Assert.That(storage.Query(), Is.Empty);
+
+            var after = new LogEntry(LogType.Log, "after-clear");
+            storage.Append(after);
+            storage.Flush();
+            var result = storage.Query();
+            Assert.That(result.Length, Is.EqualTo(1));
+            Assert.That(result[0].Message, Is.EqualTo("after-clear"));
+            Assert.That(after.Sequence, Is.GreaterThan(before.Sequence));
+        }
+
         /// <summary>Follows the cursor the way an agent does: next call starts at the highest sequence received.</summary>
         static List<LogEntry> ReadAllPages(FileLogStorage storage, int pageSize, LogType? filter, out int pages)
         {
@@ -466,6 +490,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var everything = ReadAllPages(reopened, pageSize: 4, filter: null, out _);
             Assert.AreEqual(8, everything.Count, "Entries from before and after the reopen are one stream.");
             CollectionAssert.IsOrdered(everything.Select(e => e.Sequence));
+        }
+
+        [TestCase(false)]
+        [TestCase(true)]
+        public void Dispose_FlushesBufferedEntries(bool buffered)
+        {
+            // Unity-MCP#1039: Dispose marked the storage disposed before flushing, so the buffered storage
+            // logged "Flush called but already disposed" and dropped what was still in its buffer.
+            var directory = NewDirectory();
+            var first = Open(directory, buffered, flushEntriesThreshold: 10);
+            for (var i = 0; i < 3; i++)
+                first.Append(new LogEntry(LogType.Log, $"before dispose {i}"));
+            first.Dispose();
+
+            var reopened = Open(directory, buffered);
+            CollectionAssert.AreEquivalent(
+                new[] { "before dispose 0", "before dispose 1", "before dispose 2" },
+                reopened.Query().Select(e => e.Message));
         }
 
         // ------------------------------------------------------------------ serialization + the tool

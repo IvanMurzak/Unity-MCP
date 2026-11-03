@@ -1,0 +1,20 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.FilterOracle",
+    "rootNamespace": "com.IvanMurzak.Unity.MCP.FilterOracle",
+    "references": [
+        "UnityEngine.TestRunner",
+        "UnityEditor.TestRunner",
+        "com.IvanMurzak.Unity.MCP.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": false,
+    "precompiledReferences": [],
+    "autoReferenced": false,
+    "defineConstraints": [],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

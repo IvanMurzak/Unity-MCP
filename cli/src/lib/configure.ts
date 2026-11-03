@@ -1,11 +1,5 @@
 import * as path from 'path';
-import {
-  getOrCreateConfig,
-  writeConfig,
-  updateFeatures,
-  type McpFeature,
-  type UnityConnectionConfig,
-} from '../utils/config.js';
+import { getOrCreateConfig, writeConfig, updateFeatures, type UnityConnectionConfig, readFeatures } from '../utils/config.js';
 import { emitProgress } from './progress.js';
 import { requireExistingPath } from './validation.js';
 import type {
@@ -28,14 +22,7 @@ function hasAnyAction(action: FeatureAction | undefined): boolean {
 }
 
 function snapshotFeatures(config: UnityConnectionConfig, key: 'tools' | 'prompts' | 'resources'): McpFeatureSnapshot[] {
-  const raw = config[key];
-  if (!Array.isArray(raw)) return [];
-  return raw
-    .filter(
-      (f): f is McpFeature =>
-        typeof f === 'object' && f !== null && typeof f.name === 'string' && typeof f.enabled === 'boolean',
-    )
-    .map((f) => ({ name: f.name, enabled: f.enabled }));
+  return readFeatures(config[key]).map((f) => ({ name: f.name, visible: f.visible, enabled: f.visible }));
 }
 
 /**

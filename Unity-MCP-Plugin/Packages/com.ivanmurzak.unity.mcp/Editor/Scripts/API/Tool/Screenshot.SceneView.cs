@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Screenshot / Scene View",
             ReadOnlyHint = true,
             IdempotentHint = true,
-            Enabled = false
+            Visible = false
         )]
         [AiSkillDescription("Capture a screenshot from the Unity Editor Scene View at the requested size. " +
             "Renders via the Scene View's active camera onto a temporary `RenderTexture`. Requires an open Scene View.")]
@@ -50,6 +50,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             int height = 1080
         )
         {
+            if (NoGraphicsError() is { } noGraphics)
+                return noGraphics;
+
             if (width <= 0 || height <= 0)
                 return ResponseCallTool.Error($"Width and height must be greater than 0. Got {width}x{height}.");
             if (width > MaxDimension || height > MaxDimension)

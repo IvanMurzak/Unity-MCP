@@ -1,0 +1,22 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.ParticleSystem.Installer.Tests",
+    "rootNamespace": "com.IvanMurzak.Unity.MCP.ParticleSystem.Installer.Tests",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.ParticleSystem.Installer"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll"
+    ],
+    "autoReferenced": false,
+    "defineConstraints": [
+        "UNITY_INCLUDE_TESTS"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

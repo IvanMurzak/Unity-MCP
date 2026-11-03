@@ -48,7 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Physics3D
             Assert.IsTrue(r.Ok, Table(r));
             Assert.IsTrue(RqlUnity.Engine.Execute("roots | recurse children | get components").Ok);
             Assert.IsNull(_box.sharedMaterial, "a physics material instance was created by a read");
-            StringAssert.Contains("explicit-only", RqlUnitySchema.Render(RqlUnity.Engine, "BoxCollider"));
+            StringAssert.IsMatch(@"\bmaterial \w+ explicit-only", RqlUnitySchema.Render(RqlUnity.Engine, "BoxCollider")); // the instancing getter, not just any member
         }
 
         [Test]

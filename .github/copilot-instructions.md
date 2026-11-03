@@ -27,7 +27,7 @@ Before performing any code review, you **MUST** read the project constitution: [
 - **C#**: Use 4 spaces indentation. PascalCase for classes/methods/properties, `_camelCase` for private readonly fields.
     - Namespace: `com.IvanMurzak.Unity.MCP`.
     - Example: [UnityMcpPlugin.cs](Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs).
-- **PowerShell**: Use K&R brace style.
+- **Python** (`commands/`): stdlib only, Python 3.9+.
 
 ## Architecture
 - **Unity-MCP-Plugin**: Main Unity package.
@@ -36,12 +36,12 @@ Before performing any code review, you **MUST** read the project constitution: [
     - Tests: `Packages/com.ivanmurzak.unity.mcp/Tests`.
 - **MCP Server**: lives in the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repo (binary `gamedev-mcp-server`); the plugin downloads the release pinned by `McpServerManager.ServerVersion`.
 - **Installer**: [Installer/](Installer/) wraps the package installation.
-- **Unity-Tests**: [Unity-Tests/](Unity-Tests/) contains projects for different Unity versions (2022, 2023, 6000) linking locally to the Plugin.
+- **Unity-Tests**: [Unity-Tests/](Unity-Tests/) contains projects for different Unity versions (2022.3, 6000.0, 6000.3, 6000.6) linking locally to the Plugin.
 
 ## Build and Test
 - **Plugin**:
     - Auto-compiles in Unity.
-    - Run tests: [commands/run-unity-tests.ps1](commands/run-unity-tests.ps1).
+    - Run tests: [commands/run_unity_tests.py](commands/run_unity_tests.py).
     - Editor Tests: `Packages/com.ivanmurzak.unity.mcp/Tests/Editor`.
 - **Server**: built and released from the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repo — not from this repo.
 - **Commands**: See [commands/](commands/) for utility scripts (release, tests).

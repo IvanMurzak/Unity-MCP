@@ -1,0 +1,32 @@
+# ┌──────────────────────────────────────────────────────────────────┐
+# │  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+# │  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+# │  Copyright (c) 2025 Ivan Murzak                                  │
+# │  Licensed under the Apache License, Version 2.0.                 │
+# │  See the LICENSE file in the project root for more information.  │
+# └──────────────────────────────────────────────────────────────────┘
+
+name: "Delete a ref's caches"
+description: "Delete every Actions cache entry saved under one git ref"
+
+# test_pull_request_manual.yml runs fork code from the fork-tests branch. That code can save cache
+# entries in the branch's scope; nothing else reads that scope, and this empties it before and after
+# each run so one fork's run never restores what another fork's run left behind.
+
+inputs:
+  ref:
+    description: "Full ref whose cache scope to empty, e.g. refs/heads/fork-tests"
+    required: true
+  token:
+    description: "Token with actions: write"
+    required: true
+
+runs:
+  using: "composite"
+  steps:
+    - shell: bash
+      env:
+        GH_TOKEN: ${{ inputs.token }}
+        REPO: ${{ github.repository }}
+        REF: ${{ inputs.ref }}
+      run: gh cache delete --all --ref "$REF" --succeed-on-no-caches --repo "$REPO"

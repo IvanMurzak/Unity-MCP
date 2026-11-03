@@ -28,8 +28,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     public enum McpFilterType
     {
         All,
-        Enabled,
-        Disabled
+        /// <summary>Listed to MCP clients.</summary>
+        Visible,
+        /// <summary>Not listed to MCP clients; a hidden tool still runs when called by name.</summary>
+        Hidden
     }
 
     /// <summary>
@@ -125,6 +127,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (typeDropdown != null)
             {
                 typeDropdown.choices = Enum.GetNames(typeof(McpFilterType)).ToList();
+                typeDropdown.tooltip = "Visible: listed to MCP clients (tools/list). Hidden: left out of the list to save context; a hidden tool still runs when called by name.";
                 typeDropdown.index = (int)McpFilterType.All;
                 typeDropdown.RegisterValueChangedCallback(evt => PopulateList());
             }
@@ -227,7 +230,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             return item;
         }
 
-        protected abstract void OnItemToggleChanged(TViewModel viewModel, bool isEnabled);
+        protected abstract void OnItemToggleChanged(TViewModel viewModel, bool isVisible);
 
         protected virtual void OnFoldoutChanged(TViewModel viewModel, string foldoutName, bool isExpanded)
         {
@@ -253,8 +256,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             filtered = selectedType switch
             {
-                McpFilterType.Enabled => filtered.Where(t => t.IsEnabled),
-                McpFilterType.Disabled => filtered.Where(t => !t.IsEnabled),
+                McpFilterType.Visible => filtered.Where(t => t.IsVisible),
+                McpFilterType.Hidden => filtered.Where(t => !t.IsVisible),
                 _ => filtered
             };
 
@@ -293,12 +296,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             var toggle = element.Q<Toggle>("item-toggle");
             if (toggle != null)
             {
-                toggle.SetValueWithoutNotify(viewModel.IsEnabled);
-                toggle.EnableInClassList("checked", viewModel.IsEnabled);
+                toggle.SetValueWithoutNotify(viewModel.IsVisible);
+                toggle.EnableInClassList("checked", viewModel.IsVisible);
             }
 
             var itemContainer = element.Q<VisualElement>(null, "item-container") ?? element;
-            UpdateItemClasses(itemContainer, viewModel.IsEnabled);
+            UpdateItemClasses(itemContainer, viewModel.IsVisible);
         }
 
         protected void BindDescriptionFoldout(VisualElement element, TViewModel viewModel, bool isExpanded)
@@ -373,7 +376,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         string Name { get; }
         string? Title { get; }
         string? Description { get; }
-        bool IsEnabled { get; set; }
+        bool IsVisible { get; set; }
     }
 
     /// <summary>

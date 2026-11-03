@@ -56,7 +56,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
     description: 'AI-driven animation control and playback tools.',
     packageId: 'com.ivanmurzak.unity.mcp.animation',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-Animation.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md',
     tools: [
       { name: 'animation-create', description: 'Create AnimationClip assets with keyframes' },
       { name: 'animation-get-data', description: 'Inspect clip curves, events, and properties' },
@@ -71,7 +71,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
     description: 'AI-assisted Cinemachine camera setup and configuration tools.',
     packageId: 'com.ivanmurzak.unity.mcp.cinemachine',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-Cinemachine.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md',
     tools: [
       { name: 'cinemachine-camera-create', description: 'Create a CinemachineCamera in the scene' },
       { name: 'cinemachine-set-targets', description: 'Set the Follow and LookAt targets' },
@@ -86,7 +86,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
       'AI-assisted Unity Input System authoring: InputActionAssets, maps, actions, bindings, and control schemes.',
     packageId: 'com.ivanmurzak.unity.mcp.inputsystem',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-InputSystem.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md',
     tools: [
       { name: 'inputsystem-asset-create', description: 'Create a new .inputactions InputActionAsset' },
       { name: 'inputsystem-actionmap-add', description: 'Add an ActionMap to the asset' },
@@ -102,7 +102,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
     description: 'AI-driven NavMesh navigation: surfaces, baking, agents, and links.',
     packageId: 'com.ivanmurzak.unity.mcp.navigation',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-Navigation.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md',
     tools: [
       { name: 'navigation-surface-add', description: 'Add and configure a NavMeshSurface' },
       { name: 'navigation-set-bake-settings', description: 'Set agent radius/height/slope/step and voxel size' },
@@ -122,7 +122,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
     description: 'AI-powered particle system creation and control tools.',
     packageId: 'com.ivanmurzak.unity.mcp.particlesystem',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-ParticleSystem.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md',
     tools: [
       { name: 'particle-system-get', description: 'Inspect ParticleSystem modules and settings' },
       { name: 'particle-system-modify', description: 'Modify emission, shape, color, noise, and more' },
@@ -133,7 +133,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
     description: 'AI-assisted ProBuilder geometry modeling tools.',
     packageId: 'com.ivanmurzak.unity.mcp.probuilder',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-ProBuilder.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md',
     tools: [
       { name: 'probuilder-create-shape', description: 'Create editable 3D primitives in the scene' },
       { name: 'probuilder-get-mesh-info', description: 'Retrieve faces, vertices, and edges data' },
@@ -147,7 +147,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
     description: 'AI-assisted Spline authoring: containers, knots, tangents, and evaluation.',
     packageId: 'com.ivanmurzak.unity.mcp.splines',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-Splines.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md',
     tools: [
       { name: 'splines-container-create', description: 'Create a SplineContainer in the scene' },
       { name: 'splines-add-knot', description: 'Append a knot to a spline' },
@@ -162,7 +162,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
     description: 'AI-powered Unity Terrain authoring tools.',
     packageId: 'com.ivanmurzak.unity.mcp.terrain',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-Terrain.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md',
     tools: [
       { name: 'terrain-create', description: 'Create a Terrain GameObject backed by new TerrainData' },
       { name: 'terrain-set-heights', description: 'Sculpt heightmap values over a region or the whole terrain' },
@@ -176,7 +176,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
     description: 'AI-assisted 2D Tilemap creation, painting, and tile/RuleTile asset tools.',
     packageId: 'com.ivanmurzak.unity.mcp.tilemap',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-Tilemap.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md',
     tools: [
       { name: 'tilemap-create', description: 'Create a Grid + Tilemap + TilemapRenderer' },
       { name: 'tilemap-set-tile', description: 'Paint a tile into a cell' },
@@ -190,7 +190,7 @@ export const EXTENSIONS_CATALOG: readonly ExtensionDescriptor[] = [
     description: 'AI-assisted Timeline cutscene and sequence authoring tools.',
     packageId: 'com.ivanmurzak.unity.mcp.timeline',
     version: null,
-    gitUrl: 'https://github.com/IvanMurzak/Unity-AI-Timeline.git',
+    gitUrl: 'https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md',
     tools: [
       { name: 'timeline-create', description: 'Create a TimelineAsset (.playable)' },
       { name: 'timeline-track-add', description: 'Add Animation/Activation/Audio/Signal/Control tracks' },

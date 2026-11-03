@@ -53,8 +53,8 @@ describe('CLI integration', () => {
       const { stdout, exitCode } = runCli(['--help']);
       expect(exitCode).toBe(0);
       // Extract command names from help output
-      const commandNames = ['configure', 'create-project', 'install-plugin', 'install-unity', 'open', 'remove-plugin', 'run-tool'];
-      const positions = commandNames.map(name => stdout.indexOf(name));
+      const commandNames = ['configure', 'create-project', 'exec', 'install-plugin', 'install-unity', 'open', 'remove-plugin', 'run-tool'];
+      const positions = commandNames.map(name => stdout.search(new RegExp(`^\\s+${name}\\s`, 'm')));
       // Verify each command appears after the previous one (alphabetical order)
       for (let i = 1; i < positions.length; i++) {
         expect(positions[i]).toBeGreaterThan(positions[i - 1]);
@@ -300,14 +300,14 @@ describe('CLI integration', () => {
       runCli(['configure', '--path', tmpDir, '--enable-tools', 'tool-a,tool-b']);
 
       const { stdout } = runCli(['configure', '--path', tmpDir, '--list']);
-      expect(stdout).toContain('[enabled] tool-a');
-      expect(stdout).toContain('[enabled] tool-b');
+      expect(stdout).toContain('[visible] tool-a');
+      expect(stdout).toContain('[visible] tool-b');
 
       // Now disable one
       runCli(['configure', '--path', tmpDir, '--disable-tools', 'tool-a']);
       const { stdout: stdout2 } = runCli(['configure', '--path', tmpDir, '--list']);
-      expect(stdout2).toContain('[disabled] tool-a');
-      expect(stdout2).toContain('[enabled] tool-b');
+      expect(stdout2).toContain('[hidden] tool-a');
+      expect(stdout2).toContain('[visible] tool-b');
     });
 
     it('fails when project path does not exist', () => {

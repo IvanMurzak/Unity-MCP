@@ -58,45 +58,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <inheritdoc/>
+        protected virtual bool UsePowerShell => Skill_Cli.IsWindows;
+
         protected override void BuildToolCommand(StringBuilder sb, IRunTool tool, string host, string inputExample)
         {
-            var command = tool.ToolType == McpToolType.System
-                ? "run-system-tool"
-                : "run-tool";
-            sb.AppendLine("```bash");
-            sb.AppendLine($"unity-mcp-cli {command} {tool.Name} --input '{inputExample}'");
-            sb.AppendLine("```");
-            sb.AppendLine();
+            var command = tool.ToolType == McpToolType.System ? "run-system-tool" : "run-tool";
+            sb.AppendLine(Skill_Cli.ToolCommand(command, tool.Name, inputExample, UsePowerShell));
             AppendInputFileHint(sb, tool, host, inputExample);
-            sb.AppendLine();
-            sb.AppendLine("### Troubleshooting");
-            sb.AppendLine();
-            sb.AppendLine("If `unity-mcp-cli` is not found, either install it globally (`npm install -g unity-mcp-cli`) or use `npx unity-mcp-cli` instead.");
-            sb.AppendLine($"Read the /{Skill_InitialSetup.SkillId} skill for detailed installation instructions.");
+            AppendSkillReferences(sb);
+        }
+
+        protected override string BuildSkillContentMarkdown(ISkillContent skill, string skillName)
+        {
+            var markdown = base.BuildSkillContentMarkdown(skill, skillName);
+            if (skill.Name == Skill_Cli.SkillId || skill.Name == Skill_App.SkillId)
+                return markdown;
+            var sb = new StringBuilder(markdown).AppendLine().AppendLine();
+            AppendSkillReferences(sb);
+            return sb.ToString();
+        }
+
+        private static void AppendSkillReferences(StringBuilder sb)
+        {
+            sb.AppendLine($"> CLI installation and usage: see the `{Skill_Cli.SkillId}` skill.");
+            sb.AppendLine($"> If this task needs unavailable asset-generation or Blender tools, consult `{Skill_App.SkillId}` for an optional integrated workflow.");
             sb.AppendLine();
         }
 
         /// <inheritdoc/>
         protected override void AppendInputFileHint(StringBuilder sb, IRunTool tool, string host, string inputExample)
         {
-            if (inputExample == "{}")
-                return;
-            var command = tool.ToolType == McpToolType.System
-                ? "run-system-tool"
-                : "run-tool";
-
-            sb.AppendLine($"> For complex input (multi-line strings, code), save the JSON to a file and use:");
-            sb.AppendLine("> ```bash");
-            sb.AppendLine($"> unity-mcp-cli {command} {tool.Name} --input-file args.json");
-            sb.AppendLine("> ```");
-            sb.AppendLine(">");
-            sb.AppendLine("> Or pipe via stdin (recommended):");
-            sb.AppendLine("> ```bash");
-            sb.AppendLine($"> unity-mcp-cli {command} {tool.Name} --input-file - <<'EOF'");
-            sb.AppendLine("> {\"param\": \"value\"}");
-            sb.AppendLine("> EOF");
-            sb.AppendLine("> ```");
+            if (UsePowerShell || inputExample == "{}") return;
+            var command = tool.ToolType == McpToolType.System ? "run-system-tool" : "run-tool";
+            sb.AppendLine("For complex input, create a JSON file instead:");
+            sb.AppendLine("```bash");
+            sb.AppendLine(Skill_Cli.JsonFile(inputExample, false));
+            sb.AppendLine($"unity-mcp-cli {command} {tool.Name} --input-file args.json");
+            sb.AppendLine("```");
             sb.AppendLine();
         }
+
     }
 }
