@@ -3,7 +3,7 @@
   "name": "io.github.IvanMurzak/Unity-MCP",
   "title": "AI Game Developer: MCP for Unity, Unreal and Godot",
   "description": "Make games with AI: one MCP server that connects your agent to Unity, Unreal and Godot editors.",
-  "version": "9.3.1",
+  "version": "9.3.2",
   "websiteUrl": "https://ai-game.dev",
   "repository": {
     "url": "https://github.com/IvanMurzak/Unity-MCP",
@@ -13,6 +13,74 @@
     {
       "type": "streamable-http",
       "url": "https://ai-game.dev/mcp"
+    }
+  ],
+  "packages": [
+    {
+      "registryType": "nuget",
+      "identifier": "com.IvanMurzak.GameDev.MCP.Server",
+      "version": "9.3.2",
+      "transport": {
+        "type": "stdio"
+      },
+      "environmentVariables": [
+        {
+          "name": "MCP_PLUGIN_PORT",
+          "description": "Client -> Server <- Plugin connection port (default: 8080)",
+          "format": "number"
+        },
+        {
+          "name": "MCP_PLUGIN_CLIENT_TIMEOUT",
+          "description": "Plugin -> Server connection timeout (ms) (default: 10000). Tool calls use MCP_PLUGIN_TOOL_TIMEOUT instead.",
+          "format": "number"
+        },
+        {
+          "name": "MCP_PLUGIN_TOOL_TIMEOUT",
+          "description": "How long one tool call may run in the plugin (ms). A tool call is sent once and never re-sent (default: 300000, or MCP_PLUGIN_CLIENT_TIMEOUT if larger)",
+          "format": "number"
+        },
+        {
+          "name": "MCP_PLUGIN_CLIENT_TRANSPORT",
+          "description": "Client -> Server transport type: stdio or streamableHttp (default: stdio)",
+          "format": "string",
+          "default": "stdio",
+          "choices": [
+            "streamableHttp",
+            "stdio"
+          ]
+        },
+        {
+          "name": "MCP_AUTH",
+          "description": "Authentication mode: none or oauth. Default depends on transport: stdio -> none (offline/local/CI), streamableHttp -> oauth when MCP_AUTH_ISSUER + MCP_PUBLIC_URL are set, otherwise none. oauth validates ES256 JWTs (via cached JWKS) issued by MCP_AUTH_ISSUER, audienced to MCP_PUBLIC_URL.",
+          "format": "string",
+          "default": "none",
+          "choices": [
+            "none",
+            "oauth"
+          ]
+        },
+        {
+          "name": "MCP_AUTH_ISSUER",
+          "description": "OAuth authorization-server URL (e.g. https://ai-game.dev). Required when MCP_AUTH=oauth.",
+          "format": "string"
+        },
+        {
+          "name": "MCP_PUBLIC_URL",
+          "description": "This server's canonical public resource URL (its token audience, e.g. https://ai-game.dev/mcp). Required when MCP_AUTH=oauth; also seeds the Origin allow-list.",
+          "format": "string"
+        },
+        {
+          "name": "MCP_BIND",
+          "description": "Network bind address: loopback (default), any (0.0.0.0), or a specific IP. Hosted deploys reachable by a reverse proxy set MCP_BIND=0.0.0.0.",
+          "format": "string",
+          "default": "loopback"
+        },
+        {
+          "name": "MCP_ALLOWED_ORIGINS",
+          "description": "Comma/semicolon-separated additional allowed Origins for browser clients (in addition to loopback + the MCP_PUBLIC_URL origin). Avoids a blanket wildcard on credentialed paths.",
+          "format": "string"
+        }
+      ]
     }
   ]
 }
