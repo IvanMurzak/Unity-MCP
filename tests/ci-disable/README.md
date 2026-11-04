@@ -19,5 +19,5 @@ Use a separate Unity process for each mode, `-batchmode -nographics -projectPath
    and `CI=true`; run `CiDisableProbe.Run`. Core/extension compilation and MCP startup must return.
 
 Use `-logFile <log>` for each run. Every probe must log `CI_DISABLE_PROBE_PASS <mode>` and exit 0;
-assert the NUnit XML has exactly one passed test with no skips. Unity creates new `.meta` files;
+assert the NUnit XML has exactly two passed tests with no skips. Unity creates new `.meta` files;
 copy them back to `tests/ci-disable`. Restore temporary project settings after testing.

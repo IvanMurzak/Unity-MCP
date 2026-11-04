@@ -52,7 +52,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 return;
             }
 
-
             var visualTree = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths, Logger);
             if (visualTree == null)
             {

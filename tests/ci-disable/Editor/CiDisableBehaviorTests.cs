@@ -19,6 +19,24 @@ using UnityEngine.TestTools;
 
 public class CiDisableBehaviorTests
 {
+    [Test]
+    public void DisabledRestoredWindowCannotInitializeMcp()
+    {
+        if (Environment.GetEnvironmentVariable("UNITY_MCP_DISABLE") != "1")
+            Assert.Ignore("Run in a dedicated editor launched with UNITY_MCP_DISABLE=1.");
+        AssertInactive();
+        var type = AppDomain.CurrentDomain.GetAssemblies()
+            .Select(a => a.GetType("com.IvanMurzak.Unity.MCP.Editor.UI.MainWindowEditor"))
+            .First(t => t != null);
+        var window = ScriptableObject.CreateInstance(type!);
+        try
+        {
+            type!.GetMethod("CreateGUI")!.Invoke(window, null);
+            AssertInactive();
+        }
+        finally { UnityEngine.Object.DestroyImmediate(window); }
+    }
+
     [UnityTest]
     public IEnumerator DisabledStartupSurvivesPlayModeDomainReloads()
     {
