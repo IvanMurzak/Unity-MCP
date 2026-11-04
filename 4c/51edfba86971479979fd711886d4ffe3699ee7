@@ -1,0 +1,32 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Execute.Reload.cs
+  s_7bc72ecaebd05d::t_811fa7f2ebd01d 12,14,27-28,42-46,53-54,58-59,72-84,90-104
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlBulkCreateTests.cs
+  s_7bc72ecaebd05d::t_b1f8edb1dfb1de 114-115
+  s_7bc72ecaebd05d::t_e76e20641cab69 44
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Object/UnityEngine_Object_Adapter.cs
+  s_7bc72ecaebd05d::t_ee049685af138e 50-52,66-69
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Vector2Int_Adapter.cs
+  s_7bc72ecaebd05d::t_d4099a3e32ccaf 32
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Vector3Int_Adapter.cs
+  s_7bc72ecaebd05d::t_fd90bb702aef1f 32
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_7bc72ecaebd05d::t_c0f71a93141c47 102
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Script/ScriptExecuteResultTests.cs
+  s_7bc72ecaebd05d::t_3cf667d9d13c46 87-88
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4c51edfba86971479979fd711886d4ffe3699ee7",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

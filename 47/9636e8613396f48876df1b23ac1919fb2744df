@@ -1,0 +1,56 @@
+.github/actions/setup-unity-mcp/action.yml
+  s_60bce0e60f2773::t_3dd29a3dd6d4c3 10
+  s_c8ccc024d5bacb::t_bf5ed4a005a66e 14-15,74-76,80-83,85-87
+.github/workflows/generate-unity-activation-file.yml
+  s_60bce0e60f2773::t_3e73d01fb6878e 1-85
+docs/claude/ci-unity-license.md
+  s_60bce0e60f2773::t_1711271e488194 1-75
+.github/workflows/claude.yml
+  s_7f4615417df890::t_b17fce7305309d 55
+.github/workflows/copilot-setup-steps.yml
+  s_7f4615417df890::t_332147a4f7744d 43
+.github/workflows/release.yml
+  s_c8ccc024d5bacb::t_0618a5e7d23c02 116-117,128,161,435
+.github/workflows/test_unity_plugin.yml
+  s_0bb6e4e2d9df83::t_8bb936a90d4caa 21-24,65-67,93-95
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.10",
+  "base_commit_sha": "479636e8613396f48876df1b23ac1919fb2744df",
+  "prompts": {},
+  "sessions": {
+    "s_0bb6e4e2d9df83": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "11890297-79c0-4fa3-afb2-0870d37b48c8",
+        "model": "claude-sonnet-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_60bce0e60f2773": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "53d607ea-9a51-44f7-8180-d51f9a2c2fc6",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_7f4615417df890": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "70f812bc-fafa-4d43-82de-321e43d67668",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_c8ccc024d5bacb": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "a21076f2-ff20-4f02-a0b7-731711d5ced2",
+        "model": "claude-fable-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

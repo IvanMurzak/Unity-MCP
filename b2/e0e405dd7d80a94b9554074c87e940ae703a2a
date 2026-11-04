@@ -1,0 +1,46 @@
+cli/src/utils/cloud-login.ts
+  s_a751fb1926065b::t_1d3f41afdc61bb 5,8
+  s_268cf9bc8a5956::t_055e35c9c61356 12,16,41-44
+cli/src/utils/machine-credentials.ts
+  s_a751fb1926065b::t_448e3344fbc54f 1-161
+cli/src/utils/port.ts
+  s_a751fb1926065b::t_77d0d5e43aada6 6-13,16-66,70-73,76,78
+  s_a751fb1926065b::t_7c6556390f6d87 14-15
+cli/tests/project-identity.test.ts
+  s_a751fb1926065b::t_dd3cfeb972004a 1-72
+cli/tests/machine-credentials.test.ts
+  s_a751fb1926065b::t_51b06ab4ef254e 1-112
+cli/src/commands/login.ts
+  s_a751fb1926065b::t_86575e887ec636 5,8,10,13,17-27,29-40,42-47,49-51,53-59
+cli/tests/login.test.ts
+  s_a751fb1926065b::t_9d0595f0f2f75e 49,52-55,63-65
+  s_a751fb1926065b::t_ec80a427842585 11-15,19,24,27,30-34,36-37,40,42-48,50-51,56-62
+cli/tests/cloud-login.test.ts
+  s_a751fb1926065b::t_a1c6f7efcfa23b 1-43
+cli/src/commands/setup-skills.ts
+  s_268cf9bc8a5956::t_744bd17fcf8ae0 9,138
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.13",
+  "base_commit_sha": "b2e0e405dd7d80a94b9554074c87e940ae703a2a",
+  "prompts": {},
+  "sessions": {
+    "s_268cf9bc8a5956": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a154616938dfddabb",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_a751fb1926065b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "00e8960c-83e7-486a-a338-2a4d1545497c",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/EditorPrefsValue.cs
+  s_c67a9bc5c4aa8a::t_3645ccee6ce7d3 1-95
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowInitializer.cs
+  s_c67a9bc5c4aa8a::t_95bd20034ca82c 12,20
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/McpResourcesWindow.cs
+  s_c67a9bc5c4aa8a::t_772b00de93f208 129
+  s_c67a9bc5c4aa8a::t_06801eaff4e52b 138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.AiAgents.cs
+  s_c67a9bc5c4aa8a::t_db750b7fa4499d 12
+  s_c67a9bc5c4aa8a::t_99c8dff229439e 22
+  s_c67a9bc5c4aa8a::t_0810fbdbb444b2 82
+  s_c67a9bc5c4aa8a::t_75219a6060eada 51
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests.Run.cs
+  s_c67a9bc5c4aa8a::t_36d19fab4afea6 83,87
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/EditorPrefsValue.cs.meta
+  s_c67a9bc5c4aa8a::t_e7c4951ab49ad2 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/AiAgentConfigurators/AiAgentConfigurator.cs
+  s_c67a9bc5c4aa8a::t_6fa16bc5868d71 45
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests/TestResultCollector.cs
+  s_c67a9bc5c4aa8a::t_a30b70d07db6ea 53,55-57,59-61
+  s_c67a9bc5c4aa8a::t_e37706abb27c3c 16
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/McpToolsWindow.cs
+  s_c67a9bc5c4aa8a::t_e4aa905003a637 177-179
+  s_c67a9bc5c4aa8a::t_2876eb1ed769e7 164-166
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/McpPromptsWindow.cs
+  s_c67a9bc5c4aa8a::t_595817689dc142 150-151
+  s_c67a9bc5c4aa8a::t_46c8cd6606f4d8 139-140
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Tests.cs
+  s_c67a9bc5c4aa8a::t_5260948be70627 183
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Utils/UpdateChecker.cs
+  s_c67a9bc5c4aa8a::t_de8e32d0a95bd5 52-58
+  s_c67a9bc5c4aa8a::t_9959f3e346992c 77
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.10",
+  "base_commit_sha": "83e5605c9c468c3fb49995f68b659287b01be2a4",
+  "prompts": {},
+  "sessions": {
+    "s_c67a9bc5c4aa8a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c91a0595-323c-42ae-a6c5-6efeab9529cb",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

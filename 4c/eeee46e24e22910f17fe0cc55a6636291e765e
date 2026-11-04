@@ -1,0 +1,27 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Script/ScriptExecuteGuardTests.cs
+  s_7bc72ecaebd05d::t_c7fed62c618d55 22-23
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Script/ScriptExecuteResultTests.cs
+  s_7bc72ecaebd05d::t_c349b9406b591a 69-74
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Asset/UnityEngine_Mesh_Adapter.cs
+  s_7bc72ecaebd05d::t_341aeeed375fa7 33-36,49
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.Prefabs.cs
+  s_7bc72ecaebd05d::t_6d16f14774fec4 34,43,48-49,53
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.cs
+  s_7bc72ecaebd05d::t_0291aa2dd8ec50 62-63,79-81
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "4ceeee46e24e22910f17fe0cc55a6636291e765e",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

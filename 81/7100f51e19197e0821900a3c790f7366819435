@@ -1,0 +1,34 @@
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "817100f51e19197e0821900a3c790f7366819435",
+  "prompts": {
+    "410ea7ebb6772344": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "389b9d31-c805-4d87-9388-e3d9ee8e8ce3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 60,
+      "total_deletions": 0,
+      "accepted_lines": 60,
+      "overriden_lines": 0
+    },
+    "964ca0f63c286da4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "bc7595f8-0cdf-4a76-8b81-31b8c228ca89",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 49,
+      "total_deletions": 0,
+      "accepted_lines": 49,
+      "overriden_lines": 0
+    }
+  }
+}

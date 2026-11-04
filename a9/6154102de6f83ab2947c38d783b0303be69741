@@ -1,0 +1,27 @@
+docs/README.es.md
+  s_6908d424636975::t_71acdf1de10c0e 204
+README.md
+  s_6908d424636975::t_69418dab86eafe 204
+docs/README.ja.md
+  s_6908d424636975::t_3752ce8186ea49 204
+docs/README.zh-CN.md
+  s_6908d424636975::t_fca6f95ea6f6fe 204
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/Window/MainWindowEditor.Extensions.cs
+  s_6908d424636975::t_83afa6a647c6b9 80-94
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.5.2",
+  "base_commit_sha": "a96154102de6f83ab2947c38d783b0303be69741",
+  "prompts": {},
+  "sessions": {
+    "s_6908d424636975": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "383d28d1-a361-40a7-9656-23c1b29d7a19",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
