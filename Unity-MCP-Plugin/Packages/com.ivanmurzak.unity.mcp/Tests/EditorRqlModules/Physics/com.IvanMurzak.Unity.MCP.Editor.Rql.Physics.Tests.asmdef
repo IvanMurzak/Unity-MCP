@@ -25,7 +25,7 @@
     "autoReferenced": true,
     "defineConstraints": [
         "UNITY_MCP_READY",
-        "UNITY_MCP_DEPS_35",
+        "UNITY_MCP_DEPS_36",
         "UNITY_MCP_RQL_PHYSICS",
         "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"
     ],

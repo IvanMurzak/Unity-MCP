@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "35";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "36";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -137,15 +137,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // MainThread.Instance with UnityMainThread (MainThreadDispatcher.MainThreadId), so Unity's
             // main-thread detection, including Unity 7 CoreCLR's id-2 main thread, does not rely on it.
             new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.5.1", includeInBuild: true),
-            // SignalR 8.0.32 requires 8.0.6; match the resolved version to avoid repeated restores.
+            // SignalR 8.0.33 requires 8.0.6; match the resolved version to avoid repeated restores.
             new NuGetPackage("System.Text.Json",                                      "8.0.6",  includeInBuild: true),
             // Keep SignalR on the patched v8 line (CVE-2026-70159).
-            new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.32", includeInBuild: true),
-            new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.32", includeInBuild: true),
+            new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.33", includeInBuild: true),
+            new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.33", includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.Logging",                          "8.0.1",  includeInBuild: true),
             // Pinned to 8.0.3 to match the transitive requirement from
-            // Microsoft.AspNetCore.Http.Connections.Client 8.0.32 (pulled in via
-            // SignalR.Client 8.0.32 → SignalR.Client.Core 8.0.32). Any lower pin
+            // Microsoft.AspNetCore.Http.Connections.Client 8.0.33 (pulled in via
+            // SignalR.Client 8.0.33 → SignalR.Client.Core 8.0.33). Any lower pin
             // (e.g. 8.0.2) produces an infinite restore loop on every domain reload:
             // higher-version-wins extracts 8.0.3 to disk while AllPackagesInstalled()
             // keeps checking for the pinned dir, never finds it, and triggers Restore()
@@ -162,7 +162,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // RQL (the query language of rql-query / rql-mutate and the tools' data layer): Editor-only, so it never
             // reaches player builds. Its only dependency is System.Text.Json 8.0.5, satisfied by the newer pin above.
             new NuGetPackage("com.IvanMurzak.Rql",                                    "0.3.0"),
-            new NuGetPackage("Microsoft.Bcl.Memory",                                  "10.0.4"),
+            new NuGetPackage("Microsoft.Bcl.Memory",                                  "10.0.14"),
             // Pinned to 4.8.0 so transitive System.Collections.Immutable stays at 7.0.0
             // (forward-compatible with Unity 6.6's built-in 8.0.0). Roslyn 4.14 requires
             // SCI 9.0.0 which clashes with Unity's built-in.
