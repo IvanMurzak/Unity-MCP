@@ -103,8 +103,14 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             Assert.True(Version.Parse(pin.Version) >= Version.Parse(floor),
                 $"{id} must be at least {floor}.");
             var root = Path.GetDirectoryName(Path.GetDirectoryName(RepoFile.Require(LockRelativePath)))!;
+            // A missing supported project must fail even if older fixture projects still exist.
+            var workflow = File.ReadAllText(Path.Combine(root, ".github", "workflows", "test_pull_request.yml"));
+            var versions = Regex.Matches(workflow, @"unityVersion:\s*""([^""]+)""")
+                .Cast<Match>().Select(m => m.Groups[1].Value).Distinct().ToArray();
+            Assert.NotEmpty(versions);
             var projects = Directory.GetDirectories(Path.Combine(root, "Unity-Tests"))
-                .Append(Path.Combine(root, "Unity-MCP-Plugin"));
+                .Concat(versions.Select(v => Path.Combine(root, "Unity-Tests", v)))
+                .Append(Path.Combine(root, "Unity-MCP-Plugin")).Distinct();
             var checkedManifests = 0;
             foreach (var project in projects)
             {

@@ -139,10 +139,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.5.1", includeInBuild: true),
             // SignalR 8.0.32 requires 8.0.6; match the resolved version to avoid repeated restores.
             new NuGetPackage("System.Text.Json",                                      "8.0.6",  includeInBuild: true),
+            // Keep SignalR on the patched v8 line (CVE-2026-70159).
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Client",                   "8.0.32", includeInBuild: true),
             new NuGetPackage("Microsoft.AspNetCore.SignalR.Protocols.Json",           "8.0.32", includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.Logging",                          "8.0.1",  includeInBuild: true),
-            // Keep SignalR on the patched v8 line (CVE-2026-70159).
             // Pinned to 8.0.3 to match the transitive requirement from
             // Microsoft.AspNetCore.Http.Connections.Client 8.0.32 (pulled in via
             // SignalR.Client 8.0.32 → SignalR.Client.Core 8.0.32). Any lower pin
