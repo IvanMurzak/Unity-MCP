@@ -230,5 +230,55 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         [Test]
         public void ALegacyNameThatIsTheMainPropertyIsWrittenOnce() =>
             Assert.IsNull(UnityEngine_Material_Adapter.LegacyAliasOf(_mat, "_Color"), "Standard renders _Color itself");
+
+        // Each case: a shader source, then a check on the material made with it.
+        private void WithShader(string source, System.Action check)
+        {
+            var shader = UnityEditor.ShaderUtil.CreateShaderAsset(source);
+            try
+            {
+                _mat.shader = shader;
+                check();
+            }
+            finally { Object.DestroyImmediate(shader); }
+        }
+
+        // A URP-style shader without [MainColor] (custom or older code): the hidden _Color is a stand-in, _BaseColor renders.
+        [Test]
+        public void AHiddenLegacyColorNextToAVisibleBaseColorIsNotTheMainColor() => WithShader(
+            "Shader \"Hidden/UnityMcpTests/NoMainAttribute\" { Properties { _BaseColor(\"Base Color\", Color) = (1,1,1,1) " +
+            "[HideInInspector] _Color(\"Color\", Color) = (1,1,1,1) } SubShader { Pass { } } }",
+            () =>
+            {
+                AssertOk(M(Mat + " | set color = \"#ff0000\""));
+                Assert.AreEqual(Color.red, _mat.GetColor("_BaseColor"));
+                AssertOk(M(Mat + " | set properties[\"_Color\"] = \"#00ff00\""));
+                Assert.AreEqual(Color.green, _mat.GetColor("_BaseColor"), "the legacy name reaches the rendered one");
+            });
+
+        // URP 2D sprite shaders hide _Color and still render it: alone, the hidden legacy name stays the main color.
+        [Test]
+        public void AHiddenLegacyColorAloneIsTheMainColor() => WithShader(
+            "Shader \"Hidden/UnityMcpTests/SpriteLike\" { Properties { [HideInInspector] _Color(\"Tint\", Color) = (1,1,1,1) } " +
+            "SubShader { Pass { } } }",
+            () =>
+            {
+                AssertOk(M(Mat + " | set color = \"#ff0000\""));
+                Assert.AreEqual(Color.red, _mat.GetColor("_Color"));
+            });
+
+        // A shader that names its color freely: the refusal lists the color properties to write by name.
+        [Test]
+        public void AShaderWithoutAMainColorListsItsColorProperties() => WithShader(
+            "Shader \"Hidden/UnityMcpTests/Tint\" { Properties { _Tint(\"Tint\", Color) = (1,1,1,1) _Glow(\"Glow\", Color) = (0,0,0,1) " +
+            "[HideInInspector] _Internal(\"Internal\", Color) = (1,1,1,1) _Albedo(\"Albedo\", 2D) = \"white\" {} } SubShader { Pass { } } }",
+            () =>
+            {
+                Assert.AreEqual("null", Cell(Q(Mat + " | select color")));
+                AssertFails(M(Mat + " | set color = \"#ff0000\""), "invalid-value", "properties[\"_Tint\"] (_Tint, _Glow)");
+                AssertFails(M(Mat + " | set mainTexture = null"), "invalid-value", "properties[\"_Albedo\"] (_Albedo)");
+                AssertOk(M(Mat + " | set properties[\"_Tint\"] = \"#ff0000\""));
+                Assert.AreEqual(Color.red, _mat.GetColor("_Tint"));
+            });
     }
 }
