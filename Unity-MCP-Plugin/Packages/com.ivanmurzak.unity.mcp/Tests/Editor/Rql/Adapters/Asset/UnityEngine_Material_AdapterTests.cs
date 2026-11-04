@@ -195,13 +195,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             "SubShader { Pass { } } }";
 
         [Test]
-        public void ALegacyColorOrTextureWriteReachesTheMainPropertyInUrpLikeShaders()
+        public void ALegacyColorOrTextureWriteReachesTheMainPropertyInUrpLikeShaders() => WithShader(UrpLikeShader, () =>
         {
-            var shader = UnityEditor.ShaderUtil.CreateShaderAsset(UrpLikeShader);
             var tex = new Texture2D(2, 2) { name = "Probe" };
             try
             {
-                _mat.shader = shader;
                 AssertOk(M(Mat + " | set properties[\"_Color\"] = \"#1E4D1E\""));
                 Assert.AreEqual(_mat.GetColor("_Color"), _mat.GetColor("_BaseColor"));
                 AssertTuple("(0.117647, 0.301961, 0.117647, 1)", Cell(Q(Mat + " | select color")));
@@ -220,12 +218,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
                 Assert.AreEqual(Color.blue, _mat.GetColor("_BaseColor"));
                 Assert.AreEqual("_BaseColor", Cell(Q(Mat + " | get properties | where Key ends-with \"Color\" | select Key")));
             }
-            finally
-            {
-                Object.DestroyImmediate(tex);
-                Object.DestroyImmediate(shader);
-            }
-        }
+            finally { Object.DestroyImmediate(tex); }
+        });
 
         [Test]
         public void ALegacyNameThatIsTheMainPropertyIsWrittenOnce() =>
@@ -275,7 +269,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             () =>
             {
                 Assert.AreEqual("null", Cell(Q(Mat + " | select color")));
-                AssertFails(M(Mat + " | set color = \"#ff0000\""), "invalid-value", "properties[\"_Tint\"] (_Tint, _Glow)");
+                AssertFails(M(Mat + " | set color = \"#ff0000\""), "invalid-value", "properties[\"_Tint\"] (_Tint, _Glow)"); // _Internal is hidden
                 AssertFails(M(Mat + " | set mainTexture = null"), "invalid-value", "properties[\"_Albedo\"] (_Albedo)");
                 AssertOk(M(Mat + " | set properties[\"_Tint\"] = \"#ff0000\""));
                 Assert.AreEqual(Color.red, _mat.GetColor("_Tint"));

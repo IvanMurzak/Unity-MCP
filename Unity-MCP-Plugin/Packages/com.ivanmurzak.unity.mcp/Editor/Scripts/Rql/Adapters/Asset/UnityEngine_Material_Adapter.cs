@@ -96,14 +96,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                     "the material this one is a Material Variant of (it takes the parent's shader; properties set on it become overrides); null = a plain material")
              .Add<bool>("isVariant", o => o.isVariant, description: "true when this material is a Material Variant (has a parent)")
              .Add<Color?>("color", o => MainColor(o) is { } p ? o.GetColor(p) : (Color?)null,
-                 (o, v) => o.SetColor(MainColor(o) ?? throw new InvalidOperationException(NoMain(o, "color")), v!.Value),
+                 (o, v) => o.SetColor(MainColor(o) ?? throw new InvalidOperationException(NoMain(o, ShaderPropertyType.Color)), v!.Value),
                  (o, v) => v == null ? "color cannot be null"
-                     : MainColor(o) == null ? NoMain(o, "color") : null,
-                 "the shader's main color ([MainColor], else _Color, else _BaseColor; _BaseColor in URP / HDRP); null when the shader has none")
+                     : MainColor(o) == null ? NoMain(o, ShaderPropertyType.Color) : null,
+                 "the shader's main color ([MainColor], else _Color, else a visible _BaseColor as in URP / HDRP); null when the shader has none")
              .Add<Texture?>("mainTexture", o => MainTexture(o) is { } p ? o.GetTexture(p) : null,
-                 (o, v) => o.SetTexture(MainTexture(o) ?? throw new InvalidOperationException(NoMain(o, "texture")), v),
-                 (o, v) => MainTexture(o) == null ? NoMain(o, "texture") : null,
-                 "the shader's main texture ([MainTexture], else _MainTex, else _BaseMap; _BaseMap in URP / HDRP); null when the shader has none");
+                 (o, v) => o.SetTexture(MainTexture(o) ?? throw new InvalidOperationException(NoMain(o, ShaderPropertyType.Texture)), v),
+                 (o, v) => MainTexture(o) == null ? NoMain(o, ShaderPropertyType.Texture) : null,
+                 "the shader's main texture ([MainTexture], else _MainTex, else a visible _BaseMap as in URP / HDRP); null when the shader has none");
         }
 
         private static string? MainColor(Material m) => MainProperty(m, ShaderPropertyFlags.MainColor, "_Color", "_BaseColor", ShaderPropertyType.Color);
@@ -121,9 +121,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             for (int i = 0; i < n; i++)
                 if ((shader.GetPropertyFlags(i) & flag) != 0) return shader.GetPropertyName(i);
             int legacyAt = IndexOf(shader, legacy, kind), pipelineAt = IndexOf(shader, pipeline, kind);
-            if (pipelineAt >= 0 && IsHidden(shader, pipelineAt)) pipelineAt = -1;
-            if (legacyAt >= 0 && (pipelineAt < 0 || !IsHidden(shader, legacyAt))) return legacy;
-            return pipelineAt >= 0 ? pipeline : null;
+            bool pipelineVisible = pipelineAt >= 0 && !IsHidden(shader, pipelineAt);
+            if (legacyAt >= 0 && (!pipelineVisible || !IsHidden(shader, legacyAt))) return legacy;
+            return pipelineVisible ? pipeline : null;
         }
 
         private static int IndexOf(Shader shader, string name, ShaderPropertyType kind)
@@ -136,17 +136,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         // Shaders name their color freely (_Tint, _Diffuse, _BASE_COLOR): the refusal lists the candidates, so the next write
         // can name one instead of guessing.
-        internal static string NoMain(Material m, string what)
+        private static string NoMain(Material m, ShaderPropertyType kind)
         {
+            var what = kind == ShaderPropertyType.Color ? "color" : "texture";
             var shader = m.shader;
-            var head = $"shader '{(shader != null ? shader.name : "none")}' has no main {what}";
-            var kind = what == "color" ? ShaderPropertyType.Color : ShaderPropertyType.Texture;
+            if (shader == null) return $"the material has no shader, so no main {what}";
             var names = new List<string>();
-            for (int i = 0, n = shader != null ? shader.GetPropertyCount() : 0; i < n; i++)
-                if (shader!.GetPropertyType(i) == kind && !IsHidden(shader, i)) names.Add(shader.GetPropertyName(i));
+            int n = shader.GetPropertyCount();
+            for (int i = 0; i < n; i++)
+                if (shader.GetPropertyType(i) == kind && !IsHidden(shader, i)) names.Add(shader.GetPropertyName(i));
+            var head = $"shader '{shader.name}' has no main {what}";
             return names.Count == 0
                 ? $"{head} and no visible {what} properties"
-                : $"{head}: set one of its {what} properties by name, properties[\"{names[0]}\"] ({string.Join(", ", names)})";
+                : $"{head}: set one of its {what} properties by name, properties[\"{names[0]}\"] ({RqlEditorApi.Preview(names)})";
         }
 
         // Unity ignores a parent that would make a cycle (it logs an error and keeps the old one): refused before any write.
