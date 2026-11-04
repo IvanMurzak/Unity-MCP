@@ -93,13 +93,15 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         // Issue #1119: reject a regression to the advisory ranges, including the JSON
         // transitive minimum needed to keep exact-version restore checks stable.
         [Theory]
-        [InlineData("Microsoft.AspNetCore.SignalR.Client", "8.0.32")]
-        [InlineData("Microsoft.AspNetCore.SignalR.Protocols.Json", "8.0.32")]
-        [InlineData("Microsoft.Bcl.Memory", "10.0.4")]
-        [InlineData("System.Text.Json", "8.0.6")]
-        public void SecurityPins_AndCommittedDllManifests_MeetPatchedFloor(string id, string floor)
+        [InlineData("Microsoft.AspNetCore.SignalR.Client", "8.0.32", "Microsoft.AspNetCore.SignalR.Client")]
+        [InlineData("Microsoft.AspNetCore.SignalR.Protocols.Json", "8.0.32", "Microsoft.AspNetCore.SignalR.Protocols.Json")]
+        [InlineData("Microsoft.AspNetCore.SignalR.Common", "8.0.32", "Microsoft.AspNetCore.SignalR.Client")]
+        [InlineData("Microsoft.Bcl.Memory", "10.0.4", "Microsoft.Bcl.Memory")]
+        [InlineData("System.Text.Json", "8.0.6", "System.Text.Json")]
+        public void SecurityPins_AndCommittedDllManifests_MeetPatchedFloor(string id, string floor, string pinId)
         {
-            var pin = Assert.Single(NuGetConfig.Packages, p => p.Id == id);
+            // SignalR.Common carries the advisory and must follow the Client pin transitively.
+            var pin = Assert.Single(NuGetConfig.Packages, p => p.Id == pinId);
             Assert.True(Version.Parse(pin.Version) >= Version.Parse(floor),
                 $"{id} must be at least {floor}.");
             var root = Path.GetDirectoryName(Path.GetDirectoryName(RepoFile.Require(LockRelativePath)))!;
@@ -119,7 +121,9 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                 using var doc = JsonDocument.Parse(File.ReadAllText(manifest));
                 var installed = doc.RootElement.GetProperty("packages").GetProperty(id);
                 Assert.Equal(pin.Version, installed.GetProperty("version").GetString());
-                foreach (var dll in installed.GetProperty("dlls").EnumerateArray())
+                var dlls = installed.GetProperty("dlls").EnumerateArray().ToArray();
+                Assert.NotEmpty(dlls);
+                foreach (var dll in dlls)
                     Assert.True(File.Exists(Path.Combine(Path.GetDirectoryName(manifest)!, dll.GetString()!)),
                         $"Missing {dll.GetString()} in {project}");
                 checkedManifests++;
