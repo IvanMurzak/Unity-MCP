@@ -147,6 +147,14 @@ class BumpVersionTests(TempTree):
         self.assertEqual(code, 0)
         self.assertIn("same as current version", out)
 
+    def test_bumps_from_a_prerelease_version(self):
+        self.assertEqual(self.bump("--new-version", "0.71.0-rc.1")[0], 0)
+        code, out = self.bump("--new-version", "0.71.0")
+        self.assertEqual(code, 0, out)
+        self.assertIn("Version: 0.71.0-rc.1 -> 0.71.0", out)
+        for rel in REPO_FILES:
+            self.assertNotIn("rc.1", self.read(rel), rel)
+
     def test_missing_package_json_fails(self):
         (self.root / "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json").unlink()
         code, out = self.bump("--new-version", "0.71.0")
