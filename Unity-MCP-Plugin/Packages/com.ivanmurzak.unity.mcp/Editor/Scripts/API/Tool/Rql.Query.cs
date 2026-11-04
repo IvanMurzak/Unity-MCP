@@ -20,7 +20,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
     {
         public const string QueryToolId = "rql-query";
 
-        [AiTool(QueryToolId, Title = "RQL / Query", Visible = true, ReadOnlyHint = true, OpenWorldHint = false)]
+        [AiTool(QueryToolId, Title = "RQL / Query", ReadOnlyHint = true, DestructiveHint = false, IdempotentHint = true, OpenWorldHint = false, Visible = true)]
         [AiSkillDescription(RqlGuide.QueryBlurb)]
         [AiSkillBody(RqlGuide.QueryDescription)]
         [Description(RqlGuide.QueryDescription)]

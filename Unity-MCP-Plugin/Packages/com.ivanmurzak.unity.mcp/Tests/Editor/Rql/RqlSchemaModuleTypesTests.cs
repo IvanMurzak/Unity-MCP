@@ -112,5 +112,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             StringAssert.Contains(RqlGuide.ExternalEditsRule, RqlGuide.MutateDescription);
             StringAssert.Contains("editor | call RefreshAssets()", RqlGuide.ExternalEditsRule);
         }
+
+        // MCP server directories list these tools: each description names RQL and links its public reference.
+        [Test]
+        public void EveryRqlToolDescriptionLinksTheRqlDocs()
+        {
+            StringAssert.Contains("https://ai-game.dev/docs/rql", RqlGuide.DocsLine);
+            foreach (var description in new[] { RqlGuide.QueryDescription, RqlGuide.MutateDescription, RqlGuide.SchemaDescription })
+                StringAssert.Contains(RqlGuide.DocsLine, description);
+        }
     }
 }

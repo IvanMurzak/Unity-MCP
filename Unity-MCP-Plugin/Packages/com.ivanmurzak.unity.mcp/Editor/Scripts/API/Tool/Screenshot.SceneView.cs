@@ -26,7 +26,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScreenshotSceneViewToolId,
             Title = "Screenshot / Scene View",
             ReadOnlyHint = true,
+            DestructiveHint = false,
             IdempotentHint = true,
+            OpenWorldHint = false,
             Visible = false
         )]
         [AiSkillDescription("Capture a screenshot from the Unity Editor Scene View at the requested size. " +

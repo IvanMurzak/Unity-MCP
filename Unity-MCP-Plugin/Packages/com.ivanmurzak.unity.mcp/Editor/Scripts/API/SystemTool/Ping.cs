@@ -23,7 +23,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PingToolId,
             Title = "Ping",
             ReadOnlyHint = true,
+            DestructiveHint = false,
             IdempotentHint = true,
+            OpenWorldHint = false,
             ToolType = McpToolType.System
         )]
         [AiSkillDescription("Lightweight readiness probe. Returns the input `message` echoed back, or `'pong'` " +

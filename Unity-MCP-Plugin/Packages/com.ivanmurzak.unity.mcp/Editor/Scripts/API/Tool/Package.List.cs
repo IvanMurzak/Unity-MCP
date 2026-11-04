@@ -54,7 +54,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             PackageListToolId,
             Title = "Package Manager / List Installed",
             ReadOnlyHint = true,
+            DestructiveHint = false,
             IdempotentHint = true,
+            OpenWorldHint = true,
             Visible = false
         )]
         [AiSkillDescription("List all UPM packages installed in the Unity project — name, version, source, " +

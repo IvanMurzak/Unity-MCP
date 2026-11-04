@@ -20,6 +20,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
     /// </summary>
     internal static class RqlGuide
     {
+        /// <summary>The public RQL reference; every RQL tool description links it.</summary>
+        public const string DocsUrl = "https://ai-game.dev/docs/rql";
+        public const string DocsLine = "RQL reference: " + DocsUrl + "\n";
+
         public const string QueryBlurb =
             "Query the live Unity scene (GameObjects, components, assets) with RQL in ONE call: filter, project, sort, count, " +
             "walk hierarchies. Far fewer calls/tokens than reading objects one by one.";
@@ -108,7 +112,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public const string QueryDescription =
             "Run a read-only RQL query against the live Unity Editor scene and return compact rows. One precise query beats many " +
-            "exploratory calls. Changes need rql-mutate.\n\n" + Language + "\n\nExamples:\n" +
+            "exploratory calls. Changes need rql-mutate.\n" + DocsLine + "\n" + Language + "\n\nExamples:\n" +
             "  objects | where name contains \"Enemy\" and active | select $ref name transform.position\n" +
             "  objects | get components | where $ is Light and intensity > 2 | select gameObject.name intensity color\n" +
             "  roots | recurse children | where components.count() == 1 | select $path name\n" +
@@ -199,6 +203,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "scenes and the open prefab are saved to disk automatically; an untitled scene needs SaveAs(path). " +
             "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; " +
             "a read-only member fails with readonly-member instead of being approximated.\n" +
+            DocsLine +
             MutateStages + MutateExamples +
             "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}, and so do Materials and data ScriptableObjects " +
             "(into a scene object; an asset or the open prefab cannot hold a new one: create the asset and pass its path). GameObjects, components and other " +
@@ -223,6 +228,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "Without a type: RQL sources, asset functions, the installed extensions (always active) with their guide topics, and the " +
             "component types present in the loaded scenes (with counts), plus GameObject and Transform members. \"guide:<topic>\" prints one of the " +
             "listed guides. With a type name (e.g. \"Light\", \"Enemy\", \"Vector3\"): that type's members " +
-            "(name type; ro = read-only) and methods. Use it before querying an unfamiliar component.";
+            "(name type; ro = read-only) and methods. Use it before querying an unfamiliar component.\n" + DocsLine;
     }
 }

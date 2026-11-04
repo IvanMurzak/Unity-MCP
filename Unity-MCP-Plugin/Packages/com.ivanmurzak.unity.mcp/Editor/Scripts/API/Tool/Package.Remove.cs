@@ -27,7 +27,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             PackageRemoveToolId,
             Title = "Package Manager / Remove",
+            ReadOnlyHint = false,
             DestructiveHint = true,
+            IdempotentHint = true,
+            OpenWorldHint = false,
             Visible = false
         )]
         [AiSkillDescription("Uninstall a UPM package from the Unity project. Modifies `manifest.json` and may " +

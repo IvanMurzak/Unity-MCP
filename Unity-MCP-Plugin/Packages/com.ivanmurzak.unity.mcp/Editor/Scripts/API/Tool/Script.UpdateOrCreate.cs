@@ -27,7 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ScriptUpdateOrCreateToolId,
             Title = "Script / Update or Create",
+            ReadOnlyHint = false,
             DestructiveHint = true,
+            IdempotentHint = true,
             OpenWorldHint = false,
             Visible = false
         )]

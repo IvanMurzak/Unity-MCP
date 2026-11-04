@@ -29,7 +29,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             QuitToolId,
             Title = "Editor Session / Quit",
+            ReadOnlyHint = false,
             DestructiveHint = true,
+            IdempotentHint = false,
+            OpenWorldHint = false,
             ToolType = McpToolType.System
         )]
         [AiSkillDescription("Save and quit an editor that a CLI session started (`unity-mcp-cli exec`, `open --headless`). " +
