@@ -54,12 +54,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 : null;
 
         // On a cold shader cache (a new project, a fresh editor) the first capture of a URP scene came back as background only:
-        // renders that compile shader variants draw nothing, and so do further renders until the GPU work is read back once.
+        // a render that compiles shader variants draws nothing, and so do further renders until the GPU work is read back.
         // Measured on Unity 6000.3 URP: render, render, readback was empty; render, readback, render was right (every time).
-        // So warm-up renders, each followed by a 1-pixel readback, compile what the view needs (synchronously: async
-        // compilation would draw placeholders) before the capture. A render costs milliseconds next to the PNG encode.
-        private const int WarmUpRenders = 2;
-
+        // So a warm-up render, then a 1-pixel readback, compiles what the view needs (synchronously: async compilation would
+        // draw placeholders) before the capture render.
         internal static void RenderSync(Camera camera)
         {
             var wasAsync = ShaderUtil.allowAsyncCompilation;
@@ -68,13 +66,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             var pixel = new Texture2D(1, 1, TextureFormat.RGBA32, false);
             try
             {
-                for (var i = 0; i < WarmUpRenders; i++)
-                {
-                    camera.Render();
-                    RenderTexture.active = camera.targetTexture;
-                    pixel.ReadPixels(new Rect(0, 0, 1, 1), 0, 0, recalculateMipMaps: false);
-                }
-                RenderTexture.active = prevActive;
+                camera.Render();
+                RenderTexture.active = camera.targetTexture;
+                pixel.ReadPixels(new Rect(0, 0, 1, 1), 0, 0, recalculateMipMaps: false);
                 camera.Render();
             }
             finally
