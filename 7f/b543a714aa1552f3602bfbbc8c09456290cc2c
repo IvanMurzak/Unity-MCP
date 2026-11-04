@@ -1,0 +1,29 @@
+.github/workflows/release.yml
+  007482fb3d9a64b2 54-61,71,98
+.github/actions/unity/activate-license/action.yml
+  007482fb3d9a64b2 9-11,14,16-17,19-21,23-24,28-31,37,41,48,54,58-59,63,67-68,84,88-91,98
+.github/workflows/test_unity_plugin.yml
+  007482fb3d9a64b2 70,72-81,107
+.github/actions/setup-unity-mcp/action.yml
+  007482fb3d9a64b2 15-16,19-24,82-88,90-92,94,97-102,104-106
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.10",
+  "base_commit_sha": "7fb543a714aa1552f3602bfbbc8c09456290cc2c",
+  "prompts": {
+    "007482fb3d9a64b2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "73155592-eba1-4c7d-b48f-c9749165d92e",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 1075,
+      "total_deletions": 961,
+      "accepted_lines": 360,
+      "overriden_lines": 0
+    }
+  }
+}

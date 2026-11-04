@@ -1,0 +1,45 @@
+.github/workflows/test_unity_plugin.yml
+  s_ccb6e3eca83ca4::t_1dbae8eba13ebe 58-65,67,69-71,74-75,158,246-247,251-265,275,288,326,336-338,342-343,360
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotCameraTests.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 23
+docs/dev/rql.md
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 55
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotGameViewTests.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotSceneViewTests.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 22
+docs/dev/extensions.md
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 41-43,49-51
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotIsolatedTests.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/RequiresGraphicsDeviceAttribute.cs.meta
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/UI/SceneViewToolbarOverlayTests.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 21
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotCameraTests.pre-Unity.6.5.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 23
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/ToolThreadSafetyTests.pre-Unity.6.5.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 219,226,230
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Utils/RequiresGraphicsDeviceAttribute.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 1-39
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/EditorRqlModules/Lighting/LightingEditorApiTests.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 136
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/ToolThreadSafetyTests.cs
+  s_ccb6e3eca83ca4::t_f8cde2d8539d04 219,226,230
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "997e65771ce3136eedc685a624c466f700f358b3",
+  "prompts": {},
+  "sessions": {
+    "s_ccb6e3eca83ca4": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "904a05bd-31d2-4d9b-a5e7-77ea1d9117d0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

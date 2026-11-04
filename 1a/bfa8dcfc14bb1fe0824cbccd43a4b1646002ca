@@ -1,0 +1,30 @@
+commands/tests/test_extensions.py
+  s_eb8bcde0be96a2::t_3e201daa5a1740 3,195-228
+  s_eb8bcde0be96a2::t_446778fae304e9 229-230
+docs/dev/extensions.md
+  s_eb8bcde0be96a2::t_cfebda70f9608a 44-49
+.github/workflows/release.yml
+  s_eb8bcde0be96a2::t_5416db16d8c749 407-443,504,507,510,513,588,591,594,597
+.github/workflows/test_pull_request.yml
+  s_eb8bcde0be96a2::t_777ebe06cafe80 255-295
+.github/workflows/test_pull_request_manual.yml
+  s_eb8bcde0be96a2::t_e1c74ff7bf4fe6 232,234-242,244-252,254-262,264-272
+.github/workflows/test_unity_plugin.yml
+  s_eb8bcde0be96a2::t_0bf42df6c51c21 310
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "1abfa8dcfc14bb1fe0824cbccd43a4b1646002ca",
+  "prompts": {},
+  "sessions": {
+    "s_eb8bcde0be96a2": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a14267-6fec-7a30-97a7-931925a48014",
+        "model": "gpt-6.1-sol"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

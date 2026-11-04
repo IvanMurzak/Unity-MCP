@@ -1,0 +1,25 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Unity/Logs/FileLogStorage.cs
+  s_c318ff925a6f98::t_f7617600e60f4c 520
+  s_c318ff925a6f98::t_d9416cb26831c9 37,39,55-59,62,65,130-137,141,157,180,204,312,328-329,334,448,450-451,453-455,457-463,465-466,468-476,478-480,514,516-517,519,521-526,528-529,531-534,536-539,644-645
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Unity/Logs/ILogStorage.cs
+  s_c318ff925a6f98::t_2d5cf424851ba5 36,43-47
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Unity/Logs/BufferedFileLogStorage.cs
+  s_c318ff925a6f98::t_af42c924726e1e 61,82,100,110
+  s_c318ff925a6f98::t_5950d45b8b2fa8 142,144,149,151,153-155
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "f9b115018d6d04bf5678d03eaca250802ed08aed",
+  "prompts": {},
+  "sessions": {
+    "s_c318ff925a6f98": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f18f0a3d-5bea-4017-a8c1-2c4000dad348",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

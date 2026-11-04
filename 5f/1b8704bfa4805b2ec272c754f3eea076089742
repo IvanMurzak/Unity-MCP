@@ -1,0 +1,35 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Asset/UnityEngine_Material_Adapter.cs
+  s_66d1354db89bb0::t_043e84ad2fd8d5 195-210
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.Isolated.cs
+  s_66d1354db89bb0::t_90e00a059ba733 613,674
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Screenshot/ScreenshotSceneViewTests.cs
+  s_66d1354db89bb0::t_ae410cb5f6044a 155-198
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/Adapters/Asset/UnityEngine_Material_AdapterTests.cs
+  s_66d1354db89bb0::t_327ae5d34773a9 188-225
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.cs
+  s_66d1354db89bb0::t_b33f0e3ad153a7 56-87
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_66d1354db89bb0::t_de22ea78b15da1 70
+  s_66d1354db89bb0::t_931d1034e39f98 119
+  s_66d1354db89bb0::t_f99d50170ae4c9 139
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.SceneView.cs
+  s_66d1354db89bb0::t_90e00a059ba733 88
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Screenshot.Camera.cs
+  s_66d1354db89bb0::t_90e00a059ba733 98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5f1b8704bfa4805b2ec272c754f3eea076089742",
+  "prompts": {},
+  "sessions": {
+    "s_66d1354db89bb0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf55cb14-7124-484d-9210-059cf41a44b5",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
