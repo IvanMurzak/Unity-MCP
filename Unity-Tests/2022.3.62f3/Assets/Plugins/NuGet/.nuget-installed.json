@@ -27,43 +27,43 @@
       ]
     },
     "Microsoft.AspNetCore.Connections.Abstractions": {
-      "version": "8.0.15",
+      "version": "8.0.32",
       "dlls": [
         "Microsoft.AspNetCore.Connections.Abstractions.dll"
       ]
     },
     "Microsoft.AspNetCore.Http.Connections.Client": {
-      "version": "8.0.15",
+      "version": "8.0.32",
       "dlls": [
         "Microsoft.AspNetCore.Http.Connections.Client.dll"
       ]
     },
     "Microsoft.AspNetCore.Http.Connections.Common": {
-      "version": "8.0.15",
+      "version": "8.0.32",
       "dlls": [
         "Microsoft.AspNetCore.Http.Connections.Common.dll"
       ]
     },
     "Microsoft.AspNetCore.SignalR.Client": {
-      "version": "8.0.15",
+      "version": "8.0.32",
       "dlls": [
         "Microsoft.AspNetCore.SignalR.Client.dll"
       ]
     },
     "Microsoft.AspNetCore.SignalR.Client.Core": {
-      "version": "8.0.15",
+      "version": "8.0.32",
       "dlls": [
         "Microsoft.AspNetCore.SignalR.Client.Core.dll"
       ]
     },
     "Microsoft.AspNetCore.SignalR.Common": {
-      "version": "8.0.15",
+      "version": "8.0.32",
       "dlls": [
         "Microsoft.AspNetCore.SignalR.Common.dll"
       ]
     },
     "Microsoft.AspNetCore.SignalR.Protocols.Json": {
-      "version": "8.0.15",
+      "version": "8.0.32",
       "dlls": [
         "Microsoft.AspNetCore.SignalR.Protocols.Json.dll"
       ]
@@ -75,7 +75,7 @@
       ]
     },
     "Microsoft.Bcl.Memory": {
-      "version": "10.0.3",
+      "version": "10.0.4",
       "dlls": [
         "Microsoft.Bcl.Memory.dll"
       ]
@@ -133,7 +133,7 @@
       ]
     },
     "Microsoft.Extensions.Features": {
-      "version": "8.0.15",
+      "version": "8.0.32",
       "dlls": [
         "Microsoft.Extensions.Features.dll"
       ]
@@ -247,7 +247,7 @@
       ]
     },
     "System.Text.Json": {
-      "version": "8.0.5",
+      "version": "8.0.6",
       "dlls": [
         "System.Text.Json.dll"
       ]
