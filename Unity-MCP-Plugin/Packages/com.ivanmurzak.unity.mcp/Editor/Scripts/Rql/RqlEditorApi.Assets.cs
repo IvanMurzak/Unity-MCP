@@ -301,7 +301,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         // Every object inside a prefab instance links to its source through these: the instance root already reports the use.
         private static readonly HashSet<string> PrefabLinks = new HashSet<string> { "m_CorrespondingSourceObject", "m_PrefabInstance", "m_PrefabAsset" };
 
-        private static string Preview(List<string> names) =>
+        internal static string Preview(List<string> names) =>
             names.Count <= 5 ? string.Join(", ", names) : string.Join(", ", names.GetRange(0, 5)) + $" … (+{names.Count - 5})";
     }
 }

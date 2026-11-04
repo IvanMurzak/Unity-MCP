@@ -21,7 +21,7 @@ using Object = UnityEngine.Object;
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 {
     /// <summary>
-    /// Material: safe members plus every shader property as a typed, validated map: <c>properties["_Color"]</c>; color and
+    /// Material: safe members plus every shader property as a typed, validated map: <c>properties["_Metallic"]</c>; color and
     /// mainTexture for the shader's main color / texture. Material values also take a built-in material's name:
     /// <c>set sharedMaterial = "Default-Material"</c> (the built-in materials are not project assets, so no path reaches them).
     /// </summary>
@@ -96,33 +96,62 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                     "the material this one is a Material Variant of (it takes the parent's shader; properties set on it become overrides); null = a plain material")
              .Add<bool>("isVariant", o => o.isVariant, description: "true when this material is a Material Variant (has a parent)")
              .Add<Color?>("color", o => MainColor(o) is { } p ? o.GetColor(p) : (Color?)null,
-                 (o, v) => o.SetColor(MainColor(o) ?? throw new InvalidOperationException(NoMain(o, "color")), v!.Value),
+                 (o, v) => o.SetColor(MainColor(o) ?? throw new InvalidOperationException(NoMain(o, ShaderPropertyType.Color)), v!.Value),
                  (o, v) => v == null ? "color cannot be null"
-                     : MainColor(o) == null ? NoMain(o, "color") : null,
-                 "the shader's main color ([MainColor], else _Color; _BaseColor in URP / HDRP); null when the shader has none")
+                     : MainColor(o) == null ? NoMain(o, ShaderPropertyType.Color) : null,
+                 "the shader's main color: [MainColor], else _Color (unless hidden beside a visible _BaseColor), else a visible _BaseColor; null when the shader has none")
              .Add<Texture?>("mainTexture", o => MainTexture(o) is { } p ? o.GetTexture(p) : null,
-                 (o, v) => o.SetTexture(MainTexture(o) ?? throw new InvalidOperationException(NoMain(o, "texture")), v),
-                 (o, v) => MainTexture(o) == null ? NoMain(o, "texture") : null,
-                 "the shader's main texture ([MainTexture], else _MainTex; _BaseMap in URP / HDRP); null when the shader has none");
+                 (o, v) => o.SetTexture(MainTexture(o) ?? throw new InvalidOperationException(NoMain(o, ShaderPropertyType.Texture)), v),
+                 (o, v) => MainTexture(o) == null ? NoMain(o, ShaderPropertyType.Texture) : null,
+                 "the shader's main texture: [MainTexture], else _MainTex (unless hidden beside a visible _BaseMap), else a visible _BaseMap; null when the shader has none");
         }
 
-        private static string? MainColor(Material m) => MainProperty(m, ShaderPropertyFlags.MainColor, "_Color", ShaderPropertyType.Color);
-        private static string? MainTexture(Material m) => MainProperty(m, ShaderPropertyFlags.MainTexture, "_MainTex", ShaderPropertyType.Texture);
+        private static string? MainColor(Material m) => MainProperty(m, ShaderPropertyFlags.MainColor, "_Color", "_BaseColor", ShaderPropertyType.Color);
+        private static string? MainTexture(Material m) => MainProperty(m, ShaderPropertyFlags.MainTexture, "_MainTex", "_BaseMap", ShaderPropertyType.Texture);
 
-        // The property Material.color / mainTexture use, found without Unity's "Material doesn't have a color property" error log.
-        internal static string? MainProperty(Material m, ShaderPropertyFlags flag, string fallback, ShaderPropertyType kind)
+        // The main color / texture, found without Unity's "Material doesn't have a color property" error log: [MainColor] /
+        // [MainTexture]; else the legacy _Color / _MainTex (what Material.color uses), unless it is a hidden stand-in next to a
+        // visible _BaseColor / _BaseMap (a URP-style shader without the attribute renders that one); else that visible one.
+        // A hidden legacy name alone stays the main one: URP 2D sprite shaders hide _Color and render it.
+        internal static string? MainProperty(Material m, ShaderPropertyFlags flag, string legacy, string pipeline, ShaderPropertyType kind)
         {
             var shader = m.shader;
             if (shader == null) return null;
             int n = shader.GetPropertyCount();
             for (int i = 0; i < n; i++)
                 if ((shader.GetPropertyFlags(i) & flag) != 0) return shader.GetPropertyName(i);
-            int at = shader.FindPropertyIndex(fallback);
-            return at >= 0 && shader.GetPropertyType(at) == kind ? fallback : null;
+            int legacyAt = IndexOf(shader, legacy, kind), pipelineAt = IndexOf(shader, pipeline, kind);
+            bool pipelineVisible = pipelineAt >= 0 && !IsHidden(shader, pipelineAt);
+            if (legacyAt >= 0 && (!pipelineVisible || !IsHidden(shader, legacyAt))) return legacy;
+            return pipelineVisible ? pipeline : null;
         }
 
-        private static string NoMain(Material m, string what) =>
-            $"shader '{(m.shader != null ? m.shader.name : "none")}' has no main {what}: set its property by name, properties[\"_Name\"]";
+        private static int IndexOf(Shader shader, string name, ShaderPropertyType kind)
+        {
+            int i = shader.FindPropertyIndex(name);
+            return i >= 0 && shader.GetPropertyType(i) == kind ? i : -1;
+        }
+
+        private static bool IsHidden(Shader shader, int i) => (shader.GetPropertyFlags(i) & ShaderPropertyFlags.HideInInspector) != 0;
+
+        // Shaders name their color freely (_Tint, _Diffuse, _BASE_COLOR): the refusal lists the candidates, so the next write
+        // can name one instead of guessing.
+        private static string NoMain(Material m, ShaderPropertyType kind)
+        {
+            var what = kind == ShaderPropertyType.Color ? "color" : "texture";
+            var shader = m.shader;
+            if (shader == null) return $"the material has no shader, so no main {what}";
+            List<string> visible = new List<string>(), hidden = new List<string>();
+            int n = shader.GetPropertyCount();
+            for (int i = 0; i < n; i++)
+                if (shader.GetPropertyType(i) == kind) (IsHidden(shader, i) ? hidden : visible).Add(shader.GetPropertyName(i));
+            var head = $"shader '{shader.name}' has no main {what}";
+            // Hidden ones are offered only when there is nothing else: they are often internal (and may not render).
+            var names = visible.Count > 0 ? visible : hidden;
+            if (names.Count == 0) return $"{head} and no {what} properties";
+            var which = visible.Count > 0 ? $"its {what} properties" : $"its hidden {what} properties";
+            return $"{head}: set one of {which} by name, properties[\"{names[0]}\"] ({RqlEditorApi.Preview(names)})";
+        }
 
         // Unity ignores a parent that would make a cycle (it logs an error and keeps the old one): refused before any write.
         internal static string? ValidateParent(Material material, Material? parent)
@@ -218,7 +247,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 "_MainTex" => MainTexture(m),
                 _ => null,
             };
-            return main != null && main != key && Kind(m, main) == Kind(m, key) ? main : null;
+            // Only a hidden legacy name is a stand-in: a visible one next to a [MainColor] elsewhere is a color of its own.
+            var shader = m.shader;
+            int at = shader != null ? shader.FindPropertyIndex(key) : -1;
+            return main != null && main != key && at >= 0 && IsHidden(shader!, at) && Kind(m, main) == Kind(m, key) ? main : null;
         }
 
         private static string? Validate(Material m, string key, object? value)
