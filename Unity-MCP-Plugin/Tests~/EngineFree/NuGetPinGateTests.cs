@@ -90,6 +90,47 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             return string.Concat(hash.Select(b => b.ToString("x2")));
         }
 
+        // Issue #1119: reject a regression to the advisory ranges, including the JSON
+        // transitive minimum needed to keep exact-version restore checks stable.
+        [Theory]
+        [InlineData("Microsoft.AspNetCore.SignalR.Client", "8.0.32", "Microsoft.AspNetCore.SignalR.Client")]
+        [InlineData("Microsoft.AspNetCore.SignalR.Protocols.Json", "8.0.32", "Microsoft.AspNetCore.SignalR.Protocols.Json")]
+        [InlineData("Microsoft.AspNetCore.SignalR.Common", "8.0.32", "Microsoft.AspNetCore.SignalR.Client")]
+        [InlineData("Microsoft.Bcl.Memory", "10.0.4", "Microsoft.Bcl.Memory")]
+        [InlineData("System.Text.Json", "8.0.6", "System.Text.Json")]
+        public void SecurityPins_AndCommittedDllManifests_MeetPatchedFloor(string id, string floor, string pinId)
+        {
+            // SignalR.Common carries the advisory and must follow the Client pin transitively.
+            var pin = Assert.Single(NuGetConfig.Packages, p => p.Id == pinId);
+            Assert.True(Version.Parse(pin.Version) >= Version.Parse(floor),
+                $"{id} must be at least {floor}.");
+            var root = Path.GetDirectoryName(Path.GetDirectoryName(RepoFile.Require(LockRelativePath)))!;
+            // A missing supported project must fail even if older fixture projects still exist.
+            var workflow = File.ReadAllText(Path.Combine(root, ".github", "workflows", "test_pull_request.yml"));
+            var versions = Regex.Matches(workflow, @"unityVersion:\s*""([^""]+)""")
+                .Cast<Match>().Select(m => m.Groups[1].Value).Distinct().ToArray();
+            Assert.NotEmpty(versions);
+            var projects = Directory.GetDirectories(Path.Combine(root, "Unity-Tests"))
+                .Concat(versions.Select(v => Path.Combine(root, "Unity-Tests", v)))
+                .Append(Path.Combine(root, "Unity-MCP-Plugin")).Distinct();
+            var checkedManifests = 0;
+            foreach (var project in projects)
+            {
+                var manifest = Path.Combine(project, "Assets", "Plugins", "NuGet", ".nuget-installed.json");
+                Assert.True(File.Exists(manifest), $"Missing manifest in {project}");
+                using var doc = JsonDocument.Parse(File.ReadAllText(manifest));
+                var installed = doc.RootElement.GetProperty("packages").GetProperty(id);
+                Assert.Equal(pin.Version, installed.GetProperty("version").GetString());
+                var dlls = installed.GetProperty("dlls").EnumerateArray().ToArray();
+                Assert.NotEmpty(dlls);
+                foreach (var dll in dlls)
+                    Assert.True(File.Exists(Path.Combine(Path.GetDirectoryName(manifest)!, dll.GetString()!)),
+                        $"Missing {dll.GetString()} in {project}");
+                checkedManifests++;
+            }
+            Assert.True(checkedManifests >= 5, "Must inspect the plugin and all four supported test projects.");
+        }
+
         static (string Id, string Version)[] LivePins()
             => NuGetConfig.Packages.Select(p => (p.Id, p.Version)).ToArray();
 
