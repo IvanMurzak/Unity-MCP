@@ -17,10 +17,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
     [InitializeOnLoad]
     static class MainWindowInitializer
     {
-        static PlayerPrefsBool isInitialized = new PlayerPrefsBool("Unity-MCP.MainWindow.Initialized");
+        static PlayerPrefsBool isInitialized;
 
         static MainWindowInitializer()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
+            isInitialized = new PlayerPrefsBool("Unity-MCP.MainWindow.Initialized");
+
             // An asset import worker shares these prefs but has no window to open; opening it would connect (#1050).
             if (AssetDatabase.IsAssetImportWorkerProcess() || isInitialized.Value)
                 return;

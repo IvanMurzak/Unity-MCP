@@ -61,6 +61,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public override void CreateGUI()
         {
             rootVisualElement.Clear();
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+            {
+                rootVisualElement.Add(new Label("Unity-MCP is disabled by UNITY_MCP_DISABLE. Unset it and restart Unity to enable MCP."));
+                return;
+            }
+
             _disposables.Clear();
 
             InitializePlugin();

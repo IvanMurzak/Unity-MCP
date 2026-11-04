@@ -23,10 +23,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
     [InitializeOnLoad]
     public static partial class Startup
     {
-        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(Startup));
+        static ILogger? _cachedLogger;
+        static ILogger _logger => _cachedLogger ??= UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(Startup));
 
         static Startup()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             // Asset import workers load these editor assemblies too; they must not build, connect or quit: a no-auth
             // server keeps one plugin connection, so a worker's replaced the editor's (#1050). Not isBatchMode:
             // headless CLI/CI editors still need MCP.

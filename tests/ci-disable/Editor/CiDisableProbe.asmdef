@@ -1,0 +1,7 @@
+{
+    "name": "UnityMcp.CiDisable.Tests",
+    "references": [],
+    "includePlatforms": ["Editor"],
+    "optionalUnityReferences": ["TestAssemblies"],
+    "autoReferenced": false
+}

@@ -75,7 +75,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         const string McpServerProcessName = "gamedev-mcp-server";
 
-        static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(typeof(McpServerManager));
+        static ILogger? _cachedLogger;
+        static ILogger _logger => _cachedLogger ??= UnityLoggerFactory.LoggerFactory.CreateLogger(typeof(McpServerManager));
         static readonly ReactiveProperty<McpServerStatus> _serverStatus = new(McpServerStatus.Stopped);
         // Last server-binary download/extract/checksum failure reason, or null when there is no outstanding
         // failure. The editor window observes this to surface the error + a "Download / Retry server" button
@@ -116,6 +117,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static McpServerManager()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             // The server belongs to the main editor; an asset import worker must not download, adopt or stop it (#1050).
             if (AssetDatabase.IsAssetImportWorkerProcess())
                 return;
@@ -502,6 +506,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </param>
         public static Task<bool> DownloadServerBinaryIfNeeded(bool unattended = false)
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return Task.FromResult(false);
+
             if (EnvironmentUtils.IsCi())
             {
                 // Ignore in CI environment
@@ -552,6 +559,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// </param>
         public static async Task<bool> DownloadAndUnpackBinary(bool unattended = false)
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return false;
+
             // SINGLE-FLIGHT GUARD (first-install "IOException: Sharing violation" fix). Atomically claim the one
             // download slot BEFORE the first await. On a fresh install two triggers race into the download — the
             // [InitializeOnLoad] static ctor and ServerBinaryUpdateWatcher's registeredPackages handler (which UPM
@@ -1381,6 +1391,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         public static bool StartServer()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return false;
+
             lock (_processMutex)
             {
                 if (_serverStatus.CurrentValue == McpServerStatus.Running ||

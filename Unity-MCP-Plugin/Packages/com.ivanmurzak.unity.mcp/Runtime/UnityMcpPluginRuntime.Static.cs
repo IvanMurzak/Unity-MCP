@@ -111,6 +111,9 @@ namespace com.IvanMurzak.Unity.MCP
         /// </summary>
         public static UnityMcpPluginBuilder Initialize(Action<IMcpPluginBuilder>? configure = null)
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                throw new InvalidOperationException("Unity-MCP is disabled by UNITY_MCP_DISABLE. Unset it before launching Unity to initialize MCP.");
+
             InitSingletonIfNeeded();
             var runtimeInstance = Instance;
             var version = runtimeInstance.BuildVersion();

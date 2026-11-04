@@ -89,7 +89,12 @@ def validate(root=ROOT):
         # A migration must retain every original test and its assertions unchanged.
         for name, digest in baseline.items():
             if name.startswith('Tests/') and name.endswith(('.cs', '.asmdef')):
-                if hashlib.sha256((package / name).read_bytes()).hexdigest() != digest:
+                source = (package / name).read_bytes()
+                if name.endswith('.asmdef'):
+                    # Keep migration provenance immutable. Only the new opt-out constraint is permitted;
+                    # removing its exact added bytes must recover the original test assembly definition.
+                    source = re.sub(rb',\r?\n[ \t]*"!UNITY_MCP_EXCLUDE_FROM_COMPILATION"', b'', source)
+                if hashlib.sha256(source).hexdigest() != digest:
                     raise ValueError(f'Original extension test changed: {package / name}')
         installer = read(package.parents[1] / 'migration-source.json').get('installerFiles', {})
         for name, digest in installer.items():

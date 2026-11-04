@@ -39,6 +39,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.InputSystem
 
         static InputAssetStore()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             Undo.undoRedoPerformed -= Resync;
             Undo.undoRedoPerformed += Resync;
             RqlUnity.Saving -= Flush;

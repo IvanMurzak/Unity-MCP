@@ -37,6 +37,16 @@ class PackageBoundaryTests(unittest.TestCase):
         extensions.write(self.root / 'extensions/manifest.json', {'schemaVersion': 1, 'extensions': rows})
         self.rows = rows
 
+    def test_ci_constraint_preserves_migration_checks(self):
+        extensions.validate(self.root)
+        package = self.root / self.rows[0]['package']
+        asmdef = next((package / 'Tests').rglob('*.asmdef'))
+        content = asmdef.read_bytes()
+        # Adding the CI opt-out is allowed, but changing another test-assembly property is not.
+        asmdef.write_bytes(content.replace(b'"autoReferenced": false', b'"autoReferenced": true'))
+        with self.assertRaisesRegex(ValueError, 'Original extension test changed'):
+            extensions.validate(self.root)
+
     def test_original_packages_pass_then_undeclared_sibling_assembly_fails(self):
         self.assertEqual(2, len(extensions.validate(self.root)))
         row = self.rows[0]

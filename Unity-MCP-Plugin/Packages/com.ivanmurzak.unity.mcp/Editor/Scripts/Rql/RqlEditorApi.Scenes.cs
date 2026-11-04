@@ -64,6 +64,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         [InitializeOnLoadMethod]
         private static void TrackSceneFiles()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             EditorSceneManager.sceneOpened += (scene, _) => RememberSceneFile(scene);
             // A save to another path (Save As, a copy) does not write the scene's own file: its recorded hash stays.
             EditorSceneManager.sceneSaving += (scene, path) => _savingTo = path;
