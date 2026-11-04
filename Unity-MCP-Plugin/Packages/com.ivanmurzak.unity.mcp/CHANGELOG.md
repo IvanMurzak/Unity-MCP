@@ -4,6 +4,9 @@
 
 ### Changed
 
+- **McpPlugin 8.18.0** (gate `UNITY_MCP_DEPS_34`): agent configurators say how an agent is set up for a transport
+  (config file, manual steps such as a Claude connector, or not at all) and when it must be restarted, and repair a
+  portless local Server URL (see Fixed).
 - **McpPlugin 8.16.0** (gate `UNITY_MCP_DEPS_32`): an Editor that cannot serve a call right now answers **HTTP 503**,
   not 422, on the server's direct endpoint `POST /api/tools/{name}` (the tools throw McpPlugin's new
   `ToolUnavailableException`; the MCP channel still shows the tool's message as an error result):
@@ -152,6 +155,23 @@
 
 ### Fixed
 
+- **Claude Desktop: stdio config file or a Claude connector, never an HTTP entry.** Claude Desktop starts only stdio
+  servers from `claude_desktop_config.json` and skipped the HTTP entry the AI agent panel wrote ("not valid MCP server
+  configurations"). The panel no longer writes one:
+  - Custom connection + stdio: Configure writes the stdio entry, as before.
+  - Cloud mode: the panel shows how to add the project as a Claude custom connector (Customize > Connectors in
+    Claude, link included), with the project's Cloud URL to copy, and a "Manual setup" status without Configure.
+    Remove appears only to delete an old HTTP entry an earlier version wrote. The connector works in Claude Desktop
+    and in Claude in the browser.
+  - Custom connection + HTTP: "Transport Not Supported" names the setups that work and offers no Configure; Remove
+    still deletes an old HTTP entry (never the working stdio one), and "Regenerate key" no longer rewrites one.
+- **Restart notice.** After Configure, Reconfigure or Remove for an agent that reads its MCP config only at startup
+  (stdio agents; Claude Desktop must be fully quit, also from the tray or menu bar), a dialog says to restart it (in
+  batch mode the notice is logged), and the stdio panel keeps the hint.
+- **Portless local Server URL.** An empty or portless loopback Custom Server URL (e.g. a saved `http://localhost/mcp`)
+  made Unity dial port 80 while the agent configs used the project port. It is repaired to
+  `http://localhost:<project port>` on load, on save and when the field is edited; a URL with an explicit port, a
+  remote URL, and a URL set by `UNITY_MCP_HOST` / `UNITY_MCP_CLOUD_URL` / `--url` are kept.
 - **No obsolete-API (CS0618) compiler warnings in Unity 6.3–6.6.** `Light.cookieSize2D` and
   `EditorUtility.EntityIdToObject` are used from Unity 6.3 (where they appeared), `FindObjectsByType` without a sort
   mode from 6.5. `Physics.autoSyncTransforms` and the CPU lightmapper (the only one that bakes without a graphics

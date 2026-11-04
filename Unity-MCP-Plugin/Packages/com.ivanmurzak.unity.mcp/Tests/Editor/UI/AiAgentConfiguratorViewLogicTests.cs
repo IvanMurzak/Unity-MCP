@@ -206,6 +206,121 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         #endregion
 
+        #region Claude Desktop: stdio config file, Cloud = Claude connector steps, local HTTP unsupported; restart notice (McpPlugin 8.17/8.18)
+
+        private static AiAgentConfigurator ClaudeDesktop()
+        {
+            var configurator = AiAgentConfiguratorRegistry.GetByAgentId("claude-desktop");
+            Assert.IsNotNull(configurator);
+            return configurator!;
+        }
+
+        [Test]
+        public void ClaudeDesktop_LocalHttp_IsUnsupported_DescribeHoldsOnlyTheAlert()
+        {
+            var configurator = ClaudeDesktop();
+            var settings = MakeSettings(AgentConnectionMode.Local, AuthOption.none);
+            Assert.IsFalse(configurator.SupportsTransport(TransportMethod.streamableHttp));
+            Assert.AreEqual(AgentSetupKind.Unsupported, configurator.GetSetupKind(settings, TransportMethod.streamableHttp));
+
+            var description = configurator.Describe(settings, TransportMethod.streamableHttp);
+            Assert.AreEqual(AgentSetupKind.Unsupported, description.SetupKind, "the view shows the alert panel and no Configure");
+            Assert.IsFalse(description.TransportSupported);
+            Assert.IsFalse(description.IsConfigured);
+            Assert.AreEqual(ConfiguratorStatus.NotConfigured, description.Status);
+            Assert.IsNull(description.RestartNotice);
+            Assert.AreEqual(1, description.Sections.Count);
+            Assert.AreEqual(1, description.Sections[0].Items.Count);
+            var alert = description.Sections[0].Items[0];
+            Assert.AreEqual(ConfigurationItemKind.Alert, alert.Kind);
+            StringAssert.Contains("stdio", alert.Text);
+        }
+
+        [Test]
+        public void ClaudeDesktop_CloudHttp_IsManual_ConnectorStepsWithLinkAndPinnedUrl()
+        {
+            var configurator = ClaudeDesktop();
+            var settings = CloudWithKey(ProjectKey);
+            // Nothing is written for a connector: the write guards keep refusing HTTP.
+            Assert.IsFalse(configurator.SupportsTransport(TransportMethod.streamableHttp));
+            Assert.AreEqual(AgentSetupKind.Manual, configurator.GetSetupKind(settings, TransportMethod.streamableHttp));
+
+            var description = configurator.Describe(settings, TransportMethod.streamableHttp);
+            Assert.AreEqual(AgentSetupKind.Manual, description.SetupKind, "the view renders the steps, no Configure / Remove / alert");
+            Assert.IsFalse(description.TransportSupported);
+            Assert.IsFalse(description.IsConfigured);
+            Assert.IsNull(description.RestartNotice, "a connector needs no restart");
+
+            var steps = description.Sections[0];
+            Assert.IsTrue(steps.ExpandedFirst);
+            var link = System.Linq.Enumerable.Single(steps.Items, i => i.Kind == ConfigurationItemKind.Link);
+            Assert.AreEqual("https://claude.ai/customize/connectors", link.Url);
+            var url = System.Linq.Enumerable.Single(steps.Items, i => i.Kind == ConfigurationItemKind.ReadOnlyField);
+            StringAssert.EndsWith("/p/" + settings.ProjectPin, url.Text);
+            foreach (var section in description.Sections)
+                foreach (var item in section.Items)
+                {
+                    Assert.AreNotEqual(ConfigurationItemKind.Alert, item.Kind);
+                    StringAssert.DoesNotContain(ProjectKey, item.Text ?? string.Empty);
+                }
+        }
+
+        [Test]
+        public void ClaudeDesktop_Stdio_IsSupported_WithTheFullQuitRestartNotice()
+        {
+            var configurator = ClaudeDesktop();
+            Assert.IsTrue(configurator.SupportsTransport(TransportMethod.stdio));
+
+            var description = configurator.Describe(MakeSettings(AgentConnectionMode.Local, AuthOption.none), TransportMethod.stdio);
+            Assert.IsTrue(description.TransportSupported);
+            StringAssert.Contains("Fully quit Claude Desktop", description.RestartNotice);
+            Assert.AreEqual(description.RestartNotice, configurator.GetRestartNotice(TransportMethod.stdio));
+            Assert.IsNull(configurator.GetRestartNotice(TransportMethod.streamableHttp));
+        }
+
+        [Test]
+        public void StdioAgents_GetARestartNotice_HttpAndCustomDoNot()
+        {
+            var claudeCode = AiAgentConfiguratorRegistry.GetByAgentId("claude-code")!;
+            StringAssert.Contains("Restart Claude Code", claudeCode.GetRestartNotice(TransportMethod.stdio));
+            Assert.IsNull(claudeCode.GetRestartNotice(TransportMethod.streamableHttp));
+
+            foreach (var configurator in AiAgentConfiguratorRegistry.All)
+                if (configurator is CustomConfigurator)
+                    Assert.IsNull(configurator.GetRestartNotice(TransportMethod.stdio), "Custom writes no config file");
+        }
+
+        [TestCase(null, AgentSetupKind.ConfigFile, true, TransportMethod.stdio, "Configured (stdio)")]
+        [TestCase(null, AgentSetupKind.ConfigFile, false, TransportMethod.streamableHttp, "Not configured")]
+        [TestCase(null, AgentSetupKind.Unsupported, false, TransportMethod.streamableHttp, "Not supported (http)")]
+        [TestCase(null, AgentSetupKind.Manual, false, TransportMethod.streamableHttp, "Manual setup (follow the steps below)")]
+        [TestCase("Obtaining the project key...", AgentSetupKind.ConfigFile, false, TransportMethod.streamableHttp, "Obtaining the project key...")]
+        public void ComputeStatusText_FollowsTheSetupKind(string? busyText, AgentSetupKind setupKind, bool isConfigured, TransportMethod transport, string expected)
+        {
+            Assert.AreEqual(expected, AiAgentConfiguratorView.ComputeStatusText(busyText, setupKind, isConfigured, transport));
+        }
+
+        [Test]
+        public void ShowRestartNotice_Interactive_ShowsTheDialog()
+        {
+            string? title = null, message = null;
+            Assert.IsTrue(AiAgentConfiguratorView.ShowRestartNotice("Claude Desktop", "Fully quit it.", isBatchMode: false,
+                (t, m) => { title = t; message = m; }));
+            Assert.AreEqual("Restart Claude Desktop", title);
+            Assert.AreEqual("Fully quit it.", message);
+        }
+
+        [Test]
+        public void ShowRestartNotice_BatchModeOrNoNotice_NeverOpensADialog()
+        {
+            var shown = false;
+            Assert.IsFalse(AiAgentConfiguratorView.ShowRestartNotice("Claude Desktop", "Fully quit it.", isBatchMode: true, (_, _) => shown = true));
+            Assert.IsFalse(AiAgentConfiguratorView.ShowRestartNotice("Claude Code", null, isBatchMode: false, (_, _) => shown = true));
+            Assert.IsFalse(shown);
+        }
+
+        #endregion
+
         #region Regenerate key shares the Configure button's right edge
 
         /// <summary>
