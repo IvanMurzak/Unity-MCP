@@ -241,14 +241,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
         [Test]
         public void AHiddenLegacyColorNextToAVisibleBaseColorIsNotTheMainColor() => WithShader(
             "Shader \"Hidden/UnityMcpTests/NoMainAttribute\" { Properties { _BaseColor(\"Base Color\", Color) = (1,1,1,1) " +
-            "[HideInInspector] _Color(\"Color\", Color) = (1,1,1,1) } SubShader { Pass { } } }",
+            "[HideInInspector] _Color(\"Color\", Color) = (1,1,1,1) _BaseMap(\"Base Map\", 2D) = \"white\" {} " +
+            "[HideInInspector] _MainTex(\"Main Tex\", 2D) = \"white\" {} } SubShader { Pass { } } }",
             () =>
             {
                 AssertOk(M(Mat + " | set color = \"#ff0000\""));
                 Assert.AreEqual(Color.red, _mat.GetColor("_BaseColor"));
                 AssertOk(M(Mat + " | set properties[\"_Color\"] = \"#00ff00\""));
                 Assert.AreEqual(Color.green, _mat.GetColor("_BaseColor"), "the legacy name reaches the rendered one");
+                var tex = new Texture2D(2, 2) { name = "Probe" };
+                try
+                {
+                    AssertOk(M(Mat + $" | set mainTexture = ref(\"{RefOf(tex)}\")"));
+                    Assert.AreSame(tex, _mat.GetTexture("_BaseMap"));
+                }
+                finally { Object.DestroyImmediate(tex); }
             });
+
+        // A visible _Color beside a [MainColor] elsewhere is a color of its own: listed, read and written by itself.
+        [Test]
+        public void AVisibleLegacyColorBesideAnotherMainColorIsItsOwnProperty() => WithShader(
+            "Shader \"Hidden/UnityMcpTests/TwoColors\" { Properties { [MainColor] _Tint(\"Tint\", Color) = (1,1,1,1) " +
+            "_Color(\"Color\", Color) = (1,1,1,1) } SubShader { Pass { } } }",
+            () =>
+            {
+                AssertOk(M(Mat + " | set properties[\"_Color\"] = \"#ff0000\""));
+                Assert.AreEqual(Color.red, _mat.GetColor("_Color"));
+                Assert.AreEqual(Color.white, _mat.GetColor("_Tint"));
+                StringAssert.Contains("_Color", Cell(Q(Mat + " | get properties | where Key == \"_Color\" | select Key")));
+            });
+
+        // Only hidden colors: they are offered (still writable by name); more than five names are cut short.
+        [Test]
+        public void ANoMainColorRefusalOffersHiddenColorsAndCutsLongLists()
+        {
+            WithShader(
+                "Shader \"Hidden/UnityMcpTests/HiddenOnly\" { Properties { [HideInInspector] _Shade(\"Shade\", Color) = (1,1,1,1) } " +
+                "SubShader { Pass { } } }",
+                () => AssertFails(M(Mat + " | set color = \"#ff0000\""), "invalid-value", "its hidden color properties by name, properties[\"_Shade\"]"));
+            WithShader(
+                "Shader \"Hidden/UnityMcpTests/Many\" { Properties { _A(\"A\", Color) = (1,1,1,1) _B(\"B\", Color) = (1,1,1,1) " +
+                "_C(\"C\", Color) = (1,1,1,1) _D(\"D\", Color) = (1,1,1,1) _E(\"E\", Color) = (1,1,1,1) _F(\"F\", Color) = (1,1,1,1) } " +
+                "SubShader { Pass { } } }",
+                () => AssertFails(M(Mat + " | set color = \"#ff0000\""), "invalid-value", "(_A, _B, _C, _D, _E … (+1))"));
+        }
 
         // URP 2D sprite shaders hide _Color and still render it: alone, the hidden legacy name stays the main color.
         [Test]

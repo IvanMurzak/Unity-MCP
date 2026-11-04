@@ -99,11 +99,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                  (o, v) => o.SetColor(MainColor(o) ?? throw new InvalidOperationException(NoMain(o, ShaderPropertyType.Color)), v!.Value),
                  (o, v) => v == null ? "color cannot be null"
                      : MainColor(o) == null ? NoMain(o, ShaderPropertyType.Color) : null,
-                 "the shader's main color ([MainColor], else _Color, else a visible _BaseColor as in URP / HDRP); null when the shader has none")
+                 "the shader's main color: [MainColor], else _Color (unless hidden beside a visible _BaseColor), else a visible _BaseColor; null when the shader has none")
              .Add<Texture?>("mainTexture", o => MainTexture(o) is { } p ? o.GetTexture(p) : null,
                  (o, v) => o.SetTexture(MainTexture(o) ?? throw new InvalidOperationException(NoMain(o, ShaderPropertyType.Texture)), v),
                  (o, v) => MainTexture(o) == null ? NoMain(o, ShaderPropertyType.Texture) : null,
-                 "the shader's main texture ([MainTexture], else _MainTex, else a visible _BaseMap as in URP / HDRP); null when the shader has none");
+                 "the shader's main texture: [MainTexture], else _MainTex (unless hidden beside a visible _BaseMap), else a visible _BaseMap; null when the shader has none");
         }
 
         private static string? MainColor(Material m) => MainProperty(m, ShaderPropertyFlags.MainColor, "_Color", "_BaseColor", ShaderPropertyType.Color);
@@ -141,14 +141,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             var what = kind == ShaderPropertyType.Color ? "color" : "texture";
             var shader = m.shader;
             if (shader == null) return $"the material has no shader, so no main {what}";
-            var names = new List<string>();
+            List<string> visible = new List<string>(), hidden = new List<string>();
             int n = shader.GetPropertyCount();
             for (int i = 0; i < n; i++)
-                if (shader.GetPropertyType(i) == kind && !IsHidden(shader, i)) names.Add(shader.GetPropertyName(i));
+                if (shader.GetPropertyType(i) == kind) (IsHidden(shader, i) ? hidden : visible).Add(shader.GetPropertyName(i));
             var head = $"shader '{shader.name}' has no main {what}";
-            return names.Count == 0
-                ? $"{head} and no visible {what} properties"
-                : $"{head}: set one of its {what} properties by name, properties[\"{names[0]}\"] ({RqlEditorApi.Preview(names)})";
+            // Hidden ones are offered only when there is nothing else: they are often internal (and may not render).
+            var names = visible.Count > 0 ? visible : hidden;
+            if (names.Count == 0) return $"{head} and no {what} properties";
+            var which = visible.Count > 0 ? $"its {what} properties" : $"its hidden {what} properties";
+            return $"{head}: set one of {which} by name, properties[\"{names[0]}\"] ({RqlEditorApi.Preview(names)})";
         }
 
         // Unity ignores a parent that would make a cycle (it logs an error and keeps the old one): refused before any write.
@@ -245,7 +247,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 "_MainTex" => MainTexture(m),
                 _ => null,
             };
-            return main != null && main != key && Kind(m, main) == Kind(m, key) ? main : null;
+            // Only a hidden legacy name is a stand-in: a visible one next to a [MainColor] elsewhere is a color of its own.
+            var shader = m.shader;
+            int at = shader != null ? shader.FindPropertyIndex(key) : -1;
+            return main != null && main != key && at >= 0 && IsHidden(shader!, at) && Kind(m, main) == Kind(m, key) ? main : null;
         }
 
         private static string? Validate(Material m, string key, object? value)
