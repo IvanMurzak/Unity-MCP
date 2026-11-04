@@ -183,12 +183,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 RenderTexture.active = rt;
                 pixel.ReadPixels(new Rect(16, 16, 1, 1), 0, 0);
                 Assert.AreNotEqual(Color.black, pixel.GetPixel(0, 0), "the cube is drawn at the center");
-                cam.targetTexture = null;
             }
             finally
             {
                 RenderTexture.active = prevActive;
                 ShaderUtil.allowAsyncCompilation = wasAsync;
+                camGo.GetComponent<Camera>().targetTexture = null;
                 Object.DestroyImmediate(pixel);
                 Object.DestroyImmediate(rt);
                 Object.DestroyImmediate(other);
