@@ -28,7 +28,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScreenshotCameraToolId,
             Title = "Screenshot / Camera",
             ReadOnlyHint = true,
+            DestructiveHint = false,
             IdempotentHint = true,
+            OpenWorldHint = false,
             Visible = false
         )]
         [AiSkillDescription("Capture a screenshot from a Unity `Camera` and return it as a PNG image " +
@@ -93,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 try
                 {
                     camera.targetTexture = rt;
-                    camera.Render();
+                    RenderSync(camera);
 
                     RenderTexture.active = rt;
                     var tex = new Texture2D(width, height, TextureFormat.RGB24, false);

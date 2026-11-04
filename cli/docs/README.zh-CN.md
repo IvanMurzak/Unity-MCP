@@ -144,7 +144,7 @@ unity-mcp-cli configure ./MyGame --list
 
 ```bash
 unity-mcp-cli configure ./MyGame \
-  --enable-tools gameobject-create,gameobject-find \
+  --enable-tools screenshot-scene-view,script-read \
   --disable-all-prompts
 ```
 
@@ -277,7 +277,7 @@ unity-mcp-cli open ./MyGame \
   --url http://my-server:8080 \
   --token my-secret-token \
   --auth required \
-  --tools gameobject-create,gameobject-find
+  --tools rql-query,rql-mutate,rql-schema
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -287,7 +287,7 @@ unity-mcp-cli open ./MyGame \
 通过 HTTP API 直接执行 MCP 工具。服务器 URL 和授权令牌会根据当前连接模式（自定义或云端）从项目的配置文件（`UserSettings/AI-Game-Developer-Config.json`）中**自动解析**。
 
 ```bash
-unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
+unity-mcp-cli run-tool rql-mutate ./MyGame --input '{"query":"editor | call CreateGameObject({name: \"Cube\", primitive: \"Cube\"})"}'
 ```
 
 | 选项 | 必需 | 描述 |
@@ -311,19 +311,19 @@ unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 **示例 — 调用工具（URL 和认证来自配置）：**
 
 ```bash
-unity-mcp-cli run-tool gameobject-find ./MyGame --input '{"query":"Player"}'
+unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select path name active"}'
 ```
 
 **示例 — 显式覆盖 URL：**
 
 ```bash
-unity-mcp-cli run-tool scene-save --url http://localhost:8080
+unity-mcp-cli run-tool rql-mutate --url http://localhost:8080 --input '{"query":"editor | call SaveScenes()"}'
 ```
 
 **示例 — 管道输出原始 JSON：**
 
 ```bash
-unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
+unity-mcp-cli run-tool unity-tool-list ./MyGame --raw | jq .
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)

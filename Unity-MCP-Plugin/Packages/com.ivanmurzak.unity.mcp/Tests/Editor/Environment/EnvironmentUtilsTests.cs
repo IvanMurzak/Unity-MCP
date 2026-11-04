@@ -301,6 +301,69 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("QUOTED_TOKEN", config.LocalToken);
         }
 
+        // --- Local Server URL repair (portless loopback -> project port) ---
+
+        static string ProjectHost => $"http://localhost:{UnityMcpPlugin.GeneratePortFromDirectory()}";
+
+        [TestCase("http://localhost/mcp")]
+        [TestCase("http://localhost")]
+        [TestCase("  http://localhost/  ")]
+        [TestCase("")]
+        [TestCase(null)]
+        public void NormalizeLocalHost_EmptyOrPortlessLoopback_GetsTheProjectPort(string? host)
+        {
+            Assert.AreEqual(ProjectHost, UnityMcpPluginEditor.NormalizeLocalHost(host));
+            Assert.AreEqual(UnityMcpPlugin.UnityConnectionConfig.DefaultHost, UnityMcpPluginEditor.NormalizeLocalHost(host),
+                "The repaired URL is the shipped default, so the field, the binder and the agent configs agree.");
+        }
+
+        [TestCase("http://localhost:5220")]
+        [TestCase("http://localhost:80/mcp")]
+        [TestCase("https://ai-game.dev/mcp")]
+        [TestCase("not-a-url")]
+        public void NormalizeLocalHost_ExplicitPortRemoteOrNonAbsolute_IsKept(string host)
+        {
+            Assert.AreEqual(host, UnityMcpPluginEditor.NormalizeLocalHost(host));
+        }
+
+        [Test]
+        public void RepairLocalHost_PortlessDiskValue_IsRepaired()
+        {
+            var config = BuildDiskConfig(mode: ConnectionMode.Custom);
+            config.LocalHost = "http://localhost/mcp";
+
+            Assert.IsTrue(UnityMcpPluginEditor.RepairLocalHost(config, overrides: null));
+            Assert.AreEqual(ProjectHost, config.LocalHost);
+            Assert.IsFalse(UnityMcpPluginEditor.RepairLocalHost(config, overrides: null), "A repaired value is stable.");
+        }
+
+        [Test]
+        public void RepairLocalHost_ExplicitPort_IsUnchanged()
+        {
+            var config = BuildDiskConfig(mode: ConnectionMode.Custom);
+
+            Assert.IsFalse(UnityMcpPluginEditor.RepairLocalHost(config, overrides: null));
+            Assert.AreEqual(DiskHost, config.LocalHost);
+        }
+
+        [Test]
+        public void RepairLocalHost_EnvOverriddenHost_IsLeftAlone_AndBaselineRestoreStillWorks()
+        {
+            // A host set by env / CLI flag is the caller's explicit choice, and Save() re-applies the recorded
+            // override after writing the disk baseline: repairing only the in-memory copy would not last.
+            var config = BuildDiskConfig(mode: ConnectionMode.Custom);
+            var record = EnvironmentUtils.ApplyEnvironmentOverrides(config, NoArgs(), Env((EnvironmentUtils.EnvHost, "http://localhost")));
+            Assert.IsTrue(record.Contains(EnvironmentUtils.FieldHost));
+
+            Assert.IsFalse(UnityMcpPluginEditor.RepairLocalHost(config, record));
+            Assert.AreEqual("http://localhost", config.LocalHost);
+
+            EnvironmentUtils.ApplyBaseline(config, record);
+            Assert.AreEqual(DiskHost, config.LocalHost);
+            EnvironmentUtils.ApplyOverrides(config, record);
+            Assert.AreEqual("http://localhost", config.LocalHost);
+        }
+
         // --- Helpers ---
 
         static string SerializeForDisk(UnityMcpPlugin.UnityConnectionConfig config)

@@ -681,8 +681,17 @@ export interface CreateProjectOptions {
    */
   findHubImpl?: () => string | null;
   /**
-   * Test injection — installed-editor query. Defaults to invoking the
-   * Unity Hub CLI (`--headless editors --installed`).
+   * Test injection — installed editors found by reading the Unity Hub
+   * editor folders (default root + `secondaryInstallPath.json`), with no
+   * Hub process. Defaults to `listEditorsByCommonLocations`. When it
+   * holds the requested version (or any editor, when none is requested)
+   * the Unity Hub CLI is not started.
+   */
+  listLocalEditorsImpl?: () => CreateProjectEditorInfo[];
+  /**
+   * Test injection — installed-editor query used when the editor folders
+   * hold no match. Defaults to invoking the Unity Hub CLI
+   * (`--headless editors --installed`).
    */
   listEditorsImpl?: (hubPath: string) => CreateProjectEditorInfo[];
   /**

@@ -94,84 +94,50 @@ unity-mcp-cli open ./MyUnityProject
 
 # 技能和工具参考
 
-插件内置 70+ 个工具，分为四个类别。每个工具都为 AI 带来技能。安装后所有工具立即可用，无需额外配置。完整参考及详细说明请见 [docs/default-mcp-tools.md](docs/default-mcp-tools.md)。
+自 1.0.0 起，插件只公开少量工具，大部分编辑器工作都通过 **RQL** 完成——一种针对编辑器数据的查询语言：`rql-query` 用于读取，`rql-mutate` 用于修改，`rql-schema` 用于描述数据源、类型和调用（不确定时从这里开始）。早期版本中"一个操作一个工具"的工具（`gameobject-create`、`scene-save`、`console-get-logs` 等）已在 [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017) 中被 RQL 取代。完整参考请见 [docs/default-mcp-tools.md](default-mcp-tools.md)。
 
 > 🧰 在线浏览完整的 MCP 工具注册表：[ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
 
-<details>
-  <summary>项目与资产</summary>
+默认对 AI 智能体可见的工具：`rql-query`、`rql-mutate`、`rql-schema`、`screenshot-isolated`、`script-execute`、`tests-run`、`unity-tool-list`。其他工具已安装，但在智能体的工具列表中处于隐藏状态（按名称调用时，隐藏的工具仍会运行）。可通过 `tool-set-visibility`、AI Game Developer 窗口或 `unity-mcp-cli configure <path> --enable-tools <ids>` 显示它们。
 
-- `assets-copy` — 复制指定路径的资产并保存到新路径
-- `assets-create-folder` — 在指定父文件夹中创建新文件夹
-- `assets-delete` — 从项目中删除指定路径的资产
-- `assets-find` — 使用搜索过滤字符串搜索资产数据库
-- `assets-find-built-in` — 搜索 Unity 编辑器的内置资产
-- `assets-get-data` — 获取资产文件数据，包括所有可序列化字段和属性
-- `assets-material-create` — 创建具有默认参数的新材质资产
-- `assets-modify` — 修改项目中的资产文件
-- `assets-move` — 移动项目中指定路径的资产（也可用于重命名）
-- `assets-prefab-close` — 关闭当前打开的预制体
-- `assets-prefab-create` — 从当前活动场景中的 GameObject 创建预制体
-- `assets-prefab-instantiate` — 在当前活动场景中实例化预制体
-- `assets-prefab-open` — 为特定 GameObject 打开预制体编辑模式
-- `assets-prefab-save` — 保存预制体编辑模式中的预制体
-- `assets-refresh` — 刷新 AssetDatabase
-- `assets-shader-get-data` — 获取着色器资产的详细数据（属性、子着色器、通道）
-- `assets-shader-list-all` — 列出项目资产和包中所有可用的着色器
-- `package-add` — 从 Unity Package Manager 注册表、Git URL 或本地路径安装包
-- `package-list` — 列出 Unity 项目中安装的所有包（UPM 包）
-- `package-remove` — 从 Unity 项目中移除（卸载）包
-- `package-search` — 在 Unity Package Manager 注册表和已安装包中搜索
+<details>
+  <summary>RQL（场景、GameObject、组件、资产、控制台、编辑器）</summary>
+
+- `rql-query` — 使用 RQL 查询读取编辑器数据，例如 `roots | recurse children | select name active`
+- `rql-mutate` — 修改编辑器数据或调用编辑器操作，例如 `editor | call CreateGameObject({name: "Ground", primitive: "Plane"})`
+- `rql-schema` — 描述 RQL 可用的数据源、类型、成员和调用，并输出主题指南
+- 数据源：`scenes`、`roots`、`objects`（已加载场景中的所有 GameObject）、`selection`、`prefab`（在预制体模式中打开的预制体）、`editor`（创建 GameObject、材质、文件夹和场景；打开和保存场景与预制体；复制、移动和删除资产；执行菜单项；……）、`settings`、`console`（捕获的编辑器日志条目）、`shaders`、`componentTypes`、`tests`、`testResults`、`profiler`、`lighting`；按路径访问资产使用 `unity.asset("Assets/…")`
 
 </details>
 
 <details>
-  <summary>场景与层级</summary>
+  <summary>截图</summary>
 
-- `gameobject-component-add` — 为 GameObject 添加组件
-- `gameobject-component-destroy` — 从目标 GameObject 中销毁一个或多个组件
-- `gameobject-component-get` — 获取 GameObject 上特定组件的详细信息
-- `gameobject-component-list-all` — 列出继承自 UnityEngine.Component 的 C# 类名
-- `gameobject-component-modify` — 修改 GameObject 上的特定组件
-- `gameobject-create` — 在打开的预制体或场景中创建新 GameObject
-- `gameobject-destroy` — 递归销毁 GameObject 及所有嵌套的 GameObjects
-- `gameobject-duplicate` — 在打开的预制体或场景中复制 GameObjects
-- `gameobject-find` — 根据提供的信息查找特定 GameObject
-- `gameobject-modify` — 修改 GameObjects 和/或附加组件的字段和属性
-- `gameobject-set-parent` — 为 GameObjects 列表设置父 GameObject
-- `object-get-data` — 获取指定 Unity 对象的数据
-- `object-modify` — 修改指定的 Unity 对象
-- `scene-create` — 在项目资产中创建新场景
-- `scene-get-data` — 获取指定场景中根 GameObjects 的列表
-- `scene-list-opened` — 返回 Unity 编辑器中当前打开的场景列表
-- `scene-open` — 从项目资产文件中打开场景
-- `scene-save` — 将打开的场景保存到资产文件
-- `scene-set-active` — 将指定的已打开场景设为活动场景
-- `scene-unload` — 从 Unity 编辑器的已打开场景中卸载场景
-- `screenshot-camera` — 从摄像机捕获截图并以图像形式返回
-- `screenshot-game-view` — 从 Unity 编辑器游戏视图捕获截图
 - `screenshot-isolated` — 从选定角度隔离渲染 GameObject（可选 2x2 合成视图）
-- `screenshot-scene-view` — 从 Unity 编辑器场景视图捕获截图
+- `screenshot-scene-view` — 从 Unity 编辑器场景视图捕获截图（默认隐藏）
+- `screenshot-game-view` — 从 Unity 编辑器游戏视图捕获截图（默认隐藏）
+- `screenshot-camera` — 从摄像机捕获截图并以图像形式返回（默认隐藏）
 
 </details>
 
 <details>
-  <summary>脚本与编辑器</summary>
+  <summary>脚本、测试与包</summary>
 
-- `console-clear-logs` — 清除 MCP 日志缓存和 Unity 编辑器控制台窗口
-- `console-get-logs` — 通过过滤选项获取 Unity 编辑器日志
-- `editor-application-get-state` — 返回 Unity 编辑器应用程序状态（播放模式、暂停、编译）的信息
-- `editor-application-set-state` — 控制 Unity 编辑器应用程序状态（启动/停止/暂停播放模式）
-- `editor-selection-get` — 获取 Unity 编辑器中当前选择的信息
-- `editor-selection-set` — 设置 Unity 编辑器中的当前选择
-- `reflection-method-call` — 使用输入参数调用任意 C# 方法并返回结果
-- `reflection-method-find` — 使用 C# 反射在项目中查找方法（包括私有方法）
-- `script-delete` — 删除脚本文件
 - `script-execute` — 使用 Roslyn 动态编译并执行 C# 代码
-- `script-read` — 读取脚本文件的内容
-- `script-update-or-create` — 根据提供的 C# 代码更新或创建脚本文件
+- `script-read` — 读取脚本文件的内容（默认隐藏）
+- `script-update-or-create` — 根据提供的 C# 代码更新或创建脚本文件（默认隐藏）
+- `script-delete` — 删除脚本文件（默认隐藏）
 - `tests-run` — 执行 Unity 测试（EditMode/PlayMode）：对 `tests` 数据源的任意 RQL 选择一次运行，结果可用 RQL 过滤
-- `type-get-json-schema` — 通过反射为 C# 类型生成 JSON Schema
+- `package-list`、`package-search`、`package-add`、`package-remove` — Unity Package Manager 包（默认隐藏）
+
+</details>
+
+<details>
+  <summary>工具管理</summary>
+
+- `unity-tool-list` — 列出所有工具及智能体是否可见
+- `tool-set-visibility` — 在智能体的工具列表中显示或隐藏工具（默认隐藏）
+- `tool-set-enabled-state` — `tool-set-visibility` 的已弃用别名（默认隐藏）
 
 </details>
 
@@ -259,7 +225,7 @@ unity-mcp-cli open ./MyUnityProject
 
 | 文档 | 描述 |
 | -------- | ----------- |
-| [默认 MCP 工具](docs/default-mcp-tools.md) | 所有内置工具的完整参考及描述 |
+| [默认 MCP 工具](default-mcp-tools.md) | 所有内置工具的完整参考及描述 |
 | [MCP 服务器设置](docs/mcp-server.md) | 服务器配置、环境变量、远程托管 |
 | [Docker 部署](docs/DOCKER_DEPLOYMENT.md) | 分步 Docker 部署指南 |
 | [开发指南](docs/dev/Development.md) | 架构、代码风格、CI/CD — 面向贡献者 |
@@ -613,7 +579,7 @@ public static class ChessGameAI
 
 ## 插件变量
 
-Unity MCP 插件在启动时读取以下环境变量（及命令行参数），用于覆盖已保存配置文件中的值。覆盖在运行时生效；在首次运行或生成新的认证令牌时，覆盖值会被**写入配置文件**。在后续运行中，覆盖仅在内存中生效，不会自动保存。例外情况是 `UNITY_MCP_TOOLS`，它使用 `[JsonIgnore]` 且**永远不会持久化** — 仅在运行时生效。
+Unity MCP 插件在启动时读取以下环境变量（及命令行参数），用于覆盖已保存配置文件中的值。覆盖仅在内存中生效，**永远不会写入配置文件**（`UserSettings/AI-Game-Developer-Config.json`），因此已保存的值（例如 `connectionMode` 或 `transportMethod`）仍反映在 AI Game Developer 窗口中所做的选择。如需永久更改某项设置，请在未使用该覆盖启动的编辑器中，于该窗口中修改（覆盖生效期间，在窗口中对同一设置所做的更改不会被保留）。
 
 | 环境变量                    | 命令行参数                  | 值                  | 描述                                   |
 | --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |

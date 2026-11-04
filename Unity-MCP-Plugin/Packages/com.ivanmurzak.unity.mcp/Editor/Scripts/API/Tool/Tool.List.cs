@@ -52,7 +52,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ToolListId,
             Title = "Tool / List",
             ReadOnlyHint = true,
-            IdempotentHint = true
+            DestructiveHint = false,
+            IdempotentHint = true,
+            OpenWorldHint = false
         )]
         [AiSkillDescription("List all Unity-MCP tools registered in the connected Unity Editor instance, hidden ones included (each with `Visible`). " +
             "Optional regex filter matches against tool name, description, and argument names/descriptions. " +
@@ -87,7 +89,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return MainThread.Instance.Run(() =>
             {
                 var toolManager = UnityMcpPluginEditor.Instance.Tools
-                    ?? throw new InvalidOperationException(Error.ToolManagerNotAvailable());
+                    ?? throw new ToolUnavailableException(Error.ToolManagerNotAvailable());
 
                 var allTools = toolManager.GetAllTools();
                 if (allTools == null)

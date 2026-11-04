@@ -65,6 +65,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ShouldRestartAfterUpdate_KeepRunning_Cloud_IsFalse()
             => Assert.IsFalse(McpServerManager.ShouldRestartAfterUpdate(previousKeepServerRunning: true, ConnectionMode.Cloud));
 
+        // A first open downloads the binary and would restart the server after publishing it; with stdio the
+        // AI agent owns the project's port, so that restart must not happen either.
+        [Test]
+        public void ShouldRestartAfterUpdate_KeepRunning_Custom_Stdio_IsFalse()
+            => Assert.IsFalse(McpServerManager.ShouldRestartAfterUpdate(
+                previousKeepServerRunning: true, ConnectionMode.Custom,
+                com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod.stdio));
+
+        [Test]
+        public void ShouldRestartAfterUpdate_KeepRunning_Custom_StreamableHttp_IsTrue()
+            => Assert.IsTrue(McpServerManager.ShouldRestartAfterUpdate(
+                previousKeepServerRunning: true, ConnectionMode.Custom,
+                com.IvanMurzak.McpPlugin.Common.Consts.MCP.Server.TransportMethod.streamableHttp));
+
         // --- Fix A: OrchestrateServerBinaryUpdate ordering (mock process layer records call order) ---
 
         static McpServerManager.ServerUpdateRestartOutcome RunOrchestration(

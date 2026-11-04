@@ -29,6 +29,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ToolSetVisibilityId,
             Title = "Tool / Set Visibility",
+            ReadOnlyHint = false,
+            DestructiveHint = false,
+            IdempotentHint = true,
+            OpenWorldHint = false,
             Visible = false
         )]
         [AiSkillDescription("Show or hide MCP tools by name in batch: a visible tool is listed to MCP clients (tools/list), a hidden one " +
@@ -68,7 +72,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return MainThread.Instance.Run(() =>
             {
                 var toolManager = UnityMcpPluginEditor.Instance.Tools
-                    ?? throw new InvalidOperationException(Error.ToolManagerNotAvailable());
+                    ?? throw new ToolUnavailableException(Error.ToolManagerNotAvailable());
 
                 var logs = includeLogs ? new Logs() : null;
                 var success = new Dictionary<string, bool>();

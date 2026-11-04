@@ -131,6 +131,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             finally { Tool_Script.DeferForReload(false, false, false, t0); }
         }
 
+        // A call deferred for the reload ran nothing: the editor cannot serve it now (503), not the agent's error (422),
+        // and it is not-executed, so a server with the call guard sends it again once the reloaded plugin is back.
+        [Test]
+        public void ADeferredCallIsNotExecutedUnavailable()
+        {
+            var tool = RunTool.CreateFromStaticMethod(UnityMcpPluginEditor.Instance.Reflector!, null, "deferred",
+                typeof(ScriptExecuteResultTests).GetMethod(nameof(DeferredForReload))!);
+
+            var response = tool.Run("request-1", new Dictionary<string, JsonElement>()).GetAwaiter().GetResult();
+
+            Assert.AreEqual(ResponseStatus.Error, response.Status);
+            Assert.AreEqual(ResponseErrorKind.Unavailable, response.ErrorKind, response.GetMessage());
+            Assert.AreEqual(ResponseCallTool.NotExecutedStatusCode, response.HttpStatusCode);
+            StringAssert.EndsWith(Tool_Script.ReloadPendingMessage, response.GetMessage());
+            Assert.IsTrue(ResponseCallTool.IsNotExecuted(response.Pack("request-1")));
+        }
+
+        // A tool method throws the refusal script-execute throws for a deferred call (RunTool needs a public method).
+        public static string DeferredForReload() => throw Tool_Script.ReloadPending();
+
         [Test]
         public void ATypedNullIsNullNotTheStringNull() =>
             Assert.AreEqual("System.String: null", Run("(string)null"));

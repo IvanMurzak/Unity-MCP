@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "31";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "34";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -121,7 +121,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // that McpServerManager passes, and the plugin-side duplicate-request guard.
             // 8.15.0: a tool body that throws on the request's content answers the server's direct endpoint
             // with HTTP 422 (BadRequest + HttpStatusCode 422) instead of 500; fault types stay 500.
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.15.0", includeInBuild: true),
+            // 8.16.0 adds ToolUnavailableException: the tools' "Editor cannot serve this now" failures answer 503.
+            // 8.17.0: AiAgentConfigurator.SupportsTransport (Claude Desktop is stdio-only), GetRestartNotice and
+            // AgentConfiguratorSettings.NormalizeLocalHost (portless loopback Server URL repair).
+            // 8.18.0: AgentSetupKind / GetSetupKind (Claude Desktop in Cloud mode = add-as-a-Claude-connector steps).
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.18.0", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised

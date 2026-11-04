@@ -15,6 +15,7 @@ using System.Linq;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.CodeExec;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor;
 
@@ -37,6 +38,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         internal const string ReloadPendingMessage =
             "Scripts are compiling and reload next, so this snippet was not run (a running snippet holds the reload back). " +
             "Retry in a few seconds: rql-query `editor | select isCompiling` reads false once the reload is done.";
+
+        /// <summary>
+        /// The refusal of a call deferred for a pending reload: nothing of the call has run (only its code was compiled,
+        /// off the main thread), so it is not-executed (HTTP 503) and a server with the call guard sends it again once
+        /// the reloaded plugin is back. Never use it once the snippet started (see <see cref="ReloadStopMessage"/>).
+        /// </summary>
+        internal static ToolUnavailableException ReloadPending() => new ToolUnavailableException(ReloadPendingMessage, notExecuted: true);
 
         /// <summary>How long calls are deferred for one pending compile; after it they run again (another lock may hold it).</summary>
         internal static readonly TimeSpan DeferLimit = TimeSpan.FromSeconds(60);

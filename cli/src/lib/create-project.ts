@@ -8,6 +8,7 @@ import {
   runEditorCreateProject,
   DEFAULT_CREATE_TIMEOUT_MS,
 } from '../utils/unity-hub.js';
+import { listEditorsByCommonLocations } from '../utils/unity-editor.js';
 import { emitProgress } from './progress.js';
 import type {
   CreateProjectEditorInfo,
@@ -31,14 +32,16 @@ function defaultResolveEditorExecutable(editorInstallPath: string): string | nul
  * `process.exit`, never prints to stdout / stderr, never throws past
  * the public boundary.
  *
- * The orchestration (Unity Hub discovery, installed-editor query,
+ * The orchestration (installed-editor discovery — the Unity Hub editor
+ * folders first, the Unity Hub CLI only when they hold no match —
  * version selection, executable resolution, `-createProject` spawn)
  * is shared with the CLI command — `commands/create-project.ts`
  * delegates to this function so the two paths cannot drift.
  *
  * Unlike the CLI surface, this function never installs Unity Hub.
- * When the Hub is missing (and no `hubPath` override is supplied) it
- * returns a `kind: 'failure'` result; callers that want the
+ * When the Hub is needed (the editor folders hold no match) but missing
+ * (and no `hubPath` override is supplied) it returns a `kind: 'failure'`
+ * result; callers that want the
  * auto-install bootstrap (like the CLI) run `ensureUnityHub()` first
  * and pass the result via `options.hubPath`.
  *
@@ -75,18 +78,28 @@ export async function createProject(
       message: `Creating Unity project at ${projectPath}`,
     });
 
-    // -- Unity Hub -------------------------------------------------------
-    const findHub = options.findHubImpl ?? findUnityHub;
-    const hubPath = options.hubPath ?? findHub();
-    if (!hubPath) {
-      throw new Error(
-        'Unity Hub not found. Install it with: unity-mcp-cli install-unity [version]',
-      );
-    }
-
     // -- Installed editors -----------------------------------------------
-    const listEditors = options.listEditorsImpl ?? queryInstalledEditors;
-    const editors = listEditors(hubPath);
+    // Read the Unity Hub editor folders first (no Hub process, like `open`
+    // does). The Unity Hub CLI is only asked when that finds nothing usable:
+    // it starts an Electron process that can take a long time or not return.
+    const requestedVersion = options.editorVersion?.trim();
+    const listLocal = options.listLocalEditorsImpl ?? listEditorsByCommonLocations;
+    let editors = listLocal();
+    const foundLocally = requestedVersion
+      ? editors.some((e) => e.version === requestedVersion)
+      : editors.length > 0;
+
+    if (!foundLocally) {
+      const findHub = options.findHubImpl ?? findUnityHub;
+      const hubPath = options.hubPath ?? findHub();
+      if (!hubPath) {
+        throw new Error(
+          'Unity Hub not found. Install it with: unity-mcp-cli install-unity [version]',
+        );
+      }
+      const listEditors = options.listEditorsImpl ?? queryInstalledEditors;
+      editors = listEditors(hubPath);
+    }
 
     emitProgress(options.onProgress, {
       phase: 'editors-located',
@@ -103,7 +116,6 @@ export async function createProject(
     }
 
     // -- Version selection: explicit version wins, otherwise highest ------
-    const requestedVersion = options.editorVersion?.trim();
     let editor: CreateProjectEditorInfo;
     if (requestedVersion) {
       const found = editors.find((e) => e.version === requestedVersion);

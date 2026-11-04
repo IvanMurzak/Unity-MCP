@@ -374,6 +374,8 @@ export async function openProject(
         onProgress: options.onProgress,
         warnings,
         abortSignal: options.launchDismissAbortSignal,
+        // Only the editor started here: never answer another project's Safe Mode prompt.
+        targetPid: pid,
       });
     }
 
@@ -504,11 +506,12 @@ async function openHeadless(
 
 /**
  * Click away Unity's "compile errors at launch" dialog of a windowed editor that was just started, until `signal`
- * fires (the editor is ready) or 30 s pass. Never throws; platform problems land in `warnings`.
+ * fires (the editor is ready) or 30 s pass. Never throws; platform problems land in `warnings`. With `targetPid`, only
+ * that editor's dialog is clicked.
  */
-export function dismissLaunchErrorsUntil(signal: AbortSignal, warnings: string[]): Promise<void> {
+export function dismissLaunchErrorsUntil(signal: AbortSignal, warnings: string[], targetPid?: number): Promise<void> {
   return pollAndDismissLaunchErrors({
-    timeoutMs: 30000, intervalMs: 1500, onProgress: undefined, warnings, abortSignal: signal,
+    timeoutMs: 30000, intervalMs: 1500, onProgress: undefined, warnings, abortSignal: signal, targetPid,
   });
 }
 
@@ -525,6 +528,7 @@ export interface _PollAndDismissOptionsForTests {
   platform?: DismissPlatform;
   probe?: typeof tryDismissLaunchErrorsDialog;
   abortSignal?: AbortSignal;
+  targetPid?: number;
   /**
    * Grace window (ms) after polling starts: if no dialog has been
    * observed within this window, exit early. Test override only —
@@ -560,6 +564,12 @@ interface PollAndDismissOptions {
    * uses the `noDialogGraceMs` fallback.
    */
   abortSignal?: AbortSignal;
+  /**
+   * The editor process this caller launched. When set, only a dialog owned by that process is
+   * dismissed; another Unity project open on the machine keeps its own prompt. When unknown (an
+   * embedder's `spawnImpl` reported no pid), any Unity editor's dialog matches, as before.
+   */
+  targetPid?: number;
   /**
    * Grace window in ms after polling starts: if no dialog has been
    * observed (and no permanent error has been seen) within this
@@ -639,7 +649,7 @@ async function pollAndDismissLaunchErrors(opts: PollAndDismissOptions): Promise<
   opts.abortSignal?.addEventListener('abort', onAbort, { once: true });
   try {
     while (Date.now() < deadline && !aborted) {
-      const outcome = await probe(platform);
+      const outcome = await probe(platform, opts.targetPid);
       // Re-check the exit conditions BEFORE applying the outcome:
       // if abort fired (or the deadline lapsed) while `probe` was
       // in flight, the in-flight result is stale and applying it

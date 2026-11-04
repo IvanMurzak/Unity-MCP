@@ -126,6 +126,18 @@ namespace com.IvanMurzak.Unity.MCP
                     wasCreated = true;
                 }
 
+                // Repair a saved empty or portless loopback Server URL (e.g. "http://localhost/mcp"): Unity dialed
+                // port 80 with it while the agent configs use the derived port. Runs before the env / CLI overrides
+                // apply, so it repairs the disk value only; re-save so the repaired value lands on disk.
+                var savedHost = config.LocalHost;
+                if (RepairLocalHost(config, overrides: null))
+                {
+                    _logger.LogInformation(
+                        "{method}: repairing the Server URL from <i>{old}</i> to <i>{new}</i>",
+                        nameof(GetOrCreateConfig), savedHost, config.LocalHost);
+                    wasCreated = true;
+                }
+
                 // Auto-heal a legacy absolute `SkillsPath` that points inside the project root.
                 // Committing `UserSettings/AI-Game-Developer-Config.json` is supposed to be portable
                 // across machines; a machine-specific absolute path breaks every other team member.

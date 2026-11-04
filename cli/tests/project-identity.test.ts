@@ -2,10 +2,17 @@
 // Licensed under the Apache License, Version 2.0.
 
 import { describe, it, expect } from 'vitest';
+// The v1 algorithm (no separator conversion) is still the C# reference for old pins, so its golden
+// vectors are checked against cli-core directly. The CLI itself uses v2 (see src/utils/port.ts).
 import {
-  generatePortFromDirectory,
-  deriveProjectPin,
-  normalizeProjectRoot,
+  derivePort as generatePortFromDirectory,
+  derivePin as deriveProjectPin,
+  normalize as normalizeProjectRoot,
+} from '@baizor/gamedev-cli-core';
+import {
+  generatePortFromDirectory as cliPort,
+  deriveProjectPin as cliPin,
+  normalizeProjectRoot as cliNormalize,
 } from '../src/utils/port.js';
 
 // ---------------------------------------------------------------------------
@@ -68,5 +75,31 @@ describe('ProjectIdentity golden-vector parity (C# reference <-> TS port)', () =
 
   it('never trims a lone separator below length 1', () => {
     expect(normalizeProjectRoot('/')).toBe('/');
+  });
+});
+
+// ---------------------------------------------------------------------------
+// The CLI's helpers use v2, the algorithm the Unity plugin uses for its local port
+// (UnityMcpPlugin.GeneratePortFromDirectory -> ProjectIdentity.DerivePortV2).
+// ---------------------------------------------------------------------------
+
+describe('CLI project identity uses v2 (matches the Unity plugin)', () => {
+  it('derives the port the plugin listened on for a real Windows project (observed 1.6.0)', () => {
+    // A fresh 1.6.0 project at this path: the plugin's local server listened on 26587, while the
+    // v1 derivation sent `status` to 24011.
+    expect(cliPort('C:\\UMCP-Tut-1103\\MyUnityProject')).toBe(26587);
+    expect(cliPin('C:\\UMCP-Tut-1103\\MyUnityProject')).toBe('ebff34c8');
+  });
+
+  it('hashes backslash and forward-slash forms identically', () => {
+    expect(cliPort('C:\\Users\\user\\my-game')).toBe(24298);
+    expect(cliPort('C:\\Users\\user\\my-game\\')).toBe(24298);
+    expect(cliPin('C:\\Users\\user\\my-game')).toBe('5a87324e');
+    expect(cliNormalize('C:\\Users\\User\\My-Game\\')).toBe('c:/users/user/my-game');
+  });
+
+  it('keeps v1 values for paths with no backslashes', () => {
+    expect(cliPort('/home/user/my-game')).toBe(23940);
+    expect(cliPin('/home/İstanbul/game')).toBe('672d80a7');
   });
 });

@@ -26,7 +26,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             ScreenshotSceneViewToolId,
             Title = "Screenshot / Scene View",
             ReadOnlyHint = true,
+            DestructiveHint = false,
             IdempotentHint = true,
+            OpenWorldHint = false,
             Visible = false
         )]
         [AiSkillDescription("Capture a screenshot from the Unity Editor Scene View at the requested size. " +
@@ -83,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 try
                 {
                     sceneCamera.targetTexture = rt;
-                    sceneCamera.Render();
+                    RenderSync(sceneCamera);
 
                     RenderTexture.active = rt;
                     tex = new Texture2D(width, height, TextureFormat.RGB24, false);

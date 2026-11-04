@@ -21,8 +21,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     [TestFixture]
     public class ToolParameterTests
     {
-        [Test]
-        public void AllMcpTools_ShouldHaveAtLeastOneParameter()
+        /// <summary>Every [AiTool] method on an [AiToolType] class in the loaded assemblies: the set McpPlugin registers.</summary>
+        static List<MethodInfo> FindToolMethods()
         {
             var toolMethods = AppDomain.CurrentDomain.GetAssemblies()
                 .SelectMany(assembly =>
@@ -36,6 +36,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 .ToList();
 
             Assert.IsTrue(toolMethods.Count > 0, "Should find at least one MCP tool method");
+            return toolMethods;
+        }
+
+        [Test]
+        public void AllMcpTools_ShouldHaveAtLeastOneParameter()
+        {
+            var toolMethods = FindToolMethods();
 
             var zeroParamTools = new List<string>();
             foreach (var method in toolMethods)
@@ -51,6 +58,44 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsEmpty(zeroParamTools,
                 $"The following MCP tools have no input parameters, which breaks some MCP clients (e.g. GitHub Copilot):\n"
                 + string.Join("\n", zeroParamTools));
+        }
+
+        /// <summary>
+        /// Directories of MCP servers (e.g. the Claude Connectors Directory, which lists the hosted ai-game.dev relay of
+        /// these tools) reject a tool without a title or without an explicit readOnlyHint / destructiveHint. A hint left
+        /// unset is sent as null, so it must be assigned in the attribute, even when the value is false.
+        /// </summary>
+        [Test]
+        public void AllMcpTools_ShouldDeclareTitleAndExplicitAnnotationHints()
+        {
+            var problems = new List<string>();
+            // Only this plugin's and its extensions' tools: a consumer project that marks the package testable may
+            // declare its own tools, which this rule does not govern.
+            var ownTools = FindToolMethods()
+                .Where(method => method.DeclaringType?.Assembly.GetName().Name?.StartsWith("com.IvanMurzak.Unity.MCP") == true)
+                .ToList();
+            Assert.IsNotEmpty(ownTools, "Should find this plugin's MCP tool methods");
+
+            foreach (var method in ownTools)
+            {
+                var attr = method.GetCustomAttribute<AiToolAttribute>()!;
+                var missing = new List<string>();
+                if (string.IsNullOrWhiteSpace(attr.Title)) missing.Add(nameof(AiToolAttribute.Title));
+                if (!attr.ReadOnlyHintValue.HasValue) missing.Add(nameof(AiToolAttribute.ReadOnlyHint));
+                if (!attr.DestructiveHintValue.HasValue) missing.Add(nameof(AiToolAttribute.DestructiveHint));
+                if (!attr.IdempotentHintValue.HasValue) missing.Add(nameof(AiToolAttribute.IdempotentHint));
+                if (!attr.OpenWorldHintValue.HasValue) missing.Add(nameof(AiToolAttribute.OpenWorldHint));
+                if (attr.ReadOnlyHintValue == true && attr.DestructiveHintValue == true)
+                    missing.Add("a consistent pair (ReadOnlyHint and DestructiveHint are both true)");
+
+                if (missing.Count > 0)
+                    problems.Add($"  - {attr.Name} ({method.DeclaringType?.Name}.{method.Name}): {string.Join(", ", missing)}");
+            }
+
+            Assert.IsEmpty(problems,
+                "Every MCP tool must declare a non-empty Title and set ReadOnlyHint, DestructiveHint, IdempotentHint and "
+                + "OpenWorldHint explicitly in its [AiTool] attribute:\n"
+                + string.Join("\n", problems));
         }
     }
 }

@@ -4,10 +4,27 @@
 
 ### Changed
 
+- **McpPlugin 8.18.0** (gate `UNITY_MCP_DEPS_34`): agent configurators say how an agent is set up for a transport
+  (config file, manual steps such as a Claude connector, or not at all) and when it must be restarted, and repair a
+  portless local Server URL (see Fixed).
+- **McpPlugin 8.16.0** (gate `UNITY_MCP_DEPS_32`): an Editor that cannot serve a call right now answers **HTTP 503**,
+  not 422, on the server's direct endpoint `POST /api/tools/{name}` (the tools throw McpPlugin's new
+  `ToolUnavailableException`; the MCP channel still shows the tool's message as an error result):
+  - `script-execute` called while scripts compile for a reload its own lock held back: nothing ran, so the refusal is
+    "not executed" and a server with the call guard (GameDev-MCP-Server 9.3.0+) sends the call again once the
+    reloaded plugin is back; an older server returns the refusal as a 503.
+  - `script-execute` "Reflector is not available.", `unity-tool-list` / `tool-set-visibility` /
+    `tool-set-enabled-state` "Tool manager is not available", `unity-skill-generate` "McpPluginInstance is null":
+    503, never sent again automatically.
+  - `tests-run` while another test run is in progress, or in Play Mode (or while a run is still finishing): 503
+    (was 400), never sent again automatically.
+  - Unchanged: a snippet stopped to let the reload start (it already ran part of its code) and the snippet's compile
+    and runtime errors stay 422; `tests-run` with dirty scenes stays 422.
 - **McpPlugin 8.15.0** (gate `UNITY_MCP_DEPS_31`). A tool that throws a plain, `InvalidOperationException` or
   other non-fault exception now answers the server's direct endpoint `POST /api/tools/{name}` with HTTP 422 and the
   same message, not 500: every `script-execute` failure ("Compilation failed", "Execution failed", the snippet
-  timeout, the reload-pending messages) and the tools' "not available" errors. Fault types
+  timeout, the reload-stop message). (The reload-pending refusal and the tools' "not available" errors became 503
+  with McpPlugin 8.16.0, above.) Fault types
   (`NullReferenceException`, `IndexOutOfRangeException`, `InvalidCastException`, `TimeoutException`, load errors
   and similar) stay 500. The MCP channel is unchanged.
 - **McpPlugin 8.14.0, ReflectorNet 5.5.1, GameDev-MCP-Server 9.3.0** (published releases; gate
@@ -138,6 +155,23 @@
 
 ### Fixed
 
+- **Claude Desktop: stdio config file or a Claude connector, never an HTTP entry.** Claude Desktop starts only stdio
+  servers from `claude_desktop_config.json` and skipped the HTTP entry the AI agent panel wrote ("not valid MCP server
+  configurations"). The panel no longer writes one:
+  - Custom connection + stdio: Configure writes the stdio entry, as before.
+  - Cloud mode: the panel shows how to add the project as a Claude custom connector (Customize > Connectors in
+    Claude, link included), with the project's Cloud URL to copy, and a "Manual setup" status without Configure.
+    Remove appears only to delete an old HTTP entry an earlier version wrote. The connector works in Claude Desktop
+    and in Claude in the browser.
+  - Custom connection + HTTP: "Transport Not Supported" names the setups that work and offers no Configure; Remove
+    still deletes an old HTTP entry (never the working stdio one), and "Regenerate key" no longer rewrites one.
+- **Restart notice.** After Configure, Reconfigure or Remove for an agent that reads its MCP config only at startup
+  (stdio agents; Claude Desktop must be fully quit, also from the tray or menu bar), a dialog says to restart it (in
+  batch mode the notice is logged), and the stdio panel keeps the hint.
+- **Portless local Server URL.** An empty or portless loopback Custom Server URL (e.g. a saved `http://localhost/mcp`)
+  made Unity dial port 80 while the agent configs used the project port. It is repaired to
+  `http://localhost:<project port>` on load, on save and when the field is edited; a URL with an explicit port, a
+  remote URL, and a URL set by `UNITY_MCP_HOST` / `UNITY_MCP_CLOUD_URL` / `--url` are kept.
 - **No obsolete-API (CS0618) compiler warnings in Unity 6.3–6.6.** `Light.cookieSize2D` and
   `EditorUtility.EntityIdToObject` are used from Unity 6.3 (where they appeared), `FindObjectsByType` without a sort
   mode from 6.5. `Physics.autoSyncTransforms` and the CPU lightmapper (the only one that bakes without a graphics

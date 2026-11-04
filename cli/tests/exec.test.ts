@@ -79,6 +79,8 @@ describe('execCode', () => {
     await execCode(options(d, { overrideUrl: 'http://127.0.0.1:5000', overrideToken: 't' }));
     expect(sessionOptions(d).env).toMatchObject({
       UNITY_MCP_HOST: 'http://127.0.0.1:5000', UNITY_MCP_TOKEN: 't', UNITY_MCP_START_SERVER: 'true',
+      // the plugin does not start a local server for a project saved on stdio unless http is asked for
+      UNITY_MCP_TRANSPORT: 'streamableHttp',
     });
   });
 
@@ -86,6 +88,7 @@ describe('execCode', () => {
     const d = deps();
     await execCode(options(d, { overrideUrl: 'https://example.com' }));
     expect(sessionOptions(d).env).not.toHaveProperty('UNITY_MCP_START_SERVER');
+    expect(sessionOptions(d).env).not.toHaveProperty('UNITY_MCP_TRANSPORT');
   });
 
   it('calls script-execute on the URL that answered, with the cloud-store flag', async () => {

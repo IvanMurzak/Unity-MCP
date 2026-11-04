@@ -30,6 +30,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ToolSetEnabledStateId,
             Title = "Tool / Set Enabled State (deprecated: tool-set-visibility)",
+            ReadOnlyHint = false,
+            DestructiveHint = false,
+            IdempotentHint = true,
+            OpenWorldHint = false,
             Visible = false
         )]
         [AiSkillDescription("DEPRECATED: use `tool-set-visibility`. Shows (Enabled=true) or hides (Enabled=false) MCP tools by name in batch; " +

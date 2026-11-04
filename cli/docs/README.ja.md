@@ -144,7 +144,7 @@ unity-mcp-cli configure ./MyGame --list
 
 ```bash
 unity-mcp-cli configure ./MyGame \
-  --enable-tools gameobject-create,gameobject-find \
+  --enable-tools screenshot-scene-view,script-read \
   --disable-all-prompts
 ```
 
@@ -277,7 +277,7 @@ unity-mcp-cli open ./MyGame \
   --url http://my-server:8080 \
   --token my-secret-token \
   --auth required \
-  --tools gameobject-create,gameobject-find
+  --tools rql-query,rql-mutate,rql-schema
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -287,7 +287,7 @@ unity-mcp-cli open ./MyGame \
 HTTP API経由でMCPツールを直接実行します。サーバーURLと認証トークンは、現在の接続モード（カスタムまたはクラウド）に基づいて、プロジェクトの設定ファイル（`UserSettings/AI-Game-Developer-Config.json`）から**自動的に解決**されます。
 
 ```bash
-unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
+unity-mcp-cli run-tool rql-mutate ./MyGame --input '{"query":"editor | call CreateGameObject({name: \"Cube\", primitive: \"Cube\"})"}'
 ```
 
 | オプション | 必須 | 説明 |
@@ -311,19 +311,19 @@ unity-mcp-cli run-tool gameobject-create ./MyGame --input '{"name":"Cube"}'
 **例 — ツールを呼び出す（URLと認証は設定から取得）：**
 
 ```bash
-unity-mcp-cli run-tool gameobject-find ./MyGame --input '{"query":"Player"}'
+unity-mcp-cli run-tool rql-query ./MyGame --input '{"query":"objects | where name == \"Player\" | select path name active"}'
 ```
 
 **例 — URLを明示的にオーバーライド：**
 
 ```bash
-unity-mcp-cli run-tool scene-save --url http://localhost:8080
+unity-mcp-cli run-tool rql-mutate --url http://localhost:8080 --input '{"query":"editor | call SaveScenes()"}'
 ```
 
 **例 — 生のJSON出力をパイプ：**
 
 ```bash
-unity-mcp-cli run-tool assets-list ./MyGame --raw | jq '.results'
+unity-mcp-cli run-tool unity-tool-list ./MyGame --raw | jq .
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
