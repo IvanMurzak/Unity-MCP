@@ -610,7 +610,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             out Texture2D readbackTexture)
         {
             var cam = CreateTemporaryCamera(view, bounds, isolated, backgroundMode, clearColor, fov, near, far, padding, target, temporaryObjects);
-            cam.Render();
+            RenderSync(cam);
 
             var prev = RenderTexture.active;
             RenderTexture.active = target;
@@ -671,7 +671,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         // the caller's finally is the single source of truth for camera cleanup
                         // even if anything below throws.
                         cam = CreateTemporaryCamera(quadrantView, bounds, isolated, backgroundMode, clearColor, fov, near, far, padding, rt, temporaryObjects);
-                        cam.Render();
+                        RenderSync(cam);
 
                         var prev = RenderTexture.active;
                         RenderTexture.active = rt;

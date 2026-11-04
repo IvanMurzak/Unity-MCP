@@ -53,6 +53,32 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     "Start it with a graphics device: drop -nographics (headless -batchmode keeps rendering).")
                 : null;
 
+        // On a cold shader cache (a new project, a fresh editor) the first capture of a URP scene came back as background only:
+        // a render that compiles shader variants draws nothing, and so do further renders until the GPU work is read back.
+        // Measured on Unity 6000.3 URP: render, render, readback was empty; render, readback, render was right (every time).
+        // So a warm-up render, then a 1-pixel readback, compiles what the view needs (synchronously: async compilation would
+        // draw placeholders) before the capture render.
+        internal static void RenderSync(Camera camera)
+        {
+            var wasAsync = ShaderUtil.allowAsyncCompilation;
+            ShaderUtil.allowAsyncCompilation = false;
+            var prevActive = RenderTexture.active;
+            var pixel = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            try
+            {
+                camera.Render();
+                RenderTexture.active = camera.targetTexture;
+                pixel.ReadPixels(new Rect(0, 0, 1, 1), 0, 0, recalculateMipMaps: false);
+                camera.Render();
+            }
+            finally
+            {
+                RenderTexture.active = prevActive;
+                ShaderUtil.allowAsyncCompilation = wasAsync;
+                Object.DestroyImmediate(pixel);
+            }
+        }
+
         // Scale (width, height) so the longest edge is at most MaxScreenshotDimension, preserving
         // aspect ratio. Returns the input unchanged when it is already within the limit.
         private static (int width, int height) ClampToTransportLimit(int width, int height)

@@ -185,5 +185,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.AreEqual("null", Cell(Q(Mat + " | select color")));
             AssertFails(M(Mat + " | set color = \"#ff0000\""), "invalid-value", "has no main color");
         }
+
+        // URP / HDRP Lit keep a hidden legacy _Color / _MainTex but render _BaseColor / _BaseMap: a write to the legacy name
+        // also reaches the main property, or the receipt reports a change nothing shows (the tutorial's white ground).
+        private const string UrpLikeShader =
+            "Shader \"Hidden/UnityMcpTests/UrpLike\" { Properties { " +
+            "[MainColor] _BaseColor(\"Base Color\", Color) = (1,1,1,1) [MainTexture] _BaseMap(\"Base Map\", 2D) = \"white\" {} " +
+            "[HideInInspector] _Color(\"Color\", Color) = (1,1,1,1) [HideInInspector] _MainTex(\"Main Tex\", 2D) = \"white\" {} } " +
+            "SubShader { Pass { } } }";
+
+        [Test]
+        public void ALegacyColorOrTextureWriteReachesTheMainPropertyInUrpLikeShaders()
+        {
+            var shader = UnityEditor.ShaderUtil.CreateShaderAsset(UrpLikeShader);
+            var tex = new Texture2D(2, 2) { name = "Probe" };
+            try
+            {
+                _mat.shader = shader;
+                AssertOk(M(Mat + " | set properties[\"_Color\"] = \"#1E4D1E\""));
+                Assert.AreEqual(_mat.GetColor("_Color"), _mat.GetColor("_BaseColor"));
+                AssertTuple("(0.117647, 0.301961, 0.117647, 1)", Cell(Q(Mat + " | select color")));
+
+                AssertOk(M(Mat + $" | set properties[\"_MainTex\"] = ref(\"{RefOf(tex)}\")"));
+                Assert.AreEqual(tex, _mat.GetTexture("_BaseMap"));
+
+                // The legacy name reads the rendered property: a relative write starts from it, not from a stale _Color.
+                AssertOk(M(Mat + " | set properties[\"_BaseColor\"] = \"#ff0000\""));
+                AssertTuple("(1, 0, 0, 1)", Cell(Q(Mat + " | select properties[\"_Color\"]")));
+                AssertOk(M(Mat + " | set properties[\"_Color\"].a = 0.5"));
+                Assert.AreEqual(new Color(1, 0, 0, 0.5f), _mat.GetColor("_BaseColor"));
+
+                // Listed once, by the rendered name, so a loop over the map does not change the same color twice.
+                AssertOk(M(Mat + " | get properties | where Key ends-with \"Color\" | set Value = \"#0000ff\""));
+                Assert.AreEqual(Color.blue, _mat.GetColor("_BaseColor"));
+                Assert.AreEqual("_BaseColor", Cell(Q(Mat + " | get properties | where Key ends-with \"Color\" | select Key")));
+            }
+            finally
+            {
+                Object.DestroyImmediate(tex);
+                Object.DestroyImmediate(shader);
+            }
+        }
+
+        [Test]
+        public void ALegacyNameThatIsTheMainPropertyIsWrittenOnce() =>
+            Assert.IsNull(UnityEngine_Material_Adapter.LegacyAliasOf(_mat, "_Color"), "Standard renders _Color itself");
     }
 }

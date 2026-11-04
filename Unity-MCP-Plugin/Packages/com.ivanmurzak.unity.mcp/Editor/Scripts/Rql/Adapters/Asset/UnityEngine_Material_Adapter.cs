@@ -139,7 +139,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             var shader = m.shader;
             if (shader == null) yield break;
             int n = shader.GetPropertyCount();
-            for (int i = 0; i < n; i++) yield return shader.GetPropertyName(i);
+            for (int i = 0; i < n; i++)
+            {
+                var name = shader.GetPropertyName(i);
+                if (LegacyAliasOf(m, name) == null) yield return name; // listed once, by its rendered name
+            }
         }
 
         private static ShaderPropertyType? Kind(Material m, string key)
@@ -164,6 +168,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
         // The int property ids skip the per-call name hashing of the string overloads.
         private static object? Get(Material m, string key)
         {
+            key = LegacyAliasOf(m, key) ?? key;
             var kind = Kind(m, key);
             if (kind == null) return null;
             int id = Shader.PropertyToID(key);
@@ -179,7 +184,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
             };
         }
 
+        // URP / HDRP shaders keep the legacy _Color / _MainTex only for compatibility: they render _BaseColor / _BaseMap. The legacy
+        // name reads the main property and a write goes to both, so the change shows (the receipt is not a false success) and a
+        // relative write (properties["_Color"].a = 0.5) starts from the rendered value, not a stale legacy one.
         private static void Set(Material m, string key, object? value)
+        {
+            if (LegacyAliasOf(m, key) is { } main)
+                SetProperty(m, main, value);
+            SetProperty(m, key, value);
+        }
+
+        private static void SetProperty(Material m, string key, object? value)
         {
             int id = Shader.PropertyToID(key);
             switch (Kind(m, key))
@@ -192,6 +207,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 case ShaderPropertyType.Int: m.SetInteger(id, (int)value!); break;
                 default: throw new InvalidOperationException($"shader property '{key}' has an unsupported type");
             }
+        }
+
+        /// <summary>The main property a legacy <c>_Color</c> / <c>_MainTex</c> stands in for when the shader renders another one, else null.</summary>
+        internal static string? LegacyAliasOf(Material m, string key)
+        {
+            var main = key switch
+            {
+                "_Color" => MainColor(m),
+                "_MainTex" => MainTexture(m),
+                _ => null,
+            };
+            return main != null && main != key && Kind(m, main) == Kind(m, key) ? main : null;
         }
 
         private static string? Validate(Material m, string key, object? value)
