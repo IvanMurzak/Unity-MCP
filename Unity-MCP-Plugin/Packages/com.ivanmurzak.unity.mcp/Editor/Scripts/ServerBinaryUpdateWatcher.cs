@@ -50,6 +50,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
         static ServerBinaryUpdateWatcher()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             // The server binary belongs to the main editor, not to an asset import worker (#1050).
             if (AssetDatabase.IsAssetImportWorkerProcess())
                 return;

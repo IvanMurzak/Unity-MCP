@@ -50,7 +50,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             InvalidateAndReloadAgentUI();
             CreateGUI();
         }
-        void OnValidate() => UnityMcpPluginEditor.Instance.Validate();
+        void OnValidate()
+        {
+            if (!com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                UnityMcpPluginEditor.Instance.Validate();
+        }
 
         private void SaveChanges(string message)
         {
@@ -68,6 +72,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override void OnEnable()
         {
             base.OnEnable();
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
             _disposables.Add(UnityMcpPluginEditor.SubscribeOnChanged(OnChanged));
         }
         private void OnDisable()

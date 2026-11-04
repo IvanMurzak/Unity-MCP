@@ -55,6 +55,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         static Tool_Tests()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             _testRunnerApi ??= CreateInstance();
 
             // Check for pending test run that was deferred due to script recompilation + domain reload

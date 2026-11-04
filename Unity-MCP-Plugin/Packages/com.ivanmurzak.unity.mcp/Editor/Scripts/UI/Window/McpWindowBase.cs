@@ -46,6 +46,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         public virtual void CreateGUI()
         {
             rootVisualElement.Clear();
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+            {
+                rootVisualElement.Add(new Label("Unity-MCP is disabled by UNITY_MCP_DISABLE. Unset it and restart Unity to enable MCP."));
+                return;
+            }
 
             var visualTree = EditorAssetLoader.LoadAssetAtPath<VisualTreeAsset>(WindowUxmlPaths, Logger);
             if (visualTree == null)

@@ -28,6 +28,9 @@ namespace com.IvanMurzak.Unity.MCP
 
         public UnityMcpPluginEditor BuildMcpPluginIfNeeded()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return this;
+
             var stopwatch = System.Diagnostics.Stopwatch.StartNew();
             var loggerProvider = BuildLoggerProvider();
 

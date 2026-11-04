@@ -31,6 +31,9 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
         static void Initialize()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             // Save the current main thread ID
             MainThreadId = Thread.CurrentThread.ManagedThreadId;
 
@@ -50,6 +53,9 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         [InitializeOnLoadMethod]
         static void EditorInitialize()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             // Save the current main thread ID
             MainThreadId = Thread.CurrentThread.ManagedThreadId;
 

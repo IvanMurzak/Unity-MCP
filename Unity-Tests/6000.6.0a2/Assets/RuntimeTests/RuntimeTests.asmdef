@@ -19,7 +19,8 @@
     "defineConstraints": [
         "UNITY_INCLUDE_TESTS",
         "UNITY_MCP_READY",
-        "UNITY_MCP_DEPS_34"
+        "UNITY_MCP_DEPS_34",
+        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"
     ],
     "versionDefines": [],
     "noEngineReferences": false

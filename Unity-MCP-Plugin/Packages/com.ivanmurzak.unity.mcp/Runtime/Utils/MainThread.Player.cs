@@ -19,7 +19,12 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
     public static class MainThreadInstaller
     {
         [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
-        public static void Init() => MainThread.Instance = new UnityMainThread();
+        public static void Init()
+        {
+            if (McpDisable.IsDisabled)
+                return;
+            MainThread.Instance = new UnityMainThread();
+        }
     }
     public class UnityMainThread : MainThread
     {

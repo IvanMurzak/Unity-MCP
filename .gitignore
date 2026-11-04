@@ -41,3 +41,7 @@ __pycache__/
 /Unity-Tests/*/Assets/FilterOracle/
 /Unity-Tests/*/Assets/FilterOracle.meta
 /.artifacts/
+
+# Standalone CI disable probe, copied from tests/ci-disable.
+/Unity-Tests/*/Assets/CiDisableProbe/
+/Unity-Tests/*/Assets/CiDisableProbe.meta

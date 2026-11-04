@@ -58,6 +58,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         static NuGetDependencyResolver()
         {
+            if (Environment.GetEnvironmentVariable("UNITY_MCP_DISABLE")?.Trim() is "1"
+                || string.Equals(Environment.GetEnvironmentVariable("UNITY_MCP_DISABLE")?.Trim(), "true", StringComparison.OrdinalIgnoreCase))
+                return;
+
             // In CI, skip runtime resolution — DLLs are committed to git
             // and UNITY_MCP_READY should already be in ProjectSettings.
             // Setting defines at runtime in batch mode causes "Error building Player

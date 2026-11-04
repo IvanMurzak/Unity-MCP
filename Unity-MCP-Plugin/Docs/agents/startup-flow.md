@@ -13,3 +13,11 @@ server (#1050).
 6. Validate project path (no spaces)
 7. Subscribe to editor lifecycle events (domain reload, play mode transitions)
 8. CI environment detection — skips connection and server start in CI
+
+## Explicit CI opt-out
+
+`UNITY_MCP_DISABLE=1` (also `true`, ignoring case/whitespace) skips automatic MCP initialization,
+including independent editor hooks and dependency resolution. `McpDisable` is a BCL-only check;
+startup logging must remain lazy so disabled launches do not initialize the logging graph first.
+It does not disable compilation. `UNITY_MCP_EXCLUDE_FROM_COMPILATION` is a separate scripting
+symbol used by all shipped assembly definitions. See [CI setup](../../../docs/ci-disable.md).

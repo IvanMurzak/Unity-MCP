@@ -62,6 +62,7 @@
   </ItemGroup>
 
   <ItemGroup>
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Runtime\Utils\McpDisable.cs" Link="Source\McpDisable.cs" />
     <!-- ── (a) NuGet resolver: pins + the asmdef generation gate (issue #957) ──────────────────────
          Pure BCL, no Unity API, no McpPlugin dependency. NuGetConfig is the single source of truth for
          the pinned NuGet set AND for the two gate defines, and it is the file .github/scripts/

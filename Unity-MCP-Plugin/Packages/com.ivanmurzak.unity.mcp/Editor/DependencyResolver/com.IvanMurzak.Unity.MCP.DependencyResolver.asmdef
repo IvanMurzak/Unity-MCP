@@ -10,7 +10,9 @@
     "overrideReferences": true,
     "precompiledReferences": [],
     "autoReferenced": false,
-    "defineConstraints": [],
+    "defineConstraints": [
+        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"
+    ],
     "versionDefines": [],
     "noEngineReferences": false
 }

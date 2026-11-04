@@ -33,6 +33,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         static ScriptUtils()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             // Process any pending notifications after domain reload (successful compilation)
             ScheduleProcessPendingNotifications();
 

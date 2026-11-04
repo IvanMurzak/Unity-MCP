@@ -27,7 +27,7 @@ namespace com.IvanMurzak.Unity.MCP
 
     public partial class UnityMcpPlugin : IDisposable
     {
-        public const string Version = "1.6.1";
+        public const string Version = "1.6.2";
 
         private static int _singletonCount = 0;
         public static bool HasAnyInstance => _singletonCount > 0;
@@ -100,6 +100,9 @@ namespace com.IvanMurzak.Unity.MCP
 
         public void AddUnityLogCollectorIfNeeded(Func<ILogStorage> logStorageProvider)
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return;
+
             if (LogCollector != null)
                 return;
 
@@ -124,6 +127,9 @@ namespace com.IvanMurzak.Unity.MCP
 
         public async Task<bool> Connect()
         {
+            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+                return false;
+
             _logger.LogTrace("{method} called.", nameof(Connect));
             try
             {
