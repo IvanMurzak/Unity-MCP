@@ -1,0 +1,54 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/EditorRqlModules/Mathematics/com.IvanMurzak.Unity.MCP.Editor.Rql.Mathematics.Tests.asmdef
+  s_ce4762fbd3d517::t_276a33f42164dd 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_ce4762fbd3d517::t_276a33f42164dd 68,142-143,145,147-148,165
+  s_ce4762fbd3d517::t_f9a730afe9fc80 140-141,163
+Unity-Tests/6000.3.27f1/ProjectSettings/ProjectSettings.asset
+  s_ce4762fbd3d517::t_276a33f42164dd 844
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/RqlModules/Mathematics/com.IvanMurzak.Unity.MCP.Editor.Rql.Mathematics.asmdef
+  s_ce4762fbd3d517::t_276a33f42164dd 23
+Unity-Tests/6000.0.85f1/ProjectSettings/ProjectSettings.asset
+  s_ce4762fbd3d517::t_276a33f42164dd 844
+Unity-Tests/6000.6.7f1/ProjectSettings/ProjectSettings.asset
+  s_ce4762fbd3d517::t_276a33f42164dd 605
+Unity-MCP-Plugin/Tests~/EngineFree/NuGetPinGateTests.cs
+  s_ce4762fbd3d517::t_7a662f9ffdc486 93-123
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/RqlModules/Physics/com.IvanMurzak.Unity.MCP.Editor.Rql.Physics.asmdef
+  s_ce4762fbd3d517::t_276a33f42164dd 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/EditorRqlModules/Physics/com.IvanMurzak.Unity.MCP.Editor.Rql.Physics.Tests.asmdef
+  s_ce4762fbd3d517::t_276a33f42164dd 28
+Unity-Tests/6000.6.7f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_ce4762fbd3d517::t_2b050c7f1fa0c1 30,36,42,48,54,60,66,78,136,250,268
+Unity-Tests/2022.3.62f3/ProjectSettings/ProjectSettings.asset
+  s_ce4762fbd3d517::t_276a33f42164dd 758
+.github/nuget-gate.lock
+  s_ce4762fbd3d517::t_bd8b280abdcf0c 3-4,6-8,18
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_ce4762fbd3d517::t_e0f4a8bbc60f48 30,36,42,48,54,60,66,78,136,250,268
+Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_ce4762fbd3d517::t_cc3d35dbc09695 30,36,42,48,54,60,66,78,136,250,268
+Unity-Tests/6000.0.85f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_ce4762fbd3d517::t_dff8c4b4570aa2 30,36,42,48,54,60,66,78,136,250,268
+Unity-Tests/6000.3.27f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_ce4762fbd3d517::t_160c09c5030783 30,36,42,48,54,60,66,78,136,250,268
+Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_ce4762fbd3d517::t_96fa7f0958e310 30,36,42,48,54,60,66,78,136,250,268
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/.nuget-installed.json
+  s_ce4762fbd3d517::t_dd8111d9797d24 30,36,42,48,54,60,66,78,136,250,268
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3dc252ee324e818096ec4f3399c537d57bc9063c",
+  "prompts": {},
+  "sessions": {
+    "s_ce4762fbd3d517": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a511-b246-7b82-80fa-88af1118efb4",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
