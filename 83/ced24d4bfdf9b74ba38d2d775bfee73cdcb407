@@ -1,0 +1,19 @@
+.gitignore
+  s_6375ca4e105044::t_66027c7c51c468 31-33
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "83ced24d4bfdf9b74ba38d2d775bfee73cdcb407",
+  "prompts": {},
+  "sessions": {
+    "s_6375ca4e105044": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_6375ca4e105044",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

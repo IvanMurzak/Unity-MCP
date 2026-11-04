@@ -1,0 +1,21 @@
+cli/tests/open-lib.test.ts
+  s_09496eac78bf27::t_d945fb5c7ce9bd 399-453
+cli/src/lib/open.ts
+  s_09496eac78bf27::t_dd4439d692d1c1 220-238,241-243
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "01123d05bc92e9d315c533e8dd3e98d329af8af4",
+  "prompts": {},
+  "sessions": {
+    "s_09496eac78bf27": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "266bd17a-6067-410b-a2d9-9767acc018bc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,171 @@
+Unity-Tests/6000.6.0a2/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_7bc72ecaebd05d::t_67427c32d01a7a 22
+Unity-Tests/6000.0.85f1/Assets/TestFiles/TestFiles.asmdef
+  s_7bc72ecaebd05d::t_2e73e997df5f3d 13
+Unity-Tests/6000.6.7f1/ProjectSettings/ProjectSettings.asset
+  s_7bc72ecaebd05d::t_d22c7ece506cbe 605
+Unity-Tests/6000.6.7f1/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_7bc72ecaebd05d::t_4e680c69f7b330 22
+extensions/Splines/Packages/com.ivanmurzak.unity.mcp.splines/Runtime/com.IvanMurzak.Unity.MCP.Splines.Runtime.asmdef
+  s_7bc72ecaebd05d::t_4f5ac21dd285c4 16
+extensions/Animation/Packages/com.ivanmurzak.unity.mcp.animation/Runtime/com.IvanMurzak.Unity.MCP.Animation.Runtime.asmdef
+  s_7bc72ecaebd05d::t_f07bb66da3803c 15
+extensions/ParticleSystem/Packages/com.ivanmurzak.unity.mcp.particlesystem/Runtime/com.IvanMurzak.Unity.MCP.ParticleSystem.Runtime.asmdef
+  s_7bc72ecaebd05d::t_729c28cdcc7f2e 17
+Unity-Tests/6000.3.27f1/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_7bc72ecaebd05d::t_c306526e2ebbb7 22
+Unity-Tests/6000.5.0b3/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_7bc72ecaebd05d::t_a8acfa7edea013 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnity.Save.cs
+  s_7be60963fe3603::t_f771162b6ae0bc 104
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs
+  s_7bc72ecaebd05d::t_d420a7613786c2 68,156
+Unity-Tests/6000.5.0b3/Assets/EditorTests/EditorTests.asmdef
+  s_7bc72ecaebd05d::t_5e257bd841ee65 24
+extensions/Tilemap/Packages/com.ivanmurzak.unity.mcp.tilemap/Editor/Scripts/com.IvanMurzak.Unity.MCP.Tilemap.Editor.asmdef
+  s_7bc72ecaebd05d::t_0c661854b5b575 20
+Unity-Tests/6000.3.27f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7be60963fe3603::t_654b7e4425d1ec 22
+extensions/Timeline/Packages/com.ivanmurzak.unity.mcp.timeline/Runtime/com.IvanMurzak.Unity.MCP.Timeline.Runtime.asmdef
+  s_7bc72ecaebd05d::t_d978c04ce8ad0e 16
+Unity-Tests/6000.6.7f1/Assets/TestFiles/TestFiles.asmdef
+  s_7bc72ecaebd05d::t_5949a9e2462528 13
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/Editor/Scripts/com.IvanMurzak.Unity.MCP.InputSystem.Editor.asmdef
+  s_7bc72ecaebd05d::t_9d5ce3632ca34e 19
+templates/extension/Unity-Package/Packages/YOUR_PACKAGE_ID_LOWERCASE/Tests/Editor/YOUR_PACKAGE_ID.Editor.Tests.asmdef
+  s_7bc72ecaebd05d::t_038ab8a709fbe5 35
+Unity-Tests/6000.3.27f1/Assets/EditorTests/EditorTests.asmdef
+  s_7bc72ecaebd05d::t_672e94637d7fcc 24
+templates/extension/Unity-Package/Packages/YOUR_PACKAGE_ID_LOWERCASE/Editor/Scripts/YOUR_PACKAGE_ID.Editor.asmdef
+  s_7bc72ecaebd05d::t_556f3f210e3457 18
+extensions/Terrain/Packages/com.ivanmurzak.unity.mcp.terrain/Editor/Scripts/com.IvanMurzak.Unity.MCP.Terrain.Editor.asmdef
+  s_7bc72ecaebd05d::t_9ada23614d95fb 18
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/EditorRqlModules/Mathematics/com.IvanMurzak.Unity.MCP.Editor.Rql.Mathematics.Tests.asmdef
+  s_7bc72ecaebd05d::t_5d0841cebe5bf2 29
+Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_3f87057475a311 22
+extensions/Terrain/Packages/com.ivanmurzak.unity.mcp.terrain/Runtime/com.IvanMurzak.Unity.MCP.Terrain.Runtime.asmdef
+  s_7bc72ecaebd05d::t_732b2ee30e5ca8 16
+Unity-Tests/6000.0.85f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7be60963fe3603::t_332f4c7e313f9d 22
+extensions/Animation/Packages/com.ivanmurzak.unity.mcp.animation/Editor/Scripts/com.IvanMurzak.Unity.MCP.Animation.Editor.asmdef
+  s_7bc72ecaebd05d::t_a390fcaa26f8a1 19
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/Runtime/com.IvanMurzak.Unity.MCP.InputSystem.Runtime.asmdef
+  s_7bc72ecaebd05d::t_bfdeeb42d436e8 16
+templates/extension/Unity-Package/Packages/YOUR_PACKAGE_ID_LOWERCASE/Tests/Runtime/YOUR_PACKAGE_ID.Tests.asmdef
+  s_7bc72ecaebd05d::t_c04365c614239a 28
+Unity-Tests/6000.0.85f1/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_7bc72ecaebd05d::t_6cd4bee5dfcf7d 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/EditorRqlModules/Lighting/com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting.Tests.asmdef
+  s_7bc72ecaebd05d::t_2bf8310524e80c 29
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/RqlModules/Physics/com.IvanMurzak.Unity.MCP.Editor.Rql.Physics.asmdef
+  s_7bc72ecaebd05d::t_68aacbf61bc421 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/RqlModules/Lighting/com.IvanMurzak.Unity.MCP.Editor.Rql.Lighting.asmdef
+  s_7bc72ecaebd05d::t_9e25304950d833 22
+Unity-Tests/2022.3.62f3/Assets/RuntimeTests/RuntimeTests.asmdef
+  s_7bc72ecaebd05d::t_4932f7fbd75361 22
+.github/nuget-gate.lock
+  s_7bc72ecaebd05d::t_b1b115ead5566b 3-4,21
+Unity-Tests/6000.6.7f1/Assets/EditorTests/EditorTests.asmdef
+  s_7bc72ecaebd05d::t_883a5f3a55e2f4 24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/RqlModules/Mathematics/com.IvanMurzak.Unity.MCP.Editor.Rql.Mathematics.asmdef
+  s_7bc72ecaebd05d::t_4fe58bf281167d 23
+extensions/Cinemachine/Packages/com.ivanmurzak.unity.mcp.cinemachine/Runtime/com.IvanMurzak.Unity.MCP.Cinemachine.Runtime.asmdef
+  s_7bc72ecaebd05d::t_4fe9af49665b36 16
+Unity-Tests/6000.5.0b3/Assets/TestFiles/TestFiles.asmdef
+  s_7bc72ecaebd05d::t_619c6bea9ef02b 13
+Unity-Tests/6000.6.0a2/Assets/EditorTests/EditorTests.asmdef
+  s_7bc72ecaebd05d::t_34aee1ec7881b5 24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/com.IvanMurzak.Unity.MCP.Editor.asmdef
+  s_7bc72ecaebd05d::t_c3c01f2ebf5820 35
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/RqlUnityTests.cs
+  s_7be60963fe3603::t_4ede8f182fa779 297-348
+Unity-Tests/2022.3.62f3/Assets/EditorTests/EditorTests.asmdef
+  s_7bc72ecaebd05d::t_4e41418f7c4519 24
+extensions/Cinemachine/Packages/com.ivanmurzak.unity.mcp.cinemachine/Editor/Scripts/com.IvanMurzak.Unity.MCP.Cinemachine.Editor.asmdef
+  s_7bc72ecaebd05d::t_fdd5b206e04dc9 20
+Unity-Tests/6000.3.27f1/ProjectSettings/ProjectSettings.asset
+  s_7bc72ecaebd05d::t_cb13b8b4c6c3bf 844
+extensions/Navigation/Packages/com.ivanmurzak.unity.mcp.navigation/Runtime/com.IvanMurzak.Unity.MCP.Navigation.Runtime.asmdef
+  s_7bc72ecaebd05d::t_40dce1c7685e02 16
+extensions/ProBuilder/Packages/com.ivanmurzak.unity.mcp.probuilder/Runtime/com.IvanMurzak.Unity.MCP.ProBuilder.Runtime.asmdef
+  s_7bc72ecaebd05d::t_a0b8c7fac72f29 17
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/com.IvanMurzak.Unity.MCP.Runtime.asmdef
+  s_7bc72ecaebd05d::t_538e813ae301a4 26
+Unity-MCP-Plugin/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7be60963fe3603::t_5a6a3200f24075 22
+extensions/Splines/Packages/com.ivanmurzak.unity.mcp.splines/Editor/Scripts/com.IvanMurzak.Unity.MCP.Splines.Editor.asmdef
+  s_7bc72ecaebd05d::t_1e6485cb9f98e3 21
+extensions/Timeline/Packages/com.ivanmurzak.unity.mcp.timeline/Editor/Scripts/com.IvanMurzak.Unity.MCP.Timeline.Editor.asmdef
+  s_7bc72ecaebd05d::t_1f402d93659ab9 20
+Unity-Tests/6000.0.85f1/Assets/EditorTests/EditorTests.asmdef
+  s_7bc72ecaebd05d::t_a4681a4e81fe85 24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/EditorRqlModules/Physics/com.IvanMurzak.Unity.MCP.Editor.Rql.Physics.Tests.asmdef
+  s_7bc72ecaebd05d::t_aec60db00faa12 28
+Unity-Tests/2022.3.62f3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7be60963fe3603::t_8328520c04c328 22
+Unity-Tests/6000.3.27f1/Assets/TestFiles/TestFiles.asmdef
+  s_7bc72ecaebd05d::t_86410b4ce5502b 13
+Unity-Tests/6000.6.0a2/Assets/TestFiles/TestFiles.asmdef
+  s_7bc72ecaebd05d::t_8f9e709a58ffe2 13
+Unity-Tests/6000.6.7f1/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7bc72ecaebd05d::t_7ff27b977389f4 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlEditorApi_StateTests.cs
+  s_7bc72ecaebd05d::t_61e925d3ca0fe2 12-13,187-207
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/TestFiles/com.IvanMurzak.Unity.MCP.TestFiles.asmdef
+  s_7bc72ecaebd05d::t_08d5ef481163e8 13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/com.IvanMurzak.Unity.MCP.Editor.Tests.asmdef
+  s_7bc72ecaebd05d::t_d6887359cadff1 37
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Rql.Mutate.cs
+  s_7be60963fe3603::t_48faf7fdf1425e 34-35,38
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlUnity.cs
+  s_7be60963fe3603::t_a017b009e92701 48-51,57
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_7bc72ecaebd05d::t_8d8337bc1cbbd9 40,47-48,52-54,139-140
+Unity-Tests/6000.0.85f1/ProjectSettings/ProjectSettings.asset
+  s_7bc72ecaebd05d::t_60f39729b63d42 844
+extensions/Navigation/Packages/com.ivanmurzak.unity.mcp.navigation/Editor/Scripts/com.IvanMurzak.Unity.MCP.Navigation.Editor.asmdef
+  s_7bc72ecaebd05d::t_027cf159e67c9f 20
+Unity-Tests/2022.3.62f3/Assets/TestFiles/TestFiles.asmdef
+  s_7bc72ecaebd05d::t_a1b0d7cc4f04ce 13
+extensions/ParticleSystem/Packages/com.ivanmurzak.unity.mcp.particlesystem/Editor/Scripts/com.IvanMurzak.Unity.MCP.ParticleSystem.Editor.asmdef
+  s_7bc72ecaebd05d::t_58742df1fd6782 19
+Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet/.nuget-installed.json
+  s_7be60963fe3603::t_c391d5031f87ad 22
+extensions/Tilemap/Packages/com.ivanmurzak.unity.mcp.tilemap/Runtime/com.IvanMurzak.Unity.MCP.Tilemap.Runtime.asmdef
+  s_7bc72ecaebd05d::t_8a847bbfbb49cf 16
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Runtime/com.IvanMurzak.Unity.MCP.Tests.asmdef
+  s_7bc72ecaebd05d::t_8d44b5630cd807 30
+templates/extension/Unity-Package/Packages/YOUR_PACKAGE_ID_LOWERCASE/Runtime/YOUR_PACKAGE_ID.Runtime.asmdef
+  s_7bc72ecaebd05d::t_5082e7048550a5 16
+extensions/ProBuilder/Packages/com.ivanmurzak.unity.mcp.probuilder/Editor/Scripts/com.IvanMurzak.Unity.MCP.ProBuilder.Editor.asmdef
+  s_7bc72ecaebd05d::t_ba420bc7fe0c2b 27
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/UnityTypes.cs
+  s_7be60963fe3603::t_7d74b012f3ce01 122-123,132,136
+Unity-Tests/2022.3.62f3/ProjectSettings/ProjectSettings.asset
+  s_7bc72ecaebd05d::t_3df3b2e826581d 758
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "c87013de74d9d2098355b558851d154836213bb4",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_7be60963fe3603": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9c306a43-6f1a-4fe9-9b57-09acf4bc1a65",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

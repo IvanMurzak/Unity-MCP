@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/Tool/Console.ClearLogs.cs
+  22919ac88212693f 15,35-36,39-40,42-44,47
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.2.3",
+  "base_commit_sha": "846dcedf4b75b099a64b5d5fcbf063eee652aef5",
+  "prompts": {
+    "22919ac88212693f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "486597b6-726f-42f6-8a90-07b4b9fb1ea5",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak",
+      "messages": [],
+      "total_additions": 57,
+      "total_deletions": 53,
+      "accepted_lines": 10,
+      "overriden_lines": 0
+    }
+  }
+}

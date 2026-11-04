@@ -1,0 +1,39 @@
+cli/CHANGELOG.md
+  s_7be60963fe3603::t_6c1e36648ebed4 12-17
+cli/src/commands/open.ts
+  s_7bc72ecaebd05d::t_efe540cd14698e 334,381
+cli/src/lib.ts
+  s_7be60963fe3603::t_f9157ab2e4d2c5 82
+cli/src/lib/open.ts
+  s_7be60963fe3603::t_fdc662b1e14b1d 5,23,314-343,345-350,715-720
+cli/src/lib/types.ts
+  s_7be60963fe3603::t_9d10d6dbbd10ac 527-531,542-553
+cli/src/utils/unity-editor.ts
+  s_7bc72ecaebd05d::t_e2dcc329a4023e 412-416,435
+cli/tests/open-lib.test.ts
+  s_7be60963fe3603::t_8824fb09820e3f 400-463
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "21c6e5112d74caf3435a0004f0f68101f7b9ff17",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_7be60963fe3603": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "9c306a43-6f1a-4fe9-9b57-09acf4bc1a65",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

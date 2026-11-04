@@ -1,0 +1,57 @@
+README.md
+  s_f6211569d58fbd::t_4b6f9c325e03fc 584
+  s_f6211569d58fbd::t_674e3c36258e4b 97
+docs/README.es.md
+  s_f6211569d58fbd::t_4b6f9c325e03fc 97,228,582
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/McpServerManager.cs
+  s_f6211569d58fbd::t_27fcdb851e7ddb 653,801-802,806-810
+cli/tests/exec.test.ts
+  s_f6211569d58fbd::t_c0556f84f1b771 82-83,91
+docs/default-mcp-tools.md
+  s_f6211569d58fbd::t_674e3c36258e4b 14,71,77-88,91,95-96
+cli/docs/README.zh-CN.md
+  s_f6211569d58fbd::t_4b6f9c325e03fc 314
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/README.md
+  s_f6211569d58fbd::t_4b6f9c325e03fc 97,584
+cli/docs/README.ja.md
+  s_f6211569d58fbd::t_4b6f9c325e03fc 314
+cli/src/lib/setup-mcp.ts
+  s_f6211569d58fbd::t_a05e2811c06026 150-151
+cli/docs/README.es.md
+  s_f6211569d58fbd::t_4b6f9c325e03fc 314
+cli/README.md
+  s_f6211569d58fbd::t_4b6f9c325e03fc 480
+cli/tests/setup-mcp-command.test.ts
+  s_f6211569d58fbd::t_a05e2811c06026 84-87
+cli/src/lib/exec.ts
+  s_f6211569d58fbd::t_3852548b48bfae 125-130
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/McpServerRestartAndPidKeyTests.cs
+  s_f6211569d58fbd::t_27fcdb851e7ddb 68-81
+docs/README.ja.md
+  s_f6211569d58fbd::t_4b6f9c325e03fc 97,228,582
+docs/README.fa.md
+  s_f6211569d58fbd::t_674e3c36258e4b 97
+  s_f6211569d58fbd::t_4b6f9c325e03fc 350
+cli/src/commands/setup-mcp.ts
+  s_f6211569d58fbd::t_a05e2811c06026 33,47-49,158
+docs/README.zh-CN.md
+  s_f6211569d58fbd::t_4b6f9c325e03fc 97,228,582
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/README.md"
+  s_f6211569d58fbd::t_4b6f9c325e03fc 97,584
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d38d6773bcaa60245791f3cea19704189fa86eb4",
+  "prompts": {},
+  "sessions": {
+    "s_f6211569d58fbd": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "50d269c0-808d-4a35-a92e-66bec8afcad0",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

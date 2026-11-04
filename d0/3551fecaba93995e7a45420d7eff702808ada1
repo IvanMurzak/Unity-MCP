@@ -1,0 +1,27 @@
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs"
+  s_5e2881ed8bfd52::t_2263fd77aacd8d 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs
+  s_5e2881ed8bfd52::t_f1602830fc67ed 30
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json
+  s_5e2881ed8bfd52::t_02052e9bd8047d 18
+cli/package-lock.json
+  s_5e2881ed8bfd52::t_9296f4ef4f675a 3,9
+cli/package.json
+  s_5e2881ed8bfd52::t_15e2445bea6d53 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "d03551fecaba93995e7a45420d7eff702808ada1",
+  "prompts": {},
+  "sessions": {
+    "s_5e2881ed8bfd52": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a139fe-5e37-7630-a5ee-38fd3b09c0dd",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

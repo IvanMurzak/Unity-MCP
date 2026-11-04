@@ -1,0 +1,27 @@
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/Installer.cs"
+  s_14dd598648ac0f::t_7fe6edf370478d 22
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPlugin.cs
+  s_14dd598648ac0f::t_031e4399b51b79 30
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/package.json
+  s_14dd598648ac0f::t_8a89865fc24db2 18
+cli/package-lock.json
+  s_14dd598648ac0f::t_d8b7619cdfe4c8 3,9
+cli/package.json
+  s_14dd598648ac0f::t_c47e08e10e53b1 3
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.4",
+  "base_commit_sha": "e369679b3dcd669d7d262d30833826ba186d8e33",
+  "prompts": {},
+  "sessions": {
+    "s_14dd598648ac0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_14dd598648ac0f",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

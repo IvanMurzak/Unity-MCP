@@ -1,0 +1,21 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/ServerBinaryUpdateWatcher.cs
+  s_2b047ff401cd95::t_4f4825fbca7acd 53-56
+Unity-MCP-Plugin/Docs/agents/startup-flow.md
+  s_2b047ff401cd95::t_4fa3aec36b1032 4
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "6915bd25faaf3f84b228c45c2a1c5d280dd4b0a5",
+  "prompts": {},
+  "sessions": {
+    "s_2b047ff401cd95": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "0139d361-7f55-41c8-9da8-e7fa22dda34c",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
