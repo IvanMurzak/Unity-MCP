@@ -152,5 +152,49 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Assert.IsNotNull(result);
             });
         }
+
+        // A cold shader cache drew an empty first capture (background only); RenderSync warms the view up first. The cold
+        // case cannot be staged here: this checks that the capture lands in the camera's target and the state is restored.
+        [Test]
+        public void RenderSync_RendersIntoTheTargetAndRestoresState()
+        {
+            var cube = GameObject.CreatePrimitive(PrimitiveType.Cube);
+            var camGo = new GameObject("RenderSyncCamera");
+            var rt = new RenderTexture(32, 32, 24);
+            var other = new RenderTexture(4, 4, 0);
+            var pixel = new Texture2D(1, 1, TextureFormat.RGBA32, false);
+            var wasAsync = ShaderUtil.allowAsyncCompilation;
+            var prevActive = RenderTexture.active;
+            try
+            {
+                var cam = camGo.AddComponent<Camera>();
+                cam.clearFlags = CameraClearFlags.SolidColor;
+                cam.backgroundColor = Color.black;
+                cam.targetTexture = rt;
+                camGo.transform.position = new Vector3(0, 0, -3);
+                camGo.transform.LookAt(cube.transform);
+                RenderTexture.active = other;
+                ShaderUtil.allowAsyncCompilation = true;
+
+                Tool_Screenshot.RenderSync(cam);
+
+                Assert.AreSame(other, RenderTexture.active, "RenderTexture.active is restored");
+                Assert.IsTrue(ShaderUtil.allowAsyncCompilation, "async shader compilation is restored");
+                RenderTexture.active = rt;
+                pixel.ReadPixels(new Rect(16, 16, 1, 1), 0, 0);
+                Assert.AreNotEqual(Color.black, pixel.GetPixel(0, 0), "the cube is drawn at the center");
+                cam.targetTexture = null;
+            }
+            finally
+            {
+                RenderTexture.active = prevActive;
+                ShaderUtil.allowAsyncCompilation = wasAsync;
+                Object.DestroyImmediate(pixel);
+                Object.DestroyImmediate(rt);
+                Object.DestroyImmediate(other);
+                Object.DestroyImmediate(camGo);
+                Object.DestroyImmediate(cube);
+            }
+        }
     }
 }

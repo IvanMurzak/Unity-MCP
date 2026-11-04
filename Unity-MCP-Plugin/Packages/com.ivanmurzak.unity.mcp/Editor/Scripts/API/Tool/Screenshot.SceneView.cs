@@ -85,7 +85,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 try
                 {
                     sceneCamera.targetTexture = rt;
-                    sceneCamera.Render();
+                    RenderSync(sceneCamera);
 
                     RenderTexture.active = rt;
                     tex = new Texture2D(width, height, TextureFormat.RGB24, false);

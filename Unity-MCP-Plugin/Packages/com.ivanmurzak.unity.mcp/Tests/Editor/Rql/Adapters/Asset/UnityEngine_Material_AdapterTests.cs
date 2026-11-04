@@ -185,5 +185,43 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters
             Assert.AreEqual("null", Cell(Q(Mat + " | select color")));
             AssertFails(M(Mat + " | set color = \"#ff0000\""), "invalid-value", "has no main color");
         }
+
+        // URP / HDRP Lit keep a hidden legacy _Color / _MainTex but render _BaseColor / _BaseMap: a write to the legacy name
+        // also reaches the main property, or the receipt reports a change nothing shows (the tutorial's white ground).
+        private const string UrpLikeShader =
+            "Shader \"Hidden/UnityMcpTests/UrpLike\" { Properties { " +
+            "[MainColor] _BaseColor(\"Base Color\", Color) = (1,1,1,1) [MainTexture] _BaseMap(\"Base Map\", 2D) = \"white\" {} " +
+            "[HideInInspector] _Color(\"Color\", Color) = (1,1,1,1) [HideInInspector] _MainTex(\"Main Tex\", 2D) = \"white\" {} } " +
+            "SubShader { Pass { } } }";
+
+        [Test]
+        public void ALegacyColorOrTextureWriteReachesTheMainPropertyInUrpLikeShaders()
+        {
+            var shader = UnityEditor.ShaderUtil.CreateShaderAsset(UrpLikeShader);
+            var tex = new Texture2D(2, 2) { name = "Probe" };
+            try
+            {
+                _mat.shader = shader;
+                AssertOk(M(Mat + " | set properties[\"_Color\"] = \"#1E4D1E\""));
+                var green = _mat.GetColor("_Color");
+                Assert.AreEqual(green, _mat.GetColor("_BaseColor"));
+                AssertTuple("(0.117647, 0.301961, 0.117647, 1)", Cell(Q(Mat + " | select color")));
+
+                AssertOk(M(Mat + $" | set properties[\"_MainTex\"] = ref(\"{RefOf(tex)}\")"));
+                Assert.AreEqual(tex, _mat.GetTexture("_BaseMap"));
+
+                AssertOk(M(Mat + " | set properties[\"_BaseColor\"] = \"#ff0000\""));
+                Assert.AreEqual(green, _mat.GetColor("_Color"), "a write to the main property leaves the legacy one alone");
+            }
+            finally
+            {
+                Object.DestroyImmediate(tex);
+                Object.DestroyImmediate(shader);
+            }
+        }
+
+        [Test]
+        public void ALegacyNameThatIsTheMainPropertyIsWrittenOnce() =>
+            Assert.IsNull(UnityEngine_Material_Adapter.LegacyAliasOf(_mat, "_Color"), "Standard renders _Color itself");
     }
 }

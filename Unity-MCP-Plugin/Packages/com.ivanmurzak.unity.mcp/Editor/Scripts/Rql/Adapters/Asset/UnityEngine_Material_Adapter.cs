@@ -192,6 +192,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
                 case ShaderPropertyType.Int: m.SetInteger(id, (int)value!); break;
                 default: throw new InvalidOperationException($"shader property '{key}' has an unsupported type");
             }
+            // URP / HDRP shaders keep the legacy _Color / _MainTex only for compatibility: they render _BaseColor / _BaseMap.
+            // A write to the legacy name also goes to the main property, so the change shows (the receipt is not a false success).
+            if (LegacyAliasOf(m, key) is { } main)
+                Set(m, main, value);
+        }
+
+        /// <summary>The main property a legacy <c>_Color</c> / <c>_MainTex</c> stands in for when the shader renders another one, else null.</summary>
+        internal static string? LegacyAliasOf(Material m, string key)
+        {
+            var main = key switch
+            {
+                "_Color" => MainColor(m),
+                "_MainTex" => MainTexture(m),
+                _ => null,
+            };
+            return main != null && main != key && Kind(m, main) == Kind(m, key) ? main : null;
         }
 
         private static string? Validate(Material m, string key, object? value)

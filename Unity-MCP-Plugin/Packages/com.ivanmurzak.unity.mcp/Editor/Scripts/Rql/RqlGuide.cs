@@ -67,7 +67,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "eulerAngles, localScale, parent; call LookAt(target) turns it toward a GameObject or a position). Component members are the C# members (public + [SerializeField]); find them via " +
             "objects | get components | where $ is Light. Vectors/colors print as (x, y, z); write \"(1, 2, 3)\", [1, 2, 3] or " +
             "{x: 1, y: 2, z: 3}; colors also \"#ff8800\". An asset's file: assetPath; its import settings: get importer. Material shader properties: " +
-            "properties[\"_Color\"] (the main color / texture: color, mainTexture); a Material Variant has a parent. A Mesh value also takes a primitive's name (\"Cylinder\"), a Material value a built-in material's (\"Default-Material\"). Prefab instances: " +
+            "properties[\"_Metallic\"]; the main color / texture in any render pipeline (_BaseColor / _BaseMap in URP / HDRP): color, mainTexture; a Material Variant has a parent. A Mesh value also takes a primitive's name (\"Cylinder\"), a Material value a built-in material's (\"Default-Material\"). Prefab instances: " +
             "prefabSource, prefabOverrides (all of the instance's on its root, an object's own on a part). Destroyed objects read as " +
             "null; a GameObject's missingReferences lists references to deleted assets or objects (where missingReferences.count() > 0). Navigate with paths or get; select only projects output columns.\n" +
             "Results come back as compact rows (header line, then col|col). Long results are truncated — refine with where/first or use count. " +
@@ -116,7 +116,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name contains \"Enemy\" and active | select $ref name transform.position\n" +
             "  objects | get components | where $ is Light and intensity > 2 | select gameObject.name intensity color\n" +
             "  roots | recurse children | where components.count() == 1 | select $path name\n" +
-            "  unity.assets(\"t:Material\") | select name shader.name properties[\"_Color\"]\n" + QueryExamplesExtra;
+            "  unity.assets(\"t:Material\") | select name shader.name color\n" + QueryExamplesExtra;
 
         public const string MutateStages =
             "  set path = expr, ...   assign members (paths may go through structs: set transform.position.y = transform.position.y + 1)\n" +
@@ -136,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "  objects | where name starts-with \"Enemy\" and distance(transform.position, unity.find(\"Player\").transform.position) < 10 | set active = false   (units: meters)\n" +
             "  objects | where name == \"Drone\" | set transform.position = transform.position + normalize(transform.forward) * 3   also length(v), dot(a, b), lerp(a, b, t)\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | get properties | where Key ends-with \"Color\" | set Value = \"#ffffff\"   map entries write through\n" +
-            "  unity.asset(\"Assets/Mats/Red.mat\") | set properties[\"_Color\"] = \"(1, 0, 0, 1)\"\n" +
+            "  unity.asset(\"Assets/Mats/Red.mat\") | set color = \"#ff0000\", properties[\"_Metallic\"] = 0   color = the main color in any pipeline\n" +
             "  unity.asset(\"Assets/Mats/Red.mat\") | set parent = unity.asset(\"Assets/Mats/Base.mat\")   make it a Material Variant of Base\n" +
             "  unity.asset(\"Assets/Data/Items.asset\") | get rows | where Category == \"Tool\" | set Price = round(Price * 1.15)   data asset (ScriptableObject list rows)\n" +
             "  objects | where name starts-with \"Pillar\" | get components | where $ is MeshFilter | set sharedMesh = \"Cylinder\"   built-in mesh\n" +
