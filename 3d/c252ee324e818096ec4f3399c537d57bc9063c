@@ -35,6 +35,10 @@ Unity-Tests/6000.5.0b3/Assets/Plugins/NuGet/.nuget-installed.json
   s_ce4762fbd3d517::t_96fa7f0958e310 30,36,42,48,54,60,66,78,136,250,268
 Unity-Tests/6000.6.0a2/Assets/Plugins/NuGet/.nuget-installed.json
   s_ce4762fbd3d517::t_dd8111d9797d24 30,36,42,48,54,60,66,78,136,250,268
+extensions/Navigation/Packages/com.ivanmurzak.unity.mcp.navigation/Runtime/com.IvanMurzak.Unity.MCP.Navigation.Runtime.asmdef
+  s_ce4762fbd3d517::t_c201637e6dcbe1 16
+extensions/ParticleSystem/Packages/com.ivanmurzak.unity.mcp.particlesystem/Editor/Scripts/com.IvanMurzak.Unity.MCP.ParticleSystem.Editor.asmdef
+  s_ce4762fbd3d517::t_c201637e6dcbe1 19
 ---
 {
   "schema_version": "authorship/3.0.0",
