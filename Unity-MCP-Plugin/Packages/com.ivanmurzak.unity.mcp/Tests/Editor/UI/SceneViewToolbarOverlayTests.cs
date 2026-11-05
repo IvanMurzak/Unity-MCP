@@ -62,7 +62,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void OpenWindowButton_IsIconOnlyWithTooltip()
         {
             var button = new OpenWindowButton();
-            Assert.IsEmpty(button.text, "Scene toolbar button is icon-only");
+            // Icon-only. With no text set, Unity 2022.3 returns null rather than "".
+            Assert.That(string.IsNullOrEmpty(button.text), "Scene toolbar button is icon-only");
             Assert.IsNotEmpty(button.tooltip);
         }
 
