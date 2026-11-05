@@ -72,6 +72,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override void OnEnable()
         {
             base.OnEnable();
+            // A window restored from a saved layout skips ShowWindow(); set the title + icon here too,
+            // so a renamed title or a new icon reaches already-docked windows.
+            SetupWindowWithIcon();
             if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
                 return;
             _disposables.Add(UnityMcpPluginEditor.SubscribeOnChanged(OnChanged));

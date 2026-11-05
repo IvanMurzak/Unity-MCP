@@ -22,7 +22,7 @@ using UnityEngine;
 namespace com.IvanMurzak.Unity.MCP.Editor.DevControl
 {
     /// <summary>
-    /// DEV-ONLY inject/control HTTP bridge for the "Game Developer" (AI Game Developer) editor window. A
+    /// DEV-ONLY inject/control HTTP bridge for the "AI Game Dev" editor window. A
     /// <see cref="HttpListener"/> bound to <c>http://127.0.0.1:&lt;port&gt;/</c> (loopback ONLY) whose
     /// accept loop runs on a background thread; it parses JSON in/out (<see cref="System.Text.Json"/>),
     /// routes via the pure-managed <see cref="DevControlRouter"/>, and hops every window-touching handler
