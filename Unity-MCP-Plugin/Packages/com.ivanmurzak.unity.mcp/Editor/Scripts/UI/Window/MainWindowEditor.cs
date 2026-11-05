@@ -31,13 +31,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         AlertPanel? _connectionAuthAlert;
         AlertPanel? _connectionConnectAlert;
 
-        protected override string WindowTitle => "Game Developer";
+        protected override string WindowTitle => "AI Game Dev";
         protected override string[] WindowUxmlPaths => _windowUxmlPaths;
         protected override string[] WindowUssPaths => _windowUssPaths;
 
         public static MainWindowEditor ShowWindow()
         {
-            var window = GetWindow<MainWindowEditor>("Game Developer");
+            var window = GetWindow<MainWindowEditor>("AI Game Dev");
             window.SetupWindowWithIcon();
             window.Focus();
 

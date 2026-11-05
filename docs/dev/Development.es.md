@@ -115,7 +115,7 @@ Antes de contribuir, asegúrate de tener instaladas las siguientes herramientas:
    ```
 
 5. **Apuntar el Plugin a tu servidor local** *(opcional — omite el binario descargado automáticamente)*
-   - En Unity: abre `Window/AI Game Developer — MCP`
+   - En Unity: abre `Window/AI Game Dev`
    - Establece el puerto para que coincida con tu servidor local (`8080` por defecto)
    - El plugin se conectará automáticamente
 

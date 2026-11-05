@@ -115,7 +115,7 @@
    ```
 
 5. **将插件指向本地 Server** *（可选——跳过自动下载的二进制文件）*
-   - 在 Unity 中：打开 `Window/AI Game Developer — MCP`
+   - 在 Unity 中：打开 `Window/AI Game Dev`
    - 将端口设置为与本地 Server 一致（默认为 `8080`）
    - 插件将自动连接
 

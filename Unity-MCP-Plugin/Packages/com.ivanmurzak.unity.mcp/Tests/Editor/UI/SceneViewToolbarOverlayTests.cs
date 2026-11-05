@@ -59,10 +59,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
-        public void OpenWindowButton_SetsExpectedTextAndTooltip()
+        public void OpenWindowButton_IsIconOnlyWithTooltip()
         {
             var button = new OpenWindowButton();
-            Assert.AreEqual("Game Developer", button.text);
+            Assert.IsEmpty(button.text, "Scene toolbar button is icon-only");
             Assert.IsNotEmpty(button.tooltip);
         }
 
