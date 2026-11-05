@@ -217,7 +217,7 @@ El componente Editor proporciona integración con Unity Editor, implementando ca
    - Descubrimiento basado en atributos mediante `[AiTool]`, `[AiPrompt]`, `[AiResource]`
 
 4. **Interfaz del Editor** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
-   - Ventana de configuración para la gestión de conexiones (`Window > AI Game Developer`)
+   - Ventana de configuración para la gestión de conexiones (`Window > AI Game Dev`)
    - Gestión del binario del servidor y acceso a logs mediante elementos del menú de Unity
 
 ### Runtime

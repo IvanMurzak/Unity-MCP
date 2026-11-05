@@ -84,7 +84,7 @@ unity-mcp-cli open ./MyUnityProject
 1. **[نصب پلاگین](#step-1-install-unity-mcp-plugin)** — فایل `.unitypackage` نصب‌کننده را دانلود کنید یا دستور `openupm add com.ivanmurzak.unity.mcp` را اجرا کنید
    > **روش جایگزین:** ‏`npx unity-mcp-cli install-plugin ./MyUnityProject` — راهنمای [مستندات CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 2. **[انتخاب عامل هوش مصنوعی](#step-2-install-ai-agent)** — Claude Code، Claude Desktop، GitHub Copilot، Cursor یا هر گزینه پشتیبانی‌شده دیگری
-3. **[پیکربندی عامل هوش مصنوعی](#step-3-configure-ai-agent)** — در Unity مسیر `Window/AI Game Developer` را باز کرده و روی **Auto-generate skills** (پیشنهادی) یا **Configure MCP** کلیک کنید
+3. **[پیکربندی عامل هوش مصنوعی](#step-3-configure-ai-agent)** — در Unity مسیر `Window/AI Game Dev` را باز کرده و روی **Auto-generate skills** (پیشنهادی) یا **Configure MCP** کلیک کنید
    ![Setup AI Skills](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/setup-skills.jpg?raw=true)
    > **روش جایگزین:** ‏`npx unity-mcp-cli setup-skills claude-code ./MyUnityProject` — راهنمای [مستندات CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 
@@ -197,7 +197,7 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 ### پیکربندی خودکار
 
 - پروژه Unity را باز کنید
-- مسیر `Window/AI Game Developer` را باز کنید
+- مسیر `Window/AI Game Dev` را باز کنید
 - گزینه ۱: روی `Auto-generate Skills` کلیک کنید **(پیشنهادی)**
 - گزینه ۲: روی `Configure` برای Model Context Protocol (MCP) کلیک کنید
 

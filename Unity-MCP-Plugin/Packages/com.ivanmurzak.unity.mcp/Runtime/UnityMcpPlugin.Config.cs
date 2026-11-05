@@ -82,10 +82,10 @@ namespace com.IvanMurzak.Unity.MCP
 
             /// <summary>
             /// The line McpPlugin logs after every SignalR connection error: how to silence it from the
-            /// AI Game Developer window. McpPlugin is engine-agnostic and ships no hint of its own (8.9.0+).
+            /// AI Game Dev window. McpPlugin is engine-agnostic and ships no hint of its own (8.9.0+).
             /// </summary>
             public const string DefaultConnectionErrorHint =
-                "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Developer</b> window.";
+                "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Dev</b> window.";
 
             /// <summary>
             /// Returns the active connection host based on <see cref="ConnectionMode"/>.

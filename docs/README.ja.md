@@ -83,7 +83,7 @@ unity-mcp-cli open ./MyUnityProject
 1. **[プラグインをインストール](#step-1-install-unity-mcp-plugin)** — `.unitypackage` インストーラーをダウンロードするか `openupm add com.ivanmurzak.unity.mcp` を実行
    > **代替方法：** `npx unity-mcp-cli install-plugin ./MyUnityProject` — [CLI ドキュメント](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)を参照
 2. **[AI エージェントを選択](#step-2-install-ai-agent)** — Claude Code、Claude Desktop、GitHub Copilot、Cursor、その他
-3. **[AI エージェントを設定](#step-3-configure-ai-agent)** — Unity で `Window/AI Game Developer` を開き、**スキルを自動生成**（推奨）または **MCP を設定** をクリック
+3. **[AI エージェントを設定](#step-3-configure-ai-agent)** — Unity で `Window/AI Game Dev` を開き、**スキルを自動生成**（推奨）または **MCP を設定** をクリック
   ![Setup AI Skills](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/setup-skills.jpg?raw=true)
    > **代替方法：** `npx unity-mcp-cli setup-skills claude-code ./MyUnityProject` — [CLI ドキュメント](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)を参照
 
@@ -306,7 +306,7 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 ### 自動設定
 
 - Unity プロジェクトを開く
-- `Window/AI Game Developer` を開く
+- `Window/AI Game Dev` を開く
 - オプション1: **スキルを自動生成** をクリック **（推奨）**
 - オプション2: Model Context Protocol (MCP) の **設定** をクリック
 

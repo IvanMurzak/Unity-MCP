@@ -115,7 +115,7 @@ AI はゲーム開発において重要な役割を果たしている（もし�
    ```
 
 5. **プラグインをローカルサーバーに向ける** *(任意 — 自動ダウンロードされるバイナリをスキップします)*
-   - Unity で `Window/AI Game Developer (Unity-MCP)` を開く
+   - Unity で `Window/AI Game Dev` を開く
    - ローカルサーバーのポートに合わせて設定する（デフォルトは `8080`）
    - プラグインは自動的に接続します
 
@@ -217,7 +217,7 @@ Unity 環境に統合されます。`Unity-MCP-Common` を使用して、リフ�
    - `[AiTool]`、`[AiPrompt]`、`[AiResource]` を使用した属性ベースの検出
 
 4. **エディター UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
-   - 接続管理のための設定ウィンドウ（`Window > AI Game Developer`）
+   - 接続管理のための設定ウィンドウ（`Window > AI Game Dev`）
    - Unity メニュー項目を通じたサーバーバイナリ管理とログアクセス
 
 ### ランタイム

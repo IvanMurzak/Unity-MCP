@@ -225,7 +225,7 @@ The Editor component provides Unity Editor integration, implementing MCP capabil
    - Attribute-based discovery using `[AiTool]`, `[AiPrompt]`, `[AiResource]`
 
 4. **Editor UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
-   - Configuration window for connection management (`Window > AI Game Developer`)
+   - Configuration window for connection management (`Window > AI Game Dev`)
    - Server binary management and log access via Unity menu items
 
 ### Runtime
