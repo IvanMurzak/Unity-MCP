@@ -115,7 +115,7 @@ Antes de contribuir, asegúrate de tener instaladas las siguientes herramientas:
    ```
 
 5. **Apuntar el Plugin a tu servidor local** *(opcional — omite el binario descargado automáticamente)*
-   - En Unity: abre `Window/AI Game Developer — MCP`
+   - En Unity: abre `Window/AI Game Dev`
    - Establece el puerto para que coincida con tu servidor local (`8080` por defecto)
    - El plugin se conectará automáticamente
 
@@ -217,7 +217,7 @@ El componente Editor proporciona integración con Unity Editor, implementando ca
    - Descubrimiento basado en atributos mediante `[AiTool]`, `[AiPrompt]`, `[AiResource]`
 
 4. **Interfaz del Editor** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
-   - Ventana de configuración para la gestión de conexiones (`Window > AI Game Developer`)
+   - Ventana de configuración para la gestión de conexiones (`Window > AI Game Dev`)
    - Gestión del binario del servidor y acceso a logs mediante elementos del menú de Unity
 
 ### Runtime

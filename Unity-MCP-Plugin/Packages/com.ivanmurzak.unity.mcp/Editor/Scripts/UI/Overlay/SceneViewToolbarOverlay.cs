@@ -16,7 +16,7 @@ using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
-    [Overlay(typeof(SceneView), id: Id, displayName: "AI",
+    [Overlay(typeof(SceneView), id: Id, displayName: "AI Game Dev",
         defaultDisplay = true,
         defaultDockZone = DockZone.TopToolbar,
         defaultDockPosition = DockPosition.Top,

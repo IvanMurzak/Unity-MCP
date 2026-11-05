@@ -147,7 +147,7 @@ export function stdioTransportMismatchWarning(pluginTransport: string | undefine
   return (
     'The Unity plugin in this project is set to the "' + pluginTransport + '" transport, so the Editor ' +
     "starts its own MCP server on the project's port and the agent's stdio server cannot start " +
-    '("address already in use"). Switch the transport to stdio in Window > AI Game Developer (saved for ' +
+    '("address already in use"). Switch the transport to stdio in Window > AI Game Dev (saved for ' +
     'this project); `unity-mcp-cli open --transport stdio` also works but only for that one launch.'
   );
 }

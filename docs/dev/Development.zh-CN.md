@@ -115,7 +115,7 @@
    ```
 
 5. **将插件指向本地 Server** *（可选——跳过自动下载的二进制文件）*
-   - 在 Unity 中：打开 `Window/AI Game Developer — MCP`
+   - 在 Unity 中：打开 `Window/AI Game Dev`
    - 将端口设置为与本地 Server 一致（默认为 `8080`）
    - 插件将自动连接
 
@@ -217,7 +217,7 @@ graph LR
    - 使用 `[AiTool]`、`[AiPrompt]`、`[AiResource]` 进行基于特性的发现
 
 4. **编辑器 UI** ([Scripts/UI/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/UI/))
-   - 用于连接管理的配置窗口（`Window > AI Game Developer`）
+   - 用于连接管理的配置窗口（`Window > AI Game Dev`）
    - 通过 Unity 菜单项进行服务器二进制文件管理和日志访问
 
 ### 运行时

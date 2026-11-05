@@ -15,7 +15,7 @@ Open this folder in Unity (2022.3+ minimum; compiles automatically).
 - `Assets/` — demo setup and bundled NuGet DLLs; `Commands/` — helper scripts
   (`start_mcp_inspector.bat`, needs Node.js).
 - `.claude/skills/` (and the other agents' skill folders) — gitignored output of the plugin's skill
-  generator (`[AiSkillDescription]`/`[AiSkillBody]`; auto-generate in `Window/AI Game Developer`,
+  generator (`[AiSkillDescription]`/`[AiSkillBody]`; auto-generate in `Window/AI Game Dev`,
   `unity-skill-generate`). It depends on the OS, enabled tools and extensions: never commit it.
 
 ## Critical invariants

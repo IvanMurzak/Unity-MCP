@@ -83,7 +83,7 @@ Ponte en marcha en tres pasos:
 1. **[Instalar el plugin](#step-1-install-unity-mcp-plugin)** — descarga el instalador `.unitypackage` o ejecuta `openupm add com.ivanmurzak.unity.mcp`
    > **Alternativa:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — ver [documentación de la CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 2. **[Elegir un agente de IA](#step-2-install-ai-agent)** — Claude Code, Claude Desktop, GitHub Copilot, Cursor o cualquier otro
-3. **[Configurar el agente de IA](#step-3-configure-ai-agent)** — abre `Window/AI Game Developer` en Unity y haz clic en **Auto-generate skills** (recomendado) o **Configure MCP**
+3. **[Configurar el agente de IA](#step-3-configure-ai-agent)** — abre `Window/AI Game Dev` en Unity y haz clic en **Auto-generate skills** (recomendado) o **Configure MCP**
   ![Setup AI Skills](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/setup-skills.jpg?raw=true)
    > **Alternativa:** `npx unity-mcp-cli setup-skills claude-code ./MyUnityProject` — ver [documentación de la CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 
@@ -306,7 +306,7 @@ Elige un solo `agente de IA` de tu preferencia - no necesitas instalar todos. Es
 ### Configuración automática
 
 - Abre el proyecto de Unity
-- Abre `Window/AI Game Developer`
+- Abre `Window/AI Game Dev`
 - Opción 1: Haz clic en `Auto-generate` Skills **(recomendado)**
 - Opción 2: Haz clic en `Configure` Model Context Protocol (MCP)
 

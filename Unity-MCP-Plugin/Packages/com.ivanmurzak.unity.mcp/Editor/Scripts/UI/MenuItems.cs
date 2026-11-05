@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     public static class MenuItems
     {
-        [MenuItem("Window/AI Game Developer — MCP %&a", priority = 1006)]
+        [MenuItem("Window/AI Game Dev %&a", priority = 1006)]
         public static void ShowWindow() => MainWindowEditor.ShowWindow();
 
         [MenuItem("Tools/AI Game Developer/Updates/Check for Updates", priority = 999)]

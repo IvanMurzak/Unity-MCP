@@ -21,7 +21,7 @@ using AiAgentConfiguratorRegistry = com.IvanMurzak.McpPlugin.AgentConfig.AiAgent
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
     // ===================================================================================================
-    //  DEV-ONLY inject / control / state API for the "Game Developer" (AI Game Developer) window.
+    //  DEV-ONLY inject / control / state API for the "AI Game Dev" window.
     // ---------------------------------------------------------------------------------------------------
     //  Surface for the env-gated, 127.0.0.1-bound DevControlServer (Editor/Scripts/DevControl/) so a
     //  terminal / AI agent can (a) INJECT fake states onto the LIVE window to test UI rendering and

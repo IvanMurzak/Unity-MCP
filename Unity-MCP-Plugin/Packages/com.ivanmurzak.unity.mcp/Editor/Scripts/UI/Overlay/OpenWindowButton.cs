@@ -24,9 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         public OpenWindowButton()
         {
-            text = "Game Developer";
             icon = EditorAssetLoader.LoadAssetAtPath<Texture2D>(EditorAssetLoader.PackageLogoIcon);
-            tooltip = "Open AI Game Developer window";
+            tooltip = "Open AI Game Dev window";
             clicked += MainWindowEditor.ShowWindowVoid;
             RegisterCallback<DetachFromPanelEvent>(OnDetachFromPanel);
         }

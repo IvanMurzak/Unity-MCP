@@ -21,7 +21,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class ConnectionErrorHintTests
     {
         const string ExpectedHint =
-            "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Developer</b> window.";
+            "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Dev</b> window.";
 
         [Test]
         public void UnityConfig_SuppliesTheWindowHint()

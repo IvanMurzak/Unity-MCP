@@ -23,5 +23,5 @@ Attribute-based registration for three MCP primitives. All use `[System.Componen
 
 - **No spaces in project path** — validated on startup with user warning
 - **Unity 2022.3+** minimum
-- Main UI: `Window/AI Game Developer`
+- Main UI: `Window/AI Game Dev`
 - Config file: `Assets/Resources/AI-Game-Developer-Config.json` (auto-created). Editor mode: file path; Play mode: `Resources.Load<TextAsset>()`

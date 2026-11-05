@@ -83,7 +83,7 @@ unity-mcp-cli open ./MyUnityProject
 1. **[安装插件](#step-1-install-unity-mcp-plugin)** — 下载 `.unitypackage` 安装器，或运行 `openupm add com.ivanmurzak.unity.mcp`
    > **替代方式：** `npx unity-mcp-cli install-plugin ./MyUnityProject` — 参见 [CLI 文档](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 2. **[选择 AI 智能体](#step-2-install-ai-agent)** — Claude Code、Claude Desktop、GitHub Copilot、Cursor 或其他
-3. **[配置 AI 智能体](#step-3-configure-ai-agent)** — 在 Unity 中打开 `Window/AI Game Developer`，点击**自动生成技能**（推荐）或**配置 MCP**
+3. **[配置 AI 智能体](#step-3-configure-ai-agent)** — 在 Unity 中打开 `Window/AI Game Dev`，点击**自动生成技能**（推荐）或**配置 MCP**
   ![Setup AI Skills](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/setup-skills.jpg?raw=true)
    > **替代方式：** `npx unity-mcp-cli setup-skills claude-code ./MyUnityProject` — 参见 [CLI 文档](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 
@@ -306,7 +306,7 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 ### 自动配置
 
 - 打开 Unity 项目
-- 打开 `Window/AI Game Developer`
+- 打开 `Window/AI Game Dev`
 - 选项 1：点击 `Auto-generate` 技能**（推荐）**
 - 选项 2：点击 `Configure` 模型上下文协议（MCP）
 

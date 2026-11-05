@@ -31,13 +31,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         AlertPanel? _connectionAuthAlert;
         AlertPanel? _connectionConnectAlert;
 
-        protected override string WindowTitle => "Game Developer";
+        protected override string WindowTitle => "AI Game Dev";
         protected override string[] WindowUxmlPaths => _windowUxmlPaths;
         protected override string[] WindowUssPaths => _windowUssPaths;
 
         public static MainWindowEditor ShowWindow()
         {
-            var window = GetWindow<MainWindowEditor>("Game Developer");
+            var window = GetWindow<MainWindowEditor>("AI Game Dev");
             window.SetupWindowWithIcon();
             window.Focus();
 
@@ -72,6 +72,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         protected override void OnEnable()
         {
             base.OnEnable();
+            // A window restored from a saved layout skips ShowWindow(); set the title + icon here too,
+            // so a renamed title or a new icon reaches already-docked windows.
+            SetupWindowWithIcon();
             if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
                 return;
             _disposables.Add(UnityMcpPluginEditor.SubscribeOnChanged(OnChanged));
