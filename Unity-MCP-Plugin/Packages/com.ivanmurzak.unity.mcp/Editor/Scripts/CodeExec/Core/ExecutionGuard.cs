@@ -1,4 +1,4 @@
-// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit 58ef3ed, unmodified below this header.
+// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit 2f46b50, unmodified below this header.
 // Licensed under the PolyForm Shield License 1.0.0 (https://polyformproject.org/licenses/shield/1.0.0);
 // see THIRD-PARTY-NOTICES.md in this folder. Not covered by this package's Apache-2.0 license.
 // Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
@@ -84,7 +84,7 @@ namespace com.IvanMurzak.CodeExec
         /// 10 ms apart, back to every iteration when they are not: slow iterations overshoot the budget by about 20 ms,
         /// fast ones pay one clock read per 256 iterations. The statics are shared by all threads: a race only shifts a
         /// check. Work handed to a thread or task start (<see cref="Worker"/>, <see cref="TaskWorker"/>) carries its run: a
-        /// thread-static while it runs synchronously, an <c>AsyncLocal</c> for asynchronous task work (it flows into the
+        /// thread-local while it runs synchronously, an <c>AsyncLocal</c> for asynchronous task work (it flows into the
         /// work's awaits); the tasks and threads it starts in turn belong to the same run. Once a run that started work has
         /// ended, every clock check reads it, and work of an ended run stops there. A thread entry swallows the stop: an
         /// exception left unhandled on a thread would end the process.
@@ -98,7 +98,11 @@ internal static class __CodeExecGuard
     static Run _current;
     // The run of the work running: synchronous work on this thread, and asynchronous task work (it flows into the work's
     // awaits). Nothing else carries it: a timer, an async void continuation or a thread started by work keeps none of it.
-    [global::System.ThreadStatic] static Run _thread;
+    // A ThreadLocal over object, not a thread-static: this assembly is collectible, and with the thread-static .NET 10
+    // test runs crashed now and then in the GC (a null method table while it scanned for finalization). The suspect is
+    // the runtime's thread-static storage of an unloaded assembly on threads that outlive it; ThreadLocal<object> keeps
+    // its storage in the framework (ThreadLocal<Run> would have thread-statics of a collectible instantiation again).
+    static readonly global::System.Threading.ThreadLocal<object> _thread = new global::System.Threading.ThreadLocal<object>();
     static readonly global::System.Threading.AsyncLocal<Run> _async = new global::System.Threading.AsyncLocal<Run>();
 
     /// <summary>One run: whether it has ended, whether it started work, and how much of that work has not finished.</summary>
@@ -145,7 +149,8 @@ internal static class __CodeExecGuard
     public static bool Running() => _stopped == 0 && (_orphans == 0 || (_live == 0 && _asyncOrphans == 0) || !Orphaned());
 
     // The AsyncLocal is slow to read: only once asynchronous task work has ever run.
-    static Run Current() => _thread ?? (_asyncWork != 0 ? _async.Value : null);
+    // IsValueCreated first: reading Value on a thread that never set it would allocate its storage there.
+    static Run Current() => (_thread.IsValueCreated ? (Run)_thread.Value : null) ?? (_asyncWork != 0 ? _async.Value : null);
 
     static bool Orphaned()
     {
@@ -188,16 +193,16 @@ internal static class __CodeExecGuard
     static void Do(Run run, global::System.Action work, bool swallow)
     {
         Started();
-        var thread = _thread;
+        var thread = _thread.IsValueCreated ? _thread.Value : null;
         var flowing = _asyncWork != 0 ? _async.Value : null;
-        _thread = run;
+        _thread.Value = run;
         if (flowing != null)
             _async.Value = null; // what the work starts without a wrapper (a timer, an async void continuation) is not the run's
         try { work(); }
         catch (global::System.Exception) when (swallow && !Running()) { }
         finally
         {
-            _thread = thread;
+            _thread.Value = thread;
             if (flowing != null)
                 _async.Value = flowing;
             Done(run);
@@ -218,9 +223,9 @@ internal static class __CodeExecGuard
         if (global::System.Threading.Volatile.Read(ref run.Ended) != 0)
             _asyncOrphans = 1;
         Started();
-        var thread = _thread;
+        var thread = _thread.IsValueCreated ? _thread.Value : null;
         var flowing = _async.Value;
-        _thread = null;
+        _thread.Value = null;
         _async.Value = run;
         try
         {
@@ -239,7 +244,7 @@ internal static class __CodeExecGuard
         }
         finally
         {
-            _thread = thread;
+            _thread.Value = thread;
             _async.Value = flowing;
         }
     }
@@ -285,8 +290,7 @@ internal static class __CodeExecGuard
         {
             if (timeout > 0)
             {
-                var elapsed = (global::System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000 / global::System.Diagnostics.Stopwatch.Frequency;
-                var left = timeout - elapsed;
+                var left = timeout - ElapsedMs(start);
                 if (left <= SliceMs)
                     return wait(left > 0 ? (int)left : 0);
             }
@@ -295,6 +299,9 @@ internal static class __CodeExecGuard
             Check();
         }
     }
+
+    static long ElapsedMs(long start) =>
+        (global::System.Diagnostics.Stopwatch.GetTimestamp() - start) * 1000 / global::System.Diagnostics.Stopwatch.Frequency;
 
     /// <summary>A TimeSpan timeout in ms; -2 when out of range (the framework's own wait throws for it).</summary>
     static int Ms(global::System.TimeSpan timeout)
@@ -410,10 +417,80 @@ internal static class __CodeExecGuard
     public static bool CountdownWait(global::System.Threading.CountdownEvent waitable, global::System.TimeSpan timeout, global::System.Threading.CancellationToken cancellationToken) => CountdownWait(waitable, Ms(timeout), cancellationToken);
     public static bool CountdownWait(global::System.Threading.CountdownEvent waitable, int millisecondsTimeout, global::System.Threading.CancellationToken cancellationToken) => Sliced(millisecondsTimeout, ms => waitable.Wait(ms, cancellationToken));
 
-    // Waiting again after a slice misses no Pulse: the lock is held again between two slices.
-    public static bool MonitorWait(object obj) => Sliced(-1, ms => global::System.Threading.Monitor.Wait(obj, ms));
-    public static bool MonitorWait(object obj, int millisecondsTimeout) => Sliced(millisecondsTimeout, ms => global::System.Threading.Monitor.Wait(obj, ms));
-    public static bool MonitorWait(object obj, global::System.TimeSpan timeout) => Sliced(Ms(timeout), ms => global::System.Threading.Monitor.Wait(obj, ms));
+    // A slice that times out leaves the wait queue until it holds the lock again: a Pulse in that gap would be lost (the
+    // pulsing thread may take the lock first). So the agent's Pulse / PulseAll also count the wake-ups they owe the
+    // object's sliced waiters (under its lock), and only that count wakes one: a waiter woken by the Pulse, or one between
+    // two slices, takes it once it holds the lock again; whoever finds none waits on. One Pulse wakes one waiter.
+    sealed class Waiting
+    {
+        public int Waiters, Owed;
+    }
+
+    static readonly global::System.Runtime.CompilerServices.ConditionalWeakTable<object, Waiting> _waiting =
+        new global::System.Runtime.CompilerServices.ConditionalWeakTable<object, Waiting>();
+
+    static Waiting WaitingOn(object obj)
+    {
+        Waiting waiting;
+        return obj != null && _waiting.TryGetValue(obj, out waiting) ? waiting : null;
+    }
+
+    public static bool MonitorWait(object obj) => MonitorWait(obj, -1);
+    public static bool MonitorWait(object obj, global::System.TimeSpan timeout) => MonitorWait(obj, Ms(timeout));
+    public static bool MonitorWait(object obj, int millisecondsTimeout)
+    {
+        if (obj == null || millisecondsTimeout < -1 || !global::System.Threading.Monitor.IsEntered(obj))
+            return global::System.Threading.Monitor.Wait(obj, millisecondsTimeout); // the framework's own exception
+        var waiting = _waiting.GetValue(obj, _ => new Waiting());
+        waiting.Waiters++;
+        try
+        {
+            return Sliced(millisecondsTimeout, ms => TakeWakeUp(obj, waiting, ms));
+        }
+        finally
+        {
+            // Whatever ends the wait, the lock is held again here.
+            if (--waiting.Waiters == 0)
+                _waiting.Remove(obj); // no entry outlives the wait: it would keep the snippet's code loaded
+            else if (waiting.Owed > waiting.Waiters)
+                waiting.Owed = waiting.Waiters;
+        }
+    }
+
+    // Waits up to ms (-1: without bound) for a wake-up owed to the object's waiters. Waking without one (it went to
+    // another waiter) waits on for the time left, so a short or last slice does not end early.
+    static bool TakeWakeUp(object obj, Waiting waiting, int ms)
+    {
+        var start = global::System.Diagnostics.Stopwatch.GetTimestamp();
+        for (;;)
+        {
+            var left = ms <= 0 ? ms : (int)global::System.Math.Max(0, ms - ElapsedMs(start));
+            global::System.Threading.Monitor.Wait(obj, left);
+            if (waiting.Owed > 0)
+            {
+                waiting.Owed--;
+                return true;
+            }
+            if (left == 0)
+                return false;
+        }
+    }
+
+    public static void MonitorPulse(object obj)
+    {
+        global::System.Threading.Monitor.Pulse(obj); // throws, as written, when this thread does not hold the lock
+        var waiting = WaitingOn(obj);
+        if (waiting != null && waiting.Owed < waiting.Waiters)
+            waiting.Owed++;
+    }
+
+    public static void MonitorPulseAll(object obj)
+    {
+        global::System.Threading.Monitor.PulseAll(obj);
+        var waiting = WaitingOn(obj);
+        if (waiting != null)
+            waiting.Owed = waiting.Waiters;
+    }
 
     public static bool WaitOne(global::System.Threading.WaitHandle handle) => Sliced(-1, ms => handle.WaitOne(ms));
     public static bool WaitOne(global::System.Threading.WaitHandle handle, int millisecondsTimeout) => Sliced(millisecondsTimeout, ms => handle.WaitOne(ms));

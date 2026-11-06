@@ -1,4 +1,4 @@
-// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit 58ef3ed, unmodified below this header.
+// Vendored from Code-Exec (https://github.com/IvanMurzak/Code-Exec), commit 2f46b50, unmodified below this header.
 // Licensed under the PolyForm Shield License 1.0.0 (https://polyformproject.org/licenses/shield/1.0.0);
 // see THIRD-PARTY-NOTICES.md in this folder. Not covered by this package's Apache-2.0 license.
 // Required Notice: Copyright (c) 2026 Ivan Murzak (https://github.com/IvanMurzak)
@@ -269,6 +269,9 @@ namespace com.IvanMurzak.CodeExec.Roslyn
             foreach (var pair in new[] { new[] { "SemaphoreSlim", "SemaphoreWait" }, new[] { "ManualResetEventSlim", "EventWait" }, new[] { "CountdownEvent", "CountdownWait" } })
                 Add("System.Threading." + pair[0], "Wait", pair[1], none, new[] { Ms }, new[] { Span }, new[] { Token }, new[] { Ms, Token }, new[] { Span, Token });
             Add("System.Threading.Monitor", "Wait", "MonitorWait", new[] { "object" }, new[] { "object", Ms }, new[] { "object", Span });
+            // Not waits, but the sliced Monitor.Wait needs them: a pulse while its waiter is between two slices is not lost.
+            Add("System.Threading.Monitor", "Pulse", "MonitorPulse", new[] { "object" });
+            Add("System.Threading.Monitor", "PulseAll", "MonitorPulseAll", new[] { "object" });
             Add("System.Threading.WaitHandle", "WaitOne", "WaitOne", none, new[] { Ms }, new[] { Span });
             Add("System.Threading.WaitHandle", "WaitAll", "WaitAll", new[] { HandleArray }, new[] { HandleArray, Ms }, new[] { HandleArray, Span });
             Add("System.Threading.WaitHandle", "WaitAny", "WaitAny", new[] { HandleArray }, new[] { HandleArray, Ms }, new[] { HandleArray, Span });
