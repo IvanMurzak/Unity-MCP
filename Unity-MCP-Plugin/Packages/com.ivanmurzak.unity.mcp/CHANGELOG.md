@@ -155,6 +155,10 @@
 
 ### Fixed
 
+- **`script-execute`: a `Monitor.Pulse` in a snippet is no longer lost** (vendored Code-Exec 0.4.1). A `Pulse` /
+  `PulseAll` sent while the guarded `Monitor.Wait` was between two of its slices did not wake it, so the waiter slept
+  until the budget and the snippet ended with Timeout. The guard's per-thread state also moved from a `[ThreadStatic]`
+  field to a `ThreadLocal` (an intermittent .NET 10 crash in Code-Exec's CI; Unity's Mono is not known to be affected).
 - **Claude Desktop: stdio config file or a Claude connector, never an HTTP entry.** Claude Desktop starts only stdio
   servers from `claude_desktop_config.json` and skipped the HTTP entry the AI agent panel wrote ("not valid MCP server
   configurations"). The panel no longer writes one:
