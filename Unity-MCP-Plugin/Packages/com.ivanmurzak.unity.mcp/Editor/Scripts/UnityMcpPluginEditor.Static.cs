@@ -118,6 +118,9 @@ namespace com.IvanMurzak.Unity.MCP
             }
         }
 
+        /// <inheritdoc cref="UnityConnectionConfig.CloudModeNotice"/>
+        public static string CloudModeNotice => Instance.unityConnectionConfig.CloudModeNotice;
+
         /// <summary>
         /// Repairs a Custom-mode server URL (<see cref="AgentConfiguratorSettings.NormalizeLocalHost"/>): an empty value
         /// or a loopback URL without an explicit port (e.g. <c>http://localhost/mcp</c>) becomes

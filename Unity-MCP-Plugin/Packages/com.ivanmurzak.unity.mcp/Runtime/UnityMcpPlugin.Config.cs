@@ -88,6 +88,38 @@ namespace com.IvanMurzak.Unity.MCP
                 "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Dev</b> window.";
 
             /// <summary>
+            /// Why a Cloud-mode Editor ignores the saved Server URL and starts no local server (issue #1129).
+            /// </summary>
+            [JsonIgnore]
+            public string CloudModeNotice =>
+                $"Cloud mode is active: connecting to {CloudServerUrl}. The saved Server URL {LocalHost} is used only in " +
+                "Custom mode, so the local MCP server does not start. To use it, switch the connection mode to " +
+                "<b>Custom</b> in <b>AI Game Dev</b> window.";
+
+            /// <summary>
+            /// Short Cloud-mode line for connection errors. It names only the mode and endpoint, since a Cloud error
+            /// may as well be an expired sign-in or an outage, and it is repeated after every SignalR error.
+            /// </summary>
+            public static string CloudModeConnectionErrorHint =>
+                $"Cloud mode: connecting to {CloudServerUrl}. For a local MCP server, switch to <b>Custom</b> in <b>AI Game Dev</b> window.";
+
+            /// <summary>The configured hint, preceded by <see cref="CloudModeConnectionErrorHint"/> in Cloud mode.</summary>
+            [JsonIgnore]
+            public override string? ConnectionErrorHint
+            {
+                get
+                {
+                    var hint = base.ConnectionErrorHint;
+                    if (ConnectionMode != ConnectionMode.Cloud)
+                        return hint;
+                    return string.IsNullOrWhiteSpace(hint)
+                        ? CloudModeConnectionErrorHint
+                        : CloudModeConnectionErrorHint + " " + hint;
+                }
+                set => base.ConnectionErrorHint = value;
+            }
+
+            /// <summary>
             /// Returns the active connection host based on <see cref="ConnectionMode"/>.
             /// In Cloud mode, returns <see cref="CloudServerUrl"/>.
             /// In Local mode, returns <see cref="LocalHost"/>.

@@ -594,6 +594,8 @@ Unity MCP 插件在启动时读取以下环境变量（及命令行参数），�
 | `UNITY_MCP_CREDENTIALS_DIR` | —（仅环境变量）              | 绝对文件夹路径                | 从此文件夹而不是 `~/.ai-game-dev` 读取（并刷新）机器凭据存储。用于启动器以其他配置文件登录的开发/测试 Editor（AI Game Dev App 的本地 dev stand）；是路径，绝不是令牌。相对路径会被记录并忽略 |
 
 > 命令行参数优先于环境变量。两者均会覆盖已保存的配置文件值。短标志 `-url`、`-token` 和 `-auth` 是别名；完整的 `-UNITY_MCP_*` 参数名也被接受。
+>
+> **`UserSettings/AI-Game-Developer-Config.json` 中的 Cloud 与 Custom 模式：** `connectionMode` 默认为 `Cloud`，会连接到 `https://ai-game.dev/mcp`，并且从不自动启动本地服务器（即使 `keepServerRunning` 为 `true`）。保存的 `"host"` 字段仅在 `connectionMode` 为 `"Custom"` 时使用；在文件中编辑 `"host"` 不会切换模式。要使用本地服务器，请在 AI Game Dev 窗口中选择 **Custom**，或在 Unity 关闭时设置 `"connectionMode": "Custom"`。
 
 **示例（CI/CD 批处理模式）：**
 
