@@ -96,7 +96,14 @@ namespace com.IvanMurzak.Unity.MCP
                 "Custom mode, so the local MCP server does not start. To use it, switch the connection mode to " +
                 "<b>Custom</b> in <b>AI Game Dev</b> window.";
 
-            /// <summary>The configured hint, preceded by <see cref="CloudModeNotice"/> in Cloud mode.</summary>
+            /// <summary>
+            /// Short Cloud-mode line for connection errors. It names only the mode and endpoint, since a Cloud error
+            /// may as well be an expired sign-in or an outage, and it is repeated after every SignalR error.
+            /// </summary>
+            public static string CloudModeConnectionErrorHint =>
+                $"Cloud mode: connecting to {CloudServerUrl}. For a local MCP server, switch to <b>Custom</b> in <b>AI Game Dev</b> window.";
+
+            /// <summary>The configured hint, preceded by <see cref="CloudModeConnectionErrorHint"/> in Cloud mode.</summary>
             [JsonIgnore]
             public override string? ConnectionErrorHint
             {
@@ -105,7 +112,9 @@ namespace com.IvanMurzak.Unity.MCP
                     var hint = base.ConnectionErrorHint;
                     if (ConnectionMode != ConnectionMode.Cloud)
                         return hint;
-                    return string.IsNullOrWhiteSpace(hint) ? CloudModeNotice : CloudModeNotice + " " + hint;
+                    return string.IsNullOrWhiteSpace(hint)
+                        ? CloudModeConnectionErrorHint
+                        : CloudModeConnectionErrorHint + " " + hint;
                 }
                 set => base.ConnectionErrorHint = value;
             }
