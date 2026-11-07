@@ -118,9 +118,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             MachineCredentialLock? credentialLock = null)
             => new PluginCredentialProvider(store, CreateRefresher(serverBaseUrl, httpClient), _logger, credentialLock: credentialLock);
 
+        /// <summary>
+        /// The machine credential store this editor uses: the folder named by
+        /// <see cref="CredentialsDirectory.EnvName"/> when the launcher set one (a dev/test editor),
+        /// else the OS profile's <c>~/.ai-game-dev</c>. Every store, lock and project-key cache in the
+        /// editor is rooted here, so an override never leaks a read of the real profile's store.
+        /// </summary>
+        internal static MachineCredentialStore CreateMachineStore(Func<string, string?>? getEnv = null)
+            => new MachineCredentialStore(CredentialsDirectory.ResolveOrDefault(_logger, getEnv));
+
         static PluginCredentialProvider CreateDefaultProvider()
         {
-            var store = new MachineCredentialStore();
+            var store = CreateMachineStore();
+            _logger.LogInformation("Machine credential store: {directory}", store.BaseDirectory);
             return CreateProvider(store, UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl, credentialLock: MachineLock(store));
         }
 
@@ -228,7 +238,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             CancellationToken cancellationToken = default)
         {
             var baseUrl = UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl;
-            var store = new MachineCredentialStore();
+            var store = CreateMachineStore();
             return CommitLoginCoreAsync(
                 store,
                 MachineLock(store),
@@ -439,7 +449,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
         public static async Task<MachineSignOutResult> SignOutMachineWideAsync(CancellationToken cancellationToken = default)
         {
             var baseUrl = UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl;
-            var store = new MachineCredentialStore();
+            var store = CreateMachineStore();
             var result = await MachineWideSignOut.SignOutAsync(
                 store, MachineLock(store), new TokenRevocationClient(baseUrl),
                 DeviceAuthService.DefaultClientId, _logger, cancellationToken).ConfigureAwait(false);

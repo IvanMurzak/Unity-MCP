@@ -15,6 +15,7 @@ using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.AgentConfig;
+using com.IvanMurzak.Unity.MCP.Editor.Services;
 using NUnit.Framework;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
@@ -217,6 +218,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
             Assert.IsFalse(provider.IsSignedIn);
             Assert.IsFalse(store.Exists);
+        }
+
+        [Test]
+        public void CreateMachineStore_UsesTheUnityMcpCredentialsDir()
+        {
+            // UNITY_MCP_CREDENTIALS_DIR (a dev/test editor's sandbox store) roots the production store.
+            var store = AccountCredentialService.CreateMachineStore(name => name == CredentialsDirectory.EnvName ? _dir : null);
+            Assert.AreEqual(Path.GetFullPath(_dir), store.BaseDirectory);
+        }
+
+        [Test]
+        public void CreateMachineStore_WithoutOverride_IsTheProfileStore()
+        {
+            var store = AccountCredentialService.CreateMachineStore(_ => null);
+            Assert.AreEqual(new MachineCredentialStore().BaseDirectory, store.BaseDirectory);
         }
     }
 }
