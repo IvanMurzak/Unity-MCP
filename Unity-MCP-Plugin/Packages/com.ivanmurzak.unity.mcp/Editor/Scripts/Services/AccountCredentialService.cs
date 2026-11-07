@@ -125,12 +125,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
         /// editor is rooted here, so an override never leaks a read of the real profile's store.
         /// </summary>
         internal static MachineCredentialStore CreateMachineStore(Func<string, string?>? getEnv = null)
-            => new MachineCredentialStore(CredentialsDirectory.ResolveOrDefault(_logger, getEnv));
+            => new MachineCredentialStore(getEnv == null ? StoreDirectory : CredentialsDirectory.ResolveOrDefault(_logger, getEnv));
+
+        /// <summary>
+        /// The <see cref="CredentialsDirectory.EnvName"/> folder, resolved once per domain (the environment
+        /// does not change under a running editor); null = the OS profile's store. An override is logged
+        /// once as a warning, so a dev/test editor's log always names the store it reads.
+        /// </summary>
+        internal static string? StoreDirectory => _storeDirectory.Value;
+
+        static readonly Lazy<string?> _storeDirectory = new Lazy<string?>(() =>
+        {
+            var directory = CredentialsDirectory.ResolveOrDefault(_logger);
+            if (directory != null)
+                _logger.LogWarning("Machine credential store: {directory} (from {EnvName}).", directory, CredentialsDirectory.EnvName);
+            return directory;
+        });
 
         static PluginCredentialProvider CreateDefaultProvider()
         {
             var store = CreateMachineStore();
-            _logger.LogInformation("Machine credential store: {directory}", store.BaseDirectory);
             return CreateProvider(store, UnityMcpPlugin.UnityConnectionConfig.CloudServerBaseUrl, credentialLock: MachineLock(store));
         }
 

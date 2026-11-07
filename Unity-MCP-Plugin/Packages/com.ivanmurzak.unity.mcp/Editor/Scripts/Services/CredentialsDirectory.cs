@@ -49,14 +49,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             {
                 return Resolve(getEnv);
             }
-            catch (ArgumentException e)
+            // ArgumentException: relative or invalid characters; NotSupportedException/IOException
+            // (PathTooLongException): what Path.GetFullPath throws on .NET Framework/Mono for a bad path.
+            catch (Exception e) when (e is ArgumentException || e is NotSupportedException || e is IOException)
             {
-                logger?.LogError("{Message} Using the default machine credential store.", e.Message);
+                logger?.LogError("{EnvName} is invalid ({Message}). Using the default machine credential store.", EnvName, e.Message);
                 return null;
             }
         }
 
-        // Path.IsPathFullyQualified is not available on every Unity scripting profile (.NET Standard 2.0):
+        // Path.IsPathFullyQualified is missing from Unity's .NET Framework 4.x API profile:
         // "C:folder" and "\folder" are rooted but still relative to a current drive/directory on Windows.
         static bool IsDriveRelative(string path)
         {

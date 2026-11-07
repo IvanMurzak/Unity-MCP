@@ -8,8 +8,8 @@
   instead of `~/.ai-game-dev`, together with its lock and the project-key cache — the twin of Unreal's
   `UNREAL_MCP_CREDENTIALS_DIR` and Godot's `GODOT_MCP_CREDENTIALS_DIR`. For development/test Editors whose launcher
   signs in under another profile (the AI Game Dev App's local dev stand), since .NET ignores a moved
-  `HOME`/`USERPROFILE` on Windows. Environment only; a relative value is logged and ignored. The Editor logs the
-  store it uses.
+  `HOME`/`USERPROFILE` on Windows. Environment only; a relative value is logged and ignored. The Editor logs an
+  overridden store once, as a warning.
 
 ### Changed
 

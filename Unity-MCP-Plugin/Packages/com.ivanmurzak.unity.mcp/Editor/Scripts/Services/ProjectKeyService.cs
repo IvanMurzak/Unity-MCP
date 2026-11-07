@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
                             ct => AccountCredentialService.Provider.GetAccessTokenAsync(ct),
                             issuer,
                             // The project-key cache lives beside the machine credential store (same override).
-                            store: new ProjectKeyStore(CredentialsDirectory.ResolveOrDefault(_logger)),
+                            store: new ProjectKeyStore(AccountCredentialService.StoreDirectory),
                             subjectFallback: () => AccountCredentialService.Provider.Subject,
                             logger: _logger);
                         _providerIssuer = issuer;

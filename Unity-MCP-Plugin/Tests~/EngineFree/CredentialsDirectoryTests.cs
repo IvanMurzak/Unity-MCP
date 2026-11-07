@@ -49,6 +49,8 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         public void RelativePath_IsRejected(string value)
             => Assert.Throws<ArgumentException>(() => CredentialsDirectory.Resolve(Env(value)));
 
+        // Meaningful on Windows only (CI's hosted ubuntu passes it trivially): "C:x" and @"\x" are rooted
+        // there yet still relative to a current drive/directory. On POSIX both are plain relative names.
         [Fact]
         public void DriveRelativePath_IsRejectedOnWindows()
         {
