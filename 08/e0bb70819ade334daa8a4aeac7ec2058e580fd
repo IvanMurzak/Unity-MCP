@@ -1,0 +1,19 @@
+Unity-MCP-Plugin/Tests~/EngineFree/NuGetPinGateTests.cs
+  s_ce4762fbd3d517::t_d869470498722e 96-101,103-104,124-126
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "08e0bb70819ade334daa8a4aeac7ec2058e580fd",
+  "prompts": {},
+  "sessions": {
+    "s_ce4762fbd3d517": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a511-b246-7b82-80fa-88af1118efb4",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

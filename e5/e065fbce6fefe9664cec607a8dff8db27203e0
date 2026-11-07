@@ -1,0 +1,25 @@
+tests/chain-fixtures/2022.3.62f3/tools.jsonl
+  s_66d1354db89bb0::t_4ee6e822b805bf 1,6-7,24
+tests/chain-fixtures/6000.0.85f1/tools.jsonl
+  s_66d1354db89bb0::t_70a080daf03b08 1,6-7,24
+tests/chain-fixtures/6000.3.27f1/tools.jsonl
+  s_66d1354db89bb0::t_e33836b7d39f47 1,6-7,24
+tests/chain-fixtures/6000.6.7f1/tools.jsonl
+  s_66d1354db89bb0::t_a6bc5c6195ec8f 1,6-7,24
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "e5e065fbce6fefe9664cec607a8dff8db27203e0",
+  "prompts": {},
+  "sessions": {
+    "s_66d1354db89bb0": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "cf55cb14-7124-484d-9210-059cf41a44b5",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,49 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/CredentialsDirectory.cs
+  s_b4e88c47e182f2::t_6e45d0570c6cda 1-71
+Unity-MCP-Plugin/Tests~/EngineFree/CredentialsDirectoryTests.cs
+  s_b4e88c47e182f2::t_4103b896dbaafc 59
+  s_b4e88c47e182f2::t_236914cdb80599 55
+  s_b4e88c47e182f2::t_bafc8457470b0f 1-54,56-58,60-66
+Unity-MCP-Plugin/Tests~/EngineFree/EngineFree.csproj
+  s_b4e88c47e182f2::t_98b71672ab8085 93-95
+"Installer/Assets/com.IvanMurzak/AI Game Dev Installer/README.md"
+  s_b4e88c47e182f2::t_4e59c4d3471641 596
+README.md
+  s_b4e88c47e182f2::t_ec1d5bdacd6d9e 596
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_b4e88c47e182f2::t_79d8ea85eb73cb 5-13
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AccountCredentialService.cs
+  s_b4e88c47e182f2::t_f9402d6d1dcfde 121-129,132-133,241,452
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/AssistedReauthService.cs
+  s_b4e88c47e182f2::t_c4d6e095b6a923 285
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/CredentialsDirectory.cs.meta
+  s_b4e88c47e182f2::t_5c074dea80fb55 1-11
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Services/ProjectKeyService.cs
+  s_b4e88c47e182f2::t_178a519e28a267 67-68
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/README.md
+  s_b4e88c47e182f2::t_e278f15b2b4db2 596
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Auth/MachineCredentialTests.cs
+  s_b4e88c47e182f2::t_c85e57bbf52074 18,222-236
+docs/README.es.md
+  s_b4e88c47e182f2::t_08aee8c59f4382 594
+docs/README.ja.md
+  s_b4e88c47e182f2::t_4778c6bac85269 594
+docs/README.zh-CN.md
+  s_b4e88c47e182f2::t_003e7dd360bc50 594
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "dcf722e0a940c57d9cc04e3e9c38f2eaf5804d30",
+  "prompts": {},
+  "sessions": {
+    "s_b4e88c47e182f2": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ef0d1b43-913a-487a-95df-8feba021ec1f",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

@@ -1,0 +1,19 @@
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/Editor/Scripts/Rql/InputAssetStore.cs
+  s_786775484c1dfd::t_78497d0d95fe4d 1-266
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "36c656ba743220c9baab535c61616d16ce3369d5",
+  "prompts": {},
+  "sessions": {
+    "s_786775484c1dfd": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a1a507-45d4-7513-94e8-1cdaa719338a",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
