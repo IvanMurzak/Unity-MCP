@@ -594,6 +594,8 @@ Unity MCP Plugin は起動時に以下の環境変数（およびコマンドラ
 | `UNITY_MCP_CREDENTIALS_DIR` | —（環境変数のみ）              | 絶対フォルダパス              | `~/.ai-game-dev` の代わりにこのフォルダからマシン資格情報ストアを読み取り（更新し）ます。ランチャーが別のプロファイルでサインインする開発/テスト用 Editor（AI Game Dev App のローカル dev stand）向け。パスであり、トークンではありません。相対パスはログに記録され無視されます |
 
 > コマンドライン引数は環境変数よりも優先されます。両方とも保存された設定ファイルの値を上書きします。短縮フラグ `-url`、`-token`、`-auth` はエイリアスです。完全な `-UNITY_MCP_*` 引数名も受け付けられます。
+>
+> **`UserSettings/AI-Game-Developer-Config.json` における Cloud モードと Custom モード:** `connectionMode` の既定値は `Cloud` で、`https://ai-game.dev/mcp` に接続し、ローカルサーバーは自動起動しません（`keepServerRunning` が `true` でも同様です）。保存された `"host"` フィールドは `connectionMode` が `"Custom"` の場合にのみ使用されます。ファイルで `"host"` を編集してもモードは切り替わりません。ローカルサーバーを使うには、AI Game Dev ウィンドウで **Custom** を選択するか、Unity を閉じた状態で `"connectionMode": "Custom"` を設定してください。
 
 **例（CI/CD バッチモード）：**
 

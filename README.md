@@ -597,7 +597,7 @@ The Unity MCP Plugin reads the following environment variables (and command-line
 
 > Command-line args take precedence over environment variables. Both override the saved config file value. The short flags `-url`, `-token`, and `-auth` are aliases; the full `-UNITY_MCP_*` arg names are also accepted.
 >
-> **Cloud vs Custom mode in `UserSettings/AI-Game-Developer-Config.json`:** `connectionMode` defaults to `Cloud`, which connects to `https://ai-game.dev/mcp` and never auto-starts the local server (even if `keepServerRunning` is `true`). The saved `"host"` field in the config file is used only when `connectionMode` is `"Custom"` — editing `"host"` in the file does not switch the mode automatically.
+> **Cloud vs Custom mode in `UserSettings/AI-Game-Developer-Config.json`:** `connectionMode` defaults to `Cloud`, which connects to `https://ai-game.dev/mcp` and never auto-starts the local server (even if `keepServerRunning` is `true`). The saved `"host"` field is used only when `connectionMode` is `"Custom"`; editing `"host"` in the file does not switch the mode. To use a local server, select **Custom** in the AI Game Dev window, or set `"connectionMode": "Custom"` while Unity is closed.
 
 **Example (CI/CD batch mode):**
 

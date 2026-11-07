@@ -88,6 +88,33 @@ namespace com.IvanMurzak.Unity.MCP
                 "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Dev</b> window.";
 
             /// <summary>
+            /// Prepended to the connection-error hint in Cloud mode: a saved localhost Server URL looks like a local
+            /// setup but is ignored there (issue #1129), and this line is visible at the default log level.
+            /// </summary>
+            public static string CloudModeConnectionErrorHint =>
+                $"Cloud mode is active: connecting to {CloudServerUrl}, not to the saved Server URL. " +
+                "To use a local MCP server, switch the connection mode to <b>Custom</b> in <b>AI Game Dev</b> window.";
+
+            /// <summary>
+            /// The configured hint, preceded by <see cref="CloudModeConnectionErrorHint"/> in Cloud mode.
+            /// McpPlugin reads it when each HubConnection is built, so it follows the current mode.
+            /// </summary>
+            [JsonIgnore]
+            public override string? ConnectionErrorHint
+            {
+                get
+                {
+                    var hint = base.ConnectionErrorHint;
+                    if (ConnectionMode != ConnectionMode.Cloud)
+                        return hint;
+                    return string.IsNullOrWhiteSpace(hint)
+                        ? CloudModeConnectionErrorHint
+                        : CloudModeConnectionErrorHint + " " + hint;
+                }
+                set => base.ConnectionErrorHint = value;
+            }
+
+            /// <summary>
             /// Returns the active connection host based on <see cref="ConnectionMode"/>.
             /// In Cloud mode, returns <see cref="CloudServerUrl"/>.
             /// In Local mode, returns <see cref="LocalHost"/>.

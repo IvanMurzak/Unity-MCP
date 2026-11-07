@@ -23,16 +23,41 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         const string ExpectedHint =
             "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Dev</b> window.";
 
+        static UnityMcpPlugin.UnityConnectionConfig Config(ConnectionMode mode)
+            => new UnityMcpPlugin.UnityConnectionConfig { ConnectionMode = mode };
+
         [Test]
         public void UnityConfig_SuppliesTheWindowHint()
         {
-            Assert.AreEqual(ExpectedHint, new UnityMcpPlugin.UnityConnectionConfig().ConnectionErrorHint);
+            Assert.AreEqual(ExpectedHint, Config(ConnectionMode.Custom).ConnectionErrorHint);
+        }
+
+        [Test]
+        public void CloudMode_SaysTheSavedServerUrlIsNotUsed()
+        {
+            // Issue #1129: a localhost Server URL saved with Cloud mode looked like a local setup.
+            Assert.AreEqual(
+                UnityMcpPlugin.UnityConnectionConfig.CloudModeConnectionErrorHint + " " + ExpectedHint,
+                Config(ConnectionMode.Cloud).ConnectionErrorHint);
+            StringAssert.Contains(UnityMcpPlugin.UnityConnectionConfig.CloudServerUrl,
+                UnityMcpPlugin.UnityConnectionConfig.CloudModeConnectionErrorHint);
+        }
+
+        [Test]
+        public void CloudMode_WithoutAWindowHint_StillExplainsTheMode()
+        {
+            var config = Config(ConnectionMode.Cloud);
+            config.ConnectionErrorHint = null;
+            Assert.AreEqual(UnityMcpPlugin.UnityConnectionConfig.CloudModeConnectionErrorHint, config.ConnectionErrorHint);
+
+            config.ConnectionMode = ConnectionMode.Custom;
+            Assert.IsNull(config.ConnectionErrorHint);
         }
 
         [Test]
         public void Hint_IsRuntimeOnly_AndSurvivesAReload()
         {
-            var json = JsonSerializer.Serialize(new UnityMcpPlugin.UnityConnectionConfig());
+            var json = JsonSerializer.Serialize(Config(ConnectionMode.Custom));
             StringAssert.DoesNotContain("ConnectionErrorHint", json);
 
             var loaded = JsonSerializer.Deserialize<UnityMcpPlugin.UnityConnectionConfig>(json)!;
