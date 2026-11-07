@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
     /// which <c>Environment.GetFolderPath(UserProfile)</c> ignores on Windows. Read from the editor's
     /// process environment only (the launcher sets it), never from a project file.
     /// </summary>
-    public static class CredentialsDirectory
+    internal static class CredentialsDirectory
     {
         public const string EnvName = "UNITY_MCP_CREDENTIALS_DIR";
 
