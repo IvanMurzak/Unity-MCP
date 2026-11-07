@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/Skills/Skill_InitialSetup.cs
+  20c298763e367028 12,23-25,27-33,35-147,149-196
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "72329fd3cf143f4ef8088b0ccf59ba555bc90d38",
+  "prompts": {
+    "20c298763e367028": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "687a50d9-c2db-471b-98dd-f8b82ae2ed94",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 318,
+      "total_deletions": 150,
+      "accepted_lines": 176,
+      "overriden_lines": 1
+    }
+  }
+}

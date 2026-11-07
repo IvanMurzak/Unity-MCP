@@ -1,0 +1,23 @@
+cli/tests/run-tool.test.ts
+  7dcf38a9a970be87 171,295,311
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "88e2cc3e6671bf400948877c684a08c20d327a34",
+  "prompts": {
+    "7dcf38a9a970be87": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "08b5f8fc-4a90-4525-991d-2300bf026387",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 330,
+      "total_deletions": 330,
+      "accepted_lines": 39,
+      "overriden_lines": 0
+    }
+  }
+}

@@ -1,0 +1,77 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_7bc72ecaebd05d::t_0e64fdcaffa821 7-9,45,70,147
+"extensions/Animation/Installer/Assets/com.IvanMurzak/AI Animation Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_f2ece51999eb7a 22
+extensions/Animation/Packages/com.ivanmurzak.unity.mcp.animation/package.json
+  s_7bc72ecaebd05d::t_75b7ba70f90039 15,20
+extensions/Animation/README.md
+  s_7bc72ecaebd05d::t_aacbd24f064d3a 26,54
+"extensions/Cinemachine/Installer/Assets/com.IvanMurzak/AI Cinemachine Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_7d8191c2434173 22
+extensions/Cinemachine/Packages/com.ivanmurzak.unity.mcp.cinemachine/package.json
+  s_7bc72ecaebd05d::t_50799b23830842 16,21
+extensions/Cinemachine/README.md
+  s_7bc72ecaebd05d::t_11a14ad3853805 26,60
+"extensions/InputSystem/Installer/Assets/com.IvanMurzak/AI InputSystem Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_8a5bfda1c174c0 22
+extensions/InputSystem/Packages/com.ivanmurzak.unity.mcp.inputsystem/package.json
+  s_7bc72ecaebd05d::t_ae3feecf70bf12 17,22
+extensions/InputSystem/README.md
+  s_7bc72ecaebd05d::t_59490084c24344 26,58
+"extensions/Navigation/Installer/Assets/com.IvanMurzak/AI Navigation Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_d36a9624552377 22
+extensions/Navigation/Packages/com.ivanmurzak.unity.mcp.navigation/package.json
+  s_7bc72ecaebd05d::t_38d65713ea6799 18,23
+extensions/Navigation/README.md
+  s_7bc72ecaebd05d::t_cd1134008c1cdc 26,55
+"extensions/ParticleSystem/Installer/Assets/com.IvanMurzak/AI Particle System Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_c14c8af6c25aa6 22
+extensions/ParticleSystem/Packages/com.ivanmurzak.unity.mcp.particlesystem/package.json
+  s_7bc72ecaebd05d::t_8f78f5ae1a3ae4 27,32
+extensions/ParticleSystem/README.md
+  s_7bc72ecaebd05d::t_3d4bdc09389937 26,84
+"extensions/ProBuilder/Installer/Assets/com.IvanMurzak/AI ProBuilder Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_0c1eb69130e8c6 22
+extensions/ProBuilder/Packages/com.ivanmurzak.unity.mcp.probuilder/package.json
+  s_7bc72ecaebd05d::t_f8f06ed976b254 15,20
+extensions/ProBuilder/README.md
+  s_7bc72ecaebd05d::t_c627d623ce6a83 26,65
+"extensions/Splines/Installer/Assets/com.IvanMurzak/AI Splines Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_70bd8599074a2e 22
+extensions/Splines/Packages/com.ivanmurzak.unity.mcp.splines/package.json
+  s_7bc72ecaebd05d::t_263422abc1f5e4 18,23
+"extensions/Terrain/Installer/Assets/com.IvanMurzak/AI Terrain Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_f74608566b38b2 22
+extensions/Terrain/Packages/com.ivanmurzak.unity.mcp.terrain/package.json
+  s_7bc72ecaebd05d::t_fca4a0f171cc27 18,23
+extensions/Terrain/README.md
+  s_7bc72ecaebd05d::t_4b0732939167ab 26,59
+"extensions/Tilemap/Installer/Assets/com.IvanMurzak/AI Tilemap Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_f39bd83f0b17c4 22
+extensions/Tilemap/Packages/com.ivanmurzak.unity.mcp.tilemap/package.json
+  s_7bc72ecaebd05d::t_3b157e3b58c473 19,24
+extensions/Tilemap/README.md
+  s_7bc72ecaebd05d::t_567c0618e425bb 26,60
+"extensions/Timeline/Installer/Assets/com.IvanMurzak/AI Timeline Installer/Installer.cs"
+  s_7bc72ecaebd05d::t_521a89fdb1fd6a 22
+extensions/Timeline/Packages/com.ivanmurzak.unity.mcp.timeline/package.json
+  s_7bc72ecaebd05d::t_05e6e0c9d9238e 18,23
+extensions/Timeline/README.md
+  s_7bc72ecaebd05d::t_c6cc1c20c703fb 26
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "5719839c6a30890816b74cd718bb1ff299ecec4e",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

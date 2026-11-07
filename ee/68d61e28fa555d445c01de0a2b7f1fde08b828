@@ -1,0 +1,41 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/SceneRefConverter.cs
+  s_7d1fb4e8f28b5b::t_9c54ba6620cb79 14
+  s_7d1fb4e8f28b5b::t_7e4548d072a7b2 71-74,82-83
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/AssetObjectRefConverter.cs
+  s_7d1fb4e8f28b5b::t_17033818710280 76-79,87-88
+  s_7d1fb4e8f28b5b::t_952be06e286ab7 14
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md
+  s_7d1fb4e8f28b5b::t_ff276d043e962b 5-21
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/ObjectRefConverter.cs
+  s_7d1fb4e8f28b5b::t_3cac3d4bbe6f22 64-67,75-76
+  s_7d1fb4e8f28b5b::t_2e77b4cc92db4e 14
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/JsonConverters/GameObjectRefConverterTests.cs
+  s_7d1fb4e8f28b5b::t_6b013e6fdefe36 144-256
+  s_7d1fb4e8f28b5b::t_db0b85f927eca9 15-16,18-19
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/GameObjectRefConverter.cs
+  s_7d1fb4e8f28b5b::t_dd1ca001649a04 14
+  s_7d1fb4e8f28b5b::t_86219217d3ef9a 82-85,93
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Assets.Modify.cs
+  s_7d1fb4e8f28b5b::t_b310a2e9f08c9d 119-126
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Types/ComponentRefConverter.cs
+  s_7d1fb4e8f28b5b::t_6370e9ef425968 14
+  s_7d1fb4e8f28b5b::t_1f2e83c1763042 71-74,82
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/Structures/EntityIdConverter.cs
+  s_7d1fb4e8f28b5b::t_2b7f4530476609 11-26,30,44-45,57-65,67,77-83,114-117
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.11",
+  "base_commit_sha": "ee68d61e28fa555d445c01de0a2b7f1fde08b828",
+  "prompts": {},
+  "sessions": {
+    "s_7d1fb4e8f28b5b": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "ee55318c-21bc-4ab7-9ec1-82c4f6f48645",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

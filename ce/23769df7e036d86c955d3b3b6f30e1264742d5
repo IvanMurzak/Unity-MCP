@@ -1,0 +1,27 @@
+cli/src/utils/input.ts
+  5e332338a3d9cc23 46-57
+cli/src/commands/setup-skills.ts
+  5e332338a3d9cc23 5,56-57,65,112
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/API/SystemTool/Skills.Generate.cs
+  5e332338a3d9cc23 41-42,45-60
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.15",
+  "base_commit_sha": "ce23769df7e036d86c955d3b3b6f30e1264742d5",
+  "prompts": {
+    "5e332338a3d9cc23": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "c243313f-aaee-4622-b846-5cc7ecb34626",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 102,
+      "total_deletions": 94,
+      "accepted_lines": 43,
+      "overriden_lines": 0
+    }
+  }
+}
