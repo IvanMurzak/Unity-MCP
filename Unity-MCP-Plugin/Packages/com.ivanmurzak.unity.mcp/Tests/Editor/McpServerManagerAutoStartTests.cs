@@ -44,17 +44,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
-        public void CloudModeSkipNotice_NamesBothUrlsAndTheFix()
-        {
-            // Issue #1129: Cloud mode silently ignored a saved localhost Server URL.
-            var notice = McpServerManager.CloudModeSkipNotice("https://ai-game.dev/mcp", "http://localhost:20361");
-
-            StringAssert.Contains("https://ai-game.dev/mcp", notice);
-            StringAssert.Contains("http://localhost:20361", notice);
-            StringAssert.Contains("Custom", notice);
-        }
-
-        [Test]
         public void IsAutoStartAllowedForTransport_Stdio_ReturnsFalse()
         {
             Assert.IsFalse(

@@ -88,17 +88,15 @@ namespace com.IvanMurzak.Unity.MCP
                 "To stop seeing the error, please <b>Stop</b> the connection to MCP server in <b>AI Game Dev</b> window.";
 
             /// <summary>
-            /// Prepended to the connection-error hint in Cloud mode: a saved localhost Server URL looks like a local
-            /// setup but is ignored there (issue #1129), and this line is visible at the default log level.
+            /// Why a Cloud-mode Editor ignores the saved Server URL and starts no local server (issue #1129).
             /// </summary>
-            public static string CloudModeConnectionErrorHint =>
-                $"Cloud mode is active: connecting to {CloudServerUrl}, not to the saved Server URL. " +
-                "To use a local MCP server, switch the connection mode to <b>Custom</b> in <b>AI Game Dev</b> window.";
+            [JsonIgnore]
+            public string CloudModeNotice =>
+                $"Cloud mode is active: connecting to {CloudServerUrl}. The saved Server URL {LocalHost} is used only in " +
+                "Custom mode, so the local MCP server does not start. To use it, switch the connection mode to " +
+                "<b>Custom</b> in <b>AI Game Dev</b> window.";
 
-            /// <summary>
-            /// The configured hint, preceded by <see cref="CloudModeConnectionErrorHint"/> in Cloud mode.
-            /// McpPlugin reads it when each HubConnection is built, so it follows the current mode.
-            /// </summary>
+            /// <summary>The configured hint, preceded by <see cref="CloudModeNotice"/> in Cloud mode.</summary>
             [JsonIgnore]
             public override string? ConnectionErrorHint
             {
@@ -107,9 +105,7 @@ namespace com.IvanMurzak.Unity.MCP
                     var hint = base.ConnectionErrorHint;
                     if (ConnectionMode != ConnectionMode.Cloud)
                         return hint;
-                    return string.IsNullOrWhiteSpace(hint)
-                        ? CloudModeConnectionErrorHint
-                        : CloudModeConnectionErrorHint + " " + hint;
+                    return string.IsNullOrWhiteSpace(hint) ? CloudModeNotice : CloudModeNotice + " " + hint;
                 }
                 set => base.ConnectionErrorHint = value;
             }

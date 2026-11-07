@@ -2024,15 +2024,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             => transport != TransportMethod.stdio;
 
         /// <summary>
-        /// Explains why a Cloud-mode Editor does not start the local server although <c>keepServerRunning</c>
-        /// is on: it names the endpoint actually used and the saved Custom-mode Server URL that is ignored
-        /// (issue #1129). Pure (no Unity API access) so it can be unit-tested in EditMode.
-        /// </summary>
-        internal static string CloudModeSkipNotice(string cloudUrl, string savedServerUrl)
-            => $"Cloud mode: connecting to {cloudUrl}. The saved Server URL {savedServerUrl} is used only in " +
-               "Custom mode, so the local MCP server will not start. Switch the connection mode to Custom to use it.";
-
-        /// <summary>
         /// Starts the MCP server if KeepServerRunning is enabled and no external server is detected.
         /// This method is called during Unity Editor startup to auto-start the server based on user preference.
         /// The external server check is performed asynchronously to avoid blocking the main thread.
@@ -2045,10 +2036,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Skip local server auto-start in Cloud mode — Unity connects to the cloud server instead
             if (!IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
             {
-                // keepServerRunning asks for a local server that Cloud mode never starts (issue #1129): say why
                 if (UnityMcpPluginEditor.KeepServerRunning)
-                    _logger.LogInformation("StartServerIfNeeded: {notice}",
-                        CloudModeSkipNotice(UnityMcpPluginEditor.Host, UnityMcpPluginEditor.LocalHost));
+                    _logger.LogInformation("StartServerIfNeeded: {notice}", UnityMcpPluginEditor.CloudModeNotice);
                 else
                     _logger.LogDebug("StartServerIfNeeded: Cloud mode active, skipping local server auto-start");
                 Settled();

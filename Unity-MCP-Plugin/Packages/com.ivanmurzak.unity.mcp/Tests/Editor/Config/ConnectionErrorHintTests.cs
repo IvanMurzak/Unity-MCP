@@ -36,11 +36,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void CloudMode_SaysTheSavedServerUrlIsNotUsed()
         {
             // Issue #1129: a localhost Server URL saved with Cloud mode looked like a local setup.
-            Assert.AreEqual(
-                UnityMcpPlugin.UnityConnectionConfig.CloudModeConnectionErrorHint + " " + ExpectedHint,
-                Config(ConnectionMode.Cloud).ConnectionErrorHint);
-            StringAssert.Contains(UnityMcpPlugin.UnityConnectionConfig.CloudServerUrl,
-                UnityMcpPlugin.UnityConnectionConfig.CloudModeConnectionErrorHint);
+            var config = Config(ConnectionMode.Cloud);
+            config.LocalHost = "http://localhost:20361";
+
+            Assert.AreEqual(config.CloudModeNotice + " " + ExpectedHint, config.ConnectionErrorHint);
+            StringAssert.Contains(UnityMcpPlugin.UnityConnectionConfig.CloudServerUrl, config.CloudModeNotice);
+            StringAssert.Contains("http://localhost:20361", config.CloudModeNotice);
         }
 
         [Test]
@@ -48,7 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var config = Config(ConnectionMode.Cloud);
             config.ConnectionErrorHint = null;
-            Assert.AreEqual(UnityMcpPlugin.UnityConnectionConfig.CloudModeConnectionErrorHint, config.ConnectionErrorHint);
+            Assert.AreEqual(config.CloudModeNotice, config.ConnectionErrorHint);
 
             config.ConnectionMode = ConnectionMode.Custom;
             Assert.IsNull(config.ConnectionErrorHint);
