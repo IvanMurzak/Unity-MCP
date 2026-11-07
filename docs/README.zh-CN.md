@@ -591,6 +591,7 @@ Unity MCP 插件在启动时读取以下环境变量（及命令行参数），�
 | `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | 强制设置插件配置的客户端传输方式                    |
 | `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | 强制设置插件是否保持本地服务器进程运行       |
 | `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | 逗号分隔的工具 ID      | 仅向 MCP 客户端显示列出的工具（tools/list），其余全部隐藏（隐藏的工具按名称调用时仍会运行）。未知 ID 将记录为错误日志。 |
+| `UNITY_MCP_CREDENTIALS_DIR` | —（仅环境变量）              | 绝对文件夹路径                | 从此文件夹而不是 `~/.ai-game-dev` 读取（并刷新）机器凭据存储。用于启动器以其他配置文件登录的开发/测试 Editor（AI Game Dev App 的本地 dev stand）；是路径，绝不是令牌。相对路径会被记录并忽略 |
 
 > 命令行参数优先于环境变量。两者均会覆盖已保存的配置文件值。短标志 `-url`、`-token` 和 `-auth` 是别名；完整的 `-UNITY_MCP_*` 参数名也被接受。
 

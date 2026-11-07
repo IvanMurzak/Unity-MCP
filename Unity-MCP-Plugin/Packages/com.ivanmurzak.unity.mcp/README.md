@@ -593,6 +593,7 @@ The Unity MCP Plugin reads the following environment variables (and command-line
 | `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | Force the client transport the plugin configures                    |
 | `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | Force whether the plugin keeps a local server process running       |
 | `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | comma-separated tool IDs      | Show only the listed tools to MCP clients (tools/list); all others are hidden (a hidden tool still runs when called by name). Unknown IDs are logged as errors. |
+| `UNITY_MCP_CREDENTIALS_DIR` | — (environment only)        | absolute folder path          | Read (and refresh) the machine credential store from this folder instead of `~/.ai-game-dev`. For development/test Editors whose launcher signs in under another profile (the AI Game Dev App's local dev stand); a path, never a token. A relative value is logged and ignored |
 
 > Command-line args take precedence over environment variables. Both override the saved config file value. The short flags `-url`, `-token`, and `-auth` are aliases; the full `-UNITY_MCP_*` arg names are also accepted.
 

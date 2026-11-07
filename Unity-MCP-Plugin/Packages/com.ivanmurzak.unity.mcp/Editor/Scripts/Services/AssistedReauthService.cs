@@ -282,7 +282,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
         {
             try
             {
-                var read = new MachineCredentialStore().TryRead();
+                var read = AccountCredentialService.CreateMachineStore().TryRead();
                 if (read.Status != MachineCredentialStoreStatus.Ok || read.Credentials?.Families == null)
                     return null;
                 var family = read.Credentials.Families.Plugin ?? read.Credentials.Families.Legacy;

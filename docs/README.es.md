@@ -591,6 +591,7 @@ El Unity MCP Plugin lee las siguientes variables de entorno (y argumentos de lí
 | `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | Fuerza el transporte de cliente que configura el plugin                    |
 | `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | Fuerza si el plugin mantiene un proceso de servidor local en ejecución       |
 | `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | IDs de herramientas separados por comas      | Muestra a los clientes MCP solo las herramientas listadas (tools/list); las demás se ocultan (una herramienta oculta sigue ejecutándose si se llama por su nombre). Los IDs desconocidos se registran como errores. |
+| `UNITY_MCP_CREDENTIALS_DIR` | — (solo entorno)            | ruta absoluta de carpeta      | Lee (y renueva) el almacén de credenciales de la máquina desde esta carpeta en lugar de `~/.ai-game-dev`. Para Editors de desarrollo/prueba cuyo lanzador inicia sesión con otro perfil (el dev stand local de AI Game Dev App); una ruta, nunca un token. Un valor relativo se registra y se ignora |
 
 > Los argumentos de línea de comandos tienen prioridad sobre las variables de entorno. Ambos sobrescriben el valor del archivo de configuración guardado. Las banderas cortas `-url`, `-token` y `-auth` son alias; los nombres de argumento completos `-UNITY_MCP_*` también se aceptan.
 

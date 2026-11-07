@@ -90,6 +90,9 @@
          connection config that is reachable engine-free (UnityMcpPlugin.Config.cs itself is not — see
          README.md). Pure enum + extension method. -->
     <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Runtime\Utils\LogLevel.cs" Link="Source\LogLevel.cs" />
+    <!-- UNITY_MCP_CREDENTIALS_DIR: where a dev/test editor's machine credential store lives. Pure BCL +
+         Microsoft.Extensions.Logging (via McpPlugin); CredentialsDirectoryTests drives its validation. -->
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\Scripts\Services\CredentialsDirectory.cs" Link="Source\CredentialsDirectory.cs" />
 
     <!-- ── (c) Tool attribute plumbing ─────────────────────────────────────────────────────────────
          Tool_Ping is the ONLY [AiToolType] family in the plugin whose every partial is engine-free, so
