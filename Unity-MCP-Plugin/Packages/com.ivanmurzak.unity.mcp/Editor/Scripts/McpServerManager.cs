@@ -2036,7 +2036,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Skip local server auto-start in Cloud mode — Unity connects to the cloud server instead
             if (!IsAutoStartAllowedForMode(UnityMcpPluginEditor.ConnectionMode))
             {
-                _logger.LogDebug("StartServerIfNeeded: Cloud mode active, skipping local server auto-start");
+                if (UnityMcpPluginEditor.KeepServerRunning)
+                {
+                    _logger.LogInformation(
+                        $"StartServerIfNeeded: Cloud mode active (connecting to {UnityMcpPluginEditor.Host}); " +
+                        $"skipping local server auto-start. The saved Server URL ({UnityMcpPluginEditor.LocalHost}) is used only in Custom mode. " +
+                        "Switch connectionMode to Custom to start and connect to the local server.");
+                }
+                else
+                {
+                    _logger.LogDebug("StartServerIfNeeded: Cloud mode active, skipping local server auto-start");
+                }
                 Settled();
                 return;
             }
