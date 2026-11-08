@@ -25,7 +25,8 @@
  * (`files` of the npm package), the package and Installer READMEs (shipped in the UPM package and the
  * .unitypackage), extensions/<module>/README.md (commands/extensions.py reads it). The root README.md
  * has no reader today, but documentation-sync.md makes a change to it also touch those shipped copies,
- * so listing it would rarely skip anything.
+ * so listing it would rarely skip anything. GitHub Pages publishes main:/docs after a merge; no PR job
+ * reads or tests that site, so skipping the Unity legs loses nothing there.
  */
 
 import { execFileSync } from "node:child_process";

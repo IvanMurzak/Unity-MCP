@@ -56,36 +56,34 @@ env:
 
 jobs:
   # A documentation-only PR (.github/scripts/docs-only.mjs) skips the test-unity-* legs, about 20 of the run's minutes.
-  # Dispatches, release_extensions.yml's workflow_call and `train/` PRs skip this job (same `train/` test as the chain
-  # steps), which leaves the output empty, so they run in full.
+  # Dispatches, release_extensions.yml's workflow_call and `train/` PRs (same `train/` test as the chain steps) leave the
+  # output empty, so they run in full. This job has no `if` and its steps cannot fail it: a skipped or failed job here
+  # could skip what depends on it, through the reusable workflows and release_extensions.yml's `publish`.
   # Not gated: the jobs below that take about a minute and read no listed path. test-cli must not be, because a skipped
   # caller never reports the `test-cli / test-cli (20|22)` contexts the "Required status checks" ruleset names.
   changes:
-    if: github.event_name == 'pull_request' && !contains(join(github.event.pull_request.labels.*.name, ' '), 'train/')
     runs-on: ubuntu-latest
     timeout-minutes: 5
     permissions:
       contents: read
+    env:
+      CLASSIFY: ${{ github.event_name == 'pull_request' && !contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
     outputs:
       docs_only: ${{ steps.classify.outputs.docs_only }}
     steps:
-      - id: checkout
-        uses: actions/checkout@v6
+      - uses: actions/checkout@v6
+        if: env.CLASSIFY == 'true'
         continue-on-error: true
         timeout-minutes: 3
         with:
           fetch-depth: 2 # the merge commit and both parents: docs-only.mjs diffs HEAD^1..HEAD
-          sparse-checkout: .github # the scripts and this workflow are all this job reads
+          sparse-checkout: .github/scripts # the script is all this job reads
           persist-credentials: false # it reads local trees only, and the tree may be a fork's code
       - id: classify
+        if: env.CLASSIFY == 'true'
         continue-on-error: true
         timeout-minutes: 1
         run: node .github/scripts/docs-only.mjs
-      # Allowed to fail the job, unlike the steps above: this is the gate's only test. The Unity legs still run then.
-      - name: Test the gate
-        if: steps.checkout.outcome == 'success'
-        timeout-minutes: 1
-        run: node --test .github/scripts/docs-only.test.mjs
 
   # Uploaded in chain mode too: publish_test_results.yml reads `Event File/event.json` on every completed run
   # (chain runs included), so skipping it would break that workflow. A few KB, and the consumer runs
@@ -144,6 +142,8 @@ jobs:
         run: |
           python commands/extensions.py validate
           python -m unittest discover -s commands/tests -v
+      - name: Test the docs-only gate
+        run: node --test .github/scripts/docs-only.test.mjs
 
   # The plugin's only engine-free C# tests: a plain xUnit project that compiles a chosen set of the
   # real plugin sources (Unity-MCP-Plugin/Tests~/EngineFree). No Unity licence, no editor, no Docker —

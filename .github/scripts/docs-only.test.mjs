@@ -57,14 +57,22 @@ test("isDocsOnly needs at least one file and every file on the list", () => {
 
 test("the workflow gates only the Unity legs, each so that only an explicit true skips it", () => {
   const workflow = readFileSync(fileURLToPath(new URL("../workflows/test_pull_request.yml", import.meta.url)), "utf8");
-  const jobs = workflow.slice(workflow.indexOf("\njobs:\n")).split(/\n {2}(?=[a-z][\w-]*:\n)/).slice(1);
-  const gated = jobs.filter((job) => job.includes("needs: changes"));
+  const jobs = workflow
+    .slice(workflow.indexOf("\njobs:\n"))
+    .replace(/^\s*#.*\n/gm, "")
+    .split(/\n {2}(?=[^\s#])/)
+    .slice(1);
+  const gated = jobs.filter((job) => /\bneeds:.*\bchanges\b/.test(job));
   assert.ok(gated.length > 0);
   for (const job of jobs) {
     const key = job.slice(0, job.indexOf(":"));
     assert.equal(gated.includes(job), key.startsWith("test-unity-"), key);
   }
   for (const job of gated) assert.ok(job.includes("if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}"), job);
+
+  // A skipped gate job could skip what depends on it, through the reusable workflows and release_extensions.yml.
+  const gate = jobs.find((job) => job.startsWith("changes:"));
+  assert.doesNotMatch(gate, /^ {4}if:/m);
 });
 
 function withRepo(check) {
@@ -125,7 +133,8 @@ test("a non-ASCII docs path stays unquoted, so it still matches the list", () =>
 
 test("changedFiles refuses a HEAD that is not a merge commit", () => {
   withRepo((repo, git) => {
-    git("commit", "--allow-empty", "-m", "only");
+    git("commit", "--allow-empty", "-m", "first");
+    git("commit", "--allow-empty", "-m", "second");
     assert.throws(() => changedFiles(repo));
   });
 });
