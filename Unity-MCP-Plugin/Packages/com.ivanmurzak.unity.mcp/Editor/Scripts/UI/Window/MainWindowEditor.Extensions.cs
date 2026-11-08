@@ -172,11 +172,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ),
         };
 
+        internal static IReadOnlyList<ExtensionPanel.ExtensionData> ExtensionCatalog => _extensions;
+
         private void SetupExtensionsSection(VisualElement root)
         {
             var container = root.Q<VisualElement>("ExtensionsSection");
             if (container == null)
                 return;
+
+            var installAll = root.Q<Button>("btnExtensionsInstallAll");
+            var updateAll = root.Q<Button>("btnExtensionsUpdateAll");
 
             var panels = new List<ExtensionPanel>(_extensions.Length);
             foreach (var extension in _extensions)
@@ -184,6 +189,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 var panel = new ExtensionPanel(extension);
                 container.Add(panel.Root);
                 panels.Add(panel);
+                panel.StateChanged += RefreshBulkButtons;
+            }
+
+            installAll.clicked += () => _ = ExtensionPanel.InstallOrUpdateAsync(panels.Where(p => p.CanInstall).ToList());
+            updateAll.clicked += () => _ = ExtensionPanel.InstallOrUpdateAsync(panels.Where(p => p.CanUpdate).ToList());
+            RefreshBulkButtons();
+
+            void RefreshBulkButtons()
+            {
+                var installable = panels.Count(p => p.CanInstall);
+                var updatable = panels.Count(p => p.CanUpdate);
+
+                installAll.SetEnabled(installable > 0);
+                installAll.tooltip = installable > 0
+                    ? $"Install {installable} extension(s) that are not installed yet."
+                    : "All extensions are installed.";
+
+                updateAll.style.display = updatable > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+                updateAll.tooltip = $"Update {updatable} installed extension(s) to the latest version.";
             }
 
             var listRequest = Client.List();

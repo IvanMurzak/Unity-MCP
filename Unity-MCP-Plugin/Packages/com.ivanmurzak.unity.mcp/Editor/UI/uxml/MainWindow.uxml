@@ -127,7 +127,11 @@
             </ui:VisualElement>
             <ui:VisualElement class="divider" />
             <!-- Extensions Section ============================== -->
-            <ui:Label text="Extensions" class="header" />
+            <ui:VisualElement class="row" style="align-items: center;">
+                <ui:Label text="Extensions" class="header" style="flex-grow: 1; flex-shrink: 1;" />
+                <ui:Button name="btnExtensionsInstallAll" text="Install All" class="btn-compact btn-secondary" />
+                <ui:Button name="btnExtensionsUpdateAll" text="Update All" class="btn-compact btn-primary" style="display: none;" />
+            </ui:VisualElement>
             <ui:VisualElement name="ExtensionsSection" />
             <ui:VisualElement class="divider" />
             <!-- Support Section ============================== -->
