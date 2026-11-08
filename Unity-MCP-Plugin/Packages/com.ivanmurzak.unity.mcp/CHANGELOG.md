@@ -5,7 +5,7 @@
 ### Added
 
 - Extensions section of the main window: **Install All** (installs every extension not installed yet) and **Update All**
-  (shown only when an installed extension has a newer version) beside the title; a bulk action resolves packages once.
+  (shown only when an installed extension has a newer version) beside the title. A bulk action resolves packages once, and a failure restores `manifest.json`; Update All skips `file:`/git installs.
 - Updating the plugin also updates the installed extensions to their latest versions, in the same package request.
   Extensions installed from `file:` or git are left alone; a failed extension update does not block the plugin update.
 - `UNITY_MCP_CREDENTIALS_DIR`: an absolute folder the Editor reads (and refreshes) the machine credential store from

@@ -55,6 +55,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
+        /// <summary>
+        /// Adds packages ("id@version") in one atomic request and reports how it ended, which
+        /// <see cref="Client.Resolve"/> cannot. Throws with Package Manager's error on failure.
+        /// </summary>
+        internal static Task AddPackagesAsync(string[] packages)
+        {
+            var completion = new TaskCompletionSource<bool>();
+            var request = Client.AddAndRemove(packagesToAdd: packages);
+            EditorApplication.update += OnUpdate;
+            return completion.Task;
+
+            void OnUpdate()
+            {
+                if (!request.IsCompleted)
+                    return;
+
+                EditorApplication.update -= OnUpdate;
+                if (request.Status == StatusCode.Success)
+                    completion.SetResult(true);
+                else
+                    completion.SetException(new System.InvalidOperationException(request.Error?.message ?? "Failed to add packages."));
+            }
+        }
+
         public static void Init()
         {
             // Process any pending notifications after domain reload

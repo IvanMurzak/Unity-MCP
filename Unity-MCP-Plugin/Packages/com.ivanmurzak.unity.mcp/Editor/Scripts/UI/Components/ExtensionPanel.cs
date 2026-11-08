@@ -50,6 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private readonly ExtensionData _data;
         private PanelState _state;
         private bool _busyWithUpdate;
+        private bool _isFromRegistry;
 
         /// <summary>Raised whenever the extension moves to a different install/update state.</summary>
         internal event Action? StateChanged;
@@ -59,6 +60,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         /// <summary>A newer version is available and the extension can be updated right now.</summary>
         internal bool CanUpdate => _state == PanelState.Update;
+
+        /// <summary>
+        /// Update All leaves a <c>file:</c> or git install alone: only its own Update button, a deliberate
+        /// per-extension choice, replaces such a checkout with a registry version.
+        /// </summary>
+        internal bool CanBulkUpdate => CanUpdate && _isFromRegistry;
 
         /// <summary>
         /// The root visual element of the extension panel. Add this to a parent container.
@@ -103,8 +110,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <param name="installedVersion">
         /// The currently installed version of this package, or null if not installed.
         /// </param>
-        public void RefreshStatus(string? installedVersion)
+        /// <param name="isFromRegistry">Whether that version came from a package registry, not <c>file:</c> or git.</param>
+        public void RefreshStatus(string? installedVersion, bool isFromRegistry = false)
         {
+            _isFromRegistry = isFromRegistry;
             _actionBtn.UnregisterCallback<ClickEvent>(OnActionClicked);
 
             if (installedVersion == null)
@@ -189,10 +198,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
 
         /// <summary>
-        /// Installs or updates the given extensions to their latest OpenUPM versions: every package is written
-        /// to manifest.json first, then a single <see cref="Client.Resolve"/> picks them all up, so a bulk action
-        /// costs one package resolve and one recompile. An extension that fails keeps its button usable and does
-        /// not stop the others.
+        /// Installs or updates the given extensions to their latest OpenUPM versions in one package request, so a
+        /// bulk action costs one resolve and one recompile. If a package cannot resolve, the manifest goes back to
+        /// how it was and every button comes back, so each extension can still be tried on its own.
         /// </summary>
         internal static async Task InstallOrUpdateAsync(IReadOnlyList<ExtensionPanel> panels)
         {
@@ -201,19 +209,40 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             var versions = await Task.WhenAll(panels.Select(panel => UpdateChecker.FetchLatestVersionAsync(panel._data.PackageId)));
 
-            var added = 0;
+            var known = new List<(ExtensionPanel Panel, string Version)>(panels.Count);
             for (var i = 0; i < panels.Count; i++)
             {
-                if (panels[i].TryAddToManifest(versions[i]))
-                    added++;
-                else
-                    panels[i].ResetButton();
+                if (versions[i] == null)
+                {
+                    panels[i].FailBusy("its latest version on OpenUPM is unknown");
+                    continue;
+                }
+                known.Add((panels[i], versions[i]!));
             }
+            if (known.Count == 0)
+                return;
 
-            if (added > 0)
+            string? manifestBefore = null;
+            try
             {
-                Debug.Log($"[Unity-MCP] {added} extension(s) added to manifest.json. Resolving packages...");
-                Client.Resolve();
+                manifestBefore = File.ReadAllText(ManifestPath);
+                foreach (var (panel, version) in known)
+                {
+                    if (!AddToManifest(ManifestPath, panel._data.PackageId, version))
+                        throw new InvalidOperationException("manifest.json could not be updated");
+                }
+
+                await PackageUtils.AddPackagesAsync(known.Select(item => $"{item.Panel._data.PackageId}@{item.Version}").ToArray());
+            }
+            catch (Exception ex)
+            {
+                if (manifestBefore != null)
+                {
+                    File.WriteAllText(ManifestPath, manifestBefore);
+                    Client.Resolve();
+                }
+                foreach (var (panel, _) in known)
+                    panel.FailBusy(ex.Message);
             }
         }
 
@@ -226,20 +255,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetState(PanelState.Busy);
         }
 
-        private bool TryAddToManifest(string? version)
+        private void FailBusy(string reason)
         {
-            try
-            {
-                if (version == null)
-                    throw new InvalidOperationException("its latest version on OpenUPM is unknown");
-
-                return AddToManifest(ManifestPath, _data.PackageId, version);
-            }
-            catch (Exception ex)
-            {
-                Debug.LogError($"[Unity-MCP] Failed to {(_busyWithUpdate ? "update" : "install")} extension '{_data.Name}': {ex.Message}");
-                return false;
-            }
+            Debug.LogError($"[Unity-MCP] Failed to {(_busyWithUpdate ? "update" : "install")} extension '{_data.Name}': {reason}");
+            ResetButton();
         }
 
         /// <summary>The Unity package floors of <paramref name="packageId"/> that the manifest does not satisfy yet.</summary>

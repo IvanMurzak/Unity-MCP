@@ -14,6 +14,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using UnityEngine.UIElements;
 
@@ -195,18 +196,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             installAll.clicked += () => _ = ExtensionPanel.InstallOrUpdateAsync(panels.Where(p => p.CanInstall).ToList());
-            updateAll.clicked += () => _ = ExtensionPanel.InstallOrUpdateAsync(panels.Where(p => p.CanUpdate).ToList());
+            updateAll.clicked += () => _ = ExtensionPanel.InstallOrUpdateAsync(panels.Where(p => p.CanBulkUpdate).ToList());
             RefreshBulkButtons();
 
             void RefreshBulkButtons()
             {
                 var installable = panels.Count(p => p.CanInstall);
-                var updatable = panels.Count(p => p.CanUpdate);
+                var updatable = panels.Count(p => p.CanBulkUpdate);
 
                 installAll.SetEnabled(installable > 0);
                 installAll.tooltip = installable > 0
                     ? $"Install {installable} extension(s) that are not installed yet."
-                    : "All extensions are installed.";
+                    : "Nothing to install right now.";
 
                 updateAll.style.display = updatable > 0 ? DisplayStyle.Flex : DisplayStyle.None;
                 updateAll.tooltip = $"Update {updatable} installed extension(s) to the latest version.";
@@ -230,7 +231,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             for (var i = 0; i < _extensions.Length; i++)
-                panels[i].RefreshStatus(installed.TryGetValue(_extensions[i].PackageId, out var package) ? package.version : null);
+            {
+                var isInstalled = installed.TryGetValue(_extensions[i].PackageId, out var package);
+                panels[i].RefreshStatus(isInstalled ? package.version : null, isInstalled && package.source == PackageSource.Registry);
+            }
         }
     }
 }

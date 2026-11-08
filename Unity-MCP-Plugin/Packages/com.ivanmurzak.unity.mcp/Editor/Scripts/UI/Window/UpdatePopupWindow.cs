@@ -54,6 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         // button. ResetInstallState() (called from OnEnable + OnDestroy) keeps the contract.
         private AddAndRemoveRequest? addRequest;
         private string[] _extensionSpecs = Array.Empty<string>();
+        private bool _installStarted;
         private IDisposable? _stopSubscription;
 
         /// <summary>
@@ -135,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void OnInstallUpdateClicked()
         {
-            if (addRequest != null || _stopSubscription != null)
+            if (_installStarted || addRequest != null || _stopSubscription != null)
                 return; // Already in progress
 
             var installButton = rootVisualElement.Q<Button>("btn-install-update");
@@ -185,6 +186,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             _stopSubscription?.Dispose();
             _stopSubscription = null;
+            _installStarted = true; // addRequest stays null while the extension versions are fetched below.
 
             var installButton = rootVisualElement.Q<Button>("btn-install-update");
             if (installButton != null)
@@ -288,6 +290,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _stopSubscription?.Dispose();
             _stopSubscription = null;
             addRequest = null;
+            _installStarted = false;
             _extensionSpecs = Array.Empty<string>();
         }
     }
