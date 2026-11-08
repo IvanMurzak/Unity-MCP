@@ -101,6 +101,16 @@ describe('updateProject', () => {
     expect(result.warnings.join('\n')).toContain('Tilemap');
   });
 
+  it('compares prereleases by their numbers', async () => {
+    const root = project({ [PLUGIN]: '0.9.0-beta', [TILEMAP]: '1.2.0-rc1', [TIMELINE]: '1.10.0' });
+    stubOpenUpm({ [PLUGIN]: '0.10.0', [TILEMAP]: '1.2.0', [TIMELINE]: '1.9.0-rc1' });
+
+    const result = await updateProject({ unityProjectPath: root, dryRun: true });
+
+    if (result.kind !== 'success') throw result.error;
+    expect(result.items.map((item) => item.status)).toEqual(['outdated', 'outdated', 'current']);
+  });
+
   it('fails without throwing outside a Unity project', async () => {
     const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-update-'));
     tmpDirs.push(empty);

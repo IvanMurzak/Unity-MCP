@@ -115,6 +115,17 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
     return isNewerVersion(currentVersion, newVersion);
   }
 
+  // A prerelease on either side: compare the numbers, and a prerelease is older than its own release.
+  const current = /^(\d+)\.(\d+)\.(\d+)(-.+)?$/.exec(currentVersion);
+  const next = /^(\d+)\.(\d+)\.(\d+)(-.+)?$/.exec(newVersion);
+  if (current && next) {
+    for (let part = 1; part <= 3; part++) {
+      const difference = Number(next[part]) - Number(current[part]);
+      if (difference !== 0) return difference > 0;
+    }
+    return current[4] !== undefined && next[4] === undefined;
+  }
+
   return newVersion.toLowerCase() > currentVersion.toLowerCase();
 }
 

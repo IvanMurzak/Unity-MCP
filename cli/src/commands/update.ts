@@ -75,8 +75,10 @@ async function updateProjectStep(projectPath: string, options: UpdateOptions): P
   for (const step of result.nextSteps) ui.info(step);
 
   if (result.items.length === 0) ui.info('The MCP plugin is not installed here: nothing to update in this project.');
+  // A version that could not be looked up is not "up to date": never report success over it.
+  if (result.items.some((item) => item.status === 'unknown')) return 'failed';
   if (options.check) return outdated.length > 0 ? 'outdated' : 'done';
-  return result.updated.length < outdated.length ? 'failed' : 'done';
+  return outdated.every((item) => result.updated.includes(item)) ? 'done' : 'failed';
 }
 
 async function updateSelfStep(currentVersion: string, check: boolean | undefined): Promise<Outcome> {
