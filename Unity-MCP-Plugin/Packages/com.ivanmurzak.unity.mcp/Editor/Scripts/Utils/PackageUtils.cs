@@ -11,8 +11,12 @@
 #nullable enable
 using System.Collections.Generic;
 using System.Linq;
+using System.Threading.Tasks;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using UnityEditor;
+using UnityEditor.PackageManager;
+
+using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -26,6 +30,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private const string NotificationDataSeparator = "<MCP_PKG_SEP>";
 
         private static bool _processPendingScheduled = false;
+
+        /// <summary>
+        /// The packages installed in this project, by name. Offline: only their local state is needed.
+        /// Throws when Package Manager cannot list them.
+        /// </summary>
+        internal static Task<Dictionary<string, PackageInfo>> ListInstalledAsync()
+        {
+            var completion = new TaskCompletionSource<Dictionary<string, PackageInfo>>();
+            var request = Client.List(offlineMode: true);
+            EditorApplication.update += OnUpdate;
+            return completion.Task;
+
+            void OnUpdate()
+            {
+                if (!request.IsCompleted)
+                    return;
+
+                EditorApplication.update -= OnUpdate;
+                if (request.Status == StatusCode.Success)
+                    completion.SetResult(request.Result.ToDictionary(package => package.name));
+                else
+                    completion.SetException(new System.InvalidOperationException(request.Error?.message ?? "Failed to list packages."));
+            }
+        }
+
+        /// <summary>
+        /// Adds packages ("id@version") in one atomic request and reports how it ended, which
+        /// <see cref="Client.Resolve"/> cannot. Throws with Package Manager's error on failure.
+        /// </summary>
+        internal static Task AddPackagesAsync(string[] packages)
+        {
+            var completion = new TaskCompletionSource<bool>();
+            var request = Client.AddAndRemove(packagesToAdd: packages);
+            EditorApplication.update += OnUpdate;
+            return completion.Task;
+
+            void OnUpdate()
+            {
+                if (!request.IsCompleted)
+                    return;
+
+                EditorApplication.update -= OnUpdate;
+                if (request.Status == StatusCode.Success)
+                    completion.SetResult(true);
+                else
+                    completion.SetException(new System.InvalidOperationException(request.Error?.message ?? "Failed to add packages."));
+            }
+        }
 
         public static void Init()
         {

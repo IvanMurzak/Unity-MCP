@@ -9,10 +9,13 @@
 */
 
 #nullable enable
+using System;
 using System.Collections.Generic;
 using System.Linq;
-using UnityEditor;
+using System.Threading.Tasks;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using UnityEditor.PackageManager;
+using UnityEngine;
 using UnityEngine.UIElements;
 
 using PackageInfo = UnityEditor.PackageManager.PackageInfo;
@@ -172,11 +175,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             ),
         };
 
+        internal static IReadOnlyList<ExtensionPanel.ExtensionData> ExtensionCatalog => _extensions;
+
         private void SetupExtensionsSection(VisualElement root)
         {
             var container = root.Q<VisualElement>("ExtensionsSection");
             if (container == null)
                 return;
+
+            var installAll = root.Q<Button>("btnExtensionsInstallAll");
+            var updateAll = root.Q<Button>("btnExtensionsUpdateAll");
 
             var panels = new List<ExtensionPanel>(_extensions.Length);
             foreach (var extension in _extensions)
@@ -184,33 +192,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 var panel = new ExtensionPanel(extension);
                 container.Add(panel.Root);
                 panels.Add(panel);
+                panel.StateChanged += RefreshBulkButtons;
             }
 
-            var listRequest = Client.List();
-            EditorApplication.update += OnListComplete;
+            installAll.clicked += () => _ = ExtensionPanel.InstallOrUpdateAsync(panels.Where(p => p.CanInstall).ToList());
+            updateAll.clicked += () => _ = ExtensionPanel.InstallOrUpdateAsync(panels.Where(p => p.CanBulkUpdate).ToList());
+            RefreshBulkButtons();
 
-            void OnListComplete()
+            void RefreshBulkButtons()
             {
-                if (!listRequest.IsCompleted)
-                    return;
+                var installable = panels.Count(p => p.CanInstall);
+                var updatable = panels.Count(p => p.CanBulkUpdate);
 
-                EditorApplication.update -= OnListComplete;
+                installAll.SetEnabled(installable > 0);
+                installAll.tooltip = installable > 0
+                    ? $"Install {installable} extension(s) that are not installed yet."
+                    : "Nothing to install right now.";
 
-                Dictionary<string, PackageInfo> installedByName;
-                if (listRequest.Status == StatusCode.Success)
-                    installedByName = listRequest.Result.ToDictionary(p => p.name, p => p);
-                else
-                    installedByName = new Dictionary<string, PackageInfo>();
+                updateAll.style.display = updatable > 0 ? DisplayStyle.Flex : DisplayStyle.None;
+                updateAll.tooltip = $"Update {updatable} installed extension(s) to the latest version.";
+            }
 
-                for (var i = 0; i < _extensions.Length; i++)
-                {
-                    var packageId = _extensions[i].PackageId;
-                    var installedVersion = installedByName.TryGetValue(packageId, out var pkg)
-                        ? pkg.version
-                        : null;
+            _ = RefreshPanelsAsync(panels);
+        }
 
-                    panels[i].RefreshStatus(installedVersion);
-                }
+        private static async Task RefreshPanelsAsync(IReadOnlyList<ExtensionPanel> panels)
+        {
+            Dictionary<string, PackageInfo> installed;
+            try
+            {
+                installed = await PackageUtils.ListInstalledAsync();
+            }
+            catch (Exception ex)
+            {
+                // Stay on "Checking...": treating this as "nothing installed" would offer Install All over real installs.
+                Debug.LogWarning($"[Unity-MCP] Failed to read the installed extensions: {ex.Message}");
+                return;
+            }
+
+            for (var i = 0; i < _extensions.Length; i++)
+            {
+                var isInstalled = installed.TryGetValue(_extensions[i].PackageId, out var package);
+                panels[i].RefreshStatus(isInstalled ? package.version : null, isInstalled && package.source == PackageSource.Registry);
             }
         }
     }

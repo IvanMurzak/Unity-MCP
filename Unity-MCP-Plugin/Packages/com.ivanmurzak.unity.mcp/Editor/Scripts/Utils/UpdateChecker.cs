@@ -10,13 +10,18 @@
 
 #nullable enable
 using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Net.Http;
 using System.Text.Json;
+using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
 using Microsoft.Extensions.Logging;
 using UnityEditor;
+using UnityEditor.PackageManager;
 using UnityEngine;
 using ILogger = Microsoft.Extensions.Logging.ILogger;
 
@@ -46,7 +51,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private const string PackageId = "com.ivanmurzak.unity.mcp";
         // package.openupm.com is the npm-style metadata registry (machine-readable JSON);
         // openupm.com is the human-readable package page the popup links users to.
-        private const string OpenUpmPackageMetadataUrl = "https://package.openupm.com/" + PackageId;
+        private const string OpenUpmRegistryUrl = "https://package.openupm.com/";
         private const string OpenUpmPackageUrl = "https://openupm.com/packages/" + PackageId + "/";
 
         // Anchored at both ends: accepts only complete "N.N" or "N.N.N" strings. Without the
@@ -252,7 +257,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             try
             {
-                var fetched = await FetchLatestVersionAsync();
+                var fetched = await FetchLatestVersionAsync(PackageId);
                 if (string.IsNullOrEmpty(fetched))
                 {
                     if (forceCheck)
@@ -305,7 +310,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Fetches the latest version from the OpenUPM registry.
+        /// Fetches the latest version of a package from the OpenUPM registry.
         /// </summary>
         /// <remarks>
         /// Uses the npm-style registry endpoint <c>https://package.openupm.com/{packageId}</c>,
@@ -313,11 +318,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// currently installable via Unity Package Manager. On any network or parsing failure
         /// the method returns <c>null</c> so callers fall back gracefully without prompting.
         /// </remarks>
-        private static async Task<string?> FetchLatestVersionAsync()
+        internal static async Task<string?> FetchLatestVersionAsync(string packageId)
         {
             try
             {
-                var json = await HttpClient.GetStringAsync(OpenUpmPackageMetadataUrl);
+                var json = await HttpClient.GetStringAsync(OpenUpmRegistryUrl + packageId);
                 return ParseLatestVersionFromJson(json);
             }
             catch (HttpRequestException ex)
@@ -340,6 +345,54 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 logger?.LogWarning(ex, "Unexpected error during OpenUPM update check");
                 return null;
             }
+        }
+
+        /// <summary>
+        /// Package specs ("id@version") that bring the installed extensions to their latest versions, for the plugin
+        /// update to apply in the same request. Only registry installs qualify, so a <c>file:</c> or git checkout an
+        /// extension is being developed from is never silently replaced. Best effort: it must never block the plugin
+        /// update itself, so an extension whose version is unknown is skipped.
+        /// </summary>
+        internal static async Task<string[]> GetInstalledExtensionUpdateSpecsAsync(IEnumerable<ExtensionPanel.ExtensionData> catalog)
+        {
+            try
+            {
+                var installed = await PackageUtils.ListInstalledAsync();
+                var packages = catalog
+                    .Where(data => installed.TryGetValue(data.PackageId, out var package) && package.source == PackageSource.Registry)
+                    .Select(data => installed[data.PackageId])
+                    .ToArray();
+                var latest = await Task.WhenAll(packages.Select(package => FetchLatestVersionAsync(package.name)));
+
+                var manifest = JsonNode.Parse(File.ReadAllText(ExtensionPanel.ManifestPath))?.AsObject();
+                return BuildExtensionUpdateSpecs(
+                    packages.Select((package, i) => (package.name, package.version, latest[i])),
+                    manifest?["dependencies"]?.AsObject(),
+                    Application.unityVersion);
+            }
+            catch (Exception ex)
+            {
+                Debug.LogWarning($"[Unity-MCP] Updating without the installed extensions: {ex.Message}");
+                return Array.Empty<string>();
+            }
+        }
+
+        /// <summary>
+        /// Extensions behind their latest version plus the Unity package floors those need.
+        /// </summary>
+        internal static string[] BuildExtensionUpdateSpecs(
+            IEnumerable<(string PackageId, string InstalledVersion, string? LatestVersion)> extensions,
+            JsonObject? dependencies,
+            string unityVersion)
+        {
+            return extensions
+                .Where(extension => extension.LatestVersion != null && IsNewerVersion(extension.LatestVersion, extension.InstalledVersion))
+                .SelectMany(extension => ExtensionPanel
+                    .MissingCompatibilityDependencies(extension.PackageId, dependencies, unityVersion)
+                    .Select(required => $"{required.Key}@{required.Value}")
+                    .Prepend($"{extension.PackageId}@{extension.LatestVersion}"))
+                .Distinct()
+                .ToArray();
         }
 
         /// <summary>

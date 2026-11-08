@@ -11,6 +11,7 @@
 #nullable enable
 
 using System;
+using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.DependencyResolver;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using R3;
@@ -51,7 +52,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         // these private references over the reload boundary even without [SerializeField], so
         // OnInstallUpdateClicked's "already in progress" guard would permanently lock the
         // button. ResetInstallState() (called from OnEnable + OnDestroy) keeps the contract.
-        private AddRequest? addRequest;
+        private AddAndRemoveRequest? addRequest;
+        private string[] _extensionSpecs = Array.Empty<string>();
+        private bool _installStarted;
         private IDisposable? _stopSubscription;
 
         /// <summary>
@@ -133,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private void OnInstallUpdateClicked()
         {
-            if (addRequest != null || _stopSubscription != null)
+            if (_installStarted || addRequest != null || _stopSubscription != null)
                 return; // Already in progress
 
             var installButton = rootVisualElement.Q<Button>("btn-install-update");
@@ -179,21 +182,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
         }
 
-        private void StartPackageInstall()
+        private async void StartPackageInstall()
         {
             _stopSubscription?.Dispose();
             _stopSubscription = null;
+            _installStarted = true; // addRequest stays null while the extension versions are fetched below.
 
             var installButton = rootVisualElement.Q<Button>("btn-install-update");
             if (installButton != null)
                 installButton.text = "Installing...";
 
+            // The installed extensions move in the same request as the plugin: a new extension version may need
+            // the new plugin, so the two must resolve together.
+            _extensionSpecs = await UpdateChecker.GetInstalledExtensionUpdateSpecsAsync(MainWindowEditor.ExtensionCatalog);
+            if (this == null)
+                return; // The window was closed while the versions were being fetched.
+
+            SubmitPackageInstall();
+        }
+
+        private void SubmitPackageInstall()
+        {
             // Force a clean post-install recompile so an unrelated user-asmdef
             // error can't leave the OLD plugin AppDomain loaded with the new
             // package files on disk.
             RecompileGate.Reset();
 
-            addRequest = Client.Add($"{PackageId}@{latestVersion}");
+            addRequest = Client.AddAndRemove(packagesToAdd: _extensionSpecs.Prepend($"{PackageId}@{latestVersion}").ToArray());
             EditorApplication.update += OnPackageInstallProgress;
         }
 
@@ -210,12 +225,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             EditorApplication.update -= OnPackageInstallProgress;
 
+            if (addRequest.Status >= StatusCode.Failure && _extensionSpecs.Length > 0)
+            {
+                // The request is atomic, so one bad extension would otherwise block the plugin update.
+                UnityMcpPluginEditor.Instance.LogError("Failed to update the extensions with the package, updating the package alone: {error}", typeof(UpdatePopupWindow), addRequest.Error?.message ?? "Unknown error");
+                _extensionSpecs = Array.Empty<string>();
+                SubmitPackageInstall();
+                return;
+            }
+
             if (addRequest.Status == StatusCode.Success)
             {
                 UnityMcpPluginEditor.Instance.LogInfo("Package updated to version {version}", typeof(UpdatePopupWindow), latestVersion);
+                var extensions = _extensionSpecs.Length > 0 ? "\n\nInstalled extensions were updated too." : string.Empty;
                 EditorUtility.DisplayDialog(
                     "Update Complete",
-                    $"AI Game Developer has been updated to version {latestVersion}.\n\nUnity will recompile scripts automatically.",
+                    $"AI Game Developer has been updated to version {latestVersion}.{extensions}\n\nUnity will recompile scripts automatically.",
                     "OK");
             }
             else if (addRequest.Status >= StatusCode.Failure)
@@ -265,6 +290,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _stopSubscription?.Dispose();
             _stopSubscription = null;
             addRequest = null;
+            _installStarted = false;
+            _extensionSpecs = Array.Empty<string>();
         }
     }
 }

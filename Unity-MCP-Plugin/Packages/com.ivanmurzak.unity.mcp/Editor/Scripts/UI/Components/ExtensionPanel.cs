@@ -13,7 +13,6 @@ using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using System.Net.Http;
 using System.Text;
 using System.Text.Json;
 using System.Text.Json.Nodes;
@@ -38,6 +37,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private const string RegistryName = "package.openupm.com";
         private const string RegistryUrl = "https://package.openupm.com";
+        internal static string ManifestPath => Path.Combine(Application.dataPath, "../Packages/manifest.json");
         private static readonly string[] RequiredScopes =
         {
             "com.ivanmurzak",
@@ -48,6 +48,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         private readonly Label _description;
         private readonly Button _actionBtn;
         private readonly ExtensionData _data;
+        private PanelState _state;
+        private bool _busyWithUpdate;
+        private bool _isFromRegistry;
+
+        /// <summary>Raised whenever the extension moves to a different install/update state.</summary>
+        internal event Action? StateChanged;
+
+        /// <summary>The extension is not installed and can be installed right now.</summary>
+        internal bool CanInstall => _state == PanelState.Install;
+
+        /// <summary>A newer version is available and the extension can be updated right now.</summary>
+        internal bool CanUpdate => _state == PanelState.Update;
+
+        /// <summary>
+        /// Update All leaves a <c>file:</c> or git install alone: only its own Update button, a deliberate
+        /// per-extension choice, replaces such a checkout with a registry version.
+        /// </summary>
+        internal bool CanBulkUpdate => CanUpdate && _isFromRegistry;
 
         /// <summary>
         /// The root visual element of the extension panel. Add this to a parent container.
@@ -92,8 +110,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         /// <param name="installedVersion">
         /// The currently installed version of this package, or null if not installed.
         /// </param>
-        public void RefreshStatus(string? installedVersion)
+        /// <param name="isFromRegistry">Whether that version came from a package registry, not <c>file:</c> or git.</param>
+        public void RefreshStatus(string? installedVersion, bool isFromRegistry = false)
         {
+            _isFromRegistry = isFromRegistry;
             _actionBtn.UnregisterCallback<ClickEvent>(OnActionClicked);
 
             if (installedVersion == null)
@@ -106,6 +126,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _ = CheckForUpdateAsync(installedVersion);
         }
 
+        private void SetState(PanelState state)
+        {
+            _state = state;
+            StateChanged?.Invoke();
+        }
+
         private void ShowAsChecking()
         {
             _actionBtn.text = "Checking...";
@@ -114,6 +140,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _actionBtn.AddToClassList("btn-secondary");
             _actionBtn.style.display = DisplayStyle.Flex;
             _actionBtn.SetEnabled(false);
+            SetState(PanelState.Checking);
         }
 
         private void ShowAsInstall()
@@ -126,6 +153,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _actionBtn.SetEnabled(true);
 
             _actionBtn.RegisterCallback<ClickEvent>(OnActionClicked);
+            SetState(PanelState.Install);
         }
 
         private void ShowAsUpdate(string installedVersion, string latestVersion)
@@ -138,28 +166,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _actionBtn.SetEnabled(true);
 
             _actionBtn.RegisterCallback<ClickEvent>(OnActionClicked);
+            SetState(PanelState.Update);
         }
 
         private async void OnActionClicked(ClickEvent evt)
         {
-            _actionBtn.UnregisterCallback<ClickEvent>(OnActionClicked);
-            await InstallOrUpdateAsync();
+            await InstallOrUpdateAsync(new[] { this });
         }
 
         private async Task CheckForUpdateAsync(string installedVersion)
         {
-            try
+            var latestVersion = await UpdateChecker.FetchLatestVersionAsync(_data.PackageId);
+            if (latestVersion != null && UpdateChecker.IsNewerVersion(latestVersion, installedVersion))
             {
-                var latestVersion = await FetchLatestOpenUpmVersionAsync(_data.PackageId);
-                if (latestVersion != null && UpdateChecker.IsNewerVersion(latestVersion, installedVersion))
-                {
-                    EditorApplication.delayCall += () => ShowAsUpdate(installedVersion, latestVersion);
-                    return;
-                }
-            }
-            catch
-            {
-                // Network failure is non-critical
+                EditorApplication.delayCall += () => ShowAsUpdate(installedVersion, latestVersion);
+                return;
             }
 
             EditorApplication.delayCall += () => ShowAsInstalled();
@@ -173,46 +194,91 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             _actionBtn.AddToClassList("btn-secondary");
             _actionBtn.style.display = DisplayStyle.Flex;
             _actionBtn.SetEnabled(false);
+            SetState(PanelState.Installed);
         }
 
-        private async Task InstallOrUpdateAsync()
+        /// <summary>
+        /// Installs or updates the given extensions to their latest OpenUPM versions in one package request, so a
+        /// bulk action costs one resolve and one recompile. If a package cannot resolve, the manifest goes back to
+        /// how it was and every button comes back, so each extension can still be tried on its own.
+        /// </summary>
+        internal static async Task InstallOrUpdateAsync(IReadOnlyList<ExtensionPanel> panels)
         {
-            var isUpdate = _actionBtn.text == "Update";
-            _actionBtn.SetEnabled(false);
-            _actionBtn.text = isUpdate ? "Updating..." : "Installing...";
+            foreach (var panel in panels)
+                panel.ShowAsBusy();
 
+            var versions = await Task.WhenAll(panels.Select(panel => UpdateChecker.FetchLatestVersionAsync(panel._data.PackageId)));
+
+            var known = new List<(ExtensionPanel Panel, string Version)>(panels.Count);
+            for (var i = 0; i < panels.Count; i++)
+            {
+                if (versions[i] == null)
+                {
+                    panels[i].FailBusy("its latest version on OpenUPM is unknown");
+                    continue;
+                }
+                known.Add((panels[i], versions[i]!));
+            }
+            if (known.Count == 0)
+                return;
+
+            string? manifestBefore = null;
             try
             {
-                var version = await FetchLatestOpenUpmVersionAsync(_data.PackageId);
-                if (version == null)
+                manifestBefore = File.ReadAllText(ManifestPath);
+                foreach (var (panel, version) in known)
                 {
-                    Debug.LogError($"[Unity-MCP] Failed to fetch latest version for '{_data.Name}' from OpenUPM.");
-                    ResetButton(isUpdate);
-                    return;
+                    if (!AddToManifest(ManifestPath, panel._data.PackageId, version))
+                        throw new InvalidOperationException("manifest.json could not be updated");
                 }
 
-                var manifestPath = Path.Combine(Application.dataPath, "../Packages/manifest.json");
-                if (!AddToManifest(manifestPath, _data.PackageId, version))
-                {
-                    ResetButton(isUpdate);
-                    return;
-                }
-
-                Debug.Log($"[Unity-MCP] Extension '{_data.Name}' ({_data.PackageId}@{version}) added to manifest.json. Resolving packages...");
-                Client.Resolve();
+                await PackageUtils.AddPackagesAsync(known.Select(item => $"{item.Panel._data.PackageId}@{item.Version}").ToArray());
             }
             catch (Exception ex)
             {
-                Debug.LogError($"[Unity-MCP] Failed to {(isUpdate ? "update" : "install")} extension '{_data.Name}': {ex.Message}");
-                ResetButton(isUpdate);
+                if (manifestBefore != null)
+                {
+                    File.WriteAllText(ManifestPath, manifestBefore);
+                    Client.Resolve();
+                }
+                foreach (var (panel, _) in known)
+                    panel.FailBusy(ex.Message);
             }
         }
 
-        private void ResetButton(bool isUpdate)
+        private void ShowAsBusy()
+        {
+            _busyWithUpdate = _state == PanelState.Update;
+            _actionBtn.UnregisterCallback<ClickEvent>(OnActionClicked);
+            _actionBtn.SetEnabled(false);
+            _actionBtn.text = _busyWithUpdate ? "Updating..." : "Installing...";
+            SetState(PanelState.Busy);
+        }
+
+        private void FailBusy(string reason)
+        {
+            Debug.LogError($"[Unity-MCP] Failed to {(_busyWithUpdate ? "update" : "install")} extension '{_data.Name}': {reason}");
+            ResetButton();
+        }
+
+        /// <summary>The Unity package floors of <paramref name="packageId"/> that the manifest does not satisfy yet.</summary>
+        internal static IEnumerable<KeyValuePair<string, string>> MissingCompatibilityDependencies(string packageId, JsonObject? dependencies, string unityVersion)
+        {
+            foreach (var required in UnityCompatibilityDependencies(packageId, unityVersion))
+            {
+                var current = dependencies?[required.Key]?.GetValue<string>();
+                if (string.IsNullOrEmpty(current) || (System.Version.TryParse(current, out var prior)
+                    && System.Version.Parse(required.Value) > prior))
+                    yield return required;
+            }
+        }
+
+        private void ResetButton()
         {
             _actionBtn.SetEnabled(true);
-            _actionBtn.text = isUpdate ? "Update" : "Install";
+            _actionBtn.text = _busyWithUpdate ? "Update" : "Install";
             _actionBtn.RegisterCallback<ClickEvent>(OnActionClicked);
+            SetState(_busyWithUpdate ? PanelState.Update : PanelState.Install);
         }
 
         /// <summary>
@@ -243,13 +309,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 manifest["dependencies"] = dependencies;
             }
             dependencies[packageId] = version;
-            foreach (var required in UnityCompatibilityDependencies(packageId, unityVersion ?? Application.unityVersion))
-            {
-                var current = dependencies[required.Key]?.GetValue<string>();
-                if (string.IsNullOrEmpty(current) || (System.Version.TryParse(current, out var prior)
-                    && System.Version.Parse(required.Value) > prior))
-                    dependencies[required.Key] = required.Value;
-            }
+            foreach (var required in MissingCompatibilityDependencies(packageId, dependencies, unityVersion ?? Application.unityVersion))
+                dependencies[required.Key] = required.Value;
 
             var options = new JsonSerializerOptions
             {
@@ -332,27 +393,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
         }
 
-        /// <summary>
-        /// Fetches the latest version of a package from the OpenUPM registry.
-        /// </summary>
-        private static async Task<string?> FetchLatestOpenUpmVersionAsync(string packageId)
-        {
-            using var client = new HttpClient();
-            client.DefaultRequestHeaders.Add("User-Agent", "Unity-MCP-ExtensionPanel");
-            client.Timeout = TimeSpan.FromSeconds(10);
-
-            var json = await client.GetStringAsync($"{RegistryUrl}/{packageId}");
-            using var doc = JsonDocument.Parse(json);
-
-            if (!doc.RootElement.TryGetProperty("dist-tags", out var distTags))
-                return null;
-
-            if (!distTags.TryGetProperty("latest", out var latest))
-                return null;
-
-            return latest.GetString();
-        }
-
         private static string BuildTooltip(ExtensionData data)
         {
             var sb = new StringBuilder();
@@ -379,6 +419,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             sb.Append($"Package: {data.PackageId}");
 
             return sb.ToString();
+        }
+
+        private enum PanelState
+        {
+            Checking,
+            Install,
+            Update,
+            Installed,
+            Busy
         }
 
         /// <summary>
