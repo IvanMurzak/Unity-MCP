@@ -11,6 +11,7 @@
 #nullable enable
 
 using System;
+using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.DependencyResolver;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using R3;
@@ -191,7 +192,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // The installed extensions move in the same request as the plugin: a new extension version may need
             // the new plugin, so the two must resolve together.
-            _extensionSpecs = await ExtensionPanel.GetInstalledExtensionUpdateSpecsAsync(MainWindowEditor.ExtensionCatalog);
+            _extensionSpecs = await UpdateChecker.GetInstalledExtensionUpdateSpecsAsync(MainWindowEditor.ExtensionCatalog);
             if (this == null)
                 return; // The window was closed while the versions were being fetched.
 
@@ -205,11 +206,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             // package files on disk.
             RecompileGate.Reset();
 
-            var packages = new string[_extensionSpecs.Length + 1];
-            packages[0] = $"{PackageId}@{latestVersion}";
-            _extensionSpecs.CopyTo(packages, 1);
-
-            addRequest = Client.AddAndRemove(packagesToAdd: packages);
+            addRequest = Client.AddAndRemove(packagesToAdd: _extensionSpecs.Prepend($"{PackageId}@{latestVersion}").ToArray());
             EditorApplication.update += OnPackageInstallProgress;
         }
 

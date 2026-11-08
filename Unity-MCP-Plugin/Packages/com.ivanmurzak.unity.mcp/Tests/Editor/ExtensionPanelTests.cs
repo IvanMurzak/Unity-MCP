@@ -12,6 +12,7 @@
 using System.IO;
 using System.Text.Json.Nodes;
 using com.IvanMurzak.Unity.MCP.Editor.UI;
+using com.IvanMurzak.Unity.MCP.Editor.Utils;
 using NUnit.Framework;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
@@ -23,23 +24,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         private const string Animation = "com.ivanmurzak.unity.mcp.animation";
         private const string InputSystem = "com.ivanmurzak.unity.mcp.inputsystem";
 
-        private static string[] Specs(JsonObject? dependencies, string unityVersion, params ExtensionPanel.InstalledExtension[] extensions)
-            => ExtensionPanel.BuildExtensionUpdateSpecs(extensions, dependencies, unityVersion);
+        private static string[] Specs(JsonObject? dependencies, string unityVersion, string packageId, string installed, string? latest)
+            => UpdateChecker.BuildExtensionUpdateSpecs(new[] { (packageId, installed, latest) }, dependencies, unityVersion);
 
         [Test]
         public void BuildExtensionUpdateSpecs_RegistryExtensionBehindLatest_IsUpdated()
         {
-            var specs = Specs(null, Unity60003, new ExtensionPanel.InstalledExtension(Animation, "2.0.0", "2.1.1", true));
+            var specs = Specs(null, Unity60003, Animation, "2.0.0", "2.1.1");
 
             Assert.AreEqual(new[] { $"{Animation}@2.1.1" }, specs);
-        }
-
-        [Test]
-        public void BuildExtensionUpdateSpecs_LocalOrGitExtension_IsLeftAlone()
-        {
-            var specs = Specs(null, Unity60003, new ExtensionPanel.InstalledExtension(Animation, "2.0.0", "2.1.1", false));
-
-            Assert.IsEmpty(specs);
         }
 
         [TestCase("2.1.1", "2.1.1")]
@@ -47,7 +40,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [TestCase("2.1.1", null)]
         public void BuildExtensionUpdateSpecs_NothingNewerKnown_IsSkipped(string installed, string? latest)
         {
-            var specs = Specs(null, Unity60003, new ExtensionPanel.InstalledExtension(Animation, installed, latest, true));
+            var specs = Specs(null, Unity60003, Animation, installed, latest);
 
             Assert.IsEmpty(specs);
         }
@@ -57,7 +50,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var dependencies = new JsonObject { ["com.unity.inputsystem"] = "1.17.0" };
 
-            var specs = Specs(dependencies, Unity60006, new ExtensionPanel.InstalledExtension(InputSystem, "2.0.0", "2.1.1", true));
+            var specs = Specs(dependencies, Unity60006, InputSystem, "2.0.0", "2.1.1");
 
             Assert.AreEqual(new[] { $"{InputSystem}@2.1.1", "com.unity.inputsystem@1.19.0" }, specs);
         }
@@ -67,7 +60,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var dependencies = new JsonObject { ["com.unity.inputsystem"] = "1.20.0" };
 
-            var specs = Specs(dependencies, Unity60006, new ExtensionPanel.InstalledExtension(InputSystem, "2.0.0", "2.1.1", true));
+            var specs = Specs(dependencies, Unity60006, InputSystem, "2.0.0", "2.1.1");
 
             Assert.AreEqual(new[] { $"{InputSystem}@2.1.1" }, specs);
         }
