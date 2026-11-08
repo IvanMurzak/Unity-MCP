@@ -18,6 +18,8 @@
 
 export { installPlugin } from './lib/install-plugin.js';
 export { installExtension } from './lib/install-extension.js';
+export { updateProject, findUnityProjectRoot } from './lib/update-project.js';
+export type { ProjectUpdateItem, ProjectUpdateStatus, UpdateProjectOptions, UpdateProjectResult } from './lib/update-project.js';
 export { removePlugin } from './lib/remove-plugin.js';
 export { configure } from './lib/configure.js';
 export { setupMcp, listAgentIds } from './lib/setup-mcp.js';

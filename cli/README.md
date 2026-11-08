@@ -93,6 +93,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
 - [Commands](#commands)
   - [`configure`](#configure)
   - [`create-project`](#create-project)
+  - [`update`](#update)
   - [`install-extension`](#install-extension)
   - [`install-plugin`](#install-plugin)
   - [`install-unity`](#install-unity)
@@ -182,6 +183,21 @@ unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `update`
+
+Update everything: the MCP plugin and installed extensions of a Unity project to their latest versions, then the CLI itself.
+
+```bash
+unity-mcp-cli update              # the project around the current folder, then the CLI
+unity-mcp-cli update ./MyGame      # a project by path
+unity-mcp-cli update --check       # only report; exit code 2 when something is outdated
+unity-mcp-cli update --no-self     # leave the CLI as it is
+unity-mcp-cli update --no-project  # update only the CLI
+unity-mcp-cli update --no-extensions
+```
+
+Outside a project it updates only the CLI. Installs from `file:` or git are left alone and nothing is downgraded.
 
 ## `install-extension`
 
