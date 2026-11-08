@@ -92,6 +92,11 @@ export async function resolveLatestPackageVersion(
   }
 }
 
+/** A `file:`, git or URL dependency: a local or pinned source, not a registry version. */
+export function isNonSemverSpec(spec: string): boolean {
+  return ['file:', 'git+', 'git:', 'http:', 'https:', 'ssh:'].some((prefix) => spec.startsWith(prefix));
+}
+
 /**
  * Determines if the version should be updated.
  * Only update if the new version is higher than the current version.
@@ -102,8 +107,7 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
   if (!newVersion) return false;
 
   // Skip automatic update for non-semver specs (file:, git+, http, etc.)
-  const nonSemverPrefixes = ['file:', 'git+', 'http:', 'https:'];
-  if (nonSemverPrefixes.some((prefix) => currentVersion.startsWith(prefix))) {
+  if (isNonSemverSpec(currentVersion)) {
     return false;
   }
 

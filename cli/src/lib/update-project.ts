@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { EXTENSIONS_CATALOG, type ExtensionDescriptor } from '../utils/extensions-catalog.js';
-import { resolveLatestPackageVersion, shouldUpdateVersion } from '../utils/manifest.js';
+import { EXTENSIONS_CATALOG } from '../utils/extensions-catalog.js';
+import { isNonSemverSpec, resolveLatestPackageVersion, shouldUpdateVersion } from '../utils/manifest.js';
 import { installExtension } from './install-extension.js';
 import { installPlugin } from './install-plugin.js';
 import { silentLogger } from './logger.js';
@@ -32,8 +32,6 @@ export interface UpdateProjectOptions {
   noExtensions?: boolean;
   /** Only report what would change; write nothing. */
   dryRun?: boolean;
-  /** Test seam; defaults to the shipped catalogue. */
-  catalog?: readonly ExtensionDescriptor[];
   onProgress?: ProgressCallback;
 }
 
@@ -57,10 +55,6 @@ export interface UpdateProjectFailure {
 
 export type UpdateProjectResult = UpdateProjectSuccess | UpdateProjectFailure;
 
-function isLocalSpec(spec: string): boolean {
-  return ['file:', 'git+', 'git:', 'http:', 'https:', 'ssh:'].some((prefix) => spec.startsWith(prefix));
-}
-
 /**
  * Bring a Unity project's MCP plugin and its installed extensions to their latest OpenUPM versions.
  * The one function behind `unity-mcp-cli update`. Only what the manifest already lists is touched,
@@ -80,7 +74,7 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
 
     const targets: Array<Pick<ProjectUpdateItem, 'kind' | 'name' | 'packageId'>> = [
       { kind: 'plugin' as const, name: 'MCP plugin', packageId: PLUGIN_PACKAGE_ID },
-      ...(opts.noExtensions ? [] : (opts.catalog ?? EXTENSIONS_CATALOG).map((extension) => ({
+      ...(opts.noExtensions ? [] : EXTENSIONS_CATALOG.map((extension) => ({
         kind: 'extension' as const,
         name: extension.name,
         packageId: extension.packageId,
@@ -89,7 +83,7 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
 
     const items = await Promise.all(targets.map(async (target): Promise<ProjectUpdateItem> => {
       const from = dependencies[target.packageId]!;
-      if (isLocalSpec(from)) return { ...target, from, to: null, status: 'local' };
+      if (isNonSemverSpec(from)) return { ...target, from, to: null, status: 'local' };
       try {
         const to = await resolveLatestPackageVersion(target.packageId, silentLogger);
         return { ...target, from, to, status: shouldUpdateVersion(from, to) ? 'outdated' : 'current' };

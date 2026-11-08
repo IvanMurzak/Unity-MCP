@@ -135,6 +135,18 @@ async function updateSelfStep(currentVersion: string, check: boolean | undefined
   return 'done';
 }
 
+/** The project to update, or null when there is none around the current folder. A named path that is not one exits 1. */
+function resolveProject(positional: string | undefined, explicit: string | undefined): string | null {
+  if (positional === undefined && explicit === undefined) return findUnityProjectRoot(process.cwd());
+
+  const target = resolveInstallTarget({ adapter: unityAdapter, positional, path: explicit });
+  if (target.kind === 'failure') {
+    ui.error(target.error.message);
+    process.exit(1);
+  }
+  return target.projectRoot;
+}
+
 export function createUpdateCommand(currentVersion: string): Command {
   return new Command('update')
     .description(`Update everything: the Unity project's MCP plugin and installed extensions, then ${PACKAGE_NAME} itself`)
@@ -148,20 +160,7 @@ export function createUpdateCommand(currentVersion: string): Command {
       const outcomes: Outcome[] = [];
 
       if (options.project !== false) {
-        const explicitPath = positionalPath ?? options.path;
-        let projectPath: string | null;
-        if (explicitPath !== undefined) {
-          // A named project that is not one is an error before anything changes.
-          const target = resolveInstallTarget({ adapter: unityAdapter, positional: positionalPath, path: options.path });
-          if (target.kind === 'failure') {
-            ui.error(target.error.message);
-            process.exit(1);
-          }
-          projectPath = target.projectRoot;
-        } else {
-          projectPath = findUnityProjectRoot(process.cwd());
-        }
-
+        const projectPath = resolveProject(positionalPath, options.path);
         if (projectPath === null) {
           ui.info('No Unity project here, so only the CLI is updated. Pass a project path to update its plugin and extensions.');
         } else {
