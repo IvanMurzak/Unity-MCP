@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`update` updates everything.** `update [path]` brings the project's MCP plugin and installed extensions to their
+  latest versions, then updates the CLI itself. From a subfolder it finds the project; outside a project it updates only
+  the CLI. `--check` reports (exit 2 when something is outdated); `--no-self`, `--no-project` and `--no-extensions` skip a
+  step. `file:`/git installs are left alone and nothing is downgraded. Library: `updateProject`.
 - **`openProject` `spawnImpl`** (type `EditorSpawnImpl`): an embedder starts the editor its own way. It gets the
   editor path, arguments and full environment, and returns the started process or a promise of the editor's pid,
   which `openProject` waits for before `editor-launched` and `editorPid`; a rejection fails the open. Not used by

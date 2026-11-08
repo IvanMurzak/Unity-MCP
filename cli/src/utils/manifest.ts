@@ -92,6 +92,11 @@ export async function resolveLatestPackageVersion(
   }
 }
 
+/** A `file:`, git or URL dependency: a local or pinned source, not a registry version. */
+export function isNonSemverSpec(spec: string): boolean {
+  return ['file:', 'git+', 'git:', 'http:', 'https:', 'ssh:'].some((prefix) => spec.startsWith(prefix));
+}
+
 /**
  * Determines if the version should be updated.
  * Only update if the new version is higher than the current version.
@@ -102,13 +107,23 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
   if (!newVersion) return false;
 
   // Skip automatic update for non-semver specs (file:, git+, http, etc.)
-  const nonSemverPrefixes = ['file:', 'git+', 'http:', 'https:'];
-  if (nonSemverPrefixes.some((prefix) => currentVersion.startsWith(prefix))) {
+  if (isNonSemverSpec(currentVersion)) {
     return false;
   }
 
   if (isValidVersion(currentVersion) && isValidVersion(newVersion)) {
     return isNewerVersion(currentVersion, newVersion);
+  }
+
+  // A prerelease on either side: compare the numbers, and a prerelease is older than its own release.
+  const current = /^(\d+)\.(\d+)\.(\d+)(-.+)?$/.exec(currentVersion);
+  const next = /^(\d+)\.(\d+)\.(\d+)(-.+)?$/.exec(newVersion);
+  if (current && next) {
+    for (let part = 1; part <= 3; part++) {
+      const difference = Number(next[part]) - Number(current[part]);
+      if (difference !== 0) return difference > 0;
+    }
+    return current[4] !== undefined && next[4] === undefined;
   }
 
   return newVersion.toLowerCase() > currentVersion.toLowerCase();
