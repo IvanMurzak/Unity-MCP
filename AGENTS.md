@@ -35,7 +35,8 @@ from the plugin version). Bumping the consumed server = changing that constant; 
 - `commands/` — Python utility scripts (stdlib only, 3.9+) (version bump, Unity tests, release notes).
 - `docs/` — README translations, dev docs (`docs/dev/`), agent detail docs (`docs/agents/`).
 - `memory/` — durable agent lessons (`memory/MEMORY.md` is the index).
-- `.github/workflows/`, `.github/scripts/` — CI/CD and its helper scripts.
+- `.github/workflows/`, `.github/scripts/` — CI/CD and its helper scripts. A documentation-only PR skips the Unity legs of
+  `test_pull_request.yml`; the path list is in `.github/scripts/docs-only.mjs`.
 
 ## Find detail in
 
