@@ -67,7 +67,8 @@ jobs:
 
       # `unity-tests-licensed` is the required check for the Unity suite. On a same-repository PR the
       # suite ran here with secrets, so it mirrors this run. A fork PR's is left unreported (GitHub
-      # then shows it as expected) until test_pull_request_manual.yml sets it.
+      # then shows it as expected) until test_pull_request_manual.yml sets it. A documentation-only PR
+      # skips the suite (.github/scripts/docs-only.mjs) and so gets `success` with no Unity results.
       - uses: actions/checkout@v6
         if: always() && env.SAME_REPO_PR == 'true'
         with:

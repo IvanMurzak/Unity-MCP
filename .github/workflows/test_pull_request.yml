@@ -55,6 +55,39 @@ env:
   CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
 
 jobs:
+  # Does this pull request change only documentation (the list is in .github/scripts/docs-only.mjs)? Then the
+  # test-unity-* legs, about 20 of the run's minutes, have nothing to test. Only an explicit `true` skips them: any
+  # doubt or failed gate step leaves the output empty and everything runs. Dispatches, release_extensions.yml's
+  # workflow_call and `train/` PRs skip this job (same `train/` test as the chain steps), so they run in full.
+  # Not gated: the jobs below that take about a minute and read no listed path. test-cli must not be, because a skipped
+  # caller never reports the `test-cli / test-cli (20|22)` contexts the "Required status checks" ruleset names.
+  changes:
+    if: github.event_name == 'pull_request' && !contains(join(github.event.pull_request.labels.*.name, ' '), 'train/')
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: read
+    outputs:
+      docs_only: ${{ steps.classify.outputs.docs_only }}
+    steps:
+      - id: checkout
+        uses: actions/checkout@v6
+        continue-on-error: true
+        timeout-minutes: 3
+        with:
+          fetch-depth: 2 # the merge commit and both parents: docs-only.mjs diffs HEAD^1..HEAD
+          sparse-checkout: .github # the scripts and this workflow are all this job reads
+          persist-credentials: false # it reads local trees only, and the tree may be a fork's code
+      - id: classify
+        continue-on-error: true
+        timeout-minutes: 1
+        run: node .github/scripts/docs-only.mjs
+      # Allowed to fail the job, unlike the steps above: this is the gate's only test. The Unity legs still run then.
+      - name: Test the gate
+        if: steps.checkout.outcome == 'success'
+        timeout-minutes: 1
+        run: node --test .github/scripts/docs-only.test.mjs
+
   # Uploaded in chain mode too: publish_test_results.yml reads `Event File/event.json` on every completed run
   # (chain runs included), so skipping it would break that workflow. A few KB, and the consumer runs
   # minutes after this workflow completes, so 1-day retention loses nothing.
@@ -213,6 +246,8 @@ jobs:
   # --- EDIT MODE ---
 
   test-unity-2022-3-62f3-editmode:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2022.3.62f3"
@@ -223,6 +258,8 @@ jobs:
     secrets: inherit
 
   test-unity-6000-0-85f1-editmode:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.0.85f1"
@@ -233,6 +270,8 @@ jobs:
     secrets: inherit
 
   test-unity-6000-3-27f1-editmode:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.3.27f1"
@@ -243,6 +282,8 @@ jobs:
     secrets: inherit
 
   test-unity-6000-6-7f1-editmode:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.6.7f1"
@@ -255,6 +296,8 @@ jobs:
   # --- PLAY MODE (preserve the original extension matrix) ---
 
   test-unity-2022-3-62f3-playmode:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2022.3.62f3"
@@ -265,6 +308,8 @@ jobs:
     secrets: inherit
 
   test-unity-6000-0-85f1-playmode:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.0.85f1"
@@ -275,6 +320,8 @@ jobs:
     secrets: inherit
 
   test-unity-6000-3-27f1-playmode:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.3.27f1"
@@ -285,6 +332,8 @@ jobs:
     secrets: inherit
 
   test-unity-6000-6-7f1-playmode:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.6.7f1"
@@ -297,6 +346,8 @@ jobs:
   # --- STANDALONE ---
 
   test-unity-2022-3-62f3-standalone:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/2022.3.62f3"
@@ -307,6 +358,8 @@ jobs:
     secrets: inherit
 
   test-unity-6000-0-85f1-standalone:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.0.85f1"
@@ -317,6 +370,8 @@ jobs:
     secrets: inherit
 
   test-unity-6000-3-27f1-standalone:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.3.27f1"
@@ -327,6 +382,8 @@ jobs:
     secrets: inherit
 
   test-unity-6000-6-7f1-standalone:
+    needs: changes
+    if: ${{ !cancelled() && needs.changes.outputs.docs_only != 'true' }}
     uses: ./.github/workflows/test_unity_plugin.yml
     with:
       projectPath: "./Unity-Tests/6000.6.7f1"

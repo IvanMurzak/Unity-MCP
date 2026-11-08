@@ -48,6 +48,9 @@ is compiled, and the run's summary (the `save-event-file` job of `test_pull_requ
 to get the suite run. On any other run an empty license still fails game-ci, as before. The signal
 that the suite really ran is the `unity-tests-licensed` commit status (below), the required check.
 
+A documentation-only PR (paths in `.github/scripts/docs-only.mjs`) skips the `test-unity-*` jobs too; on a
+same-repository PR its `unity-tests-licensed` is then `success` with no Unity results.
+
 ### Runs from before #971: how to tell no-secrets from a real license failure
 
 Before #971 game-ci ran on fork PRs, received the empty `UNITY_LICENSE` and aborted, so **every
