@@ -32,6 +32,8 @@ import { execFileSync } from "node:child_process";
 import { appendFileSync, realpathSync } from "node:fs";
 import { fileURLToPath } from "node:url";
 
+const git = (cwd, ...args) => execFileSync("git", args, { cwd, encoding: "utf8" });
+
 /** @param {string} path repo-relative, forward slashes */
 export function isDocsPath(path) {
   return path === "AGENTS.md" || path.startsWith("docs/") || path.startsWith("memory/");
@@ -44,13 +46,12 @@ export function isDocsOnly(files) {
 
 /** The files the pull request's merge commit changes against its base. */
 export function changedFiles(repo) {
-  const git = (...args) => execFileSync("git", args, { cwd: repo, encoding: "utf8" });
-  git("rev-parse", "--verify", "HEAD^2"); // throws unless HEAD is the merge commit
-  return git("diff", "--name-only", "--no-renames", "-z", "HEAD^1", "HEAD").split("\0").filter(Boolean);
+  git(repo, "rev-parse", "--verify", "HEAD^2"); // throws unless HEAD is the merge commit
+  return git(repo, "diff", "--name-only", "--no-renames", "-z", "HEAD^1", "HEAD").split("\0").filter(Boolean);
 }
 
 function main() {
-  const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
+  const head = git(process.cwd(), "rev-parse", "HEAD").trim();
   if (head !== process.env.GITHUB_SHA) throw new Error(`HEAD ${head} is not GITHUB_SHA ${process.env.GITHUB_SHA}`);
   const files = changedFiles(process.cwd());
   const docsOnly = isDocsOnly(files);

@@ -55,10 +55,9 @@ env:
   CHAIN_LOCK_HASH8: ${{ inputs.lock_hash8 }}
 
 jobs:
-  # Does this pull request change only documentation (the list is in .github/scripts/docs-only.mjs)? Then the
-  # test-unity-* legs, about 20 of the run's minutes, have nothing to test. Only an explicit `true` skips them: any
-  # doubt or failed gate step leaves the output empty and everything runs. Dispatches, release_extensions.yml's
-  # workflow_call and `train/` PRs skip this job (same `train/` test as the chain steps), so they run in full.
+  # A documentation-only PR (.github/scripts/docs-only.mjs) skips the test-unity-* legs, about 20 of the run's minutes.
+  # Dispatches, release_extensions.yml's workflow_call and `train/` PRs skip this job (same `train/` test as the chain
+  # steps), which leaves the output empty, so they run in full.
   # Not gated: the jobs below that take about a minute and read no listed path. test-cli must not be, because a skipped
   # caller never reports the `test-cli / test-cli (20|22)` contexts the "Required status checks" ruleset names.
   changes:
