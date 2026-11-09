@@ -112,8 +112,8 @@ jobs:
           done
           present=$(dpkg-query -W -f='${binary:Package} ' azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri google-cloud-sdk google-cloud-cli 2>/dev/null || true)
           if [ -n "$present" ]; then sudo apt-get remove -y --fix-missing $present || echo "apt-get remove $present: failed"; fi
-          sudo apt-get autoremove -y
-          sudo apt-get clean
+          sudo apt-get autoremove -y || echo "apt-get autoremove -y: failed"
+          sudo apt-get clean || echo "apt-get clean: failed"
           df -h /
 
       # --------------------------------------------------------------------- #
