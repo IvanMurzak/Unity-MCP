@@ -1,0 +1,43 @@
+name: pages
+
+# Publishes docs/ (a docsify site, served as static files: docs/.nojekyll) to
+# https://ivanmurzak.github.io/Unity-MCP/. Replaces GitHub's built-in legacy "pages-build-deployment",
+# which runs Node 20 actions and annotates a deprecation warning on every docs push. Like the legacy
+# build it uploads docs/ verbatim: no Jekyll step, which would convert the .md files docsify fetches.
+# Takes effect only while the repo's Pages source is "GitHub Actions" (build_type=workflow).
+
+on:
+  push:
+    branches: [main]
+    paths: ["docs/**"]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+concurrency:
+  group: pages
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/checkout@v6
+        with:
+          persist-credentials: false
+
+      - uses: actions/configure-pages@v6
+
+      - uses: actions/upload-pages-artifact@v5
+        with:
+          path: ./docs
+
+      - id: deployment
+        uses: actions/deploy-pages@v5.0.1
