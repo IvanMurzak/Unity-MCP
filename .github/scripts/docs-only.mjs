@@ -25,9 +25,10 @@
  * (`files` of the npm package), the package and Installer READMEs (shipped in the UPM package and the
  * .unitypackage), extensions/<module>/README.md (commands/extensions.py reads it). The root README.md
  * has no reader today, but documentation-sync.md makes a change to it also touch those shipped copies,
- * so listing it would rarely skip anything. The root .claude/ and .agents/ hold agent settings and skills
- * that no build or test reads (the plugin's ".claude/skills" is a path inside the user's project). GitHub Pages publishes main:/docs after a merge; no PR job
- * reads or tests that site, so skipping the Unity legs loses nothing there.
+ * so listing it would rarely skip anything. GitHub Pages publishes main:/docs after a merge; no PR job
+ * reads or tests that site, so skipping the Unity legs loses nothing there. The root .claude/ and
+ * .agents/ hold agent settings and skills that nothing reads; the plugin's ".claude/skills" is a path
+ * in the user's project.
  */
 
 import { execFileSync } from "node:child_process";
@@ -38,7 +39,7 @@ const git = (cwd, ...args) => execFileSync("git", args, { cwd, encoding: "utf8" 
 
 /** @param {string} path repo-relative, forward slashes */
 export function isDocsPath(path) {
-  return path === "AGENTS.md" || path.startsWith("docs/") || path.startsWith("memory/") || path.startsWith(".claude/") || path.startsWith(".agents/");
+  return path === "AGENTS.md" || /^(docs|memory|\.claude|\.agents)\//.test(path);
 }
 
 /** @param {readonly string[]} files */
