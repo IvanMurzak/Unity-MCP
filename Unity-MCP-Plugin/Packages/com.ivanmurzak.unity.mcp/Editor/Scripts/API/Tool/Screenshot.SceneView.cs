@@ -25,9 +25,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ScreenshotSceneViewToolId,
             Title = "Screenshot / Scene View",
-            ReadOnlyHint = true,
+            ReadOnlyHint = false,
             DestructiveHint = false,
-            IdempotentHint = true,
+            IdempotentHint = false,
             OpenWorldHint = false,
             Visible = false
         )]
@@ -41,17 +41,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Uses `SceneView.lastActiveSceneView` (falls back to the first window in `SceneView.sceneViews`). Allocates " +
             "a temporary `RenderTexture`, swaps it onto the Scene View's camera, calls `Render`, reads back with " +
             "`Texture2D.ReadPixels`, encodes PNG, and restores the camera's prior `targetTexture`. Throws/errors when " +
-            "no Scene View is open or the Scene View camera is null.")]
+            "no Scene View is open or the Scene View camera is null." + SavePathSkillSection)]
         [Description("Captures a screenshot from the Unity Editor Scene View and returns it as an image. " +
-            "Returns the image directly for visual inspection by the LLM.")]
+            "Returns the image directly for visual inspection by the LLM." + SavePathNote)]
         public ResponseCallTool ScreenshotSceneView
         (
             [Description("Width of the screenshot in pixels.")]
             int width = 1920,
             [Description("Height of the screenshot in pixels.")]
-            int height = 1080
+            int height = 1080,
+            [Description(SavePathDescription)]
+            string? savePath = null
         )
         {
+            if (SavePathError(savePath, out var saveTo) is { } refused)
+                return refused;
+
             if (NoGraphicsError() is { } noGraphics)
                 return noGraphics;
 
@@ -103,8 +108,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         Object.DestroyImmediate(tex);
                 }
 
-                return ResponseCallTool.Image(pngBytes, McpPlugin.Common.Consts.MimeType.ImagePng,
-                    $"Screenshot from Scene View ({width}x{height})");
+                return CaptureResult(pngBytes!, $"Screenshot from Scene View ({width}x{height})", saveTo);
             });
         }
     }

@@ -27,9 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ScreenshotGameViewToolId,
             Title = "Screenshot / Game View",
-            ReadOnlyHint = true,
+            ReadOnlyHint = false,
             DestructiveHint = false,
-            IdempotentHint = true,
+            IdempotentHint = false,
             OpenWorldHint = false,
             Visible = false
         )]
@@ -44,13 +44,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Locates `UnityEditor.GameView`, repaints it, then reflects the `m_RenderTexture` field and reads back via " +
             "`Texture2D.ReadPixels`. On graphics APIs whose UV origin is top-left (`SystemInfo.graphicsUVStartsAtTop`), " +
             "the read-back pixels are vertically flipped before encoding so the orientation matches what the user sees. " +
-            "Returns a PNG image with the resolution baked into the caption.")]
+            "Returns a PNG image with the resolution baked into the caption." + SavePathSkillSection)]
         [Description("Captures a screenshot from the Unity Editor Game View and returns it as an image. " +
             "Reads the Game View's own render texture directly via the Unity Editor API. " +
             "The image size matches the current Game View resolution. " +
-            "Returns the image directly for visual inspection by the LLM.")]
-        public ResponseCallTool ScreenshotGameView(string? nothing = null)
+            "Returns the image directly for visual inspection by the LLM." + SavePathNote)]
+        public ResponseCallTool ScreenshotGameView
+        (
+            string? nothing = null,
+            [Description(SavePathDescription)]
+            string? savePath = null
+        )
         {
+            if (SavePathError(savePath, out var saveTo) is { } refused)
+                return refused;
+
             if (NoGraphicsError() is { } noGraphics)
                 return noGraphics;
 
@@ -140,8 +148,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         UnityEngine.Object.DestroyImmediate(tex);
                 }
 
-                return ResponseCallTool.Image(pngBytes, McpPlugin.Common.Consts.MimeType.ImagePng,
-                    $"Screenshot from Game View ({width}x{height})");
+                return CaptureResult(pngBytes!, $"Screenshot from Game View ({width}x{height})", saveTo);
             });
         }
     }
