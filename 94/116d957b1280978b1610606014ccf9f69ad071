@@ -1,0 +1,37 @@
+cli/src/utils/launch-error-dismiss.ts
+  s_96a889b2a9ec0f::t_2ad67aec524375 318-357,366-369,371-380,392,399-421,429-462
+  s_96a889b2a9ec0f::t_3819df4ec0e33b 474-478,488-493,496-497
+cli/src/lib/open.ts
+  s_96a889b2a9ec0f::t_b7f8ee821d0024 500
+  s_96a889b2a9ec0f::t_398eb875feed3a 354-355,365-371,391-406,411-414,416-420,427-429,437-450,456-457,459,461-499,502-503,505-511
+  s_96a889b2a9ec0f::t_72fc1face826a7 515,517-529
+  s_96a889b2a9ec0f::t_a6c67a6d361f54 308-310,317,320,415,451-452
+cli/README.md
+  s_96a889b2a9ec0f::t_f9514c239d97f6 260,262
+cli/src/commands/open.ts
+  s_96a889b2a9ec0f::t_a4800e1b743444 141-142
+  s_96a889b2a9ec0f::t_d0ad46d2183a1a 226
+cli/tests/open-lib.test.ts
+  s_96a889b2a9ec0f::t_036df55cf59a67 625,630-631
+  s_96a889b2a9ec0f::t_e517084a5e78b5 416,419,428,430-439,444,447,458-462,467,472,474-475,479,482,484-485,487-491,494-522,528,530,532-535,538-563,569,594,596-600,605,610
+  s_96a889b2a9ec0f::t_88bb1bc1dc5752 396,399,401-405,408-412,424-426,442-443
+cli/tests/launch-error-dismiss.test.ts
+  s_96a889b2a9ec0f::t_f1f695e897f504 56-96
+  s_96a889b2a9ec0f::t_e97cb75a39868c 13
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.1",
+  "base_commit_sha": "94116d957b1280978b1610606014ccf9f69ad071",
+  "prompts": {},
+  "sessions": {
+    "s_96a889b2a9ec0f": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "f69faed4-0135-4243-87c8-981a7cb298cc",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

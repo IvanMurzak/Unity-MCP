@@ -1,0 +1,23 @@
+Unity-MCP-Plugin/Assets/root/Editor/Scripts/UI/Window/MainWindowEditor.AiAgents.cs
+  fddb35c7cbbf3909 60-65
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.12",
+  "base_commit_sha": "cd26468595b60379f24dccb540f8f94e29c26ae8",
+  "prompts": {
+    "fddb35c7cbbf3909": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "e4a3f47c-12e3-42d3-af7c-06f10699966e",
+        "model": "claude-sonnet-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 150,
+      "total_deletions": 144,
+      "accepted_lines": 30,
+      "overriden_lines": 0
+    }
+  }
+}

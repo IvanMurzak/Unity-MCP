@@ -1,0 +1,71 @@
+cli/src/utils/config.ts
+  s_26c6de2ec5bd6c::t_b47326b696bf85 4
+  s_aac3bc4118fc76::t_d0cddb41d354cb 174-200,203-206,208-210,212-215,219-222,224
+cli/src/utils/connection.ts
+  s_26c6de2ec5bd6c::t_7cd80a1527f5d6 5
+  s_a0187f20d63fae::t_d365df8fad2afb 64,66-74,78-79,81-83,88,94,107-114
+cli/tests/run-tool.test.ts
+  s_26c6de2ec5bd6c::t_e6b45131a82c1f 47-49
+  s_26c6de2ec5bd6c::t_68a156be173d1e 9-14,19-22,52
+  s_26c6de2ec5bd6c::t_8ebfa41bbeffbf 50-51,53
+  s_26c6de2ec5bd6c::t_0e6df3207f6687 7-8
+  s_26c6de2ec5bd6c::t_480b14c5b7e905 69-71,78,80-92,114,118,133,139-140,202,232,239
+  s_26c6de2ec5bd6c::t_f95a5680168324 157,164-185,192,196,201,203-204,211,215,219,234,241,248,259
+  s_26c6de2ec5bd6c::t_1894fdacf82963 45-46
+  s_26c6de2ec5bd6c::t_7f1a41f10b59da 28,40-44
+  s_26c6de2ec5bd6c::t_c710270fadad22 186-191
+  s_26c6de2ec5bd6c::t_e9289f3ac72e1d 193-195
+  s_26c6de2ec5bd6c::t_ae94276e72927d 197-200
+  s_26c6de2ec5bd6c::t_2e072ff92bc55c 205-210
+  s_26c6de2ec5bd6c::t_91a6fdb24196b7 212-214
+  s_26c6de2ec5bd6c::t_ddd952207af75b 216-218
+  s_26c6de2ec5bd6c::t_eb61b605041217 220-222
+  s_26c6de2ec5bd6c::t_f45de1044a32df 233
+  s_26c6de2ec5bd6c::t_5a788863959e98 235-238
+  s_26c6de2ec5bd6c::t_bf7a2595bfe300 240
+  s_26c6de2ec5bd6c::t_cea32d73b86666 242-247
+  s_26c6de2ec5bd6c::t_787639511c9c7f 249-251,256-258
+  s_26c6de2ec5bd6c::t_15694bb31fd00a 260-262
+  s_aac3bc4118fc76::t_e916b1c20da6a1 223-230,252-255,263-267,375,381-395,441,446-460
+cli/src/lib/run-tool.ts
+  s_26c6de2ec5bd6c::t_af5369e4110488 8
+  s_aac3bc4118fc76::t_d633752b5cc427 169,176-190
+cli/src/commands/run-tool-builder.ts
+  s_aac3bc4118fc76::t_2bd87c4da91933 72-78,81
+cli/src/lib/types.ts
+  s_aac3bc4118fc76::t_709d782234d308 570,626-632
+cli/tests/lib-run-tool.test.ts
+  s_aac3bc4118fc76::t_f52ece8bf7911f 395-465
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.6.15",
+  "base_commit_sha": "fe389d56f77943d50eac92d0f24ac944bf7daa54",
+  "prompts": {},
+  "sessions": {
+    "s_26c6de2ec5bd6c": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "7e37eae3-dfc4-48d5-a966-2e93a641e10b",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_a0187f20d63fae": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "92a83b9b-471a-4dfb-a4d5-cc213d191839",
+        "model": "claude-opus-4-8"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    },
+    "s_aac3bc4118fc76": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "agent-a0a42a0b913805815",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

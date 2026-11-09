@@ -1,0 +1,19 @@
+docs/dev/extensions.md
+  s_49b5a09f1baa8a::t_47824f1a067e1a 83-84,86
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "3049654a2b89190516fc825aa902af5f6ea0a4ad",
+  "prompts": {},
+  "sessions": {
+    "s_49b5a09f1baa8a": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "s_49b5a09f1baa8a",
+        "model": "unknown"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

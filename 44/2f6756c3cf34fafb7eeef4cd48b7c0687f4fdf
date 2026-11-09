@@ -1,0 +1,23 @@
+.github/workflows/claude.yml
+  9268bcafe5f923dc 98
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.1.8",
+  "base_commit_sha": "442f6756c3cf34fafb7eeef4cd48b7c0687f4fdf",
+  "prompts": {
+    "9268bcafe5f923dc": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "250a777a-6d1f-4034-a39d-05a5b35656d3",
+        "model": "claude-opus-4-6"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>",
+      "messages": [],
+      "total_additions": 104,
+      "total_deletions": 104,
+      "accepted_lines": 12,
+      "overriden_lines": 0
+    }
+  }
+}

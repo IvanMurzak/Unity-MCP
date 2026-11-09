@@ -1,0 +1,126 @@
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.cs
+  s_7bc72ecaebd05d::t_214a89daf8f5b7 55-58,60,63-64,67-90,94-96
+  s_7bc72ecaebd05d::t_f61d775537899d 166-179
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Script/ScriptExecuteGuardTests.cs
+  s_7bc72ecaebd05d::t_9098cdaad9448b 1-67
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Object/UnityEngine_Object_Adapter.cs
+  s_7bc72ecaebd05d::t_a2958047b5d273 46-52
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlEditorApi.Prefabs.cs
+  s_7bc72ecaebd05d::t_6612309725afe1 22-24,26-27,30-47
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Config/PluginRoleTests.cs
+  s_7bc72ecaebd05d::t_cf2552f1da0b7d 1-40
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlBulkCreateTests.cs
+  s_7bc72ecaebd05d::t_27ba477af1a3a1 1-127
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/UnityMcpPluginRuntime.cs
+  s_7bc72ecaebd05d::t_025b752984768e 32-46
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/Adapters/VectorArithmeticTests.cs
+  s_7bc72ecaebd05d::t_381f346466cbb2 38-44
+  s_7bc72ecaebd05d::t_eeb00dd56f9e08 1-37,45-78
+  s_7bc72ecaebd05d::t_09588c9290b692 79-80
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Execute.Reload.cs
+  s_7bc72ecaebd05d::t_00429a18c85968 5-76,78
+  s_7bc72ecaebd05d::t_ba2b0c1c562fb8 1-4,77,79
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/RqlGuide.cs
+  s_7bc72ecaebd05d::t_36aa5eaf3adc54 12-13
+  s_7bc72ecaebd05d::t_b5d232eb8519af 127-128
+  s_7bc72ecaebd05d::t_4dc1ada67682f8 70-73
+  s_7bc72ecaebd05d::t_3f6734609fed8d 115-118
+  s_7bc72ecaebd05d::t_dbd4031a125e80 102-103
+  s_7bc72ecaebd05d::t_6c1bf8032dca2b 148
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Execute.cs
+  s_7bc72ecaebd05d::t_5e26c17d858572 89-92
+  s_7bc72ecaebd05d::t_4d42818e1e0c02 93-95
+  s_7bc72ecaebd05d::t_ce98073afb9533 49,52-64,147,169-171
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/antigravity-64.png.meta
+  s_7bc72ecaebd05d::t_2a89f5e995234b 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/claude-64.png.meta
+  s_7bc72ecaebd05d::t_db983fa9e9fccd 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/codex-64.png.meta
+  s_7bc72ecaebd05d::t_2ab77226681beb 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/cursor-64.png.meta
+  s_7bc72ecaebd05d::t_0945e3658faaaa 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/gemini-64.png.meta
+  s_7bc72ecaebd05d::t_2c97bbc3c68b36 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/github-copilot-64.png.meta
+  s_7bc72ecaebd05d::t_9635682869500f 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/kilo-code-64.png.meta
+  s_7bc72ecaebd05d::t_e69f27b0e6b66e 4-7,59,61,75,88,101-102,114,127,142-164,166,176-177
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/open-code-64.png.meta
+  s_7bc72ecaebd05d::t_206146047f896e 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/rider-64.png.meta
+  s_7bc72ecaebd05d::t_01e6f0f920ee5f 4-7,59,61,75,88,101,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/unity-64.png.meta
+  s_7bc72ecaebd05d::t_7d4d14d5fe40d0 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/visual-studio-64.png.meta
+  s_7bc72ecaebd05d::t_7d745cea124dad 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/vs-code-64.png.meta
+  s_7bc72ecaebd05d::t_3892052aae39f6 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/ai-agents/zoo-code-64.png.meta
+  s_7bc72ecaebd05d::t_a14e200dfb3e07 4-7,59,61,75,88,101,116-138,140,150-151
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/discord_icon.png.meta
+  s_7bc72ecaebd05d::t_a9b6a3d8127488 4-7,59,61,75,88,103-125,127,137-138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/github_icon.png.meta
+  s_7bc72ecaebd05d::t_78a7bfaccb7071 4-7,59,61,75,88,103-125,127,137-138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo.png.meta
+  s_7bc72ecaebd05d::t_a2942dc41f2e92 4-7,59,61,75,88,101-102,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_305.png.meta
+  s_7bc72ecaebd05d::t_dab0d890992a45 4-7,59,61,75,88,103-125,127,137-138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_512.png.meta
+  s_7bc72ecaebd05d::t_0772f8919cb26e 4-7,59,61,75,88,101-102,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_script_icon.png.meta
+  s_7bc72ecaebd05d::t_dc0e738a8867e7 4-7,59,61,75,88,101,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/logo_window_icon.png.meta
+  s_7bc72ecaebd05d::t_99e9d66adf18b8 4-7,59,61,75,88,101,114,129-151,153,163-164
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Gizmos/star_icon.png.meta
+  s_7bc72ecaebd05d::t_ae7927b37b1d39 4-7,59,61,75,88,103-125,127,137-138
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/API/Tool/Script.Execute.Reload.cs.meta
+  s_7bc72ecaebd05d::t_13861d8d1184c3 1-2
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/Core/ExecutionGuard.cs.meta
+  s_7bc72ecaebd05d::t_daeb85da5b21f8 1-2
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/Roslyn/GuardWriter.cs
+  s_7bc72ecaebd05d::t_f16df39ad8dec4 18-20,58-63,69,73,101-144,177,180,199,202-203,289-312,320-332,338,340,346-347
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/Roslyn/GuardWriter.cs.meta
+  s_7bc72ecaebd05d::t_21d43313f57dc0 1-2
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/Roslyn/RoslynCSharpCompiler.cs
+  s_7bc72ecaebd05d::t_057ef7f3283dbd 97-98,103
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/VENDORED.md
+  s_7bc72ecaebd05d::t_ff9450af54deca 4,26-27
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Color_Adapter.cs
+  s_7bc72ecaebd05d::t_837153702f34cc 23-24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Vector2Int_Adapter.cs
+  s_7bc72ecaebd05d::t_418c71d83c93ee 24-25,33
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Vector2_Adapter.cs
+  s_7bc72ecaebd05d::t_055df3a5b1681f 23-24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Vector3Int_Adapter.cs
+  s_7bc72ecaebd05d::t_b0f649e4c38c1f 24-25,33
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Vector3_Adapter.cs
+  s_7bc72ecaebd05d::t_8df52f5873cbb7 23-24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/Rql/Adapters/Struct/UnityEngine_Vector4_Adapter.cs
+  s_7bc72ecaebd05d::t_d322a5afa74c86 23-24
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Config/PluginRoleTests.cs.meta
+  s_7bc72ecaebd05d::t_9933f104d7addf 1-2
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/Adapters/VectorArithmeticTests.cs.meta
+  s_7bc72ecaebd05d::t_3a763caedbeb9e 1-2
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/EditorApi/RqlBulkCreateTests.cs.meta
+  s_7bc72ecaebd05d::t_33768a98646937 1-2
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Rql/RqlUnityTests.cs
+  s_7bc72ecaebd05d::t_2b2b2493033a8b 254
+Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Tests/Editor/Tool/Script/ScriptExecuteGuardTests.cs.meta
+  s_7bc72ecaebd05d::t_93376a924f9180 1-2
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "8865bddcb36e04cce438b490f1588fdcce5df615",
+  "prompts": {},
+  "sessions": {
+    "s_7bc72ecaebd05d": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "40274cb2-edf8-49ba-9a73-33b83cb5be53",
+        "model": "claude-opus-5-5"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

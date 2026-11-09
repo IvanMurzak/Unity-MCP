@@ -1,0 +1,19 @@
+Unity-MCP-Plugin/ProjectSettings/ProjectSettings.asset
+  s_f9885b8a4d06ac::t_7fc8a8d2c76c6f 770,772-774,776-777,779-790
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.7.5",
+  "base_commit_sha": "f3524dcef7ca91cc5ae3c4865a725171453b6d76",
+  "prompts": {},
+  "sessions": {
+    "s_f9885b8a4d06ac": {
+      "agent_id": {
+        "tool": "codex",
+        "id": "01a15163-393a-7211-938a-4b86b5b293ef",
+        "model": "gpt-6-astra"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}

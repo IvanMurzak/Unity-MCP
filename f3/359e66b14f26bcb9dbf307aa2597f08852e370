@@ -1,0 +1,24 @@
+cli/tests/unity-editor.test.ts
+  s_daaef8f5dfd2ff::t_ddb56ea52c92af 118-195
+  s_daaef8f5dfd2ff::t_cf53821e0a7fa8 1
+cli/tests/editor-cache.test.ts
+  s_daaef8f5dfd2ff::t_5411cc2df8a55c 1-172
+cli/src/utils/editor-cache.ts
+  s_daaef8f5dfd2ff::t_77bc9a1c6f4bbd 30-34,39
+---
+{
+  "schema_version": "authorship/3.0.0",
+  "git_ai_version": "1.4.4",
+  "base_commit_sha": "f3359e66b14f26bcb9dbf307aa2597f08852e370",
+  "prompts": {},
+  "sessions": {
+    "s_daaef8f5dfd2ff": {
+      "agent_id": {
+        "tool": "claude",
+        "id": "187a330e-4747-4049-b8e7-a9d8661bb456",
+        "model": "claude-opus-4-7"
+      },
+      "human_author": "Ivan Murzak <Ivan.D.Murzak@gmail.com>"
+    }
+  }
+}
