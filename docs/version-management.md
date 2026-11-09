@@ -51,6 +51,6 @@ The script automatically finds and replaces version strings in:
 1.  **Commit** all current changes.
 2.  Run the bump script: `python commands/bump_version.py --new-version X.Y.Z`
 3.  **Verify** the changes (git diff).
-4.  **Commit** the version bump, open a PR and merge it to `main` (or dispatch `bump_version.yml`, which opens the PR).
+4.  **Commit** the version bump, open a PR and merge it to `main`.
 5.  **Release** by manually dispatching `.github/workflows/release.yml`; merging the bump publishes nothing,
     and the workflow refuses a version whose tag already exists.
