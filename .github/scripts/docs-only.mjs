@@ -27,8 +27,8 @@
  * has no reader today, but documentation-sync.md makes a change to it also touch those shipped copies,
  * so listing it would rarely skip anything. GitHub Pages publishes main:/docs after a merge; no PR job
  * reads or tests that site, so skipping the Unity legs loses nothing there. The root .claude/ and
- * .agents/ hold agent settings and skills that nothing reads; the plugin's ".claude/skills" is a path
- * in the user's project.
+ * .agents/ hold agent settings and skills that no CI build or test reads; the plugin's ".claude/skills"
+ * is a path in the user's project.
  */
 
 import { execFileSync } from "node:child_process";
