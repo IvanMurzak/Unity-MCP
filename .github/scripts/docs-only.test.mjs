@@ -17,15 +17,22 @@ import { fileURLToPath } from "node:url";
 import { test } from "node:test";
 import { changedFiles, isDocsOnly, isDocsPath } from "./docs-only.mjs";
 
-test("isDocsPath lists the root docs, memory and AGENTS.md, nothing else", () => {
+test("isDocsPath lists the root docs, memory, agent config and AGENTS.md, nothing else", () => {
   const skip = [
     "docs/README.ja.md",
     "docs/agents/release.md",
     "docs/img/promo/banner.gif",
     "memory/MEMORY.md",
     "AGENTS.md",
+    ".claude/settings.json",
+    ".claude/skills/x/SKILL.md",
+    ".agents/skills/x/SKILL.md",
   ];
   const run = [
+    ".claude", // a file, not the folder
+    "cli/.claude/settings.json",
+    ".claude-plugin/plugin.json",
+    ".github/agents/x.agent.md",
     "README.md", // documentation-sync.md ties it to the shipped copies below
     "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/README.md",
     "Installer/Assets/com.IvanMurzak/AI Game Dev Installer/README.md",
