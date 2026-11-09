@@ -348,6 +348,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class ScreenshotSavePathCaptureTests : BaseTest
     {
         string _folder = string.Empty;
+        string _relative = string.Empty;
         string _full = string.Empty;
 
         Tool_Screenshot Tool => new Tool_Screenshot();
@@ -357,6 +358,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var name = "McpSavePathTests_" + Guid.NewGuid().ToString("N");
             _folder = ScreenshotSavePathTests.ProjectFolder(name);
+            _relative = name + "/shot.png";
             _full = _folder + "/shot.png";
         }
 
@@ -366,8 +368,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             if (Directory.Exists(_folder))
                 Directory.Delete(_folder, recursive: true);
         }
-
-        string RelativeTarget => _full.Substring(UnityMcpPluginEditor.ProjectRootPath.Length + 1);
 
         static GameObjectRef CreateCube()
         {
@@ -418,7 +418,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ScreenshotCamera_SavePath_WritesAndDoesNotOverwrite()
         {
             CreateCamera();
-            AssertSavedThenNotOverwritten(() => Tool.ScreenshotCamera(width: 64, height: 64, savePath: RelativeTarget));
+            AssertSavedThenNotOverwritten(() => Tool.ScreenshotCamera(width: 64, height: 64, savePath: _relative));
         }
 
         [Test]
@@ -433,7 +433,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             CreateCamera();
 
-            RunTool(Tool_Screenshot.ScreenshotCameraToolId, $@"{{ ""width"": 64, ""height"": 64, ""savePath"": ""{RelativeTarget}"" }}");
+            RunTool(Tool_Screenshot.ScreenshotCameraToolId, $@"{{ ""width"": 64, ""height"": 64, ""savePath"": ""{_relative}"" }}");
 
             Assert.IsTrue(File.Exists(_full));
         }
@@ -442,7 +442,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ScreenshotSceneView_SavePath_WritesAndDoesNotOverwrite()
         {
             OpenSceneView();
-            AssertSavedThenNotOverwritten(() => Tool.ScreenshotSceneView(width: 64, height: 64, savePath: RelativeTarget));
+            AssertSavedThenNotOverwritten(() => Tool.ScreenshotSceneView(width: 64, height: 64, savePath: _relative));
         }
 
         [Test]
@@ -456,7 +456,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ScreenshotGameView_SavePath_WritesAndDoesNotOverwrite()
         {
             OpenGameView();
-            AssertSavedThenNotOverwritten(() => Tool.ScreenshotGameView(savePath: RelativeTarget));
+            AssertSavedThenNotOverwritten(() => Tool.ScreenshotGameView(savePath: _relative));
         }
 
         [Test]
@@ -470,14 +470,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ScreenshotIsolated_SavePath_WritesAndDoesNotOverwrite()
         {
             var cube = CreateCube();
-            AssertSavedThenNotOverwritten(() => Tool.ScreenshotIsolated(gameObjectRef: cube, resolution: 64, savePath: RelativeTarget));
+            AssertSavedThenNotOverwritten(() => Tool.ScreenshotIsolated(gameObjectRef: cube, resolution: 64, savePath: _relative));
         }
 
         [Test]
         public void ScreenshotIsolated_Composite_SavePath_Writes()
         {
             var cube = CreateCube();
-            var result = Tool.ScreenshotIsolated(gameObjectRef: cube, cameraView: Tool_Screenshot.CameraView.Composite, resolution: 32, savePath: RelativeTarget);
+            var result = Tool.ScreenshotIsolated(gameObjectRef: cube, cameraView: Tool_Screenshot.CameraView.Composite, resolution: 32, savePath: _relative);
             ScreenshotSavePathTests.AssertSaved(result, _full);
         }
 

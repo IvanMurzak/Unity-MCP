@@ -35,11 +35,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "result text says 'Saved to <absolute path>'.";
 
         private const string SavePathSkillSection =
-            "\n\n## Saving a file\n\n" +
-            "`savePath` (optional) also writes the PNG inside the project; the image is still returned and the text says " +
-            "`Saved to <absolute path>`. Use it when the user wants the picture as a file. `Screenshots/shot.png` stays a plain " +
-            "file; a path under `Assets/` is imported as a Unity asset with a `.meta`. Refused: outside the project, Unity's own " +
-            "folders, a name other than `.png`, an existing file.";
+            "\n\n## Saving a file\n\n`savePath`: " + SavePathDescription + " The image is still returned and the text says `Saved to <absolute path>`.";
 
         private const string PngExtension = ".png";
 
@@ -48,10 +44,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         private static readonly string[] UnityOwnedFolders = { "Library", "Temp", "Logs", "obj", "Packages", "ProjectSettings", "UserSettings" };
 
         // Names Windows reserves for devices, extension or not: on older versions NUL.png writes nowhere and raises no error.
-        private static readonly Regex WindowsDeviceName = new Regex(@"^(CON|PRN|AUX|NUL|COM\d|LPT\d)(\..*)?$", RegexOptions.IgnoreCase | RegexOptions.Compiled);
+        private static readonly Regex WindowsDeviceName = new Regex(@"^(CON|PRN|AUX|NUL|COM\d|LPT\d)(\..*)?$", RegexOptions.IgnoreCase);
 
         private static StringComparison PathComparison =>
             Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
+
+        private static string WithForwardSlashes(string projectRoot) => projectRoot.Replace('\\', '/').TrimEnd('/');
 
         /// <summary>
         /// Checks an optional <c>savePath</c> against <paramref name="projectRoot"/>. Returns the refusal, or null when it is fine: then
@@ -64,7 +62,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (string.IsNullOrWhiteSpace(savePath))
                 return null;
 
-            var root = projectRoot.Replace('\\', '/').TrimEnd('/');
+            var root = WithForwardSlashes(projectRoot);
             string Refuse(string why) => $"Cannot save to '{savePath}': {why}";
             string RefuseOutside() => Refuse($"it must stay inside the project folder {root}. Pass a path relative to it, such as Screenshots/shot.png.");
             const string fileNameExample = "add a file name, such as Screenshots/shot.png.";
@@ -162,19 +160,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// <summary>The tool's image result; with <paramref name="saveTo"/> the PNG is written first and the text says where. Main thread.</summary>
         internal static ResponseCallTool CaptureResult(byte[] png, string caption, string? saveTo)
         {
-            if (saveTo == null)
-                return ResponseCallTool.Image(png, McpPlugin.Common.Consts.MimeType.ImagePng, caption);
-
-            var writeError = WriteCapture(saveTo, png);
-            if (writeError != null)
-                return ResponseCallTool.Error(writeError);
-
-            return ResponseCallTool.Image(png, McpPlugin.Common.Consts.MimeType.ImagePng, $"{caption}\nSaved to {saveTo}{ImportIfAsset(saveTo)}");
+            if (saveTo != null)
+            {
+                var writeError = WriteCapture(saveTo, png);
+                if (writeError != null)
+                    return ResponseCallTool.Error(writeError);
+                caption += $"\nSaved to {saveTo}{ImportIfAsset(saveTo)}";
+            }
+            return ResponseCallTool.Image(png, McpPlugin.Common.Consts.MimeType.ImagePng, caption);
         }
 
         private static string? WriteCapture(string fullPath, byte[] png)
         {
-            const string nothingSaved = "nothing was saved.";
+            string CouldNotWrite(Exception ex) => $"Could not write the capture to {fullPath} ({ex.Message}); nothing was saved.";
+
             FileStream stream;
             try
             {
@@ -185,8 +184,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 return File.Exists(fullPath)
-                    ? $"{fullPath} already exists and a capture never overwrites one; {nothingSaved}"
-                    : $"Could not write the capture to {fullPath} ({ex.Message}); {nothingSaved}";
+                    ? $"{fullPath} already exists and a capture never overwrites one; nothing was saved."
+                    : CouldNotWrite(ex);
             }
 
             try
@@ -198,7 +197,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
             {
                 File.Delete(fullPath); // this call created it, and a partial PNG is worse than none
-                return $"Could not write the capture to {fullPath} ({ex.Message}); {nothingSaved}";
+                return CouldNotWrite(ex);
             }
         }
 
@@ -206,8 +205,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         // domain reload in the middle of a screenshot call. Without an import the agent could not address the file as an asset yet.
         private static string ImportIfAsset(string fullPath)
         {
-            var root = UnityMcpPluginEditor.ProjectRootPath.Replace('\\', '/').TrimEnd('/');
-            var assetPath = fullPath.Substring(root.Length + 1);
+            var assetPath = fullPath.Substring(WithForwardSlashes(UnityMcpPluginEditor.ProjectRootPath).Length + 1);
             if (!assetPath.StartsWith("Assets/", StringComparison.Ordinal))
                 return string.Empty;
 
