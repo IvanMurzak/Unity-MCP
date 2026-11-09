@@ -27,9 +27,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         (
             ScreenshotCameraToolId,
             Title = "Screenshot / Camera",
-            ReadOnlyHint = true,
+            ReadOnlyHint = false,
             DestructiveHint = false,
-            IdempotentHint = true,
+            IdempotentHint = false,
             OpenWorldHint = false,
             Visible = false
         )]
@@ -46,10 +46,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "## Behavior\n\n" +
             "Allocates a temporary `RenderTexture`, swaps it onto the chosen camera, calls `Camera.Render`, reads back " +
             "via `Texture2D.ReadPixels`, encodes as PNG, and restores the camera's prior `targetTexture`. Returns a " +
-            "`ResponseCallTool.Image` with `image/png` MIME and a descriptive caption.")]
+            "`ResponseCallTool.Image` with `image/png` MIME and a descriptive caption." + SavePathSkillSection)]
         [Description("Captures a screenshot from a camera and returns it as an image. " +
             "If no camera is specified, uses the Main Camera. " +
-            "Returns the image directly for visual inspection by the LLM.")]
+            "Returns the image directly for visual inspection by the LLM." + SavePathNote)]
         public ResponseCallTool ScreenshotCamera
         (
             [Description("Reference to the camera GameObject. If not specified, uses the Main Camera.")]
@@ -57,9 +57,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             [Description("Width of the screenshot in pixels.")]
             int width = 1920,
             [Description("Height of the screenshot in pixels.")]
-            int height = 1080
+            int height = 1080,
+            [Description(SavePathDescription)]
+            string? savePath = null
         )
         {
+            if (SavePathError(savePath, out var saveTo) is { } refused)
+                return refused;
+
             if (NoGraphicsError() is { } noGraphics)
                 return noGraphics;
 
@@ -117,8 +122,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     Object.DestroyImmediate(rt);
                 }
 
-                return ResponseCallTool.Image(pngBytes, McpPlugin.Common.Consts.MimeType.ImagePng,
-                    $"Screenshot from camera '{camera.name}' ({width}x{height})");
+                return CaptureResult(pngBytes, $"Screenshot from camera '{camera.name}' ({width}x{height})", saveTo);
             });
         }
     }

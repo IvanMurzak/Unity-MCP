@@ -117,6 +117,7 @@ Shown to the AI agent by default: `rql-query`, `rql-mutate`, `rql-schema`, `scre
 - `screenshot-scene-view` - Captures a screenshot from the Unity Editor Scene View (hidden by default)
 - `screenshot-game-view` - Captures a screenshot from the Unity Editor Game View (hidden by default)
 - `screenshot-camera` - Captures a screenshot from a camera and returns it as an image (hidden by default)
+- All four take an optional `savePath`, for when the user wants the picture as a file: the PNG is also written inside the project (never over an existing file) and the result says `Saved to <absolute path>`; under `Assets/` it is imported as a Unity asset
 
 </details>
 

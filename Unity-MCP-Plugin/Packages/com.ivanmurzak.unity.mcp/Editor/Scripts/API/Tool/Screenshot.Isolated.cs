@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             Title = "Screenshot / Isolated GameObject",
             ReadOnlyHint = false,
             DestructiveHint = false,
-            IdempotentHint = true,
+            IdempotentHint = false,
             OpenWorldHint = false,
             Visible = true
         )]
@@ -127,14 +127,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             "Isolation temporarily activates inactive child GameObjects so their renderers participate in the cull. " +
             "Activation state is restored in `finally`, but OnEnable-triggered side effects (audio, networking, " +
             "animation events) are not rewindable. Set `isolated=false` if your scene contains scripts that must not " +
-            "fire OnEnable during the capture.")]
+            "fire OnEnable during the capture." + SavePathSkillSection)]
         [Description("Renders a screenshot of a target GameObject with configurable isolation, background, "
                    + "camera angle, and lighting. When isolated=true (default), only the target object is "
                    + "visible via layer-based culling and inactive children of the target are temporarily "
                    + "activated for the render (their OnEnable callbacks may fire — restored in finally, but "
                    + "side effects like audio/network/animation events are not undoable). When isolated=false, "
                    + "the existing scene state is rendered as-is without activating inactive objects. Supports "
-                   + "custom multi-light setups via JSON. Returns a base64-encoded PNG.")]
+                   + "custom multi-light setups via JSON. Returns a base64-encoded PNG." + SavePathNote)]
         public ResponseCallTool ScreenshotIsolated
         (
             [Description("Reference to the target GameObject (by instanceId, path, or name).")]
@@ -164,9 +164,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                        + "Example: [{\"type\":\"Directional\",\"color\":\"#FFF4E5\",\"intensity\":1.2,\"rotation\":[45,-45,0]}]")]
             string? lights = null,
             [Description("Output image resolution in pixels (width = height). Default: 512.")]
-            int? resolution = 512
+            int? resolution = 512,
+            [Description(SavePathDescription)]
+            string? savePath = null
         )
         {
+            if (SavePathError(savePath, out var saveTo) is { } refused)
+                return refused;
+
             if (NoGraphicsError() is { } noGraphics)
                 return noGraphics;
 
@@ -313,8 +318,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                             out readbackTexture);
                     }
 
-                    return ResponseCallTool.Image(pngBytes, McpPlugin.Common.Consts.MimeType.ImagePng,
-                        $"Isolated screenshot of '{target.name}' ({resolvedCameraView}, {resolvedResolution}x{resolvedResolution}, isolated={resolvedIsolated}, backgroundMode={resolvedBackgroundMode})");
+                    return CaptureResult(pngBytes,
+                        $"Isolated screenshot of '{target.name}' ({resolvedCameraView}, {resolvedResolution}x{resolvedResolution}, isolated={resolvedIsolated}, backgroundMode={resolvedBackgroundMode})", saveTo);
                 }
                 finally
                 {

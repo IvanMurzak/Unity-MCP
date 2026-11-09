@@ -117,6 +117,7 @@ unity-mcp-cli open ./MyUnityProject
 - `screenshot-scene-view` - Unity Editor Scene Viewからスクリーンショットをキャプチャ（デフォルトで非表示）
 - `screenshot-game-view` - Unity Editor Game Viewからスクリーンショットをキャプチャ（デフォルトで非表示）
 - `screenshot-camera` - カメラからスクリーンショットをキャプチャし、画像として返す（デフォルトで非表示）
+- 4 つのツールはいずれも省略可能な `savePath` を受け取ります。ユーザーが画像をファイルとして必要とする場合に使用します。PNG はプロジェクト内にも書き込まれ（既存のファイルは上書きしません）、結果には `Saved to <絶対パス>` と表示されます。`Assets/` 以下の場合は Unity アセットとしてインポートされます
 
 </details>
 

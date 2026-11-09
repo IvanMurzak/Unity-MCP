@@ -32,6 +32,8 @@ RQL sources: `scenes`, `roots`, `objects` (every GameObject in the loaded scenes
 | **Screenshot / Game View** | `screenshot-game-view` | hidden | Capture the Unity Editor Game View. |
 | **Screenshot / Camera** | `screenshot-camera` | hidden | Capture a camera's view as an image. |
 
+All four take an optional `savePath`, for when the user wants the picture as a file. The PNG is also written inside the project and the result says `Saved to <absolute path>`; the image is still returned. `Screenshots/shot.png` stays a plain file; a path under `Assets/` is imported at once as a Unity asset with a `.meta`. Refused: anything outside the project (`..`, other absolute paths, a symlink or junction in the path), Unity's own folders (`Library`, `Temp`, `Logs`, `obj`, `Packages`, `ProjectSettings`, `UserSettings`), a name other than `.png`, and an existing file (it never overwrites).
+
 ## 📜 Scripting & Tests
 | Tool | ID | Default | Description |
 | :--- | :--- | :--- | :--- |

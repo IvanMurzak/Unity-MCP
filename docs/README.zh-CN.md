@@ -117,6 +117,7 @@ unity-mcp-cli open ./MyUnityProject
 - `screenshot-scene-view` — 从 Unity 编辑器场景视图捕获截图（默认隐藏）
 - `screenshot-game-view` — 从 Unity 编辑器游戏视图捕获截图（默认隐藏）
 - `screenshot-camera` — 从摄像机捕获截图并以图像形式返回（默认隐藏）
+- 这四个工具都接受可选的 `savePath`，用于用户需要图片文件的情况：PNG 还会写入项目内（绝不覆盖现有文件），结果中显示 `Saved to <绝对路径>`；位于 `Assets/` 下时会作为 Unity 资源导入
 
 </details>
 

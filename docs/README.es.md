@@ -117,6 +117,7 @@ Visibles para el agente de IA por defecto: `rql-query`, `rql-mutate`, `rql-schem
 - `screenshot-scene-view` - Captura una captura de pantalla de la vista de escena del Unity Editor (oculta por defecto)
 - `screenshot-game-view` - Captura una captura de pantalla de la vista de juego del Unity Editor (oculta por defecto)
 - `screenshot-camera` - Captura una captura de pantalla desde una cámara y la devuelve como imagen (oculta por defecto)
+- Las cuatro aceptan un `savePath` opcional, para cuando el usuario quiere la imagen como archivo: el PNG también se escribe dentro del proyecto (nunca sobre un archivo existente) y el resultado indica `Saved to <ruta absoluta>`; bajo `Assets/` se importa como un asset de Unity
 
 </details>
 
