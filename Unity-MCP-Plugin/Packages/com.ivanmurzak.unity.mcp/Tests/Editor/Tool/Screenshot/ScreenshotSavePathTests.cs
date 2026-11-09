@@ -78,6 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 ["Assets/Deep/Er/shot.png"] = "Assets/Deep/Er/shot.png",
                 ["  shot.png  "] = "shot.png",
                 ["Library.png"] = "Library.png",
+                ["~x/shot.png"] = "~x/shot.png",
                 [_root + "/Abs/shot.png"] = "Abs/shot.png",
                 [_root + "//Abs//shot.png"] = "Abs/shot.png",
             };
@@ -104,7 +105,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 // No file name
                 ".png", "..png", "Screenshots/..png",
                 // Not a PNG, or a name Windows treats differently from how it reads
-                "shot.jpg", "shot.png.jpg", "shot.png:stream", "shot.png.", "shot.png ./x", "sh*ot.png", "sh?ot.png", "NUL.png", "COM1/shot.png",
+                "shot.jpg", "shot.png.jpg", "shot.png:stream", "shot.png.", "shot.png ./x", "sh*ot.png", "sh?ot.png", "NUL.png", "NUL .png", "COM1/shot.png", "COM¹.png",
+                new string('b', 300) + ".png",
                 // Unity's own folders
                 "Library/shot.png", "library/shot.png", "Temp/shot.png", "Logs/a/shot.png", "obj/shot.png", "Packages/shot.png",
                 "ProjectSettings/shot.png", "UserSettings/shot.png", _root + "/Temp/shot.png", "Assets/../Temp/shot.png",
@@ -132,6 +134,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void CheckSavePath_OtherCaseOfAnExistingFolder_UsesTheSpellingOnDisk()
         {
+            if (Application.platform == RuntimePlatform.OSXEditor)
+                Assert.Ignore("Not checked on macOS: the file system ignores case there, but the Mono name match may not.");
+
             Directory.CreateDirectory(_root + "/Assets/Textures");
             var expected = Directory.Exists(_root + "/assets") // the file system ignores case, as on Windows and by default on macOS
                 ? _root + "/Assets/Textures/shot.png"
@@ -246,18 +251,53 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [Test]
-        public void CaptureResult_ExistingFile_IsNeverOverwritten()
+        public void CaptureResult_FileAppearedDuringTheCapture_IsNeverOverwritten()
         {
-            // What decides this is the write itself: the file can appear after the path was checked, during the capture.
-            var full = _root + "/shot.png";
-            var original = new byte[] { 1, 2, 3 };
-            File.WriteAllBytes(full, original);
+            var folder = ProjectFolder("McpSavePathTests_" + Guid.NewGuid().ToString("N"));
+            Directory.CreateDirectory(folder);
+            try
+            {
+                var full = folder + "/shot.png";
+                var original = new byte[] { 1, 2, 3 };
+                File.WriteAllBytes(full, original);
 
-            var result = Tool_Screenshot.CaptureResult(TinyPng, "caption", full);
+                var result = Tool_Screenshot.CaptureResult(TinyPng, "caption", full);
 
-            Assert.AreEqual(ResponseStatus.Error, result.Status);
-            StringAssert.Contains("never overwrites", TextOf(result));
-            CollectionAssert.AreEqual(original, File.ReadAllBytes(full));
+                Assert.AreEqual(ResponseStatus.Error, result.Status);
+                StringAssert.Contains("never overwrites", TextOf(result));
+                CollectionAssert.AreEqual(original, File.ReadAllBytes(full));
+            }
+            finally
+            {
+                Directory.Delete(folder, recursive: true);
+            }
+        }
+
+        [Test]
+        public void CaptureResult_LinkAppearedDuringTheCapture_WritesNothing()
+        {
+            var folder = ProjectFolder("McpSavePathTests_" + Guid.NewGuid().ToString("N"));
+            var outside = _root + "-outside";
+            Directory.CreateDirectory(folder);
+            Directory.CreateDirectory(outside);
+            try
+            {
+                CreateDirectoryLink(folder + "/Later", outside);
+
+                var result = Tool_Screenshot.CaptureResult(TinyPng, "caption", folder + "/Later/shot.png");
+
+                Assert.AreEqual(ResponseStatus.Error, result.Status);
+                StringAssert.Contains("is a link", TextOf(result));
+                Assert.IsEmpty(Directory.GetFileSystemEntries(outside));
+            }
+            finally
+            {
+                // Link first: a recursive delete of the link's parent must never reach through to the target.
+                if (Directory.Exists(folder + "/Later"))
+                    Directory.Delete(folder + "/Later");
+                Directory.Delete(folder, recursive: true);
+                Directory.Delete(outside, recursive: true);
+            }
         }
 
         // Stays in the JSON path an agent uses, and runs without a device: a bad path comes back before any graphics check.
@@ -406,12 +446,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             CollectionAssert.AreEqual(bytes, File.ReadAllBytes(_full));
         }
 
-        void AssertDefaultUnchanged(ResponseCallTool result)
+        void AssertDefaultUnchanged(Func<ResponseCallTool> capture)
         {
+            var before = Directory.GetFileSystemEntries(UnityMcpPluginEditor.ProjectRootPath);
+            var result = capture();
+
+            CollectionAssert.AreEquivalent(before, Directory.GetFileSystemEntries(UnityMcpPluginEditor.ProjectRootPath), "Nothing new in the project root");
             Assert.AreEqual(ResponseStatus.Success, result.Status, ScreenshotSavePathTests.TextOf(result));
             Assert.IsNotNull(ScreenshotSavePathTests.ImageOf(result));
             StringAssert.DoesNotContain("Saved to", ScreenshotSavePathTests.TextOf(result));
-            Assert.IsFalse(Directory.Exists(_folder));
         }
 
         [Test]
@@ -425,7 +468,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ScreenshotCamera_NoSavePath_IsUnchanged()
         {
             CreateCamera();
-            AssertDefaultUnchanged(Tool.ScreenshotCamera(width: 64, height: 64));
+            AssertDefaultUnchanged(() => Tool.ScreenshotCamera(width: 64, height: 64));
         }
 
         [Test]
@@ -449,7 +492,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ScreenshotSceneView_NoSavePath_IsUnchanged()
         {
             OpenSceneView();
-            AssertDefaultUnchanged(Tool.ScreenshotSceneView(width: 64, height: 64));
+            AssertDefaultUnchanged(() => Tool.ScreenshotSceneView(width: 64, height: 64));
         }
 
         [Test]
@@ -463,7 +506,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ScreenshotGameView_NoSavePath_IsUnchanged()
         {
             OpenGameView();
-            AssertDefaultUnchanged(Tool.ScreenshotGameView());
+            AssertDefaultUnchanged(() => Tool.ScreenshotGameView());
         }
 
         [Test]
@@ -485,7 +528,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ScreenshotIsolated_NoSavePath_IsUnchanged()
         {
             var cube = CreateCube();
-            AssertDefaultUnchanged(Tool.ScreenshotIsolated(gameObjectRef: cube, resolution: 64));
+            AssertDefaultUnchanged(() => Tool.ScreenshotIsolated(gameObjectRef: cube, resolution: 64));
         }
     }
 }

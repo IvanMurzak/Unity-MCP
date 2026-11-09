@@ -257,6 +257,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 RenderTexture? renderTexture = null;
                 Texture2D? readbackTexture = null;
                 var prevActiveRT = RenderTexture.active;
+                byte[] pngBytes;
 
                 try
                 {
@@ -279,7 +280,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     // other modes; alpha is simply ignored when clearFlags fills it opaque.
                     var rtFormat = RenderTextureFormat.ARGB32;
 
-                    byte[] pngBytes;
                     if (resolvedCameraView == CameraView.Composite)
                     {
                         pngBytes = RenderComposite(
@@ -318,8 +318,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                             out readbackTexture);
                     }
 
-                    return CaptureResult(pngBytes,
-                        $"Isolated screenshot of '{target.name}' ({resolvedCameraView}, {resolvedResolution}x{resolvedResolution}, isolated={resolvedIsolated}, backgroundMode={resolvedBackgroundMode})", saveTo);
                 }
                 finally
                 {
@@ -347,6 +345,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                         UnityEngine.Object.DestroyImmediate(renderTexture);
                     }
                 }
+
+                // After the restore above: saving under Assets/ imports the file, and an AssetPostprocessor may look at the scene.
+                return CaptureResult(pngBytes,
+                    $"Isolated screenshot of '{target.name}' ({resolvedCameraView}, {resolvedResolution}x{resolvedResolution}, isolated={resolvedIsolated}, backgroundMode={resolvedBackgroundMode})", saveTo);
             });
         }
 

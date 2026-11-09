@@ -44,7 +44,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         private static readonly string[] UnityOwnedFolders = { "Library", "Temp", "Logs", "obj", "Packages", "ProjectSettings", "UserSettings" };
 
         // Names Windows reserves for devices, extension or not: on older versions NUL.png writes nowhere and raises no error.
-        private static readonly Regex WindowsDeviceName = new Regex(@"^(CON|PRN|AUX|NUL|COM\d|LPT\d)(\..*)?$", RegexOptions.IgnoreCase);
+        private static readonly Regex WindowsDeviceName = new Regex(@"^(CON|PRN|AUX|NUL|COM[\d¹²³]|LPT[\d¹²³]) *(\..*)?$", RegexOptions.IgnoreCase);
 
         private static StringComparison PathComparison =>
             Path.DirectorySeparatorChar == '\\' ? StringComparison.OrdinalIgnoreCase : StringComparison.Ordinal;
@@ -61,16 +61,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             fullPath = null;
             if (string.IsNullOrWhiteSpace(savePath))
                 return null;
+            try
+            {
+                return JudgeSavePath(savePath!, projectRoot, out fullPath);
+            }
+            catch (Exception ex) when (IsFileSystemFailure(ex))
+            {
+                return $"Cannot save to '{savePath}': {ex.Message}";
+            }
+        }
 
+        private static bool IsFileSystemFailure(Exception ex) =>
+            ex is IOException or UnauthorizedAccessException or ArgumentException or NotSupportedException;
+
+        private static string? JudgeSavePath(string savePath, string projectRoot, out string? fullPath)
+        {
+            fullPath = null;
             var root = WithForwardSlashes(projectRoot);
             string Refuse(string why) => $"Cannot save to '{savePath}': {why}";
             string RefuseOutside() => Refuse($"it must stay inside the project folder {root}. Pass a path relative to it, such as Screenshots/shot.png.");
             const string fileNameExample = "add a file name, such as Screenshots/shot.png.";
 
-            var path = savePath!.Trim().Replace('\\', '/');
+            var path = savePath.Trim().Replace('\\', '/');
             if (path.Equals(root, PathComparison) || path.StartsWith(root + "/", PathComparison))
                 path = path.Substring(root.Length);
-            else if (path.StartsWith("/") || path.StartsWith("~") || path.Contains(":")) // rooted, UNC, home, drive, NTFS stream
+            else if (path.StartsWith("/") || path == "~" || path.StartsWith("~/") || path.Contains(":")) // rooted, UNC, home, drive, NTFS stream
                 return RefuseOutside();
 
             var parts = path.Split(new[] { '/' }, StringSplitOptions.RemoveEmptyEntries);
@@ -103,13 +118,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (extension.Length > 0 && !extension.Equals(PngExtension, StringComparison.OrdinalIgnoreCase))
                 return Refuse("the capture is a PNG, so the file name must end in .png.");
 
-            if (kept.Count > 1 && UnityOwnedFolders.Contains(kept[0], StringComparer.OrdinalIgnoreCase))
-                return Refuse($"{kept[0]}/ belongs to Unity, which may delete or rewrite what is in it. Use another folder, such as Screenshots/shot.png.");
-
             var full = root;
-            foreach (var part in kept)
+            for (var i = 0; i < kept.Count; i++)
             {
-                full += "/" + SpelledAsOnDisk(full, part);
+                var spelled = SpelledAsOnDisk(full, kept[i]);
+                // On the spelling on disk: that is what turns an 8.3 alias such as PROJEC~1 into the folder it names.
+                if (i == 0 && kept.Count > 1 && UnityOwnedFolders.Contains(spelled, StringComparer.OrdinalIgnoreCase))
+                    return Refuse($"{spelled}/ belongs to Unity, which may delete or rewrite what is in it. Use another folder, such as Screenshots/shot.png.");
+                full += "/" + spelled;
                 if (IsLink(full))
                     return Refuse($"{full} is a link (a symlink or a junction), which may lead out of the project. Use a real folder inside it.");
             }
@@ -162,7 +178,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         {
             if (saveTo != null)
             {
-                var writeError = WriteCapture(saveTo, png);
+                // Judged again: a link can take a folder's place while the capture renders, and CreateNew only protects the last name.
+                var writeError = CheckSavePath(saveTo, UnityMcpPluginEditor.ProjectRootPath, out _) ?? WriteCapture(saveTo, png);
                 if (writeError != null)
                     return ResponseCallTool.Error(writeError);
                 caption += $"\nSaved to {saveTo}{ImportIfAsset(saveTo)}";
@@ -181,7 +198,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 // CreateNew and not a check before the write: the file can appear while the capture renders.
                 stream = new FileStream(fullPath, FileMode.CreateNew, FileAccess.Write);
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (IsFileSystemFailure(ex))
             {
                 return File.Exists(fullPath)
                     ? $"{fullPath} already exists and a capture never overwrites one; nothing was saved."
@@ -192,11 +209,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             {
                 using (stream)
                     stream.Write(png, 0, png.Length);
-                return null;
+                // A write to a device succeeds and leaves no file; "Saved to" must not be claimed then.
+                return File.Exists(fullPath) ? null : CouldNotWrite(new IOException("no file appeared"));
             }
-            catch (Exception ex) when (ex is IOException or UnauthorizedAccessException)
+            catch (Exception ex) when (IsFileSystemFailure(ex))
             {
-                File.Delete(fullPath); // this call created it, and a partial PNG is worse than none
+                try
+                {
+                    File.Delete(fullPath); // this call created it, and a partial PNG is worse than none
+                }
+                catch (Exception deleteEx) when (IsFileSystemFailure(deleteEx))
+                {
+                    return $"{CouldNotWrite(ex)} A partial file may remain there.";
+                }
                 return CouldNotWrite(ex);
             }
         }
