@@ -10,7 +10,8 @@ import type { CommandOutput, EnvelopeError } from './output.js';
 const DIALOG_SUSPECTS: ReadonlySet<ExitCodeValue> = new Set([ExitCode.Timeout, ExitCode.Busy, ExitCode.Unreachable]);
 
 /**
- * The modal dialogs of the project's running editor (Windows). A `-batchmode` editor never shows one, so it is not
+ * The modal dialogs of the project's running editor (Windows, macOS; an error such as a missing macOS
+ * Accessibility permission counts as none). A `-batchmode` editor never shows one, so it is not
  * scanned.
  */
 export async function findBlockingDialogs(projectPath: string): Promise<EditorDialog[]> {

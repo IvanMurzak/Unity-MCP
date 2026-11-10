@@ -668,7 +668,15 @@ timeout, `18` a modal dialog blocks the editor. Diagnostics go to stderr in the 
 A modal dialog (a save prompt, "Enter Safe Mode?", `EditorUtility.DisplayDialog`) blocks the editor's main thread, so
 every tool call waits until someone answers it. `dialog` lists the dialogs of the project's editor and can press a
 button. `status`, `run-tool`, `exec`, `compile` and `wait-for-ready` report such a dialog as exit code `18`
-(`AWAITING_INPUT`) instead of a plain timeout. Windows only; a headless (`-batchmode`) editor never shows dialogs.
+(`AWAITING_INPUT`) instead of a plain timeout. Windows and macOS; a headless (`-batchmode`) editor never shows dialogs.
+
+| Platform | How | Requirement |
+|---|---|---|
+| **Windows** | Win32 (`EnumWindows`, `BM_CLICK`) through PowerShell | None |
+| **macOS** | System Events UI scripting through `osascript -l JavaScript`: the editor's dialog windows and sheets, their texts and buttons | **Accessibility permission** for the app that runs the CLI (your terminal or AI agent app): System Settings → Privacy & Security → Accessibility. Without it `dialog` fails with that hint, and the exit-18 check finds no dialogs. |
+
+A dialog id comes from the list and stays the same while that dialog is open (Windows: its window handle; macOS: a
+hash of its pid, title, text and buttons). The button label is never put into a script, only passed as data.
 
 ```bash
 unity-mcp-cli dialog ./MyGame                          # list: title and buttons

@@ -26,7 +26,7 @@ export const statusCommand = new Command('status')
   .option('--token <token>', 'Bearer token override (bypasses config)')
   .option('--timeout <ms>', 'Probe timeout in milliseconds (default: 5000)', '5000')
   .option('--format <format>', FORMAT_OPTION_DESCRIPTION, 'text')
-  .addHelpText('after', '\nExit codes: 0 the MCP server answers, 7 it does not, 18 the editor is blocked by a modal dialog (Windows).')
+  .addHelpText('after', '\nExit codes: 0 the MCP server answers, 7 it does not, 18 the editor is blocked by a modal dialog (Windows, macOS).')
   .action(async (positionalPath: string | undefined, options: StatusOptions) => {
     // Explicitly typed: `out.fail` returns `never`, which narrows only through a declared type.
     const out: CommandOutput = new CommandOutput('status', parseFormat(options.format));

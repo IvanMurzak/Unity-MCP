@@ -68,9 +68,9 @@ describe('envelope', () => {
 });
 
 describe('editor dialogs', () => {
-  it('is Windows-only', async () => {
+  it('is Windows and macOS only', async () => {
     expect(await listEditorDialogs([1], 'linux')).toEqual({ kind: 'unsupported', platform: 'linux' });
-    expect(await pressEditorDialogButton([1], 'OK', undefined, 'darwin')).toEqual({ kind: 'unsupported', platform: 'darwin' });
+    expect(await pressEditorDialogButton([1], 'OK', undefined, 'linux')).toEqual({ kind: 'unsupported', platform: 'linux' });
   });
 
   it('parses the helper output', () => {

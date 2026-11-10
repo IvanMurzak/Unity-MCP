@@ -14,7 +14,7 @@ interface DialogCliOptions {
 }
 
 export const dialogCommand = new Command('dialog')
-  .description('List the modal dialogs blocking the project\'s Unity Editor, or press a button on one (Windows)')
+  .description('List the modal dialogs blocking the project\'s Unity Editor, or press a button on one (Windows, macOS)')
   .argument('[path]', 'Unity project path (default: current directory)')
   .option('--path <path>', 'Unity project path')
   .option('--press <button>', 'Press the button with this label (case-insensitive)')
@@ -31,7 +31,7 @@ export const dialogCommand = new Command('dialog')
 
     if (options.press !== undefined) {
       const pressed = await pressEditorDialogButton([proc.pid], options.press, options.id);
-      if (pressed.kind === 'unsupported') out.fail(ExitCode.CommandFailed, { code: 'UNSUPPORTED_PLATFORM', message: `Dialog control is supported on Windows only (this is ${pressed.platform}).` });
+      if (pressed.kind === 'unsupported') out.fail(ExitCode.CommandFailed, { code: 'UNSUPPORTED_PLATFORM', message: `Dialog control is supported on Windows and macOS only (this is ${pressed.platform}).` });
       if (pressed.kind !== 'pressed') out.fail(ExitCode.CommandFailed, { code: pressed.kind === 'not-found' ? 'NOT_FOUND' : 'DIALOG_ERROR', message: pressed.message });
       if (!out.machine) ui.success(`Pressed "${pressed.button}".`);
       out.succeed({ pid: proc.pid, pressed: pressed.button });
@@ -39,7 +39,7 @@ export const dialogCommand = new Command('dialog')
     }
 
     const listed = await listEditorDialogs([proc.pid]);
-    if (listed.kind === 'unsupported') out.fail(ExitCode.CommandFailed, { code: 'UNSUPPORTED_PLATFORM', message: `Dialog detection is supported on Windows only (this is ${listed.platform}).` });
+    if (listed.kind === 'unsupported') out.fail(ExitCode.CommandFailed, { code: 'UNSUPPORTED_PLATFORM', message: `Dialog detection is supported on Windows and macOS only (this is ${listed.platform}).` });
     if (listed.kind === 'error') out.fail(ExitCode.CommandFailed, { code: 'DIALOG_ERROR', message: listed.message });
     if (!out.machine) {
       if (listed.dialogs.length === 0) ui.success(`No modal dialog blocks the editor (PID ${proc.pid}).`);
