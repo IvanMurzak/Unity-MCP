@@ -25,74 +25,67 @@ function isTTY(): boolean {
   return !!process.stdout.isTTY;
 }
 
-/**
- * Draw a Unicode rounded box around text with cyan borders.
- */
-function drawBox(text: string): string {
-  const lines = text.split('\n');
-  const padding = 2;
-  const maxLen = Math.max(...lines.map(l => stripAnsi(l).length));
-  const innerWidth = maxLen + padding * 2;
-  const pad = ' '.repeat(padding);
-
-  const top = chalk.cyan('╭' + '─'.repeat(innerWidth) + '╮');
-  const bottom = chalk.cyan('╰' + '─'.repeat(innerWidth) + '╯');
-  const middle = lines.map(l => {
-    const visible = stripAnsi(l).length;
-    const right = ' '.repeat(maxLen - visible);
-    return chalk.cyan('│') + pad + l + right + pad + chalk.cyan('│');
-  });
-
-  return [top, ...middle, bottom].join('\n');
-}
-
-/**
- * Strip ANSI escape codes from a string.
- */
-function stripAnsi(str: string): string {
-  // eslint-disable-next-line no-control-regex
-  return str.replace(/\x1B\[[0-9;]*m/g, '');
-}
-
-/** The everyday workflow shown under the root help, so a newcomer (or an AI agent) knows where to start. */
-export const ROOT_HELP_WORKFLOW: ReadonlyArray<[string, string]> = [
-  ['unity-mcp-cli tools', 'List the editor\'s AI tools (scene, assets, tests, screenshots, ...)'],
-  ['unity-mcp-cli tools <name>', 'One tool: what it does, its inputs, an example call'],
-  ['unity-mcp-cli run-tool <name> --input \'<json>\'', 'Call an AI tool'],
-  ['unity-mcp-cli exec \'<C# code>\'', 'Run C# in the editor (the last expression is the result)'],
-  ['unity-mcp-cli compile', 'Check that the scripts compile (file:line errors)'],
-  ['unity-mcp-cli test', 'Run the Unity tests (no plugin needed)'],
-  ['unity-mcp-cli status', 'Is the editor running and reachable?'],
-  ['unity-mcp-cli close', 'Close the editor the CLI started'],
+/** The root help's featured commands: how an agent gets from nothing to a working call. */
+const ROOT_EDITOR_COMMANDS: ReadonlyArray<readonly [string, string, string]> = [
+  ['rql', "rql '<query>'", 'read or change scenes, GameObjects, components, assets (RQL; recipes below)'],
+  ['exec', "exec '<C# code>'", 'C# in the editor (the last expression is the result)'],
+  ['tools', 'tools [name]', "the editor's AI tools, or one in detail; run-tool <name> --input '<json>' calls one"],
 ];
+const ROOT_CODE_COMMANDS: ReadonlyArray<readonly [string, string, string]> = [
+  ['compile', 'compile', 'check that the scripts compile (file:line errors)'],
+  ['test', 'test', 'run the Unity tests (no plugin needed)'],
+];
+/** How many of `rql --help`'s recipes the root help shows. */
+const ROOT_RQL_RECIPES = 6;
+
+/** RQL recipes: [query, what it does]. */
+export type RqlRecipes = ReadonlyArray<readonly [string, string]>;
+
+/**
+ * The root help: short on purpose (agents read it first, and every later turn re-reads it): the everyday commands, the
+ * other command names, and the RQL recipes most tasks need. Each command's own --help has the details.
+ */
+function formatRootHelp(target: Command, helper: Help, appVersion: string | undefined, recipes: RqlRecipes): string {
+  const name = target.name();
+  const featured = new Set([...ROOT_EDITOR_COMMANDS, ...ROOT_CODE_COMMANDS].map(([cmd]) => cmd));
+  const row = ([, usage, what]: readonly [string, string, string]) => `  ${chalk.yellow(usage.padEnd(26))} ${chalk.dim(what)}`;
+  const others = helper.visibleCommands(target).map((c) => c.name()).filter((c) => !featured.has(c) && c !== 'help');
+  const lines = [
+    `${chalk.bold.cyan('Unity-MCP CLI')}${appVersion ? ` v${appVersion}` : ''}: drive the Unity Editor of the project in the current folder (or --path <dir>).`,
+    '',
+    chalk.bold('Editor work (the first call starts a headless editor and keeps it warm; no open / status needed):'),
+    ...ROOT_EDITOR_COMMANDS.map(row),
+    chalk.bold('Code:'),
+    ...ROOT_CODE_COMMANDS.map(row),
+    `${chalk.bold('More commands:')} ${others.join(' ')}`,
+  ];
+  if (recipes.length > 0) {
+    lines.push('', chalk.bold('RQL recipes (strings inside the query take double quotes; a set / call is saved to disk at once):'));
+    for (const [query, what] of recipes.slice(0, ROOT_RQL_RECIPES)) lines.push(`  ${chalk.yellow(`rql '${query}'`)}  ${chalk.dim(`# ${what}`)}`);
+  }
+  lines.push(
+    '',
+    chalk.dim(`Details: ${name} <command> --help (rql --help: operators, more recipes). Machine-readable output: --format json.`),
+    '',
+  );
+  return lines.join('\n');
+}
 
 /**
  * Apply styled help formatting to a Commander command.
  * Call this on every Command instance (root and subcommands)
  * so that --help / -h always renders the fancy UI.
  *
- * @param appVersion - The CLI version string, shown in the root banner.
+ * @param appVersion - The CLI version string, shown in the root help.
  */
-export function configureStyledHelp(cmd: Command, appVersion?: string): Command {
+export function configureStyledHelp(cmd: Command, appVersion?: string, rootRecipes: RqlRecipes = []): Command {
   cmd.configureHelp({
     formatHelp(target: Command, helper: Help): string {
-      const isRoot = !target.parent;
+      if (!target.parent) return formatRootHelp(target, helper, appVersion, rootRecipes);
       const lines: string[] = [];
 
-      // Banner for root, styled title for subcommands
-      if (isRoot && appVersion) {
-        lines.push(
-          drawBox(
-            `${chalk.bold.cyan('Unity-MCP CLI')}  ${chalk.dim(`v${appVersion}`)}\n${chalk.dim('Bridge LLMs with Unity via Model Context Protocol')}`
-          )
-        );
-      } else {
-        lines.push(
-          drawBox(
-            `${chalk.bold.cyan(target.name())} ${chalk.dim('\u2014')} ${target.description()}`
-          )
-        );
-      }
+      // A plain line, not a box: agents read this help, and box borders cost as much as the text again.
+      lines.push(`${chalk.bold.cyan(target.name())} ${chalk.dim('\u2014')} ${target.description()}`);
       lines.push('');
 
       // Usage
@@ -126,23 +119,6 @@ export function configureStyledHelp(cmd: Command, appVersion?: string): Command 
         for (const opt of options) {
           lines.push(`  ${chalk.green(helper.optionTerm(opt).padEnd(30))} ${chalk.dim(helper.optionDescription(opt))}`);
         }
-        lines.push('');
-      }
-
-      // Footer
-      if (isRoot) {
-        lines.push(chalk.bold('Working in a project (run these inside it; the editor is started headless when needed):'));
-        for (const [cmdLine, what] of ROOT_HELP_WORKFLOW) {
-          lines.push(`  ${chalk.yellow(cmdLine.padEnd(48))} ${chalk.dim(what)}`);
-        }
-        lines.push('');
-        lines.push(
-          chalk.dim('Run ') +
-          chalk.yellow('unity-mcp-cli <command> --help') +
-          chalk.dim(' for detailed usage of each command; ') +
-          chalk.yellow('unity-mcp-cli commands --format json') +
-          chalk.dim(' for all of them, machine-readable.')
-        );
         lines.push('');
       }
 

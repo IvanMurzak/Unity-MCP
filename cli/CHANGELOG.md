@@ -16,6 +16,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`rql '<query>'`: one RQL query without JSON quoting.** A query ending in `set` / `call` goes to `rql-mutate`
+  (`--dry-run`, `--max-targets`), any other to `rql-query`; `--schema [type]` runs `rql-schema`; `-f <file>` / `-f -`
+  reads the query (a shell may strip the inner quotes). After a change it lists the scene / asset / settings files
+  written (Unity saves at once), and an operator spelled as in another language (`startsWith`, `like`) gets a hint.
+- **A shorter root `--help` (4.4 KB -> 1.8 KB)**: the everyday commands, the other command names and six RQL recipes;
+  a subcommand's help starts with a plain line instead of a box.
 - **`test`: Unity tests in a batch-mode editor, no plugin needed.** Runs Unity's own `-runTests` (`--mode`,
   `--filter`, `--category`, `--assembly`, extra editor args after `--`) and takes the verdict from the NUnit report:
   exit 0 passed, 8 failed, 6 no verdict (compile errors listed as `file(line,col): error CS…`, a crash, the project

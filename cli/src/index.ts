@@ -14,6 +14,7 @@ import { installPluginCommand } from './commands/install-plugin.js';
 import { loginCommand } from './commands/login.js';
 import { configureCommand } from './commands/configure.js';
 import { removePluginCommand } from './commands/remove-plugin.js';
+import { RQL_RECIPES, rqlCommand } from './commands/rql.js';
 import { runToolCommand } from './commands/run-tool.js';
 import { runSystemToolCommand } from './commands/run-system-tool.js';
 import { setupMcpCommand } from './commands/setup-mcp.js';
@@ -54,6 +55,7 @@ const subcommands = [
   loginCommand,
   openCommand,
   removePluginCommand,
+  rqlCommand,
   runToolCommand,
   runSystemToolCommand,
   setupMcpCommand,
@@ -84,8 +86,8 @@ for (const cmd of subcommands) {
 }
 program.exitOverride(exitOnParseError);
 
-// Apply styled help to root (after subcommands so banner knows about them)
-configureStyledHelp(program, pkg.version);
+// Apply styled help to root (after the subcommands: the root help names them)
+configureStyledHelp(program, pkg.version, RQL_RECIPES);
 
 // Wire verbose flag before any command executes
 program.hook('preAction', (_thisCommand, actionCommand) => {

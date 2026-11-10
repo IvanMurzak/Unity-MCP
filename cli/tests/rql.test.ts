@@ -1,0 +1,87 @@
+import { afterEach, describe, expect, it } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import { assetsWrittenSince, decodeQueryFile, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlToolCall, saveReceipt, stripToolName } from '../src/lib/rql.js';
+
+const dirs: string[] = [];
+afterEach(() => {
+  for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
+});
+
+describe('rql query routing', () => {
+  it('splits stages only on top-level pipes', () => {
+    expect(rqlStages('objects | where name == "a|b" | select [1, (2 | 3)]')).toEqual(['objects', 'where name == "a|b"', 'select [1, (2 | 3)]']);
+  });
+
+  it('sends a query ending in set / call to rql-mutate, any other to rql-query', () => {
+    expect(isRqlMutation('objects | where name starts-with "Tree" | set active = false')).toBe(true);
+    expect(isRqlMutation('editor | call OpenScene("Assets/Scenes/A.unity")')).toBe(true);
+    expect(isRqlMutation('objects | where name starts-with "Tree" | count')).toBe(false);
+    expect(isRqlMutation('objects | where name == "set | call" | select name')).toBe(false);
+  });
+
+  it('drops a pasted tool name only at the start', () => {
+    expect(stripToolName('rql-query console | count')).toBe('console | count');
+    expect(stripToolName('objects | where name == "rql-query"')).toBe('objects | where name == "rql-query"');
+  });
+});
+
+describe('rqlErrorHint', () => {
+  it('names the RQL spelling of an operator from another language', () => {
+    expect(rqlErrorHint('rql-query', "error syntax-error: unexpected 'startsWith' in 'where' stage at 21")).toMatch(/starts-with/);
+    expect(rqlErrorHint('rql-query', "error syntax-error: unexpected 'like' in 'where' stage")).toMatch(/no like/);
+    expect(rqlErrorHint('rql-query', "error unknown-source: unknown source 'object'")).toBeUndefined();
+    expect(rqlErrorHint('script-execute', "unexpected 'startsWith'")).toBeUndefined();
+  });
+});
+
+describe('assetsWrittenSince', () => {
+  it('lists the scene / asset files under Assets written since a time', () => {
+    const project = fs.mkdtempSync(path.join(os.tmpdir(), 'rql-unity-'));
+    dirs.push(project);
+    const scenes = path.join(project, 'Assets', 'Scenes');
+    fs.mkdirSync(scenes, { recursive: true });
+    const old = path.join(scenes, 'Old.unity');
+    fs.writeFileSync(old, '');
+    const past = new Date(Date.now() - 60_000);
+    fs.utimesSync(old, past, past);
+    const since = Date.now() - 1000;
+    fs.writeFileSync(path.join(scenes, 'Arena.unity'), '');
+    fs.writeFileSync(path.join(project, 'Assets', 'Red.mat'), '');
+    fs.writeFileSync(path.join(scenes, 'Arena.unity.meta'), '');
+    expect(assetsWrittenSince(project, since)).toEqual(['Assets/Red.mat', 'Assets/Scenes/Arena.unity']);
+  });
+});
+
+describe('rqlToolCall', () => {
+  it('routes a query, and refuses a query with --schema or a read-only query with mutate flags', () => {
+    expect(rqlToolCall('objects | count', {})).toEqual({ toolName: 'rql-query', input: { query: 'objects | count' } });
+    expect(rqlToolCall('objects | set active = false', { dryRun: true, maxTargets: 300 }))
+      .toEqual({ toolName: 'rql-mutate', input: { query: 'objects | set active = false', dry_run: true, max_targets: 300 } });
+    expect(rqlToolCall(undefined, { schema: 'Light' })).toEqual({ toolName: 'rql-schema', input: { type: 'Light' } });
+    expect(rqlToolCall('objects | count', { schema: true })).toHaveProperty('usage');
+    expect(rqlToolCall(undefined, { schema: 'objects | count' })).toHaveProperty('usage');
+    expect(rqlToolCall('objects | count', { dryRun: true })).toHaveProperty('usage');
+    expect(rqlToolCall(undefined, {})).toHaveProperty('usage');
+  });
+
+  it('reads || as or and decodes a UTF-16 query file', () => {
+    expect(rqlLastVerb('objects | where name == "a" || name == "b" | set active = false')).toBe('set');
+    const text = 'objects | count';
+    expect(decodeQueryFile(Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, 'utf16le')]))).toBe(text);
+  });
+
+  it('treats backtick identifiers as opaque', () => {
+    expect(rqlLastVerb("objects | where `Bob's` == 1 | set active = false")).toBe('set');
+  });
+});
+
+describe('saveReceipt', () => {
+  it('names the files written; a call that wrote nothing says nothing, a set says so', () => {
+    expect(saveReceipt(['Assets/A.unity'], 'set')).toBe('Saved to disk: Assets/A.unity');
+    expect(saveReceipt(['a', 'b', 'c'], 'set', 2)).toBe('Saved to disk: a, b, +1 more');
+    expect(saveReceipt([], 'call')).toBeUndefined();
+    expect(saveReceipt([], 'set')).toMatch(/No scene, asset or settings file/);
+  });
+});

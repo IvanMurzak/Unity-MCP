@@ -13,8 +13,9 @@ import { isLoopbackUrl } from '../lib/editor-session.js';
 import { readToolResponse } from '../lib/exec.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from '../lib/types.js';
 import { parsePositiveIntFlag } from './open.js';
+import { rqlErrorHint } from '../lib/rql.js';
 
-interface BuilderOptions {
+export interface BuilderOptions {
   /** CLI subcommand name, e.g. `'run-tool'`. */
   name: string;
   /** `description()` text for the commander command. */
@@ -36,7 +37,10 @@ interface BuilderOptions {
   invoke: (opts: RunToolOptions) => Promise<RunToolResult>;
 }
 
-interface CliOptions {
+/** What `runToolAction` needs of a command: everything but its help texts. */
+export type RunToolCall = Omit<BuilderOptions, 'description' | 'argDescription'>;
+
+export interface RunToolCliOptions {
   path?: string;
   url?: string;
   token?: string;
@@ -137,115 +141,131 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
     .option('--no-start', 'Never start an editor: fail when none answers (default: start a headless one for a project with ProjectSettings/ProjectVersion.txt, unless --url names a remote server)')
     .option('--once', 'Close the editor after the call if this call started it (one-shot CI use)')
     .option('--ready-timeout <ms>', 'How long to wait for a started editor to become ready', String(DEFAULT_SESSION_READY_TIMEOUT_MS))
-    .action(async (toolName: string, positionalPath: string | undefined, options: CliOptions) => {
-      const format = parseFormat(options.format);
-      // Explicitly typed: `out.fail` returns `never`, which narrows only through a declared type.
-      const out: CommandOutput = new CommandOutput(cfg.name, format);
-      // Validate --timeout first so a bad value short-circuits before
-      // we read --input-file or hit the network.
-      const timeoutMs = parseInt(options.timeout!, 10);
-      if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
-        out.fail(ExitCode.Usage, { code: 'USAGE', message: `Invalid --timeout value: "${options.timeout}". Must be a positive integer (milliseconds).` });
-      }
-      const readyTimeoutMs = parsePositiveIntFlag(options.readyTimeout, '--ready-timeout', DEFAULT_SESSION_READY_TIMEOUT_MS);
-      const human = !options.raw && !out.machine;
+    .action((toolName: string, positionalPath: string | undefined, options: RunToolCliOptions) =>
+      runToolAction(cfg, toolName, positionalPath, options));
+}
 
-      // Resolve path + connection up front so the heading and verbose
-      // output reflect the final endpoint before the HTTP call fires.
-      const projectPath = resolveAndValidateProjectPath(positionalPath, options);
-      const conn = await resolveEditorConnection(projectPath, options);
-      const { url: resolvedUrl, token, tokenFromCloudStore } = conn;
-      if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: conn.signInRequired });
-      if (conn.localFallback) out.warn(localFallbackNote(conn.url));
-      const body = parseInput(options);
-      const authSource = options.token ? '--token flag' : 'config or machine store';
+/**
+ * Call one tool and print its answer (`run-tool`, and `rql` with the RQL tool it picks). Returns after a successful
+ * call; a failed one exits with its classified code.
+ */
+export async function runToolAction(
+  cfg: RunToolCall,
+  toolName: string,
+  positionalPath: string | undefined,
+  options: RunToolCliOptions,
+  /** After a successful call printed its answer: when the call went out, and whether the editor runs on this machine. */
+  onSuccess?: (call: { calledAt: number; local: boolean }) => void,
+): Promise<void> {
+  const format = parseFormat(options.format);
+  // Explicitly typed: `out.fail` returns `never`, which narrows only through a declared type.
+  const out: CommandOutput = new CommandOutput(cfg.name, format);
+  // Validate --timeout first so a bad value short-circuits before
+  // we read --input-file or hit the network.
+  const timeoutMs = parseInt(options.timeout!, 10);
+  if (!Number.isFinite(timeoutMs) || timeoutMs <= 0) {
+    out.fail(ExitCode.Usage, { code: 'USAGE', message: `Invalid --timeout value: "${options.timeout}". Must be a positive integer (milliseconds).` });
+  }
+  const readyTimeoutMs = parsePositiveIntFlag(options.readyTimeout, '--ready-timeout', DEFAULT_SESSION_READY_TIMEOUT_MS);
+  const human = !options.raw && !out.machine;
 
-      verbose(`${cfg.verboseLabel}: ${toolName}`);
-      verbose(`Body: ${body}`);
-      if (token) verbose(`Authorization header set (source: ${authSource})`);
+  // Resolve path + connection up front so the heading and verbose
+  // output reflect the final endpoint before the HTTP call fires.
+  const projectPath = resolveAndValidateProjectPath(positionalPath, options);
+  const conn = await resolveEditorConnection(projectPath, options);
+  const { url: resolvedUrl, token, tokenFromCloudStore } = conn;
+  if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: conn.signInRequired });
+  if (conn.localFallback) out.warn(localFallbackNote(conn.url));
+  const body = parseInput(options);
+  const authSource = options.token ? '--token flag' : 'config or machine store';
 
-      const spinner = human ? ui.startSpinner('Connecting...') : null;
-      let baseUrl = resolvedUrl;
-      let editor: { source?: string; closeIfStarted: () => Promise<number | undefined> } = { closeIfStarted: async () => undefined };
-      if (options.start !== false && canStartEditor(projectPath, options.url)) {
-        const ensured = await ensureEditor({
-          projectPath,
-          probeUrls: resolveProbeUrls(projectPath, resolvedUrl, conn.overrideUrl),
-          token,
-          overrideUrl: conn.overrideUrl,
-          overrideToken: options.token,
-          readyTimeoutMs,
-          closeOnFailure: options.once === true,
-          onStatus: message => {
-            verbose(message);
-            out.progress(message);
-            if (spinner) spinner.text = message;
-          },
-        });
-        if (ensured.kind === 'failure') {
-          spinner?.error(ensured.reason === 'launch-failed' ? 'Could not start the Unity Editor' : 'The MCP server did not answer');
-          const { exitCode, code } = classifyEditorFailure(ensured);
-          await failIfAwaitingInput(out, projectPath, exitCode);
-          out.fail(exitCode, { code, message: ensured.message }, null,
-            ensured.reason === 'not-ready' && ensured.editorSource !== 'foreign' ? PLUGIN_NOT_CONNECTED_HINT : undefined);
-        }
-        baseUrl = ensured.baseUrl;
-        editor = ensured;
-      }
-      const endpoint = `${baseUrl}${cfg.routePrefix}/${encodeURIComponent(toolName)}`;
-      verbose(`Endpoint: ${endpoint}`);
+  verbose(`${cfg.verboseLabel}: ${toolName}`);
+  verbose(`Body: ${body}`);
+  if (token) verbose(`Authorization header set (source: ${authSource})`);
 
-      spinner?.stop();
-      verbose(`${cfg.headingLabel}: ${toolName} at ${endpoint}${token ? ` (auth from ${authSource})` : ''}`);
-      out.progress(`Calling ${toolName}...`);
-      const callSpinner = human ? ui.startSpinner(`Calling ${toolName}...`) : null;
-
-      // The CLI already resolved url/token, so passing them explicitly makes the lib's resolver a no-op; the lib
-      // still refreshes a machine-store Bearer once on 401.
-      const result = await cfg.invoke({
-        toolName, url: baseUrl, ...(token ? { token } : {}), input: body, timeoutMs, tokenFromCloudStore,
-      });
-
-      const closedPid = options.once ? await editor.closeIfStarted() : undefined;
-      if (closedPid !== undefined) verbose(`Closed the editor this call started (PID ${closedPid})`);
-      const editorData = { ...(editor.source ? { source: editor.source } : {}), ...(closedPid !== undefined ? { closedPid } : {}) };
-
-      if (result.kind === 'success') {
-        const response = readToolResponse(result.data);
-        if (out.machine) {
-          if (!response.ok) {
-            out.fail(ExitCode.CommandFailed, { code: 'TOOL_FAILED', message: response.text }, { tool: toolName, result: result.data, editor: editorData });
-          }
-          out.succeed({ tool: toolName, result: result.data, editor: editorData });
-          return;
-        }
-        if (options.raw) {
-          process.stdout.write(stringifyForRaw(result.data));
-        } else {
-          // The tool's own answer as it wrote it (the JSON envelope is `--raw` / `--format json`).
-          callSpinner?.stop();
-          if (response.ok) console.log(response.text);
-          else ui.error(`${toolName} reported an error: ${response.text}`);
-        }
-        if (!response.ok) process.exit(ExitCode.CommandFailed);
-        return;
-      }
-
-      callSpinner?.stop();
-      const classified = classifyToolFailure(result);
-      await failIfAwaitingInput(out, projectPath, classified.exitCode, { tool: toolName, editor: editorData }, options.raw);
-      if (out.machine) {
-        out.fail(classified.exitCode, { code: classified.code, message: buildFailureMessage(result, { toolName, endpoint, raw: false, timeoutMs, errorNoun: cfg.errorNoun }) },
-          { tool: toolName, ...(result.data !== undefined ? { result: result.data } : {}), ...(result.httpStatus ? { httpStatus: result.httpStatus } : {}), editor: editorData });
-      }
-      handleFailure(result, {
-        toolName,
-        endpoint,
-        raw: options.raw,
-        timeoutMs,
-        errorNoun: cfg.errorNoun,
-      });
+  const spinner = human ? ui.startSpinner('Connecting...') : null;
+  let baseUrl = resolvedUrl;
+  let editor: { source?: string; closeIfStarted: () => Promise<number | undefined> } = { closeIfStarted: async () => undefined };
+  if (options.start !== false && canStartEditor(projectPath, options.url)) {
+    const ensured = await ensureEditor({
+      projectPath,
+      probeUrls: resolveProbeUrls(projectPath, resolvedUrl, conn.overrideUrl),
+      token,
+      overrideUrl: conn.overrideUrl,
+      overrideToken: options.token,
+      readyTimeoutMs,
+      closeOnFailure: options.once === true,
+      onStatus: message => {
+        verbose(message);
+        out.progress(message);
+        if (spinner) spinner.text = message;
+      },
     });
+    if (ensured.kind === 'failure') {
+      spinner?.error(ensured.reason === 'launch-failed' ? 'Could not start the Unity Editor' : 'The MCP server did not answer');
+      const { exitCode, code } = classifyEditorFailure(ensured);
+      await failIfAwaitingInput(out, projectPath, exitCode);
+      out.fail(exitCode, { code, message: ensured.message }, null,
+        ensured.reason === 'not-ready' && ensured.editorSource !== 'foreign' ? PLUGIN_NOT_CONNECTED_HINT : undefined);
+    }
+    baseUrl = ensured.baseUrl;
+    editor = ensured;
+  }
+  const endpoint = `${baseUrl}${cfg.routePrefix}/${encodeURIComponent(toolName)}`;
+  verbose(`Endpoint: ${endpoint}`);
+
+  spinner?.stop();
+  verbose(`${cfg.headingLabel}: ${toolName} at ${endpoint}${token ? ` (auth from ${authSource})` : ''}`);
+  out.progress(`Calling ${toolName}...`);
+  const callSpinner = human ? ui.startSpinner(`Calling ${toolName}...`) : null;
+
+  // The CLI already resolved url/token, so passing them explicitly makes the lib's resolver a no-op; the lib
+  // still refreshes a machine-store Bearer once on 401.
+  const calledAt = Date.now();
+  const result = await cfg.invoke({
+    toolName, url: baseUrl, ...(token ? { token } : {}), input: body, timeoutMs, tokenFromCloudStore,
+  });
+
+  const closedPid = options.once ? await editor.closeIfStarted() : undefined;
+  if (closedPid !== undefined) verbose(`Closed the editor this call started (PID ${closedPid})`);
+  const editorData = { ...(editor.source ? { source: editor.source } : {}), ...(closedPid !== undefined ? { closedPid } : {}) };
+
+  if (result.kind === 'success') {
+    const response = readToolResponse(result.data);
+    if (out.machine) {
+      if (!response.ok) {
+        out.fail(ExitCode.CommandFailed, { code: 'TOOL_FAILED', message: response.text }, { tool: toolName, result: result.data, editor: editorData });
+      }
+      out.succeed({ tool: toolName, result: result.data, editor: editorData });
+      return;
+    }
+    if (options.raw) {
+      process.stdout.write(stringifyForRaw(result.data));
+    } else {
+      // The tool's own answer as it wrote it (the JSON envelope is `--raw` / `--format json`).
+      callSpinner?.stop();
+      if (response.ok) console.log(response.text);
+      else ui.error(withRqlHint(toolName, `${toolName} reported an error: ${response.text}`));
+    }
+    if (!response.ok) process.exit(ExitCode.CommandFailed);
+    onSuccess?.({ calledAt, local: isLoopbackUrl(baseUrl) });
+    return;
+  }
+
+  callSpinner?.stop();
+  const classified = classifyToolFailure(result);
+  await failIfAwaitingInput(out, projectPath, classified.exitCode, { tool: toolName, editor: editorData }, options.raw);
+  if (out.machine) {
+    out.fail(classified.exitCode, { code: classified.code, message: buildFailureMessage(result, { toolName, endpoint, raw: false, timeoutMs, errorNoun: cfg.errorNoun }) },
+      { tool: toolName, ...(result.data !== undefined ? { result: result.data } : {}), ...(result.httpStatus ? { httpStatus: result.httpStatus } : {}), editor: editorData });
+  }
+  handleFailure(result, {
+    toolName,
+    endpoint,
+    raw: options.raw,
+    timeoutMs,
+    errorNoun: cfg.errorNoun,
+  });
 }
 
 export function stringifyForRaw(data: unknown): string {
@@ -280,6 +300,8 @@ export function handleFailure(failure: RunToolFailure, ctx: FailureContext): nev
 
 /** What to do next after a failed call, when there is a clear next step. */
 export function failureHint(failure: RunToolFailure, toolName: string): string | undefined {
+  const rqlHint = failure.reason === 'http-error' ? rqlErrorHint(toolName, serverError(failure.data) ?? '') : undefined;
+  if (rqlHint) return `hint: ${rqlHint}`;
   if (failure.reason === 'http-error' && failure.httpStatus === 404) {
     return `No tool named "${toolName}". List the available tools with: unity-mcp-cli tools`;
   }
@@ -311,4 +333,10 @@ export function buildFailureMessage(failure: RunToolFailure, ctx: FailureContext
 
 function capitalize(s: string): string {
   return s.length === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+/** `message`, with a hint for a familiar slip when an RQL tool failed. */
+function withRqlHint(toolName: string, message: string): string {
+  const hint = rqlErrorHint(toolName, message);
+  return hint ? `${message}\nhint: ${hint}` : message;
 }
