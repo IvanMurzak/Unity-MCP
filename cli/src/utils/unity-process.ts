@@ -1,4 +1,5 @@
 import { execFileSync, execSync } from 'child_process';
+import * as fs from 'fs';
 import { platform } from 'os';
 import * as path from 'path';
 import { verbose } from './ui.js';
@@ -15,12 +16,15 @@ export interface UnityProcess {
  */
 export function findUnityProcess(projectPath: string): UnityProcess | null {
   const isWindows = platform() === 'win32';
-  const resolvedTarget = path.resolve(projectPath);
-  const normalizedTarget = isWindows ? resolvedTarget.toLowerCase() : resolvedTarget;
+  const normalize = (p: string): string => {
+    const real = canonicalPath(p);
+    return isWindows ? real.toLowerCase() : real;
+  };
+  const normalizedTarget = normalize(projectPath);
   const processes = listUnityProcesses();
 
   for (const proc of processes) {
-    const normalizedProc = isWindows ? proc.projectPath.toLowerCase() : proc.projectPath;
+    const normalizedProc = normalize(proc.projectPath);
     if (normalizedProc === normalizedTarget) {
       verbose(`Found Unity process PID ${proc.pid} with project: ${proc.projectPath}`);
       return proc;
@@ -29,6 +33,19 @@ export function findUnityProcess(projectPath: string): UnityProcess | null {
 
   verbose(`No Unity process found for project: ${projectPath}`);
   return null;
+}
+
+/**
+ * The absolute path with symlinks resolved, so `/tmp/x` and `/private/tmp/x` (macOS) or a junction and its target name
+ * the same project. A path that does not exist (or cannot be read) stays as `path.resolve` gives it.
+ */
+export function canonicalPath(p: string): string {
+  const resolved = path.resolve(p);
+  try {
+    return fs.realpathSync.native(resolved);
+  } catch {
+    return resolved;
+  }
 }
 
 /**
