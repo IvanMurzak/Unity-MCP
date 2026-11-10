@@ -7,7 +7,7 @@ import { readConfig, isCloudMode } from '../utils/config.js';
 import { runCloudLogin } from '../utils/cloud-login.js';
 import { MachineCredentialStore } from '../utils/machine-credentials.js';
 import { writeCliSkills } from '../lib/setup-skills.js';
-import { CLI_SKILL_NAME } from '../lib/skill-guides.js';
+import { CLI_NAME } from '../lib/cli-guide.js';
 
 interface SetupSkillsOptions {
   url?: string;
@@ -53,13 +53,13 @@ async function callGenerateSkills(
 }
 
 export const setupSkillsCommand = new Command('setup-skills')
-  .description(`Write skill files for an AI agent: the ${CLI_SKILL_NAME} skill (offline, no editor needed) and, when the project's editor answers, the plugin's per-tool skills`)
+  .description(`Write skill files for an AI agent: the ${CLI_NAME} skill (offline, no editor needed) and, when the project's editor answers, the plugin's per-tool skills`)
   .argument('[agent-id]', 'Agent to generate skills for (use --list to see all)')
   .argument('[path]', 'Unity project path (defaults to cwd)')
   .option('--url <url>', 'Server URL override')
   .option('--token <token>', 'Auth token override')
   .option('--list', 'List all agents with skills support status')
-  .option('--offline', `Only write the ${CLI_SKILL_NAME} skill; do not ask the editor for the plugin's skills`)
+  .option('--offline', `Only write the ${CLI_NAME} skill; do not ask the editor for the plugin's skills`)
   .option('--timeout <ms>', 'Request timeout in milliseconds (default: 60000)', '60000')
   .action(
     async (
@@ -109,12 +109,12 @@ export const setupSkillsCommand = new Command('setup-skills')
       ui.heading('Generate Skills');
       ui.label('Agent', agent.name);
       ui.label('Skills path', offline.skillsDir);
-      if (offline.filesWritten.length > 0) ui.success(`Wrote the ${CLI_SKILL_NAME} skill (${offline.filesWritten.length} file(s) changed)`);
-      else ui.info(`The ${CLI_SKILL_NAME} skill is up to date`);
+      if (offline.filesWritten.length > 0) ui.success(`Wrote the ${CLI_NAME} skill (${offline.filesWritten.length} file(s) changed)`);
+      else ui.info(`The ${CLI_NAME} skill is up to date`);
       if (options.offline) return;
 
       // The plugin's per-tool skills: only an editor can generate them. A closed editor is not an error.
-      let { url: serverUrl, token } = await resolveConnection(projectPath, options);
+      const { url: serverUrl, token } = await resolveConnection(projectPath, options);
       const endpoint = `${serverUrl}/api/system-tools/unity-skill-generate`;
       verbose(`Endpoint: ${endpoint}`);
       ui.label('Server', serverUrl);
@@ -123,9 +123,9 @@ export const setupSkillsCommand = new Command('setup-skills')
       const spinner = ui.startSpinner(`Asking the editor for the plugin's skills...`);
 
       try {
-        let response = await callGenerateSkills(endpoint, token, JSON.stringify({ path: agent.skillsPath }), timeoutMs);
+        const response = await callGenerateSkills(endpoint, token, JSON.stringify({ path: agent.skillsPath }), timeoutMs);
 
-        // Handle 401 in Cloud mode
+        // 401: Cloud mode without a sign-in logs in; a rejected token or a non-cloud 401 is a note.
         if (response.status === 401) {
           await response.text();
           spinner.stop();
@@ -145,20 +145,12 @@ export const setupSkillsCommand = new Command('setup-skills')
             // Token saved. Unity Editor needs to connect with it.
             ui.info('Unity Editor must connect to the cloud server with this token.');
             ui.info('If Unity was already running, restart it to pick up the new token:');
-            console.log();
-            console.log(`  unity-mcp-cli open ${positionalPath ?? '.'}`);
-            console.log(`  unity-mcp-cli wait-for-ready ${positionalPath ?? '.'}`);
-            console.log(`  unity-mcp-cli setup-skills ${agentId} ${positionalPath ?? '.'}`);
-            console.log();
+            printReconnectSteps(agentId, positionalPath);
           } else if (cloud && hadToken) {
             // Token exists but was rejected — Unity Editor isn't connected
             ui.warn('Cloud server rejected the token: the Unity Editor may not be connected yet, so only the CLI skill was written.');
             ui.info('For the plugin\'s skills too, connect the editor and run setup-skills again:');
-            console.log();
-            console.log(`  unity-mcp-cli open ${positionalPath ?? '.'}`);
-            console.log(`  unity-mcp-cli wait-for-ready ${positionalPath ?? '.'}`);
-            console.log(`  unity-mcp-cli setup-skills ${agentId} ${positionalPath ?? '.'}`);
-            console.log();
+            printReconnectSteps(agentId, positionalPath);
           } else {
             ui.warn('HTTP 401 from the server: check your --token value. Only the CLI skill was written.');
           }
@@ -189,6 +181,14 @@ export const setupSkillsCommand = new Command('setup-skills')
       }
     },
   );
+
+/** The commands that connect the editor and rerun setup-skills for the plugin's skills too. */
+function printReconnectSteps(agentId: string, positionalPath: string | undefined): void {
+  const at = positionalPath ?? '.';
+  console.log();
+  for (const step of [`open ${at}`, `wait-for-ready ${at}`, `setup-skills ${agentId} ${at}`]) console.log(`  unity-mcp-cli ${step}`);
+  console.log();
+}
 
 /** The editor did not answer: the CLI skill is written, so this is information, not a failure. */
 function reportFetchError(err: unknown, timeoutMs: number): void {

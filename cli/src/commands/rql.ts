@@ -17,8 +17,6 @@ interface RqlCliOptions extends Omit<RunToolCliOptions, 'input' | 'inputFile' | 
   maxTargets?: string;
 }
 
-export { RQL_RECIPES };
-
 /** How `rql` calls a tool: as run-tool does. */
 const RQL_CALL: RunToolCall = {
   name: 'rql',

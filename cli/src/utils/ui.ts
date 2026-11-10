@@ -1,9 +1,7 @@
 import chalk from 'chalk';
 import yoctoSpinner, { type Spinner } from 'yocto-spinner';
 import type { Command, Help } from 'commander';
-import { CODE_COMMANDS, EDITOR_COMMANDS, EDITOR_START, ROOT_RQL_RECIPES, type CommandRow, type RqlRecipes } from '../lib/cli-guide.js';
-
-export type { RqlRecipes };
+import { CODE_COMMANDS, EDITOR_COMMANDS, EDITOR_START, ROOT_RQL_RECIPES, RQL_RECIPES, type CommandRow } from '../lib/cli-guide.js';
 
 // --- Verbose mode ---
 let verboseEnabled = false;
@@ -32,7 +30,7 @@ function isTTY(): boolean {
  * The root help: short on purpose (agents read it first, and every later turn re-reads it): the everyday commands, the
  * other command names, and the RQL recipes most tasks need. Each command's own --help has the details.
  */
-function formatRootHelp(target: Command, helper: Help, appVersion: string | undefined, recipes: RqlRecipes): string {
+function formatRootHelp(target: Command, helper: Help, appVersion: string | undefined): string {
   const name = target.name();
   const featured = new Set([...EDITOR_COMMANDS, ...CODE_COMMANDS].map(([cmd]) => cmd));
   const row = ([, usage, what]: CommandRow) => `  ${chalk.yellow(usage.padEnd(26))} ${chalk.dim(what)}`;
@@ -46,10 +44,8 @@ function formatRootHelp(target: Command, helper: Help, appVersion: string | unde
     ...CODE_COMMANDS.map(row),
     `${chalk.bold('More commands:')} ${others.join(' ')}`,
   ];
-  if (recipes.length > 0) {
-    lines.push('', chalk.bold('RQL recipes (strings inside the query take double quotes; a set / call is saved to disk at once):'));
-    for (const [query, what] of recipes.slice(0, ROOT_RQL_RECIPES)) lines.push(`  ${chalk.yellow(`rql '${query}'`)}  ${chalk.dim(`# ${what}`)}`);
-  }
+  lines.push('', chalk.bold('RQL recipes (strings inside the query take double quotes; a set / call is saved to disk at once):'));
+  for (const [query, what] of RQL_RECIPES.slice(0, ROOT_RQL_RECIPES)) lines.push(`  ${chalk.yellow(`rql '${query}'`)}  ${chalk.dim(`# ${what}`)}`);
   lines.push(
     '',
     chalk.dim(`Details: ${name} <command> --help (rql --help: operators, more recipes). Machine-readable output: --format json.`),
@@ -65,10 +61,10 @@ function formatRootHelp(target: Command, helper: Help, appVersion: string | unde
  *
  * @param appVersion - The CLI version string, shown in the root help.
  */
-export function configureStyledHelp(cmd: Command, appVersion?: string, rootRecipes: RqlRecipes = []): Command {
+export function configureStyledHelp(cmd: Command, appVersion?: string): Command {
   cmd.configureHelp({
     formatHelp(target: Command, helper: Help): string {
-      if (!target.parent) return formatRootHelp(target, helper, appVersion, rootRecipes);
+      if (!target.parent) return formatRootHelp(target, helper, appVersion);
       const lines: string[] = [];
 
       // A plain line, not a box: agents read this help, and box borders cost as much as the text again.

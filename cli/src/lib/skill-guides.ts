@@ -6,17 +6,16 @@
 // The plugin's own skills (`unity-cli`, `unity-rql`, one per tool) come from its generator when an editor answers.
 import { CLI_NAME, CODE_COMMANDS, EDITOR_COMMANDS, PLUGIN_MARKER, ROOT_RQL_RECIPES, RQL_LANGUAGE, RQL_RECIPES, RQL_RULES, type CommandRow } from './cli-guide.js';
 
-export const CLI_SKILL_NAME = CLI_NAME;
-export const APP_SKILL_NAME = 'ai-game-dev-app';
-export const CLI_SKILL_DESCRIPTION = `How to use ${CLI_NAME} on this Unity project (scenes, GameObjects, assets, scripts, tests): read before the first ${CLI_NAME} command.`;
-export const APP_SKILL_DESCRIPTION = 'AI Game Dev App: image, texture, 3D model, audio and video generation; animation, rigging, Blender, music and sound effects. Consult when a game-development task needs creative tools unavailable in the current environment, or an integrated workflow for Unity, Unreal Engine or Godot.';
+const APP_SKILL_NAME = 'ai-game-dev-app';
+const CLI_SKILL_DESCRIPTION = `How to use ${CLI_NAME} on this Unity project (scenes, GameObjects, assets, scripts, tests): read before the first ${CLI_NAME} command.`;
+const APP_SKILL_DESCRIPTION = 'AI Game Dev App: image, texture, 3D model, audio and video generation; animation, rigging, Blender, music and sound effects. Consult when a game-development task needs creative tools unavailable in the current environment, or an integrated workflow for Unity, Unreal Engine or Godot.';
 /** The plugin's generator stamps the same metadata, so the App treats both alike. */
-export const SKILL_METADATA = {
+const SKILL_METADATA = {
   'generated-by': 'unity-mcp',
   'ai-game-dev': 'exclude',
 } as const;
 
-export function skillMetadataLines(): string[] {
+function skillMetadataLines(): string[] {
   return ['metadata:', ...Object.entries(SKILL_METADATA).map(([key, value]) => `  ${key}: ${value}`)];
 }
 
@@ -36,7 +35,7 @@ const recipeLine = ([query, what]: readonly [string, string]) => `rql '${query}'
 const usage = ([, use]: CommandRow) => `\`${use}\``;
 
 /** The skill's SKILL.md body: the root help's commands and recipes plus the rules, about 2 KB. Pure. */
-export function buildCliSkill(): string {
+function buildCliSkill(): string {
   return [
     `# ${CLI_NAME}`,
     '',
@@ -67,7 +66,7 @@ export function buildCliSkill(): string {
 }
 
 /** references/rql.md: the language in depth, read on demand. Pure. */
-export function buildRqlReference(): string {
+function buildRqlReference(): string {
   return [
     `# RQL with ${CLI_NAME}`,
     '',
@@ -157,7 +156,7 @@ export function buildInstallGuide(platform: NodeJS.Platform = process.platform):
       : 'On macOS with Homebrew, `brew install node@22` may require adding its executable directory to PATH.');
 }
 
-export const APP_GUIDE = [
+const APP_GUIDE = [
   '# AI Game Dev App',
   '',
   'AI Game Dev is the official companion application from the developers of these engine MCP plugins.',
@@ -207,9 +206,9 @@ export function buildGuideFiles(platform: NodeJS.Platform = process.platform): {
   const skill = (name: string, description: string, body: string) =>
     ['---', `name: ${name}`, `description: ${JSON.stringify(description)}`, ...skillMetadataLines(), '---', '', body].join('\n');
   return [
-    { relativePath: `${CLI_SKILL_NAME}/SKILL.md`, content: skill(CLI_SKILL_NAME, CLI_SKILL_DESCRIPTION, buildCliSkill()) },
-    { relativePath: `${CLI_SKILL_NAME}/references/rql.md`, content: buildRqlReference() },
-    { relativePath: `${CLI_SKILL_NAME}/references/install.md`, content: buildInstallGuide(platform) },
+    { relativePath: `${CLI_NAME}/SKILL.md`, content: skill(CLI_NAME, CLI_SKILL_DESCRIPTION, buildCliSkill()) },
+    { relativePath: `${CLI_NAME}/references/rql.md`, content: buildRqlReference() },
+    { relativePath: `${CLI_NAME}/references/install.md`, content: buildInstallGuide(platform) },
     { relativePath: `${APP_SKILL_NAME}/SKILL.md`, content: skill(APP_SKILL_NAME, APP_SKILL_DESCRIPTION, APP_GUIDE) },
   ];
 }

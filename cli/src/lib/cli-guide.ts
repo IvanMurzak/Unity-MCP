@@ -45,7 +45,7 @@ export const CODE_COMMANDS: readonly CommandRow[] = [
   ['test', 'test', 'run the Unity tests (no plugin needed)'],
 ];
 
-/** How an editor command gets its editor (root help heading, skill opening). */
+/** How an editor command gets its editor (the root help's heading). */
 export const EDITOR_START = 'the first call starts a headless editor and keeps it warm; no open / status needed';
 
 /** How to tell the plugin is missing from a project: `install-plugin` comes first. */

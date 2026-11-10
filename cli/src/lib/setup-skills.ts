@@ -16,7 +16,7 @@ export interface WriteCliSkillsOptions {
 }
 
 export type WriteCliSkillsResult =
-  | { kind: 'success'; success: true; skillsDir: string; skillPath: string; filesWritten: string[] }
+  | { kind: 'success'; success: true; skillsDir: string; filesWritten: string[] }
   | { kind: 'failure'; success: false; error: Error };
 
 /** Write the CLI's own skills into the agent's skills folder under the project. Never throws. */
@@ -35,7 +35,7 @@ export function writeCliSkills(opts: WriteCliSkillsOptions): WriteCliSkillsResul
       fs.writeFileSync(target, file.content, 'utf-8');
       filesWritten.push(target);
     }
-    return { kind: 'success', success: true, skillsDir, skillPath: path.join(skillsDir, files[0].relativePath), filesWritten };
+    return { kind: 'success', success: true, skillsDir, filesWritten };
   } catch (err) {
     return { kind: 'failure', success: false, error: err instanceof Error ? err : new Error(String(err)) };
   }
