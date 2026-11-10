@@ -347,7 +347,7 @@ describe('run-tool command', () => {
 
   it('requires tool name argument', () => {
     const { exitCode, stdout } = runCli(['run-tool']);
-    expect(exitCode).toBe(1);
+    expect(exitCode).toBe(2); // usage error
     expect(stdout).toContain("missing required argument");
   });
 
@@ -425,7 +425,7 @@ describe('run-tool config resolution', () => {
       expect(stdout).toContain('https://ai-game.dev/mcp');
       // ... but with no machine-store credential the call is refused, never sent unauthenticated.
       expect(stdout).toContain('Not logged in to ai-game.dev');
-      expect(exitCode).toBe(1);
+      expect(exitCode).toBe(6); // NOT_AUTHENTICATED: the command ran and was refused
     } finally {
       cleanup();
     }
@@ -490,7 +490,7 @@ describe('run-tool config resolution', () => {
       expect(stdout).not.toContain('Authorization header set');
       // ... and the run-tool command refuses to fire an unauthenticated cloud request.
       expect(stdout).toContain('Not logged in to ai-game.dev');
-      expect(exitCode).toBe(1);
+      expect(exitCode).toBe(6); // NOT_AUTHENTICATED: the command ran and was refused
     } finally {
       cleanup();
     }

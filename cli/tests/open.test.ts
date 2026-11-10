@@ -100,7 +100,7 @@ describe('open command (merged open + connect)', () => {
         '--launch-dismiss-timeout-ms',
         'banana',
       ]);
-      expect(exitCode).toBe(1);
+      expect(exitCode).toBe(2) // usage error;
       expect(stdout).toContain('--launch-dismiss-timeout-ms');
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });

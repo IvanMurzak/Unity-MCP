@@ -1,15 +1,9 @@
 // Library-safe `execCode`: run C# in a project's Unity Editor through `script-execute`, starting a warm
 // headless editor when none is running. No console output, no `process.exit`.
 
-import {
-  DEFAULT_SESSION_IDLE_SECONDS,
-  EditorSessionError,
-  type EditorSession,
-  type EditorSessionErrorReason,
-  type WaitedEditorSource,
-} from '@baizor/gamedev-cli-core';
-import { createUnitySession, isLoopbackUrl, sessionErrorMessage, type UnitySessionOptions } from './editor-session.js';
-import { buildOpenEnv, dismissLaunchErrorsUntil } from './open.js';
+import type { EditorSessionErrorReason, EnsureSource, WaitedEditorSource } from '@baizor/gamedev-cli-core';
+import type { UnitySessionOptions } from './editor-session.js';
+import { ensureEditor, type EnsureEditorSession } from './ensure-editor.js';
 import { runTool } from './run-tool.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
 
@@ -35,7 +29,7 @@ function deferredForReload(result: RunToolResult): boolean {
 
 /** Injection points for tests. */
 export interface ExecDeps {
-  session: (options: UnitySessionOptions) => Pick<EditorSession<string>, 'ensure'>;
+  session: (options: UnitySessionOptions) => EnsureEditorSession;
   invoke: (options: RunToolOptions) => Promise<RunToolResult>;
   /** Waits between re-sends of a deferred snippet (default: a timer). */
   sleep?: (ms: number) => Promise<void>;
@@ -58,6 +52,8 @@ export interface ExecCodeOptions {
   timeoutMs?: number;
   /** Server URLs to try, first answer wins (the CLI passes the config URL plus the project's local port). */
   probeUrls: string[];
+  /** Close the editor after the call when this call started it (`--once`). */
+  once?: boolean;
   /** Bearer for the server. */
   token?: string;
   /** `token` came from the shared machine store: a 401 refreshes it once. */
@@ -76,6 +72,10 @@ export interface ExecCodeSuccess {
   baseUrl: string;
   /** Parsed `script-execute` response body. */
   data: unknown;
+  /** How the editor was obtained (`started`: this call launched it). */
+  editorSource?: EnsureSource;
+  /** With `once`: the pid of the editor this call started and closed again. */
+  closedPid?: number;
 }
 
 export interface ExecCodeFailure {
@@ -91,6 +91,8 @@ export interface ExecCodeFailure {
   baseUrl?: string;
   /** The underlying call failure (`tool-failed` only). */
   toolFailure?: RunToolFailure;
+  /** With `once`: the pid of the editor this call started and closed again. */
+  closedPid?: number;
   message: string;
   error?: Error;
 }
@@ -103,57 +105,26 @@ export type ExecCodeResult = ExecCodeSuccess | ExecCodeFailure;
  * editor. It quits by itself after `idleTimeoutSeconds` without tool calls, so the next call stays warm.
  */
 export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult> {
-  const deps: ExecDeps = { session: createUnitySession, invoke: runTool, ...options.deps };
+  const deps: Partial<ExecDeps> & Pick<ExecDeps, 'invoke'> = { invoke: runTool, ...options.deps };
 
-  // The server a started editor connects to (recorded in its lease): the explicit URL, normalized as the CLI resolves
-  // it (no trailing slash), else the resolved one.
-  const serverUrl = options.overrideUrl?.replace(/\/$/, '') ?? options.probeUrls[0];
-  let baseUrl: string;
-  // A windowed editor we start may stop on the "compile errors at launch" dialog; click it away until it is ready.
-  const ready = new AbortController();
-  let dismissing: Promise<void> | undefined;
-  try {
-    const session = deps.session({
-      projectPath: options.projectPath,
-      urls: options.probeUrls,
-      token: options.token,
-      ...(serverUrl !== undefined ? { serverUrl } : {}),
-      env: buildOpenEnv({
-        keepConnected: true,
-        url: options.overrideUrl,
-        token: options.overrideToken,
-        // A local server is only reachable if someone starts it; the plugin does when asked. exec talks
-        // HTTP to it, so it also asks for the http transport (in memory only): with a project saved on
-        // stdio the plugin would otherwise leave the port to the AI agent and start nothing.
-        ...(options.overrideUrl && isLoopbackUrl(options.overrideUrl)
-          ? { startServer: true, transport: 'streamableHttp' as const }
-          : {}),
-      }),
-      idleSeconds: options.idleTimeoutSeconds ?? DEFAULT_SESSION_IDLE_SECONDS,
-      ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
-      ...(options.foreignReadyTimeoutMs !== undefined ? { foreignReadyTimeoutMs: options.foreignReadyTimeoutMs } : {}),
-      ...(options.onStatus ? { onStatus: options.onStatus } : {}),
-      ...(options.window ? { onLaunched: (pid: number) => { dismissing = dismissLaunchErrorsUntil(ready.signal, [], pid); } } : {}),
-    });
-    baseUrl = (await session.ensure({ mode: options.window ? 'window' : 'headless' })).ready;
-  } catch (err) {
-    const error = err instanceof Error ? err : new Error(String(err));
-    const sessionError = err instanceof EditorSessionError ? err : undefined;
-    const sessionReason = sessionError?.reason;
-    const reason = sessionReason === 'exited' || sessionReason === 'not-ready' ? 'not-ready' : 'launch-failed';
-    return {
-      kind: 'failure',
-      success: false,
-      reason,
-      ...(sessionReason ? { sessionReason } : {}),
-      ...(sessionError?.source ? { editorSource: sessionError.source } : {}),
-      message: sessionErrorMessage(error, serverUrl),
-      error,
-    };
-  } finally {
-    ready.abort();
-    await dismissing;
+  const ensured = await ensureEditor({
+    projectPath: options.projectPath,
+    probeUrls: options.probeUrls,
+    token: options.token,
+    overrideUrl: options.overrideUrl,
+    overrideToken: options.overrideToken,
+    window: options.window,
+    idleTimeoutSeconds: options.idleTimeoutSeconds,
+    readyTimeoutMs: options.readyTimeoutMs,
+    foreignReadyTimeoutMs: options.foreignReadyTimeoutMs,
+    onStatus: options.onStatus,
+    session: deps.session,
+  });
+  if (ensured.kind === 'failure') {
+    const { kind: _kind, ...failure } = ensured;
+    return { kind: 'failure', success: false, ...failure };
   }
+  const { baseUrl } = ensured;
 
   options.onStatus?.('Running...');
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
@@ -173,12 +144,16 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
     options.onStatus?.('Scripts are compiling; waiting for the reload...');
     await sleep(2_000);
   }
+  const closedPid = options.once ? await ensured.closeIfStarted() : undefined;
+  const closed = closedPid !== undefined ? { closedPid } : {};
   if (result.kind === 'failure') {
     return {
-      kind: 'failure', success: false, reason: 'tool-failed', baseUrl, toolFailure: result, message: result.message, error: result.error,
+      kind: 'failure', success: false, reason: 'tool-failed', baseUrl, toolFailure: result, message: result.message, error: result.error, ...closed,
     };
   }
-  return { kind: 'success', success: true, baseUrl, data: result.data };
+  return {
+    kind: 'success', success: true, baseUrl, data: result.data, ...(ensured.source ? { editorSource: ensured.source } : {}), ...closed,
+  };
 }
 
 /** Request body for `script-execute`; empty lists are left out so older plugins without them still accept it. */

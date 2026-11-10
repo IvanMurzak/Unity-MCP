@@ -2,6 +2,9 @@ import { Command } from 'commander';
 import { createRequire } from 'module';
 import { bootstrapLocalCommand } from './commands/bootstrap-local.js';
 import { closeCommand } from './commands/close.js';
+import { createCommandsCommand } from './commands/commands.js';
+import { compileCommand } from './commands/compile.js';
+import { dialogCommand } from './commands/dialog.js';
 import { createProjectCommand } from './commands/create-project.js';
 import { execCommand } from './commands/exec.js';
 import { installUnityCommand } from './commands/install-unity.js';
@@ -16,9 +19,11 @@ import { runSystemToolCommand } from './commands/run-system-tool.js';
 import { setupMcpCommand } from './commands/setup-mcp.js';
 import { setupSkillsCommand } from './commands/setup-skills.js';
 import { statusCommand } from './commands/status.js';
+import { testCommand } from './commands/test.js';
 import { createUpdateCommand } from './commands/update.js';
 import { waitForReadyCommand } from './commands/wait-for-ready.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
+import { ExitCode } from './utils/exit-codes.js';
 import { checkForUpdate, isRunningViaNpx, printUpdateNotification } from './utils/update-check.js';
 
 const require = createRequire(import.meta.url);
@@ -36,8 +41,11 @@ program
 const subcommands = [
   bootstrapLocalCommand,
   closeCommand,
+  createCommandsCommand(() => program, pkg.version),
+  compileCommand,
   configureCommand,
   createProjectCommand,
+  dialogCommand,
   execCommand,
   installExtensionCommand,
   installPluginCommand,
@@ -50,15 +58,27 @@ const subcommands = [
   setupMcpCommand,
   setupSkillsCommand,
   statusCommand,
+  testCommand,
   createUpdateCommand(pkg.version),
   waitForReadyCommand,
 ];
 
+/**
+ * Commander's parse errors (unknown option, missing argument, ...) are usage errors: exit 2, as in the shared exit-code
+ * table. Help and version output keep exit 0.
+ */
+function exitOnParseError(err: { exitCode: number; code: string }): never {
+  const informational = err.code === 'commander.helpDisplayed' || err.code === 'commander.help' || err.code === 'commander.version';
+  process.exit(informational || err.exitCode === 0 ? err.exitCode : ExitCode.Usage);
+}
+
 for (const cmd of subcommands) {
   cmd.option('-v, --verbose', 'Enable verbose diagnostic output');
+  cmd.exitOverride(exitOnParseError);
   configureStyledHelp(cmd);
   program.addCommand(cmd);
 }
+program.exitOverride(exitOnParseError);
 
 // Apply styled help to root (after subcommands so banner knows about them)
 configureStyledHelp(program, pkg.version);
