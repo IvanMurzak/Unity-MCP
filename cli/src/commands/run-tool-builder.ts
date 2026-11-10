@@ -5,10 +5,9 @@ import { verbose } from '../utils/ui.js';
 import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } from '../utils/connection.js';
 import { parseInput } from '../utils/input.js';
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
-import { findUnityProcess } from '../utils/unity-process.js';
-import { listEditorDialogs, type EditorDialog } from '../utils/editor-dialogs.js';
+import { failIfAwaitingInput } from '../utils/awaiting-input.js';
 import { ExitCode, type ExitCodeValue } from '../utils/exit-codes.js';
-import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat, type EnvelopeError } from '../utils/output.js';
+import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 import { ensureEditor, type EnsureEditorFailure } from '../lib/ensure-editor.js';
 import { readToolResponse } from '../lib/exec.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from '../lib/types.js';
@@ -103,29 +102,8 @@ export function classifyEditorFailure(failure: Pick<EnsureEditorFailure, 'reason
     : { exitCode: ExitCode.Unreachable, code: 'UNREACHABLE' };
 }
 
-/**
- * The modal dialogs of the project's editor, when it is running and shows any (Windows). A call that timed out or was
- * refused as busy is then waiting for a human, which `AWAITING_INPUT` (exit 18) says instead of a retryable code.
- */
-export async function findBlockingDialogs(projectPath: string): Promise<EditorDialog[]> {
-  const proc = findUnityProcess(projectPath);
-  if (!proc) return [];
-  const listed = await listEditorDialogs([proc.pid]);
-  return listed.kind === 'ok' ? listed.dialogs : [];
-}
-
-export function describeDialogs(dialogs: EditorDialog[]): string {
-  return dialogs.map(d => `"${d.title}"${d.message ? `: ${d.message.replace(/\s+/g, ' ')}` : ''} [${d.buttons.join(' | ')}]`).join('; ');
-}
-
-/** The awaiting-input error for `dialogs`, with the hint to answer them. */
-export function awaitingInputError(dialogs: EditorDialog[]): EnvelopeError {
-  return {
-    code: 'AWAITING_INPUT',
-    message: `The Unity Editor is blocked by a modal dialog: ${describeDialogs(dialogs)}. ` +
-      'Answer it in the editor, or with `unity-mcp-cli dialog --press <button>`.',
-  };
-}
+/** Hint for an editor the CLI did not start that never answered. */
+export const PLUGIN_NOT_CONNECTED_HINT = 'If the project is open in a Unity Editor, check that its AI Game Developer plugin is connected.';
 
 /**
  * Whether a missing editor may be started for `projectPath`: only for a project that names its Unity version, so the
@@ -202,13 +180,10 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
         });
         if (ensured.kind === 'failure') {
           spinner?.error(ensured.reason === 'launch-failed' ? 'Could not start the Unity Editor' : 'The MCP server did not answer');
-          const dialogs = await findBlockingDialogs(projectPath);
-          if (dialogs.length > 0) out.fail(ExitCode.AwaitingInput, awaitingInputError(dialogs), { dialogs });
           const { exitCode, code } = classifyEditorFailure(ensured);
+          await failIfAwaitingInput(out, projectPath, exitCode);
           out.fail(exitCode, { code, message: ensured.message }, null,
-            ensured.reason === 'not-ready' && ensured.editorSource !== 'foreign'
-              ? 'If the project is open in a Unity Editor, check that its AI Game Developer plugin is connected.'
-              : undefined);
+            ensured.reason === 'not-ready' && ensured.editorSource !== 'foreign' ? PLUGIN_NOT_CONNECTED_HINT : undefined);
         }
         baseUrl = ensured.baseUrl;
         editor = ensured;
@@ -262,15 +237,7 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
 
       callSpinner?.stop();
       const classified = classifyToolFailure(result);
-      if (classified.exitCode === ExitCode.Timeout || classified.exitCode === ExitCode.Busy) {
-        const dialogs = await findBlockingDialogs(projectPath);
-        if (dialogs.length > 0) {
-          if (out.machine) out.fail(ExitCode.AwaitingInput, awaitingInputError(dialogs), { tool: toolName, dialogs, editor: editorData });
-          if (options.raw) process.stderr.write(awaitingInputError(dialogs).message + '\n');
-          else ui.error(awaitingInputError(dialogs).message);
-          process.exit(ExitCode.AwaitingInput);
-        }
-      }
+      await failIfAwaitingInput(out, projectPath, classified.exitCode, { tool: toolName, editor: editorData }, options.raw);
       if (out.machine) {
         out.fail(classified.exitCode, { code: classified.code, message: buildFailureMessage(result, { toolName, endpoint, raw: false, timeoutMs, errorNoun: cfg.errorNoun }) },
           { tool: toolName, ...(result.data !== undefined ? { result: result.data } : {}), ...(result.httpStatus ? { httpStatus: result.httpStatus } : {}), editor: editorData });

@@ -2,13 +2,12 @@
 // runs, then kept warm): refresh assets so changed scripts compile, wait for the compile and its domain reload, and
 // read the compiler diagnostics from the editor's Console. No console output, no `process.exit`.
 
-import { compileStatusSnippet, parseCompileStatus, type CompileState } from './compile-snippets.js';
+import { COMPILE_STATUS_SNIPPET, parseCompileStatus, REFRESH_SNIPPET, type CompileState } from './compile-snippets.js';
 import { ensureEditor, type EnsureEditorOptions, type EnsureEditorFailure } from './ensure-editor.js';
 import { readToolResponse, SCRIPT_EXECUTE_TOOL, buildScriptExecuteInput, RELOAD_PENDING_TEXT } from './exec.js';
 import { runTool } from './run-tool.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
 import type { CompilerMessage } from '../utils/compiler-messages.js';
-import { REFRESH_SNIPPET } from './compile-snippets.js';
 
 /** Default wait for the compile and the domain reload after it. */
 export const DEFAULT_COMPILE_TIMEOUT_MS = 180_000;
@@ -74,32 +73,21 @@ export async function compileProject(options: CompileProjectOptions): Promise<Co
     now: () => Date.now(),
     ...options.deps,
   };
-  const ensured = await deps.ensure({
-    projectPath: options.projectPath,
-    probeUrls: options.probeUrls,
-    token: options.token,
-    overrideUrl: options.overrideUrl,
-    overrideToken: options.overrideToken,
-    window: options.window,
-    idleTimeoutSeconds: options.idleTimeoutSeconds,
-    readyTimeoutMs: options.readyTimeoutMs,
-    foreignReadyTimeoutMs: options.foreignReadyTimeoutMs,
-    closeOnFailure: options.once,
-    onStatus: options.onStatus,
-  });
+  const { timeoutMs, once, tokenFromCloudStore, deps: _deps, ...ensureOptions } = options;
+  const ensured = await deps.ensure({ ...ensureOptions, closeOnFailure: once });
   if (ensured.kind === 'failure') return { kind: 'failure', reason: 'unreachable', message: ensured.message, editorFailure: ensured };
 
-  const deadline = deps.now() + (options.timeoutMs ?? DEFAULT_COMPILE_TIMEOUT_MS);
+  const deadline = deps.now() + (timeoutMs ?? DEFAULT_COMPILE_TIMEOUT_MS);
   const call = (code: string) => deps.invoke({
     toolName: SCRIPT_EXECUTE_TOOL,
     url: ensured.baseUrl,
     ...(options.token ? { token: options.token } : {}),
-    tokenFromCloudStore: options.tokenFromCloudStore,
+    tokenFromCloudStore,
     input: buildScriptExecuteInput(code, [], []),
     timeoutMs: POLL_CALL_TIMEOUT_MS,
   });
   const finish = async <T extends CompileProjectResult>(result: T): Promise<T> => {
-    const closedPid = options.once ? await ensured.closeIfStarted() : undefined;
+    const closedPid = once ? await ensured.closeIfStarted() : undefined;
     return closedPid !== undefined ? { ...result, closedPid } : result;
   };
 
@@ -107,11 +95,12 @@ export async function compileProject(options: CompileProjectOptions): Promise<Co
   options.onStatus?.('Refreshing assets...');
   for (;;) {
     const refreshed = await call(REFRESH_SNIPPET);
-    if (refreshed.kind === 'success' && readToolResponse(refreshed.data).ok) break;
-    const failure = refreshed.kind === 'failure' ? refreshed : undefined;
-    const text = failure ? failure.message : readToolResponse(refreshed.kind === 'success' ? refreshed.data : undefined).text;
-    if ((failure && !transient(failure)) || (!failure && !text.includes(RELOAD_PENDING_TEXT))) {
-      return finish({ kind: 'failure', reason: 'tool-failed', message: text, ...(failure ? { toolFailure: failure } : {}) });
+    if (refreshed.kind === 'failure') {
+      if (!transient(refreshed)) return finish({ kind: 'failure', reason: 'tool-failed', message: refreshed.message, toolFailure: refreshed });
+    } else {
+      const response = readToolResponse(refreshed.data);
+      if (response.ok) break;
+      if (!response.text.includes(RELOAD_PENDING_TEXT)) return finish({ kind: 'failure', reason: 'tool-failed', message: response.text });
     }
     if (deps.now() >= deadline) return finish({ kind: 'failure', reason: 'timeout', message: 'The editor did not accept the refresh before the timeout.' });
     await deps.sleep(POLL_INTERVAL_MS);
@@ -123,7 +112,7 @@ export async function compileProject(options: CompileProjectOptions): Promise<Co
   let lastFailure: RunToolFailure | undefined;
   for (;;) {
     await deps.sleep(POLL_INTERVAL_MS);
-    const polled = await call(compileStatusSnippet());
+    const polled = await call(COMPILE_STATUS_SNIPPET);
     if (polled.kind === 'failure') {
       if (!transient(polled)) return finish({ kind: 'failure', reason: 'tool-failed', message: polled.message, toolFailure: polled });
       lastFailure = polled;
@@ -155,7 +144,7 @@ export async function compileProject(options: CompileProjectOptions): Promise<Co
       return finish({
         kind: 'failure',
         reason: 'timeout',
-        message: `The compile did not finish within ${Math.round((options.timeoutMs ?? DEFAULT_COMPILE_TIMEOUT_MS) / 1000)} seconds.`,
+        message: `The compile did not finish within ${Math.round((timeoutMs ?? DEFAULT_COMPILE_TIMEOUT_MS) / 1000)} seconds.`,
         ...(lastFailure ? { toolFailure: lastFailure } : {}),
       });
     }

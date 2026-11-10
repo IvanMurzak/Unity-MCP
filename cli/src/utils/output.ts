@@ -47,15 +47,6 @@ export function formatEnvelope(envelope: Envelope, format: 'json' | 'ndjson'): s
   return (format === 'json' ? JSON.stringify(envelope, null, 2) : JSON.stringify(envelope)) + '\n';
 }
 
-/**
- * Reports progress the way `format` wants it: an ndjson line on stderr, nothing for json (stdout is reserved for the
- * envelope), the text callback otherwise.
- */
-export function reportProgress(format: string, command: string, message: string, text?: (message: string) => void): void {
-  if (format === 'ndjson') process.stderr.write(JSON.stringify({ type: 'progress', command, message }) + '\n');
-  else if (format === 'text') text?.(message);
-}
-
 /** Collects warnings and builds the envelope of one command run. */
 export class CommandOutput {
   readonly warnings: string[] = [];
@@ -66,8 +57,9 @@ export class CommandOutput {
     return isMachineFormat(this.format);
   }
 
-  progress(message: string, text?: (message: string) => void): void {
-    reportProgress(this.format, this.command, message, text);
+  /** A progress line on stderr in ndjson; nothing otherwise (json reserves stdout for the envelope, text has spinners). */
+  progress(message: string): void {
+    if (this.format === 'ndjson') process.stderr.write(JSON.stringify({ type: 'progress', command: this.command, message }) + '\n');
   }
 
   warn(message: string): void {

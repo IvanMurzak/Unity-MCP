@@ -25,8 +25,7 @@ interface TestCliOptions {
   format?: string;
 }
 
-function parseMode(raw: string | undefined): TestMode | undefined {
-  if (raw === undefined) return 'EditMode';
+function parseMode(raw: string): TestMode | undefined {
   const value = raw.trim().toLowerCase();
   if (value === 'editmode' || value === 'edit') return 'EditMode';
   if (value === 'playmode' || value === 'play') return 'PlayMode';
@@ -82,7 +81,7 @@ export const testCommand = new Command('test')
     const format = parseFormat(options.format, ['github'] as const);
     // Explicitly typed: `out.fail` returns `never`, which narrows only through a declared type.
     const out: CommandOutput = new CommandOutput('test', format);
-    const mode = parseMode(options.mode);
+    const mode = parseMode(options.mode ?? 'EditMode');
     if (!mode) out.fail(ExitCode.Usage, { code: 'USAGE', message: `--mode must be EditMode or PlayMode (got: "${options.mode}")` });
     const timeoutSeconds = parsePositiveIntFlag(options.timeout, '--timeout', DEFAULT_TEST_TIMEOUT_SECONDS);
     if (timeoutSeconds === 0) out.fail(ExitCode.Usage, { code: 'USAGE', message: '--timeout must be greater than 0' });

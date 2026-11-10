@@ -5,7 +5,7 @@ import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } fr
 import { waitForReady } from '../lib/wait-for-ready.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
-import { awaitingInputError, findBlockingDialogs } from './run-tool-builder.js';
+import { failIfAwaitingInput } from '../utils/awaiting-input.js';
 
 interface WaitForReadyOptions {
   path?: string;
@@ -66,7 +66,6 @@ export const waitForReadyCommand = new Command('wait-for-ready')
       process.exit(ExitCode.Success);
     }
     spinner?.stop();
-    const dialogs = await findBlockingDialogs(projectPath);
-    if (dialogs.length > 0) out.fail(ExitCode.AwaitingInput, awaitingInputError(dialogs), { dialogs, elapsedMs: result.elapsedMs });
+    await failIfAwaitingInput(out, projectPath, ExitCode.Timeout, { elapsedMs: result.elapsedMs });
     out.fail(ExitCode.Timeout, { code: 'TIMEOUT', message: `Timed out after ${(timeoutMs / 1000).toFixed(1)}s waiting for MCP server` }, { elapsedMs: result.elapsedMs });
   });

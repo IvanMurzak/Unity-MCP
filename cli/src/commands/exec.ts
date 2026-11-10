@@ -6,8 +6,9 @@ import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } fr
 import { DEFAULT_EXEC_TIMEOUT_MS, execCode, readToolResponse, SCRIPT_EXECUTE_TOOL } from '../lib/exec.js';
 import { parsePositiveIntFlag } from './open.js';
 import {
-  awaitingInputError, buildFailureMessage, classifyEditorFailure, classifyToolFailure, findBlockingDialogs, handleFailure, stringifyForRaw,
+  buildFailureMessage, classifyEditorFailure, classifyToolFailure, handleFailure, PLUGIN_NOT_CONNECTED_HINT, stringifyForRaw,
 } from './run-tool-builder.js';
+import { failIfAwaitingInput } from '../utils/awaiting-input.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 
@@ -119,14 +120,7 @@ export const execCommand = new Command('exec')
       const classified = result.toolFailure
         ? classifyToolFailure(result.toolFailure)
         : classifyEditorFailure({ reason: result.reason === 'tool-failed' ? 'not-ready' : result.reason, sessionReason: result.sessionReason });
-      if (classified.exitCode === ExitCode.Timeout || classified.exitCode === ExitCode.Busy || classified.exitCode === ExitCode.Unreachable) {
-        const dialogs = await findBlockingDialogs(projectPath);
-        if (dialogs.length > 0) {
-          if (out.machine) out.fail(ExitCode.AwaitingInput, awaitingInputError(dialogs), { dialogs, editor });
-          ui.error(awaitingInputError(dialogs).message);
-          process.exit(ExitCode.AwaitingInput);
-        }
-      }
+      await failIfAwaitingInput(out, projectPath, classified.exitCode, { editor }, options.raw);
       if (result.toolFailure) {
         if (out.machine) {
           out.fail(classified.exitCode, {
@@ -144,9 +138,7 @@ export const execCommand = new Command('exec')
       }
       if (!out.machine) ui.error(result.reason === 'launch-failed' ? 'Could not start the Unity Editor' : 'The MCP server did not answer');
       out.fail(classified.exitCode, { code: classified.code, message: result.message }, { editor },
-        result.reason === 'not-ready' && result.editorSource !== 'foreign'
-          ? 'If the project is open in a Unity Editor, check that its AI Game Developer plugin is connected.'
-          : undefined);
+        result.reason === 'not-ready' && result.editorSource !== 'foreign' ? PLUGIN_NOT_CONNECTED_HINT : undefined);
     }
 
     spinner?.stop();

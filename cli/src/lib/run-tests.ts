@@ -124,12 +124,8 @@ export function findReservedArg(args: readonly string[]): string | undefined {
   return args.find(a => reserved.has(a.toLowerCase()));
 }
 
-function tail(file: string, lines: number): string[] {
-  try {
-    return fs.readFileSync(file, 'utf-8').split(/\r?\n/).filter(l => l.trim() !== '').slice(-lines);
-  } catch {
-    return [];
-  }
+function tail(log: string, lines: number): string[] {
+  return log.split(/\r?\n/).filter(l => l.trim() !== '').slice(-lines);
 }
 
 function readLog(file: string): string {
@@ -240,13 +236,14 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   if (outcome.timedOut) {
     return {
       kind: 'failure', reason: 'timeout', message: `The test run did not finish within ${timeoutMs / 1000} seconds.`,
-      paths, editorExitCode: outcome.code, logTail: tail(logFile, 20),
+      paths, editorExitCode: outcome.code, logTail: tail(readLog(logFile), 20),
     };
   }
 
   const report = fs.existsSync(output) ? parseNUnitReport(fs.readFileSync(output, 'utf-8')) : undefined;
   if (!report) {
-    const compilerErrors = parseCompilerMessages(readLog(logFile)).filter(m => m.severity === 'error');
+    const log = readLog(logFile);
+    const compilerErrors = parseCompilerMessages(log).filter(m => m.severity === 'error');
     return {
       kind: 'failure',
       reason: 'no-verdict',
@@ -256,7 +253,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       paths,
       editorExitCode: outcome.code,
       compilerErrors,
-      logTail: tail(logFile, 20),
+      logTail: tail(log, 20),
     };
   }
 

@@ -8,7 +8,8 @@ import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/
 import { formatCompilerMessage } from '../utils/compiler-messages.js';
 import { escapeAnnotationData } from '../utils/nunit-report.js';
 import { compileProject, DEFAULT_COMPILE_TIMEOUT_MS } from '../lib/compile.js';
-import { awaitingInputError, classifyEditorFailure, findBlockingDialogs } from './run-tool-builder.js';
+import { classifyEditorFailure } from './run-tool-builder.js';
+import { failIfAwaitingInput } from '../utils/awaiting-input.js';
 import { parsePositiveIntFlag } from './open.js';
 
 interface CompileCliOptions {
@@ -68,16 +69,13 @@ export const compileCommand = new Command('compile')
 
     if (result.kind === 'failure') {
       const data = result.closedPid !== undefined ? { editor: { closedPid: result.closedPid } } : null;
-      if (result.reason === 'timeout' || result.reason === 'unreachable') {
-        const dialogs = await findBlockingDialogs(projectPath);
-        if (dialogs.length > 0) out.fail(ExitCode.AwaitingInput, awaitingInputError(dialogs), { dialogs });
-      }
-      if (result.reason === 'unreachable') {
-        const { exitCode, code } = result.editorFailure ? classifyEditorFailure(result.editorFailure) : { exitCode: ExitCode.Unreachable, code: 'UNREACHABLE' };
-        out.fail(exitCode, { code, message: result.message }, data);
-      }
-      if (result.reason === 'timeout') out.fail(ExitCode.Timeout, { code: 'TIMEOUT', message: result.message }, data);
-      out.fail(ExitCode.CommandFailed, { code: 'TOOL_FAILED', message: result.message }, data);
+      const { exitCode, code } = result.reason === 'unreachable'
+        ? (result.editorFailure ? classifyEditorFailure(result.editorFailure) : { exitCode: ExitCode.Unreachable, code: 'UNREACHABLE' })
+        : result.reason === 'timeout'
+          ? { exitCode: ExitCode.Timeout, code: 'TIMEOUT' }
+          : { exitCode: ExitCode.CommandFailed, code: 'TOOL_FAILED' };
+      await failIfAwaitingInput(out, projectPath, exitCode, data ?? {});
+      out.fail(exitCode, { code, message: result.message }, data);
     }
 
     const failed = result.errors.length > 0 || result.state === 'failed' || (options.strict === true && result.warnings.length > 0);

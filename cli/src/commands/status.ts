@@ -8,7 +8,7 @@ import { probe, type ProbeResult } from '../utils/probe.js';
 import { listEditorDialogs, type EditorDialog } from '../utils/editor-dialogs.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
-import { awaitingInputError } from './run-tool-builder.js';
+import { awaitingInputError, describeDialog } from '../utils/awaiting-input.js';
 
 interface StatusOptions {
   path?: string;
@@ -67,7 +67,7 @@ export const statusCommand = new Command('status')
     const dialogs: EditorDialog[] = listed?.kind === 'ok' ? listed.dialogs : [];
     if (human && dialogs.length > 0) {
       ui.heading('Modal Dialogs');
-      for (const d of dialogs) ui.warn(`"${d.title}" [${d.buttons.join(' | ')}]${d.message ? ` ${d.message.replace(/\s+/g, ' ')}` : ''}`);
+      for (const d of dialogs) ui.warn(describeDialog(d));
     }
 
     // 3. Local server check

@@ -19,8 +19,7 @@ export interface CompileStatus {
  * The compile state (`state:busy|ok|failed`, first line) and, once settled, the Console's compiler messages (one per
  * line). Only lines that look like compiler diagnostics leave the editor, so a full Console stays a small answer.
  */
-export function compileStatusSnippet(): string {
-  return `var busy = UnityEditor.EditorApplication.isCompiling || UnityEditor.EditorApplication.isUpdating;
+export const COMPILE_STATUS_SNIPPET = `var busy = UnityEditor.EditorApplication.isCompiling || UnityEditor.EditorApplication.isUpdating;
 var sb = new System.Text.StringBuilder();
 sb.AppendLine(busy ? "state:busy" : (UnityEditor.EditorUtility.scriptCompilationFailed ? "state:failed" : "state:ok"));
 var editorAssembly = typeof(UnityEditor.Editor).Assembly;
@@ -53,7 +52,6 @@ if (!busy && entries != null && entryType != null)
     }
 }
 sb.ToString()`;
-}
 
 /**
  * The string a snippet returned. `script-execute` answers a value as `<type>: <json>` (`System.String: "state:ok\r\n"`);

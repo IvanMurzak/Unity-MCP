@@ -24,7 +24,7 @@ import { createUpdateCommand } from './commands/update.js';
 import { waitForReadyCommand } from './commands/wait-for-ready.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
 import { ExitCode } from './utils/exit-codes.js';
-import { formatEnvelope } from './utils/output.js';
+import { formatEnvelope, isMachineFormat } from './utils/output.js';
 import { checkForUpdate, isRunningViaNpx, printUpdateNotification } from './utils/update-check.js';
 
 const require = createRequire(import.meta.url);
@@ -87,7 +87,7 @@ function machineFormatFromArgv(argv: readonly string[]): 'json' | 'ndjson' | und
     const value = arg === '--format' ? argv[i + 1] : arg.startsWith('--format=') ? arg.slice('--format='.length) : undefined;
     if (value === undefined) continue;
     const format = value.trim().toLowerCase();
-    return format === 'json' || format === 'ndjson' ? format : undefined;
+    return isMachineFormat(format) ? format : undefined;
   }
   return undefined;
 }

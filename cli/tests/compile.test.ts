@@ -1,6 +1,6 @@
 import { describe, it, expect, vi } from 'vitest';
 import { formatCompilerMessage, parseCompilerMessage, parseCompilerMessages } from '../src/utils/compiler-messages.js';
-import { compileStatusSnippet, parseCompileStatus, REFRESH_SNIPPET } from '../src/lib/compile-snippets.js';
+import { COMPILE_STATUS_SNIPPET, parseCompileStatus, REFRESH_SNIPPET } from '../src/lib/compile-snippets.js';
 import { compileProject, type CompileDeps } from '../src/lib/compile.js';
 import type { EnsureEditorResult } from '../src/lib/ensure-editor.js';
 import type { RunToolOptions, RunToolResult } from '../src/lib/types.js';
@@ -31,7 +31,7 @@ describe('compiler messages', () => {
 
 describe('compile snippets', () => {
   it('the status snippet ends with the expression that is its result', () => {
-    expect(compileStatusSnippet().trimEnd().endsWith('sb.ToString()')).toBe(true);
+    expect(COMPILE_STATUS_SNIPPET.trimEnd().endsWith('sb.ToString()')).toBe(true);
     expect(REFRESH_SNIPPET).toContain('AssetDatabase.Refresh()');
   });
 
