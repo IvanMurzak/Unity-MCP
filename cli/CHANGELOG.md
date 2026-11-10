@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- **The exit codes, `--format`, the result envelope, the `commands` manifest and the local-server fallback rule
+  now come from `@baizor/gamedev-cli-core` 0.9.0** (one contract for the three engine CLIs). `commands --format json` names the exit codes by their `ExitCode` key (`CommandFailed`, was `COMMAND_FAILED`) and adds option `choices`; a failure envelope no command handled names the program when no command is on the command line. An unreadable
+  sign-in no longer prints PowerShell's DPAPI exception, and a forced close of an editor unity-mcp-cli started also kills its
+  child processes.
+
 ### Added
 
 - **`test`: Unity tests in a batch-mode editor, no plugin needed.** Runs Unity's own `-runTests` (`--mode`,

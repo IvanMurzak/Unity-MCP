@@ -6,7 +6,7 @@ import { readConfig, resolveConnectionFromConfig, isCloudMode } from './config.j
 import { readCloudAccessToken } from './cloud-credentials.js';
 import * as ui from './ui.js';
 import { findUnityProcess } from './unity-process.js';
-import { MachineCredentialStore } from './machine-credentials.js';
+import { decideLocalFallback, machineCredentialStatus, signedInButUnusableMessage } from '@baizor/gamedev-cli-core';
 import { hasLiveSessionLease } from '../lib/editor-session.js';
 
 export interface ConnectionOptions {
@@ -82,10 +82,6 @@ export interface ResolveConnectionDeps {
    * this machine; anything else = a sign-in exists (it may be expired, revoked, unreadable or momentarily busy).
    */
   credentialState?: () => 'ok' | 'missing' | 'unreadable';
-}
-
-function machineCredentialState(): 'ok' | 'missing' | 'unreadable' {
-  return new MachineCredentialStore().readState().status;
 }
 
 /** An editor has the project open and no live session lease says the CLI started it. */
@@ -180,9 +176,7 @@ export interface EditorConnection {
   signInRequired?: string;
 }
 
-export const SIGNED_IN_BUT_UNUSABLE_MESSAGE = 'This machine is signed in to ai-game.dev, but the sign-in cannot be used right now '
-  + '(expired, revoked, unreadable, or the credential store is busy). Run `unity-mcp-cli login` to sign in again, or retry. '
-  + 'The project stays in Cloud mode: the CLI does not switch it to a local server.';
+export const SIGNED_IN_BUT_UNUSABLE_MESSAGE = signedInButUnusableMessage('unity-mcp-cli');
 
 export const USER_EDITOR_IN_CLOUD_MESSAGE = 'The project is open in a Unity Editor connected to ai-game.dev (Cloud mode), and you are not signed in. '
   + 'Run `unity-mcp-cli login`, or switch the editor\'s connection to Custom (a local server), or pass --url.';
@@ -210,7 +204,8 @@ export async function resolveEditorConnection(
   const refuse = (message: string): EditorConnection => (
     { url: resolved.url, token: undefined, tokenFromCloudStore: false, overrideUrl: undefined, localFallback: false, signInRequired: message });
   // Only a machine that was never signed in falls back: an existing sign-in is the user's choice of the cloud.
-  if ((deps.credentialState ?? machineCredentialState)() !== 'missing') return refuse(SIGNED_IN_BUT_UNUSABLE_MESSAGE);
+  const decision = decideLocalFallback({ cloudSignInMissing: true, credentialStatus: deps.credentialState ?? machineCredentialStatus });
+  if (decision === 'refuse-signed-in') return refuse(SIGNED_IN_BUT_UNUSABLE_MESSAGE);
   if ((deps.userEditorOpen ?? userEditorOpen)(projectPath)) return refuse(USER_EDITOR_IN_CLOUD_MESSAGE);
   verbose(`Not signed in to ai-game.dev (Cloud mode): using the project's local server ${localUrl}`);
   return { url: localUrl, token: readConfig(projectPath)?.token, tokenFromCloudStore: false, overrideUrl: localUrl, localFallback: true };
