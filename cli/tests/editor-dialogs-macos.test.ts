@@ -10,6 +10,7 @@ import {
   pressEditorDialogButton,
   type ScriptRunner,
 } from '../src/utils/editor-dialogs.js';
+import { describeDialog } from '../src/utils/awaiting-input.js';
 
 // A minimal stand-in for the JXA System Events object model the macOS scripts use, so the real script text runs here.
 interface FakeElement { name: string; subrole?: string; modal?: boolean; texts?: string[]; buttons?: string[]; sheets?: FakeElement[] }
@@ -69,6 +70,22 @@ describe('editor dialogs on macOS', () => {
     ]);
     for (const d of listed.dialogs) expect(d.id).toMatch(/^\d+$/);
     expect(new Set(listed.dialogs.map(d => d.id)).size).toBe(2);
+  });
+
+  it('reports an untitled alert\'s first text as its title, and drops a title the window repeats as text', async () => {
+    const windows: Record<number, FakeElement[]> = {
+      42: [
+        // Unity's EditorUtility.DisplayDialog on macOS: an NSAlert with an empty AXTitle (live probe, Unity 6000.3).
+        { name: '', subrole: 'AXDialog', modal: true, texts: ['Probe Title', 'Editor blocked by probe'], buttons: ['Cancel', 'Proceed'] },
+        // osascript `display dialog ... with title`: the title is also a static text.
+        { name: 'E2E Probe', subrole: 'AXDialog', modal: true, texts: ['Blocked by test', 'E2E Probe'], buttons: ['Proceed', 'Cancel'] },
+      ],
+    };
+    const listed = await listEditorDialogs([42], 'darwin', fakeOsa(windows));
+    expect(listed.kind === 'ok' ? listed.dialogs.map(({ id: _id, ...d }) => d) : listed).toEqual([
+      { pid: 42, title: 'Probe Title', message: 'Editor blocked by probe', buttons: ['Cancel', 'Proceed'] },
+      { pid: 42, title: 'E2E Probe', message: 'Blocked by test', buttons: ['Proceed', 'Cancel'] },
+    ]);
   });
 
   it('keeps an id stable when the window order changes', async () => {
@@ -133,5 +150,13 @@ describe('editor dialogs on macOS', () => {
 
   it('a process without windows (or gone) has no dialogs', async () => {
     expect(await listEditorDialogs([5], 'darwin', fakeOsa(UNITY_WINDOWS))).toEqual({ kind: 'ok', dialogs: [] });
+  });
+});
+
+describe('describeDialog', () => {
+  it('omits an empty title instead of printing empty quotes', () => {
+    expect(describeDialog({ id: '1', pid: 1, title: 'Hold On', message: 'Save?\nNow', buttons: ['Save', 'Cancel'] })).toBe('"Hold On": Save? Now [Save | Cancel]');
+    expect(describeDialog({ id: '1', pid: 1, title: 'Hold On', message: '', buttons: ['OK'] })).toBe('"Hold On" [OK]');
+    expect(describeDialog({ id: '1', pid: 1, title: '', message: 'Überschreiben?', buttons: ['Replace'] })).toBe('Überschreiben? [Replace]');
   });
 });
