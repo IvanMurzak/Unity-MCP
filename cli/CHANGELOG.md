@@ -16,11 +16,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   JUnit; `--format github` writes `::error` annotations at the failing test's source line.
 - **`compile [--strict]`**: refreshes assets in the project's editor (started headless when none runs), waits for the
   compile and its domain reload, and reports compiler errors/warnings with file, line and column (exit 0 / 6 / 7 / 14).
-- **`dialog [--press <button>]`** (Windows, macOS): lists the modal dialogs blocking the editor and presses a button.
-  `status`, `run-tool`, `exec`, `compile` and `wait-for-ready` report a blocking dialog as exit 18 (`AWAITING_INPUT`).
-  macOS uses System Events (`osascript`, dialog windows and sheets) and needs the Accessibility permission of the
-  terminal or agent app; without it `dialog` says where to grant it (System Settings → Privacy & Security →
-  Accessibility).
+- **`dialog [--press <button>]`** (Windows, macOS, Linux): lists the modal dialogs blocking the editor and presses a
+  button. `status`, `run-tool`, `exec`, `compile` and `wait-for-ready` report a blocking dialog as exit 18
+  (`AWAITING_INPUT`). macOS uses System Events (`osascript`, dialog windows and sheets) and needs the Accessibility
+  permission of the terminal or agent app; without it `dialog` says where to grant it (System Settings → Privacy &
+  Security → Accessibility). Linux reads the AT-SPI accessibility bus through a `python3` helper (PyGObject), on X11
+  and Wayland, for GTK dialogs such as Unity's `EditorUtility.DisplayDialog`; it needs `python3-gi` and
+  `gir1.2-atspi-2.0` (Debian/Ubuntu names) and a running accessibility bus, and names the missing package or setting
+  when one is absent.
 - **`tools [name]`**: the AI tools the project's editor offers (one line each with their inputs, or one tool in detail
   with an example call and its schema), read over MCP `tools/list` plus the hidden tools; starts a headless editor when
   needed and saves the list in the project (git-ignored) for `--cached` / `--no-start`. The root `--help` now ends with

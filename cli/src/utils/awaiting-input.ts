@@ -15,7 +15,7 @@ export function isBatchModeEditor(commandLine: string): boolean {
 }
 
 /**
- * The modal dialogs of the project's running editor (Windows, macOS; an error such as a missing macOS
+ * The modal dialogs of the project's running editor (Windows, macOS, Linux; an error such as a missing macOS
  * Accessibility permission counts as none). A `-batchmode` editor never shows one, so it is not
  * scanned.
  */

@@ -68,9 +68,9 @@ describe('envelope', () => {
 });
 
 describe('editor dialogs', () => {
-  it('is Windows and macOS only', async () => {
-    expect(await listEditorDialogs([1], 'linux')).toEqual({ kind: 'unsupported', platform: 'linux' });
-    expect(await pressEditorDialogButton([1], 'OK', undefined, 'linux')).toEqual({ kind: 'unsupported', platform: 'linux' });
+  it('is Windows, macOS and Linux only', async () => {
+    expect(await listEditorDialogs([1], 'freebsd')).toEqual({ kind: 'unsupported', platform: 'freebsd' });
+    expect(await pressEditorDialogButton([1], 'OK', undefined, 'freebsd')).toEqual({ kind: 'unsupported', platform: 'freebsd' });
   });
 
   it('parses the helper output', () => {

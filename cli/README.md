@@ -668,15 +668,22 @@ timeout, `18` a modal dialog blocks the editor. Diagnostics go to stderr in the 
 A modal dialog (a save prompt, "Enter Safe Mode?", `EditorUtility.DisplayDialog`) blocks the editor's main thread, so
 every tool call waits until someone answers it. `dialog` lists the dialogs of the project's editor and can press a
 button. `status`, `run-tool`, `exec`, `compile` and `wait-for-ready` report such a dialog as exit code `18`
-(`AWAITING_INPUT`) instead of a plain timeout. Windows and macOS; a headless (`-batchmode`) editor never shows dialogs.
+(`AWAITING_INPUT`) instead of a plain timeout. Windows, macOS and Linux; a headless (`-batchmode`) editor never shows
+dialogs.
 
 | Platform | How | Requirement |
 |---|---|---|
 | **Windows** | Win32 (`EnumWindows`, `BM_CLICK`) through PowerShell | None |
 | **macOS** | System Events UI scripting through `osascript -l JavaScript`: the editor's dialog windows and sheets, their texts and buttons | **Accessibility permission** for the app that runs the CLI (your terminal or AI agent app): System Settings → Privacy & Security → Accessibility. Without it `dialog` fails with that hint, and the exit-18 check finds no dialogs. |
+| **Linux** | The AT-SPI accessibility bus through a `python3` helper (PyGObject): the editor's dialog and alert windows (GTK, which Unity's `EditorUtility.DisplayDialog` uses), their labels and push buttons, pressed through their `click` action. Works on X11 and Wayland | `python3` with PyGObject and the AT-SPI typelib (Debian/Ubuntu: `python3-gi gir1.2-atspi-2.0`; Fedora: `python3-gobject at-spi2-core`; Arch: `python-gobject at-spi2-core`) and a running accessibility bus (`at-spi2-core`, started on demand in GNOME, KDE and most desktops). Run the CLI in the desktop session that runs the editor. A missing package, an unreachable bus or no graphical session make `dialog` fail with a hint naming the fix, and the exit-18 check finds no dialogs. |
 
-A dialog id comes from the list and stays the same while that dialog is open (Windows: its window handle; macOS: a
-hash of its pid, title, text and buttons). The button label is never put into a script, only passed as data.
+A dialog id comes from the list and stays the same while that dialog is open (Windows: its window handle; macOS and
+Linux: a hash of its pid, title, text and buttons). The button label is never put into a script, only passed as data.
+
+On a headless Linux machine, run the editor (without `-batchmode`) and the CLI under `Xvfb` inside one
+`dbus-run-session`, with `at-spi2-core` installed. If the same user also has a desktop session, give that private
+session its own `XDG_RUNTIME_DIR`: its accessibility bus would otherwise replace (and on exit delete) the desktop's
+`at-spi` socket.
 
 ```bash
 unity-mcp-cli dialog ./MyGame                          # list: title and buttons
