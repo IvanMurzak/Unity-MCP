@@ -1,0 +1,110 @@
+import { describe, it, expect, vi } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
+import * as path from 'path';
+import {
+  describeInputs, listTools, mcpEndpoint, parseHiddenToolNames, parseMcpMessage, readToolCache, summary, writeToolCache,
+} from '../src/lib/list-tools.js';
+import { resolveEditorConnection } from '../src/utils/connection.js';
+import type { RunToolResult } from '../src/lib/types.js';
+
+describe('list-tools helpers', () => {
+  it('finds the MCP endpoint of a base URL', () => {
+    expect(mcpEndpoint('http://localhost:1/')).toBe('http://localhost:1/mcp');
+    expect(mcpEndpoint('https://ai-game.dev/mcp')).toBe('https://ai-game.dev/mcp');
+  });
+
+  it('reads a JSON-RPC message from JSON or an SSE event', () => {
+    expect(parseMcpMessage('{"result":{"a":1}}')).toEqual({ result: { a: 1 } });
+    expect(parseMcpMessage('event: message\ndata: {"result":{"b":2}}\n\n')).toEqual({ result: { b: 2 } });
+    expect(parseMcpMessage('garbage')).toBeUndefined();
+  });
+
+  it('reads hidden tools from both answer shapes of unity-tool-list (as the plugin sent them live)', () => {
+    expect(parseHiddenToolNames('19 results\nName|Visible\npackage-add|false\nrql-query|true\nscreenshot-camera|false\n'))
+      .toEqual(['package-add', 'screenshot-camera']);
+    expect(parseHiddenToolNames('{Name:package-add,Visible:false,Description:"x"}\n{Name:rql-query,Visible:true}')).toEqual(['package-add']);
+  });
+
+  it('summarizes descriptions and inputs', () => {
+    expect(summary('Change the scene. All-or-nothing: more.')).toBe('Change the scene.');
+    expect(describeInputs({ properties: { query: { type: 'string', description: 'The RQL query.' }, n: { type: 'integer' } }, required: ['query'] }))
+      .toEqual(['query*: string — The RQL query.', 'n: integer']);
+  });
+
+  it('caches the catalog in the project and keeps it out of git', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-tools-cache-'));
+    try {
+      writeToolCache(dir, { tools: [{ name: 'a', description: '', inputSchema: {} }], hidden: [], readAt: 'now' });
+      expect(readToolCache(dir)?.tools[0].name).toBe('a');
+      expect(fs.readdirSync(dir)).toEqual([expect.stringMatching(/^\.ai-game-dev$/)]);
+      const ignore = fs.readFileSync(path.join(dir, fs.readdirSync(dir)[0], '.gitignore'), 'utf-8');
+      expect(ignore).toContain('tools.json');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
+describe('listTools', () => {
+  it('reads tools/list over MCP and the hidden names from unity-tool-list', async () => {
+    const calls: string[] = [];
+    const fetchImpl = vi.fn(async (_url: string | URL | Request, init?: RequestInit) => {
+      const body = init?.body ? JSON.parse(String(init.body)) as { method?: string } : {};
+      calls.push(body.method ?? String(init?.method));
+      const headers = new Headers({ 'mcp-session-id': 's1' });
+      if (body.method === 'tools/list') {
+        return new Response('event: message\ndata: {"result":{"tools":[{"name":"rql-query","description":"Read.","inputSchema":{"type":"object"}}]}}\n', { headers });
+      }
+      return new Response('{"result":{}}', { headers });
+    });
+    const invoke = vi.fn(async (): Promise<RunToolResult> => ({
+      kind: 'success', success: true, endpoint: 'x', httpStatus: 200,
+      data: { status: 'success', content: [{ type: 'text', text: 'Name|Visible\nrql-query|true\npackage-add|false' }] },
+    }));
+    const result = await listTools({ baseUrl: 'http://localhost:1', fetchImpl: fetchImpl as unknown as typeof fetch, invoke });
+    expect(result.kind).toBe('success');
+    if (result.kind !== 'success') return;
+    expect(result.catalog.tools.map(t => t.name)).toEqual(['rql-query']);
+    expect(result.catalog.hidden).toEqual(['package-add']);
+    expect(calls).toEqual(['initialize', 'notifications/initialized', 'tools/list', 'DELETE']);
+  });
+
+  it('reports an unreachable server', async () => {
+    const fetchImpl = vi.fn(async () => { throw new Error('ECONNREFUSED'); });
+    expect(await listTools({ baseUrl: 'http://localhost:1', fetchImpl: fetchImpl as unknown as typeof fetch })).toMatchObject({ kind: 'failure' });
+  });
+});
+
+describe('resolveEditorConnection', () => {
+  function project(config: object): string {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-editor-conn-'));
+    fs.mkdirSync(path.join(dir, 'UserSettings'));
+    fs.writeFileSync(path.join(dir, 'UserSettings', 'AI-Game-Developer-Config.json'), JSON.stringify(config));
+    return dir;
+  }
+
+  it('Cloud mode without a sign-in falls back to the local server (and its config token)', async () => {
+    const dir = project({ connectionMode: 'Cloud', token: 'local-tok' });
+    try {
+      const conn = await resolveEditorConnection(dir, {}, { readCloudToken: () => undefined });
+      expect(conn.localFallback).toBe(true);
+      expect(conn.url).toMatch(/^http:\/\/localhost:\d+$/);
+      expect(conn.overrideUrl).toBe(conn.url);
+      expect(conn.token).toBe('local-tok');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('a sign-in or an explicit --url keeps the resolved connection', async () => {
+    const dir = project({ connectionMode: 'Cloud' });
+    try {
+      expect((await resolveEditorConnection(dir, {}, { readCloudToken: () => 'cloud-tok' })).localFallback).toBe(false);
+      const explicit = await resolveEditorConnection(dir, { url: 'http://localhost:9' }, { readCloudToken: () => undefined });
+      expect(explicit).toMatchObject({ localFallback: false, url: 'http://localhost:9', overrideUrl: 'http://localhost:9' });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

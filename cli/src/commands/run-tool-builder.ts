@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { parseInput } from '../utils/input.js';
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
 import { failIfAwaitingInput } from '../utils/awaiting-input.js';
@@ -151,14 +151,9 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
       // Resolve path + connection up front so the heading and verbose
       // output reflect the final endpoint before the HTTP call fires.
       const projectPath = resolveAndValidateProjectPath(positionalPath, options);
-      const { url: resolvedUrl, token, cloudAuthMissing, tokenFromCloudStore } =
-        await resolveConnection(projectPath, options);
-      if (cloudAuthMissing) {
-        out.fail(ExitCode.CommandFailed, {
-          code: 'NOT_AUTHENTICATED',
-          message: 'Not logged in to ai-game.dev. Run `unity-mcp-cli login` to sign in, then retry — or pass --token / --url to target a specific server.',
-        });
-      }
+      const conn = await resolveEditorConnection(projectPath, options);
+      const { url: resolvedUrl, token, tokenFromCloudStore } = conn;
+    if (conn.localFallback) out.warn(localFallbackNote(conn.url));
       const body = parseInput(options);
       const authSource = options.token ? '--token flag' : 'config or machine store';
 
@@ -172,9 +167,9 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
       if (options.start !== false && canStartEditor(projectPath, options.url)) {
         const ensured = await ensureEditor({
           projectPath,
-          probeUrls: resolveProbeUrls(projectPath, resolvedUrl, options.url),
+          probeUrls: resolveProbeUrls(projectPath, resolvedUrl, conn.overrideUrl),
           token,
-          overrideUrl: options.url,
+          overrideUrl: conn.overrideUrl,
           overrideToken: options.token,
           readyTimeoutMs,
           closeOnFailure: options.once === true,
@@ -271,12 +266,13 @@ export function handleFailure(failure: RunToolFailure, ctx: FailureContext): nev
     if (ctx.raw) {
       process.stdout.write(stringifyForRaw(failure.data));
     } else {
-      ui.error(`HTTP ${failure.httpStatus}: ${failure.message}`);
-      if (failure.data !== undefined) {
-        ui.info(typeof failure.data === 'string'
-          ? failure.data
-          : JSON.stringify(failure.data, null, 2));
+      const text = serverError(failure.data);
+      ui.error(text ?? `HTTP ${failure.httpStatus}: ${failure.message}`);
+      if (text === undefined && failure.data !== undefined) {
+        console.error(typeof failure.data === 'string' ? failure.data : JSON.stringify(failure.data, null, 2));
       }
+      const hint = failureHint(failure, ctx.toolName);
+      if (hint) ui.info(hint);
     }
     process.exit(exitCode);
   }
@@ -285,6 +281,17 @@ export function handleFailure(failure: RunToolFailure, ctx: FailureContext): nev
   if (ctx.raw) process.stderr.write(message + '\n');
   else ui.error(`Failed to call ${ctx.errorNoun}: ${message}`);
   process.exit(exitCode);
+}
+
+/** What to do next after a failed call, when there is a clear next step. */
+export function failureHint(failure: RunToolFailure, toolName: string): string | undefined {
+  if (failure.reason === 'http-error' && failure.httpStatus === 404) {
+    return `No tool named "${toolName}". List the available tools with: unity-mcp-cli tools`;
+  }
+  if (failure.reason === 'http-error' && serverError(failure.data)?.startsWith('[invalid_params]')) {
+    return `See the inputs of ${toolName} with: unity-mcp-cli tools ${toolName}`;
+  }
+  return undefined;
 }
 
 export function buildFailureMessage(failure: RunToolFailure, ctx: FailureContext): string {
@@ -297,8 +304,11 @@ export function buildFailureMessage(failure: RunToolFailure, ctx: FailureContext
       return `Connection was reset by the server at ${ctx.endpoint}. The server may have crashed or restarted.`;
     case 'network-error':
       return `Cannot reach ${ctx.endpoint}. Check your network connection and server URL.`;
-    case 'http-error':
-      return serverError(failure.data) ?? `HTTP ${failure.httpStatus}: ${failure.message}`;
+    case 'http-error': {
+      const text = serverError(failure.data) ?? `HTTP ${failure.httpStatus}: ${failure.message}`;
+      const hint = failureHint(failure, ctx.toolName);
+      return hint ? `${text} ${hint}` : text;
+    }
     default:
       return failure.message;
   }

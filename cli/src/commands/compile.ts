@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 import { formatCompilerMessage } from '../utils/compiler-messages.js';
@@ -43,18 +43,17 @@ export const compileCommand = new Command('compile')
     if (timeoutSeconds === 0) out.fail(ExitCode.Usage, { code: 'USAGE', message: '--timeout must be greater than 0' });
     const readyTimeoutMs = parsePositiveIntFlag(options.readyTimeout, '--ready-timeout', DEFAULT_SESSION_READY_TIMEOUT_MS);
     const projectPath = resolveAndValidateProjectPath(positionalPath, options);
-    const { url, token, cloudAuthMissing, tokenFromCloudStore } = await resolveConnection(projectPath, options);
-    if (cloudAuthMissing) {
-      out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: 'Not logged in to ai-game.dev. Run `unity-mcp-cli login` to sign in, then retry — or pass --token / --url.' });
-    }
+    const conn = await resolveEditorConnection(projectPath, options);
+    const { url, token, tokenFromCloudStore } = conn;
+    if (conn.localFallback) out.warn(localFallbackNote(conn.url));
 
     const spinner = out.machine || format === 'github' ? null : ui.startSpinner('Connecting...');
     const result = await compileProject({
       projectPath,
-      probeUrls: resolveProbeUrls(projectPath, url, options.url),
+      probeUrls: resolveProbeUrls(projectPath, url, conn.overrideUrl),
       token,
       tokenFromCloudStore,
-      overrideUrl: options.url,
+      overrideUrl: conn.overrideUrl,
       overrideToken: options.token,
       readyTimeoutMs,
       timeoutMs: timeoutSeconds * 1000,

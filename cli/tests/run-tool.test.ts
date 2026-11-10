@@ -408,7 +408,7 @@ describe('run-tool config resolution', () => {
     expect(stdout).toContain('http://localhost:55555');
   });
 
-  it('resolves the hardcoded cloud URL in Cloud mode, then refuses when not logged in', () => {
+  it('resolves the hardcoded cloud URL in Cloud mode, then falls back to the local server when not logged in', () => {
     writeProjectConfig({
       connectionMode: 'Cloud',
       host: 'http://localhost:55555',
@@ -424,8 +424,11 @@ describe('run-tool config resolution', () => {
       expect(stdout).toContain('Cloud mode');
       expect(stdout).toContain('https://ai-game.dev/mcp');
       // ... but with no machine-store credential the call is refused, never sent unauthenticated.
-      expect(stdout).toContain('Not logged in to ai-game.dev');
-      expect(exitCode).toBe(6); // NOT_AUTHENTICATED: the command ran and was refused
+      // ... but with no machine-store credential nothing goes to the cloud unauthenticated: the project's local
+      // server is used instead (nothing answers here, so the call fails as unreachable).
+      expect(stdout).toContain('Not signed in to ai-game.dev');
+      expect(stdout).not.toContain('Authorization header set');
+      expect(exitCode).toBe(7);
     } finally {
       cleanup();
     }
@@ -489,8 +492,9 @@ describe('run-tool config resolution', () => {
       expect(stdout).toContain('hasToken=false');
       expect(stdout).not.toContain('Authorization header set');
       // ... and the run-tool command refuses to fire an unauthenticated cloud request.
-      expect(stdout).toContain('Not logged in to ai-game.dev');
-      expect(exitCode).toBe(6); // NOT_AUTHENTICATED: the command ran and was refused
+      // ... and the call never goes to the cloud unauthenticated: it uses the local server instead.
+      expect(stdout).toContain('Not signed in to ai-game.dev');
+      expect(exitCode).toBe(7);
     } finally {
       cleanup();
     }

@@ -38,7 +38,7 @@ export interface RunTestsOptions {
   category?: string;
   /** `-assemblyNames`. */
   assemblies?: string;
-  /** NUnit report path (default `<cwd>/test-results.xml`). */
+  /** NUnit report path (default `<project>/Logs/test-results.xml`: Unity's Logs/ folder, never committed). */
   output?: string;
   /** Also write a JUnit report here. */
   junitOutput?: string;
@@ -201,7 +201,7 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     editorPath = found;
   }
 
-  const output = path.resolve(options.output ?? 'test-results.xml');
+  const output = path.resolve(options.output ?? path.join(projectPath, 'Logs', 'test-results.xml'));
   const logFile = path.resolve(options.logFile ?? output.replace(/\.xml$/i, '') + '.log');
   const paths: RunTestsPaths = {
     editorPath, output, logFile, ...(options.junitOutput ? { junitOutput: path.resolve(options.junitOutput) } : {}),

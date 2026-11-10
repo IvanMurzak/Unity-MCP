@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { DEFAULT_EXEC_TIMEOUT_MS, execCode, readToolResponse, SCRIPT_EXECUTE_TOOL } from '../lib/exec.js';
 import { parsePositiveIntFlag } from './open.js';
 import {
@@ -83,10 +83,9 @@ export const execCommand = new Command('exec')
     }
 
     const projectPath = resolveAndValidateProjectPath(undefined, options);
-    const { url, token, cloudAuthMissing, tokenFromCloudStore } = await resolveConnection(projectPath, options);
-    if (cloudAuthMissing) {
-      out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: 'Not logged in to ai-game.dev. Run `unity-mcp-cli login` to sign in, then retry — or pass --token / --url.' });
-    }
+    const conn = await resolveEditorConnection(projectPath, options);
+    const { url, token, tokenFromCloudStore } = conn;
+    if (conn.localFallback) out.warn(localFallbackNote(conn.url));
 
     const spinner = options.raw || out.machine ? null : ui.startSpinner('Connecting...');
     const result = await execCode({
@@ -99,10 +98,10 @@ export const execCommand = new Command('exec')
       readyTimeoutMs,
       timeoutMs,
       once: options.once === true,
-      probeUrls: resolveProbeUrls(projectPath, url, options.url),
+      probeUrls: resolveProbeUrls(projectPath, url, conn.overrideUrl),
       token,
       tokenFromCloudStore,
-      overrideUrl: options.url,
+      overrideUrl: conn.overrideUrl,
       overrideToken: options.token,
       onStatus: message => {
         verbose(message);

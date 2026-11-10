@@ -108,7 +108,9 @@ export class CommandOutput {
 
   warn(message: string): void {
     this.warnings.push(message);
-    if (!this.machine) ui.warn(message);
+    // stderr: in text mode stdout may be the result itself (`--raw`).
+    if (!this.machine) process.stderr.write(`WARN: ${message}
+`);
   }
 
   /** Print the success envelope (machine formats) and return; text output is the caller's. */

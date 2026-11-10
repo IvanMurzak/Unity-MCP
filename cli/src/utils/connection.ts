@@ -140,3 +140,43 @@ export function resolveProbeUrls(projectPath: string, resolvedUrl: string, expli
   }
   return urls;
 }
+
+export interface EditorConnection {
+  url: string;
+  token: string | undefined;
+  tokenFromCloudStore: boolean;
+  /**
+   * The server URL a started editor must serve. Set to the project's local server when the project is in Cloud mode
+   * but nobody is signed in (`localFallback`); otherwise the explicit `--url`.
+   */
+  overrideUrl: string | undefined;
+  /** Cloud mode without a sign-in: the command uses the project's local server instead of refusing. */
+  localFallback: boolean;
+}
+
+/**
+ * The connection of a command that can start the project's editor itself (`exec`, `run-tool`, `compile`, `tools`).
+ * In Cloud mode without an ai-game.dev sign-in the cloud cannot be reached, but the editor can serve its own local MCP
+ * server: an editor the CLI starts is told to (in memory — the project config is not changed), so the command works
+ * on a fresh project instead of failing with "not logged in". A user's editor connected to the cloud is still found
+ * only through the cloud.
+ */
+export async function resolveEditorConnection(
+  projectPath: string,
+  options: ConnectionOptions,
+  deps: ResolveConnectionDeps = {},
+): Promise<EditorConnection> {
+  const resolved = await resolveConnection(projectPath, options, deps);
+  if (!resolved.cloudAuthMissing) {
+    return { url: resolved.url, token: resolved.token, tokenFromCloudStore: resolved.tokenFromCloudStore, overrideUrl: options.url, localFallback: false };
+  }
+  const localUrl = `http://localhost:${generatePortFromDirectory(projectPath)}`;
+  verbose(`Not signed in to ai-game.dev (Cloud mode): using the project's local server ${localUrl}`);
+  return { url: localUrl, token: readConfig(projectPath)?.token, tokenFromCloudStore: false, overrideUrl: localUrl, localFallback: true };
+}
+
+/** The note a command shows when it fell back to the local server. */
+export function localFallbackNote(url: string): string {
+  return `Not signed in to ai-game.dev, so the project's local MCP server (${url}) is used: an editor started now serves it. ` +
+    'Run `unity-mcp-cli login` to use Cloud mode.';
+}
