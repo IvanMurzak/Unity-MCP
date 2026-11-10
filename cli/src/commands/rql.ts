@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { Command, Option } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
-import { RQL_MUTATE_TOOL, assetsWrittenSince, rqlLastVerb, rqlToolCall, saveReceipt, stripToolName } from '../lib/rql.js';
+import { RQL_MUTATE_TOOL, assetsWrittenSince, decodeQueryFile, rqlLastVerb, rqlToolCall, saveReceipt, stripToolName } from '../lib/rql.js';
 import { runTool } from '../lib/run-tool.js';
 import { resolveAndValidateProjectPath } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
@@ -20,7 +20,7 @@ interface RqlCliOptions extends Omit<RunToolCliOptions, 'input' | 'inputFile' | 
 /** The recipes `rql --help` shows; the root help shows the first ones. */
 export const RQL_RECIPES: RqlRecipes = [
   ['editor | call OpenScene("Assets/Scenes/Forest.unity")', 'open a scene (writes no file): objects lists the OPEN scenes only'],
-  ['editor | call NewScene("Assets/Scenes/Cave.unity")', 'a new empty scene, saved at that path, now open'],
+  ['editor | call NewScene("Assets/Scenes/Cave.unity")', 'a new scene (camera + light), saved at that path, now open'],
   ['editor | call CreateGameObject({name: "Ball", primitive: "Sphere", position: [1, 0.5, 0]})', 'create (meters, Y up)'],
   ['objects | where name starts-with "Tree" | select name transform.position transform.localScale', 'read'],
   ['objects | where name contains "Enemy" | count', 'count'],
@@ -56,7 +56,7 @@ const RQL_HELP_FOOTER = [
 function readQuery(query: string | undefined, file: string | undefined): string | undefined {
   if (query !== undefined && file !== undefined) throw new Error('Pass the query either as an argument or with -f, not both.');
   if (file === undefined) return query;
-  return fs.readFileSync(file === '-' ? 0 : file, 'utf-8').trim();
+  return decodeQueryFile(fs.readFileSync(file === '-' ? 0 : file)).trim();
 }
 
 export const rqlCommand = new Command('rql')
@@ -91,14 +91,12 @@ export const rqlCommand = new Command('rql')
     if ('usage' in call) out.fail(ExitCode.Usage, { code: 'USAGE', message: call.usage });
 
     // Unity saves a set / call to disk; which files it wrote is read from the disk, so nobody re-opens the scene to
-    // check. Not for an editor reached by --url: its disk may be another machine's.
-    const human = !options.raw && !out.machine;
-    const saveCheck = call.toolName === RQL_MUTATE_TOOL && !options.dryRun && human && options.url === undefined
+    // check: only for an editor on this machine, and only files written since the tool call itself.
+    const receiptFor = call.toolName === RQL_MUTATE_TOOL && !options.dryRun && !options.raw && !out.machine
       ? resolveAndValidateProjectPath(undefined, options) : undefined;
-    const startedAt = Date.now();
-    await runToolAction(RQL_CALL, call.toolName, undefined, { ...options, input: JSON.stringify(call.input) });
-    if (saveCheck !== undefined) {
-      const receipt = saveReceipt(assetsWrittenSince(saveCheck, startedAt), rqlLastVerb(query!));
+    await runToolAction(RQL_CALL, call.toolName, undefined, { ...options, input: JSON.stringify(call.input) }, ({ calledAt, local }) => {
+      if (receiptFor === undefined || !local) return;
+      const receipt = saveReceipt(assetsWrittenSince(receiptFor, calledAt), rqlLastVerb(query!));
       if (receipt) console.log(receipt);
-    }
+    });
   });

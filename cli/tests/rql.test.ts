@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { assetsWrittenSince, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlToolCall, saveReceipt, stripToolName } from '../src/lib/rql.js';
+import { assetsWrittenSince, decodeQueryFile, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlToolCall, saveReceipt, stripToolName } from '../src/lib/rql.js';
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -66,6 +66,12 @@ describe('rqlToolCall', () => {
     expect(rqlToolCall(undefined, {})).toHaveProperty('usage');
   });
 
+  it('reads || as or and decodes a UTF-16 query file', () => {
+    expect(rqlLastVerb('objects | where name == "a" || name == "b" | set active = false')).toBe('set');
+    const text = 'objects | count';
+    expect(decodeQueryFile(Buffer.concat([Buffer.from([0xff, 0xfe]), Buffer.from(text, 'utf16le')]))).toBe(text);
+  });
+
   it('treats backtick identifiers as opaque', () => {
     expect(rqlLastVerb("objects | where `Bob's` == 1 | set active = false")).toBe('set');
   });
@@ -76,6 +82,6 @@ describe('saveReceipt', () => {
     expect(saveReceipt(['Assets/A.unity'], 'set')).toBe('Saved to disk: Assets/A.unity');
     expect(saveReceipt(['a', 'b', 'c'], 'set', 2)).toBe('Saved to disk: a, b, +1 more');
     expect(saveReceipt([], 'call')).toBeUndefined();
-    expect(saveReceipt([], 'set')).toMatch(/No scene or asset file/);
+    expect(saveReceipt([], 'set')).toMatch(/No scene, asset or settings file/);
   });
 });

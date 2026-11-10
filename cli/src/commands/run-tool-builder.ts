@@ -154,6 +154,8 @@ export async function runToolAction(
   toolName: string,
   positionalPath: string | undefined,
   options: RunToolCliOptions,
+  /** After a successful call printed its answer: when the call went out, and whether the editor runs on this machine. */
+  onSuccess?: (call: { calledAt: number; local: boolean }) => void,
 ): Promise<void> {
   const format = parseFormat(options.format);
   // Explicitly typed: `out.fail` returns `never`, which narrows only through a declared type.
@@ -219,6 +221,7 @@ export async function runToolAction(
 
   // The CLI already resolved url/token, so passing them explicitly makes the lib's resolver a no-op; the lib
   // still refreshes a machine-store Bearer once on 401.
+  const calledAt = Date.now();
   const result = await cfg.invoke({
     toolName, url: baseUrl, ...(token ? { token } : {}), input: body, timeoutMs, tokenFromCloudStore,
   });
@@ -245,6 +248,7 @@ export async function runToolAction(
       else ui.error(withRqlHint(toolName, `${toolName} reported an error: ${response.text}`));
     }
     if (!response.ok) process.exit(ExitCode.CommandFailed);
+    onSuccess?.({ calledAt, local: isLoopbackUrl(baseUrl) });
     return;
   }
 

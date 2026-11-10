@@ -10,7 +10,7 @@ export const RQL_SCHEMA_TOOL = 'rql-schema';
 
 /**
  * The query's top-level stages (split on `|` outside strings, `backtick` identifiers, parentheses, brackets and
- * braces), trimmed.
+ * braces; `||` is RQL's or, not a stage break), trimmed.
  */
 export function rqlStages(query: string): string[] {
   const stages: string[] = [];
@@ -28,6 +28,8 @@ export function rqlStages(query: string): string[] {
       depth++;
     } else if (ch === ')' || ch === ']' || ch === '}') {
       depth = Math.max(0, depth - 1);
+    } else if (ch === '|' && query[i + 1] === '|') {
+      i++;
     } else if (ch === '|' && depth === 0) {
       stages.push(query.slice(start, i).trim());
       start = i + 1;
@@ -54,6 +56,13 @@ export function isRqlMutation(query: string): boolean {
  */
 export function stripToolName(query: string): string {
   return query.replace(/^\s*rql-(query|mutate)\s+/, '');
+}
+
+/** A query file's text: UTF-8, or UTF-16 with a byte-order mark (Windows PowerShell 5.1 writes `>` files so). */
+export function decodeQueryFile(bytes: Buffer): string {
+  if (bytes[0] === 0xff && bytes[1] === 0xfe) return bytes.subarray(2).toString('utf16le');
+  if (bytes[0] === 0xfe && bytes[1] === 0xff) return Buffer.from(bytes.subarray(2)).swap16().toString('utf16le');
+  return bytes.toString('utf-8').replace(/^﻿/, '');
 }
 
 export interface RqlCallOptions {
@@ -113,8 +122,8 @@ export function rqlErrorHint(toolName: string, message: string): string | undefi
 const SAVED_FILE = /\.(unity|prefab|asset|mat|controller|anim|overrideController|physicMaterial|lighting)$/i;
 
 /**
- * The scene / asset files under `<project>/Assets` modified at or after `sinceMs`, relative to the project with
- * forward slashes, sorted — what a change actually wrote.
+ * The scene / asset / settings files under `<project>/Assets` and `<project>/ProjectSettings` modified at or after
+ * `sinceMs`, relative to the project with forward slashes, sorted — what a change actually wrote.
  */
 export function assetsWrittenSince(projectDir: string, sinceMs: number): string[] {
   const found: string[] = [];
@@ -139,6 +148,7 @@ export function assetsWrittenSince(projectDir: string, sinceMs: number): string[
     }
   };
   walk(path.join(projectDir, 'Assets'));
+  walk(path.join(projectDir, 'ProjectSettings'));
   return found.sort();
 }
 
@@ -147,7 +157,7 @@ export function assetsWrittenSince(projectDir: string, sinceMs: number): string[
  * nothing (OpenScene writes nothing on purpose); a `set` that wrote nothing says so.
  */
 export function saveReceipt(written: readonly string[], verb: 'set' | 'call' | undefined, limit = 20): string | undefined {
-  if (written.length === 0) return verb === 'set' ? 'No scene or asset file under Assets/ changed on disk.' : undefined;
+  if (written.length === 0) return verb === 'set' ? 'No scene, asset or settings file of the project changed on disk.' : undefined;
   const more = written.length > limit ? `, +${written.length - limit} more` : '';
   return `Saved to disk: ${written.slice(0, limit).join(', ')}${more}`;
 }
