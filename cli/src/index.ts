@@ -24,8 +24,7 @@ import { toolsCommand } from './commands/tools.js';
 import { createUpdateCommand } from './commands/update.js';
 import { waitForReadyCommand } from './commands/wait-for-ready.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
-import { ExitCode } from './utils/exit-codes.js';
-import { isMachineFormat, writeEnvelope } from './utils/output.js';
+import { classifyCliError, writeFailureEnvelope } from '@baizor/gamedev-cli-core';
 import { checkForUpdate, isRunningViaNpx, printUpdateNotification } from './utils/update-check.js';
 
 const require = createRequire(import.meta.url);
@@ -68,38 +67,13 @@ const subcommands = [
 
 /**
  * Commander's parse errors (unknown option, missing argument, ...) are usage errors: exit 2, as in the shared exit-code
- * table. Help and version output keep exit 0.
+ * table. Help and version output keep exit 0. Commander already printed the message to stderr; a machine format still
+ * gets its envelope on stdout.
  */
 function exitOnParseError(err: { exitCode: number; code: string; message: string }): never {
-  const informational = err.code === 'commander.helpDisplayed' || err.code === 'commander.help' || err.code === 'commander.version';
-  if (informational || err.exitCode === 0) process.exit(err.exitCode);
-  // Commander already printed the message to stderr; a machine format still gets its envelope on stdout.
-  writeErrorEnvelope('USAGE', err.message.replace(/^error:\s*/, ''));
-  process.exit(ExitCode.Usage);
-}
-
-/**
- * `--format json|ndjson` from the raw arguments: a failure before (or outside) a command's own handling — a parse
- * error, an unexpected exception — must still leave one envelope on stdout.
- */
-function machineFormatFromArgv(argv: readonly string[]): 'json' | 'ndjson' | undefined {
-  for (let i = 0; i < argv.length; i++) {
-    const arg = argv[i];
-    if (arg === '--') break;
-    const value = arg === '--format' ? argv[i + 1] : arg.startsWith('--format=') ? arg.slice('--format='.length) : undefined;
-    if (value === undefined) continue;
-    const format = value.trim().toLowerCase();
-    return isMachineFormat(format) ? format : undefined;
-  }
-  return undefined;
-}
-
-function writeErrorEnvelope(code: string, message: string): void {
-  const format = machineFormatFromArgv(process.argv.slice(2));
-  if (!format) return;
-  const known = new Set(program.commands.map(c => c.name()));
-  const command = process.argv.slice(2).find(a => known.has(a)) ?? '';
-  writeEnvelope({ success: false, command, data: null, errors: [{ code, message }], warnings: [] }, format);
+  const failure = classifyCliError(err);
+  if (!failure.informational) writeFailureEnvelope(program, failure);
+  process.exit(failure.exitCode);
 }
 
 for (const cmd of subcommands) {
@@ -137,8 +111,9 @@ program.parseAsync()
     }
   })
   .catch((err) => {
-    const message = (err as Error).message || String(err);
-    uiError(message);
-    writeErrorEnvelope('ERROR', message);
-    process.exit(ExitCode.Error);
+    // A failure no command handled still leaves one envelope on stdout in a machine format.
+    const failure = classifyCliError(err);
+    uiError(failure.message);
+    writeFailureEnvelope(program, failure);
+    process.exit(failure.exitCode);
   });
