@@ -24,7 +24,7 @@ import { testCommand } from './commands/test.js';
 import { toolsCommand } from './commands/tools.js';
 import { createUpdateCommand } from './commands/update.js';
 import { waitForReadyCommand } from './commands/wait-for-ready.js';
-import { configureStyledHelp, error as uiError, setRootRecipes, setVerbose } from './utils/ui.js';
+import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
 import { classifyCliError, writeFailureEnvelope } from '@baizor/gamedev-cli-core';
 import { checkForUpdate, isRunningViaNpx, printUpdateNotification } from './utils/update-check.js';
 
@@ -86,9 +86,8 @@ for (const cmd of subcommands) {
 }
 program.exitOverride(exitOnParseError);
 
-// Apply styled help to root (after subcommands so banner knows about them)
-setRootRecipes(RQL_RECIPES);
-configureStyledHelp(program, pkg.version);
+// Apply styled help to root (after the subcommands: the root help names them)
+configureStyledHelp(program, pkg.version, RQL_RECIPES);
 
 // Wire verbose flag before any command executes
 program.hook('preAction', (_thisCommand, actionCommand) => {

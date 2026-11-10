@@ -514,7 +514,8 @@ unity-mcp-cli rql 'objects | where name starts-with "Rock" | set transform.local
 
 | Option | Required | Description |
 |---|---|---|
-| `[query]` | Yes, unless `--schema` | The RQL query (single-quote it; strings inside take double quotes) |
+| `[query]` | Yes, unless `--schema` / `-f` | The RQL query (single-quote it; strings inside take double quotes) |
+| `-f, --file <file>` | No | Read the query from a file (`-`: stdin), for a shell that strips the inner quotes |
 | `--schema [type]` | No | List the RQL sources, or one type's members |
 | `--dry-run` | No | For `set` / `call`: show what would change, change nothing |
 | `--max-targets <n>` | No | For `set` / `call`: more than 200 targets (up to 1000) |

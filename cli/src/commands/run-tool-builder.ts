@@ -37,6 +37,9 @@ export interface BuilderOptions {
   invoke: (opts: RunToolOptions) => Promise<RunToolResult>;
 }
 
+/** What `runToolAction` needs of a command: everything but its help texts. */
+export type RunToolCall = Omit<BuilderOptions, 'description' | 'argDescription'>;
+
 export interface RunToolCliOptions {
   path?: string;
   url?: string;
@@ -147,7 +150,7 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
  * call; a failed one exits with its classified code.
  */
 export async function runToolAction(
-  cfg: BuilderOptions,
+  cfg: RunToolCall,
   toolName: string,
   positionalPath: string | undefined,
   options: RunToolCliOptions,
@@ -239,7 +242,7 @@ export async function runToolAction(
       // The tool's own answer as it wrote it (the JSON envelope is `--raw` / `--format json`).
       callSpinner?.stop();
       if (response.ok) console.log(response.text);
-      else ui.error(withRqlHint(`${toolName} reported an error: ${response.text}`));
+      else ui.error(withRqlHint(toolName, `${toolName} reported an error: ${response.text}`));
     }
     if (!response.ok) process.exit(ExitCode.CommandFailed);
     return;
@@ -293,7 +296,7 @@ export function handleFailure(failure: RunToolFailure, ctx: FailureContext): nev
 
 /** What to do next after a failed call, when there is a clear next step. */
 export function failureHint(failure: RunToolFailure, toolName: string): string | undefined {
-  const rqlHint = failure.reason === 'http-error' ? rqlErrorHint(serverError(failure.data) ?? '') : undefined;
+  const rqlHint = failure.reason === 'http-error' ? rqlErrorHint(toolName, serverError(failure.data) ?? '') : undefined;
   if (rqlHint) return `hint: ${rqlHint}`;
   if (failure.reason === 'http-error' && failure.httpStatus === 404) {
     return `No tool named "${toolName}". List the available tools with: unity-mcp-cli tools`;
@@ -328,7 +331,8 @@ function capitalize(s: string): string {
   return s.length === 0 ? s : s.charAt(0).toUpperCase() + s.slice(1);
 }
 
-function withRqlHint(message: string): string {
-  const hint = rqlErrorHint(message);
+/** `message`, with a hint for a familiar slip when an RQL tool failed. */
+function withRqlHint(toolName: string, message: string): string {
+  const hint = rqlErrorHint(toolName, message);
   return hint ? `${message}\nhint: ${hint}` : message;
 }

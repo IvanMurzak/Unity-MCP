@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import { assetsWrittenSince, isRqlMutation, rqlErrorHint, rqlStages, stripToolName } from '../src/lib/rql.js';
+import { assetsWrittenSince, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlToolCall, saveReceipt, stripToolName } from '../src/lib/rql.js';
 
 const dirs: string[] = [];
 afterEach(() => {
@@ -29,9 +29,10 @@ describe('rql query routing', () => {
 
 describe('rqlErrorHint', () => {
   it('names the RQL spelling of an operator from another language', () => {
-    expect(rqlErrorHint("error syntax-error: unexpected 'startsWith' in 'where' stage at 21")).toMatch(/starts-with/);
-    expect(rqlErrorHint("error syntax-error: unexpected 'like' in 'where' stage")).toMatch(/no like/);
-    expect(rqlErrorHint("error unknown-source: unknown source 'object'")).toBeUndefined();
+    expect(rqlErrorHint('rql-query', "error syntax-error: unexpected 'startsWith' in 'where' stage at 21")).toMatch(/starts-with/);
+    expect(rqlErrorHint('rql-query', "error syntax-error: unexpected 'like' in 'where' stage")).toMatch(/no like/);
+    expect(rqlErrorHint('rql-query', "error unknown-source: unknown source 'object'")).toBeUndefined();
+    expect(rqlErrorHint('script-execute', "unexpected 'startsWith'")).toBeUndefined();
   });
 });
 
@@ -50,5 +51,31 @@ describe('assetsWrittenSince', () => {
     fs.writeFileSync(path.join(project, 'Assets', 'Red.mat'), '');
     fs.writeFileSync(path.join(scenes, 'Arena.unity.meta'), '');
     expect(assetsWrittenSince(project, since)).toEqual(['Assets/Red.mat', 'Assets/Scenes/Arena.unity']);
+  });
+});
+
+describe('rqlToolCall', () => {
+  it('routes a query, and refuses a query with --schema or a read-only query with mutate flags', () => {
+    expect(rqlToolCall('objects | count', {})).toEqual({ toolName: 'rql-query', input: { query: 'objects | count' } });
+    expect(rqlToolCall('objects | set active = false', { dryRun: true, maxTargets: 300 }))
+      .toEqual({ toolName: 'rql-mutate', input: { query: 'objects | set active = false', dry_run: true, max_targets: 300 } });
+    expect(rqlToolCall(undefined, { schema: 'Light' })).toEqual({ toolName: 'rql-schema', input: { type: 'Light' } });
+    expect(rqlToolCall('objects | count', { schema: true })).toHaveProperty('usage');
+    expect(rqlToolCall(undefined, { schema: 'objects | count' })).toHaveProperty('usage');
+    expect(rqlToolCall('objects | count', { dryRun: true })).toHaveProperty('usage');
+    expect(rqlToolCall(undefined, {})).toHaveProperty('usage');
+  });
+
+  it('treats backtick identifiers as opaque', () => {
+    expect(rqlLastVerb("objects | where `Bob's` == 1 | set active = false")).toBe('set');
+  });
+});
+
+describe('saveReceipt', () => {
+  it('names the files written; a call that wrote nothing says nothing, a set says so', () => {
+    expect(saveReceipt(['Assets/A.unity'], 'set')).toBe('Saved to disk: Assets/A.unity');
+    expect(saveReceipt(['a', 'b', 'c'], 'set', 2)).toBe('Saved to disk: a, b, +1 more');
+    expect(saveReceipt([], 'call')).toBeUndefined();
+    expect(saveReceipt([], 'set')).toMatch(/No scene or asset file/);
   });
 });

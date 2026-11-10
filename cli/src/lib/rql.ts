@@ -8,7 +8,10 @@ export const RQL_QUERY_TOOL = 'rql-query';
 export const RQL_MUTATE_TOOL = 'rql-mutate';
 export const RQL_SCHEMA_TOOL = 'rql-schema';
 
-/** The query's top-level stages (split on `|` outside strings, parentheses, brackets and braces), trimmed. */
+/**
+ * The query's top-level stages (split on `|` outside strings, `backtick` identifiers, parentheses, brackets and
+ * braces), trimmed.
+ */
 export function rqlStages(query: string): string[] {
   const stages: string[] = [];
   let depth = 0;
@@ -17,9 +20,9 @@ export function rqlStages(query: string): string[] {
   for (let i = 0; i < query.length; i++) {
     const ch = query[i];
     if (quote) {
-      if (ch === '\\') i++;
+      if (ch === '\\' && quote !== '`') i++;
       else if (ch === quote) quote = undefined;
-    } else if (ch === '"' || ch === '\'') {
+    } else if (ch === '"' || ch === '\'' || ch === '`') {
       quote = ch;
     } else if (ch === '(' || ch === '[' || ch === '{') {
       depth++;
@@ -34,10 +37,15 @@ export function rqlStages(query: string): string[] {
   return stages;
 }
 
+/** `set` or `call` when the query's last stage is one (it changes the editor), else `undefined` (it only reads). */
+export function rqlLastVerb(query: string): 'set' | 'call' | undefined {
+  const stages = rqlStages(query);
+  return /^(set|call)\b/i.exec(stages[stages.length - 1] ?? '')?.[1].toLowerCase() as 'set' | 'call' | undefined;
+}
+
 /** A query whose last stage is `set` or `call` changes the editor (rql-mutate); any other only reads (rql-query). */
 export function isRqlMutation(query: string): boolean {
-  const stages = rqlStages(query);
-  return /^(set|call)\b/i.test(stages[stages.length - 1] ?? '');
+  return rqlLastVerb(query) !== undefined;
 }
 
 /**
@@ -46,6 +54,34 @@ export function isRqlMutation(query: string): boolean {
  */
 export function stripToolName(query: string): string {
   return query.replace(/^\s*rql-(query|mutate)\s+/, '');
+}
+
+export interface RqlCallOptions {
+  /** `--schema [type]`: true without a type. */
+  schema?: string | boolean;
+  dryRun?: boolean;
+  maxTargets?: number;
+}
+
+/** The rql-* tool and its input for a command-line query, or why the command line is wrong. */
+export function rqlToolCall(query: string | undefined, options: RqlCallOptions):
+  { toolName: string; input: Record<string, unknown> } | { usage: string } {
+  const { schema, dryRun, maxTargets } = options;
+  if (schema !== undefined) {
+    // `rql --schema 'objects | count'` hands the query to --schema as its value.
+    if (query !== undefined || (typeof schema === 'string' && /[|\s]/.test(schema.trim()))) {
+      return { usage: 'Pass either a query or --schema [type] (a type name), not both.' };
+    }
+    return { toolName: RQL_SCHEMA_TOOL, input: typeof schema === 'string' ? { type: schema } : {} };
+  }
+  if (query === undefined || query.trim() === '') {
+    return { usage: 'No query given: rql \'objects | where name starts-with "Tree" | count\' (recipes: rql --help)' };
+  }
+  if (!isRqlMutation(query)) {
+    if (dryRun || maxTargets !== undefined) return { usage: '--dry-run and --max-targets are for a query ending in set / call.' };
+    return { toolName: RQL_QUERY_TOOL, input: { query } };
+  }
+  return { toolName: RQL_MUTATE_TOOL, input: { query, ...(dryRun ? { dry_run: true } : {}), ...(maxTargets !== undefined ? { max_targets: maxTargets } : {}) } };
 }
 
 /** Operators agents bring from other languages, with RQL's spelling. */
@@ -59,8 +95,12 @@ const OPERATOR_HINTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^(regex|regexp|match|rlike)$/i, 'RQL spells it matches "regex": where name matches "^Tree_[0-9]+$"'],
 ];
 
-/** A hint for an RQL error whose cause is a familiar slip (a camelCase operator, SQL `like`), else `undefined`. */
-export function rqlErrorHint(message: string): string | undefined {
+/**
+ * A hint for a failed RQL tool (`toolName` rql-*) whose error is a familiar slip (an operator spelled as in another
+ * language), else `undefined`.
+ */
+export function rqlErrorHint(toolName: string, message: string): string | undefined {
+  if (!toolName.startsWith('rql-')) return undefined;
   const token = /unexpected '([^']+)'|unknown method '([^']+)'/.exec(message);
   const word = token?.[1] ?? token?.[2];
   if (word) {
@@ -74,9 +114,9 @@ const SAVED_FILE = /\.(unity|prefab|asset|mat|controller|anim|overrideController
 
 /**
  * The scene / asset files under `<project>/Assets` modified at or after `sinceMs`, relative to the project with
- * forward slashes, sorted — what a save call actually wrote. At most `limit`.
+ * forward slashes, sorted — what a change actually wrote.
  */
-export function assetsWrittenSince(projectDir: string, sinceMs: number, limit = 20): string[] {
+export function assetsWrittenSince(projectDir: string, sinceMs: number): string[] {
   const found: string[] = [];
   const walk = (dir: string): void => {
     let entries: fs.Dirent[];
@@ -99,5 +139,15 @@ export function assetsWrittenSince(projectDir: string, sinceMs: number, limit = 
     }
   };
   walk(path.join(projectDir, 'Assets'));
-  return found.sort().slice(0, limit);
+  return found.sort();
+}
+
+/**
+ * The line a change prints: the files it wrote (the first `limit`, then how many more). Nothing for a `call` that wrote
+ * nothing (OpenScene writes nothing on purpose); a `set` that wrote nothing says so.
+ */
+export function saveReceipt(written: readonly string[], verb: 'set' | 'call' | undefined, limit = 20): string | undefined {
+  if (written.length === 0) return verb === 'set' ? 'No scene or asset file under Assets/ changed on disk.' : undefined;
+  const more = written.length > limit ? `, +${written.length - limit} more` : '';
+  return `Saved to disk: ${written.slice(0, limit).join(', ')}${more}`;
 }
