@@ -49,16 +49,15 @@ describe('CLI integration', () => {
       // (the word 'connect' may appear in descriptions, but not as a standalone command)
     });
 
-    it('lists commands in alphabetical order', () => {
+    it('names every command and shows the RQL recipes, compactly', () => {
       const { stdout, exitCode } = runCli(['--help']);
       expect(exitCode).toBe(0);
-      // Extract command names from help output
-      const commandNames = ['configure', 'create-project', 'exec', 'install-plugin', 'install-unity', 'open', 'remove-plugin', 'run-tool'];
-      const positions = commandNames.map(name => stdout.search(new RegExp(`^\\s+${name}\\s`, 'm')));
-      // Verify each command appears after the previous one (alphabetical order)
-      for (let i = 1; i < positions.length; i++) {
-        expect(positions[i]).toBeGreaterThan(positions[i - 1]);
+      for (const name of ['compile', 'configure', 'create-project', 'exec', 'install-plugin', 'install-unity', 'open', 'remove-plugin', 'rql', 'run-tool', 'tools']) {
+        expect(stdout, `help should name ${name}`).toMatch(new RegExp(`(^|[\\s:])${name}(\\s|$)`, 'm'));
       }
+      expect(stdout).toContain("rql 'objects | where name");
+      // Agents read the root help first and re-read it on every later turn: keep it short.
+      expect(stdout.length).toBeLessThan(2500);
     });
 
     it('shows version with --version', () => {

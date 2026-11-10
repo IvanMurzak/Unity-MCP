@@ -101,6 +101,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`open`](#open)
   - [`close`](#close)
   - [`tools`](#tools)
+  - [`rql`](#rql)
   - [`run-tool`](#run-tool)
   - [`exec`](#exec)
   - [`test`](#test)
@@ -494,6 +495,31 @@ unity-mcp-cli tools --format json   # full schemas, machine-readable
 | `--once` | No | Close the editor afterwards if this call started it |
 | `--ready-timeout <ms>` | No | Wait for a started editor (default: 300000) |
 | `--url <url>` / `--token <token>` | No | Server overrides |
+| `--format <format>` | No | `text`, `json` or `ndjson` |
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `rql`
+
+One RQL query from the command line, without JSON quoting. A query whose last stage is `set` or `call` goes to
+`rql-mutate`, any other to `rql-query`; `--schema [type]` runs `rql-schema`. Starts a headless editor like `run-tool`.
+Unity saves a change to disk at once, so after a `set` / `call` the CLI prints the scene and asset files it wrote
+(`Saved to disk: Assets/Scenes/Forest.unity`). An operator spelled as in another language (`startsWith`, `like`) gets
+a hint with RQL's spelling. `rql --help` lists recipes.
+
+```bash
+unity-mcp-cli rql 'objects | where name starts-with "Tree" | count'
+unity-mcp-cli rql 'objects | where name starts-with "Rock" | set transform.localScale = transform.localScale * 1.5'
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[query]` | Yes, unless `--schema` | The RQL query (single-quote it; strings inside take double quotes) |
+| `--schema [type]` | No | List the RQL sources, or one type's members |
+| `--dry-run` | No | For `set` / `call`: show what would change, change nothing |
+| `--max-targets <n>` | No | For `set` / `call`: more than 200 targets (up to 1000) |
+| `--path <path>` | No | Unity project path (default: the current directory) |
+| `--no-start` / `--once` | No | As for `run-tool` (`--url`, `--token`, `--raw`, `--timeout`, `--ready-timeout` work too) |
 | `--format <format>` | No | `text`, `json` or `ndjson` |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
