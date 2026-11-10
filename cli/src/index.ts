@@ -24,7 +24,7 @@ import { createUpdateCommand } from './commands/update.js';
 import { waitForReadyCommand } from './commands/wait-for-ready.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
 import { ExitCode } from './utils/exit-codes.js';
-import { formatEnvelope, isMachineFormat } from './utils/output.js';
+import { isMachineFormat, writeEnvelope } from './utils/output.js';
 import { checkForUpdate, isRunningViaNpx, printUpdateNotification } from './utils/update-check.js';
 
 const require = createRequire(import.meta.url);
@@ -95,8 +95,9 @@ function machineFormatFromArgv(argv: readonly string[]): 'json' | 'ndjson' | und
 function writeErrorEnvelope(code: string, message: string): void {
   const format = machineFormatFromArgv(process.argv.slice(2));
   if (!format) return;
-  const command = process.argv.slice(2).find(a => !a.startsWith('-')) ?? '';
-  process.stdout.write(formatEnvelope({ success: false, command, data: null, errors: [{ code, message }], warnings: [] }, format));
+  const known = new Set(program.commands.map(c => c.name()));
+  const command = process.argv.slice(2).find(a => known.has(a)) ?? '';
+  writeEnvelope({ success: false, command, data: null, errors: [{ code, message }], warnings: [] }, format);
 }
 
 for (const cmd of subcommands) {

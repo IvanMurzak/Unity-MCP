@@ -9,6 +9,7 @@ import { failIfAwaitingInput } from '../utils/awaiting-input.js';
 import { ExitCode, type ExitCodeValue } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 import { ensureEditor, type EnsureEditorFailure } from '../lib/ensure-editor.js';
+import { isLoopbackUrl } from '../lib/editor-session.js';
 import { readToolResponse } from '../lib/exec.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from '../lib/types.js';
 import { parsePositiveIntFlag } from './open.js';
@@ -72,6 +73,9 @@ export function classifyToolFailure(failure: RunToolFailure): { exitCode: ExitCo
       return { exitCode: ExitCode.CommandFailed, code: 'NOT_AUTHENTICATED' };
     case 'http-error':
       if (failure.httpStatus === 503) return { exitCode: ExitCode.Busy, code: 'BUSY' };
+      // The server's own tool timeout, and a plugin connection lost after the call was sent.
+      if (failure.httpStatus === 504) return { exitCode: ExitCode.Timeout, code: 'TIMEOUT' };
+      if (failure.httpStatus === 502) return { exitCode: ExitCode.Unreachable, code: 'UNREACHABLE' };
       if (failure.httpStatus === 404) return { exitCode: ExitCode.Usage, code: 'NOT_FOUND' };
       if (failure.httpStatus === 400) return { exitCode: ExitCode.Usage, code: 'USAGE' };
       // 422: the tool ran and failed, unless the server rejected the arguments before running it.
@@ -109,7 +113,9 @@ export const PLUGIN_NOT_CONNECTED_HINT = 'If the project is open in a Unity Edit
  * Whether a missing editor may be started for `projectPath`: only for a project that names its Unity version, so the
  * CLI never guesses an editor for a folder that merely looks like a project.
  */
-export function canStartEditor(projectPath: string): boolean {
+export function canStartEditor(projectPath: string, explicitUrl?: string): boolean {
+  // An explicit remote server is called as given: the editor that serves it may run on another machine.
+  if (explicitUrl !== undefined && !isLoopbackUrl(explicitUrl)) return false;
   return getProjectEditorVersion(projectPath) !== null;
 }
 
@@ -126,7 +132,7 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
     .option('--raw', 'Output raw JSON (no formatting)')
     .option('--format <format>', FORMAT_OPTION_DESCRIPTION, 'text')
     .option('--timeout <ms>', 'Request timeout in milliseconds (default: 60000)', '60000')
-    .option('--no-start', 'Never start an editor: fail when none answers (default: start a headless one for a project with ProjectSettings/ProjectVersion.txt)')
+    .option('--no-start', 'Never start an editor: fail when none answers (default: start a headless one for a project with ProjectSettings/ProjectVersion.txt, unless --url names a remote server)')
     .option('--once', 'Close the editor after the call if this call started it (one-shot CI use)')
     .option('--ready-timeout <ms>', 'How long to wait for a started editor to become ready', String(DEFAULT_SESSION_READY_TIMEOUT_MS))
     .action(async (toolName: string, positionalPath: string | undefined, options: CliOptions) => {
@@ -163,7 +169,7 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
       const spinner = human ? ui.startSpinner('Connecting...') : null;
       let baseUrl = resolvedUrl;
       let editor: { source?: string; closeIfStarted: () => Promise<number | undefined> } = { closeIfStarted: async () => undefined };
-      if (options.start !== false && canStartEditor(projectPath)) {
+      if (options.start !== false && canStartEditor(projectPath, options.url)) {
         const ensured = await ensureEditor({
           projectPath,
           probeUrls: resolveProbeUrls(projectPath, resolvedUrl, options.url),

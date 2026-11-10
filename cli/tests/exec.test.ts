@@ -69,6 +69,17 @@ describe('execCode', () => {
     expect(closeOwned).not.toHaveBeenCalled();
   });
 
+  it('with once, leaves an editor alone whose lease another call has since rewritten', async () => {
+    const closeOwned = vi.fn(async () => ({ kind: 'closed' as const, pid: 42, forced: false }));
+    const lease = { pid: 1, startedAt: 'x', nonce: 'ours', hostId: 'h' } as unknown as NonNullable<EnsureResult<string>['lease']>;
+    const ensure = vi.fn(async (): Promise<EnsureResult<string>> => ({ ready: LOCAL, source: 'started', lease }));
+    const readLease = vi.fn(() => ({ ...lease, nonce: 'theirs' }));
+    const d = { session: vi.fn(() => ({ ensure, closeOwned, readLease })), invoke: vi.fn(async (): Promise<RunToolResult> => CALLED) };
+    const result = await execCode(options(d, { once: true }));
+    expect(closeOwned).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty('closedPid');
+  });
+
   it('with once, never closes an editor it reused', async () => {
     const closeOwned = vi.fn(async () => ({ kind: 'closed' as const, pid: 42, forced: false }));
     const ensure = vi.fn(async (): Promise<EnsureResult<string>> => ({ ready: LOCAL, source: 'foreign' }));

@@ -6,7 +6,7 @@ import { spawnSync } from 'child_process';
 import { CLI_PATH } from './helpers/cli.js';
 import { formatEnvelope } from '../src/utils/output.js';
 import { EXIT_CODE_DESCRIPTIONS, ExitCode } from '../src/utils/exit-codes.js';
-import { classifyToolFailure } from '../src/commands/run-tool-builder.js';
+import { canStartEditor, classifyToolFailure } from '../src/commands/run-tool-builder.js';
 import { listEditorDialogs, parseDialogList, pressDialogScript, pressEditorDialogButton } from '../src/utils/editor-dialogs.js';
 import type { RunToolFailure } from '../src/lib/types.js';
 
@@ -32,12 +32,30 @@ describe('exit codes', () => {
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 503 }))).toEqual({ exitCode: 17, code: 'BUSY' });
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 404 }))).toEqual({ exitCode: 2, code: 'NOT_FOUND' });
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 500 }))).toEqual({ exitCode: 6, code: 'TOOL_FAILED' });
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 504 }))).toEqual({ exitCode: 14, code: 'TIMEOUT' });
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 502 }))).toEqual({ exitCode: 7, code: 'UNREACHABLE' });
     expect(classifyToolFailure(failure({ reason: 'invalid-input' }))).toEqual({ exitCode: 2, code: 'USAGE' });
     // What the server answered in a live run: a failed snippet, and arguments rejected before the tool ran.
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 422, data: { error: "Tool execution failed for 'Script / Execute': boom" } })))
       .toEqual({ exitCode: 6, code: 'TOOL_FAILED' });
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 422, data: { error: "[invalid_params] Invalid params for tool 'package-add'" } })))
       .toEqual({ exitCode: 2, code: 'USAGE' });
+  });
+});
+
+describe('canStartEditor', () => {
+  it('starts an editor only for a project that names its version, and never for a remote --url', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-can-start-'));
+    try {
+      expect(canStartEditor(dir)).toBe(false);
+      fs.mkdirSync(path.join(dir, 'ProjectSettings'));
+      fs.writeFileSync(path.join(dir, 'ProjectSettings', 'ProjectVersion.txt'), 'm_EditorVersion: 6000.3.27f1\n');
+      expect(canStartEditor(dir)).toBe(true);
+      expect(canStartEditor(dir, 'http://localhost:1234')).toBe(true);
+      expect(canStartEditor(dir, 'https://ai-game.dev/mcp')).toBe(false);
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });
 
@@ -68,8 +86,18 @@ describe('editor dialogs', () => {
     expect(ran).toBe(false);
   });
 
-  it('quotes the button label as a PowerShell literal', () => {
-    expect(pressDialogScript([5], 0n, "Don't $(evil)")).toContain("'Don''t $(evil)'");
+  it('passes the button label through the environment, never in the script', async () => {
+    const label = "Don’t $(Start-Process calc) ' \"";
+    let seen: { script: string; env?: Record<string, string> } | undefined;
+    const result = await pressEditorDialogButton([5], label, undefined, 'win32', async (script, env) => {
+      seen = { script, env };
+      return 'pressed';
+    });
+    expect(result).toEqual({ kind: 'pressed', button: label });
+    expect(seen?.script).not.toContain('Start-Process');
+    expect(seen?.script).toContain('$env:UNITY_MCP_DIALOG_BUTTON');
+    expect(seen?.env).toEqual({ UNITY_MCP_DIALOG_BUTTON: label });
+    expect(pressDialogScript([5], 0n)).toContain('$env:UNITY_MCP_DIALOG_BUTTON');
   });
 
   it('rejects a non-numeric dialog id', async () => {
@@ -89,6 +117,24 @@ describe('CLI exit codes and formats', () => {
     const envelope = JSON.parse(stdout);
     expect(envelope).toMatchObject({ success: false, command: 'status', errors: [{ code: 'USAGE' }] });
     expect(envelope.errors[0].message).not.toMatch(/^error:/);
+  });
+
+  it('an early validation failure in json mode still leaves one envelope and nothing else on stdout', () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-not-a-project-'));
+    try {
+      const { stdout, stderr } = runCli(['dialog', dir, '--format', 'json']);
+      const envelope = JSON.parse(stdout);
+      expect(envelope).toMatchObject({ success: false, command: 'dialog' });
+      expect(envelope.errors).toHaveLength(1);
+      expect(stderr).not.toBe('');
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+
+  it('the envelope of a parse error names the command even after --format json', () => {
+    const { stdout } = runCli(['--format', 'json', 'status', '--no-such-flag']);
+    expect(JSON.parse(stdout).command).toBe('status');
   });
 
   it('an unknown --format is a usage error', () => {

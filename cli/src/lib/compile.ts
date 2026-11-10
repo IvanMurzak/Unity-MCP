@@ -61,7 +61,9 @@ export type CompileProjectResult = CompileProjectSuccess | CompileProjectFailure
 /** A call failure a reloading editor produces: retry it until the deadline. */
 function transient(failure: RunToolFailure): boolean {
   return failure.reason === 'connection-refused' || failure.reason === 'connection-reset' || failure.reason === 'network-error'
-    || failure.reason === 'timeout' || (failure.reason === 'http-error' && failure.httpStatus === 503)
+    || failure.reason === 'timeout'
+    // While the domain reloads the server answers 503 (not executed), 502 (connection lost), 504 or 500 (its retries).
+    || (failure.reason === 'http-error' && [500, 502, 503, 504].includes(failure.httpStatus ?? 0))
     || failure.message.includes(RELOAD_PENDING_TEXT);
 }
 

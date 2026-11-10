@@ -24,6 +24,7 @@ export const dialogCommand = new Command('dialog')
     // Explicitly typed: `out.fail` returns `never`, which narrows only through a declared type.
     const out: CommandOutput = new CommandOutput('dialog', parseFormat(options.format));
     if (options.id !== undefined && options.press === undefined) out.fail(ExitCode.Usage, { code: 'USAGE', message: '--id needs --press' });
+    if (options.id !== undefined && !/^\d+$/.test(options.id)) out.fail(ExitCode.Usage, { code: 'USAGE', message: `--id must be a dialog id from the list (got: "${options.id}")` });
     const projectPath = resolveAndValidateProjectPath(positionalPath, options);
     const proc = findUnityProcess(projectPath);
     if (!proc) out.fail(ExitCode.Unreachable, { code: 'UNREACHABLE', message: 'No Unity Editor has this project open.' });

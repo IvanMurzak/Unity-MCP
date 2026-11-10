@@ -1,6 +1,6 @@
 import { Command, type Argument, type Option } from 'commander';
 import { EXIT_CODE_DESCRIPTIONS } from '../utils/exit-codes.js';
-import { formatEnvelope, parseFormat } from '../utils/output.js';
+import { parseFormat, writeEnvelope } from '../utils/output.js';
 
 export interface CommandManifestEntry {
   name: string;
@@ -12,6 +12,8 @@ export interface CommandManifestEntry {
 export interface CommandManifest {
   name: string;
   version: string;
+  /** Options every command accepts (`--verbose`, `--help`) and the root's own (`--version`). */
+  globalOptions: Array<{ flags: string; description: string; default?: unknown }>;
   commands: CommandManifestEntry[];
   exitCodes: typeof EXIT_CODE_DESCRIPTIONS;
 }
@@ -29,7 +31,8 @@ export function buildCommandManifest(root: Command, version: string): CommandMan
   return {
     name: root.name(),
     version,
-    commands: root.commands.map(cmd => ({
+    globalOptions: [...root.options.filter(o => !o.hidden).map(describeOption), { flags: '-h, --help', description: 'Display help for the command' }],
+    commands: root.commands.filter(cmd => !(cmd as unknown as { _hidden?: boolean })._hidden).map(cmd => ({
       name: cmd.name(),
       description: cmd.description(),
       arguments: cmd.registeredArguments.map(describeArgument),
@@ -48,7 +51,7 @@ export function createCommandsCommand(getRoot: () => Command, version: string): 
       const manifest = buildCommandManifest(getRoot(), version);
       const format = parseFormat(options.format);
       if (format === 'json' || format === 'ndjson') {
-        process.stdout.write(formatEnvelope({ success: true, command: 'commands', data: manifest, errors: [], warnings: [] }, format));
+        writeEnvelope({ success: true, command: 'commands', data: manifest, errors: [], warnings: [] }, format);
         return;
       }
       for (const cmd of manifest.commands) {

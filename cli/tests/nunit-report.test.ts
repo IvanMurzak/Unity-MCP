@@ -62,11 +62,34 @@ describe('parseNUnitReport', () => {
   });
 });
 
+describe('suite-level failures', () => {
+  it('counts a failed OneTimeTearDown even when every case passed', () => {
+    const xml = `<test-run result="Failed" total="1" passed="1" failed="0" skipped="0">
+      <test-suite type="TestFixture" name="T" fullname="A.T" result="Failed" site="TearDown" duration="0.1">
+        <failure><message><![CDATA[teardown broke]]></message><stack-trace><![CDATA[at A.T.Down () in /p/Assets/T.cs:9]]></stack-trace></failure>
+        <test-case fullname="A.T.One" name="One" result="Passed"/>
+      </test-suite>
+    </test-run>`;
+    const report = parseNUnitReport(xml)!;
+    expect(report.summary.failed).toBe(1);
+    const failure = report.tests.find(t => t.suiteFailure)!;
+    expect(failure).toMatchObject({ fullName: 'A.T [TearDown]', outcome: 'failed', message: 'teardown broke' });
+  });
+
+  it('ignores a suite that failed only because a child failed', () => {
+    const xml = `<test-run result="Failed" total="1" passed="0" failed="1">
+      <test-suite fullname="A.T" result="Failed" site="Child"><test-case fullname="A.T.One" name="One" result="Failed"/></test-suite>
+    </test-run>`;
+    expect(parseNUnitReport(xml)!.summary.failed).toBe(1);
+  });
+});
+
 describe('XML escaping', () => {
   it('round-trips entities', () => {
     const text = `a & b < c > "d" 'e'`;
     expect(decodeXml(encodeXml(text))).toBe(text);
     expect(decodeXml('&#65;&#x42;')).toBe('AB');
+    expect(decodeXml('&#x110000;')).toBe('');
   });
 
   it('drops characters XML cannot carry', () => {

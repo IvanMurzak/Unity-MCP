@@ -1,8 +1,9 @@
 // Machine-readable command results (`--format json|ndjson`), the same envelope in unity-mcp-cli, unreal-mcp-cli and
 // godot-cli. The result goes to stdout and nothing else does; progress and logs go to stderr.
 
+import * as fs from 'fs';
 import * as ui from './ui.js';
-import { ExitCode, type ExitCodeValue } from './exit-codes.js';
+import { EXIT_CODE_DESCRIPTIONS, ExitCode, type ExitCodeValue } from './exit-codes.js';
 
 export type OutputFormat = 'text' | 'json' | 'ndjson';
 
@@ -47,11 +48,54 @@ export function formatEnvelope(envelope: Envelope, format: 'json' | 'ndjson'): s
   return (format === 'json' ? JSON.stringify(envelope, null, 2) : JSON.stringify(envelope)) + '\n';
 }
 
+/** Whether an envelope already went out: exactly one per run. */
+let envelopeWritten = false;
+
+/**
+ * Write the envelope synchronously: `process.stdout.write` to a pipe is asynchronous on macOS, so a `process.exit` right
+ * after it could cut the JSON short.
+ */
+export function writeEnvelope(envelope: Envelope, format: 'json' | 'ndjson'): void {
+  if (envelopeWritten) return;
+  envelopeWritten = true;
+  const buffer = Buffer.from(formatEnvelope(envelope, format), 'utf-8');
+  let offset = 0;
+  while (offset < buffer.length) {
+    try {
+      offset += fs.writeSync(1, buffer, offset);
+    } catch (err) {
+      if ((err as NodeJS.ErrnoException).code !== 'EAGAIN') throw err;
+    }
+  }
+}
+
+/** The output of the command being run (one per process), for the exit safety net. */
+let active: CommandOutput | undefined;
+
+function onExit(code: number): void {
+  if (!active?.machine || envelopeWritten) return;
+  // A path that exited without an envelope (a shared validator, an unexpected error): stdout still gets one.
+  const name = EXIT_CODE_DESCRIPTIONS.find(e => e.code === code)?.name ?? 'ERROR';
+  writeEnvelope({
+    success: code === 0,
+    command: active.command,
+    data: null,
+    errors: code === 0 ? [] : [{ code: name, message: 'The command failed before it produced a result; see stderr for details.' }],
+    warnings: active.warnings,
+  }, active.format as 'json' | 'ndjson');
+}
+
 /** Collects warnings and builds the envelope of one command run. */
 export class CommandOutput {
   readonly warnings: string[] = [];
 
-  constructor(readonly command: string, readonly format: OutputFormat | string) {}
+  constructor(readonly command: string, readonly format: OutputFormat | string) {
+    if (active === undefined) process.on('exit', onExit);
+    active = this;
+    // In a machine format stdout carries the envelope and nothing else: anything printed with console.log (shared
+    // helpers, hints, verbose lines) goes to stderr.
+    if (this.machine) console.log = console.error;
+  }
 
   get machine(): boolean {
     return isMachineFormat(this.format);
@@ -70,7 +114,7 @@ export class CommandOutput {
   /** Print the success envelope (machine formats) and return; text output is the caller's. */
   succeed(data: unknown): void {
     if (this.machine) {
-      process.stdout.write(formatEnvelope({ success: true, command: this.command, data, errors: [], warnings: this.warnings }, this.format as 'json' | 'ndjson'));
+      writeEnvelope({ success: true, command: this.command, data, errors: [], warnings: this.warnings }, this.format as 'json' | 'ndjson');
     }
   }
 
@@ -81,7 +125,7 @@ export class CommandOutput {
   fail(exitCode: ExitCodeValue, errors: EnvelopeError | EnvelopeError[], data: unknown = null, hint?: string): never {
     const list = Array.isArray(errors) ? errors : [errors];
     if (this.machine) {
-      process.stdout.write(formatEnvelope({ success: false, command: this.command, data, errors: list, warnings: this.warnings }, this.format as 'json' | 'ndjson'));
+      writeEnvelope({ success: false, command: this.command, data, errors: list, warnings: this.warnings }, this.format as 'json' | 'ndjson');
     } else {
       for (const err of list) ui.error(err.message);
       if (hint) ui.info(hint);

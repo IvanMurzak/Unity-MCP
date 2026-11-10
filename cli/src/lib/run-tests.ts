@@ -1,7 +1,7 @@
 // Library-safe `runTests`: run a project's Unity tests through the editor's own command line (`-batchmode -runTests`),
 // with no MCP plugin or server involved, and turn the NUnit report into a verdict. No console output, no exit.
 
-import { spawn, type ChildProcess } from 'child_process';
+import { execFile, spawn, type ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
 import { defaultSessionProcessOps } from '@baizor/gamedev-cli-core';
@@ -21,6 +21,12 @@ export const RESERVED_TEST_ARGS: readonly string[] = [
 
 /** Default `--timeout`: an hour, so a hung editor never blocks a CI job forever. */
 export const DEFAULT_TEST_TIMEOUT_SECONDS = 3600;
+
+/** The largest `--timeout` a timer can hold (2^31-1 ms); a larger one would fire at once. */
+export const MAX_TEST_TIMEOUT_SECONDS = 2_147_483;
+
+/** After a kill, how long to wait for the editor's exit before giving up on it. */
+const KILL_GRACE_MS = 30_000;
 
 export interface RunTestsOptions {
   projectPath: string;
@@ -56,14 +62,16 @@ export interface RunTestsDeps {
   /** PID of an editor that has the project open, or undefined. */
   findOpenEditor: (projectPath: string) => number | undefined;
   spawn: (command: string, args: string[]) => ChildProcess;
-  killTree: (pid: number) => Promise<unknown>;
+  /** Kill `pid` and every process it started; true when the kill was delivered. */
+  killTree: (pid: number) => Promise<boolean>;
 }
 
 const defaultDeps: RunTestsDeps = {
   findEditor: version => findEditorPath(version),
   findOpenEditor: projectPath => findUnityProcess(projectPath)?.pid ?? (hasLiveSessionLease(projectPath) ? -1 : undefined),
-  spawn: (command, args) => spawn(command, args, { stdio: 'ignore', windowsHide: true }),
-  killTree: pid => defaultSessionProcessOps.forceKill(pid),
+  // Its own process group on POSIX, so the kill reaches the import workers and compilers the editor starts.
+  spawn: (command, args) => spawn(command, args, { stdio: 'ignore', windowsHide: true, detached: process.platform !== 'win32' }),
+  killTree: pid => killProcessTree(pid),
 };
 
 export interface RunTestsPaths {
@@ -122,6 +130,21 @@ export function buildTestArgs(projectPath: string, options: RunTestsOptions, pat
 export function findReservedArg(args: readonly string[]): string | undefined {
   const reserved = new Set(RESERVED_TEST_ARGS.map(a => a.toLowerCase()));
   return args.find(a => reserved.has(a.toLowerCase()));
+}
+
+/** Kill a process with everything it started: `taskkill /T` on Windows, the process group elsewhere. */
+export function killProcessTree(pid: number): Promise<boolean> {
+  if (process.platform !== 'win32') {
+    try {
+      process.kill(-pid, 'SIGKILL');
+      return Promise.resolve(true);
+    } catch {
+      return defaultSessionProcessOps.forceKill(pid);
+    }
+  }
+  return new Promise((resolve) => {
+    execFile('taskkill', ['/PID', String(pid), '/T', '/F'], { windowsHide: true, timeout: 15_000 }, err => resolve(err === null));
+  });
 }
 
 function tail(log: string, lines: number): string[] {
@@ -187,6 +210,8 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
   fs.mkdirSync(path.dirname(logFile), { recursive: true });
   // A report left by an earlier run must never pass for this run's.
   fs.rmSync(output, { force: true });
+  // Nor may an earlier run's log explain a run that never wrote one.
+  fs.rmSync(logFile, { force: true });
 
   const args = buildTestArgs(projectPath, options, paths);
   options.onStatus?.(`Starting Unity in batch mode (${options.mode ?? 'EditMode'} tests)...`);
@@ -201,32 +226,38 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       return;
     }
     let timedOut = false;
+    let interrupted = false;
+    let giveUp: NodeJS.Timeout | undefined;
+    const kill = async (): Promise<void> => {
+      const killed = child.pid !== undefined && await deps.killTree(child.pid);
+      if (!killed) child.kill('SIGKILL');
+    };
     // Ctrl+C or a cancelled CI step ends this process: take the editor down with it, or it keeps the project open and
-    // the next run refuses it as already open.
+    // the next run refuses it as already open. The run then never reports a verdict: the signal ends the process.
     const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
     const onSignal = (signal: NodeJS.Signals) => {
-      const done = child.pid !== undefined ? deps.killTree(child.pid) : Promise.resolve(child.kill('SIGKILL'));
-      void Promise.resolve(done).finally(() => process.kill(process.pid, signal));
-      for (const s of signals) process.removeListener(s, onSignal);
+      interrupted = true;
+      cleanup();
+      // Windows cannot raise SIGHUP on itself.
+      void kill().finally(() => process.kill(process.pid, process.platform === 'win32' && signal === 'SIGHUP' ? 'SIGTERM' : signal));
     };
     for (const s of signals) process.once(s, onSignal);
     const cleanup = () => { for (const s of signals) process.removeListener(s, onSignal); };
+    const finish = (result: { code: number | null; timedOut: boolean; error?: Error }) => {
+      clearTimeout(timer);
+      if (giveUp) clearTimeout(giveUp);
+      cleanup();
+      if (!interrupted) resolve(result);
+    };
     const timer = setTimeout(() => {
       timedOut = true;
       options.onStatus?.(`Timed out after ${timeoutMs / 1000} s; stopping the editor...`);
-      if (child.pid !== undefined) void deps.killTree(child.pid);
-      else child.kill('SIGKILL');
+      void kill();
+      // An editor the kill cannot reach (stuck in the kernel) must not hold the CLI past its timeout.
+      giveUp = setTimeout(() => finish({ code: null, timedOut: true }), KILL_GRACE_MS);
     }, timeoutMs);
-    child.once('error', (err) => {
-      clearTimeout(timer);
-      cleanup();
-      resolve({ code: null, timedOut, error: err });
-    });
-    child.once('exit', (code) => {
-      clearTimeout(timer);
-      cleanup();
-      resolve({ code, timedOut });
-    });
+    child.once('error', err => finish({ code: null, timedOut, error: err }));
+    child.once('exit', code => finish({ code, timedOut }));
     options.onStatus?.('Running tests...');
   });
 

@@ -6,7 +6,7 @@ import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } fr
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 import { formatCompilerMessage } from '../utils/compiler-messages.js';
-import { escapeAnnotationData } from '../utils/nunit-report.js';
+import { escapeAnnotationData, escapeAnnotationProperty } from '../utils/nunit-report.js';
 import { compileProject, DEFAULT_COMPILE_TIMEOUT_MS } from '../lib/compile.js';
 import { classifyEditorFailure } from './run-tool-builder.js';
 import { failIfAwaitingInput } from '../utils/awaiting-input.js';
@@ -88,7 +88,7 @@ export const compileCommand = new Command('compile')
     };
     if (format === 'github') {
       for (const m of [...result.errors, ...result.warnings]) {
-        console.log(`::${m.severity} file=${m.file},line=${m.line},col=${m.column},title=${m.code}::${escapeAnnotationData(m.message)}`);
+        console.log(`::${m.severity} file=${escapeAnnotationProperty(m.file)},line=${m.line},col=${m.column},title=${m.code}::${escapeAnnotationData(m.message)}`);
       }
     } else if (!out.machine) {
       // Diagnostics on stderr, in the compiler's own spelling that editors link.

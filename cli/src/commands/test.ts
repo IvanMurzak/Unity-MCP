@@ -5,8 +5,8 @@ import { resolveAndValidateProjectPath } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 import { formatCompilerMessage } from '../utils/compiler-messages.js';
-import { toGitHubAnnotations, escapeAnnotationData, type TestReport } from '../utils/nunit-report.js';
-import { DEFAULT_TEST_TIMEOUT_SECONDS, runTests, type RunTestsResult, type TestMode } from '../lib/run-tests.js';
+import { toGitHubAnnotations, escapeAnnotationData, escapeAnnotationProperty, type TestReport } from '../utils/nunit-report.js';
+import { DEFAULT_TEST_TIMEOUT_SECONDS, MAX_TEST_TIMEOUT_SECONDS, runTests, type RunTestsResult, type TestMode } from '../lib/run-tests.js';
 import { parsePositiveIntFlag } from './open.js';
 
 interface TestCliOptions {
@@ -84,7 +84,9 @@ export const testCommand = new Command('test')
     const mode = parseMode(options.mode ?? 'EditMode');
     if (!mode) out.fail(ExitCode.Usage, { code: 'USAGE', message: `--mode must be EditMode or PlayMode (got: "${options.mode}")` });
     const timeoutSeconds = parsePositiveIntFlag(options.timeout, '--timeout', DEFAULT_TEST_TIMEOUT_SECONDS);
-    if (timeoutSeconds === 0) out.fail(ExitCode.Usage, { code: 'USAGE', message: '--timeout must be greater than 0' });
+    if (timeoutSeconds === 0 || timeoutSeconds > MAX_TEST_TIMEOUT_SECONDS) {
+      out.fail(ExitCode.Usage, { code: 'USAGE', message: `--timeout must be between 1 and ${MAX_TEST_TIMEOUT_SECONDS} seconds` });
+    }
     // `test -- -foo` leaves no path: the first editor argument (they all start with '-') lands in [path].
     if (positionalPath?.startsWith('-')) {
       editorArgs = [positionalPath, ...editorArgs];
@@ -125,7 +127,7 @@ export const testCommand = new Command('test')
       };
       if (format === 'github') {
         for (const err of result.compilerErrors ?? []) {
-          console.log(`::error file=${err.file},line=${err.line},col=${err.column},title=${err.code}::${escapeAnnotationData(err.message)}`);
+          console.log(`::error file=${escapeAnnotationProperty(err.file)},line=${err.line},col=${err.column},title=${err.code}::${escapeAnnotationData(err.message)}`);
         }
         console.log(`::error title=Unity test run::${escapeAnnotationData(result.message)}`);
       } else if (human) {
@@ -144,7 +146,7 @@ export const testCommand = new Command('test')
           out.fail(ExitCode.CommandFailed, { code: 'PROJECT_OPEN', message: result.message }, data,
             'Close that editor (`unity-mcp-cli close`), or run the tests inside it: `unity-mcp-cli run-tool tests-run`.');
         case 'editor-not-found':
-          out.fail(ExitCode.CommandFailed, { code: 'EDITOR_NOT_FOUND', message: result.message }, data,
+          out.fail(ExitCode.Unreachable, { code: 'EDITOR_NOT_FOUND', message: result.message }, data,
             'Install it with `unity-mcp-cli install-unity --path <project>`, or pass --editor-path.');
         default:
           out.fail(ExitCode.CommandFailed, { code: 'TEST_RUN_ERROR', message: result.message }, data);

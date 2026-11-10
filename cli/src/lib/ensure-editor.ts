@@ -16,7 +16,7 @@ import { buildOpenEnv, dismissLaunchErrorsUntil } from './open.js';
 export const ONCE_CLOSE_TIMEOUT_MS = 60_000;
 
 /** The part of an `EditorSession` the callers use; tests pass a fake. `closeOwned` is optional for fakes. */
-export type EnsureEditorSession = Pick<EditorSession<string>, 'ensure'> & Partial<Pick<EditorSession<string>, 'closeOwned'>>;
+export type EnsureEditorSession = Pick<EditorSession<string>, 'ensure'> & Partial<Pick<EditorSession<string>, 'closeOwned' | 'readLease'>>;
 
 export type EnsureEditorSessionFactory = (options: UnitySessionOptions) => EnsureEditorSession;
 
@@ -117,6 +117,10 @@ export async function ensureEditor(options: EnsureEditorOptions): Promise<Ensure
       source: ensured.source,
       closeIfStarted: async () => {
         if (ensured.source !== 'started' || !started.closeOwned) return undefined;
+        // Only while the lease is still the one this call wrote: after a crash another call may have started (and
+        // leased) a new editor, which is not ours to close.
+        const nonce = ensured.lease?.nonce;
+        if (nonce !== undefined && started.readLease && started.readLease()?.nonce !== nonce) return undefined;
         const closed = await started.closeOwned({ timeoutMs: ONCE_CLOSE_TIMEOUT_MS, force: true });
         return closed.kind === 'closed' ? closed.pid : undefined;
       },

@@ -94,6 +94,18 @@ describe('runTests', () => {
     expect(killTree).toHaveBeenCalledWith(4242);
   });
 
+  it('gives up on an editor the kill cannot reach instead of hanging past the timeout', async () => {
+    vi.useFakeTimers();
+    try {
+      const { deps } = fakeEditor({});
+      const run = runTests({ projectPath: dir, output: path.join(dir, 'r.xml'), timeoutSeconds: 1, deps: { ...deps, killTree: async () => false } });
+      await vi.advanceTimersByTimeAsync(1_000 + 30_000 + 10);
+      expect(await run).toMatchObject({ kind: 'failure', reason: 'timeout' });
+    } finally {
+      vi.useRealTimers();
+    }
+  });
+
   it('refuses a project an editor has open', async () => {
     const { deps, spawned } = fakeEditor({ report: PASSING, code: 0 });
     const result = await runTests({ projectPath: dir, deps: { ...deps, findOpenEditor: () => 99 } });

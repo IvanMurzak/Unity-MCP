@@ -29,8 +29,11 @@ export type PressDialogResult =
   | { kind: 'unsupported'; platform: string }
   | { kind: 'error'; message: string };
 
-/** Runs a PowerShell script and returns its stdout; injected by tests. */
-export type PowerShellRunner = (script: string) => Promise<string>;
+/** Runs a PowerShell script (with extra environment variables) and returns its stdout; injected by tests. */
+export type PowerShellRunner = (script: string, env?: Record<string, string>) => Promise<string>;
+
+/** Environment variable that carries the button label into the press script (never interpolated into code). */
+export const BUTTON_ENV = 'UNITY_MCP_DIALOG_BUTTON';
 
 /**
  * The environment of the PowerShell helper. `Add-Type` compiles through files in TEMP; a process whose TEMP is the
@@ -42,8 +45,8 @@ export function powerShellEnv(env: NodeJS.ProcessEnv = process.env, exists: (dir
   return userTemp && exists(userTemp) ? { ...env, TEMP: userTemp, TMP: userTemp } : env;
 }
 
-const runPowerShell: PowerShellRunner = script => new Promise((resolve, reject) => {
-  execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], { timeout: 10_000, windowsHide: true, env: powerShellEnv() }, (err, stdout) => {
+const runPowerShell: PowerShellRunner = (script, env) => new Promise((resolve, reject) => {
+  execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], { timeout: 10_000, windowsHide: true, env: { ...powerShellEnv(), ...env } }, (err, stdout) => {
     if (err) reject(err);
     else resolve(stdout);
   });
@@ -143,13 +146,14 @@ try {${HELPER}
 } catch { Write-Output ('error:' + $_.Exception.Message) }`;
 }
 
-/** The PowerShell script that presses `button` on dialog `id` (0: any dialog of `pids`). Exposed for tests. */
-export function pressDialogScript(pids: number[], id: bigint, button: string): string {
-  // The label goes in as a single-quoted PowerShell literal ('' escapes a quote): never interpolated.
-  const label = `'${button.replace(/'/g, "''")}'`;
+/**
+ * The PowerShell script that presses the button named by `$env:UNITY_MCP_DIALOG_BUTTON` on dialog `id` (0: any dialog
+ * of `pids`). The label never enters the script text, so no quoting can break out of it. Exposed for tests.
+ */
+export function pressDialogScript(pids: number[], id: bigint): string {
   return `$ErrorActionPreference = 'Stop'
 try {${HELPER}
-  Write-Output ([UnityMcp.Dialogs.Finder]::Press(${pidArray(pids)}, [long]${id.toString()}, ${label}))
+  Write-Output ([UnityMcp.Dialogs.Finder]::Press(${pidArray(pids)}, [long]${id.toString()}, $env:${BUTTON_ENV}))
 } catch { Write-Output ('error:' + $_.Exception.Message) }`;
 }
 
@@ -197,7 +201,7 @@ export async function pressEditorDialogButton(
     handle = BigInt(id);
   }
   try {
-    const out = (await run(pressDialogScript(pids.filter(isValidPid), handle, button))).trim();
+    const out = (await run(pressDialogScript(pids.filter(isValidPid), handle), { [BUTTON_ENV]: button })).trim();
     if (out === 'pressed') return { kind: 'pressed', button };
     if (out.startsWith('error:')) return { kind: 'error', message: out.slice('error:'.length).trim() };
     return { kind: 'not-found', message: `No open dialog has a "${button}" button.` };

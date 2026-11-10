@@ -9,12 +9,13 @@ export function setVerbose(enabled: boolean): void {
   verboseEnabled = enabled;
 }
 
+/** A diagnostic line on stderr, so stdout stays the command's result. */
 export function verbose(msg: string): void {
   if (verboseEnabled) {
-    if (isTTY()) {
-      console.log(chalk.dim(`[verbose] ${msg}`));
+    if (process.stderr.isTTY) {
+      console.error(chalk.dim(`[verbose] ${msg}`));
     } else {
-      console.log(`[verbose] ${msg}`);
+      console.error(`[verbose] ${msg}`);
     }
   }
 }

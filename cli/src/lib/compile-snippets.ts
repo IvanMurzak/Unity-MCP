@@ -33,6 +33,14 @@ if (!busy && entries != null && entryType != null)
     var end = entries.GetMethod("EndGettingEntries", staticFlags);
     var get = entries.GetMethod("GetEntryInternal", staticFlags);
     var messageField = entryType.GetField("message", instanceFlags);
+    // The Console's filters (hidden warnings, search text, collapse) would hide entries: show all while reading.
+    var flagsProperty = entries.GetProperty("consoleFlags", staticFlags);
+    var getText = entries.GetMethod("GetFilteringText", staticFlags);
+    var setText = entries.GetMethod("SetFilteringText", staticFlags);
+    var savedFlags = flagsProperty != null ? (int)flagsProperty.GetValue(null) : 0;
+    var savedText = getText != null && setText != null ? getText.Invoke(null, null) as string : null;
+    if (flagsProperty != null) flagsProperty.SetValue(null, (savedFlags | 128 | 256 | 512) & ~1);
+    if (savedText != null) setText.Invoke(null, new object[] { "" });
     if (start != null && end != null && get != null && messageField != null)
     {
         var count = (int)start.Invoke(null, null);
@@ -50,6 +58,8 @@ if (!busy && entries != null && entryType != null)
         }
         finally { end.Invoke(null, null); }
     }
+    if (flagsProperty != null) flagsProperty.SetValue(null, savedFlags);
+    if (savedText != null) setText.Invoke(null, new object[] { savedText });
 }
 sb.ToString()`;
 

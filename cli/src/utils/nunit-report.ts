@@ -15,6 +15,8 @@ export interface TestCaseResult {
   durationSeconds: number;
   message?: string;
   stackTrace?: string;
+  /** A fixture's setup or teardown failed (not a test case). */
+  suiteFailure?: boolean;
 }
 
 export interface TestRunSummary {
@@ -39,7 +41,7 @@ export function decodeXml(text: string): string {
   return text.replace(/&(#x[0-9a-f]+|#\d+|amp|lt|gt|quot|apos);/gi, (_, entity: string) => {
     if (entity[0] === '#') {
       const code = entity[1] === 'x' || entity[1] === 'X' ? parseInt(entity.slice(2), 16) : parseInt(entity.slice(1), 10);
-      return Number.isFinite(code) ? String.fromCodePoint(code) : '';
+      return Number.isFinite(code) && code >= 0 && code <= 0x10ffff ? String.fromCodePoint(code) : '';
     }
     return ENTITIES[entity.toLowerCase()] ?? '';
   });
@@ -118,12 +120,35 @@ export function parseNUnitReport(xml: string): TestReport | undefined {
     });
   }
 
+  // A fixture's OneTimeSetUp/TearDown failure is reported on its <test-suite> (site="SetUp"/"TearDown"), not as a
+  // failed case (a teardown failure leaves every case passed): count it as a failure of its own.
+  for (const m of xml.matchAll(/<test-suite\b([^>]*?)>((?:\s*<properties>[\s\S]*?<\/properties>)?\s*(<failure\b[\s\S]*?<\/failure>))?/g)) {
+    const attrs = attributes(m[1]);
+    if ((attrs.result ?? '').toLowerCase() !== 'failed' || !['setup', 'teardown'].includes((attrs.site ?? '').toLowerCase())) continue;
+    const failure = m[3];
+    const fullName = `${attrs.fullname ?? attrs.name ?? ''} [${attrs.site}]`;
+    const message = failure ? elementText(failure, 'message') : undefined;
+    const stackTrace = failure ? elementText(failure, 'stack-trace') : undefined;
+    tests.push({
+      fullName,
+      name: `[${attrs.site}]`,
+      className: attrs.fullname ?? attrs.name ?? '',
+      outcome: 'failed',
+      durationSeconds: toNumber(attrs.duration),
+      suiteFailure: true,
+      ...(message !== undefined ? { message } : {}),
+      ...(stackTrace !== undefined ? { stackTrace } : {}),
+    });
+  }
+
   const count = (outcome: TestOutcome) => tests.filter(t => t.outcome === outcome).length;
+  const suiteFailures = tests.filter(t => t.suiteFailure).length;
   // The run's own counters win; the per-case count covers a writer that leaves them out.
   const summary: TestRunSummary = {
     total: run.total !== undefined ? toNumber(run.total) : tests.length,
     passed: run.passed !== undefined ? toNumber(run.passed) : count('passed'),
-    failed: run.failed !== undefined ? toNumber(run.failed) : count('failed'),
+    // Unity's counter counts cases only; a suite-level failure adds to it.
+    failed: (run.failed !== undefined ? toNumber(run.failed) : count('failed') - suiteFailures) + suiteFailures,
     skipped: run.skipped !== undefined ? toNumber(run.skipped) : count('skipped'),
     inconclusive: run.inconclusive !== undefined ? toNumber(run.inconclusive) : count('inconclusive'),
     durationSeconds: toNumber(run.duration),
