@@ -19,6 +19,12 @@ export type WriteCliSkillsResult =
   | { kind: 'success'; success: true; skillsDir: string; filesWritten: string[] }
   | { kind: 'failure'; success: false; error: Error };
 
+/** Equal apart from line endings and blank lines (the editor's generator writes CRLF and no blank line after the front matter). */
+function sameText(a: string, b: string): boolean {
+  const norm = (s: string) => s.replace(/\r/g, '').replace(/\n{2,}/g, '\n').trim();
+  return norm(a) === norm(b);
+}
+
 /** Write the CLI's own skills into the agent's skills folder under the project. Never throws. */
 export function writeCliSkills(opts: WriteCliSkillsOptions): WriteCliSkillsResult {
   try {
@@ -30,7 +36,8 @@ export function writeCliSkills(opts: WriteCliSkillsOptions): WriteCliSkillsResul
     const filesWritten: string[] = [];
     for (const file of files) {
       const target = path.join(skillsDir, file.relativePath);
-      if (fs.existsSync(target) && fs.readFileSync(target, 'utf-8') === file.content) continue;
+      // Same text is up to date even in another layout: the editor writes the shared ai-game-dev-app skill too.
+      if (fs.existsSync(target) && sameText(fs.readFileSync(target, 'utf-8'), file.content)) continue;
       fs.mkdirSync(path.dirname(target), { recursive: true });
       fs.writeFileSync(target, file.content, 'utf-8');
       filesWritten.push(target);

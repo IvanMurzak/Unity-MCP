@@ -55,7 +55,7 @@ function buildCliSkill(): string {
     '',
     '## Other commands',
     '',
-    [...EDITOR_COMMANDS, ...CODE_COMMANDS].filter(([name]) => name !== 'rql').map(usage).join(' · ') + ' · `close` · `--format json`',
+    [...EDITOR_COMMANDS, ...CODE_COMMANDS].filter(([name]) => name !== 'rql').map(usage).join(' · ') + ' · `close` · most commands take `--format json`',
     '',
     `Exit codes: ${Object.entries(EXIT_CODE_ACTIONS).map(([code, action]) => `${code} ${action}`).join('; ')}.`,
     '',

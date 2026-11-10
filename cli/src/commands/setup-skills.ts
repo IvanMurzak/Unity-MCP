@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
+import { isUnityProject, resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
 import { getAgentById, getAgentIds, listAgentTable } from '../utils/agents.js';
 import { readConfig, isCloudMode } from '../utils/config.js';
 import { runCloudLogin } from '../utils/cloud-login.js';
@@ -100,17 +100,23 @@ export const setupSkillsCommand = new Command('setup-skills')
       const projectPath = resolveAndValidateProjectPath(positionalPath, options);
       verbose(`Project path: ${projectPath}`);
 
-      // The CLI's own skill needs nothing but the CLI: written first, whatever the editor's state.
-      const offline = writeCliSkills({ projectPath, agentId });
-      if (offline.kind === 'failure') {
-        ui.error(offline.error.message);
-        process.exit(1);
-      }
+      // The CLI's own skill needs nothing but the CLI: written first, whatever the editor's state. Only into a Unity
+      // project: with --url the folder is not checked above, and a home folder's .claude/skills is every project's.
       ui.heading('Generate Skills');
       ui.label('Agent', agent.name);
-      ui.label('Skills path', offline.skillsDir);
-      if (offline.filesWritten.length > 0) ui.success(`Wrote the ${CLI_NAME} skill (${offline.filesWritten.length} file(s) changed)`);
-      else ui.info(`The ${CLI_NAME} skill is up to date`);
+      if (isUnityProject(projectPath)) {
+        const offline = writeCliSkills({ projectPath, agentId });
+        if (offline.kind === 'failure') {
+          ui.error(offline.error.message);
+          process.exit(1);
+        }
+        ui.label('Skills path', offline.skillsDir);
+        if (offline.filesWritten.length > 0) ui.success(`Wrote the ${CLI_NAME} skill (${offline.filesWritten.length} file(s) changed)`);
+        else ui.info(`The ${CLI_NAME} skill is up to date`);
+      } else {
+        ui.warn(`Not a Unity project (missing Assets folder): ${projectPath}; the ${CLI_NAME} skill was not written.`);
+        if (options.offline) process.exit(1);
+      }
       if (options.offline) return;
 
       // The plugin's per-tool skills: only an editor can generate them. A closed editor is not an error.
@@ -139,6 +145,7 @@ export const setupSkillsCommand = new Command('setup-skills')
             console.log();
             const newToken = await runCloudLogin(new MachineCredentialStore());
             if (!newToken) {
+              ui.info('Login not completed: only the CLI skill was written.');
               return;
             }
 
@@ -194,8 +201,9 @@ function printReconnectSteps(agentId: string, positionalPath: string | undefined
 function reportFetchError(err: unknown, timeoutMs: number): void {
   const message = err instanceof Error ? err.message : String(err);
   const isTimeout = err instanceof Error && err.name === 'AbortError';
-  const isConnectionRefused =
-    message.includes('ECONNREFUSED') || message.includes('fetch failed');
+  // Only a refused connection means "no editor there"; DNS, TLS or reset errors (a wrong --url) are worth a warning.
+  const cause = (err as { cause?: { code?: string } } | undefined)?.cause;
+  const isConnectionRefused = cause?.code === 'ECONNREFUSED' || message.includes('ECONNREFUSED');
 
   if (isTimeout) {
     ui.warn(`The editor did not answer within ${timeoutMs / 1000} seconds: only the CLI skill was written.`);

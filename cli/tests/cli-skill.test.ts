@@ -3,6 +3,7 @@
 
 import { describe, it, expect, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
+import * as http from 'http';
 import * as net from 'net';
 import * as os from 'os';
 import * as path from 'path';
@@ -103,6 +104,43 @@ describe('setup-skills without an editor', () => {
     expect(stdout).toContain('No Unity Editor answered');
     expect(fs.readFileSync(path.join(tmpDir, '.claude', 'skills', 'unity-mcp-cli', 'SKILL.md'), 'utf-8')).toBe(skillMd());
   }, 20000);
+
+  it.each([[401, 'HTTP 401'], [404, 'unity-skill-generate tool'], [500, 'HTTP 500']])(
+    'an editor answering %i is a note: the CLI skill is written, exit 0', async (status, text) => {
+      const server = http.createServer((_req, res) => { res.writeHead(status); res.end(); });
+      await new Promise<void>((resolve) => server.listen(0, '127.0.0.1', resolve));
+      try {
+        const port = (server.address() as net.AddressInfo).port;
+        const { stdout, exitCode } = await runCliAsync(['setup-skills', 'claude-code', tmpDir, '--url', `http://127.0.0.1:${port}`, '--token', 't']);
+        expect(exitCode).toBe(0);
+        expect(stdout).toContain(text);
+        expect(fs.existsSync(path.join(tmpDir, '.claude', 'skills', 'unity-mcp-cli', 'SKILL.md'))).toBe(true);
+      } finally {
+        await new Promise<void>((resolve) => server.close(() => resolve()));
+      }
+    }, 20000);
+
+  it('writes nothing outside a Unity project, even with --url', async () => {
+    const plain = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-cli-plain-'));
+    try {
+      const port = await closedPort();
+      const { exitCode } = await runCliAsync(['setup-skills', 'claude-code', plain, '--url', `http://127.0.0.1:${port}`, '--timeout', '5000']);
+      expect(exitCode).toBe(0);
+      expect(fs.existsSync(path.join(plain, '.claude'))).toBe(false);
+      const offline = await runCliAsync(['setup-skills', 'claude-code', plain, '--offline', '--url', 'http://127.0.0.1:1']);
+      expect(offline.exitCode).toBe(1);
+    } finally {
+      fs.rmSync(plain, { recursive: true, force: true });
+    }
+  }, 20000);
+
+  it('treats the editor\'s CRLF copy of a shared skill as up to date', () => {
+    expect(writeCliSkills({ projectPath: tmpDir, agentId: 'claude-code' }).kind).toBe('success');
+    const app = path.join(tmpDir, '.claude', 'skills', 'ai-game-dev-app', 'SKILL.md');
+    fs.writeFileSync(app, fs.readFileSync(app, 'utf-8').replace('---\n\n', '---\n').replace(/\n/g, '\r\n'));
+    const again = writeCliSkills({ projectPath: tmpDir, agentId: 'claude-code' });
+    expect(again.kind === 'success' && again.filesWritten).toEqual([]);
+  });
 
   it('--offline writes the CLI skill without asking any editor', async () => {
     const { stdout, exitCode } = await runCliAsync(['setup-skills', 'claude-code', tmpDir, '--offline']);
