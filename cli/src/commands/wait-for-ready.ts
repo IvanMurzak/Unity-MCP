@@ -25,7 +25,7 @@ export const waitForReadyCommand = new Command('wait-for-ready')
   .option('--timeout <ms>', 'Maximum time to wait in milliseconds (default: 120000)', '120000')
   .option('--interval <ms>', 'Polling interval in milliseconds (default: 3000)', '3000')
   .option('--format <format>', FORMAT_OPTION_DESCRIPTION, 'text')
-  .addHelpText('after', '\nExit codes: 0 ready, 14 timed out, 18 a modal dialog blocks the editor (Windows, macOS).')
+  .addHelpText('after', '\nExit codes: 0 ready, 14 timed out, 18 a modal dialog blocks the editor (Windows, macOS, Linux).')
   .action(async (positionalPath: string | undefined, options: WaitForReadyOptions) => {
     // Explicitly typed: `out.fail` returns `never`, which narrows only through a declared type.
     const out: CommandOutput = new CommandOutput('wait-for-ready', parseFormat(options.format));
