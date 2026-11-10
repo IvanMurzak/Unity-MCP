@@ -97,8 +97,24 @@ jobs:
           android: true
           dotnet: true
           haskell: true
-          large-packages: true
+          # The action's own large-packages step names packages the runner image no longer
+          # ships (powershell), so its misc `apt-get remove` fails and annotates a warning on
+          # every leg. The step below does the same removals, skipping absent packages.
+          large-packages: false
           swap-storage: true
+
+      - name: Free disk space (large packages)
+        run: |
+          # One pattern per call, as the action did: a pattern the image no longer matches must not
+          # abort the others. The step stays best-effort; nothing below depends on it.
+          for pattern in '^aspnetcore-.*' '^dotnet-.*' '^llvm-.*' 'php.*' '^mongodb-.*' '^mysql-.*'; do
+            sudo apt-get remove -y --fix-missing "$pattern" || echo "apt-get remove $pattern: nothing removed"
+          done
+          present=$(dpkg-query -W -f='${binary:Package} ' azure-cli google-chrome-stable firefox powershell mono-devel libgl1-mesa-dri google-cloud-sdk google-cloud-cli 2>/dev/null || true)
+          if [ -n "$present" ]; then sudo apt-get remove -y --fix-missing $present || echo "apt-get remove $present: failed"; fi
+          sudo apt-get autoremove -y || echo "apt-get autoremove -y: failed"
+          sudo apt-get clean || echo "apt-get clean: failed"
+          df -h /
 
       # --------------------------------------------------------------------- #
       # 2-b'. Chain feed (chain_feed.py §C4) — a no-op on an ordinary PR run.
