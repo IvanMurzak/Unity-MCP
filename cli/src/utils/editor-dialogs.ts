@@ -308,7 +308,8 @@ export function macPermissionMessage(message: string): string {
 const LINUX_SCRIPT = (mode: 'list' | 'press') => `import json, os, sys
 
 def out(text):
-    sys.stdout.write(text)
+    # UTF-8 bytes whatever the locale: an error text may hold a non-ASCII label or detail.
+    sys.stdout.buffer.write(text.encode('utf-8'))
     sys.exit(0)
 
 def fail(code, detail):
@@ -482,8 +483,8 @@ export const LINUX_HINTS: Record<string, string> = {
     + '(Debian/Ubuntu), python3-gobject and at-spi2-core (Fedora) or python-gobject and at-spi2-core (Arch).',
   'no-bus': 'The AT-SPI accessibility bus is not running or not reachable: install at-spi2-core and run the CLI in the '
     + 'desktop session of the user who runs the editor (its DBUS_SESSION_BUS_ADDRESS).',
-  'no-display': 'There is no graphical session (neither DISPLAY nor WAYLAND_DISPLAY is set) and no reachable '
-    + 'accessibility bus: run the CLI in the desktop session that runs the editor; on a headless machine, run the '
+  'no-display': 'There is no graphical session (neither DISPLAY nor WAYLAND_DISPLAY is set) and the accessibility bus '
+    + 'is unreachable or empty: run the CLI in the desktop session that runs the editor; on a headless machine, run the '
     + 'editor and the CLI under Xvfb inside one dbus-run-session with at-spi2-core installed (with its own '
     + 'XDG_RUNTIME_DIR when the user also has a desktop session: the private bus would replace its at-spi socket).',
   'no-apps': 'No application is registered on the accessibility bus, so accessibility is off in this session: enable it '

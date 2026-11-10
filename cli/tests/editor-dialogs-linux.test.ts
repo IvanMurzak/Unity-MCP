@@ -326,6 +326,14 @@ describe.skipIf(!hasPython())('editor dialogs on Linux (real script, fake AT-SPI
       .toEqual({ kind: 'error', message: expect.stringMatching(/autolaunch.*no graphical session/) });
     expect(await pressEditorDialogButton([42], 'OK', undefined, 'linux', fakePython({ apps: [] })))
       .toEqual({ kind: 'error', message: expect.stringContaining('toolkit-accessibility true') });
+    expect(await listEditorDialogs([42], 'linux', fakePython({ apps: [] }, { DISPLAY: '', WAYLAND_DISPLAY: '' })))
+      .toEqual({ kind: 'error', message: expect.stringContaining('unreachable or empty') });
+  });
+
+  it('reports a refused click action with the (non-ASCII) label intact, whatever the locale', async () => {
+    const scene: FakeScene = { apps: [{ pid: 3, windows: [{ role: 'DIALOG', name: 'Frage', children: [button('Übernehmen', { actions: [] })] }] }] };
+    expect(await pressEditorDialogButton([3], 'übernehmen', undefined, 'linux', fakePython(scene, { LC_ALL: 'C', PYTHONIOENCODING: 'ascii' })))
+      .toEqual({ kind: 'error', message: 'The button "Übernehmen" did not accept the click action.' });
   });
 
   it('a pid without windows on the bus has no dialogs', async () => {
