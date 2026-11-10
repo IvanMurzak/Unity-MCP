@@ -23,6 +23,7 @@ function fakeEditor(opts: { report?: string; log?: string; code?: number }) {
   const deps: Partial<RunTestsDeps> = {
     findEditor: async () => '/fake/Unity',
     findOpenEditor: () => undefined,
+    closeOwnedEditor: async () => undefined,
     killTree: async (pid: number) => { await killTree(pid); setImmediate(() => child.emit('exit', null)); return true; },
     spawn: (command, args) => {
       spawned.push({ command, args });
@@ -104,6 +105,21 @@ describe('runTests', () => {
     } finally {
       vi.useRealTimers();
     }
+  });
+
+  it('closes a headless editor the CLI started, then runs', async () => {
+    const { deps, spawned } = fakeEditor({ report: PASSING, code: 0 });
+    let open = true;
+    const closeOwnedEditor = vi.fn(async () => { open = false; return 77; });
+    const status: string[] = [];
+    const result = await runTests({
+      projectPath: dir, output: path.join(dir, 'r.xml'), onStatus: m => status.push(m),
+      deps: { ...deps, findOpenEditor: () => (open ? 77 : undefined), closeOwnedEditor },
+    });
+    expect(result).toMatchObject({ kind: 'completed', verdict: 'passed' });
+    expect(closeOwnedEditor).toHaveBeenCalledTimes(1);
+    expect(spawned).toHaveLength(1);
+    expect(status.join('\n')).toContain('PID 77');
   });
 
   it('refuses a project an editor has open', async () => {

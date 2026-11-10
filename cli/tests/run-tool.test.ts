@@ -363,7 +363,7 @@ describe('run-tool command', () => {
       '--url', 'http://localhost:99999',
       '--input', 'not-valid-json',
     ]);
-    expect(exitCode).toBe(1);
+    expect(exitCode).toBe(2); // usage error
     expect(stdout).toContain('--input must be valid JSON');
   });
 });

@@ -9,7 +9,7 @@ import { findEditorPath, getProjectEditorVersion } from '../utils/unity-editor.j
 import { findUnityProcess } from '../utils/unity-process.js';
 import { parseCompilerMessages, type CompilerMessage } from '../utils/compiler-messages.js';
 import { parseNUnitReport, toJUnitXml, type TestReport } from '../utils/nunit-report.js';
-import { hasLiveSessionLease, validateEditorPath } from './editor-session.js';
+import { createUnitySession, hasLiveSessionLease, validateEditorPath } from './editor-session.js';
 
 export type TestMode = 'EditMode' | 'PlayMode';
 
@@ -61,6 +61,11 @@ export interface RunTestsDeps {
   findEditor: (version: string | undefined) => Promise<string | null>;
   /** PID of an editor that has the project open, or undefined. */
   findOpenEditor: (projectPath: string) => number | undefined;
+  /**
+   * Close the project's editor when the CLI started it (its session lease names it): a warm headless editor left by
+   * `exec` / `compile` / `run-tool`. Resolves to the pid closed, or undefined (none of ours, or it would not close).
+   */
+  closeOwnedEditor: (projectPath: string) => Promise<number | undefined>;
   spawn: (command: string, args: string[]) => ChildProcess;
   /** Kill `pid` and every process it started; true when the kill was delivered. */
   killTree: (pid: number) => Promise<boolean>;
@@ -69,6 +74,11 @@ export interface RunTestsDeps {
 const defaultDeps: RunTestsDeps = {
   findEditor: version => findEditorPath(version),
   findOpenEditor: projectPath => findUnityProcess(projectPath)?.pid ?? (hasLiveSessionLease(projectPath) ? -1 : undefined),
+  closeOwnedEditor: async (projectPath) => {
+    if (!hasLiveSessionLease(projectPath)) return undefined;
+    const closed = await createUnitySession({ projectPath, urls: [] }).closeOwned({ timeoutMs: 60_000, force: true });
+    return closed.kind === 'closed' ? closed.pid : undefined;
+  },
   // Its own process group on POSIX, so the kill reaches the import workers and compilers the editor starts.
   spawn: (command, args) => spawn(command, args, { stdio: 'ignore', windowsHide: true, detached: process.platform !== 'win32' }),
   killTree: pid => killProcessTree(pid),
@@ -172,6 +182,12 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     return { kind: 'failure', reason: 'usage', message: `${reserved} is managed by the test command; remove it from the arguments after --.` };
   }
 
+  // A warm editor the CLI itself left (exec / compile / run-tool) is ours to close: it saves and quits, the run goes on.
+  // An editor the user opened is never touched.
+  if (deps.findOpenEditor(projectPath) !== undefined) {
+    const closedPid = await deps.closeOwnedEditor(projectPath);
+    if (closedPid !== undefined) options.onStatus?.(`Closed the headless editor the CLI had started (PID ${closedPid}) so the test run can open the project.`);
+  }
   const openPid = deps.findOpenEditor(projectPath);
   if (openPid !== undefined) {
     return {

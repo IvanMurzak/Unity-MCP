@@ -42,6 +42,7 @@ interface CliOptions {
   token?: string;
   input?: string;
   inputFile?: string;
+  arg?: string[];
   raw?: boolean;
   timeout?: string;
   format?: string;
@@ -129,6 +130,7 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
     .option('--token <token>', 'Bearer token override (bypasses config)')
     .option('--input <json>', 'JSON string of tool arguments')
     .option('--input-file <file>', 'Read JSON arguments from file')
+    .option('--arg <key=value>', 'One tool argument, repeatable, merged over --input; JSON values are parsed (count=3, flag=true), anything else is text (query=objects | select name)', (v: string, prev: string[] = []) => [...prev, v])
     .option('--raw', 'Output raw JSON (no formatting)')
     .option('--format <format>', FORMAT_OPTION_DESCRIPTION, 'text')
     .option('--timeout <ms>', 'Request timeout in milliseconds (default: 60000)', '60000')

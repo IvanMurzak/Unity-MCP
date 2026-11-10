@@ -100,6 +100,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`login`](#login)
   - [`open`](#open)
   - [`close`](#close)
+  - [`tools`](#tools)
   - [`run-tool`](#run-tool)
   - [`exec`](#exec)
   - [`test`](#test)
@@ -469,6 +470,34 @@ unity-mcp-cli close ./MyGame
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
+## `tools`
+
+List the AI tools the project's Unity Editor offers — the scene, assets, tests, screenshots and everything installed
+extensions add — with what each does and its inputs, or show one tool in detail (full description, inputs, an example
+call, its JSON input schema). Starts a headless editor when none runs, like [`exec`](#exec). The list is read over MCP
+(`tools/list`) and saved in the project (git-ignored), so `--cached` answers instantly while the editor is closed.
+Hidden tools (not offered to MCP clients) are listed by name; `run-tool` still calls them.
+
+```bash
+unity-mcp-cli tools                 # every tool, one line each, with its inputs
+unity-mcp-cli tools rql-mutate      # one tool: description, inputs, example call, schema
+unity-mcp-cli tools screenshot      # a regex filter over names and descriptions
+unity-mcp-cli tools --format json   # full schemas, machine-readable
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[name]` | No | A tool name (details) or a regex (filter) |
+| `--path <path>` | No | Unity project path (default: current directory) |
+| `--cached` | No | Answer from the saved list without contacting the editor |
+| `--no-start` | No | Never start an editor; use the saved list when none answers |
+| `--once` | No | Close the editor afterwards if this call started it |
+| `--ready-timeout <ms>` | No | Wait for a started editor (default: 300000) |
+| `--url <url>` / `--token <token>` | No | Server overrides |
+| `--format <format>` | No | `text`, `json` or `ndjson` |
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
 ## `run-tool`
 
 Execute an MCP tool directly via the HTTP API. The server URL and authorization token are **automatically resolved** from the project's config file (`UserSettings/AI-Game-Developer-Config.json`), based on the current connection mode (Custom or Cloud).
@@ -566,10 +595,12 @@ echo 'Application.unityVersion' | unity-mcp-cli exec
 
 `exec` calls the `script-execute` tool, so snippets, `usings` and `include` need a plugin version with Code-Exec support. A compile error or an exception exits with code 6 and points at your own lines.
 
-> A fresh project starts in **Cloud** connection mode: its plugin connects to ai-game.dev and starts no local server, so
-> a headless editor started for `exec` / `run-tool` / `compile` is reached only through ai-game.dev. To work fully
-> locally, pass `--url http://localhost:<port>` (the started editor then starts that local server) or switch the
-> project's connection to Custom.
+> **Not signed in?** A fresh project starts in **Cloud** connection mode. Without an ai-game.dev sign-in, `exec`,
+> `run-tool`, `compile` and `tools` use the project's **local** MCP server instead (they say so on stderr): an editor
+> they start is told to serve it, in memory — the project config is not changed. Run `login` to work through the cloud.
+>
+> A headless editor started by the CLI keeps running when the project's scripts do not compile
+> (`-ignorecompilererrors`), so `compile` can report the errors; its log is `Logs/unity-mcp-cli-editor.log`.
 
 ## `test`
 
@@ -592,7 +623,7 @@ unity-mcp-cli test ./MyGame --format json --timeout 900 -- -nographics
 | `--filter <pattern>` | No | Unity `-testFilter`: full test names or a regex, `;` separates several |
 | `--category <names>` | No | Unity `-testCategory` |
 | `--assembly <names>` | No | Unity `-assemblyNames` |
-| `--output <file>` | No | NUnit report path (default: `test-results.xml`) |
+| `--output <file>` | No | NUnit report path (default: `<project>/Logs/test-results.xml`) |
 | `--junit-output <file>` | No | Also write a JUnit report |
 | `--log-file <file>` | No | Editor log (default: the report path with `.log`) |
 | `--timeout <seconds>` | No | Kill the editor (and its child processes) after this long (default: 3600) |

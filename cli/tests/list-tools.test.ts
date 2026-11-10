@@ -108,3 +108,14 @@ describe('resolveEditorConnection', () => {
     }
   });
 });
+
+describe('run-tool --arg', () => {
+  it('merges key=value pairs over the JSON input, parsing JSON values', async () => {
+    const { mergeArgs } = await import('../src/utils/input.js');
+    expect(JSON.parse(mergeArgs('{"a":1}', ['query=objects | where name == "Crate" | select name', 'dry_run=true', 'n=3'])))
+      .toEqual({ a: 1, query: 'objects | where name == "Crate" | select name', dry_run: true, n: 3 });
+    expect(JSON.parse(mergeArgs('{}', ['text=a=b']))).toEqual({ text: 'a=b' });
+    expect(() => mergeArgs('{}', ['novalue'])).toThrow(/key=value/);
+    expect(() => mergeArgs('[1]', ['a=1'])).toThrow(/JSON object/);
+  });
+});

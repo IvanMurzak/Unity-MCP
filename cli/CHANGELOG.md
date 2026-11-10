@@ -18,6 +18,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   compile and its domain reload, and reports compiler errors/warnings with file, line and column (exit 0 / 6 / 7 / 14).
 - **`dialog [--press <button>]`** (Windows): lists the modal dialogs blocking the editor and presses a button.
   `status`, `run-tool`, `exec`, `compile` and `wait-for-ready` report a blocking dialog as exit 18 (`AWAITING_INPUT`).
+- **`tools [name]`**: the AI tools the project's editor offers (one line each with their inputs, or one tool in detail
+  with an example call and its schema), read over MCP `tools/list` plus the hidden tools; starts a headless editor when
+  needed and saves the list in the project (git-ignored) for `--cached` / `--no-start`. The root `--help` now ends with
+  the everyday workflow (`tools`, `run-tool`, `exec`, `compile`, `test`, `status`, `close`). A call to an unknown tool
+  points at `tools`, invalid arguments at `tools <name>`.
+- **Works without an ai-game.dev sign-in:** in Cloud mode with no sign-in, `exec`, `run-tool`, `compile` and `tools`
+  use the project's local server (a started editor serves it, in memory) instead of failing with "not logged in".
+- **A headless editor survives script compile errors** (`-ignorecompilererrors`) and logs to
+  `Logs/unity-mcp-cli-editor.log`; an editor that exits before it is ready names that log and the compile errors.
 - **`commands --format json`**: a manifest of every command, argument, option and exit code, read from the CLI.
 - **`--format json|ndjson`** on `run-tool`, `run-system-tool`, `exec`, `status`, `wait-for-ready` and the new
   commands: one result envelope `{success, command, data, errors[{code, message}], warnings}` on stdout, progress and
@@ -28,6 +37,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Library: `ensureEditor` (the shared start-or-reuse policy), `runTests`, `compileProject`, `ExitCode`; `execCode` takes `once`.
 
 ### Changed
+
+- `run-tool` prints the tool's own answer (not a banner plus an escaped JSON envelope; that stays `--raw` /
+  `--format json`), a failed call prints the server's error text, and `test` writes its reports to
+  `<project>/Logs/` by default. Spinner and progress lines go to stderr.
 
 - **Exit codes follow one table shared with `unreal-mcp-cli` and `godot-cli`:** 2 bad arguments (commander parse
   errors and bad flag values, previously 1), 6 the command ran and failed, 7 editor unreachable, 8 tests failed,
