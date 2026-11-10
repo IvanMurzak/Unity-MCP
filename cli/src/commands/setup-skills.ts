@@ -4,8 +4,6 @@ import { verbose } from '../utils/ui.js';
 import { isUnityProject, resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
 import { getAgentById, getAgentIds, listAgentTable } from '../utils/agents.js';
 import { readConfig, isCloudMode } from '../utils/config.js';
-import { runCloudLogin } from '../utils/cloud-login.js';
-import { MachineCredentialStore } from '../utils/machine-credentials.js';
 import { writeCliSkills } from '../lib/setup-skills.js';
 import { CLI_NAME } from '../lib/cli-guide.js';
 
@@ -121,6 +119,17 @@ export const setupSkillsCommand = new Command('setup-skills')
 
       // The plugin's per-tool skills: only an editor can generate them. A closed editor is not an error.
       const { url: serverUrl, token } = await resolveConnection(projectPath, options);
+      // Never a login from here: it opens a browser and signs the machine in, a side effect an agent's setup step
+      // must not have. Without a token, a Cloud project's editor cannot be asked: say how, and stop.
+      const config = readConfig(projectPath);
+      const cloud = config != null && isCloudMode(config);
+      if (cloud && !token) {
+        ui.info('Cloud mode, not signed in: only the CLI skill was written. For the plugin\'s per-tool skills too:');
+        console.log();
+        console.log('  unity-mcp-cli login');
+        printReconnectSteps(agentId, positionalPath);
+        return;
+      }
       const endpoint = `${serverUrl}/api/system-tools/unity-skill-generate`;
       verbose(`Endpoint: ${endpoint}`);
       ui.label('Server', serverUrl);
@@ -131,29 +140,12 @@ export const setupSkillsCommand = new Command('setup-skills')
       try {
         const response = await callGenerateSkills(endpoint, token, JSON.stringify({ path: agent.skillsPath }), timeoutMs);
 
-        // 401: Cloud mode without a sign-in logs in; a rejected token or a non-cloud 401 is a note.
+        // 401 is a note: a rejected Cloud token (the editor is not connected yet) or a wrong --token.
         if (response.status === 401) {
           await response.text();
           spinner.stop();
 
-          const config = readConfig(projectPath);
-          const cloud = config != null && isCloudMode(config);
-          const hadToken = !!token;
-
-          if (cloud && !options.token && !hadToken) {
-            ui.info('Cloud authentication required for the plugin\'s skills. Starting login...');
-            console.log();
-            const newToken = await runCloudLogin(new MachineCredentialStore());
-            if (!newToken) {
-              ui.info('Login not completed: only the CLI skill was written.');
-              return;
-            }
-
-            // Token saved. Unity Editor needs to connect with it.
-            ui.info('Unity Editor must connect to the cloud server with this token.');
-            ui.info('If Unity was already running, restart it to pick up the new token:');
-            printReconnectSteps(agentId, positionalPath);
-          } else if (cloud && hadToken) {
+          if (cloud) {
             // Token exists but was rejected — Unity Editor isn't connected
             ui.warn('Cloud server rejected the token: the Unity Editor may not be connected yet, so only the CLI skill was written.');
             ui.info('For the plugin\'s skills too, connect the editor and run setup-skills again:');
