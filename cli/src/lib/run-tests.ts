@@ -1,10 +1,10 @@
 // Library-safe `runTests`: run a project's Unity tests through the editor's own command line (`-batchmode -runTests`),
 // with no MCP plugin or server involved, and turn the NUnit report into a verdict. No console output, no exit.
 
-import { execFile, spawn, type ChildProcess } from 'child_process';
+import { spawn, type ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { defaultSessionProcessOps } from '@baizor/gamedev-cli-core';
+import { killProcessTree } from '@baizor/gamedev-cli-core';
 import { findEditorPath, getProjectEditorVersion } from '../utils/unity-editor.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import { parseCompilerMessages, type CompilerMessage } from '../utils/compiler-messages.js';
@@ -146,20 +146,8 @@ export function findReservedArg(args: readonly string[]): string | undefined {
   return args.find(a => reserved.has(a.toLowerCase()));
 }
 
-/** Kill a process with everything it started: `taskkill /T` on Windows, the process group elsewhere. */
-export function killProcessTree(pid: number): Promise<boolean> {
-  if (process.platform !== 'win32') {
-    try {
-      process.kill(-pid, 'SIGKILL');
-      return Promise.resolve(true);
-    } catch {
-      return defaultSessionProcessOps.forceKill(pid);
-    }
-  }
-  return new Promise((resolve) => {
-    execFile('taskkill', ['/PID', String(pid), '/T', '/F'], { windowsHide: true, timeout: 15_000 }, err => resolve(err === null));
-  });
-}
+/** Kill a process with everything it started (cli-core: `taskkill /T /F` on Windows, the process group elsewhere). */
+export { killProcessTree };
 
 function tail(log: string, lines: number): string[] {
   return log.split(/\r?\n/).filter(l => l.trim() !== '').slice(-lines);
