@@ -75,3 +75,23 @@ describe('findUnityProcess', () => {
     expect(findUnityProcess(projectPath)?.pid).toBe(200);
   });
 });
+
+describe('canonicalPath', () => {
+  it('resolves a symlinked directory to its target, and keeps a missing path as resolved', async () => {
+    const fs = await import('fs');
+    const os = await import('os');
+    const { canonicalPath } = await import('../src/utils/unity-process.js');
+    const root = fs.realpathSync.native(fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-canon-')));
+    try {
+      const target = path.join(root, 'Project');
+      fs.mkdirSync(target);
+      const link = path.join(root, 'Link');
+      // Like macOS /tmp → /private/tmp. A junction needs no privilege on Windows.
+      fs.symlinkSync(target, link, 'junction');
+      expect(canonicalPath(link)).toBe(target);
+      expect(canonicalPath(path.join(root, 'missing'))).toBe(path.join(root, 'missing'));
+    } finally {
+      fs.rmSync(root, { recursive: true, force: true });
+    }
+  });
+});

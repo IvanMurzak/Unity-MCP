@@ -4,7 +4,7 @@ import * as path from 'path';
 import { platform as nodePlatform } from 'os';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { findUnityProcess } from '../utils/unity-process.js';
+import { canonicalPath, findUnityProcess } from '../utils/unity-process.js';
 import { readSessionLease, type CloseOwnedResult } from '@baizor/gamedev-cli-core';
 import { createProjectSession } from '../lib/editor-session.js';
 import {
@@ -32,19 +32,8 @@ const DEFAULT_TIMEOUT_SECONDS = 30;
  * possible, and trims any trailing path separator. Exported for unit tests.
  */
 export function resolveCloseProjectPath(positionalPath: string | undefined, cwd: string): string {
-  const explicit = positionalPath ?? cwd;
-  let resolved = path.resolve(explicit);
-
-  // realpathSync collapses symlinks, ".." segments, and trailing separators
-  // when the path exists. When it does not, fall through to the resolved
-  // form so the caller can produce a "path does not exist" error.
-  try {
-    resolved = fs.realpathSync(resolved);
-  } catch {
-    // Path may not exist — let the caller decide what to do.
-  }
-
-  return resolved;
+  // A missing path stays resolved, so the caller can say it does not exist.
+  return canonicalPath(positionalPath ?? cwd);
 }
 
 /**
@@ -88,11 +77,8 @@ export function parseTimeoutSeconds(raw: string | undefined): number | null {
  * is alive and matches the enumerated process for this project (handles
  * stale lockfiles); otherwise uses the enumerated PID.
  *
- * Symlink/realpath handling: `resolveCloseProjectPath` canonicalises via
- * `realpathSync` while `findUnityProcess` only `path.resolve`s the cmdline
- * `-projectPath` argument. If Unity was launched via a symlink, the first
- * lookup misses. We retry against the un-canonicalised form so a symlinked
- * launch path doesn't silently degrade close to a no-op.
+ * Symlinks: `findUnityProcess` compares both paths after realpath, so an editor
+ * launched through a symlink is found by the canonical project path.
  *
  * Returns `null` when no live editor matches the project. Exported for tests.
  */
@@ -101,17 +87,7 @@ export function resolveEditorPid(projectPath: string, platform: SupportedPlatfor
   // Enumerate Unity processes once. `findUnityProcess` shells out (3s timeout
   // on Windows via PowerShell+CIM, 5s on POSIX via `ps`), so calling it twice
   // on the stale-lockfile path used to roughly double close latency.
-  let proc = findUnityProcess(projectPath);
-
-  // Symlink fallback: if the canonical realpath form found no process, retry
-  // with `path.resolve` only (no realpath collapse) — that matches what
-  // `findUnityProcess` derives from the cmdline `-projectPath` argument.
-  if (!proc) {
-    const resolvedNoRealpath = path.resolve(projectPath);
-    if (resolvedNoRealpath !== projectPath) {
-      proc = findUnityProcess(resolvedNoRealpath);
-    }
-  }
+  const proc = findUnityProcess(projectPath);
 
   if (lockPid !== null && isProcessAlive(lockPid, platform)) {
     if (proc && proc.pid === lockPid) {

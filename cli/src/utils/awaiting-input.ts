@@ -27,7 +27,8 @@ export async function findBlockingDialogs(projectPath: string): Promise<EditorDi
 }
 
 export function describeDialog(d: EditorDialog): string {
-  return `"${d.title}"${d.message ? `: ${d.message.replace(/\s+/g, ' ')}` : ''} [${d.buttons.join(' | ')}]`;
+  const text = [d.title ? `"${d.title}"` : '', d.message.replace(/\s+/g, ' ')].filter(Boolean).join(': ');
+  return `${text}${text ? ' ' : ''}[${d.buttons.join(' | ')}]`;
 }
 
 /** The awaiting-input error for `dialogs`, with the hint to answer them. */
