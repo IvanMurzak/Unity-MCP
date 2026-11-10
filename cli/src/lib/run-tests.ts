@@ -85,7 +85,8 @@ const defaultDeps: RunTestsDeps = {
   },
   // Its own process group on POSIX, so the kill reaches the import workers and compilers the editor starts.
   spawn: (command, args) => spawn(command, args, { stdio: 'ignore', windowsHide: true, detached: process.platform !== 'win32' }),
-  killTree: pid => killProcessTree(pid),
+  // cli-core: `taskkill /T /F` on Windows, the process group elsewhere.
+  killTree: killProcessTree,
 };
 
 export interface RunTestsPaths {
@@ -146,8 +147,6 @@ export function findReservedArg(args: readonly string[]): string | undefined {
   return args.find(a => reserved.has(a.toLowerCase()));
 }
 
-/** Kill a process with everything it started (cli-core: `taskkill /T /F` on Windows, the process group elsewhere). */
-export { killProcessTree };
 
 function tail(log: string, lines: number): string[] {
   return log.split(/\r?\n/).filter(l => l.trim() !== '').slice(-lines);
