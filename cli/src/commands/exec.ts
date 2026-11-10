@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { localFallbackNote, SIGN_IN_REQUIRED_MESSAGE, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { DEFAULT_EXEC_TIMEOUT_MS, execCode, readToolResponse, SCRIPT_EXECUTE_TOOL } from '../lib/exec.js';
 import { parsePositiveIntFlag } from './open.js';
 import {
@@ -85,7 +85,7 @@ export const execCommand = new Command('exec')
     const projectPath = resolveAndValidateProjectPath(undefined, options);
     const conn = await resolveEditorConnection(projectPath, options);
     const { url, token, tokenFromCloudStore } = conn;
-    if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: SIGN_IN_REQUIRED_MESSAGE });
+    if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: conn.signInRequired });
     if (conn.localFallback) out.warn(localFallbackNote(conn.url));
 
     const spinner = options.raw || out.machine ? null : ui.startSpinner('Connecting...');

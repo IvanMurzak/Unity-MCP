@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { localFallbackNote, SIGN_IN_REQUIRED_MESSAGE, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { parseInput } from '../utils/input.js';
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
 import { failIfAwaitingInput } from '../utils/awaiting-input.js';
@@ -155,7 +155,7 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
       const projectPath = resolveAndValidateProjectPath(positionalPath, options);
       const conn = await resolveEditorConnection(projectPath, options);
       const { url: resolvedUrl, token, tokenFromCloudStore } = conn;
-      if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: SIGN_IN_REQUIRED_MESSAGE });
+      if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: conn.signInRequired });
       if (conn.localFallback) out.warn(localFallbackNote(conn.url));
       const body = parseInput(options);
       const authSource = options.token ? '--token flag' : 'config or machine store';

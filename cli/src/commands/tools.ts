@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { localFallbackNote, SIGN_IN_REQUIRED_MESSAGE, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 import { ensureEditor } from '../lib/ensure-editor.js';
@@ -84,7 +84,7 @@ export const toolsCommand = new Command('tools')
       source = `saved ${cached.readAt}`;
     } else {
       const conn = await resolveEditorConnection(projectPath, options);
-      if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: SIGN_IN_REQUIRED_MESSAGE });
+      if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: conn.signInRequired });
       if (conn.localFallback) out.warn(localFallbackNote(conn.url));
       const spinner = out.machine ? null : ui.startSpinner('Connecting to the Unity Editor...');
       const mayStart = options.start !== false && canStartEditor(projectPath, options.url);

@@ -87,7 +87,7 @@ describe('resolveEditorConnection', () => {
   it('Cloud mode without a sign-in falls back to the local server (and its config token)', async () => {
     const dir = project({ connectionMode: 'Cloud', token: 'local-tok' });
     try {
-      const conn = await resolveEditorConnection(dir, {}, { readCloudToken: () => undefined });
+      const conn = await resolveEditorConnection(dir, {}, { readCloudToken: () => undefined, credentialState: () => 'missing', userEditorOpen: () => false });
       expect(conn.localFallback).toBe(true);
       expect(conn.url).toMatch(/^http:\/\/localhost:\d+$/);
       expect(conn.overrideUrl).toBe(conn.url);
@@ -145,14 +145,38 @@ describe('parseToolRecords', () => {
   });
 });
 
+describe('resolveEditorConnection with an existing sign-in', () => {
+  it('never switches a signed-in machine to the local server, even when its token cannot be used now', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-editor-conn-signed-'));
+    try {
+      fs.mkdirSync(path.join(dir, 'UserSettings'));
+      fs.writeFileSync(path.join(dir, 'UserSettings', 'AI-Game-Developer-Config.json'), JSON.stringify({ connectionMode: 'Cloud' }));
+      for (const state of ['ok', 'unreadable'] as const) {
+        // `ok` with no usable token: expired/revoked family or a busy store.
+        const conn = await resolveEditorConnection(dir, {}, { readCloudToken: () => undefined, credentialState: () => state, userEditorOpen: () => false });
+        expect(conn.localFallback).toBe(false);
+        expect(conn.url).toBe('https://ai-game.dev/mcp');
+        expect(conn.signInRequired).toMatch(/signed in to ai-game.dev/);
+      }
+      // A working sign-in goes to the cloud with its token.
+      const working = await resolveEditorConnection(dir, {}, { readCloudToken: () => 'tok', credentialState: () => 'ok' });
+      expect(working).toMatchObject({ url: 'https://ai-game.dev/mcp', token: 'tok', localFallback: false });
+      expect(working.signInRequired).toBeUndefined();
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});
+
 describe('resolveEditorConnection with a user editor open', () => {
   it('requires a sign-in instead of falling back (that editor talks to the cloud)', async () => {
     const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-editor-conn-open-'));
     try {
       fs.mkdirSync(path.join(dir, 'UserSettings'));
       fs.writeFileSync(path.join(dir, 'UserSettings', 'AI-Game-Developer-Config.json'), JSON.stringify({ connectionMode: 'Cloud' }));
-      const conn = await resolveEditorConnection(dir, {}, { readCloudToken: () => undefined, userEditorOpen: () => true });
-      expect(conn).toMatchObject({ signInRequired: true, localFallback: false });
+      const conn = await resolveEditorConnection(dir, {}, { readCloudToken: () => undefined, credentialState: () => 'missing', userEditorOpen: () => true });
+      expect(conn.localFallback).toBe(false);
+      expect(conn.signInRequired).toMatch(/connected to ai-game.dev/);
     } finally {
       fs.rmSync(dir, { recursive: true, force: true });
     }
