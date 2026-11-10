@@ -53,8 +53,8 @@ describe('editor dialogs on Linux (injected runner)', () => {
   it('maps not-found and helper errors', async () => {
     expect(await pressEditorDialogButton([42], 'Nope', undefined, 'linux', stubRunner('not-found')))
       .toEqual({ kind: 'not-found', message: 'No open dialog has a "Nope" button.' });
-    expect(await pressEditorDialogButton([42], 'OK', undefined, 'linux', stubRunner('error:press-failed: the button "OK" did not accept the click action')))
-      .toEqual({ kind: 'error', message: 'press-failed: the button "OK" did not accept the click action' });
+    expect(await pressEditorDialogButton([42], 'OK', undefined, 'linux', stubRunner('error:The button "OK" did not accept the click action.')))
+      .toEqual({ kind: 'error', message: 'The button "OK" did not accept the click action.' });
   });
 
   it('names the package to install or the setting to enable', async () => {
@@ -88,7 +88,7 @@ describe('editor dialogs on Linux (injected runner)', () => {
     const abort = '\n(process:1): dbind-WARNING **: Couldn\'t connect to accessibility bus: Failed to connect to socket /x\n'
       + '(process:1): dbind-ERROR **: AT-SPI: Couldn\'t connect to accessibility bus. Is at-spi-bus-launcher running?\n';
     expect(linuxRunFailure({ code: null }, abort)).toBe('no-bus: (process:1): dbind-ERROR **: AT-SPI: Couldn\'t connect to accessibility bus. Is at-spi-bus-launcher running?');
-    expect(linuxRunFailure({ code: null, killed: true }, '')).toMatch(/^timeout: /);
+    expect(linuxRunFailure({ code: null, killed: true }, '')).toBe('The accessibility bus did not answer within 5 s: the editor may be busy.');
     expect(linuxRunFailure({ code: 1 }, 'Traceback\nValueError: x\n')).toBe('ValueError: x');
     expect(linuxRunFailure({ code: 1 }, '')).toBe('python3 exited with code 1');
   });
@@ -309,7 +309,7 @@ describe.skipIf(!hasPython())('editor dialogs on Linux (real script, fake AT-SPI
   it('reports not-found for an unknown label, another dialog\'s id, a window that is no dialog or another app', async () => {
     readClicks();
     const run = fakePython(SCENE);
-    for (const [pids, label, id] of [[[42], 'Nope', undefined], [[42], 'Proceed', '123'], [[42], 'Close', undefined], [[42], 'OK', undefined], [[42, 7], 'Row', undefined], [[42], 'OK', undefined]] as [number[], string, string | undefined][]) {
+    for (const [pids, label, id] of [[[42], 'Nope', undefined], [[42], 'Proceed', '123'], [[42], 'Close', undefined], [[42], 'OK', undefined], [[42, 7], 'Row', undefined], [[7], 'OK', undefined]] as [number[], string, string | undefined][]) {
       expect((await pressEditorDialogButton(pids, label, id, 'linux', run)).kind).toBe('not-found');
     }
     expect(readClicks()).toEqual([]);

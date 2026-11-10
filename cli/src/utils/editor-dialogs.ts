@@ -303,7 +303,8 @@ export function macPermissionMessage(message: string): string {
 // script works on X11 and Wayland: GTK (Unity's `EditorUtility.DisplayDialog`, zenity) registers there by default. A
 // dialog is a top-level window of an application whose pid is listed, with role DIALOG/ALERT/FILE_CHOOSER or the MODAL
 // state, and at least one labelled push button. Its texts are the showing labels outside buttons. Output: a JSON array
-// (ASCII), `pressed`, `not-found`, or `error:<code>: <detail>` (codes: see `LINUX_HINTS`).
+// (ASCII), `pressed`, `not-found`, or `error:<code>: <detail>` (codes: see `LINUX_HINTS`; `atspi` is any other
+// AT-SPI failure).
 const LINUX_SCRIPT = (mode: 'list' | 'press') => `import json, os, sys
 
 def out(text):
@@ -459,7 +460,7 @@ ${mode === 'list'
             if name.lower() == label:
                 if press(el):
                     out('pressed')
-                fail('press-failed', 'the button "' + name + '" did not accept the click action')
+                out('error:The button "' + name + '" did not accept the click action.')
     out('not-found')`}
 except Exception as e:
     fail('atspi', e)
@@ -488,25 +489,24 @@ export const LINUX_HINTS: Record<string, string> = {
   'no-apps': 'No application is registered on the accessibility bus, so accessibility is off in this session: enable it '
     + '(GNOME: gsettings set org.gnome.desktop.interface toolkit-accessibility true), make sure NO_AT_BRIDGE is not set '
     + 'for the editor, then restart the editor.',
-  timeout: 'The accessibility bus did not answer within 5 s: the editor may be busy.',
 };
 
 /** Linux: append the install/enable hint to a helper error `<code>: <detail>`. Exposed for tests. */
 export function linuxErrorMessage(message: string): string {
-  const code = /^([a-z-]+):/.exec(message)?.[1];
-  const hint = code === undefined ? undefined : LINUX_HINTS[code];
-  return hint ? `${message.slice(code!.length + 1).trim()}. ${hint}` : message;
+  const [, code = '', detail = ''] = /^([a-z-]+):(.*)$/s.exec(message) ?? [];
+  const hint = LINUX_HINTS[code];
+  return hint ? `${detail.trim()}. ${hint}` : message;
 }
 
 /**
- * Linux: the `<code>: <detail>` message for a failed `python3` run. Not found on PATH: `no-python`; libatspi aborting
- * because it cannot reach the bus: `no-bus`; killed by the timeout: `timeout`. Exposed for tests.
+ * Linux: the message for a failed `python3` run, as `<code>: <detail>` when a hint applies. Not found on PATH:
+ * `no-python`; libatspi aborting because it cannot reach the bus: `no-bus`. Exposed for tests.
  */
 export function linuxRunFailure(err: { code?: string | number | null; killed?: boolean }, stderr: string): string {
   const lastLine = stderr.trim().split('\n').pop()?.trim() ?? '';
   if (err.code === 'ENOENT') return 'no-python: python3 was not found on PATH';
   if (/accessibility bus/i.test(stderr)) return `no-bus: ${lastLine}`;
-  if (err.killed) return 'timeout: the dialog scan was stopped after 5 s';
+  if (err.killed) return 'The accessibility bus did not answer within 5 s: the editor may be busy.';
   // `err.message` would repeat the whole script.
   return lastLine || `python3 exited with code ${String(err.code)}`;
 }
