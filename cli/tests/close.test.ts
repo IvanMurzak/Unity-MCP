@@ -155,7 +155,7 @@ describe('resolveCloseProjectPath', () => {
     try {
       const withTrailing = tmpDir + path.sep;
       const result = resolveCloseProjectPath(withTrailing, '/fake/cwd');
-      expect(result).toBe(fs.realpathSync(tmpDir));
+      expect(result).toBe(fs.realpathSync.native(tmpDir));
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
@@ -168,7 +168,7 @@ describe('resolveCloseProjectPath', () => {
       fs.mkdirSync(subdir);
       const messy = path.join(tmpDir, 'sub', '..', 'sub');
       const result = resolveCloseProjectPath(messy, '/fake/cwd');
-      expect(result).toBe(fs.realpathSync(subdir));
+      expect(result).toBe(fs.realpathSync.native(subdir));
     } finally {
       fs.rmSync(tmpDir, { recursive: true, force: true });
     }
