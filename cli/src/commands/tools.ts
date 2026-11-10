@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, SIGN_IN_REQUIRED_MESSAGE, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 import { ensureEditor } from '../lib/ensure-editor.js';
@@ -81,8 +81,10 @@ export const toolsCommand = new Command('tools')
     if (options.cached) {
       if (!cached) out.fail(ExitCode.CommandFailed, { code: 'NOT_FOUND', message: 'No saved tool list yet: run `unity-mcp-cli tools` once without --cached.' });
       catalog = cached;
+      source = `saved ${cached.readAt}`;
     } else {
       const conn = await resolveEditorConnection(projectPath, options);
+      if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: SIGN_IN_REQUIRED_MESSAGE });
       if (conn.localFallback) out.warn(localFallbackNote(conn.url));
       const spinner = out.machine ? null : ui.startSpinner('Connecting to the Unity Editor...');
       const mayStart = options.start !== false && canStartEditor(projectPath, options.url);
@@ -137,7 +139,6 @@ export const toolsCommand = new Command('tools')
       }
       if (!catalog) out.fail(ExitCode.Unreachable, { code: 'UNREACHABLE', message: 'No editor answered and no saved tool list exists.' });
     }
-    if (options.cached) source = `saved ${catalog.readAt}`;
 
     const exact = name !== undefined ? catalog.tools.find(t => t.name === name) : undefined;
     if (exact) {

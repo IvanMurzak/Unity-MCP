@@ -171,7 +171,11 @@ export async function ensureEditor(options: EnsureEditorOptions): Promise<Ensure
       reason: sessionReason === 'exited' || sessionReason === 'not-ready' ? 'not-ready' : 'launch-failed',
       ...(sessionReason ? { sessionReason } : {}),
       ...(sessionError?.source ? { editorSource: sessionError.source } : {}),
-      message: sessionErrorMessage(error, serverUrl) + (sessionReason === 'exited' ? explainEditorExit(options.projectPath) : ''),
+      // A headless editor this call started logs to a known file: point at it (and its compile errors), whether it
+      // exited or never answered.
+      message: sessionErrorMessage(error, serverUrl)
+        + (!options.window && sessionError?.source === 'started' && (sessionReason === 'exited' || sessionReason === 'not-ready')
+          ? explainEditorExit(options.projectPath) : ''),
       error,
     };
   } finally {

@@ -5,7 +5,8 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { ensureAiGameDevGitignore, SESSION_DIR_NAME } from '@baizor/gamedev-cli-core';
+import { ensureAiGameDevGitignore, SESSION_DIR_NAME, writeFileAtomicSync } from '@baizor/gamedev-cli-core';
+import { isLoopbackUrl } from './editor-session.js';
 import { runTool } from './run-tool.js';
 import { readToolResponse } from './exec.js';
 import type { RunToolOptions, RunToolResult } from './types.js';
@@ -38,7 +39,7 @@ export function toolCachePath(projectPath: string): string {
 export function readToolCache(projectPath: string): ToolCatalog | undefined {
   try {
     const parsed = JSON.parse(fs.readFileSync(toolCachePath(projectPath), 'utf-8')) as ToolCatalog;
-    return Array.isArray(parsed.tools) ? parsed : undefined;
+    return Array.isArray(parsed.tools) && Array.isArray(parsed.hidden) ? parsed : undefined;
   } catch {
     return undefined;
   }
@@ -47,7 +48,8 @@ export function readToolCache(projectPath: string): ToolCatalog | undefined {
 export function writeToolCache(projectPath: string, catalog: ToolCatalog): void {
   try {
     fs.mkdirSync(path.dirname(toolCachePath(projectPath)), { recursive: true });
-    fs.writeFileSync(toolCachePath(projectPath), JSON.stringify(catalog, null, 1));
+    // Atomic: two parallel `tools` calls never leave a torn file.
+    writeFileAtomicSync(toolCachePath(projectPath), Buffer.from(JSON.stringify(catalog, null, 1), 'utf-8'));
     // Machine-local, like the session files: never committed.
     ensureAiGameDevGitignore(projectPath, [CACHE_FILE_NAME]);
   } catch {
@@ -76,6 +78,31 @@ export function parseMcpMessage(text: string): { result?: unknown; error?: { mes
 }
 
 /**
+ * Tools from `unity-tool-list` called with descriptions and inputs: `{Name:x,Visible:true,Description:"…",Inputs:[{Name:a,
+ * Description:"…"|null}]}` records, one per line. The inputs carry names and descriptions only (no types).
+ */
+export function parseToolRecords(text: string): Array<ToolInfo & { visible: boolean }> {
+  const unquote = (q: string): string => {
+    try {
+      return JSON.parse(`"${q}"`) as string;
+    } catch {
+      return q;
+    }
+  };
+  const result: Array<ToolInfo & { visible: boolean }> = [];
+  for (const line of text.split(/\r?\n/)) {
+    const m = /^\{Name:([\w.-]+),Visible:(true|false)(?:,Description:(?:null|"((?:[^"\\]|\\.)*)"))?(?:,Inputs:\[(.*)\])?\}\s*$/.exec(line.trim());
+    if (!m) continue;
+    const properties: Record<string, { description?: string }> = {};
+    for (const input of (m[4] ?? '').matchAll(/\{Name:([\w.-]+),Description:(?:null|"((?:[^"\\]|\\.)*)")\}/g)) {
+      properties[input[1]] = input[2] !== undefined ? { description: unquote(input[2]) } : {};
+    }
+    result.push({ name: m[1], visible: m[2] === 'true', description: m[3] !== undefined ? unquote(m[3]) : '', inputSchema: { type: 'object', properties } });
+  }
+  return result;
+}
+
+/**
  * Names of hidden tools in `unity-tool-list`'s answer: a `Name|Visible` table (`package-add|false` rows), or
  * `{Name:package-add,Visible:false,...}` records when descriptions are included.
  */
@@ -95,8 +122,13 @@ export interface ListToolsOptions {
 
 export type ListToolsResult = { kind: 'success'; catalog: ToolCatalog } | { kind: 'failure'; message: string };
 
-/** Read the catalog from a running server. */
+/**
+ * Read the catalog from a running server. A local server is asked over MCP (`tools/list`, full input schemas). Through
+ * the cloud, MCP would list the cloud's own tools (and maybe another instance's), so the editor's plugin is asked
+ * instead (`unity-tool-list`: names, descriptions, input names).
+ */
 export async function listTools(options: ListToolsOptions): Promise<ListToolsResult> {
+  if (!isLoopbackUrl(options.baseUrl)) return listToolsViaPlugin(options);
   const fetchImpl = options.fetchImpl ?? fetch;
   const endpoint = mcpEndpoint(options.baseUrl);
   const headers: Record<string, string> = {
@@ -114,16 +146,19 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
     await init.text();
     const session = init.headers.get('mcp-session-id');
     const sessionHeaders = session ? { ...headers, 'mcp-session-id': session } : headers;
-    await fetchImpl(endpoint, { method: 'POST', headers: sessionHeaders, signal: timeout(), body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) })
-      .then(r => r.text()).catch(() => undefined);
-    const listed = await fetchImpl(endpoint, { method: 'POST', headers: sessionHeaders, signal: timeout(), body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }) });
-    const message = parseMcpMessage(await listed.text());
-    const tools = (message?.result as { tools?: Array<{ name: string; description?: string; inputSchema?: Record<string, unknown> }> } | undefined)?.tools;
-    if (!listed.ok || !tools) {
-      return { kind: 'failure', message: message?.error?.message ?? `MCP tools/list failed: HTTP ${listed.status} at ${endpoint}` };
-    }
-    if (session) {
-      await fetchImpl(endpoint, { method: 'DELETE', headers: sessionHeaders, signal: timeout() }).then(r => r.text()).catch(() => undefined);
+    let tools: Array<{ name: string; description?: string; inputSchema?: Record<string, unknown> }> | undefined;
+    try {
+      await fetchImpl(endpoint, { method: 'POST', headers: sessionHeaders, signal: timeout(), body: JSON.stringify({ jsonrpc: '2.0', method: 'notifications/initialized' }) })
+        .then(r => r.text()).catch(() => undefined);
+      const listed = await fetchImpl(endpoint, { method: 'POST', headers: sessionHeaders, signal: timeout(), body: JSON.stringify({ jsonrpc: '2.0', id: 2, method: 'tools/list' }) });
+      const message = parseMcpMessage(await listed.text());
+      tools = (message?.result as { tools?: typeof tools } | undefined)?.tools;
+      if (!listed.ok || !tools) {
+        return { kind: 'failure', message: message?.error?.message ?? `MCP tools/list failed: HTTP ${listed.status} at ${endpoint}` };
+      }
+    } finally {
+      // End the MCP session whatever happened, so the server does not keep it.
+      if (session) await fetchImpl(endpoint, { method: 'DELETE', headers: sessionHeaders, signal: timeout() }).then(r => r.text()).catch(() => undefined);
     }
 
     const invoke = options.invoke ?? runTool;
@@ -141,6 +176,26 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
   } catch (err) {
     return { kind: 'failure', message: `Could not read the tool list at ${endpoint}: ${err instanceof Error ? err.message : String(err)}` };
   }
+}
+
+/** The catalog from the plugin's own `unity-tool-list` (used through the cloud). */
+async function listToolsViaPlugin(options: ListToolsOptions): Promise<ListToolsResult> {
+  const invoke = options.invoke ?? runTool;
+  const answer = await invoke({
+    toolName: TOOL_LIST_TOOL, url: options.baseUrl, ...(options.token ? { token: options.token } : {}),
+    input: { includeDescription: true, includeInputs: 'InputsWithDescription' }, timeoutMs: options.timeoutMs ?? 30_000,
+  });
+  if (answer.kind === 'failure') return { kind: 'failure', message: answer.message };
+  const records = parseToolRecords(readToolResponse(answer.data).text);
+  if (records.length === 0) return { kind: 'failure', message: 'The editor answered unity-tool-list in an unknown format.' };
+  return {
+    kind: 'success',
+    catalog: {
+      tools: records.filter(r => r.visible).map(({ visible: _visible, ...t }) => t).sort((a, b) => a.name.localeCompare(b.name)),
+      hidden: records.filter(r => !r.visible).map(r => r.name).sort(),
+      readAt: new Date().toISOString(),
+    },
+  };
 }
 
 /** The first sentence of a description (at most `max` characters), for one-line listings. */

@@ -5,6 +5,8 @@ import { generatePortFromDirectory } from './port.js';
 import { readConfig, resolveConnectionFromConfig, isCloudMode } from './config.js';
 import { readCloudAccessToken } from './cloud-credentials.js';
 import * as ui from './ui.js';
+import { findUnityProcess } from './unity-process.js';
+import { hasLiveSessionLease } from '../lib/editor-session.js';
 
 export interface ConnectionOptions {
   path?: string;
@@ -72,6 +74,13 @@ export interface ResolveConnectionDeps {
    * on-disk read). Tests inject a deterministic value.
    */
   readCloudToken?: () => Promise<string | undefined> | string | undefined;
+  /** Whether an editor the CLI did not start has the project open (`resolveEditorConnection`). */
+  userEditorOpen?: (projectPath: string) => boolean;
+}
+
+/** An editor has the project open and no live session lease says the CLI started it. */
+function userEditorOpen(projectPath: string): boolean {
+  return findUnityProcess(projectPath) !== null && !hasLiveSessionLease(projectPath);
 }
 
 export async function resolveConnection(
@@ -152,7 +161,16 @@ export interface EditorConnection {
   overrideUrl: string | undefined;
   /** Cloud mode without a sign-in: the command uses the project's local server instead of refusing. */
   localFallback: boolean;
+  /**
+   * Cloud mode without a sign-in while an editor the CLI did not start has the project open: that editor talks to the
+   * cloud, so only a sign-in reaches it. The command refuses with NOT_AUTHENTICATED.
+   */
+  signInRequired: boolean;
 }
+
+/** The error of `signInRequired`. */
+export const SIGN_IN_REQUIRED_MESSAGE = 'The project is open in a Unity Editor connected to ai-game.dev (Cloud mode), and you are not signed in. '
+  + 'Run `unity-mcp-cli login`, or switch the editor\'s connection to Custom (a local server), or pass --url.';
 
 /**
  * The connection of a command that can start the project's editor itself (`exec`, `run-tool`, `compile`, `tools`).
@@ -168,11 +186,17 @@ export async function resolveEditorConnection(
 ): Promise<EditorConnection> {
   const resolved = await resolveConnection(projectPath, options, deps);
   if (!resolved.cloudAuthMissing) {
-    return { url: resolved.url, token: resolved.token, tokenFromCloudStore: resolved.tokenFromCloudStore, overrideUrl: options.url, localFallback: false };
+    return {
+      url: resolved.url, token: resolved.token, tokenFromCloudStore: resolved.tokenFromCloudStore, overrideUrl: options.url,
+      localFallback: false, signInRequired: false,
+    };
   }
   const localUrl = `http://localhost:${generatePortFromDirectory(projectPath)}`;
+  if ((deps.userEditorOpen ?? userEditorOpen)(projectPath)) {
+    return { url: resolved.url, token: undefined, tokenFromCloudStore: false, overrideUrl: undefined, localFallback: false, signInRequired: true };
+  }
   verbose(`Not signed in to ai-game.dev (Cloud mode): using the project's local server ${localUrl}`);
-  return { url: localUrl, token: readConfig(projectPath)?.token, tokenFromCloudStore: false, overrideUrl: localUrl, localFallback: true };
+  return { url: localUrl, token: readConfig(projectPath)?.token, tokenFromCloudStore: false, overrideUrl: localUrl, localFallback: true, signInRequired: false };
 }
 
 /** The note a command shows when it fell back to the local server. */

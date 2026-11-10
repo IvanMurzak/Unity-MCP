@@ -9,7 +9,8 @@ import { findEditorPath, getProjectEditorVersion } from '../utils/unity-editor.j
 import { findUnityProcess } from '../utils/unity-process.js';
 import { parseCompilerMessages, type CompilerMessage } from '../utils/compiler-messages.js';
 import { parseNUnitReport, toJUnitXml, type TestReport } from '../utils/nunit-report.js';
-import { createUnitySession, hasLiveSessionLease, validateEditorPath } from './editor-session.js';
+import { readSessionLease } from '@baizor/gamedev-cli-core';
+import { createProjectSession, hasLiveSessionLease, validateEditorPath } from './editor-session.js';
 
 export type TestMode = 'EditMode' | 'PlayMode';
 
@@ -75,8 +76,11 @@ const defaultDeps: RunTestsDeps = {
   findEditor: version => findEditorPath(version),
   findOpenEditor: projectPath => findUnityProcess(projectPath)?.pid ?? (hasLiveSessionLease(projectPath) ? -1 : undefined),
   closeOwnedEditor: async (projectPath) => {
-    if (!hasLiveSessionLease(projectPath)) return undefined;
-    const closed = await createUnitySession({ projectPath, urls: [] }).closeOwned({ timeoutMs: 60_000, force: true });
+    // Only a headless editor: a windowed one (exec --window) is in front of the user. Asked through its plugin with the
+    // project's connection, so it saves before quitting; never killed (a call may still be running in it).
+    if (!hasLiveSessionLease(projectPath) || readSessionLease(projectPath)?.mode !== 'headless') return undefined;
+    const session = await createProjectSession(projectPath, {});
+    const closed = await session.closeOwned({ timeoutMs: 60_000, force: false });
     return closed.kind === 'closed' ? closed.pid : undefined;
   },
   // Its own process group on POSIX, so the kill reaches the import workers and compilers the editor starts.
@@ -184,11 +188,14 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
 
   // A warm editor the CLI itself left (exec / compile / run-tool) is ours to close: it saves and quits, the run goes on.
   // An editor the user opened is never touched.
-  if (deps.findOpenEditor(projectPath) !== undefined) {
+  let openPid = deps.findOpenEditor(projectPath);
+  if (openPid !== undefined) {
     const closedPid = await deps.closeOwnedEditor(projectPath);
-    if (closedPid !== undefined) options.onStatus?.(`Closed the headless editor the CLI had started (PID ${closedPid}) so the test run can open the project.`);
+    if (closedPid !== undefined) {
+      options.onStatus?.(`Closed the headless editor the CLI had started (PID ${closedPid}) so the test run can open the project.`);
+      openPid = deps.findOpenEditor(projectPath);
+    }
   }
-  const openPid = deps.findOpenEditor(projectPath);
   if (openPid !== undefined) {
     return {
       kind: 'failure',

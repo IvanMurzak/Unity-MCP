@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, SIGN_IN_REQUIRED_MESSAGE, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 import { formatCompilerMessage } from '../utils/compiler-messages.js';
@@ -45,6 +45,7 @@ export const compileCommand = new Command('compile')
     const projectPath = resolveAndValidateProjectPath(positionalPath, options);
     const conn = await resolveEditorConnection(projectPath, options);
     const { url, token, tokenFromCloudStore } = conn;
+    if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: SIGN_IN_REQUIRED_MESSAGE });
     if (conn.localFallback) out.warn(localFallbackNote(conn.url));
 
     const spinner = out.machine || format === 'github' ? null : ui.startSpinner('Connecting...');

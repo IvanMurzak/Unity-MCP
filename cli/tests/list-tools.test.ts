@@ -119,3 +119,42 @@ describe('run-tool --arg', () => {
     expect(() => mergeArgs('[1]', ['a=1'])).toThrow(/JSON object/);
   });
 });
+
+describe('parseToolRecords', () => {
+  it('reads the record lines unity-tool-list sends with descriptions and inputs (sample from a live editor)', async () => {
+    const { parseToolRecords } = await import('../src/lib/list-tools.js');
+    const text = '19 results\n'
+      + '{Name:package-add,Visible:false,Description:"Install a package from the Unity Package Manager registry, Git URL, or local path. Use \'package-search\' first.",Inputs:[{Name:packageId,Description:null}]}\n'
+      + '{Name:rql-query,Visible:true,Description:"Run a read-only RQL query. Say \\"hi\\".",Inputs:[{Name:query,Description:"The RQL query."}]}';
+    const records = parseToolRecords(text);
+    expect(records.map(r => [r.name, r.visible])).toEqual([['package-add', false], ['rql-query', true]]);
+    expect(records[1].description).toBe('Run a read-only RQL query. Say "hi".');
+    expect(records[1].inputSchema).toEqual({ type: 'object', properties: { query: { description: 'The RQL query.' } } });
+    expect(records[0].inputSchema).toEqual({ type: 'object', properties: { packageId: {} } });
+  });
+
+  it('through the cloud asks the plugin, not MCP tools/list', async () => {
+    const fetchImpl = vi.fn();
+    const invoke = vi.fn(async (): Promise<RunToolResult> => ({
+      kind: 'success', success: true, endpoint: 'x', httpStatus: 200,
+      data: { status: 'success', content: [{ type: 'text', text: '{Name:rql-query,Visible:true,Description:"Q.",Inputs:[]}\n{Name:package-add,Visible:false,Description:"P.",Inputs:[]}' }] },
+    }));
+    const result = await listTools({ baseUrl: 'https://ai-game.dev/mcp', fetchImpl: fetchImpl as unknown as typeof fetch, invoke });
+    expect(fetchImpl).not.toHaveBeenCalled();
+    expect(result).toMatchObject({ kind: 'success', catalog: { tools: [{ name: 'rql-query' }], hidden: ['package-add'] } });
+  });
+});
+
+describe('resolveEditorConnection with a user editor open', () => {
+  it('requires a sign-in instead of falling back (that editor talks to the cloud)', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-editor-conn-open-'));
+    try {
+      fs.mkdirSync(path.join(dir, 'UserSettings'));
+      fs.writeFileSync(path.join(dir, 'UserSettings', 'AI-Game-Developer-Config.json'), JSON.stringify({ connectionMode: 'Cloud' }));
+      const conn = await resolveEditorConnection(dir, {}, { readCloudToken: () => undefined, userEditorOpen: () => true });
+      expect(conn).toMatchObject({ signInRequired: true, localFallback: false });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
+  });
+});

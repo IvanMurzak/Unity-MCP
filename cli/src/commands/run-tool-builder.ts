@@ -2,7 +2,7 @@ import { Command } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, SIGN_IN_REQUIRED_MESSAGE, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { parseInput } from '../utils/input.js';
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
 import { failIfAwaitingInput } from '../utils/awaiting-input.js';
@@ -155,7 +155,8 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
       const projectPath = resolveAndValidateProjectPath(positionalPath, options);
       const conn = await resolveEditorConnection(projectPath, options);
       const { url: resolvedUrl, token, tokenFromCloudStore } = conn;
-    if (conn.localFallback) out.warn(localFallbackNote(conn.url));
+      if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: SIGN_IN_REQUIRED_MESSAGE });
+      if (conn.localFallback) out.warn(localFallbackNote(conn.url));
       const body = parseInput(options);
       const authSource = options.token ? '--token flag' : 'config or machine store';
 
@@ -266,7 +267,7 @@ export function handleFailure(failure: RunToolFailure, ctx: FailureContext): nev
         console.error(typeof failure.data === 'string' ? failure.data : JSON.stringify(failure.data, null, 2));
       }
       const hint = failureHint(failure, ctx.toolName);
-      if (hint) ui.info(hint);
+      if (hint) console.error(hint);
     }
     process.exit(exitCode);
   }
