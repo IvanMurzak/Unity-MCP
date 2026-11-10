@@ -67,7 +67,8 @@ function elementText(xml: string, name: string): string | undefined {
   const inner = m[1];
   const parts = [...inner.matchAll(/<!\[CDATA\[([\s\S]*?)\]\]>/g)];
   const text = parts.length > 0 ? parts.map(p => p[1]).join('') : decodeXml(inner);
-  const trimmed = text.trim();
+  // Unity on Windows writes CRLF inside messages; one newline style keeps JSON and annotations clean.
+  const trimmed = text.replace(/\r\n?/g, '\n').trim();
   return trimmed.length > 0 ? trimmed : undefined;
 }
 

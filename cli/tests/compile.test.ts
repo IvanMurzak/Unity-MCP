@@ -40,6 +40,13 @@ describe('compile snippets', () => {
     expect(parseCompileStatus('state:failed\nAssets/A.cs(1,1): error CS1002: ; expected\n')?.messages).toHaveLength(1);
     expect(parseCompileStatus('something else')).toBeUndefined();
   });
+
+  it('unwraps the typed answer of script-execute (System.String: "<json>")', () => {
+    // Exactly what the plugin returned in a live run: the value as JSON after its type name.
+    expect(parseCompileStatus(String.raw`System.String: "state:ok\r\n"`)).toEqual({ state: 'ok', messages: [] });
+    expect(parseCompileStatus(String.raw`System.String: "state:failed\r\nAssets\\A.cs(1,1): error CS1002: ; expected\r\n"`)?.messages[0].file)
+      .toBe('Assets/A.cs');
+  });
 });
 
 const URL = 'http://localhost:1';

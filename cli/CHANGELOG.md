@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`test`: Unity tests in a batch-mode editor, no plugin needed.** Runs Unity's own `-runTests` (`--mode`,
+  `--filter`, `--category`, `--assembly`, extra editor args after `--`) and takes the verdict from the NUnit report:
+  exit 0 passed, 8 failed, 6 no verdict (compile errors listed as `file(line,col): error CS…`, a crash, the project
+  already open in an editor), 14 timeout (the editor tree is killed; Ctrl+C stops it too). `--junit-output` writes
+  JUnit; `--format github` writes `::error` annotations at the failing test's source line.
+- **`compile [--strict]`**: refreshes assets in the project's editor (started headless when none runs), waits for the
+  compile and its domain reload, and reports compiler errors/warnings with file, line and column (exit 0 / 6 / 7 / 14).
+- **`dialog [--press <button>]`** (Windows): lists the modal dialogs blocking the editor and presses a button.
+  `status`, `run-tool`, `exec`, `compile` and `wait-for-ready` report a blocking dialog as exit 18 (`AWAITING_INPUT`).
+- **`commands --format json`**: a manifest of every command, argument, option and exit code, read from the CLI.
+- **`--format json|ndjson`** on `run-tool`, `run-system-tool`, `exec`, `status`, `wait-for-ready` and the new
+  commands: one result envelope `{success, command, data, errors[{code, message}], warnings}` on stdout, progress and
+  logs on stderr; a command-line error still prints an envelope.
+- **`run-tool` / `run-system-tool` start a headless editor** like `exec` when none answers (only for a project with
+  `ProjectSettings/ProjectVersion.txt`; `--no-start` turns it off), and **`--once`** (also on `exec` and `compile`)
+  closes an editor the call started, after the call or when it never became ready.
+- Library: `ensureEditor` (the shared start-or-reuse policy), `runTests`, `compileProject`, `ExitCode`; `execCode` takes `once`.
+
+### Changed
+
+- **Exit codes follow one table shared with `unreal-mcp-cli` and `godot-cli`:** 2 bad arguments (commander parse
+  errors and bad flag values, previously 1), 6 the command ran and failed, 7 editor unreachable, 8 tests failed,
+  14 timeout, 17 busy, 18 awaiting input. Notably `run-tool` / `exec` now exit 6 (not 0) when the tool answers with an
+  error, `wait-for-ready` exits 14 on timeout and `status` 7 when the server does not answer.
+
 - **`update` updates everything.** `update [path]` brings the project's MCP plugin and installed extensions to their
   latest versions, then updates the CLI itself. From a subfolder it finds the project; outside a project it updates only
   the CLI. `--check` reports (exit 2 when something is outdated); `--no-self`, `--no-project` and `--no-extensions` skip a

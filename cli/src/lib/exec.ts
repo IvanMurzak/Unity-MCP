@@ -119,6 +119,7 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
     foreignReadyTimeoutMs: options.foreignReadyTimeoutMs,
     onStatus: options.onStatus,
     session: deps.session,
+    closeOnFailure: options.once,
   });
   if (ensured.kind === 'failure') {
     const { kind: _kind, ...failure } = ensured;

@@ -37,6 +37,11 @@ export interface EnsureEditorOptions {
   /** Wait for an editor this call did not start (the user's GUI) to answer; see `UnitySessionOptions.foreignReadyTimeoutMs`. */
   foreignReadyTimeoutMs?: number;
   onStatus?: (message: string) => void;
+  /**
+   * Close an editor this call started when it never became ready (`--once`), instead of leaving it to its idle
+   * timeout. Only an editor whose lease this call wrote is closed.
+   */
+  closeOnFailure?: boolean;
   /** Injection point for tests. */
   session?: EnsureEditorSessionFactory;
 }
@@ -80,8 +85,9 @@ export async function ensureEditor(options: EnsureEditorOptions): Promise<Ensure
   // A windowed editor we start may stop on the "compile errors at launch" dialog; click it away until it is ready.
   const ready = new AbortController();
   let dismissing: Promise<void> | undefined;
+  let session: EnsureEditorSession | undefined;
   try {
-    const session = factory({
+    session = factory({
       projectPath: options.projectPath,
       urls: options.probeUrls,
       token: options.token,
@@ -103,14 +109,15 @@ export async function ensureEditor(options: EnsureEditorOptions): Promise<Ensure
       ...(options.onStatus ? { onStatus: options.onStatus } : {}),
       ...(options.window ? { onLaunched: (pid: number) => { dismissing = dismissLaunchErrorsUntil(ready.signal, [], pid); } } : {}),
     });
-    const ensured = await session.ensure({ mode: options.window ? 'window' : 'headless' });
+    const started = session;
+    const ensured = await started.ensure({ mode: options.window ? 'window' : 'headless' });
     return {
       kind: 'ready',
       baseUrl: ensured.ready,
       source: ensured.source,
       closeIfStarted: async () => {
-        if (ensured.source !== 'started' || !session.closeOwned) return undefined;
-        const closed = await session.closeOwned({ timeoutMs: ONCE_CLOSE_TIMEOUT_MS, force: true });
+        if (ensured.source !== 'started' || !started.closeOwned) return undefined;
+        const closed = await started.closeOwned({ timeoutMs: ONCE_CLOSE_TIMEOUT_MS, force: true });
         return closed.kind === 'closed' ? closed.pid : undefined;
       },
     };
@@ -118,6 +125,9 @@ export async function ensureEditor(options: EnsureEditorOptions): Promise<Ensure
     const error = err instanceof Error ? err : new Error(String(err));
     const sessionError = err instanceof EditorSessionError ? err : undefined;
     const sessionReason = sessionError?.reason;
+    if (options.closeOnFailure && sessionError?.source === 'started' && session?.closeOwned) {
+      await session.closeOwned({ timeoutMs: ONCE_CLOSE_TIMEOUT_MS, force: true }).catch(() => undefined);
+    }
     return {
       kind: 'failure',
       reason: sessionReason === 'exited' || sessionReason === 'not-ready' ? 'not-ready' : 'launch-failed',

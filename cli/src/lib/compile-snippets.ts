@@ -55,9 +55,24 @@ if (!busy && entries != null && entryType != null)
 sb.ToString()`;
 }
 
+/**
+ * The string a snippet returned. `script-execute` answers a value as `<type>: <json>` (`System.String: "state:ok\r\n"`);
+ * a bare string is taken as is.
+ */
+export function unwrapStringResult(text: string): string {
+  const m = /^System\.String:\s*("[\s\S]*")\s*$/.exec(text.trim());
+  if (!m) return text;
+  try {
+    const value: unknown = JSON.parse(m[1]);
+    return typeof value === 'string' ? value : text;
+  } catch {
+    return text;
+  }
+}
+
 /** Parse the status snippet's answer; undefined when it is not one. */
 export function parseCompileStatus(text: string): CompileStatus | undefined {
-  const lines = text.split(/\r?\n/);
+  const lines = unwrapStringResult(text).split(/\r?\n/);
   const m = /^state:(busy|ok|failed)$/.exec(lines[0]?.trim() ?? '');
   if (!m) return undefined;
   return { state: m[1] as CompileState, messages: parseCompilerMessages(lines.slice(1).join('\n')) };

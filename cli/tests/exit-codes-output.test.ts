@@ -33,6 +33,11 @@ describe('exit codes', () => {
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 404 }))).toEqual({ exitCode: 2, code: 'NOT_FOUND' });
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 500 }))).toEqual({ exitCode: 6, code: 'TOOL_FAILED' });
     expect(classifyToolFailure(failure({ reason: 'invalid-input' }))).toEqual({ exitCode: 2, code: 'USAGE' });
+    // What the server answered in a live run: a failed snippet, and arguments rejected before the tool ran.
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 422, data: { error: "Tool execution failed for 'Script / Execute': boom" } })))
+      .toEqual({ exitCode: 6, code: 'TOOL_FAILED' });
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 422, data: { error: "[invalid_params] Invalid params for tool 'package-add'" } })))
+      .toEqual({ exitCode: 2, code: 'USAGE' });
   });
 });
 
@@ -76,6 +81,14 @@ describe('CLI exit codes and formats', () => {
   it('an unknown option is a usage error (2), --help stays 0', () => {
     expect(runCli(['status', '--no-such-flag']).exitCode).toBe(2);
     expect(runCli(['status', '--help']).exitCode).toBe(0);
+  });
+
+  it('a parse error still leaves one envelope on stdout in json mode', () => {
+    const { exitCode, stdout } = runCli(['status', '--format', 'json', '--no-such-flag']);
+    expect(exitCode).toBe(2);
+    const envelope = JSON.parse(stdout);
+    expect(envelope).toMatchObject({ success: false, command: 'status', errors: [{ code: 'USAGE' }] });
+    expect(envelope.errors[0].message).not.toMatch(/^error:/);
   });
 
   it('an unknown --format is a usage error', () => {

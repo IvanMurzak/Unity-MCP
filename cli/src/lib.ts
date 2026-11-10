@@ -30,6 +30,15 @@ export { waitForReady } from './lib/wait-for-ready.js';
 export type { WaitForReadyOptions, WaitForReadyResult, WaitForReadySuccess, WaitForReadyFailure } from './lib/wait-for-ready.js';
 export { execCode, buildScriptExecuteInput, readToolResponse, DEFAULT_EXEC_TIMEOUT_MS } from './lib/exec.js';
 export type { ExecCodeOptions, ExecCodeResult, ExecCodeSuccess, ExecCodeFailure } from './lib/exec.js';
+export { ensureEditor } from './lib/ensure-editor.js';
+export type { EnsureEditorOptions, EnsureEditorResult, EnsureEditorReady, EnsureEditorFailure } from './lib/ensure-editor.js';
+export { runTests, DEFAULT_TEST_TIMEOUT_SECONDS } from './lib/run-tests.js';
+export type { RunTestsOptions, RunTestsResult, RunTestsVerdict, RunTestsFailure, TestMode } from './lib/run-tests.js';
+export { compileProject, DEFAULT_COMPILE_TIMEOUT_MS } from './lib/compile.js';
+export type { CompileProjectOptions, CompileProjectResult, CompileProjectSuccess, CompileProjectFailure } from './lib/compile.js';
+export { ExitCode } from './utils/exit-codes.js';
+export type { CompilerMessage } from './utils/compiler-messages.js';
+export type { TestReport, TestCaseResult, TestRunSummary } from './utils/nunit-report.js';
 
 // The extension catalogue is part of the public library surface: a consumer that
 // renders an "install an extension" list (the desktop app) needs the same ten

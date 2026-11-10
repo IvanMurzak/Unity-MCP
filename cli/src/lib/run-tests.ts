@@ -205,6 +205,16 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
       return;
     }
     let timedOut = false;
+    // Ctrl+C or a cancelled CI step ends this process: take the editor down with it, or it keeps the project open and
+    // the next run refuses it as already open.
+    const signals: NodeJS.Signals[] = ['SIGINT', 'SIGTERM', 'SIGHUP'];
+    const onSignal = (signal: NodeJS.Signals) => {
+      const done = child.pid !== undefined ? deps.killTree(child.pid) : Promise.resolve(child.kill('SIGKILL'));
+      void Promise.resolve(done).finally(() => process.kill(process.pid, signal));
+      for (const s of signals) process.removeListener(s, onSignal);
+    };
+    for (const s of signals) process.once(s, onSignal);
+    const cleanup = () => { for (const s of signals) process.removeListener(s, onSignal); };
     const timer = setTimeout(() => {
       timedOut = true;
       options.onStatus?.(`Timed out after ${timeoutMs / 1000} s; stopping the editor...`);
@@ -213,10 +223,12 @@ export async function runTests(options: RunTestsOptions): Promise<RunTestsResult
     }, timeoutMs);
     child.once('error', (err) => {
       clearTimeout(timer);
+      cleanup();
       resolve({ code: null, timedOut, error: err });
     });
     child.once('exit', (code) => {
       clearTimeout(timer);
+      cleanup();
       resolve({ code, timedOut });
     });
     options.onStatus?.('Running tests...');

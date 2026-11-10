@@ -3,7 +3,9 @@
 // one. A windowless (`-batchmode`) editor never shows dialogs. Library-safe: never throws, never prints.
 
 import { execFile } from 'child_process';
+import * as fs from 'fs';
 import { platform as nodePlatform } from 'os';
+import * as path from 'path';
 
 export interface EditorDialog {
   /** Window handle, stable while the dialog is open; pass it to `pressEditorDialogButton`. */
@@ -30,8 +32,18 @@ export type PressDialogResult =
 /** Runs a PowerShell script and returns its stdout; injected by tests. */
 export type PowerShellRunner = (script: string) => Promise<string>;
 
+/**
+ * The environment of the PowerShell helper. `Add-Type` compiles through files in TEMP; a process whose TEMP is the
+ * machine-wide `C:\Windows\Temp` (services, CI agents, some shells) may not write there and fails with "Source file
+ * ... could not be found", so the user's own temp folder is used when it exists.
+ */
+export function powerShellEnv(env: NodeJS.ProcessEnv = process.env, exists: (dir: string) => boolean = fs.existsSync): NodeJS.ProcessEnv {
+  const userTemp = env.LOCALAPPDATA ? path.join(env.LOCALAPPDATA, 'Temp') : undefined;
+  return userTemp && exists(userTemp) ? { ...env, TEMP: userTemp, TMP: userTemp } : env;
+}
+
 const runPowerShell: PowerShellRunner = script => new Promise((resolve, reject) => {
-  execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], { timeout: 10_000, windowsHide: true }, (err, stdout) => {
+  execFile('powershell', ['-NoProfile', '-NonInteractive', '-Command', script], { timeout: 10_000, windowsHide: true, env: powerShellEnv() }, (err, stdout) => {
     if (err) reject(err);
     else resolve(stdout);
   });

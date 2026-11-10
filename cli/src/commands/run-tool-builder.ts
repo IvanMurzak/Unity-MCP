@@ -74,12 +74,25 @@ export function classifyToolFailure(failure: RunToolFailure): { exitCode: ExitCo
     case 'http-error':
       if (failure.httpStatus === 503) return { exitCode: ExitCode.Busy, code: 'BUSY' };
       if (failure.httpStatus === 404) return { exitCode: ExitCode.Usage, code: 'NOT_FOUND' };
-      if (failure.httpStatus === 400 || failure.httpStatus === 422) return { exitCode: ExitCode.Usage, code: 'USAGE' };
+      if (failure.httpStatus === 400) return { exitCode: ExitCode.Usage, code: 'USAGE' };
+      // 422: the tool ran and failed, unless the server rejected the arguments before running it.
+      if (failure.httpStatus === 422) {
+        return serverError(failure.data)?.startsWith('[invalid_params]')
+          ? { exitCode: ExitCode.Usage, code: 'USAGE' }
+          : { exitCode: ExitCode.CommandFailed, code: 'TOOL_FAILED' };
+      }
       if (failure.httpStatus === 401 || failure.httpStatus === 403) return { exitCode: ExitCode.CommandFailed, code: 'NOT_AUTHENTICATED' };
       return { exitCode: ExitCode.CommandFailed, code: 'TOOL_FAILED' };
     default:
       return { exitCode: ExitCode.CommandFailed, code: 'TOOL_FAILED' };
   }
+}
+
+/** The server's own error text of a failed call (`{ "error": "..." }`), when it sent one. */
+export function serverError(data: unknown): string | undefined {
+  if (typeof data === 'string') return data.trim() || undefined;
+  const error = (data as { error?: unknown } | null | undefined)?.error;
+  return typeof error === 'string' && error.trim() !== '' ? error : undefined;
 }
 
 /** Exit code and error token of an editor that could not be started or reached. */
@@ -180,6 +193,7 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
           overrideUrl: options.url,
           overrideToken: options.token,
           readyTimeoutMs,
+          closeOnFailure: options.once === true,
           onStatus: message => {
             verbose(message);
             out.progress(message);
@@ -311,7 +325,7 @@ export function buildFailureMessage(failure: RunToolFailure, ctx: FailureContext
     case 'network-error':
       return `Cannot reach ${ctx.endpoint}. Check your network connection and server URL.`;
     case 'http-error':
-      return `HTTP ${failure.httpStatus}: ${failure.message}`;
+      return serverError(failure.data) ?? `HTTP ${failure.httpStatus}: ${failure.message}`;
     default:
       return failure.message;
   }

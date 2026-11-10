@@ -74,7 +74,19 @@ export async function compileProject(options: CompileProjectOptions): Promise<Co
     now: () => Date.now(),
     ...options.deps,
   };
-  const ensured = await deps.ensure({ ...options, onStatus: options.onStatus });
+  const ensured = await deps.ensure({
+    projectPath: options.projectPath,
+    probeUrls: options.probeUrls,
+    token: options.token,
+    overrideUrl: options.overrideUrl,
+    overrideToken: options.overrideToken,
+    window: options.window,
+    idleTimeoutSeconds: options.idleTimeoutSeconds,
+    readyTimeoutMs: options.readyTimeoutMs,
+    foreignReadyTimeoutMs: options.foreignReadyTimeoutMs,
+    closeOnFailure: options.once,
+    onStatus: options.onStatus,
+  });
   if (ensured.kind === 'failure') return { kind: 'failure', reason: 'unreachable', message: ensured.message, editorFailure: ensured };
 
   const deadline = deps.now() + (options.timeoutMs ?? DEFAULT_COMPILE_TIMEOUT_MS);

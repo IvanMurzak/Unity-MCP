@@ -102,12 +102,17 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`close`](#close)
   - [`run-tool`](#run-tool)
   - [`exec`](#exec)
+  - [`test`](#test)
+  - [`compile`](#compile)
+  - [`dialog`](#dialog)
+  - [`commands`](#commands-1)
   - [`wait-for-ready`](#wait-for-ready)
   - [`setup-mcp`](#setup-mcp)
   - [`setup-skills`](#setup-skills)
   - [`remove-plugin`](#remove-plugin)
   - [`status`](#status)
   - [Global Options](#global-options)
+  - [Exit Codes and Machine-Readable Output](#exit-codes-and-machine-readable-output)
 - [Full Automation Example](#full-automation-example)
 - [How It Works](#how-it-works)
     - [Deterministic Port](#deterministic-port)
@@ -481,7 +486,20 @@ unity-mcp-cli run-tool rql-mutate ./MyGame --input '{"query":"editor | call Crea
 | `--input <json>` | No | JSON string of tool arguments (defaults to `{}`) |
 | `--input-file <file>` | No | Read JSON arguments from a file |
 | `--raw` | No | Output raw JSON (no formatting, no spinner) |
+| `--format <format>` | No | `text` (default), `json` or `ndjson` — see [machine-readable output](#exit-codes-and-machine-readable-output) |
 | `--timeout <ms>` | No | Request timeout in milliseconds (default: 60000) |
+| `--no-start` | No | Never start an editor; fail (exit 7) when none answers |
+| `--once` | No | Close the editor after the call if this call started it (one-shot CI use) |
+| `--ready-timeout <ms>` | No | How long to wait for a started editor to become ready (default: 300000) |
+
+**Starting the editor.** When no editor of the project answers, `run-tool` starts a headless one exactly like
+[`exec`](#exec) (shared session lease, never closes an editor it did not start) — but only for a project that names its
+Unity version in `ProjectSettings/ProjectVersion.txt`, so it never guesses an editor. `--no-start` turns this off;
+`--once` makes the call one-shot: an editor this call started is closed again after the call (and also when it never
+became ready). `run-system-tool` behaves the same.
+
+A tool that answers with an error exits 6; a timeout 14, an unreachable editor 7, a busy editor 17, and a call blocked
+by a modal dialog 18.
 
 **URL resolution priority:**
 1. `--url` → use directly
@@ -506,6 +524,12 @@ unity-mcp-cli run-tool rql-mutate --url http://localhost:8080 --input '{"query":
 
 ```bash
 unity-mcp-cli run-tool unity-tool-list ./MyGame --raw | jq .
+```
+
+**Example — one-shot call in CI (starts a headless editor, closes it afterwards):**
+
+```bash
+unity-mcp-cli run-tool package-list ./MyGame --url http://localhost:28343 --once --format json
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
@@ -535,10 +559,108 @@ echo 'Application.unityVersion' | unity-mcp-cli exec
 | `--ready-timeout <ms>` | No | How long to wait for the editor to become ready (default: 300000) |
 | `--timeout <ms>` | No | Tool call timeout (default: 310000) |
 | `--raw` | No | Print the raw tool response JSON |
+| `--format <format>` | No | `text` (default), `json` or `ndjson` |
+| `--once` | No | Close the editor after the call if this call started it |
 | `--url <url>` | No | Server URL override; a local URL also makes a newly started editor start that server |
 | `--token <token>` | No | Bearer token override |
 
-`exec` calls the `script-execute` tool, so snippets, `usings` and `include` need a plugin version with Code-Exec support. A compile error exits with code 1 and points at your own lines.
+`exec` calls the `script-execute` tool, so snippets, `usings` and `include` need a plugin version with Code-Exec support. A compile error or an exception exits with code 6 and points at your own lines.
+
+> A fresh project starts in **Cloud** connection mode: its plugin connects to ai-game.dev and starts no local server, so
+> a headless editor started for `exec` / `run-tool` / `compile` is reached only through ai-game.dev. To work fully
+> locally, pass `--url http://localhost:<port>` (the started editor then starts that local server) or switch the
+> project's connection to Custom.
+
+## `test`
+
+Run the project's Unity tests the way CI does: a **batch-mode editor with Unity's own `-runTests`** — no AI Game
+Developer plugin and no MCP server are involved, so it works on a project whose plugin is broken or missing. The verdict
+comes from the NUnit report the run writes (an earlier report at the same path is deleted first), never from the
+editor's exit code alone.
+
+```bash
+unity-mcp-cli test ./MyGame                                  # EditMode, report in ./test-results.xml
+unity-mcp-cli test ./MyGame --mode PlayMode --filter "MyGame.Tests.Combat" --junit-output junit.xml
+unity-mcp-cli test ./MyGame --format github                  # ::error annotations at the failing test's source line
+unity-mcp-cli test ./MyGame --format json --timeout 900 -- -nographics
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | No | Unity project path (positional or `--path`, default: current directory) |
+| `--mode <mode>` | No | `EditMode` (default) or `PlayMode` |
+| `--filter <pattern>` | No | Unity `-testFilter`: full test names or a regex, `;` separates several |
+| `--category <names>` | No | Unity `-testCategory` |
+| `--assembly <names>` | No | Unity `-assemblyNames` |
+| `--output <file>` | No | NUnit report path (default: `test-results.xml`) |
+| `--junit-output <file>` | No | Also write a JUnit report |
+| `--log-file <file>` | No | Editor log (default: the report path with `.log`) |
+| `--timeout <seconds>` | No | Kill the editor (and its child processes) after this long (default: 3600) |
+| `--nographics` | No | Run without a GPU |
+| `--unity <version>` / `--editor-path <path>` | No | Editor to use (default: the project's version) |
+| `--format <format>` | No | `text`, `json`, `ndjson` or `github` |
+| `-- <args>` | No | Extra editor arguments; the ones `test` manages (`-batchmode`, `-runTests`, `-quit`, ...) are rejected |
+
+**Exit codes:** `0` all passed (a run of zero tests passes with a warning), `8` tests failed, `6` no verdict (compile
+errors — listed as `file(line,col): error CS...` — a license problem, a crash, or the project is **already open in an
+editor**: a second editor cannot open it, so use `run-tool tests-run` on that editor instead), `14` timeout, `2` bad
+arguments. Ctrl+C or a cancelled CI job also stops the editor.
+
+## `compile`
+
+"Does my C# compile?" against the project's editor: refreshes assets so changed scripts compile, waits for the compile
+and its domain reload, and reports the compiler errors and warnings from the editor's Console with file, line and
+column. Starts a headless editor when none runs (kept warm for the next call, like `exec`); a call against a warm
+editor takes a few seconds.
+
+```bash
+unity-mcp-cli compile ./MyGame
+unity-mcp-cli compile ./MyGame --strict --format github   # warnings fail too
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | No | Unity project path (positional or `--path`) |
+| `--strict` | No | Fail on compiler warnings too |
+| `--timeout <seconds>` | No | Wait for the compile and domain reload (default: 180) |
+| `--ready-timeout <ms>` | No | Wait for a started editor (default: 300000) |
+| `--once` | No | Close the editor afterwards if this call started it |
+| `--url <url>` / `--token <token>` | No | Server overrides, as for `exec` |
+| `--format <format>` | No | `text`, `json`, `ndjson` or `github` |
+
+**Exit codes:** `0` compiles, `6` compile errors (or warnings with `--strict`), `7` no editor could be reached, `14`
+timeout, `18` a modal dialog blocks the editor. Diagnostics go to stderr in the compiler's own
+`file(line,col): error CS0103: ...` form.
+
+## `dialog`
+
+A modal dialog (a save prompt, "Enter Safe Mode?", `EditorUtility.DisplayDialog`) blocks the editor's main thread, so
+every tool call waits until someone answers it. `dialog` lists the dialogs of the project's editor and can press a
+button. `status`, `run-tool`, `exec`, `compile` and `wait-for-ready` report such a dialog as exit code `18`
+(`AWAITING_INPUT`) instead of a plain timeout. Windows only; a headless (`-batchmode`) editor never shows dialogs.
+
+```bash
+unity-mcp-cli dialog ./MyGame                          # list: title and buttons
+unity-mcp-cli dialog ./MyGame --press "Don't Save"     # answer it
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | No | Unity project path (positional or `--path`) |
+| `--press <button>` | No | Press the button with this label (case-insensitive) |
+| `--id <id>` | No | With `--press`: the dialog to answer (from the list) |
+| `--format <format>` | No | `text`, `json` or `ndjson` |
+
+## `commands`
+
+Every command with its arguments, options and defaults, plus the exit-code table — read from the CLI itself, so it
+never drifts. Meant for agents and tooling.
+
+```bash
+unity-mcp-cli commands --format json
+```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 ## `wait-for-ready`
 
@@ -555,6 +677,9 @@ unity-mcp-cli wait-for-ready ./MyGame
 | `--token <token>` | No | Bearer token override (bypasses config) |
 | `--timeout <ms>` | No | Maximum time to wait in milliseconds (default: 120000) |
 | `--interval <ms>` | No | Polling interval in milliseconds (default: 3000) |
+| `--format <format>` | No | `text` (default), `json` or `ndjson` |
+
+Exits `0` when ready, `14` on timeout and `18` when a modal dialog blocks the editor.
 
 **Example — wait with default timeout (120s):**
 
@@ -686,6 +811,10 @@ unity-mcp-cli status ./MyGame
 | `--url <url>` | No | Direct server URL override (bypasses config) |
 | `--token <token>` | No | Bearer token override (bypasses config) |
 | `--timeout <ms>` | No | Probe timeout in milliseconds (default: 5000) |
+| `--format <format>` | No | `text` (default), `json` or `ndjson` |
+
+Exits `0` when the MCP server answers, `7` when it does not, and `18` when a modal dialog blocks the editor (listed in
+the output; see [`dialog`](#dialog)).
 
 **Example output:**
 
@@ -723,6 +852,42 @@ These options are available on all commands:
 unity-mcp-cli install-plugin ./MyGame --verbose
 ```
 
+## Exit Codes and Machine-Readable Output
+
+`unity-mcp-cli`, `unreal-mcp-cli` and `godot-cli` share one exit-code table, so a script or an agent can tell "fix the
+command line" from "the editor failed" from "the tests failed" without reading messages:
+
+| Code | Name | Meaning |
+|---|---|---|
+| `0` | `SUCCESS` | The command succeeded |
+| `1` | `ERROR` | Unclassified error |
+| `2` | `USAGE` | Bad arguments; nothing ran. Fix the command line — do not retry it unchanged |
+| `6` | `COMMAND_FAILED` | The command ran and failed (tool error, compile errors, test run without a verdict) |
+| `7` | `UNREACHABLE` | The editor or MCP server could not be started or reached; retry once the environment is fixed |
+| `8` | `TESTS_FAILED` | The tests ran and some failed |
+| `14` | `TIMEOUT` | Timed out before a result |
+| `17` | `BUSY` | The editor is busy and did not run the call; retry later |
+| `18` | `AWAITING_INPUT` | A modal dialog blocks the editor; a human must answer it (see [`dialog`](#dialog)) |
+
+`--format json` (on `run-tool`, `run-system-tool`, `exec`, `test`, `compile`, `dialog`, `status`, `wait-for-ready` and
+`commands`) prints exactly one result envelope on stdout; everything else goes to stderr. `--format ndjson` prints the
+same envelope as one line and streams progress lines (`{"type":"progress",...}`) on stderr. A command-line error under
+`--format json` still prints an envelope (code `USAGE`).
+
+```json
+{
+  "success": false,
+  "command": "test",
+  "data": { "verdict": "failed", "summary": { "total": 3, "passed": 2, "failed": 1 } },
+  "errors": [{ "code": "TESTS_FAILED", "message": "1 test(s) failed." }],
+  "warnings": []
+}
+```
+
+`errors[].code` is a stable token (`USAGE`, `TOOL_FAILED`, `UNREACHABLE`, `TIMEOUT`, `BUSY`, `AWAITING_INPUT`,
+`TESTS_FAILED`, `TEST_RUN_ERROR`, `TEST_TIMED_OUT`, `COMPILATION_FAILED`, `PROJECT_OPEN`, `NOT_FOUND`, ...); match it,
+never the message.
+
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
 # Full Automation Example
@@ -748,8 +913,12 @@ unity-mcp-cli open ./MyAIGame
 # 6. Wait for Unity Editor and MCP server to be ready
 unity-mcp-cli wait-for-ready ./MyAIGame
 
-# 7. Run tests to verify everything works
-unity-mcp-cli run-tool tests-run ./MyAIGame --input '{"testMode":"EditMode"}'
+# 7. Check that the scripts compile, then close the editor
+unity-mcp-cli compile ./MyAIGame
+unity-mcp-cli close ./MyAIGame
+
+# 8. Run the tests in a batch-mode editor (no plugin needed); JUnit for the CI dashboard
+unity-mcp-cli test ./MyAIGame --junit-output junit.xml
 ```
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
