@@ -10,7 +10,40 @@ import {
   type WaitedEditorSource,
 } from '@baizor/gamedev-cli-core';
 import { createUnitySession, isLoopbackUrl, sessionErrorMessage, type UnitySessionOptions } from './editor-session.js';
+import * as fs from 'fs';
+import * as path from 'path';
 import { buildOpenEnv, dismissLaunchErrorsUntil } from './open.js';
+import { formatCompilerMessage, parseCompilerMessages } from '../utils/compiler-messages.js';
+
+/** The log of a headless editor the CLI starts: in the project's Logs/ (never committed), where an agent can read it. */
+export function headlessLogPath(projectPath: string): string {
+  return path.join(path.resolve(projectPath), 'Logs', 'unity-mcp-cli-editor.log');
+}
+
+/**
+ * Arguments for a headless editor the CLI starts. In batch mode Unity aborts at startup when the project's scripts do
+ * not compile ("Scripts have compiler errors"); with `-ignorecompilererrors` it keeps running (the plugin's own
+ * assemblies compile separately), so `compile` and `exec` can still report and fix the errors.
+ */
+export function headlessEditorArgs(projectPath: string): string[] {
+  return ['-ignorecompilererrors', '-logFile', headlessLogPath(projectPath)];
+}
+
+/** Why a started editor exited, read from its log: the compile errors when there are any, else the log's path. */
+export function explainEditorExit(projectPath: string): string {
+  const logFile = headlessLogPath(projectPath);
+  let log = '';
+  try {
+    log = fs.readFileSync(logFile, 'utf-8');
+  } catch {
+    return '';
+  }
+  const errors = parseCompilerMessages(log).filter(m => m.severity === 'error');
+  const lines = errors.slice(0, 10).map(formatCompilerMessage);
+  return lines.length > 0
+    ? ` The project's scripts do not compile:\n${lines.join('\n')}\nEditor log: ${logFile}`
+    : ` Editor log: ${logFile}`;
+}
 
 /** How long `--once` waits for an editor it started to save and quit before killing it. */
 export const ONCE_CLOSE_TIMEOUT_MS = 60_000;
@@ -104,6 +137,7 @@ export async function ensureEditor(options: EnsureEditorOptions): Promise<Ensure
           : {}),
       }),
       idleSeconds: options.idleTimeoutSeconds ?? DEFAULT_SESSION_IDLE_SECONDS,
+      ...(options.window ? {} : { extraArgs: headlessEditorArgs(options.projectPath) }),
       ...(options.readyTimeoutMs !== undefined ? { readyTimeoutMs: options.readyTimeoutMs } : {}),
       ...(options.foreignReadyTimeoutMs !== undefined ? { foreignReadyTimeoutMs: options.foreignReadyTimeoutMs } : {}),
       ...(options.onStatus ? { onStatus: options.onStatus } : {}),
@@ -137,7 +171,7 @@ export async function ensureEditor(options: EnsureEditorOptions): Promise<Ensure
       reason: sessionReason === 'exited' || sessionReason === 'not-ready' ? 'not-ready' : 'launch-failed',
       ...(sessionReason ? { sessionReason } : {}),
       ...(sessionError?.source ? { editorSource: sessionError.source } : {}),
-      message: sessionErrorMessage(error, serverUrl),
+      message: sessionErrorMessage(error, serverUrl) + (sessionReason === 'exited' ? explainEditorExit(options.projectPath) : ''),
       error,
     };
   } finally {

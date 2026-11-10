@@ -192,14 +192,8 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
       const endpoint = `${baseUrl}${cfg.routePrefix}/${encodeURIComponent(toolName)}`;
       verbose(`Endpoint: ${endpoint}`);
 
-      if (human) {
-        spinner?.stop();
-        ui.heading(cfg.headingLabel);
-        ui.label('Tool', toolName);
-        ui.label('URL', endpoint);
-        if (token) ui.label('Auth', `from ${authSource}`);
-        ui.divider();
-      }
+      spinner?.stop();
+      verbose(`${cfg.headingLabel}: ${toolName} at ${endpoint}${token ? ` (auth from ${authSource})` : ''}`);
       out.progress(`Calling ${toolName}...`);
       const callSpinner = human ? ui.startSpinner(`Calling ${toolName}...`) : null;
 
@@ -225,12 +219,10 @@ export function buildRunToolCommand(cfg: BuilderOptions): Command {
         if (options.raw) {
           process.stdout.write(stringifyForRaw(result.data));
         } else {
-          if (response.ok) callSpinner?.success(`${toolName} completed`);
-          else callSpinner?.error(`${toolName} reported an error`);
-          ui.success('Response:');
-          console.log(typeof result.data === 'string'
-            ? result.data
-            : JSON.stringify(result.data, null, 2));
+          // The tool's own answer as it wrote it (the JSON envelope is `--raw` / `--format json`).
+          callSpinner?.stop();
+          if (response.ok) console.log(response.text);
+          else ui.error(`${toolName} reported an error: ${response.text}`);
         }
         if (!response.ok) process.exit(ExitCode.CommandFailed);
         return;

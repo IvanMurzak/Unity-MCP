@@ -219,14 +219,15 @@ export function label(key: string, value: string): void {
  * Methods are safe to call but produce no ANSI output.
  */
 function createNoOpSpinner(text: string): Spinner {
-  console.log(text);
+  // Progress, not the result: on stderr, so a piped stdout holds only the command's output.
+  console.error(text);
   const self: Spinner = {
     start: () => self,
     stop: () => self,
-    success: (msg?: string) => { if (msg) console.log(`SUCCESS: ${msg}`); return self; },
+    success: (msg?: string) => { if (msg) console.error(`SUCCESS: ${msg}`); return self; },
     error: (msg?: string) => { if (msg) console.error(`ERROR: ${msg}`); return self; },
-    warning: (msg?: string) => { if (msg) console.log(`WARN: ${msg}`); return self; },
-    info: (msg?: string) => { if (msg) console.log(`INFO: ${msg}`); return self; },
+    warning: (msg?: string) => { if (msg) console.error(`WARN: ${msg}`); return self; },
+    info: (msg?: string) => { if (msg) console.error(`INFO: ${msg}`); return self; },
     clear: () => self,
     get text() { return text; },
     set text(value: string) { text = value; },
