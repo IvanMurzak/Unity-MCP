@@ -16,18 +16,20 @@ export interface UnityProcess {
  */
 export function findUnityProcess(projectPath: string): UnityProcess | null {
   const isWindows = platform() === 'win32';
-  const normalize = (p: string): string => {
-    const real = canonicalPath(p);
-    return isWindows ? real.toLowerCase() : real;
-  };
-  const normalizedTarget = normalize(projectPath);
+  const key = (p: string): string => (isWindows ? p.toLowerCase() : p);
   const processes = listUnityProcesses();
-
-  for (const proc of processes) {
-    const normalizedProc = normalize(proc.projectPath);
-    if (normalizedProc === normalizedTarget) {
-      verbose(`Found Unity process PID ${proc.pid} with project: ${proc.projectPath}`);
-      return proc;
+  // Plain paths first: realpath does I/O, and an offline network share can block it for the SMB timeout.
+  const resolvedTarget = key(path.resolve(projectPath));
+  const realTarget = key(canonicalPath(projectPath));
+  for (const pass of ['resolved', 'real'] as const) {
+    for (const proc of processes) {
+      const match = pass === 'resolved'
+        ? key(proc.projectPath) === resolvedTarget
+        : !proc.projectPath.startsWith('\\\\') && key(canonicalPath(proc.projectPath)) === realTarget;
+      if (match) {
+        verbose(`Found Unity process PID ${proc.pid} with project: ${proc.projectPath}`);
+        return proc;
+      }
     }
   }
 

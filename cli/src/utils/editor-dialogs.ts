@@ -212,7 +212,8 @@ function describe(pid, el) {
   if (texts.length === 0) { try { texts = strings(el.staticTexts.name()); } catch (e) {} }
   // A titled window repeats its title as a static text. An untitled alert (NSAlert: Unity's DisplayDialog) shows its
   // title as the first, bold text: report it as the title, as on Windows.
-  texts = texts.filter(t => t !== title);
+  const repeated = title ? texts.indexOf(title) : -1;
+  if (repeated >= 0) texts.splice(repeated, 1);
   if (title === '' && texts.length > 1) title = texts.shift();
   const message = texts.join('\\n');
   return { id: fnv([pid, title, message, buttons.join('\\u0002')].join('\\u0001')), pid: pid, title: title, message: message, buttons: buttons, el: el };
