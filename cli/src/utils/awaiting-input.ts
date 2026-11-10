@@ -9,6 +9,11 @@ import type { CommandOutput, EnvelopeError } from './output.js';
 /** Failures a blocking dialog can cause; only these pay for the dialog scan. */
 const DIALOG_SUSPECTS: ReadonlySet<ExitCodeValue> = new Set([ExitCode.Timeout, ExitCode.Busy, ExitCode.Unreachable]);
 
+/** A windowless editor: it never shows a dialog, so scanning it only costs time (and, on macOS, a permission prompt). */
+export function isBatchModeEditor(commandLine: string): boolean {
+  return /(^|\s)-batchmode(\s|$)/i.test(commandLine);
+}
+
 /**
  * The modal dialogs of the project's running editor (Windows, macOS; an error such as a missing macOS
  * Accessibility permission counts as none). A `-batchmode` editor never shows one, so it is not
@@ -16,7 +21,7 @@ const DIALOG_SUSPECTS: ReadonlySet<ExitCodeValue> = new Set([ExitCode.Timeout, E
  */
 export async function findBlockingDialogs(projectPath: string): Promise<EditorDialog[]> {
   const proc = findUnityProcess(projectPath);
-  if (!proc || /(^|\s)-batchmode(\s|$)/i.test(proc.commandLine)) return [];
+  if (!proc || isBatchModeEditor(proc.commandLine)) return [];
   const listed = await listEditorDialogs([proc.pid]);
   return listed.kind === 'ok' ? listed.dialogs : [];
 }

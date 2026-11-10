@@ -64,10 +64,14 @@ const runPowerShell: ScriptRunner = (script, env) => new Promise((resolve, rejec
   });
 });
 
+const MAC_TIMEOUT_MESSAGE = 'System Events did not answer within 5 s: the editor may be busy, or a macOS permission '
+  + 'prompt is waiting for an answer.';
+
 const runOsaScript: ScriptRunner = (script, env) => new Promise((resolve, reject) => {
-  execFile('osascript', ['-l', 'JavaScript', '-e', script], { timeout: 10_000, env: { ...process.env, ...env } }, (err, stdout, stderr) => {
+  // Short: the scan runs after a timeout, when a busy (not blocked) editor also stalls System Events.
+  execFile('osascript', ['-l', 'JavaScript', '-e', script], { timeout: 5_000, env: { ...process.env, ...env } }, (err, stdout, stderr) => {
     // osascript's own error text is on stderr; `err.message` would repeat the whole script.
-    if (err) reject(new Error(String(stderr).trim() || (err.killed ? 'osascript timed out' : err.message)));
+    if (err) reject(new Error(String(stderr).trim() || (err.killed ? MAC_TIMEOUT_MESSAGE : err.message)));
     else resolve(stdout);
   });
 });
@@ -217,14 +221,13 @@ function dialogs(se, pid) {
   for (const w of windows) {
     const sub = attr(w, 'AXSubrole');
     if (sub === 'AXDialog' || sub === 'AXSystemDialog' || attr(w, 'AXModal') === true) {
-      const d = describe(pid, w);
-      if (d) found.push(d);
+      // A window that closes or stops answering mid-scan is skipped, not fatal to the others.
+      try { const d = describe(pid, w); if (d) found.push(d); } catch (e) {}
     }
     let sheets = [];
     try { sheets = w.sheets(); } catch (e) {}
     for (const s of sheets) {
-      const d = describe(pid, s);
-      if (d) found.push(d);
+      try { const d = describe(pid, s); if (d) found.push(d); } catch (e) {}
     }
   }
   return found;
@@ -275,7 +278,8 @@ export const MAC_ACCESSIBILITY_HINT =
  * permission for controlling System Events. Exposed for tests.
  */
 export function macPermissionMessage(message: string): string {
-  if (/-1719\b|-25211\b|assistive access/i.test(message)) {
+  // -1719 alone is also "invalid index" (a window closed mid-scan): only its access-denied texts count.
+  if (/-25211\b|assistive access|access not allowed/i.test(message)) {
     return `macOS denied access to the editor's windows (${message}). ${MAC_ACCESSIBILITY_HINT}`;
   }
   if (/-1743\b|not authori[sz]ed to send apple events/i.test(message)) {

@@ -8,7 +8,7 @@ import { probe, type ProbeResult } from '../utils/probe.js';
 import { listEditorDialogs, type EditorDialog } from '../utils/editor-dialogs.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
-import { awaitingInputError, describeDialog } from '../utils/awaiting-input.js';
+import { awaitingInputError, describeDialog, isBatchModeEditor } from '../utils/awaiting-input.js';
 
 interface StatusOptions {
   path?: string;
@@ -63,7 +63,8 @@ export const statusCommand = new Command('status')
     }
 
     // 2. Modal dialogs: a dialog blocks every tool call until a human answers it.
-    const listed = proc ? await listEditorDialogs([proc.pid]) : undefined;
+    const listed = proc && !isBatchModeEditor(proc.commandLine) ? await listEditorDialogs([proc.pid]) : undefined;
+    if (listed?.kind === 'error') out.warn(`Could not check the editor for modal dialogs: ${listed.message}`);
     const dialogs: EditorDialog[] = listed?.kind === 'ok' ? listed.dialogs : [];
     if (human && dialogs.length > 0) {
       ui.heading('Modal Dialogs');

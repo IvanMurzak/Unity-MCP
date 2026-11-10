@@ -127,6 +127,8 @@ describe('editor dialogs on macOS', () => {
     expect(thrown).toMatchObject({ kind: 'error', message: expect.stringContaining('Privacy & Security → Accessibility') });
     expect(macPermissionMessage('execution error: Not authorized to send Apple events to System Events. (-1743)')).toContain('Automation');
     expect(macPermissionMessage('boom')).toBe('boom');
+    // -1719 is also "invalid index" (a window closed mid-scan): not a permission problem.
+    expect(macPermissionMessage('Invalid index. (-1719)')).toBe('Invalid index. (-1719)');
   });
 
   it('a process without windows (or gone) has no dialogs', async () => {
