@@ -4,6 +4,7 @@ import * as path from 'path';
 import { findUnityHub, listInstalledEditors } from '../utils/unity-hub.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import * as ui from '../utils/ui.js';
+import { ExitCode } from '../utils/exit-codes.js';
 import { verbose } from '../utils/ui.js';
 import {
   openProject,
@@ -67,12 +68,12 @@ export function parsePositiveIntFlag(
   // bookkeeping to be sane.
   if (!/^\d+$/.test(trimmed)) {
     ui.error(`${flagName} must be a positive integer (got: "${raw}")`);
-    process.exit(1);
+    process.exit(ExitCode.Usage);
   }
   const parsed = parseInt(trimmed, 10);
   if (!Number.isFinite(parsed) || parsed < 0) {
     ui.error(`${flagName} must be a positive integer (got: "${raw}")`);
-    process.exit(1);
+    process.exit(ExitCode.Usage);
   }
   return parsed;
 }

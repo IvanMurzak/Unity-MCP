@@ -177,7 +177,7 @@ describe('bootstrap-local CLI integration', () => {
       '--path', tmpDir,
       '--token', 'tok',
     ]);
-    expect(exitCode).toBe(1);
+    expect(exitCode).toBe(2) // a missing required option is a usage error;
     expect(stdout).toMatch(/required option|--url/i);
   });
 
@@ -187,7 +187,7 @@ describe('bootstrap-local CLI integration', () => {
       '--path', tmpDir,
       '--url', 'http://localhost:5140',
     ]);
-    expect(exitCode).toBe(1);
+    expect(exitCode).toBe(2) // a missing required option is a usage error;
     expect(stdout).toMatch(/required option|--token/i);
   });
 

@@ -3,10 +3,36 @@ import * as path from 'path';
 import * as ui from './ui.js';
 import { verbose } from './ui.js';
 import { parseJsonStrict, JsonParseError } from './json-parse.js';
+import { ExitCode } from './exit-codes.js';
 
 export interface InputOptions {
   input?: string;
   inputFile?: string;
+  /** `key=value` pairs (`--arg`), merged over `--input`: a value that parses as JSON is taken as JSON, else as text. */
+  arg?: string[];
+}
+
+/** Merge `key=value` pairs into a JSON object body. Exported for tests. */
+export function mergeArgs(body: string, args: string[]): string {
+  if (args.length === 0) return body;
+  const parsed: unknown = JSON.parse(body);
+  if (parsed === null || typeof parsed !== 'object' || Array.isArray(parsed)) {
+    throw new Error('--arg needs the tool input to be a JSON object');
+  }
+  const merged = parsed as Record<string, unknown>;
+  for (const pair of args) {
+    const eq = pair.indexOf('=');
+    if (eq <= 0) throw new Error(`--arg must be key=value (got: "${pair}")`);
+    const value = pair.slice(eq + 1);
+    let typed: unknown = value;
+    try {
+      typed = JSON.parse(value);
+    } catch {
+      // plain text
+    }
+    merged[pair.slice(0, eq)] = typed;
+  }
+  return JSON.stringify(merged);
 }
 
 /**
@@ -18,6 +44,16 @@ export interface InputOptions {
  * - Falls back to `{}` if nothing provided.
  */
 export function parseInput(options: InputOptions): string {
+  const body = parseInputBody(options);
+  try {
+    return mergeArgs(body, options.arg ?? []);
+  } catch (err) {
+    ui.error(err instanceof Error ? err.message : String(err));
+    process.exit(ExitCode.Usage);
+  }
+}
+
+function parseInputBody(options: InputOptions): string {
   if (options.inputFile) {
     const isStdin = options.inputFile === '-' || options.inputFile === '/dev/stdin';
     let content: string;
@@ -28,17 +64,17 @@ export function parseInput(options: InputOptions): string {
         content = fs.readFileSync(0, 'utf-8');
       } catch {
         ui.error('Failed to read from stdin.');
-        process.exit(1);
+        process.exit(ExitCode.Usage);
       }
       if (!content.trim()) {
         ui.error('No input received from stdin.');
-        process.exit(1);
+        process.exit(ExitCode.Usage);
       }
     } else {
       const filePath = path.resolve(options.inputFile);
       if (!fs.existsSync(filePath)) {
         ui.error(`Input file does not exist: ${filePath}`);
-        process.exit(1);
+        process.exit(ExitCode.Usage);
       }
       content = fs.readFileSync(filePath, 'utf-8');
     }
@@ -52,7 +88,7 @@ export function parseInput(options: InputOptions): string {
       } else {
         ui.error(`--input-file content from '${source}' must be valid JSON`);
       }
-      process.exit(1);
+      process.exit(ExitCode.Usage);
     }
 
     return content;
@@ -68,7 +104,7 @@ export function parseInput(options: InputOptions): string {
       } else {
         ui.error('--input must be valid JSON');
       }
-      process.exit(1);
+      process.exit(ExitCode.Usage);
     }
   }
 

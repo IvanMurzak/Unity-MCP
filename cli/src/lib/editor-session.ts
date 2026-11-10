@@ -74,6 +74,8 @@ export interface UnitySessionOptions {
   unityVersion?: string;
   /** A started editor quits after this many seconds without tool calls; 0 = never. Default 300. */
   idleSeconds?: number;
+  /** Extra arguments for a started editor (after `-batchmode -projectPath`). */
+  extraArgs?: readonly string[];
   readyTimeoutMs?: number;
   /** Wait for an editor the CLI did not start. Default `DEFAULT_FOREIGN_READY_TIMEOUT_MS` (at most `readyTimeoutMs`). */
   foreignReadyTimeoutMs?: number;
@@ -187,6 +189,7 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
       ? { serverUrl: options.serverUrl, connectionMode: options.serverUrl === CLOUD_SERVER_URL ? 'Cloud' : 'Custom' }
       : {}),
     ...(options.idleSeconds !== undefined ? { idleSeconds: options.idleSeconds } : {}),
+    ...(options.extraArgs ? { extraArgs: options.extraArgs } : {}),
     readyTimeoutMs,
     foreignReadyTimeoutMs: options.foreignReadyTimeoutMs ?? Math.min(DEFAULT_FOREIGN_READY_TIMEOUT_MS, readyTimeoutMs),
     ...(options.onStatus ? { onStatus: options.onStatus } : {}),

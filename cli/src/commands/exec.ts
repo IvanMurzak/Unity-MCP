@@ -2,10 +2,15 @@ import * as fs from 'fs';
 import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
-import { resolveAndValidateProjectPath, resolveConnection, resolveProbeUrls } from '../utils/connection.js';
+import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { DEFAULT_EXEC_TIMEOUT_MS, execCode, readToolResponse, SCRIPT_EXECUTE_TOOL } from '../lib/exec.js';
 import { parsePositiveIntFlag } from './open.js';
-import { handleFailure, stringifyForRaw } from './run-tool-builder.js';
+import {
+  buildFailureMessage, classifyEditorFailure, classifyToolFailure, handleFailure, PLUGIN_NOT_CONNECTED_HINT, stringifyForRaw,
+} from './run-tool-builder.js';
+import { failIfAwaitingInput } from '../utils/awaiting-input.js';
+import { ExitCode } from '../utils/exit-codes.js';
+import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 
 interface ExecCliOptions {
   path?: string;
@@ -17,6 +22,8 @@ interface ExecCliOptions {
   readyTimeout?: string;
   timeout?: string;
   raw?: boolean;
+  format?: string;
+  once?: boolean;
   url?: string;
   token?: string;
 }
@@ -26,7 +33,7 @@ function parseNonZeroIntFlag(raw: string | undefined, flagName: string, fallback
   const value = parsePositiveIntFlag(raw, flagName, fallback);
   if (value === 0) {
     ui.error(`${flagName} must be greater than 0`);
-    process.exit(1);
+    process.exit(ExitCode.Usage);
   }
   return value;
 }
@@ -57,9 +64,14 @@ export const execCommand = new Command('exec')
   .option('--ready-timeout <ms>', 'How long to wait for the editor to become ready', '300000')
   .option('--timeout <ms>', 'Tool call timeout in milliseconds', String(DEFAULT_EXEC_TIMEOUT_MS))
   .option('--raw', 'Print the raw tool response JSON')
+  .option('--format <format>', FORMAT_OPTION_DESCRIPTION, 'text')
+  .option('--once', 'Close the editor after the call if this call started it (one-shot CI use)')
   .option('--url <url>', 'Direct server URL override (bypasses config)')
   .option('--token <token>', 'Bearer token override (bypasses config)')
   .action(async (codeArg: string | undefined, options: ExecCliOptions) => {
+    const format = parseFormat(options.format);
+    // Explicitly typed: `out.fail` returns `never`, which narrows only through a declared type.
+    const out: CommandOutput = new CommandOutput('exec', format);
     const idleTimeoutSeconds = parsePositiveIntFlag(options.idle, '--idle', 300); // 0: never quit
     const readyTimeoutMs = parseNonZeroIntFlag(options.readyTimeout, '--ready-timeout', 300_000);
     const timeoutMs = parseNonZeroIntFlag(options.timeout, '--timeout', DEFAULT_EXEC_TIMEOUT_MS);
@@ -67,18 +79,16 @@ export const execCommand = new Command('exec')
     try {
       code = readCode(codeArg, options.file);
     } catch (err) {
-      ui.error(err instanceof Error ? err.message : String(err));
-      process.exit(1);
+      out.fail(ExitCode.Usage, { code: 'USAGE', message: err instanceof Error ? err.message : String(err) });
     }
 
     const projectPath = resolveAndValidateProjectPath(undefined, options);
-    const { url, token, cloudAuthMissing, tokenFromCloudStore } = await resolveConnection(projectPath, options);
-    if (cloudAuthMissing) {
-      ui.error('Not logged in to ai-game.dev. Run `unity-mcp-cli login` to sign in, then retry — or pass --token / --url.');
-      process.exit(1);
-    }
+    const conn = await resolveEditorConnection(projectPath, options);
+    const { url, token, tokenFromCloudStore } = conn;
+    if (conn.signInRequired) out.fail(ExitCode.CommandFailed, { code: 'NOT_AUTHENTICATED', message: conn.signInRequired });
+    if (conn.localFallback) out.warn(localFallbackNote(conn.url));
 
-    const spinner = options.raw ? null : ui.startSpinner('Connecting...');
+    const spinner = options.raw || out.machine ? null : ui.startSpinner('Connecting...');
     const result = await execCode({
       projectPath,
       code,
@@ -88,20 +98,36 @@ export const execCommand = new Command('exec')
       idleTimeoutSeconds,
       readyTimeoutMs,
       timeoutMs,
-      probeUrls: resolveProbeUrls(projectPath, url, options.url),
+      once: options.once === true,
+      probeUrls: resolveProbeUrls(projectPath, url, conn.overrideUrl),
       token,
       tokenFromCloudStore,
-      overrideUrl: options.url,
+      overrideUrl: conn.overrideUrl,
       overrideToken: options.token,
       onStatus: message => {
         verbose(message);
+        out.progress(message);
         if (spinner) spinner.text = message;
       },
     });
+    const editor = {
+      ...(result.kind === 'success' && result.editorSource ? { source: result.editorSource } : {}),
+      ...(result.closedPid !== undefined ? { closedPid: result.closedPid } : {}),
+    };
 
     if (result.kind === 'failure') {
+      spinner?.stop();
+      const classified = result.toolFailure
+        ? classifyToolFailure(result.toolFailure)
+        : classifyEditorFailure({ reason: result.reason === 'tool-failed' ? 'not-ready' : result.reason, sessionReason: result.sessionReason });
+      await failIfAwaitingInput(out, projectPath, classified.exitCode, { editor }, options.raw);
       if (result.toolFailure) {
-        spinner?.stop();
+        if (out.machine) {
+          out.fail(classified.exitCode, {
+            code: classified.code,
+            message: buildFailureMessage(result.toolFailure, { toolName: SCRIPT_EXECUTE_TOOL, endpoint: result.toolFailure.endpoint, raw: false, timeoutMs, errorNoun: 'tool' }),
+          }, { editor });
+        }
         handleFailure(result.toolFailure, {
           toolName: SCRIPT_EXECUTE_TOOL,
           endpoint: result.toolFailure.endpoint,
@@ -110,23 +136,26 @@ export const execCommand = new Command('exec')
           errorNoun: 'tool',
         });
       }
-      spinner?.error(result.reason === 'launch-failed' ? 'Could not start the Unity Editor' : 'The MCP server did not answer');
-      ui.error(result.message);
-      if (result.reason === 'not-ready' && result.editorSource !== 'foreign') {
-        ui.info('If the project is open in a Unity Editor, check that its AI Game Developer plugin is connected.');
-      }
-      process.exit(1);
+      if (!out.machine) ui.error(result.reason === 'launch-failed' ? 'Could not start the Unity Editor' : 'The MCP server did not answer');
+      out.fail(classified.exitCode, { code: classified.code, message: result.message }, { editor },
+        result.reason === 'not-ready' && result.editorSource !== 'foreign' ? PLUGIN_NOT_CONNECTED_HINT : undefined);
     }
 
     spinner?.stop();
-    if (options.raw) {
-      process.stdout.write(stringifyForRaw(result.data));
+    const response = readToolResponse(result.data);
+    if (out.machine) {
+      if (!response.ok) out.fail(ExitCode.CommandFailed, { code: 'TOOL_FAILED', message: response.text }, { result: result.data, editor });
+      out.succeed({ output: response.text, result: result.data, editor });
       return;
     }
-    const response = readToolResponse(result.data);
+    if (options.raw) {
+      process.stdout.write(stringifyForRaw(result.data));
+      if (!response.ok) process.exit(ExitCode.CommandFailed);
+      return;
+    }
     if (!response.ok) {
       ui.error(response.text);
-      process.exit(1);
+      process.exit(ExitCode.CommandFailed);
     }
     console.log(response.text);
   });

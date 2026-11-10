@@ -9,6 +9,47 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **`test`: Unity tests in a batch-mode editor, no plugin needed.** Runs Unity's own `-runTests` (`--mode`,
+  `--filter`, `--category`, `--assembly`, extra editor args after `--`) and takes the verdict from the NUnit report:
+  exit 0 passed, 8 failed, 6 no verdict (compile errors listed as `file(line,col): error CS…`, a crash, the project
+  already open in an editor), 14 timeout (the editor tree is killed; Ctrl+C stops it too). `--junit-output` writes
+  JUnit; `--format github` writes `::error` annotations at the failing test's source line.
+- **`compile [--strict]`**: refreshes assets in the project's editor (started headless when none runs), waits for the
+  compile and its domain reload, and reports compiler errors/warnings with file, line and column (exit 0 / 6 / 7 / 14).
+- **`dialog [--press <button>]`** (Windows, macOS): lists the modal dialogs blocking the editor and presses a button.
+  `status`, `run-tool`, `exec`, `compile` and `wait-for-ready` report a blocking dialog as exit 18 (`AWAITING_INPUT`).
+  macOS uses System Events (`osascript`, dialog windows and sheets) and needs the Accessibility permission of the
+  terminal or agent app; without it `dialog` says where to grant it (System Settings → Privacy & Security →
+  Accessibility).
+- **`tools [name]`**: the AI tools the project's editor offers (one line each with their inputs, or one tool in detail
+  with an example call and its schema), read over MCP `tools/list` plus the hidden tools; starts a headless editor when
+  needed and saves the list in the project (git-ignored) for `--cached` / `--no-start`. The root `--help` now ends with
+  the everyday workflow (`tools`, `run-tool`, `exec`, `compile`, `test`, `status`, `close`). A call to an unknown tool
+  points at `tools`, invalid arguments at `tools <name>`.
+- **Works without an ai-game.dev sign-in:** in Cloud mode with no sign-in, `exec`, `run-tool`, `compile` and `tools`
+  use the project's local server (a started editor serves it, in memory) instead of failing with "not logged in".
+- **A headless editor survives script compile errors** (`-ignorecompilererrors`) and logs to
+  `Logs/unity-mcp-cli-editor.log`; an editor that exits before it is ready names that log and the compile errors.
+- **`commands --format json`**: a manifest of every command, argument, option and exit code, read from the CLI.
+- **`--format json|ndjson`** on `run-tool`, `run-system-tool`, `exec`, `status`, `wait-for-ready` and the new
+  commands: one result envelope `{success, command, data, errors[{code, message}], warnings}` on stdout, progress and
+  logs on stderr; a command-line error still prints an envelope.
+- **`run-tool` / `run-system-tool` start a headless editor** like `exec` when none answers (only for a project with
+  `ProjectSettings/ProjectVersion.txt`; `--no-start` turns it off), and **`--once`** (also on `exec` and `compile`)
+  closes an editor the call started, after the call or when it never became ready.
+- Library: `ensureEditor` (the shared start-or-reuse policy), `runTests`, `compileProject`, `ExitCode`; `execCode` takes `once`.
+
+### Changed
+
+- `run-tool` prints the tool's own answer (not a banner plus an escaped JSON envelope; that stays `--raw` /
+  `--format json`), a failed call prints the server's error text, and `test` writes its reports to
+  `<project>/Logs/` by default. Spinner and progress lines go to stderr.
+
+- **Exit codes follow one table shared with `unreal-mcp-cli` and `godot-cli`:** 2 bad arguments (commander parse
+  errors and bad flag values, previously 1), 6 the command ran and failed, 7 editor unreachable, 8 tests failed,
+  14 timeout, 17 busy, 18 awaiting input. Notably `run-tool` / `exec` now exit 6 (not 0) when the tool answers with an
+  error, `wait-for-ready` exits 14 on timeout and `status` 7 when the server does not answer.
+
 - **`update` updates everything.** `update [path]` brings the project's MCP plugin and installed extensions to their
   latest versions, then updates the CLI itself. From a subfolder it finds the project; outside a project it updates only
   the CLI. `--check` reports (exit 2 when something is outdated); `--no-self`, `--no-project` and `--no-extensions` skip a

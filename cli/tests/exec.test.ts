@@ -36,7 +36,57 @@ describe('execCode', () => {
     const d = deps();
     const result = await execCode(options(d));
     expect(d.ensure).toHaveBeenCalledWith({ mode: 'headless' });
-    expect(result).toEqual({ kind: 'success', success: true, baseUrl: LOCAL, data: CALLED.data });
+    expect(result).toEqual({ kind: 'success', success: true, baseUrl: LOCAL, data: CALLED.data, editorSource: 'running' });
+  });
+
+  it('with once, closes an editor this call started after the call', async () => {
+    const closeOwned = vi.fn(async () => ({ kind: 'closed' as const, pid: 42, forced: false }));
+    const ensure = vi.fn(async (): Promise<EnsureResult<string>> => ({ ready: LOCAL, source: 'started' }));
+    const d = { session: vi.fn(() => ({ ensure, closeOwned })), invoke: vi.fn(async (): Promise<RunToolResult> => CALLED) };
+    const result = await execCode(options(d, { once: true }));
+    expect(closeOwned).toHaveBeenCalledTimes(1);
+    expect(result).toMatchObject({ kind: 'success', editorSource: 'started', closedPid: 42 });
+  });
+
+  it('with once, closes an editor this call started that never became ready', async () => {
+    const closeOwned = vi.fn(async () => ({ kind: 'closed' as const, pid: 42, forced: true }));
+    const ensure = vi.fn(async (): Promise<EnsureResult<string>> => {
+      throw new EditorSessionError('not-ready', 'never answered', { source: 'started' });
+    });
+    const d = { session: vi.fn(() => ({ ensure, closeOwned })), invoke: vi.fn(async (): Promise<RunToolResult> => CALLED) };
+    const result = await execCode(options(d, { once: true }));
+    expect(result).toMatchObject({ kind: 'failure', reason: 'not-ready' });
+    expect(closeOwned).toHaveBeenCalledTimes(1);
+    expect(d.invoke).not.toHaveBeenCalled();
+  });
+
+  it('without once, leaves a started editor that never became ready to its idle timeout', async () => {
+    const closeOwned = vi.fn(async () => ({ kind: 'closed' as const, pid: 42, forced: true }));
+    const ensure = vi.fn(async (): Promise<EnsureResult<string>> => {
+      throw new EditorSessionError('not-ready', 'never answered', { source: 'started' });
+    });
+    await execCode(options({ session: vi.fn(() => ({ ensure, closeOwned })), invoke: vi.fn(async (): Promise<RunToolResult> => CALLED) }));
+    expect(closeOwned).not.toHaveBeenCalled();
+  });
+
+  it('with once, leaves an editor alone whose lease another call has since rewritten', async () => {
+    const closeOwned = vi.fn(async () => ({ kind: 'closed' as const, pid: 42, forced: false }));
+    const lease = { pid: 1, startedAt: 'x', nonce: 'ours', hostId: 'h' } as unknown as NonNullable<EnsureResult<string>['lease']>;
+    const ensure = vi.fn(async (): Promise<EnsureResult<string>> => ({ ready: LOCAL, source: 'started', lease }));
+    const readLease = vi.fn(() => ({ ...lease, nonce: 'theirs' }));
+    const d = { session: vi.fn(() => ({ ensure, closeOwned, readLease })), invoke: vi.fn(async (): Promise<RunToolResult> => CALLED) };
+    const result = await execCode(options(d, { once: true }));
+    expect(closeOwned).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty('closedPid');
+  });
+
+  it('with once, never closes an editor it reused', async () => {
+    const closeOwned = vi.fn(async () => ({ kind: 'closed' as const, pid: 42, forced: false }));
+    const ensure = vi.fn(async (): Promise<EnsureResult<string>> => ({ ready: LOCAL, source: 'foreign' }));
+    const d = { session: vi.fn(() => ({ ensure, closeOwned })), invoke: vi.fn(async (): Promise<RunToolResult> => CALLED) };
+    const result = await execCode(options(d, { once: true }));
+    expect(closeOwned).not.toHaveBeenCalled();
+    expect(result).not.toHaveProperty('closedPid');
   });
 
   it('hands the session the probe URLs, token, idle timeout and a connected-plugin env', async () => {

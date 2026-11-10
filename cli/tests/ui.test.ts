@@ -61,10 +61,10 @@ describe('verbose output', () => {
     consoleSpy.mockRestore();
   });
 
-  it('verbose() outputs with [verbose] prefix when enabled', async () => {
+  it('verbose() writes a [verbose] line to stderr when enabled (stdout stays the result)', async () => {
     const ui = await import('../src/utils/ui.js');
     ui.setVerbose(true);
-    const consoleSpy = vi.spyOn(console, 'log').mockImplementation(() => {});
+    const consoleSpy = vi.spyOn(console, 'error').mockImplementation(() => {});
 
     ui.verbose('test message');
 

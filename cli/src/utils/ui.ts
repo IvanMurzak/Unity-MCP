@@ -9,12 +9,13 @@ export function setVerbose(enabled: boolean): void {
   verboseEnabled = enabled;
 }
 
+/** A diagnostic line on stderr, so stdout stays the command's result. */
 export function verbose(msg: string): void {
   if (verboseEnabled) {
-    if (isTTY()) {
-      console.log(chalk.dim(`[verbose] ${msg}`));
+    if (process.stderr.isTTY) {
+      console.error(chalk.dim(`[verbose] ${msg}`));
     } else {
-      console.log(`[verbose] ${msg}`);
+      console.error(`[verbose] ${msg}`);
     }
   }
 }
@@ -52,6 +53,18 @@ function stripAnsi(str: string): string {
   // eslint-disable-next-line no-control-regex
   return str.replace(/\x1B\[[0-9;]*m/g, '');
 }
+
+/** The everyday workflow shown under the root help, so a newcomer (or an AI agent) knows where to start. */
+export const ROOT_HELP_WORKFLOW: ReadonlyArray<[string, string]> = [
+  ['unity-mcp-cli tools', 'List the editor\'s AI tools (scene, assets, tests, screenshots, ...)'],
+  ['unity-mcp-cli tools <name>', 'One tool: what it does, its inputs, an example call'],
+  ['unity-mcp-cli run-tool <name> --input \'<json>\'', 'Call an AI tool'],
+  ['unity-mcp-cli exec \'<C# code>\'', 'Run C# in the editor (the last expression is the result)'],
+  ['unity-mcp-cli compile', 'Check that the scripts compile (file:line errors)'],
+  ['unity-mcp-cli test', 'Run the Unity tests (no plugin needed)'],
+  ['unity-mcp-cli status', 'Is the editor running and reachable?'],
+  ['unity-mcp-cli close', 'Close the editor the CLI started'],
+];
 
 /**
  * Apply styled help formatting to a Commander command.
@@ -118,10 +131,17 @@ export function configureStyledHelp(cmd: Command, appVersion?: string): Command 
 
       // Footer
       if (isRoot) {
+        lines.push(chalk.bold('Working in a project (run these inside it; the editor is started headless when needed):'));
+        for (const [cmdLine, what] of ROOT_HELP_WORKFLOW) {
+          lines.push(`  ${chalk.yellow(cmdLine.padEnd(48))} ${chalk.dim(what)}`);
+        }
+        lines.push('');
         lines.push(
           chalk.dim('Run ') +
           chalk.yellow('unity-mcp-cli <command> --help') +
-          chalk.dim(' for detailed usage of each command.')
+          chalk.dim(' for detailed usage of each command; ') +
+          chalk.yellow('unity-mcp-cli commands --format json') +
+          chalk.dim(' for all of them, machine-readable.')
         );
         lines.push('');
       }
@@ -199,14 +219,15 @@ export function label(key: string, value: string): void {
  * Methods are safe to call but produce no ANSI output.
  */
 function createNoOpSpinner(text: string): Spinner {
-  console.log(text);
+  // Progress, not the result: on stderr, so a piped stdout holds only the command's output.
+  console.error(text);
   const self: Spinner = {
     start: () => self,
     stop: () => self,
-    success: (msg?: string) => { if (msg) console.log(`SUCCESS: ${msg}`); return self; },
+    success: (msg?: string) => { if (msg) console.error(`SUCCESS: ${msg}`); return self; },
     error: (msg?: string) => { if (msg) console.error(`ERROR: ${msg}`); return self; },
-    warning: (msg?: string) => { if (msg) console.log(`WARN: ${msg}`); return self; },
-    info: (msg?: string) => { if (msg) console.log(`INFO: ${msg}`); return self; },
+    warning: (msg?: string) => { if (msg) console.error(`WARN: ${msg}`); return self; },
+    info: (msg?: string) => { if (msg) console.error(`INFO: ${msg}`); return self; },
     clear: () => self,
     get text() { return text; },
     set text(value: string) { text = value; },
