@@ -132,5 +132,8 @@ export const statusCommand = new Command('status')
     out.fail(ExitCode.Unreachable, {
       code: 'UNREACHABLE',
       message: proc ? 'Unity is running but MCP server is not responding yet' : 'Unity is not running and MCP server is not reachable',
-    }, data);
+    }, data, proc
+      ? 'Wait for it with `unity-mcp-cli wait-for-ready`, or check that the editor\'s AI Game Developer plugin is connected.'
+      // Nothing to fix: the editor commands start one themselves.
+      : 'No need to start it: `tools`, `run-tool`, `exec` and `compile` start a headless editor when none runs (`test` needs none).');
   });
