@@ -174,14 +174,14 @@ export function updateFeatures(
   config[featureType] = features;
 }
 
+/** The connection mode the plugin gives a project it has not configured yet. */
+export const PLUGIN_DEFAULT_CONNECTION_MODE = 'Cloud';
+
 /**
  * Determine whether the config is in Cloud mode.
  * Handles both string ("Cloud") and legacy integer (1) representations
  * of the ConnectionMode enum.
  */
-/** The connection mode the plugin gives a project it has not configured yet. */
-export const PLUGIN_DEFAULT_CONNECTION_MODE = 'Cloud';
-
 export function isCloudMode(config: UnityConnectionConfig): boolean {
   const mode = config.connectionMode;
   return mode === 'Cloud' || mode === 1;

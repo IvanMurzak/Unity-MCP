@@ -2,7 +2,7 @@ import * as fs from 'fs';
 import * as path from 'path';
 import { verbose } from './ui.js';
 import { generatePortFromDirectory } from './port.js';
-import { readConfig, resolveConnectionFromConfig, isCloudMode, PLUGIN_DEFAULT_CONNECTION_MODE } from './config.js';
+import { readConfig, resolveConnectionFromConfig, isCloudMode, CLOUD_SERVER_URL, PLUGIN_DEFAULT_CONNECTION_MODE } from './config.js';
 import { readCloudAccessToken } from './cloud-credentials.js';
 import * as ui from './ui.js';
 import { findUnityProcess } from './unity-process.js';
@@ -104,8 +104,12 @@ export async function resolveConnection(
   // A project the plugin has not configured yet (no config file, or no connection mode in it) is in the plugin's
   // default mode: resolving it as a local server would start an editor that dials ai-game.dev.
   const config = { ...saved, connectionMode: saved?.connectionMode ?? PLUGIN_DEFAULT_CONNECTION_MODE };
-  // An explicit --url and --token leave nothing to resolve: skip the credential store (lock, maybe a refresh call).
-  const fromConfig = options.url && options.token
+  // The machine's ai-game.dev Bearer goes to ai-game.dev only, never to an explicit --url elsewhere; and with --url plus
+  // --token there is nothing to resolve. Either way the credential store (its lock, maybe a refresh call) is skipped.
+  const explicitUrl = options.url?.replace(/\/$/, '');
+  const skipStore = explicitUrl !== undefined
+    && (options.token !== undefined || (isCloudMode(config) && explicitUrl !== CLOUD_SERVER_URL));
+  const fromConfig = skipStore
     ? { url: undefined, token: undefined }
     : await resolveConnectionFromConfig(config, { readCloudToken: deps.readCloudToken ?? readCloudAccessToken });
 

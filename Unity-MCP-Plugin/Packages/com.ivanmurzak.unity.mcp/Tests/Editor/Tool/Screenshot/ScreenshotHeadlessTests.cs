@@ -25,16 +25,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     public class ScreenshotHeadlessTests : BaseTest
     {
         bool _savedBatchMode;
+        bool _savedNoGraphicsDevice;
 
+        // A graphics device is simulated too: CI runs this under -nographics, whose error would answer first.
         [SetUp]
         public void SimulateBatchMode()
         {
             _savedBatchMode = Tool_Screenshot.BatchMode;
+            _savedNoGraphicsDevice = Tool_Screenshot.NoGraphicsDevice;
             Tool_Screenshot.BatchMode = true;
+            Tool_Screenshot.NoGraphicsDevice = false;
         }
 
         [TearDown]
-        public void RestoreBatchMode() => Tool_Screenshot.BatchMode = _savedBatchMode;
+        public void RestoreBatchMode()
+        {
+            Tool_Screenshot.BatchMode = _savedBatchMode;
+            Tool_Screenshot.NoGraphicsDevice = _savedNoGraphicsDevice;
+        }
 
         static readonly TestCaseData[] Captures =
         {

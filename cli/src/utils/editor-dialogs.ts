@@ -55,9 +55,16 @@ export const ID_ENV = 'UNITY_MCP_DIALOG_ID';
  * machine-wide `C:\Windows\Temp` (services, CI agents, some shells) may not write there and fails with "Source file
  * ... could not be found", so the user's own temp folder is used when it exists.
  */
+/** TEMP is the machine-wide `%SystemRoot%\Temp` (only then is it swapped: any other TEMP was chosen on purpose). */
+function isMachineTemp(env: NodeJS.ProcessEnv): boolean {
+  const temp = env['TEMP'];
+  const systemRoot = env['SystemRoot'] ?? env['SYSTEMROOT'] ?? 'C:\\Windows';
+  return !!temp && path.win32.resolve(temp).toLowerCase() === path.win32.resolve(systemRoot, 'Temp').toLowerCase();
+}
+
 export function powerShellEnv(env: NodeJS.ProcessEnv = process.env, exists: (dir: string) => boolean = fs.existsSync): NodeJS.ProcessEnv {
-  const userTemp = env.LOCALAPPDATA ? path.join(env.LOCALAPPDATA, 'Temp') : undefined;
-  return userTemp && exists(userTemp) ? { ...env, TEMP: userTemp, TMP: userTemp } : env;
+  const userTemp = env['LOCALAPPDATA'] ? path.join(env['LOCALAPPDATA'], 'Temp') : undefined;
+  return userTemp && isMachineTemp(env) && exists(userTemp) ? { ...env, TEMP: userTemp, TMP: userTemp } : env;
 }
 
 const runPowerShell: ScriptRunner = (script, env) => new Promise((resolve, reject) => {
@@ -105,6 +112,7 @@ namespace UnityMcp.Dialogs {
     [DllImport("user32.dll", CharSet=CharSet.Unicode)] static extern IntPtr SendMessageW(IntPtr h, uint m, IntPtr w, IntPtr l);
     [DllImport("user32.dll")] static extern bool IsWindow(IntPtr h);
     [DllImport("user32.dll")] static extern int GetDlgCtrlID(IntPtr h);
+    [DllImport("user32.dll")] static extern bool IsWindowEnabled(IntPtr h);
     static bool Closed(IntPtr h) {
       for (var i = 0; i < 20; i++) { if (!IsWindow(h) || !IsWindowVisible(h)) return true; System.Threading.Thread.Sleep(50); }
       return false;
@@ -157,6 +165,7 @@ namespace UnityMcp.Dialogs {
           return true;
         }, IntPtr.Zero);
         if (match == IntPtr.Zero) continue;
+        if (!IsWindowEnabled(match)) return "disabled";
         SendMessageW(match, 0x00F5, IntPtr.Zero, IntPtr.Zero);
         if (Closed(h)) return "pressed";
         // BM_CLICK can be lost on a dialog that is not the active window (another process's dialog); the dialog's own
@@ -600,6 +609,7 @@ export async function pressEditorDialogButton(
       : await run(platform === 'darwin' ? MAC_PRESS_DIALOG_SCRIPT : LINUX_PRESS_DIALOG_SCRIPT,
         { [PIDS_ENV]: valid.join(','), [ID_ENV]: id ?? '', [BUTTON_ENV]: button })).trim();
     if (out === 'pressed') result = { kind: 'pressed', button };
+    else if (out === 'disabled') result = { kind: 'error', message: `The "${button}" button is disabled.` };
     else if (out === 'still-open') result = { kind: 'error', message: `Pressed "${button}", but the dialog is still open: answer it in the editor.` };
     else if (out.startsWith('error:')) result = { kind: 'error', message: out.slice('error:'.length).trim() };
     else result = { kind: 'not-found', message: `No open dialog has a "${button}" button.` };

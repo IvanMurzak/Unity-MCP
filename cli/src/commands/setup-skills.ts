@@ -3,7 +3,7 @@ import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { isUnityProject, resolveAndValidateProjectPath, resolveConnection } from '../utils/connection.js';
 import { getAgentById, getAgentIds, listAgentTable } from '../utils/agents.js';
-import { readConfig, isCloudMode } from '../utils/config.js';
+import { CLOUD_SERVER_URL } from '../utils/config.js';
 import { writeCliSkills } from '../lib/setup-skills.js';
 import { CLI_NAME } from '../lib/cli-guide.js';
 
@@ -121,8 +121,8 @@ export const setupSkillsCommand = new Command('setup-skills')
       const { url: serverUrl, token } = await resolveConnection(projectPath, options);
       // Never a login from here: it opens a browser and signs the machine in, a side effect an agent's setup step
       // must not have. Without a token, a Cloud project's editor cannot be asked: say how, and stop.
-      const config = readConfig(projectPath);
-      const cloud = config != null && isCloudMode(config);
+      // The resolved URL, not the saved config: a project the plugin has not configured yet is in Cloud mode too.
+      const cloud = serverUrl === CLOUD_SERVER_URL;
       if (cloud && !token) {
         ui.info('Cloud mode, not signed in: only the CLI skill was written. For the plugin\'s per-tool skills too:');
         console.log();
