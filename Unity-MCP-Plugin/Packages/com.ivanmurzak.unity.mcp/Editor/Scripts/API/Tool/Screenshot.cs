@@ -59,6 +59,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         /// </summary>
         internal static bool IsAllBlack(Texture2D texture)
         {
+            // The captures are RGB24: every byte is a color channel, read in place (no full-size Color32 copy).
+            if (texture.format == TextureFormat.RGB24)
+            {
+                foreach (var channel in texture.GetPixelData<byte>(0))
+                    if (channel != 0)
+                        return false;
+                return true;
+            }
             foreach (var pixel in texture.GetPixels32())
                 if (pixel.r != 0 || pixel.g != 0 || pixel.b != 0)
                     return false;
@@ -67,8 +75,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         private static ResponseCallTool BlackFrameError(string toolId, string window) =>
             ResponseCallTool.Error($"{toolId} read back an all-black image: nothing drew into the {window} (no camera " +
-                "renders to it, e.g. no scene is open). Open a scene with a camera (`editor | call OpenScene(...)`), or " +
-                "render a camera with screenshot-camera.");
+                "renders to it, e.g. no scene is open), or the scene renders entirely black. Open a scene with a camera " +
+                "(`editor | call OpenScene(...)`), or render a camera with screenshot-camera.");
 
         // On a cold shader cache (a new project, a fresh editor) the first capture of a URP scene came back as background only:
         // a render that compiles shader variants draws nothing, and so do further renders until the GPU work is read back.

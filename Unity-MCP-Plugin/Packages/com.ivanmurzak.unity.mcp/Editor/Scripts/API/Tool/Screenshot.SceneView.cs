@@ -93,9 +93,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 {
                     // The Scene View places its camera when it draws, which a headless editor never does: place it at
                     // the view's pivot, rotation and distance first (what the view does itself; a no-op once it drew).
-                    sceneCamera.transform.SetPositionAndRotation(
-                        sceneView.pivot + sceneView.rotation * new Vector3(0f, 0f, -sceneView.cameraDistance),
-                        sceneView.rotation);
+                    // The projection first: cameraDistance reads it, and is infinite for an orthographic view whose
+                    // camera never drew; a placement that is still not finite is skipped.
+                    sceneCamera.orthographic = sceneView.orthographic;
+                    if (sceneView.orthographic)
+                        sceneCamera.orthographicSize = sceneView.size;
+                    var position = sceneView.pivot + sceneView.rotation * new Vector3(0f, 0f, -sceneView.cameraDistance);
+                    if (float.IsFinite(position.x) && float.IsFinite(position.y) && float.IsFinite(position.z))
+                        sceneCamera.transform.SetPositionAndRotation(position, sceneView.rotation);
                     sceneCamera.targetTexture = rt;
                     RenderSync(sceneCamera);
 
