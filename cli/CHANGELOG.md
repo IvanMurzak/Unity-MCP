@@ -10,10 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Fixed — a connection dropped mid-call exits 7 `UNREACHABLE`
 
 A socket the server took and then closed — before the answer's headers, in the middle of its body, a reset (`ECONNRESET`,
-`EPIPE`, undici's `UND_ERR_SOCKET` "other side closed" / "terminated") — now fails `run-tool`, `run-system-tool`, `exec`,
-`rql` and `tools` with exit **7** `UNREACHABLE` (`connection-reset`), the same in all three engine CLIs (one helper,
+`EPIPE`, undici's `UND_ERR_SOCKET` "other side closed" / "terminated") — now fails `run-tool`, `run-system-tool`, `exec`
+and `rql` with exit **7** `UNREACHABLE` (`connection-reset`), the same in all three engine CLIs (one helper,
 `networkFailureReason` of `@baizor/gamedev-cli-core` ^0.11.1). It was exit 1 `ERROR` (only an `ECONNRESET` on the first
-cause was recognised), and a body cut off after a 200 was read as an empty answer. A connect timeout or an unreachable
+cause was recognised), and a body cut off after a 200 was read as an empty answer. `tools` already exited 7 for these;
+its envelope now names the reason the same way. A connect timeout or an unreachable
 host (`ETIMEDOUT`, `EHOSTUNREACH`, `ENETUNREACH`) is exit 7 too (was 1).
 
 ### Changed — one failure table shared with `unreal-mcp-cli` and `godot-cli`
