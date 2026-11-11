@@ -147,7 +147,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             }
 
             var user = CloudProjectSettings.userId ?? "";
-            if (_purchases != null && _purchasesUser == user && DateTime.UtcNow - _purchasesAt < PurchasesTtl)
+            // Another account's list is never answered, not even while the store is unreachable.
+            if (_purchasesUser != user)
+            {
+                _purchases = null;
+                _failedAt = DateTime.MinValue;
+                _purchasesUser = user;
+            }
+            if (_purchases != null && DateTime.UtcNow - _purchasesAt < PurchasesTtl)
                 return _purchases;
             // The store was just unreachable: answer from what is known instead of waiting on the network again.
             if (DateTime.UtcNow - _failedAt < FailureBackoff)
@@ -156,7 +163,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             try
             {
                 _purchases = AssetStoreAccount.FetchPurchases(token);
-                _purchasesUser = user;
                 _purchasesAt = DateTime.UtcNow;
                 _accountError = null;
                 return _purchases;

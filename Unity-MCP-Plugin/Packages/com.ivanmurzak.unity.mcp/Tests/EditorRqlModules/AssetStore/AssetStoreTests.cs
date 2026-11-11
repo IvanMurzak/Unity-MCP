@@ -10,17 +10,21 @@
 
 #nullable enable
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Text;
 using System.Text.Json;
+using System.Text.RegularExpressions;
 using com.IvanMurzak.Unity.MCP.Editor.Rql;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.Adapters;
 using NUnit.Framework;
 using UnityEditor;
+using UnityEngine;
+using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
 {
@@ -354,6 +358,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
             StringAssert.Contains(Tool_AssetStore.LibraryToolId, result.next);
             StringAssert.DoesNotContain("assetStore |", result.next, "the tool's agent may not know the RQL source");
             StringAssert.Contains("never import the package another way", result.next);
+        }
+
+        [UnityTest]
+        public IEnumerator AnImportThatFailsToStartAfterAnsweringIsReportedByTheLibrary()
+        {
+            AssetStorePackageImporter.AsksBeforeImport = () => true;
+            AssetStorePackageImporter.StartImport = _ => throw new IOException("the file is locked");
+            AddToCache("Test Rocks", TestPackages.Package(("Assets/RqlAssetStoreTests", null), ("Assets/RqlAssetStoreTests/a.txt", "hello")));
+            LogAssert.Expect(LogType.Error, new Regex("did not start: the file is locked"));
+            Assert.AreEqual(AssetStorePackageImporter.AwaitingUser, new Tool_AssetStore().Add("Test Rocks").status);
+            for (var i = 0; i < 5; i++) yield return null; // the deferred start runs on the next Editor update
+            var row = new Tool_AssetStore().Library("Test Rocks").Packages.Single();
+            Assert.AreEqual("the file is locked", row.ImportError);
+            Assert.AreEqual(false, row.Imported);
+        }
+
+        [Test]
+        public void AddToolPassesACacheOnlyPackageByNameNotByItsZeroProductId()
+        {
+            AssetStorePackageImporter.AsksBeforeImport = () => false;
+            AddToCache("Test Rocks", TestPackages.Package(("Assets/RqlAssetStoreTests", null), ("Assets/RqlAssetStoreTests/a.txt", "hello")));
+            AddToCache("Test Trees", TestPackages.Package(("Assets/RqlAssetStoreTests", null), ("Assets/RqlAssetStoreTests/b.txt", "hello")));
+            var e = Assert.Throws<ArgumentException>(() => new Tool_AssetStore().Add("0"));
+            StringAssert.Contains("by its name", e!.Message);
+            Assert.AreEqual(0, _started.Count);
         }
 
         [Test]

@@ -138,13 +138,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             {
                 // Started after this call answered, so Unity's confirmation window never holds the agent's call.
                 var start = StartImport; // as set now: a test that swapped it restores it before the next update
-                AssetStoreEditorUpdate.Next(() => start(file));
+                _startErrors.Remove(file);
+                AssetStoreEditorUpdate.Next(() =>
+                {
+                    // Nobody waits for this call any more: a failure is kept for importError and logged.
+                    try { start(file); }
+                    catch (Exception e)
+                    {
+                        _startErrors[file] = e.Message;
+                        UnityEngine.Debug.LogError($"[AssetStore] The import of '{packageName}' did not start: {e.Message}");
+                    }
+                });
                 var pending = Describe(packageName, assetFiles, replaced, AwaitingUser);
                 pending.next = "Unity checks the package's signature first and Asset Store packages have none: it shows " +
                     "\"Missing signature\" and waits for the user, and until they answer the Editor answers no tool call. Ask the user " +
                     "to review it and press Import Anyway (or Cancel); the agent never presses Import Anyway. Then " +
                     (checkHint ?? "assetStore | get packages | where name == \"" + packageName + "\" | select imported (or unity.asset(path) of a file listed here)") +
-                    " shows it arrived. Nobody at the Editor: unity-mcp-cli dialog --press Cancel closes the window, nothing is imported." + NoWorkaround;
+                    " shows it arrived (no window and importError set: the import did not start). Nobody at the Editor: unity-mcp-cli dialog --press Cancel closes the window, nothing is imported." + NoWorkaround;
                 return pending;
             }
 
@@ -154,6 +164,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             var imported = probe == null || !string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(probe.path, AssetPathToGUIDOptions.OnlyExistingAssets));
             return Describe(packageName, assetFiles, replaced, imported ? "imported" : "queued");
         }
+
+        static readonly Dictionary<string, string> _startErrors = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+
+        /// <summary>Why the deferred import of <paramref name="file"/> failed to start; null when it started (or never ran).</summary>
+        public static string? StartError(string file) => _startErrors.TryGetValue(file, out var error) ? error : null;
 
         /// <summary>Every file of the package is in the project (by GUID): its import arrived.</summary>
         public static bool IsImported(string file)

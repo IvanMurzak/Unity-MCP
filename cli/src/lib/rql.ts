@@ -68,7 +68,7 @@ const OPERATOR_HINTS: ReadonlyArray<readonly [RegExp, string]> = [
  */
 export function rqlErrorHint(toolName: string, message: string): string | undefined {
   if (!toolName.startsWith('rql-')) return undefined;
-  if (/unknown source 'assetStore'|unknown method 'SignIn'/.test(message)) return OLD_PLUGIN_ACCOUNT_HINT;
+  if (/unknown source 'assetStore'|unknown method 'SignIn' on AssetStoreEditorApi/.test(message)) return OLD_PLUGIN_ACCOUNT_HINT;
   const token = /unexpected '([^']+)'|unknown method '([^']+)'/.exec(message);
   const word = token?.[1] ?? token?.[2];
   if (word) {

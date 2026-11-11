@@ -39,8 +39,10 @@ namespace com.IvanMurzak.Unity.MCP
             // disk-baseline values so Save() can persist them without leaking the overrides.
             RuntimeOverrides = EnvironmentUtils.ApplyEnvironmentOverrides(unityConnectionConfig);
             SyncCustomSkillsPath(unityConnectionConfig.SkillsPath);
+            // No plugin is built yet, so there are no live tool states to capture: capturing would replace the loaded
+            // Tools / Prompts / Resources with empty lists and lose every saved visibility choice.
             if (wasCreated)
-                Save();
+                Save(captureCurrentToolStates: false);
             IncrementSingletonCount();
         }
 

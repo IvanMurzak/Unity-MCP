@@ -457,6 +457,12 @@ async function openHeadless(
   options: OpenProjectOptions,
   warnings: string[],
 ): Promise<OpenProjectResult> {
+  const projectVersion = getProjectEditorVersion(projectPath) ?? undefined;
+  if (options.unityVersion && projectVersion && options.unityVersion !== projectVersion && options.editorPath === undefined) {
+    // Batch mode shows no upgrade dialog: the editor converts the project's files without asking.
+    warnings.push(`${VERSION_MISMATCH_WARNING} ${projectVersion}; the headless Unity ${options.unityVersion} upgrades (or ` +
+      `downgrades) it without asking.`);
+  }
   // The idle timeout travels as AIGD_SESSION_IDLE_SECONDS (the session contract), not as UNITY_MCP_IDLE_TIMEOUT.
   const env = buildOpenEnv({ ...applyCloudModeDefaults(projectPath, options, warnings), idleTimeoutSeconds: undefined });
   emitProgress(options.onProgress, {

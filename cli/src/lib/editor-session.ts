@@ -17,7 +17,8 @@ import {
   type EditorLaunchSpec,
   type SessionProcessOps,
 } from '@baizor/gamedev-cli-core';
-import { findEditorPath, getProjectEditorVersion } from '../utils/unity-editor.js';
+import { editorLaunchArgs, findEditorPath, getProjectEditorVersion } from '../utils/unity-editor.js';
+import { findUnityHub } from '../utils/unity-hub.js';
 import { clearCachedEditorPath } from '../utils/editor-cache.js';
 import { resolveConnection, resolveProbeUrls } from '../utils/connection.js';
 import { CLOUD_SERVER_URL } from '../utils/config.js';
@@ -50,6 +51,8 @@ export interface UnitySessionDeps {
   findEditor: (version: string | undefined) => Promise<string | null>;
   /** Drop the cached editor path of `version` (it failed to start), so the next call resolves it again. */
   forgetEditor: (version: string | undefined) => void;
+  /** Unity Hub's executable; null when it is not installed (a windowed editor then starts without the Hub arguments). */
+  findHub: () => string | null;
   processOps?: Partial<SessionProcessOps>;
   fetchImpl?: typeof fetch;
 }
@@ -100,6 +103,7 @@ const defaultDeps: UnitySessionDeps = {
   requestOsClose: pid => sendGracefulShutdown(pid),
   findEditor: version => findEditorPath(version),
   forgetEditor: version => clearCachedEditorPath(version),
+  findHub: () => findUnityHub(),
 };
 
 export function isLoopbackUrl(url: string): boolean {
@@ -129,6 +133,8 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
 
   const editor: EditorLaunchSpec = {
     ...unityAdapter.editor!,
+    // A windowed editor opens the way `open` starts it, through Unity Hub, so it has the Hub's Unity sign-in.
+    args: (root, mode) => mode === 'window' ? editorLaunchArgs(root, deps.findHub()) : unityAdapter.editor!.args(root, mode),
     // The PID lets the session notice cheaply when the user's editor exits while it waits for it.
     findRunningEditor: async root => {
       const pid = deps.findEditorPid(root);

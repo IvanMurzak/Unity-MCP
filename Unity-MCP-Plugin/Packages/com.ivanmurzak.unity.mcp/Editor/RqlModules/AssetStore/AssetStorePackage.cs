@@ -58,6 +58,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                         "awaiting-user or queued; reads the package file, so select it for a few packages, not all")]
         public bool imported => localPath != null && File.Exists(localPath) && AssetStorePackageImporter.IsImported(localPath);
 
+        [RqlDescription("why the last Import() of this package failed to start after it answered awaiting-user (no " +
+                        "'Missing signature' window then appears); null when it started or was not imported")]
+        public string? importError => localPath == null ? null : AssetStorePackageImporter.StartError(localPath);
+
         [RqlDescription("the downloaded .unitypackage file, null when not downloaded")]
         public string? localPath { get; private set; }
 
