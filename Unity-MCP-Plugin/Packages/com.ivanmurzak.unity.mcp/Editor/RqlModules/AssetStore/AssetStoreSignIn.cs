@@ -26,11 +26,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         [RqlDescription("the signed-in account's user name (empty when signed out)")]
         public string userName { get; internal set; } = "";
 
-        [RqlDescription("Unity's sign-in was opened for the user (false: already signed in, or a headless Editor that cannot show it)")]
+        [RqlDescription("Unity's sign-in was opened for the user (false: already signed in, or an Editor that cannot show it: " +
+                        "headless, or opened without Unity Hub; next says what to do)")]
         public bool opened { get; internal set; }
 
         [RqlDescription("what happens next and who does it: the user signs in, never the agent")]
         public string next { get; internal set; } = "";
+    }
+
+    /// <summary>
+    /// Runs work on the Editor's next update, after the current tool call answered. Not <c>EditorApplication.delayCall</c>:
+    /// that one waits while the Editor is in the background (seen on Unity 6.6); <c>update</c> keeps ticking.
+    /// </summary>
+    internal static class AssetStoreEditorUpdate
+    {
+        /// <summary>Call on the main thread (RQL calls run there): <c>update</c> is a plain delegate field.</summary>
+        public static void Next(Action action)
+        {
+            void Once()
+            {
+                EditorApplication.update -= Once;
+                action();
+            }
+            EditorApplication.update += Once;
+        }
     }
 
     /// <summary>
@@ -41,13 +60,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
     {
         /// <summary>
         /// Test seam: what opens Unity's sign-in (tests replace it so no sign-in UI ever opens). Deferred to the next Editor
-        /// update: ShowLogin can show a modal dialog (Unity 6 signs in through Unity Hub and may offer "Install Unity Hub"),
-        /// which would otherwise hold the agent's call until the user answers it.
+        /// update, so a modal window it opens never holds the agent's call until the user answers it.
         /// </summary>
-        internal static Action ShowLogin = () => EditorApplication.delayCall += () => CloudProjectSettings.ShowLogin();
+        internal static Action ShowLogin = () => AssetStoreEditorUpdate.Next(CloudProjectSettings.ShowLogin);
 
         /// <summary>Test seam: the Editor runs without a window (-batchmode), where no sign-in UI can appear.</summary>
         internal static Func<bool> IsBatchMode = () => Application.isBatchMode;
+
+        /// <summary>
+        /// Test seam: the Editor was opened through Unity Hub (<c>-useHub</c>, as the Hub and <c>unity-mcp-cli open</c> start
+        /// it). Only such an Editor signs in: it takes the Hub's account, and its sign-in goes through the Hub. One opened
+        /// directly stays signed out, and its sign-in only offers "Install Unity Hub", even with the Hub installed.
+        /// </summary>
+        internal static Func<bool> LaunchedViaHub = () =>
+            Array.Exists(Environment.GetCommandLineArgs(), a => string.Equals(a, "-useHub", StringComparison.OrdinalIgnoreCase));
 
         /// <summary>Test seam: asks Unity for a fresh access token of the signed-in account.</summary>
         internal static Action RefreshAccessToken = () => CloudProjectSettings.RefreshAccessToken(_ => { });
@@ -75,13 +101,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                            "window (unity-mcp-cli open <project>) and call SignIn() there"
                 };
             }
+            if (!LaunchedViaHub())
+            {
+                // Its sign-in would only show "Install Unity Hub" (a modal dialog), whether the Hub is installed or not.
+                return new AssetStoreSignIn
+                {
+                    next = "this Editor was opened directly, not through Unity Hub, so it cannot sign in (Unity would only offer " +
+                           "\"Install Unity Hub\", even with the Hub installed). Ask the user to save their work, then reopen the " +
+                           "project through the Hub: unity-mcp-cli close <project> and unity-mcp-cli open <project> (it starts the " +
+                           "Editor through Unity Hub when the Hub is installed; otherwise install Unity Hub first), or open it from " +
+                           "Unity Hub. An Editor opened so takes the account the Hub is signed in to; if still signed out, call SignIn() again"
+                };
+            }
             ShowLogin();
             return new AssetStoreSignIn
             {
                 opened = true,
-                next = "Unity's sign-in is opening for the user (a recent Editor signs in through Unity Hub, or a dialog may ask " +
-                       "about Unity Hub and block the Editor until the user answers it): ask the user to complete the sign-in to " +
-                       "their Unity account themselves (the agent never types credentials nor answers that dialog), " + CheckAfter
+                next = "Unity's sign-in is opening through Unity Hub for the user: ask them to sign in to their Unity account there " +
+                       "(the agent never types credentials nor answers its windows), " + CheckAfter
             };
         }
     }

@@ -79,8 +79,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         }
 
         [RqlCallable("open Unity's sign-in for the user when the Editor is not signed in to a Unity account (signedIn false; the " +
-                     "owned packages need it); the user signs in there (Unity 6: through Unity Hub; a dialog about the Hub may block the " +
-                     "Editor until the user answers it), never the agent; returns whether it opened and the next step")]
+                     "owned packages need it; it goes through Unity Hub, so an Editor opened without the Hub is told how to reopen it); the " +
+                     "user signs in, never the agent; returns whether it opened and the next step")]
         public AssetStoreSignIn SignIn() => AssetStoreSignInFlow.Run(signedIn, userName);
 
         [RqlCallable("open the Asset Store website's search for text in the user's browser, to find new packages (buying or " +

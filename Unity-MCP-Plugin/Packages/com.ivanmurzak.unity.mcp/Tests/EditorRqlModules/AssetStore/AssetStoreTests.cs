@@ -27,6 +27,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
     /// <summary>Builds .unitypackage files (gzipped tar of guid/pathname, guid/asset, guid/asset.meta) for the tests.</summary>
     internal static class TestPackages
     {
+        /// <summary>
+        /// A fresh path under the project's Temp/ folder: the Editor's own temp folder can be one it may not delete in
+        /// (seen: C:\Windows\Temp, where the tests could not delete their folders).
+        /// </summary>
+        public static string TempPath(string name) => Path.GetFullPath(Path.Combine("Temp", $"{name}-{Guid.NewGuid():N}"));
+
         public static byte[] Tar(IEnumerable<(string name, byte[] data)> entries)
         {
             using var ms = new MemoryStream();
@@ -38,6 +44,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
                 Encoding.ASCII.GetBytes(Convert.ToString(data.Length, 8).PadLeft(11, '0') + "\0").CopyTo(header, 124);
                 header[156] = (byte)'0';
                 Encoding.ASCII.GetBytes("ustar\0").CopyTo(header, 257);
+                // The header checksum (Unity's own decompressor checks it): the byte sum with the field read as spaces.
+                for (var i = 148; i < 156; i++) header[i] = (byte)' ';
+                var sum = 0;
+                foreach (var b in header) sum += b;
+                Encoding.ASCII.GetBytes(Convert.ToString(sum, 8).PadLeft(6, '0') + "\0 ").CopyTo(header, 148);
                 ms.Write(header, 0, 512);
                 ms.Write(data, 0, data.Length);
                 var pad = (512 - data.Length % 512) % 512;
@@ -96,7 +107,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
         [Test]
         public void ReadsAGzippedPackageFile()
         {
-            var file = Path.Combine(Path.GetTempPath(), $"rql-assetstore-{Guid.NewGuid():N}.unitypackage");
+            var file = TestPackages.TempPath("rql-assetstore") + ".unitypackage";
             File.WriteAllBytes(file, TestPackages.Package(("Assets/A", null), ("Assets/A/x.txt", "hi")));
             try
             {
@@ -177,13 +188,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
         const string ImportFolder = "Assets/RqlAssetStoreTests";
         string _cache = "";
         string? _previousCache;
+        Func<bool>? _asks;
+        Action<string>? _startImport;
+        readonly List<string> _started = new List<string>();
 
         [SetUp]
         public void SetUpCache()
         {
             AssetStoreEditorApi.AccountDisabled = true;
+            // Never let a test start Unity's real import: on Unity 6.6 it shows the modal "Missing signature" window.
+            _asks = AssetStorePackageImporter.AsksBeforeImport;
+            _startImport = AssetStorePackageImporter.StartImport;
+            _started.Clear();
+            AssetStorePackageImporter.StartImport = file => _started.Add(file);
             _previousCache = Environment.GetEnvironmentVariable(AssetStoreCache.EnvironmentVariable);
-            _cache = Path.Combine(Path.GetTempPath(), $"rql-assetstore-cache-{Guid.NewGuid():N}");
+            _cache = TestPackages.TempPath("rql-assetstore-cache");
             Directory.CreateDirectory(Path.Combine(_cache, "Test Publisher", "3D ModelsProps"));
             Environment.SetEnvironmentVariable(AssetStoreCache.EnvironmentVariable, _cache);
             if (AssetDatabase.IsValidFolder(ImportFolder)) AssetDatabase.DeleteAsset(ImportFolder);
@@ -193,6 +212,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
         public void TearDownCache()
         {
             AssetStoreEditorApi.AccountDisabled = false;
+            AssetStorePackageImporter.AsksBeforeImport = _asks!;
+            AssetStorePackageImporter.StartImport = _startImport!;
             Environment.SetEnvironmentVariable(AssetStoreCache.EnvironmentVariable, _previousCache);
             if (Directory.Exists(_cache)) Directory.Delete(_cache, true);
             if (AssetDatabase.IsValidFolder(ImportFolder)) AssetDatabase.DeleteAsset(ImportFolder);
@@ -247,14 +268,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
         }
 
         [Test]
-        public void ImportBringsTheFilesIntoTheProject()
+        public void ImportOfACachedPackagePassesItsChecks()
         {
+            AddToCache("Test Rocks", TestPackages.Package(("Assets/RqlAssetStoreTests", null), ("Assets/RqlAssetStoreTests/a.txt", "hello")));
+            var r = M("assetStore | get packages | where name == \"Test Rocks\" | call Import()", dryRun: true);
+            Assert.IsTrue(r.Ok, Table(r));
+            Assert.IsFalse(AssetDatabase.IsValidFolder(ImportFolder), Table(r));
+        }
+
+        [Test]
+        public void ImportThatUnityConfirmsFirstAnswersAtOnceAndStartsAfterTheCall()
+        {
+            AssetStorePackageImporter.AsksBeforeImport = () => true;
             AddToCache("Test Rocks", TestPackages.Package(("Assets/RqlAssetStoreTests", null), ("Assets/RqlAssetStoreTests/a.txt", "hello")));
             var r = M("assetStore | get packages | where name == \"Test Rocks\" | call Import()");
             Assert.IsTrue(r.Ok, Table(r));
-            AssetDatabase.Refresh();
-            Assert.IsTrue(File.Exists("Assets/RqlAssetStoreTests/a.txt"), Table(r));
-            Assert.AreEqual("hello", File.ReadAllText("Assets/RqlAssetStoreTests/a.txt"));
+            StringAssert.Contains("awaiting-user", Table(r));
+            StringAssert.Contains("Missing signature", Table(r));
+            StringAssert.Contains("select imported", Table(r));
+            Assert.AreEqual(0, _started.Count, "the import starts on the next Editor update, after the call answered");
+            Assert.AreEqual("false", Cell(Q("assetStore | get packages | where name == \"Test Rocks\" | select imported")));
+        }
+
+        [Test]
+        public void ImportWithoutConfirmationStartsRightAway()
+        {
+            AssetStorePackageImporter.AsksBeforeImport = () => false;
+            var file = AddToCache("Test Rocks", TestPackages.Package(("Assets/RqlAssetStoreTests", null), ("Assets/RqlAssetStoreTests/a.txt", "hello")));
+            var r = M("assetStore | get packages | where name == \"Test Rocks\" | call Import()");
+            Assert.IsTrue(r.Ok, Table(r));
+            Assert.AreEqual(1, _started.Count, Table(r));
+            Assert.AreEqual(Path.GetFullPath(file).Replace('\\', '/'), Path.GetFullPath(_started[0]).Replace('\\', '/'));
+            StringAssert.IsMatch("status:(imported|queued)", Table(r));
         }
 
         [Test]
@@ -285,6 +330,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
         bool _batchMode;
         Action? _showLogin;
         Func<bool>? _isBatchMode;
+        Func<bool>? _viaHub;
+        bool _launchedViaHub;
         Action? _refresh;
 
         [SetUp]
@@ -293,6 +340,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
             AssetStoreEditorApi.AccountDisabled = true; // signed out, whatever the Editor running the tests is signed in to
             _shown = _refreshed = 0;
             _batchMode = false;
+            _launchedViaHub = true;
+            _viaHub = AssetStoreSignInFlow.LaunchedViaHub;
+            AssetStoreSignInFlow.LaunchedViaHub = () => _launchedViaHub;
             _showLogin = AssetStoreSignInFlow.ShowLogin;
             _isBatchMode = AssetStoreSignInFlow.IsBatchMode;
             _refresh = AssetStoreSignInFlow.RefreshAccessToken;
@@ -307,6 +357,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
             AssetStoreEditorApi.AccountDisabled = false;
             AssetStoreSignInFlow.ShowLogin = _showLogin!;
             AssetStoreSignInFlow.IsBatchMode = _isBatchMode!;
+            AssetStoreSignInFlow.LaunchedViaHub = _viaHub!;
             AssetStoreSignInFlow.RefreshAccessToken = _refresh!;
         }
 
@@ -329,6 +380,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
             Assert.IsTrue(r.Ok, Table(r));
             Assert.AreEqual(0, _shown, Table(r));
             StringAssert.Contains("headless", Table(r));
+        }
+
+        [Test]
+        public void SignInInAnEditorOpenedWithoutTheHubSaysToReopenItThroughTheHub()
+        {
+            _launchedViaHub = false;
+            var r = M("assetStore | call SignIn()");
+            Assert.IsTrue(r.Ok, Table(r));
+            Assert.AreEqual(0, _shown, Table(r)); // its sign-in would only offer "Install Unity Hub"
+            StringAssert.Contains("Install Unity Hub", Table(r));
+            StringAssert.Contains("unity-mcp-cli open", Table(r));
         }
 
         [Test]

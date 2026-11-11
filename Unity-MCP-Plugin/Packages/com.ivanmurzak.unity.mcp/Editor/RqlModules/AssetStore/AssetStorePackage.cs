@@ -54,6 +54,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         [RqlDescription("the package's Asset Store page")]
         public string? storeUrl => productId > 0 ? $"https://assetstore.unity.com/packages/slug/{productId}" : null;
 
+        [RqlDescription("every file of the downloaded package is in the project (by GUID): poll it after Import() answered " +
+                        "awaiting-user or queued; reads the package file, so select it for a few packages, not all")]
+        public bool imported => localPath != null && File.Exists(localPath) && AssetStorePackageImporter.IsImported(localPath);
+
         [RqlDescription("the downloaded .unitypackage file, null when not downloaded")]
         public string? localPath { get; private set; }
 

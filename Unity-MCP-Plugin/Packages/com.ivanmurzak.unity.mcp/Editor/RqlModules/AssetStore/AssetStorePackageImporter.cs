@@ -26,8 +26,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         [RqlDescription("the package's name")]
         public string package { get; internal set; } = "";
 
-        [RqlDescription("imported, or queued (the Editor finishes it on its next update: query unity.assets(…) again in a moment)")]
+        [RqlDescription("imported; queued (the Editor finishes it on its next update: query again in a moment); or awaiting-user " +
+                        "(Unity asks the user to confirm the package first, see notes; poll with imported / unity.asset(path))")]
         public string status { get; internal set; } = "";
+
+        [RqlDescription("what the agent does next when the import waits for the user (status awaiting-user), else null")]
+        public string? next { get; internal set; }
 
         [RqlDescription("files in the package")]
         public int files { get; internal set; }
@@ -91,6 +95,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             }
         }
 
+        /// <summary>
+        /// Unity 6.6 checks a package's signature before importing it. Asset Store .unitypackage files carry none, so a
+        /// windowed Editor shows the modal "Missing signature" window and waits for the user (Import Anyway / Cancel); a
+        /// batch-mode Editor imports without asking. The window holds the Editor's main thread, so no tool call is answered
+        /// while it is open. Test seam.
+        /// </summary>
+        internal static Func<bool> AsksBeforeImport = () =>
+#if UNITY_6000_6_OR_NEWER
+            !UnityEngine.Application.isBatchMode;
+#else
+            false;
+#endif
+
+        /// <summary>Test seam: starts Unity's import of a .unitypackage file, without Unity's import dialog.</summary>
+        internal static Action<string> StartImport = file =>
+#if UNITY_6000_6_OR_NEWER
+            UnityEditor.AssetPackage.Package.Import(file, false);
+#else
+            AssetDatabase.ImportPackage(file, false);
+#endif
+
+        internal const string AwaitingUser = "awaiting-user";
+
         public static AssetStoreImportResult Import(string packageName, string file, bool allowProjectSettings)
         {
             Check(file, allowProjectSettings);
@@ -98,11 +125,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             var assetFiles = entries.Where(e => e.isFile).ToList();
             var replaced = assetFiles.Count(e => !string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(e.guid)) && File.Exists(AssetDatabase.GUIDToAssetPath(e.guid)));
 
-            AssetDatabase.ImportPackage(file, false);
+            if (AsksBeforeImport())
+            {
+                // Started after this call answered, so Unity's confirmation window never holds the agent's call.
+                var start = StartImport; // as set now: a test that swapped it restores it before the next update
+                AssetStoreEditorUpdate.Next(() => start(file));
+                var pending = Describe(packageName, assetFiles, replaced, AwaitingUser);
+                pending.next = "Unity checks the package's signature first and Asset Store packages have none: it shows " +
+                    "\"Missing signature\" and waits for the user, and until they answer the Editor answers no tool call. Ask the user " +
+                    "to review it and press Import Anyway (or Cancel); the agent never presses Import Anyway. Then assetStore | get " +
+                    "packages | where name == \"" + packageName + "\" | select imported (or unity.asset(path) of a file listed here) " +
+                    "shows it arrived. Nobody at the Editor: unity-mcp-cli dialog --press Cancel closes the window, nothing is imported";
+                return pending;
+            }
+
+            StartImport(file);
 
             var probe = assetFiles.FirstOrDefault(e => e.path.StartsWith("Assets/", StringComparison.Ordinal));
             var imported = probe == null || !string.IsNullOrEmpty(AssetDatabase.AssetPathToGUID(probe.path, AssetPathToGUIDOptions.OnlyExistingAssets));
             return Describe(packageName, assetFiles, replaced, imported ? "imported" : "queued");
+        }
+
+        /// <summary>Every file of the package is in the project (by GUID): its import arrived.</summary>
+        public static bool IsImported(string file)
+        {
+            var files = UnityPackageArchive.ReadEntries(file).Where(e => e.isFile).ToList();
+            return files.Count > 0 && files.All(e => !string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(e.guid)) &&
+                                                      File.Exists(AssetDatabase.GUIDToAssetPath(e.guid)));
         }
 
         /// <summary>The import report for a package's files (exposed for tests).</summary>
