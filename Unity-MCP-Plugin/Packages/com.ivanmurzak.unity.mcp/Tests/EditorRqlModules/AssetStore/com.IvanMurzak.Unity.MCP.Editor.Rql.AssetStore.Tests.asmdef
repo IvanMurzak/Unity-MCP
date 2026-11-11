@@ -1,0 +1,34 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore.Tests",
+    "rootNamespace": "",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Editor",
+        "com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore",
+        "com.IvanMurzak.Unity.MCP.Editor.Tests"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "optionalUnityReferences": [
+        "TestAssemblies"
+    ],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "nunit.framework.dll",
+        "System.Text.Json.dll",
+        "McpPlugin.Common.dll",
+        "Rql.Contracts.dll",
+        "Rql.Parser.dll",
+        "Rql.Execution.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY",
+        "UNITY_MCP_DEPS_41",
+        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

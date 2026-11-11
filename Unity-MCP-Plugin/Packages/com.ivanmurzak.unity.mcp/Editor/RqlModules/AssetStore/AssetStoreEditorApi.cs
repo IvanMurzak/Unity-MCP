@@ -1,0 +1,173 @@
+/*
+┌──────────────────────────────────────────────────────────────────┐
+│  Author: Ivan Murzak (https://github.com/IvanMurzak)             │
+│  Repository: GitHub (https://github.com/IvanMurzak/Unity-MCP)    │
+│  Copyright (c) 2026 Ivan Murzak                                  │
+│  Licensed under the Apache License, Version 2.0.                 │
+│  See the LICENSE file in the project root for more information.  │
+└──────────────────────────────────────────────────────────────────┘
+*/
+
+#nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
+using System.Linq;
+using Rql;
+using UnityEditor;
+using UnityEngine;
+
+namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
+{
+    /// <summary>
+    /// The <c>assetStore</c> source: the Asset Store packages the user can import — the ones they own ("My Assets", read with
+    /// the Editor's sign-in) merged with the asset packages already downloaded to the local cache, e.g.
+    /// <c>assetStore | get packages | where name contains "chess" | call Import()</c>. Downloading a package not in the cache
+    /// yet is the Package Manager window's job (<c>call OpenInPackageManager()</c>): the Editor exposes no public API for it.
+    /// </summary>
+    [RqlNoAutoSave] // reading the store or importing a package must not save the user's unrelated scene edits
+    public sealed class AssetStoreEditorApi
+    {
+        public static readonly AssetStoreEditorApi Instance = new AssetStoreEditorApi();
+
+        /// <summary>How long the owned-packages list is reused before the store is asked again.</summary>
+        static readonly TimeSpan PurchasesTtl = TimeSpan.FromMinutes(10);
+
+        List<AssetStorePurchase>? _purchases;
+        string? _purchasesUser;
+        DateTime _purchasesAt;
+        string? _accountError;
+
+        private AssetStoreEditorApi() { }
+
+        // ------------------------------------------------------------ state
+
+        [RqlDescription("a Unity account is signed in to the Editor: needed for owned packages (the local cache works without)")]
+        public bool signedIn => !string.IsNullOrEmpty(AccessToken());
+
+        [RqlDescription("the signed-in Unity account's user name (empty when signed out)")]
+        public string userName => signedIn ? CloudProjectSettings.userName ?? "" : "";
+
+        [RqlDescription("the local cache the Editor downloads asset packages into (ASSETSTORE_CACHE_PATH or the OS default)")]
+        public string cachePath => AssetStoreCache.Root.Replace('\\', '/');
+
+        [RqlDescription("why the owned packages could not be read last time (sign-in, network), null when they were")]
+        public string? accountError
+        {
+            get
+            {
+                _ = OwnedPurchases();
+                return _accountError;
+            }
+        }
+
+        [RqlDescription("the packages you can import: owned ones (owned = true; downloaded = in the local cache) and cached " +
+                        "downloads; members productId name publisher category owned downloaded sizeMB purchasedAt tags hidden " +
+                        "storeUrl localPath; calls Import(), Contents(filter), OpenInPackageManager()")]
+        public List<AssetStorePackage> packages => BuildPackages();
+
+        // ------------------------------------------------------------ operations
+
+        [RqlCallable("forget the cached owned-packages list and read it from the Asset Store again (after buying or adding a " +
+                     "package, or downloading one in the Package Manager); returns the number of packages")]
+        public int Refresh()
+        {
+            _purchases = null;
+            _purchasesUser = null;
+            return BuildPackages().Count;
+        }
+
+        [RqlCallable("open the Asset Store website's search for text in the user's browser, to find new packages (buying or " +
+                     "adding one to My Assets is the user's step: then Refresh() and Import()); returns the URL")]
+        public string OpenStoreSearch(string text)
+        {
+            var url = "https://assetstore.unity.com/?q=" + Uri.EscapeDataString(text ?? "") + "&orderBy=1";
+            Application.OpenURL(url);
+            return url;
+        }
+
+        [RqlCallable("import any .unitypackage file (a path in the project, e.g. a render-pipeline variant shipped inside an " +
+                     "Asset Store package, or an absolute path) without the import dialog; returns what it imported")]
+        public AssetStoreImportResult ImportFile(string path, bool allowProjectSettings = false)
+        {
+            var file = PackageFile(path);
+            return AssetStorePackageImporter.Import(Path.GetFileNameWithoutExtension(file), file, allowProjectSettings);
+        }
+
+        // Call validator (RQL runs it before the call, on dry runs too).
+        public string? ValidateImportFile(string path, bool allowProjectSettings = false)
+            => AssetStorePackageImporter.Rejection(() => AssetStorePackageImporter.Check(PackageFile(path), allowProjectSettings));
+
+        // ------------------------------------------------------------ internals
+
+        /// <summary>Test seam: true lists the local cache only, without asking the store.</summary>
+        internal static bool AccountDisabled;
+
+        internal static string AccessToken()
+        {
+            if (AccountDisabled) return "";
+            try { return CloudProjectSettings.accessToken ?? ""; }
+            catch (Exception) { return ""; } // no Unity Connect in this Editor session
+        }
+
+        static string PackageFile(string? path)
+        {
+            if (string.IsNullOrWhiteSpace(path))
+                throw new ArgumentException("a .unitypackage path is required, e.g. \"Assets/Vendor/URP.unitypackage\"");
+            var full = Path.GetFullPath(path!.Trim());
+            if (!full.EndsWith(".unitypackage", StringComparison.OrdinalIgnoreCase))
+                throw new ArgumentException($"'{path}' is not a .unitypackage file");
+            if (!File.Exists(full))
+                throw new ArgumentException($"no file at '{path}'");
+            return full.Replace('\\', '/');
+        }
+
+        /// <summary>The owned packages, read from the store at most every <see cref="PurchasesTtl"/>; empty when signed out.</summary>
+        internal List<AssetStorePurchase> OwnedPurchases()
+        {
+            var token = AccessToken();
+            if (token.Length == 0)
+            {
+                _accountError = "not signed in to a Unity account in the Editor: only the local cache is listed (sign in via the Account menu, top right)";
+                return new List<AssetStorePurchase>();
+            }
+
+            var user = CloudProjectSettings.userId ?? "";
+            if (_purchases != null && _purchasesUser == user && DateTime.UtcNow - _purchasesAt < PurchasesTtl)
+                return _purchases;
+
+            try
+            {
+                _purchases = AssetStoreAccount.FetchPurchases(token);
+                _purchasesUser = user;
+                _purchasesAt = DateTime.UtcNow;
+                _accountError = null;
+                return _purchases;
+            }
+            catch (Exception e)
+            {
+                _accountError = (e is AggregateException a && a.InnerException != null ? a.InnerException : e).Message;
+                Debug.LogWarning($"[RQL] assetStore: owned packages unavailable: {_accountError}");
+                return _purchases ?? new List<AssetStorePurchase>();
+            }
+        }
+
+        List<AssetStorePackage> BuildPackages()
+        {
+            var cached = AssetStoreCache.Scan(AssetStoreCache.Root);
+            var unclaimed = new List<AssetStoreCachedFile>(cached);
+            var result = new List<AssetStorePackage>();
+
+            foreach (var purchase in OwnedPurchases())
+            {
+                var key = AssetStoreCache.MatchKey(purchase.displayName);
+                var file = unclaimed.FirstOrDefault(f => AssetStoreCache.MatchKey(f.name) == key);
+                if (file != null) unclaimed.Remove(file);
+                result.Add(AssetStorePackage.Owned(purchase, file));
+            }
+            foreach (var file in unclaimed)
+                result.Add(AssetStorePackage.CachedOnly(file));
+            return result;
+        }
+    }
+}
