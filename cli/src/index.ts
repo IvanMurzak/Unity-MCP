@@ -23,6 +23,7 @@ import { statusCommand } from './commands/status.js';
 import { testCommand } from './commands/test.js';
 import { toolsCommand } from './commands/tools.js';
 import { createUpdateCommand } from './commands/update.js';
+import { unityAccountCommand } from './commands/unity-account.js';
 import { waitForReadyCommand } from './commands/wait-for-ready.js';
 import { configureStyledHelp, error as uiError, setVerbose } from './utils/ui.js';
 import { classifyCliError, writeFailureEnvelope } from '@baizor/gamedev-cli-core';
@@ -63,6 +64,7 @@ const subcommands = [
   statusCommand,
   testCommand,
   toolsCommand,
+  unityAccountCommand,
   createUpdateCommand(pkg.version),
   waitForReadyCommand,
 ];

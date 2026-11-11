@@ -98,6 +98,7 @@ npx unity-mcp-cli install-plugin /path/to/unity/project
   - [`install-plugin`](#install-plugin)
   - [`install-unity`](#install-unity)
   - [`login`](#login)
+  - [`unity-account`](#unity-account)
   - [`open`](#open)
   - [`close`](#close)
   - [`tools`](#tools)
@@ -352,6 +353,34 @@ unity-mcp-cli login --tools-only
 ```bash
 unity-mcp-cli login --project ./MyGame
 ```
+
+![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+
+## `unity-account`
+
+Show the **Unity account** the running Unity Editor is signed in to, and start its sign-in. The Asset Store's
+"My Assets" (the `assetStore` RQL source) needs it; a Personal license works without it, so an editor can run signed
+out. This is not the ai-game.dev account: that is [`login`](#login).
+
+`--sign-in` opens Unity's sign-in in that editor; the **user** completes it there (recent editors sign in through
+Unity Hub, and may first show a dialog about the Hub that blocks the editor until it is answered: `dialog` lists it).
+No credentials pass through the CLI. The command needs the project open in an editor with a window
+([`open`](#open)) and never starts a headless one, which cannot show the sign-in. Agents can run the same queries with
+`rql`: `assetStore | select signedIn userName` and `assetStore | call SignIn()`.
+
+```bash
+unity-mcp-cli unity-account ./MyGame            # signedIn|userName
+unity-mcp-cli unity-account ./MyGame --sign-in  # opens Unity's sign-in for the user
+```
+
+| Option | Required | Description |
+|---|---|---|
+| `[path]` | No | Unity project path (positional or `--path`; default: the current directory) |
+| `--sign-in` | No | Open Unity's sign-in when the editor is not signed in (signed in: refreshes the access token) |
+| `--format <format>` | No | `text`, `json` or `ndjson` |
+
+Exits `0` with the editor's answer, `7` when no editor answers. A plugin too old for this command gets a hint to run
+[`update`](#update).
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
