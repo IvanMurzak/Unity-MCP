@@ -1,8 +1,10 @@
 import { describe, it, expect, vi, beforeEach, afterEach } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import { runTool, runSystemTool, type RunToolOptions, type RunToolResult } from '../src/lib.js';
+import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
+
+afterEach(removeTempDirs);
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -21,7 +23,7 @@ function textResponse(body: string, status = 200, statusText = 'OK'): Response {
 }
 
 function mkUnityProject(): string {
-  const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-runtool-'));
+  const dir = makeTempDir('unity-mcp-runtool-');
   fs.mkdirSync(path.join(dir, 'Assets'), { recursive: true });
   return dir;
 }
@@ -331,10 +333,6 @@ describe('runTool — connection resolution', () => {
 
   beforeEach(() => {
     projectPath = mkUnityProject();
-  });
-
-  afterEach(() => {
-    fs.rmSync(projectPath, { recursive: true, force: true });
   });
 
   it('falls back to deterministic localhost port when no config exists', async () => {

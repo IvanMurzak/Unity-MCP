@@ -6,21 +6,20 @@ import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
 import { findUnityProjectRoot, updateProject } from '../src/lib/update-project.js';
+import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
 
 const PLUGIN = 'com.ivanmurzak.unity.mcp';
 const TILEMAP = 'com.ivanmurzak.unity.mcp.tilemap';
 const SPLINES = 'com.ivanmurzak.unity.mcp.splines';
 const TIMELINE = 'com.ivanmurzak.unity.mcp.timeline';
 
-const tmpDirs: string[] = [];
 afterEach(() => {
   vi.unstubAllGlobals();
-  while (tmpDirs.length) fs.rmSync(tmpDirs.pop()!, { recursive: true, force: true });
+  removeTempDirs();
 });
 
 function project(dependencies: Record<string, string>): string {
-  const root = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-update-'));
-  tmpDirs.push(root);
+  const root = makeTempDir('unity-update-');
   fs.mkdirSync(path.join(root, 'Packages'));
   fs.mkdirSync(path.join(root, 'ProjectSettings'));
   fs.writeFileSync(path.join(root, 'ProjectSettings', 'ProjectVersion.txt'), 'm_EditorVersion: 6000.3.1f1\n');
@@ -112,8 +111,7 @@ describe('updateProject', () => {
   });
 
   it('fails without throwing outside a Unity project', async () => {
-    const empty = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-update-'));
-    tmpDirs.push(empty);
+    const empty = makeTempDir('unity-update-');
 
     const result = await updateProject({ unityProjectPath: empty });
 
