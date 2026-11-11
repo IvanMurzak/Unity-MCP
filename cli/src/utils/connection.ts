@@ -6,7 +6,7 @@ import { readConfig, resolveConnectionFromConfig, isCloudMode, CLOUD_SERVER_URL,
 import { readCloudAccessToken } from './cloud-credentials.js';
 import * as ui from './ui.js';
 import { findUnityProcess } from './unity-process.js';
-import { decideLocalFallback, machineCredentialStatus, signedInButUnusableMessage } from '@baizor/gamedev-cli-core';
+import { ExitCode, activeCommandOutput, decideLocalFallback, machineCredentialStatus, signedInButUnusableMessage } from '@baizor/gamedev-cli-core';
 import { hasLiveSessionLease } from '../lib/editor-session.js';
 
 export interface ConnectionOptions {
@@ -47,9 +47,12 @@ export function resolveAndValidateProjectPath(positionalPath: string | undefined
   }
 
   if (!isUnityProject(resolved)) {
-    ui.error(`Not a Unity project (missing Assets folder): ${resolved}`);
+    // No project at the path: exit 2 NOT_FOUND, as in unreal-mcp-cli and godot-cli.
+    const message = `Not a Unity project (missing Assets folder): ${resolved}`;
+    activeCommandOutput()?.record('NOT_FOUND', message);
+    ui.error(message);
     ui.info('Provide a Unity project path as an argument, or use --url to connect to a server directly.');
-    process.exit(1);
+    process.exit(ExitCode.Usage);
   }
 
   return resolved;

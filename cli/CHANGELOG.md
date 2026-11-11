@@ -7,6 +7,21 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — one failure table shared with `unreal-mcp-cli` and `godot-cli`
+
+A failed `run-tool`, `run-system-tool`, `exec`, `rql` or `tools` call is classified by `classifyToolFailure` of
+`@baizor/gamedev-cli-core` ^0.11.0, so all three engine CLIs give the same exit code and error code (table in the README,
+`errorCodes` in `commands --format json`). The envelope error carries the server's HTTP status:
+`errors[{code, message, httpStatus}]`. Behaviour changes:
+
+- `tools <name>` with no matching tool, and `tools --cached` with no saved list: exit **2** `NOT_FOUND` (was 6).
+- A failed `tools` read with an HTTP error answer is classified by its status (401 → 6 `NOT_AUTHENTICATED`,
+  503 → 17 `BUSY`, ...) instead of always 7 `UNREACHABLE`.
+- HTTP 503 whose error says no engine plugin is connected: exit **7** `UNREACHABLE` (was 17 `BUSY`).
+- HTTP 408: exit 14 `TIMEOUT`; HTTP 429: exit 17 `BUSY`; any other 4xx: exit 2 `USAGE` (were 6 `TOOL_FAILED`).
+- A call that failed for an unclassified reason: exit **1** `ERROR` (was 6 `TOOL_FAILED`).
+- A path that is not a Unity project (no `Assets` folder): exit **2** `NOT_FOUND` (was 1), as in the other two CLIs.
+
 ### Fixed
 
 - **A fresh project no longer hangs `tools` / `exec` / `run-tool` / `compile`.** A project the plugin has not configured

@@ -126,6 +126,7 @@ export const execCommand = new Command('exec')
           out.fail(classified.exitCode, {
             code: classified.code,
             message: buildFailureMessage(result.toolFailure, { toolName: SCRIPT_EXECUTE_TOOL, endpoint: result.toolFailure.endpoint, raw: false, timeoutMs, errorNoun: 'tool' }),
+            httpStatus: classified.httpStatus,
           }, { editor });
         }
         handleFailure(result.toolFailure, {

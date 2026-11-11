@@ -120,7 +120,8 @@ export interface ListToolsOptions {
   invoke?: (options: RunToolOptions) => Promise<RunToolResult>;
 }
 
-export type ListToolsResult = { kind: 'success'; catalog: ToolCatalog } | { kind: 'failure'; message: string };
+/** A failure carries the server's HTTP status when it answered with an error status. */
+export type ListToolsResult = { kind: 'success'; catalog: ToolCatalog } | { kind: 'failure'; message: string; httpStatus?: number };
 
 /**
  * Read the catalog from a running server. A local server is asked over MCP (`tools/list`, full input schemas). Through
@@ -142,7 +143,7 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
       method: 'POST', headers, signal: timeout(),
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'unity-mcp-cli', version: '1' } } }),
     });
-    if (!init.ok) return { kind: 'failure', message: `MCP initialize failed: HTTP ${init.status} at ${endpoint}` };
+    if (!init.ok) return { kind: 'failure', message: `MCP initialize failed: HTTP ${init.status} at ${endpoint}`, httpStatus: init.status };
     await init.text();
     const session = init.headers.get('mcp-session-id');
     const sessionHeaders = session ? { ...headers, 'mcp-session-id': session } : headers;
@@ -154,7 +155,7 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
       const message = parseMcpMessage(await listed.text());
       tools = (message?.result as { tools?: typeof tools } | undefined)?.tools;
       if (!listed.ok || !tools) {
-        return { kind: 'failure', message: message?.error?.message ?? `MCP tools/list failed: HTTP ${listed.status} at ${endpoint}` };
+        return { kind: 'failure', message: message?.error?.message ?? `MCP tools/list failed: HTTP ${listed.status} at ${endpoint}`, ...(listed.ok ? {} : { httpStatus: listed.status }) };
       }
     } finally {
       // End the MCP session whatever happened, so the server does not keep it.
@@ -185,7 +186,7 @@ async function listToolsViaPlugin(options: ListToolsOptions): Promise<ListToolsR
     toolName: TOOL_LIST_TOOL, url: options.baseUrl, ...(options.token ? { token: options.token } : {}),
     input: { includeDescription: true, includeInputs: 'InputsWithDescription' }, timeoutMs: options.timeoutMs ?? 30_000,
   });
-  if (answer.kind === 'failure') return { kind: 'failure', message: answer.message };
+  if (answer.kind === 'failure') return { kind: 'failure', message: answer.message, ...(answer.httpStatus !== undefined ? { httpStatus: answer.httpStatus } : {}) };
   const records = parseToolRecords(readToolResponse(answer.data).text);
   if (records.length === 0) return { kind: 'failure', message: 'The editor answered unity-tool-list in an unknown format.' };
   return {

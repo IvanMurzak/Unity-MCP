@@ -1,12 +1,18 @@
 import { Command } from 'commander';
-import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
+import {
+  DEFAULT_SESSION_READY_TIMEOUT_MS,
+  classifyEditorStartFailure,
+  classifyToolFailure as classifyCoreToolFailure,
+  serverErrorText,
+  type ToolFailureClass,
+} from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
 import { parseInput } from '../utils/input.js';
 import { getProjectEditorVersion } from '../utils/unity-editor.js';
 import { failIfAwaitingInput } from '../utils/awaiting-input.js';
-import { ExitCode, type ExitCodeValue } from '../utils/exit-codes.js';
+import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
 import { ensureEditor, type EnsureEditorFailure } from '../lib/ensure-editor.js';
 import { isLoopbackUrl } from '../lib/editor-session.js';
@@ -63,52 +69,21 @@ interface FailureContext {
   errorNoun: string;
 }
 
-/** Exit code and stable error token of a failed tool call. */
-export function classifyToolFailure(failure: RunToolFailure): { exitCode: ExitCodeValue; code: string } {
-  switch (failure.reason) {
-    case 'timeout':
-      return { exitCode: ExitCode.Timeout, code: 'TIMEOUT' };
-    case 'connection-refused':
-    case 'connection-reset':
-    case 'network-error':
-      return { exitCode: ExitCode.Unreachable, code: 'UNREACHABLE' };
-    case 'invalid-input':
-      return { exitCode: ExitCode.Usage, code: 'USAGE' };
-    case 'not-authenticated':
-      return { exitCode: ExitCode.CommandFailed, code: 'NOT_AUTHENTICATED' };
-    case 'http-error':
-      if (failure.httpStatus === 503) return { exitCode: ExitCode.Busy, code: 'BUSY' };
-      // The server's own tool timeout, and a plugin connection lost after the call was sent.
-      if (failure.httpStatus === 504) return { exitCode: ExitCode.Timeout, code: 'TIMEOUT' };
-      if (failure.httpStatus === 502) return { exitCode: ExitCode.Unreachable, code: 'UNREACHABLE' };
-      if (failure.httpStatus === 404) return { exitCode: ExitCode.Usage, code: 'NOT_FOUND' };
-      if (failure.httpStatus === 400) return { exitCode: ExitCode.Usage, code: 'USAGE' };
-      // 422: the tool ran and failed, unless the server rejected the arguments before running it.
-      if (failure.httpStatus === 422) {
-        return serverError(failure.data)?.startsWith('[invalid_params]')
-          ? { exitCode: ExitCode.Usage, code: 'USAGE' }
-          : { exitCode: ExitCode.CommandFailed, code: 'TOOL_FAILED' };
-      }
-      if (failure.httpStatus === 401 || failure.httpStatus === 403) return { exitCode: ExitCode.CommandFailed, code: 'NOT_AUTHENTICATED' };
-      return { exitCode: ExitCode.CommandFailed, code: 'TOOL_FAILED' };
-    default:
-      return { exitCode: ExitCode.CommandFailed, code: 'TOOL_FAILED' };
-  }
+/**
+ * Exit code and stable error token of a failed tool call: the shared table of all three engine CLIs
+ * (`classifyToolFailure` in @baizor/gamedev-cli-core, keyed on the server's HTTP status).
+ */
+export function classifyToolFailure(failure: RunToolFailure): ToolFailureClass {
+  return classifyCoreToolFailure(failure);
 }
 
 /** The server's own error text of a failed call (`{ "error": "..." }`), when it sent one. */
-export function serverError(data: unknown): string | undefined {
-  if (typeof data === 'string') return data.trim() || undefined;
-  const error = (data as { error?: unknown } | null | undefined)?.error;
-  return typeof error === 'string' && error.trim() !== '' ? error : undefined;
-}
+export const serverError = serverErrorText;
 
 /** Exit code and error token of an editor that could not be started or reached. */
-export function classifyEditorFailure(failure: Pick<EnsureEditorFailure, 'reason' | 'sessionReason'>): { exitCode: ExitCodeValue; code: string } {
-  // Another CLI call holds the project's start lock for the whole wait: retry later.
-  return failure.sessionReason === 'lock-busy'
-    ? { exitCode: ExitCode.Busy, code: 'BUSY' }
-    : { exitCode: ExitCode.Unreachable, code: 'UNREACHABLE' };
+export function classifyEditorFailure(failure: Pick<EnsureEditorFailure, 'reason' | 'sessionReason'>): ToolFailureClass {
+  // Another CLI call holds the project's start lock for the whole wait: BUSY, retry later.
+  return classifyEditorStartFailure({ sessionReason: failure.sessionReason });
 }
 
 /** Hint for an editor the CLI did not start that never answered. */
@@ -256,7 +231,7 @@ export async function runToolAction(
   const classified = classifyToolFailure(result);
   await failIfAwaitingInput(out, projectPath, classified.exitCode, { tool: toolName, editor: editorData }, options.raw);
   if (out.machine) {
-    out.fail(classified.exitCode, { code: classified.code, message: buildFailureMessage(result, { toolName, endpoint, raw: false, timeoutMs, errorNoun: cfg.errorNoun }) },
+    out.fail(classified.exitCode, { code: classified.code, message: buildFailureMessage(result, { toolName, endpoint, raw: false, timeoutMs, errorNoun: cfg.errorNoun }), httpStatus: classified.httpStatus },
       { tool: toolName, ...(result.data !== undefined ? { result: result.data } : {}), ...(result.httpStatus ? { httpStatus: result.httpStatus } : {}), editor: editorData });
   }
   handleFailure(result, {

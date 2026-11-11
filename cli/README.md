@@ -554,8 +554,9 @@ Unity version in `ProjectSettings/ProjectVersion.txt`, so it never guesses an ed
 `--once` makes the call one-shot: an editor this call started is closed again after the call (and also when it never
 became ready). `run-system-tool` behaves the same.
 
-A tool that answers with an error exits 6; a timeout 14, an unreachable editor 7, a busy editor 17, and a call blocked
-by a modal dialog 18.
+A tool that answers with an error exits 6; an unknown tool 2 (`NOT_FOUND`), a timeout 14, an unreachable editor 7, a busy
+editor 17, and a call blocked by a modal dialog 18 — the full table, with the HTTP statuses, is in
+[Exit Codes](#exit-codes-and-machine-readable-output).
 
 **URL resolution priority:**
 1. `--url` → use directly
@@ -939,8 +940,8 @@ command line" from "the editor failed" from "the tests failed" without reading m
 |---|---|---|
 | `0` | `SUCCESS` | The command succeeded |
 | `1` | `ERROR` | Unclassified error |
-| `2` | `USAGE` | Bad arguments; nothing ran. Fix the command line — do not retry it unchanged |
-| `6` | `COMMAND_FAILED` | The command ran and failed (tool error, compile errors, test run without a verdict) |
+| `2` | `USAGE` | Bad arguments, an unknown tool; nothing ran. Fix the command line — do not retry it unchanged |
+| `6` | `COMMAND_FAILED` | The command ran and failed (tool error, compile errors, test run without a verdict, refused credentials) |
 | `7` | `UNREACHABLE` | The editor or MCP server could not be started or reached; retry once the environment is fixed |
 | `8` | `TESTS_FAILED` | The tests ran and some failed |
 | `14` | `TIMEOUT` | Timed out before a result |
@@ -962,9 +963,27 @@ same envelope as one line and streams progress lines (`{"type":"progress",...}`)
 }
 ```
 
-`errors[].code` is a stable token (`USAGE`, `TOOL_FAILED`, `UNREACHABLE`, `TIMEOUT`, `BUSY`, `AWAITING_INPUT`,
-`TESTS_FAILED`, `TEST_RUN_ERROR`, `TEST_TIMED_OUT`, `COMPILATION_FAILED`, `PROJECT_OPEN`, `NOT_FOUND`, ...); match it,
-never the message.
+`errors[].code` is a stable token (`USAGE`, `NOT_FOUND`, `NOT_AUTHENTICATED`, `TOOL_FAILED`, `UNREACHABLE`, `TIMEOUT`,
+`BUSY`, `AWAITING_INPUT`, `TESTS_FAILED`, `TEST_RUN_ERROR`, `TEST_TIMED_OUT`, `COMPILATION_FAILED`, `PROJECT_OPEN`,
+`ERROR`, ...); match it, never the message.
+
+**A tool call that did not succeed** (`run-tool`, `run-system-tool`, `exec`, `rql`, `tools`) maps to the same exit code
+and error code in all three CLIs (the table lives in `@baizor/gamedev-cli-core`; `commands --format json` lists it as
+`errorCodes`). When the MCP server answered, its HTTP status decides, and the envelope error carries it:
+`errors[{code, message, httpStatus}]`.
+
+| Condition | HTTP status | Exit | `errors[].code` |
+|---|---|---|---|
+| Bad arguments: a bad flag, tool arguments the CLI or the server rejected (any 4xx not listed here) | 400 (a 422 `[invalid_params]`) | `2` | `USAGE` |
+| No tool by that name (list them with `tools`), or no project at the path | 404 | `2` | `NOT_FOUND` |
+| No usable credentials, or the server refused them: sign in with `login` | 401, 403 | `6` | `NOT_AUTHENTICATED` |
+| The tool ran and reported an error (`status: "error"`, any 5xx not listed here) | 409, 422, 500 | `6` | `TOOL_FAILED` |
+| The project's code did not build, so no editor was started | — | `6` | `COMPILATION_FAILED` |
+| Connection refused or reset, no engine plugin connected to the server, plugin lost after the call was sent | 502 | `7` | `UNREACHABLE` |
+| No answer in time: `--timeout`, or the server's own tool timeout | 408, 504 | `14` | `TIMEOUT` |
+| Busy and did not run the call (reloading, rate-limited, another CLI call holds the editor); retry later | 503, 429 | `17` | `BUSY` |
+| A modal dialog blocks the editor | — | `18` | `AWAITING_INPUT` |
+| Anything else (the call was aborted, an unexpected error) | — | `1` | `ERROR` |
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 
