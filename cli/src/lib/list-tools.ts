@@ -150,7 +150,7 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
     });
     if (!init.ok) {
       const message = `MCP initialize failed: HTTP ${init.status} at ${endpoint}`;
-      return { kind: 'failure', message, failure: { reason: 'http-error', httpStatus: init.status, data: await init.text().catch(() => undefined), message } };
+      return { kind: 'failure', message, failure: { reason: 'http-error', httpStatus: init.status, data: await init.text(), message } }; // a body cut off: the catch below
     }
     await init.text();
     const session = init.headers.get('mcp-session-id');
