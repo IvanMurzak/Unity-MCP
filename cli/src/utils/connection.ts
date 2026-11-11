@@ -6,8 +6,9 @@ import { readConfig, resolveConnectionFromConfig, isCloudMode, CLOUD_SERVER_URL,
 import { readCloudAccessToken } from './cloud-credentials.js';
 import * as ui from './ui.js';
 import { findUnityProcess } from './unity-process.js';
-import { ExitCode, activeCommandOutput, decideLocalFallback, machineCredentialStatus, signedInButUnusableMessage } from '@baizor/gamedev-cli-core';
+import { activeCommandOutput, decideLocalFallback, machineCredentialStatus, signedInButUnusableMessage } from '@baizor/gamedev-cli-core';
 import { hasLiveSessionLease } from '../lib/editor-session.js';
+import { ExitCode } from './exit-codes.js';
 
 export interface ConnectionOptions {
   path?: string;

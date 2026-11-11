@@ -155,7 +155,7 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
       const message = parseMcpMessage(await listed.text());
       tools = (message?.result as { tools?: typeof tools } | undefined)?.tools;
       if (!listed.ok || !tools) {
-        return { kind: 'failure', message: message?.error?.message ?? `MCP tools/list failed: HTTP ${listed.status} at ${endpoint}`, ...(listed.ok ? {} : { httpStatus: listed.status }) };
+        return { kind: 'failure', message: message?.error?.message ?? `MCP tools/list failed: HTTP ${listed.status} at ${endpoint}`, httpStatus: listed.ok ? undefined : listed.status };
       }
     } finally {
       // End the MCP session whatever happened, so the server does not keep it.
@@ -186,7 +186,7 @@ async function listToolsViaPlugin(options: ListToolsOptions): Promise<ListToolsR
     toolName: TOOL_LIST_TOOL, url: options.baseUrl, ...(options.token ? { token: options.token } : {}),
     input: { includeDescription: true, includeInputs: 'InputsWithDescription' }, timeoutMs: options.timeoutMs ?? 30_000,
   });
-  if (answer.kind === 'failure') return { kind: 'failure', message: answer.message, ...(answer.httpStatus !== undefined ? { httpStatus: answer.httpStatus } : {}) };
+  if (answer.kind === 'failure') return { kind: 'failure', message: answer.message, httpStatus: answer.httpStatus };
   const records = parseToolRecords(readToolResponse(answer.data).text);
   if (records.length === 0) return { kind: 'failure', message: 'The editor answered unity-tool-list in an unknown format.' };
   return {

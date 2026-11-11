@@ -2,8 +2,8 @@ import { Command } from 'commander';
 import {
   DEFAULT_SESSION_READY_TIMEOUT_MS,
   classifyEditorStartFailure,
-  classifyToolFailure as classifyCoreToolFailure,
-  serverErrorText,
+  classifyToolFailure,
+  serverErrorText as serverError,
   type ToolFailureClass,
 } from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
@@ -70,15 +70,10 @@ interface FailureContext {
 }
 
 /**
- * Exit code and stable error token of a failed tool call: the shared table of all three engine CLIs
- * (`classifyToolFailure` in @baizor/gamedev-cli-core, keyed on the server's HTTP status).
+ * Exit code and stable error token of a failed tool call (the shared table of all three engine CLIs, keyed on the
+ * server's HTTP status), and the server's own error text of a failed call.
  */
-export function classifyToolFailure(failure: RunToolFailure): ToolFailureClass {
-  return classifyCoreToolFailure(failure);
-}
-
-/** The server's own error text of a failed call (`{ "error": "..." }`), when it sent one. */
-export const serverError = serverErrorText;
+export { classifyToolFailure, serverErrorText as serverError } from '@baizor/gamedev-cli-core';
 
 /** Exit code and error token of an editor that could not be started or reached. */
 export function classifyEditorFailure(failure: Pick<EnsureEditorFailure, 'reason' | 'sessionReason'>): ToolFailureClass {
@@ -277,12 +272,11 @@ export function handleFailure(failure: RunToolFailure, ctx: FailureContext): nev
 export function failureHint(failure: RunToolFailure, toolName: string): string | undefined {
   const rqlHint = failure.reason === 'http-error' ? rqlErrorHint(toolName, serverError(failure.data) ?? '') : undefined;
   if (rqlHint) return `hint: ${rqlHint}`;
-  if (failure.reason === 'http-error' && failure.httpStatus === 404) {
-    return `No tool named "${toolName}". List the available tools with: unity-mcp-cli tools`;
-  }
-  if (failure.reason === 'http-error' && serverError(failure.data)?.startsWith('[invalid_params]')) {
-    return `See the inputs of ${toolName} with: unity-mcp-cli tools ${toolName}`;
-  }
+  if (failure.reason !== 'http-error') return undefined;
+  // The hint follows the shared classification: an unknown tool, or arguments the server rejected.
+  const { code } = classifyToolFailure(failure);
+  if (code === 'NOT_FOUND') return `No tool named "${toolName}". List the available tools with: unity-mcp-cli tools`;
+  if (code === 'USAGE') return `See the inputs of ${toolName} with: unity-mcp-cli tools ${toolName}`;
   return undefined;
 }
 
