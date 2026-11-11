@@ -1,6 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
-import { isNewerVersion, isValidVersion } from './semver.js';
+import { isNewerVersion, isNumericVersion } from '@baizor/gamedev-cli-core';
 import { silentLogger, type LibLogger } from '../lib/logger.js';
 import { unityExtensionDependencies } from './extension-compatibility.js';
 
@@ -111,7 +111,7 @@ export function shouldUpdateVersion(currentVersion: string, newVersion: string):
     return false;
   }
 
-  if (isValidVersion(currentVersion) && isValidVersion(newVersion)) {
+  if (isNumericVersion(currentVersion) && isNumericVersion(newVersion)) {
     return isNewerVersion(currentVersion, newVersion);
   }
 
@@ -257,7 +257,7 @@ export function addPackageToManifest(
     : '';
   for (const [dependency, required] of Object.entries(unityExtensionDependencies(packageId, editorVersion))) {
     const existing = manifest.dependencies[dependency];
-    if (!existing || (isValidVersion(existing) && shouldUpdateVersion(existing, required))) {
+    if (!existing || (isNumericVersion(existing) && shouldUpdateVersion(existing, required))) {
       manifest.dependencies[dependency] = required;
       modified = true;
     }

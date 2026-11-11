@@ -1,11 +1,10 @@
 import { Command } from 'commander';
 import { spawn } from 'child_process';
 import { platform } from 'os';
-import { resolveInstallTarget, unityAdapter } from '@baizor/gamedev-cli-core';
+import { isNewerVersion, resolveInstallTarget, unityAdapter } from '@baizor/gamedev-cli-core';
 import { findUnityProjectRoot, updateProject, type ProjectUpdateItem } from '../lib/update-project.js';
 import * as ui from '../utils/ui.js';
 import { fetchLatestVersion, formatUpdateAvailable, isRunningViaNpx } from '../utils/update-check.js';
-import { isNewerVersion } from '../utils/semver.js';
 
 const PACKAGE_NAME = 'unity-mcp-cli';
 
