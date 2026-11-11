@@ -162,7 +162,7 @@ describe('CLI integration', () => {
     });
 
     it('fails when project path has no manifest.json', () => {
-      const emptyDir = makeTempDir('empty-');
+      const emptyDir = makeTempDir('unity-mcp-cli-empty-');
       const { stdout, exitCode } = runCli([
         'install-plugin',
         '--path', emptyDir,
@@ -218,7 +218,7 @@ describe('CLI integration', () => {
     });
 
     it('fails when project path has no manifest.json', () => {
-      const emptyDir = makeTempDir('empty-');
+      const emptyDir = makeTempDir('unity-mcp-cli-empty-');
       const { stdout, exitCode } = runCli([
         'remove-plugin',
         '--path', emptyDir,
