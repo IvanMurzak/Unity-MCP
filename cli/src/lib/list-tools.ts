@@ -5,7 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { ensureAiGameDevGitignore, SESSION_DIR_NAME, writeFileAtomicSync, type ToolFailureLike } from '@baizor/gamedev-cli-core';
+import { ensureAiGameDevGitignore, networkFailureReason, SESSION_DIR_NAME, writeFileAtomicSync, type ToolFailureLike } from '@baizor/gamedev-cli-core';
 import { isLoopbackUrl } from './editor-session.js';
 import { runTool } from './run-tool.js';
 import { readToolResponse } from './exec.js';
@@ -150,7 +150,7 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
     });
     if (!init.ok) {
       const message = `MCP initialize failed: HTTP ${init.status} at ${endpoint}`;
-      return { kind: 'failure', message, failure: { reason: 'http-error', httpStatus: init.status, data: await init.text().catch(() => undefined), message } };
+      return { kind: 'failure', message, failure: { reason: 'http-error', httpStatus: init.status, data: await init.text(), message } }; // a body cut off: the catch below
     }
     await init.text();
     const session = init.headers.get('mcp-session-id');
@@ -186,7 +186,7 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
   } catch (err) {
     const message = `Could not read the tool list at ${endpoint}: ${err instanceof Error ? err.message : String(err)}`;
     const timedOut = err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
-    return { kind: 'failure', message, failure: { reason: timedOut ? 'timeout' : 'network-error', message } };
+    return { kind: 'failure', message, failure: { reason: timedOut ? 'timeout' : networkFailureReason(err) ?? 'network-error', message } };
   }
 }
 

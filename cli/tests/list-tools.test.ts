@@ -78,6 +78,13 @@ describe('listTools', () => {
     expect(result.kind === 'failure' && classifyToolFailure(result.failure)).toEqual({ exitCode: 7, code: 'UNREACHABLE' });
   });
 
+  it('an error answer whose body is cut off is a dropped connection (exit 7), not the error status', async () => {
+    const dropped = new TypeError('terminated', { cause: Object.assign(new Error('other side closed'), { code: 'UND_ERR_SOCKET' }) });
+    const fetchImpl = vi.fn(async () => ({ ok: false, status: 500, text: async () => { throw dropped; } }) as unknown as Response);
+    const result = await listTools({ baseUrl: 'http://localhost:1', fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect(result.kind === 'failure' && classifyToolFailure(result.failure)).toEqual({ exitCode: 7, code: 'UNREACHABLE' });
+  });
+
   it('classifies an HTTP error answer by the shared table, like run-tool', async () => {
     const fetchImpl = vi.fn(async () => new Response('', { status: 401 }));
     const local = await listTools({ baseUrl: 'http://localhost:1', fetchImpl: fetchImpl as unknown as typeof fetch });
