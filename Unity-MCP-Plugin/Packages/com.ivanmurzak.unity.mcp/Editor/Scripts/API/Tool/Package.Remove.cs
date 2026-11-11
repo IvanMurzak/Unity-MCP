@@ -31,7 +31,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             DestructiveHint = true,
             IdempotentHint = true,
             OpenWorldHint = false,
-            Visible = false
+            Visible = true
         )]
         [AiSkillDescription("Uninstall a UPM package from the Unity project. Modifies `manifest.json` and may " +
             "trigger a domain reload — the final result is delivered after the reload via the request's `requestId`. " +

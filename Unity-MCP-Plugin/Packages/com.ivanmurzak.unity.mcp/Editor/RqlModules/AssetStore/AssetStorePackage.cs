@@ -110,6 +110,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         public AssetStoreImportResult Import(bool allowProjectSettings = false)
             => AssetStorePackageImporter.Import(name, RequireFile(), allowProjectSettings);
 
+        /// <summary>The import for the assetstore-add tool: its "see it arrived" hint names the tool, not RQL.</summary>
+        internal AssetStoreImportResult Import(bool allowProjectSettings, string checkHint)
+            => AssetStorePackageImporter.Import(name, RequireFile(), allowProjectSettings, checkHint);
+
         // Call validator (RQL runs it before the call, on dry runs too).
         public string? ValidateImport(bool allowProjectSettings = false)
             => AssetStorePackageImporter.Rejection(() => AssetStorePackageImporter.Check(RequireFile(), allowProjectSettings));

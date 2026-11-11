@@ -318,6 +318,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
             Assert.IsFalse(r.Ok, Table(r));
             StringAssert.Contains("no file", Table(r));
         }
+
+        [Test]
+        public void ImportedIgnoresTheDependencyManifestAPackageCarries()
+        {
+            // Unity merges a package's Packages/manifest.json into the project's instead of importing it as an asset.
+            var file = AddToCache("Test Rocks", TestPackages.Package(("Packages/manifest.json", "{}")));
+            Assert.IsFalse(AssetStorePackageImporter.IsImported(file), "no Assets/ files: nothing to have arrived");
+            var withAsset = AddToCache("Test Stones", TestPackages.Package(("Packages/manifest.json", "{}"), ("Assets/RqlAssetStoreTests/a.txt", "x")));
+            Assert.IsFalse(AssetStorePackageImporter.IsImported(withAsset), "the asset is not in the project yet");
+        }
+
+        [Test]
+        public void LibraryToolFiltersByEveryWordAndSaysWhatIsImportable()
+        {
+            AddToCache("Low Poly Trees", TestPackages.Package(("Assets/RqlAssetStoreTests/t.txt", "t")));
+            AddToCache("Low Poly Rocks", TestPackages.Package(("Assets/RqlAssetStoreTests/r.txt", "r")));
+            var result = new Tool_AssetStore().Library("poly tree");
+            Assert.IsFalse(result.SignedIn);
+            StringAssert.Contains("SignIn()", result.AccountError);
+            Assert.AreEqual(1, result.Total);
+            Assert.AreEqual("Low Poly Trees", result.Packages[0].Name);
+            Assert.IsTrue(result.Packages[0].Downloaded);
+            Assert.IsFalse(result.Packages[0].Imported);
+            Assert.AreEqual(2, new Tool_AssetStore().Library("publisher").Total, "the publisher matches too");
+        }
+
+        [Test]
+        public void AddToolImportsByNameAndPointsBackToTheLibraryTool()
+        {
+            AssetStorePackageImporter.AsksBeforeImport = () => true;
+            AddToCache("Test Rocks", TestPackages.Package(("Assets/RqlAssetStoreTests", null), ("Assets/RqlAssetStoreTests/a.txt", "hello")));
+            var result = new Tool_AssetStore().Add("test rocks");
+            Assert.AreEqual(AssetStorePackageImporter.AwaitingUser, result.status);
+            StringAssert.Contains(Tool_AssetStore.LibraryToolId, result.next);
+            StringAssert.DoesNotContain("assetStore |", result.next, "the tool's agent may not know the RQL source");
+            StringAssert.Contains("never import the package another way", result.next);
+        }
+
+        [Test]
+        public void AddToolRefusesAnUnknownPackage()
+        {
+            var e = Assert.Throws<ArgumentException>(() => new Tool_AssetStore().Add("No Such Pack"));
+            StringAssert.Contains(Tool_AssetStore.LibraryToolId, e!.Message);
+        }
     }
 
     /// <summary>

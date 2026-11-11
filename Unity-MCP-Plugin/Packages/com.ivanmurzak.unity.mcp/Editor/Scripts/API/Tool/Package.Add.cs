@@ -30,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             DestructiveHint = true,
             IdempotentHint = false,
             OpenWorldHint = true,
-            Visible = false
+            Visible = true
         )]
         [AiSkillDescription("Install a Unity package from the registry, a Git URL, or a local path. " +
             "Modifies `manifest.json` and triggers package resolution; may also trigger a domain reload — the final " +

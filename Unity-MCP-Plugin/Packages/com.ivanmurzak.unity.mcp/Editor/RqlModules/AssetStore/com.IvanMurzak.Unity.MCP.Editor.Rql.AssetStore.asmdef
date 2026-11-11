@@ -11,6 +11,9 @@
     "allowUnsafeCode": false,
     "overrideReferences": true,
     "precompiledReferences": [
+        "McpPlugin.Common.dll",
+        "McpPlugin.dll",
+        "ReflectorNet.dll",
         "System.Text.Json.dll",
         "Rql.Contracts.dll",
         "Rql.Parser.dll",

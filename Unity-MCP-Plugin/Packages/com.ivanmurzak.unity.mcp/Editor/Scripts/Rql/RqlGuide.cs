@@ -190,6 +190,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "dry_run=true mutation or a read-only snippet), show them and end your turn; delete only that list, in a separate call, " +
             "after the user confirms. Otherwise never find and delete candidates in the same turn.";
 
+        /// <summary>
+        /// Packages go through their tools (measured 2026-11-11: agents that installed them from script-execute took 2-40x the
+        /// tokens, and one unpacked an Asset Store package by hand after the user cancelled Unity's signature check).
+        /// </summary>
+        public const string PackagesRule =
+            "Install Unity packages with package-search / package-add and Asset Store packages with assetstore-library / " +
+            "assetstore-add, not with code here: never call Client.Add, AssetDatabase.ImportPackage or unpack a .unitypackage " +
+            "yourself. Unity's 'Missing signature' window is the user's to answer; if they cancel, stop.";
+
         /// <summary>Unity sees a file changed on disk (by the agent or the user) only after a refresh (wave 7: batchmode never refreshes).</summary>
         public const string ExternalEditsRule =
             "After project files change outside the Editor (written to disk by you, a script or the user), run editor | call RefreshAssets() " +

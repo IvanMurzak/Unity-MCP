@@ -239,6 +239,14 @@ namespace com.IvanMurzak.Unity.MCP
                 => Math.Max(toolTimeoutMs > 0 ? toolTimeoutMs : Consts.Hub.DefaultToolTimeoutMs, timeoutMs);
 
             public List<McpFeature> Tools { get; set; } = new();
+
+            /// <summary>
+            /// The last tool-default change applied to <see cref="Tools"/> (<see cref="MigrateToolDefaults"/>). A tool's
+            /// visibility is saved when it is first seen, so a later change of its default reaches existing projects only
+            /// through this migration. 0 in a file saved before the field existed.
+            /// </summary>
+            public int ToolDefaultsRevision { get; set; }
+
             public List<McpFeature> Prompts { get; set; } = new();
             public List<McpFeature> Resources { get; set; } = new();
             public Dictionary<string, bool> SkillAutoGenerate { get; set; } = new();
@@ -314,6 +322,25 @@ namespace com.IvanMurzak.Unity.MCP
                 }
                 return false;
             }
+
+            /// <summary>
+            /// Revision 1 (2026-11): the Package Manager tools are shown by default. Measured with a real agent, hidden they
+            /// were never found (it installed packages from script-execute instead, at about 3x the tokens). Shows them once
+            /// in a project saved before; a user who hides them afterwards keeps them hidden. Returns true when the config
+            /// changed (the caller re-saves it).
+            /// </summary>
+            public bool MigrateToolDefaults()
+            {
+                if (ToolDefaultsRevision >= CurrentToolDefaultsRevision)
+                    return false;
+                foreach (var tool in Tools)
+                    if (tool.Name.StartsWith("package-", StringComparison.Ordinal))
+                        tool.Visible = true;
+                ToolDefaultsRevision = CurrentToolDefaultsRevision;
+                return true;
+            }
+
+            public const int CurrentToolDefaultsRevision = 1;
 
             /// <summary>
             /// One tool / prompt / resource entry of the config file: whether MCP clients see it listed

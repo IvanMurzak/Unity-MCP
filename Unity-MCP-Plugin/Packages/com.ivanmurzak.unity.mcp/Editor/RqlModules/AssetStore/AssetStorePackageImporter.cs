@@ -118,7 +118,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
 
         internal const string AwaitingUser = "awaiting-user";
 
-        public static AssetStoreImportResult Import(string packageName, string file, bool allowProjectSettings)
+        /// <summary>The agent's rule when the user is asked: the test agents worked around a Cancel (wave of 2026-11-11).</summary>
+        internal const string NoWorkaround =
+            " If the user presses Cancel, stop and tell them: never import the package another way (script-execute, " +
+            "AssetDatabase / AssetPackage calls, unpacking the .unitypackage file), that bypasses Unity's check and the user's choice.";
+
+        /// <summary>
+        /// Imports <paramref name="file"/>. <paramref name="checkHint"/> tells the agent how to see the import arrive when
+        /// it waits for the user (the RQL query by default; the tools pass their own call).
+        /// </summary>
+        public static AssetStoreImportResult Import(string packageName, string file, bool allowProjectSettings, string? checkHint = null)
         {
             Check(file, allowProjectSettings);
             var entries = UnityPackageArchive.ReadEntries(file);
@@ -133,9 +142,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                 var pending = Describe(packageName, assetFiles, replaced, AwaitingUser);
                 pending.next = "Unity checks the package's signature first and Asset Store packages have none: it shows " +
                     "\"Missing signature\" and waits for the user, and until they answer the Editor answers no tool call. Ask the user " +
-                    "to review it and press Import Anyway (or Cancel); the agent never presses Import Anyway. Then assetStore | get " +
-                    "packages | where name == \"" + packageName + "\" | select imported (or unity.asset(path) of a file listed here) " +
-                    "shows it arrived. Nobody at the Editor: unity-mcp-cli dialog --press Cancel closes the window, nothing is imported";
+                    "to review it and press Import Anyway (or Cancel); the agent never presses Import Anyway. Then " +
+                    (checkHint ?? "assetStore | get packages | where name == \"" + packageName + "\" | select imported (or unity.asset(path) of a file listed here)") +
+                    " shows it arrived. Nobody at the Editor: unity-mcp-cli dialog --press Cancel closes the window, nothing is imported." + NoWorkaround;
                 return pending;
             }
 
@@ -149,7 +158,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         /// <summary>Every file of the package is in the project (by GUID): its import arrived.</summary>
         public static bool IsImported(string file)
         {
-            var files = UnityPackageArchive.ReadEntries(file).Where(e => e.isFile).ToList();
+            // Only project assets: a package may also carry Packages/manifest.json (its dependencies), which Unity merges
+            // into the project's manifest instead of importing it as an asset, so its GUID never appears.
+            var files = UnityPackageArchive.ReadEntries(file)
+                .Where(e => e.isFile && e.path.StartsWith("Assets/", StringComparison.Ordinal))
+                .ToList();
             return files.Count > 0 && files.All(e => !string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(e.guid)) &&
                                                       File.Exists(AssetDatabase.GUIDToAssetPath(e.guid)));
         }
