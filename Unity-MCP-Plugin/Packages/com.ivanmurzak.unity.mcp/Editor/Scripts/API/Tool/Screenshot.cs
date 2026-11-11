@@ -43,15 +43,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         // in editors that do have a device.
         internal static volatile bool NoGraphicsDevice;
 
-        /// <summary>The editor runs headless (-batchmode): it never draws its editor windows.</summary>
-        internal static volatile bool BatchMode;
-
         [InitializeOnLoadMethod]
-        private static void ReadGraphicsDevice()
-        {
-            NoGraphicsDevice = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
-            BatchMode = Application.isBatchMode;
-        }
+        private static void ReadGraphicsDevice() => NoGraphicsDevice = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
 
         private static ResponseCallTool? NoGraphicsError() =>
             NoGraphicsDevice
@@ -61,15 +54,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 : null;
 
         /// <summary>
-        /// A headless editor never draws its editor windows: a Game View capture is black and a Scene View's camera is
-        /// never placed at its view, with no error from Unity either way. Say so instead of returning such an image.
+        /// Every pixel is black: nothing drew into the view (a Game View that no camera renders to, e.g. in an editor
+        /// started headless with no scene open), which Unity reports with no error. Main thread (reads the texture).
         /// </summary>
-        private static ResponseCallTool? HeadlessError(string toolId, string window) =>
-            BatchMode
-                ? ResponseCallTool.Error($"{toolId} needs a windowed Unity Editor: this one runs headless (-batchmode), " +
-                    $"which never draws the {window}. Use screenshot-camera (renders a scene camera, also headless), or " +
-                    "open the project with a window (`unity-mcp-cli close --owned-only`, then `unity-mcp-cli open`).")
-                : null;
+        internal static bool IsAllBlack(Texture2D texture)
+        {
+            foreach (var pixel in texture.GetPixels32())
+                if (pixel.r != 0 || pixel.g != 0 || pixel.b != 0)
+                    return false;
+            return true;
+        }
+
+        private static ResponseCallTool BlackFrameError(string toolId, string window) =>
+            ResponseCallTool.Error($"{toolId} read back an all-black image: nothing drew into the {window} (no camera " +
+                "renders to it, e.g. no scene is open). Open a scene with a camera (`editor | call OpenScene(...)`), or " +
+                "render a camera with screenshot-camera.");
 
         // On a cold shader cache (a new project, a fresh editor) the first capture of a URP scene came back as background only:
         // a render that compiles shader variants draws nothing, and so do further renders until the GPU work is read back.

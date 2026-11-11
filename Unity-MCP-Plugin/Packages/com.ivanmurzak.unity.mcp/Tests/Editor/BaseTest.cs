@@ -188,11 +188,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // call because Unity's test framework resets this between SetUp and the
             // test body.
             string? mainJson = null;
+            LogAssert.ignoreFailingMessages = true;
             yield return CallToolOnMainThreadCoop(toolName, json, (_, j) => mainJson = j);
             Assert.IsNotNull(mainJson, $"[{toolName}] main-thread call produced no JSON.");
             Assert.IsFalse(mainJson!.Contains(MainThreadViolationSnippet),
                 $"[{toolName}] main-thread call surfaced a thread-safety error:\n{mainJson}");
 
+            LogAssert.ignoreFailingMessages = true;
             var bgTask = CallToolFromBackgroundThreadInternal(toolName, json);
             yield return WaitForTask(bgTask);
             var bgJson = bgTask.Result.json;

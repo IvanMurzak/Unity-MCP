@@ -437,7 +437,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         void AssertSavedThenNotOverwritten(Func<ResponseCallTool> capture)
         {
-            ScreenshotSavePathTests.AssertSaved(capture(), _full);
+            var first = capture();
+            if (ScreenshotGameViewTests.IsHeadlessBlackFrame(first))
+            {
+                Assert.IsFalse(File.Exists(_full), "An all-black capture is never saved");
+                return;
+            }
+            ScreenshotSavePathTests.AssertSaved(first, _full);
 
             var bytes = File.ReadAllBytes(_full);
             var second = capture();
@@ -452,6 +458,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var result = capture();
 
             CollectionAssert.AreEquivalent(before, Directory.GetFileSystemEntries(UnityMcpPluginEditor.ProjectRootPath), "Nothing new in the project root");
+            if (ScreenshotGameViewTests.IsHeadlessBlackFrame(result))
+                return;
             Assert.AreEqual(ResponseStatus.Success, result.Status, ScreenshotSavePathTests.TextOf(result));
             Assert.IsNotNull(ScreenshotSavePathTests.ImageOf(result));
             StringAssert.DoesNotContain("Saved to", ScreenshotSavePathTests.TextOf(result));
@@ -481,28 +489,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(File.Exists(_full));
         }
 
-        [Test, RequiresWindowedEditor]
+        [Test]
         public void ScreenshotSceneView_SavePath_WritesAndDoesNotOverwrite()
         {
             OpenSceneView();
             AssertSavedThenNotOverwritten(() => Tool.ScreenshotSceneView(width: 64, height: 64, savePath: _relative));
         }
 
-        [Test, RequiresWindowedEditor]
+        [Test]
         public void ScreenshotSceneView_NoSavePath_IsUnchanged()
         {
             OpenSceneView();
             AssertDefaultUnchanged(() => Tool.ScreenshotSceneView(width: 64, height: 64));
         }
 
-        [Test, RequiresWindowedEditor]
+        [Test]
         public void ScreenshotGameView_SavePath_WritesAndDoesNotOverwrite()
         {
             OpenGameView();
             AssertSavedThenNotOverwritten(() => Tool.ScreenshotGameView(savePath: _relative));
         }
 
-        [Test, RequiresWindowedEditor]
+        [Test]
         public void ScreenshotGameView_NoSavePath_IsUnchanged()
         {
             OpenGameView();

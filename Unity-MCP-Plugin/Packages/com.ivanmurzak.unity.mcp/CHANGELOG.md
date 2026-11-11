@@ -168,9 +168,11 @@
 
 ### Fixed
 
-- `screenshot-game-view` and `screenshot-scene-view` in a headless (`-batchmode`) editor answer that they need a windowed
-  editor and point at `screenshot-camera`, instead of a black Game View image or a Scene View image from a camera that
-  was never placed at the view.
+- `screenshot-game-view` and `screenshot-scene-view` no longer return an all-black image: when nothing drew into the
+  view (a Game View no camera renders to, e.g. in an editor started headless with no scene open) they answer with an
+  error that names the cause and points at `screenshot-camera`. `screenshot-scene-view` places the Scene View's camera at
+  the view before rendering, so a Scene View that never drew (headless) no longer renders from wherever its camera was
+  created; with no Scene View open the error says how to get one.
 - `screenshot-game-view` with the Game View behind another tab (the default layout) brings it to the front and asks for
   one more call, instead of "ensure the Game View is visible".
 - **`script-execute`: a `Monitor.Pulse` in a snippet is no longer lost** (vendored Code-Exec 0.4.1). A `Pulse` /

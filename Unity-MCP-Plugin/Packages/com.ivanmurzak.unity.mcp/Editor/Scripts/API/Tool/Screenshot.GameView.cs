@@ -62,9 +62,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (NoGraphicsError() is { } noGraphics)
                 return noGraphics;
 
-            if (HeadlessError(ScreenshotGameViewToolId, "Game View") is { } headless)
-                return headless;
-
             return MainThread.Instance.Run(() =>
             {
                 var gameViewType = Type.GetType("UnityEditor.GameView,UnityEditor");
@@ -116,6 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 RenderTexture? scaledRt = null;
                 Texture2D? tex = null;
                 byte[]? pngBytes = null;
+                var black = false;
                 try
                 {
                     // When the Game View is within the limit (scale == 1) the read path is
@@ -147,7 +145,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
 
                     tex.Apply();
-                    pngBytes = tex.EncodeToPNG();
+                    black = IsAllBlack(tex);
+                    if (!black)
+                        pngBytes = tex.EncodeToPNG();
                 }
                 finally
                 {
@@ -157,6 +157,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (tex != null)
                         UnityEngine.Object.DestroyImmediate(tex);
                 }
+
+                if (black)
+                    return BlackFrameError(ScreenshotGameViewToolId, "Game View");
 
                 return CaptureResult(pngBytes!, $"Screenshot from Game View ({width}x{height})", saveTo);
             });
