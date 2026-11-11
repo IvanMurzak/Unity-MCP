@@ -826,7 +826,11 @@ unity-mcp-cli setup-mcp claude-code ./MyGame --no-pin
 
 ## `setup-skills`
 
-Generate skill files for an AI agent by calling the MCP server's system tool API. Requires Unity Editor to be running with the MCP plugin installed.
+Write skill files for an AI agent. Always, offline (no editor, no server): the `unity-mcp-cli` skill, how an agent
+uses this CLI from a cold start (the first editor command starts a headless editor; `rql` recipes; `compile` / `test`;
+`--format json`; exit codes and `dialog`), with `references/rql.md` and `references/install.md` for depth, plus
+`ai-game-dev-app`. The recipes come from the same source as `--help`, so the two cannot drift. Then, when the
+project's editor answers, it also asks the plugin for its per-tool skills; a closed editor is not an error.
 
 ```bash
 unity-mcp-cli setup-skills claude-code ./MyGame
@@ -839,6 +843,7 @@ unity-mcp-cli setup-skills claude-code ./MyGame
 | `--url <url>` | No | Server URL override |
 | `--token <token>` | No | Auth token override |
 | `--list` | No | List all agents with skills support status |
+| `--offline` | No | Only write the `unity-mcp-cli` skill; do not ask the editor |
 | `--timeout <ms>` | No | Request timeout in milliseconds (default: 60000) |
 
 **Example — list agents with skills support:**

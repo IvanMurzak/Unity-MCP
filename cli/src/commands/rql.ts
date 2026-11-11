@@ -6,7 +6,7 @@ import { runTool } from '../lib/run-tool.js';
 import { resolveAndValidateProjectPath } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { CommandOutput, FORMAT_OPTION_DESCRIPTION, parseFormat } from '../utils/output.js';
-import type { RqlRecipes } from '../utils/ui.js';
+import { RQL_LANGUAGE, RQL_RECIPES } from '../lib/cli-guide.js';
 import { parsePositiveIntFlag } from './open.js';
 import { runToolAction, type RunToolCall, type RunToolCliOptions } from './run-tool-builder.js';
 
@@ -16,19 +16,6 @@ interface RqlCliOptions extends Omit<RunToolCliOptions, 'input' | 'inputFile' | 
   dryRun?: boolean;
   maxTargets?: string;
 }
-
-/** The recipes `rql --help` shows; the root help shows the first ones. */
-export const RQL_RECIPES: RqlRecipes = [
-  ['editor | call OpenScene("Assets/Scenes/Forest.unity")', 'open a scene (writes no file): objects lists the OPEN scenes only'],
-  ['editor | call NewScene("Assets/Scenes/Cave.unity")', 'a new scene (camera + light), saved at that path, now open'],
-  ['editor | call CreateGameObject({name: "Ball", primitive: "Sphere", position: [1, 0.5, 0]})', 'create (meters, Y up)'],
-  ['objects | where name starts-with "Tree" | select name transform.position transform.localScale', 'read'],
-  ['objects | where name contains "Enemy" | count', 'count'],
-  ['objects | where name starts-with "Rock" | set transform.localScale = transform.localScale * 1.5', 'change (vectors compute per axis)'],
-  ['objects | get components | where $ is Light | set intensity = 2', 'components'],
-  ['objects | where name == "Old" | call Destroy()', 'delete'],
-  ['unity.assets("t:Material", "Assets/Materials") | select name shader.name', 'assets of a type under a folder'],
-];
 
 /** How `rql` calls a tool: as run-tool does. */
 const RQL_CALL: RunToolCall = {
@@ -44,8 +31,7 @@ const RQL_HELP_FOOTER = [
   'Recipes:',
   ...RQL_RECIPES.map(([query, what]) => `  ${query}  # ${what}`),
   '',
-  'Stages: where, select a b, sort x [desc], first N, count, get <member>, set a = expr, call Method(args).',
-  'Operators: == != < <= > >= and or not, contains, starts-with, ends-with, x in [a, b], $ is Light.',
+  ...RQL_LANGUAGE,
   'Quote the query with single quotes; strings inside it take double quotes (a shell that strips them: -f <file> or -f -).',
   'A set / call is saved to disk at once (the files written are listed) and its receipt lists every change, so a',
   'separate check is rarely needed. Sources, types and members: unity-mcp-cli rql --schema [Type]',
