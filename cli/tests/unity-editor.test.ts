@@ -4,12 +4,27 @@ import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
 import {
+  HUB_LAUNCH_ARGS,
+  editorLaunchArgs,
   getProjectEditorVersion,
   getSecondaryInstallPathFile,
   listEditorsByCommonLocations,
   readSecondaryInstallPaths,
   resolveEditorPath,
 } from '../src/utils/unity-editor.js';
+
+describe('editorLaunchArgs', () => {
+  it('opens the project through Unity Hub when it is installed: token-free flags only', () => {
+    const project = path.resolve('MyGame');
+    expect(editorLaunchArgs('MyGame', '/opt/unity-hub')).toEqual(['-projectPath', project, '-useHub', '-hubIPC']);
+    expect(HUB_LAUNCH_ARGS).toEqual(['-useHub', '-hubIPC']);
+    for (const arg of editorLaunchArgs('MyGame', '/opt/unity-hub')) expect(arg).not.toMatch(/token|session/i);
+  });
+
+  it('opens it directly without Unity Hub', () => {
+    expect(editorLaunchArgs('MyGame', null)).toEqual(['-projectPath', path.resolve('MyGame')]);
+  });
+});
 
 describe('resolveEditorPath', () => {
   describe('darwin', () => {
@@ -460,9 +475,10 @@ describe.skipIf(process.platform !== 'win32')('findEditorPath (secondaryInstallP
 // ---------------------------------------------------------------------------
 // findEditorPath — cache-poisoning fix (Windows-only host gate)
 // ---------------------------------------------------------------------------
-// When a caller asks for a version that is NOT installed and the resolver
-// falls back to the highest installed editor, the cache MUST NOT be written
-// under the requested-but-unmatched key. This was the secondary bug in #784.
+// When a caller asks for a version that is NOT installed, the resolver returns
+// null (never another editor: a newer one would upgrade the project behind a
+// modal dialog) and the cache MUST NOT be written under the requested key.
+// The cache part was the secondary bug in #784.
 //
 // Host-gated to win32 for the same reason as the sibling
 // `secondaryInstallPath fast path` block above: the redirected
@@ -474,7 +490,7 @@ describe.skipIf(process.platform !== 'win32')('findEditorPath (secondaryInstallP
 // mocked `listInstalledEditors` was consulted and the tests would pass for
 // the wrong reason (the fast path itself writes the cache).
 // ---------------------------------------------------------------------------
-describe.skipIf(process.platform !== 'win32')('findEditorPath (no cache write on unmatched-version fallback)', () => {
+describe.skipIf(process.platform !== 'win32')('findEditorPath (an unmatched version is not installed: null, no cache write)', () => {
   let tmpDir: string;
   let origHome: string | undefined;
   let origUserProfile: string | undefined;
@@ -514,7 +530,7 @@ describe.skipIf(process.platform !== 'win32')('findEditorPath (no cache write on
     vi.restoreAllMocks();
   });
 
-  it('does NOT cache the fallback resolution when requested version != resolved version', async () => {
+  it('returns null and caches nothing when the requested version is not installed', async () => {
     // Set up a fake "installed" editor that Unity Hub will return.
     const installedDir = path.join(tmpDir, 'installed', '2022.3.62f3');
     fs.mkdirSync(installedDir, { recursive: true });
@@ -540,12 +556,10 @@ describe.skipIf(process.platform !== 'win32')('findEditorPath (no cache write on
       '../src/utils/unity-editor.js'
     )) as typeof import('../src/utils/unity-editor.js');
 
-    // Ask for a version that is NOT in the installed list. Expect a
-    // best-effort fallback (the highest installed editor's path), but the
-    // cache MUST NOT learn the bogus key.
+    // Ask for a version that is NOT in the installed list: no other editor
+    // stands in for it, and the cache MUST NOT learn the bogus key.
     const result = await findEditorPath('999.0.0f0');
-    expect(result).not.toBeNull(); // fallback path returned
-    expect(result).toContain('2022.3.62f3'); // fell back to the installed editor
+    expect(result).toBeNull();
 
     // Verify the cache file does NOT contain the bogus requested key.
     const cacheFile = path.join(tmpDir, '.unity-mcp-cli-editor-cache.json');
@@ -690,5 +704,16 @@ describe('listEditorsByCommonLocations', () => {
 
   it('returns [] when no root exists', () => {
     expect(listEditorsByCommonLocations()).toEqual([]);
+  });
+});
+
+describe('suggestEditorVersion', () => {
+  it('suggests the smallest stable upgrade, never an alpha or beta', async () => {
+    const { suggestEditorVersion } = await import('../src/utils/unity-editor.js');
+    const installed = ['7000.0.0a11', '6000.6.7f1', '6000.6.3f1', '6000.3.1f1', '2022.3.62f3'];
+    expect(suggestEditorVersion('6000.5.0b10', installed)).toBe('6000.6.3f1');
+    expect(suggestEditorVersion('9000.0.0f1', installed)).toBe('6000.6.7f1'); // nothing newer: the newest stable
+    expect(suggestEditorVersion('6000.0.0f1', ['7000.0.0a11'])).toBe('7000.0.0a11'); // only a pre-release installed
+    expect(suggestEditorVersion('6000.0.0f1', [])).toBeUndefined();
   });
 });

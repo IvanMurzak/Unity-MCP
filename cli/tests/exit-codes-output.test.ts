@@ -7,7 +7,7 @@ import { CLI_PATH } from './helpers/cli.js';
 import { formatEnvelope } from '../src/utils/output.js';
 import { EXIT_CODE_DESCRIPTIONS, ExitCode } from '../src/utils/exit-codes.js';
 import { canStartEditor, classifyToolFailure } from '../src/commands/run-tool-builder.js';
-import { listEditorDialogs, parseDialogList, pressDialogScript, pressEditorDialogButton } from '../src/utils/editor-dialogs.js';
+import { listDialogsScript, listEditorDialogs, parseDialogList, pressDialogScript, pressEditorDialogButton } from '../src/utils/editor-dialogs.js';
 import type { RunToolFailure } from '../src/lib/types.js';
 
 /** Run the built CLI; stdout and stderr apart (the envelope must be alone on stdout). */
@@ -104,6 +104,18 @@ describe('editor dialogs', () => {
     expect(seen?.script).toContain('$env:UNITY_MCP_DIALOG_BUTTON');
     expect(seen?.env).toEqual({ UNITY_MCP_DIALOG_BUTTON: label });
     expect(pressDialogScript([5], 0n)).toContain('$env:UNITY_MCP_DIALOG_BUTTON');
+  });
+
+  it("lists Unity's own modal windows (UI Toolkit, e.g. Missing signature) and cancels them with Escape", () => {
+    const list = listDialogsScript([5]);
+    expect(list).toContain('UnityContainerWndClass');
+    expect(list).toContain('UnityCancel');
+    // Pressed with a posted Escape key (WM_KEYDOWN 0x0100, VK_ESCAPE 0x1B): no focus change, no mouse.
+    expect(pressDialogScript([5], 0n)).toMatch(/PostMessageW\(h, 0x0100, new IntPtr\(0x1B\)/);
+  });
+
+  it.runIf(process.platform === 'win32')('the Windows helper compiles and finds no dialog of a process without windows', async () => {
+    expect(await listEditorDialogs([999_999_999])).toEqual({ kind: 'ok', dialogs: [] });
   });
 
   it('rejects a non-numeric dialog id', async () => {

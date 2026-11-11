@@ -129,7 +129,8 @@ Shown to the AI agent by default: `rql-query`, `rql-mutate`, `rql-schema`, `scre
 - `script-update-or-create` - Updates or creates script file with the provided C# code (hidden by default)
 - `script-delete` - Delete the script file(s) (hidden by default)
 - `tests-run` - Execute Unity tests (EditMode/PlayMode): any RQL selection over the `tests` source as one run, results filtered with RQL
-- `package-list`, `package-search`, `package-add`, `package-remove` - Unity Package Manager packages (hidden by default)
+- `package-list`, `package-search`, `package-add`, `package-remove` - Unity Package Manager packages
+- `assetstore-library`, `assetstore-add` - Asset Store packages you own or downloaded: find one and import it (more through the RQL source `assetStore`)
 
 </details>
 

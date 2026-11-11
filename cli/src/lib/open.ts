@@ -39,6 +39,10 @@ import type {
  * Pure / no I/O — exported for tests and for the CLI command's own
  * use so the two paths can share resolution semantics.
  */
+
+/** The start of the warning `openProject` adds when `--unity` differs from the project's version (shown to the user). */
+export const VERSION_MISMATCH_WARNING = 'The project was saved with Unity';
+
 export function resolveProjectPath(
   optionPath: string | undefined,
   cwd: string,
@@ -239,9 +243,14 @@ export async function openProject(
       phase: 'detecting-editor-version',
       message: 'Detecting Unity Editor version',
     });
+    const projectVersion = getProjectEditorVersion(projectPath) ?? undefined;
     let version = options.unityVersion;
     if (!version) {
-      version = getProjectEditorVersion(projectPath) ?? undefined;
+      version = projectVersion;
+    } else if (projectVersion && version !== projectVersion && options.editorPath === undefined) {
+      // Asked on purpose: the windowed editor opens with Unity's upgrade / downgrade dialog, which waits for the user.
+      warnings.push(`${VERSION_MISMATCH_WARNING} ${projectVersion}; Unity ${version} asks to upgrade (or downgrade) it ` +
+        `before it opens: answer that dialog in the Editor (it changes the project's files).`);
     }
     resolvedVersion = version;
 
@@ -448,6 +457,12 @@ async function openHeadless(
   options: OpenProjectOptions,
   warnings: string[],
 ): Promise<OpenProjectResult> {
+  const projectVersion = getProjectEditorVersion(projectPath) ?? undefined;
+  if (options.unityVersion && projectVersion && options.unityVersion !== projectVersion && options.editorPath === undefined) {
+    // Batch mode shows no upgrade dialog: the editor converts the project's files without asking.
+    warnings.push(`${VERSION_MISMATCH_WARNING} ${projectVersion}; the headless Unity ${options.unityVersion} upgrades (or ` +
+      `downgrades) it without asking.`);
+  }
   // The idle timeout travels as AIGD_SESSION_IDLE_SECONDS (the session contract), not as UNITY_MCP_IDLE_TIMEOUT.
   const env = buildOpenEnv({ ...applyCloudModeDefaults(projectPath, options, warnings), idleTimeoutSeconds: undefined });
   emitProgress(options.onProgress, {

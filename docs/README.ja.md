@@ -129,7 +129,8 @@ unity-mcp-cli open ./MyUnityProject
 - `script-update-or-create` - 提供されたC#コードでスクリプトファイルを更新または作成（デフォルトで非表示）
 - `script-delete` - スクリプトファイルを削除（デフォルトで非表示）
 - `tests-run` - Unityテスト（EditMode/PlayMode）を実行：`tests` ソースに対する任意のRQL選択を1回の実行で、結果はRQLで絞り込み
-- `package-list`、`package-search`、`package-add`、`package-remove` - Unity Package Manager のパッケージ（デフォルトで非表示）
+- `package-list`、`package-search`、`package-add`、`package-remove` - Unity Package Manager のパッケージ
+- `assetstore-library`、`assetstore-add` - 所有またはダウンロード済みの Asset Store パッケージを検索してインポート（その他の操作は RQL ソース `assetStore`）
 
 </details>
 

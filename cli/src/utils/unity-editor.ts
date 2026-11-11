@@ -4,7 +4,6 @@ import { spawn } from 'child_process';
 import { homedir, platform } from 'os';
 import { findUnityHub, ensureUnityHub, listInstalledEditors, type InstalledEditor } from './unity-hub.js';
 import { readCachedEditorPath, writeCachedEditorPath } from './editor-cache.js';
-import * as ui from './ui.js';
 import { verbose } from './ui.js';
 
 /**
@@ -121,33 +120,39 @@ export async function findEditorPath(version?: string): Promise<string | null> {
     return fallback;
   }
 
+  // A requested version that is not installed is NEVER replaced by another editor: opening a project in a newer
+  // editor upgrades it (Unity blocks on a "Project Upgrade Required" dialog nobody answers) and in an older one
+  // downgrades it. The caller reports it as not installed, listing the installed editors. Only a version-less request
+  // takes the highest installed editor (cached under the auto key).
   if (version) {
     const match = editors.find((e) => e.version === version);
-    if (match) {
-      const resolved = getEditorBinary(match.path);
-      writeCachedEditorPath(version, resolved);
-      verbose(`findEditorPath matched requested version ${version} in ${Date.now() - startedAt}ms`);
-      return resolved;
+    if (!match) {
+      verbose(`findEditorPath: requested ${version} is not installed (installed: ${editors.map((e) => e.version).join(', ')})`);
+      return null;
     }
+    const resolved = getEditorBinary(match.path);
+    writeCachedEditorPath(version, resolved);
+    verbose(`findEditorPath matched requested version ${version} in ${Date.now() - startedAt}ms`);
+    return resolved;
   }
-
-  // Return the highest installed editor by version-aware sorting.
-  // Cache discipline: only write under the requested key when the
-  // resolved editor's version actually matches the request. Otherwise
-  // (e.g. the user asked for `999.0.0f0` which is not installed)
-  // we still return the highest installed editor as a best-effort
-  // fallback, but DO NOT cache it — caching would silently return the
-  // wrong editor for that version forever after (issue #784). The
-  // version-less `__auto__` slot is always safe to cache.
   const sorted = [...editors].sort((a, b) => compareUnityVersions(b.version, a.version));
   const resolved = getEditorBinary(sorted[0].path);
-  if (version === undefined || sorted[0].version === version) {
-    writeCachedEditorPath(version, resolved);
-  } else {
-    verbose(`findEditorPath skipping cache write: requested ${version} did not match resolved ${sorted[0].version}`);
-  }
+  writeCachedEditorPath(undefined, resolved);
   verbose(`findEditorPath selected highest installed version ${sorted[0].version} in ${Date.now() - startedAt}ms`);
   return resolved;
+}
+
+/**
+ * The installed editor to suggest for a project whose version `requested` is missing: the oldest stable (`f`)
+ * release newer than it (the smallest upgrade), else the newest stable one, else the newest of any kind. Undefined
+ * when nothing is installed.
+ */
+export function suggestEditorVersion(requested: string, installed: string[]): string | undefined {
+  const stable = installed.filter((v) => /\d+\.\d+\.\d+f\d+/.test(v));
+  const newerStable = stable.filter((v) => compareUnityVersions(v, requested) > 0).sort(compareUnityVersions);
+  if (newerStable.length > 0) return newerStable[0];
+  const newestFirst = (list: string[]) => [...list].sort((a, b) => compareUnityVersions(b, a))[0];
+  return newestFirst(stable) ?? newestFirst(installed);
 }
 
 /**
@@ -422,9 +427,20 @@ export interface LaunchEditorCallbacks {
   onError?: (err: Error) => void;
 }
 
-/** The editor's command-line arguments for opening `projectPath` (`launchEditor` and an `openProject` `spawnImpl`). */
-export function editorLaunchArgs(projectPath: string): string[] {
-  return ['-projectPath', path.resolve(projectPath)];
+/**
+ * What Unity Hub adds when it opens a project, minus its session arguments (`-hubSessionId`, `-accessToken`): the
+ * editor then connects to the Hub (starting it in the background, `--silent`, when it is not running) and takes the
+ * Unity account the Hub is signed in to. Without them a signed-out editor stays signed out, and its sign-in only offers
+ * "Install Unity Hub". Never a credential: the editor fetches its session from the Hub itself.
+ */
+export const HUB_LAUNCH_ARGS: readonly string[] = ['-useHub', '-hubIPC'];
+
+/**
+ * The editor's command-line arguments for opening `projectPath` in a window (`launchEditor` and an `openProject`
+ * `spawnImpl`): through Unity Hub (`HUB_LAUNCH_ARGS`) when the Hub is installed (`hubPath`, found by default).
+ */
+export function editorLaunchArgs(projectPath: string, hubPath: string | null = findUnityHub()): string[] {
+  return ['-projectPath', path.resolve(projectPath), ...(hubPath ? HUB_LAUNCH_ARGS : [])];
 }
 
 /** The editor's full environment: `process.env`, then `env` (the MCP variables). */
@@ -468,41 +484,4 @@ export function launchEditor(
 
   child.unref();
   return child;
-}
-
-/**
- * Print actionable help when a required Unity Editor version is not found.
- * Lists installed editors and suggests install or override commands.
- */
-export function printEditorNotFoundHelp(requestedVersion: string | undefined, commandName: string): void {
-  if (requestedVersion) {
-    ui.error(`Unity Editor ${requestedVersion} is not installed.`);
-  } else {
-    ui.error('No Unity Editor found.');
-  }
-
-  ui.heading('Options:');
-
-  if (requestedVersion) {
-    ui.info(`Install it:  npx unity-mcp-cli install-unity ${requestedVersion}`);
-  }
-  ui.info('Install latest stable:  npx unity-mcp-cli install-unity');
-
-  // Show installed editors as alternatives
-  const hubPath = findUnityHub();
-  if (hubPath) {
-    const editors = listInstalledEditors(hubPath);
-    if (editors.length > 0) {
-      ui.heading('Installed editors:');
-      for (const editor of editors) {
-        ui.label(editor.version, editor.path);
-      }
-      if (requestedVersion) {
-        const hint = commandName === 'connect'
-          ? `npx unity-mcp-cli ${commandName} --unity ${editors[0].version} --path <path> --url <url>`
-          : `npx unity-mcp-cli ${commandName} <path> --unity ${editors[0].version}`;
-        ui.info(`Use a different version:  ${hint}`);
-      }
-    }
-  }
 }

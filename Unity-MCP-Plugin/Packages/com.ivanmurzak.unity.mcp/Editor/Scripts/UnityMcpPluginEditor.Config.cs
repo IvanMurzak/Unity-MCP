@@ -120,6 +120,13 @@ namespace com.IvanMurzak.Unity.MCP
                     wasCreated = true;
                 }
 
+                if (config.MigrateToolDefaults())
+                {
+                    _logger.LogInformation("{method}: tool defaults updated to revision {revision} (Package Manager tools shown)",
+                        nameof(GetOrCreateConfig), UnityConnectionConfig.CurrentToolDefaultsRevision);
+                    wasCreated = true;
+                }
+
                 if (string.IsNullOrEmpty(config.LocalToken))
                 {
                     config.LocalToken = GenerateToken();

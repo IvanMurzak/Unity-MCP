@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             DestructiveHint = false,
             IdempotentHint = true,
             OpenWorldHint = true,
-            Visible = false
+            Visible = true
         )]
         [AiSkillDescription("Search Unity's package registry plus locally installed packages (Git, local, " +
             "embedded sources) by query string. Returns available versions and installation status. " +

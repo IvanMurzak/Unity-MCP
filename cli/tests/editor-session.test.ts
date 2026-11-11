@@ -53,6 +53,7 @@ function fakeWorld() {
     }),
     requestOsClose: vi.fn(() => false),
     findEditor: vi.fn(async () => '/opt/Unity/Editor/Unity'),
+    findHub: () => null,
     processOps,
     fetchImpl,
   };
@@ -121,6 +122,20 @@ describe('createUnitySession', () => {
     await createUnitySession({ projectPath: project, urls: [LOCAL], deps }).ensure({ mode: 'window' });
     expect(world.spawned[0].args).toEqual(['-projectPath', path.resolve(project)]);
     expect(world.spawned[0].hideWindow).toBe(false);
+  });
+
+  it('opens a window through Unity Hub when the Hub is installed', async () => {
+    const { world, deps } = fakeWorld();
+    const withHub = { ...deps, findHub: () => '/opt/UnityHub/unityhub' };
+    await createUnitySession({ projectPath: project, urls: [LOCAL], deps: withHub }).ensure({ mode: 'window' });
+    expect(world.spawned[0].args).toEqual(['-projectPath', path.resolve(project), '-useHub', '-hubIPC']);
+  });
+
+  it('starts a headless editor without the Unity Hub arguments', async () => {
+    const { world, deps } = fakeWorld();
+    const withHub = { ...deps, findHub: () => '/opt/UnityHub/unityhub' };
+    await createUnitySession({ projectPath: project, urls: [LOCAL], deps: withHub }).ensure({ mode: 'headless' });
+    expect(world.spawned[0].args).toEqual(['-batchmode', '-projectPath', path.resolve(project)]);
   });
 
   it('waits for a running editor that is not ready yet instead of starting a second one', async () => {

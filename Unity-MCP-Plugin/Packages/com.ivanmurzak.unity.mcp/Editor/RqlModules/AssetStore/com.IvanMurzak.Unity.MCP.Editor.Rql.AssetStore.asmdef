@@ -1,0 +1,30 @@
+{
+    "name": "com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore",
+    "rootNamespace": "",
+    "references": [
+        "com.IvanMurzak.Unity.MCP.Editor"
+    ],
+    "includePlatforms": [
+        "Editor"
+    ],
+    "excludePlatforms": [],
+    "allowUnsafeCode": false,
+    "overrideReferences": true,
+    "precompiledReferences": [
+        "McpPlugin.Common.dll",
+        "McpPlugin.dll",
+        "ReflectorNet.dll",
+        "System.Text.Json.dll",
+        "Rql.Contracts.dll",
+        "Rql.Parser.dll",
+        "Rql.Execution.dll"
+    ],
+    "autoReferenced": true,
+    "defineConstraints": [
+        "UNITY_MCP_READY",
+        "UNITY_MCP_DEPS_42",
+        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"
+    ],
+    "versionDefines": [],
+    "noEngineReferences": false
+}

@@ -2,12 +2,14 @@ import { Command } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as path from 'path';
 import { findUnityHub, listInstalledEditors } from '../utils/unity-hub.js';
+import { suggestEditorVersion } from '../utils/unity-editor.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import * as ui from '../utils/ui.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import { verbose } from '../utils/ui.js';
 import {
   openProject,
+  VERSION_MISMATCH_WARNING,
   resolveProjectPath as libResolveProjectPath,
   isUnityProjectDir as libIsUnityProjectDir,
 } from '../lib/open.js';
@@ -108,10 +110,12 @@ function printEditorNotFoundHelp(requestedVersion: string | undefined, commandNa
         ui.label(editor.version, editor.path);
       }
       if (requestedVersion) {
+        const suggested = suggestEditorVersion(requestedVersion, editors.map((e) => e.version)) ?? editors[0].version;
         const hint = commandName === 'connect'
-          ? `npx unity-mcp-cli ${commandName} --unity ${editors[0].version} --path <path> --url <url>`
-          : `npx unity-mcp-cli ${commandName} <path> --unity ${editors[0].version}`;
+          ? `npx unity-mcp-cli ${commandName} --unity ${suggested} --path <path> --url <url>`
+          : `npx unity-mcp-cli ${commandName} <path> --unity ${suggested}`;
         ui.info(`Use a different version:  ${hint}`);
+        ui.info(`  (Unity then asks to upgrade or downgrade the project, which changes its files)`);
       }
     }
   }
@@ -367,7 +371,8 @@ export const openCommand = new Command('open')
         result.errorMessage.startsWith('Unity Editor') &&
         result.errorMessage.endsWith('is not installed.')
       ) {
-        printEditorNotFoundHelp(options.unity, 'open');
+        // The version may come from ProjectVersion.txt, not --unity.
+        printEditorNotFoundHelp(result.unityVersion ?? options.unity, 'open');
       } else if (result.errorMessage === 'No Unity Editor found.') {
         printEditorNotFoundHelp(undefined, 'open');
       } else {
@@ -385,7 +390,11 @@ export const openCommand = new Command('open')
       process.exit(0);
     }
 
-    for (const warning of result.warnings) verbose(warning);
+    // The version-mismatch warning needs the user's action in the Editor: always shown. The rest are diagnostics.
+    for (const warning of result.warnings) {
+      if (warning.startsWith(VERSION_MISMATCH_WARNING)) ui.warn(warning);
+      else verbose(warning);
+    }
     if (result.baseUrl) ui.success(`MCP server is ready at ${result.baseUrl}`);
 
     // Path is normally absolute already; resolve defensively for

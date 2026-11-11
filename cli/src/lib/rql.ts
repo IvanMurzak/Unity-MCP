@@ -36,6 +36,21 @@ export function rqlToolCall(query: string | undefined, options: RqlCallOptions):
   return { toolName: RQL_MUTATE_TOOL, input: { query, ...(dryRun ? { dry_run: true } : {}), ...(maxTargets !== undefined ? { max_targets: maxTargets } : {}) } };
 }
 
+/** `unity-account`: the Unity account the editor is signed in to (the plugin's `assetStore` source). */
+export const UNITY_ACCOUNT_QUERY = 'assetStore | select signedIn userName';
+/** `unity-account --sign-in`: opens Unity's sign-in in the editor; the user completes it there. */
+export const UNITY_SIGN_IN_QUERY = 'assetStore | call SignIn()';
+/** The answer when the editor's plugin predates the Unity account support. */
+export const OLD_PLUGIN_ACCOUNT_HINT =
+  "this project's AI Game Developer plugin has no Unity account support (assetStore source) yet: update it with unity-mcp-cli update";
+
+/** The rql-* tool call of `unity-account`: read the account, or (`signIn`) open Unity's sign-in. */
+export function unityAccountToolCall(signIn: boolean): { toolName: string; input: { query: string } } {
+  return signIn
+    ? { toolName: RQL_MUTATE_TOOL, input: { query: UNITY_SIGN_IN_QUERY } }
+    : { toolName: RQL_QUERY_TOOL, input: { query: UNITY_ACCOUNT_QUERY } };
+}
+
 /** Operators agents bring from other languages, with RQL's spelling. */
 const OPERATOR_HINTS: ReadonlyArray<readonly [RegExp, string]> = [
   [/^startswith$/i, 'RQL spells it starts-with: where name starts-with "Tree"'],
@@ -53,6 +68,7 @@ const OPERATOR_HINTS: ReadonlyArray<readonly [RegExp, string]> = [
  */
 export function rqlErrorHint(toolName: string, message: string): string | undefined {
   if (!toolName.startsWith('rql-')) return undefined;
+  if (/unknown source 'assetStore'|unknown method 'SignIn' on AssetStoreEditorApi/.test(message)) return OLD_PLUGIN_ACCOUNT_HINT;
   const token = /unexpected '([^']+)'|unknown method '([^']+)'/.exec(message);
   const word = token?.[1] ?? token?.[2];
   if (word) {

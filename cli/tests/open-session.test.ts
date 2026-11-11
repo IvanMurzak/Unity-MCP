@@ -58,6 +58,13 @@ describe('openProject with editor sessions', () => {
     expect(events.map(e => e.phase)).toContain('editor-launched');
   });
 
+  it('headless: warns that another Unity version converts the project without asking', async () => {
+    const { factory } = fakeSession();
+    const result = await openProject({ projectPath: project, headless: true, unityVersion: '6000.0.30f1', sessionFactory: factory });
+    expect(result.kind === 'success' && result.warnings.some(w =>
+      w.startsWith('The project was saved with Unity 2022.3.62f3') && w.includes('without asking'))).toBe(true);
+  });
+
   it('headless without an idle timeout never quits by itself', async () => {
     const { factory } = fakeSession();
     await openProject({ projectPath: project, headless: true, sessionFactory: factory });

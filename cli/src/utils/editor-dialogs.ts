@@ -92,7 +92,9 @@ function isValidPid(pid: number): boolean {
 
 // The Win32 helper both scripts load. Standard dialogs (`#32770`: Unity's DisplayDialog, "Enter Safe Mode?", the save
 // prompt) are listed with their Static texts and Button labels; a button is pressed with BM_CLICK, which does not move
-// the mouse or steal focus.
+// the mouse or steal focus. Unity's own modal windows (UI Toolkit, e.g. "Missing signature" before a package import)
+// are a visible UnityContainerWndClass window while the editor's other window is disabled: their text and buttons are
+// drawn by Unity (no Win32 or UI Automation controls), so only "Cancel" is offered, sent as Escape (posted, no focus).
 const HELPER = `
 if (-not ([System.Management.Automation.PSTypeName]'UnityMcp.Dialogs.Finder').Type) {
   Add-Type -TypeDefinition @"
@@ -113,6 +115,9 @@ namespace UnityMcp.Dialogs {
     [DllImport("user32.dll")] static extern bool IsWindow(IntPtr h);
     [DllImport("user32.dll")] static extern int GetDlgCtrlID(IntPtr h);
     [DllImport("user32.dll")] static extern bool IsWindowEnabled(IntPtr h);
+    [DllImport("user32.dll")] static extern bool PostMessageW(IntPtr h, uint m, IntPtr w, IntPtr l);
+    const string UnityWindow = "UnityContainerWndClass";
+    public const string UnityCancel = "Cancel";
     static bool Closed(IntPtr h) {
       for (var i = 0; i < 20; i++) { if (!IsWindow(h) || !IsWindowVisible(h)) return true; System.Threading.Thread.Sleep(50); }
       return false;
@@ -131,12 +136,17 @@ namespace UnityMcp.Dialogs {
     public static List<IntPtr> Dialogs(int[] pids) {
       var set = new HashSet<uint>(); foreach (var p in pids) set.Add((uint)p);
       var found = new List<IntPtr>();
+      var unity = new List<KeyValuePair<uint, IntPtr>>(); var blocked = new HashSet<uint>();
       EnumWindows((h, l) => {
         if (!IsWindowVisible(h)) return true;
         uint pid; GetWindowThreadProcessId(h, out pid);
-        if (set.Contains(pid) && Cls(h) == "#32770") found.Add(h);
+        if (!set.Contains(pid)) return true;
+        var cls = Cls(h);
+        if (cls == "#32770") found.Add(h);
+        else if (cls == UnityWindow) { if (IsWindowEnabled(h)) unity.Add(new KeyValuePair<uint, IntPtr>(pid, h)); else blocked.Add(pid); }
         return true;
       }, IntPtr.Zero);
+      foreach (var w in unity) if (blocked.Contains(w.Key)) found.Add(w.Value);
       return found;
     }
     public static string List(int[] pids) {
@@ -144,7 +154,10 @@ namespace UnityMcp.Dialogs {
       foreach (var h in Dialogs(pids)) {
         uint pid; GetWindowThreadProcessId(h, out pid);
         var texts = new List<string>(); var buttons = new List<string>();
-        EnumChildWindows(h, (c, l) => {
+        if (Cls(h) == UnityWindow) {
+          texts.Add("A Unity window: its text and buttons are drawn by Unity; only Cancel (Escape) can be pressed from outside, answer anything else in the editor.");
+          buttons.Add("\\"" + UnityCancel + "\\"");
+        } else EnumChildWindows(h, (c, l) => {
           if (!IsWindowVisible(c)) return true;
           var cls = Cls(c); var t = Text(c);
           if (t.Length == 0) return true;
@@ -159,6 +172,12 @@ namespace UnityMcp.Dialogs {
     public static string Press(int[] pids, long id, string label) {
       foreach (var h in Dialogs(pids)) {
         if (id != 0 && h.ToInt64() != id) continue;
+        if (Cls(h) == UnityWindow) {
+          if (!string.Equals(label, UnityCancel, StringComparison.OrdinalIgnoreCase)) continue;
+          PostMessageW(h, 0x0100, new IntPtr(0x1B), new IntPtr(0x00010001));
+          PostMessageW(h, 0x0101, new IntPtr(0x1B), new IntPtr(unchecked((int)0xC0010001)));
+          return Closed(h) ? "pressed" : "still-open";
+        }
         IntPtr match = IntPtr.Zero;
         EnumChildWindows(h, (c, l) => {
           if (Cls(c) == "Button" && string.Equals(Text(c).Replace("&", ""), label, StringComparison.OrdinalIgnoreCase)) { match = c; return false; }

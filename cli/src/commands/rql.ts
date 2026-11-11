@@ -18,7 +18,7 @@ interface RqlCliOptions extends Omit<RunToolCliOptions, 'input' | 'inputFile' | 
 }
 
 /** How `rql` calls a tool: as run-tool does. */
-const RQL_CALL: RunToolCall = {
+export const RQL_CALL: RunToolCall = {
   name: 'rql',
   routePrefix: '/api/tools',
   verboseLabel: 'Tool',
