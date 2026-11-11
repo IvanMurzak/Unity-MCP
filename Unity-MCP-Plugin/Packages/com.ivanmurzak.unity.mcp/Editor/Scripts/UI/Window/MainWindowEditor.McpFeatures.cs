@@ -170,6 +170,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         DateTime.UtcNow);
                     return;
                 }
+                using (com.IvanMurzak.Unity.MCP.Runtime.Utils.UnityMainThread.WaitThroughModalWindows()) // the Editor's own work, not an MCP call
                 MainThread.Instance.Run(() =>
                 {
                     // Second check: close the TOCTOU window between the thread-pool check above

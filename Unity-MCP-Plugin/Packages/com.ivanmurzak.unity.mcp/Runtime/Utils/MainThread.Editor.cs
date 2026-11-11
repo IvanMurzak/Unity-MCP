@@ -104,10 +104,34 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         static Task<T> Dispatch<T>(Func<T> body)
         {
             var item = new WorkItem<T>(body);
-            _waiting.TryAdd(item, 0);
+            if (!_waitThroughModalWindows.Value)
+            {
+                _waiting.TryAdd(item, 0);
+                EnsureWatchdog();
+            }
             _pending.Enqueue(item.Execute);
-            EnsureWatchdog();
             return item.Task;
+        }
+
+        static readonly AsyncLocal<bool> _waitThroughModalWindows = new AsyncLocal<bool>();
+
+        /// <summary>
+        /// Until disposed, main-thread work posted from this flow is exempt from the modal-window watchdog: it waits
+        /// for the window to be answered, as before. For the Editor's own (non-MCP-call) code, e.g. a dialog it opens
+        /// itself through <see cref="MainThread.Run{T}(Func{T})"/>, or a UI update that must not be dropped.
+        /// </summary>
+        public static IDisposable WaitThroughModalWindows()
+        {
+            var previous = _waitThroughModalWindows.Value;
+            _waitThroughModalWindows.Value = true;
+            return new ModalExemption(previous);
+        }
+
+        sealed class ModalExemption : IDisposable
+        {
+            readonly bool _previous;
+            public ModalExemption(bool previous) => _previous = previous;
+            public void Dispose() => _waitThroughModalWindows.Value = _previous;
         }
 
         #region Modal-window watchdog
@@ -148,11 +172,14 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         }
 
         /// <summary>Fails the waiting work older than <see cref="GraceSeconds"/> when a modal window blocks the main thread.</summary>
-        internal static void CheckWaiting()
+        static void CheckWaiting()
         {
             try
             {
-                var stale = _waiting.Keys.Where(item => item.Age.TotalSeconds >= GraceSeconds).ToList();
+                if (_waiting.IsEmpty)
+                    return;
+                // The lock-free enumerator: Keys would take every bucket lock against the Dispatch hot path.
+                var stale = _waiting.Where(entry => entry.Key.AgeSeconds >= GraceSeconds).Select(entry => entry.Key).ToList();
                 if (stale.Count == 0)
                     return;
                 var window = FindBlockingWindow();
@@ -169,7 +196,7 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
         interface IWorkItem
         {
-            TimeSpan Age { get; }
+            double AgeSeconds { get; }
             void FailBlocked(EditorModalWindow window);
         }
 
@@ -179,13 +206,13 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
             readonly Func<T> _body;
             readonly TaskCompletionSource<T> _tcs = new TaskCompletionSource<T>();
-            readonly Stopwatch _age = Stopwatch.StartNew();
+            readonly long _startTimestamp = Stopwatch.GetTimestamp();
             int _state = Queued;
 
             public WorkItem(Func<T> body) => _body = body;
 
             public Task<T> Task => _tcs.Task;
-            public TimeSpan Age => _age.Elapsed;
+            public double AgeSeconds => (double)(Stopwatch.GetTimestamp() - _startTimestamp) / Stopwatch.Frequency;
 
             public void Execute()
             {
@@ -199,9 +226,10 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
             public void FailBlocked(EditorModalWindow window)
             {
-                var notStarted = Interlocked.CompareExchange(ref _state, Abandoned, Queued) == Queued;
+                var started = Interlocked.CompareExchange(ref _state, Abandoned, Queued) != Queued;
                 _waiting.TryRemove(this, out _);
-                _tcs.TrySetException(new ToolUnavailableException(window.BlockedCallMessage(started: !notStarted)));
+                // notExecuted stays false: a not-executed failure is re-sent by the server for its reconnect wait.
+                _tcs.TrySetException(new ToolUnavailableException(window.BlockedCallMessage(started)));
             }
         }
 

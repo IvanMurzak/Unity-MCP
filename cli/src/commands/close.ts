@@ -7,8 +7,8 @@ import { verbose } from '../utils/ui.js';
 import { canonicalPath, findUnityProcess } from '../utils/unity-process.js';
 import { readSessionLease, type CloseOwnedResult } from '@baizor/gamedev-cli-core';
 import { createProjectSession } from '../lib/editor-session.js';
-import { describeDialog, findBlockingDialogs } from '../utils/awaiting-input.js';
-import type { EditorDialog } from '../utils/editor-dialogs.js';
+import { awaitingInputError, isBatchModeEditor } from '../utils/awaiting-input.js';
+import { listEditorDialogs, type EditorDialog } from '../utils/editor-dialogs.js';
 import { ExitCode } from '../utils/exit-codes.js';
 import {
   readLockfilePid,
@@ -38,7 +38,8 @@ export type ExitWaitResult =
 
 export interface ExitWaitDeps {
   isAlive: (pid: number) => boolean;
-  findDialogs: () => Promise<EditorDialog[]>;
+  /** The editor's modal dialogs; omitted: no scan (with --force, which hard-kills at the timeout anyway). */
+  findDialogs?: () => Promise<EditorDialog[]>;
   sleep?: (ms: number) => Promise<void>;
   now?: () => number;
 }
@@ -53,27 +54,45 @@ export async function waitForExitOrDialog(pid: number, timeoutMs: number, deps: 
   const now = deps.now ?? Date.now;
   const start = now();
   const deadline = start + timeoutMs;
-  let nextScan = start + DIALOG_SCAN_DELAY_MS;
+  let lastScan = start - DIALOG_SCAN_INTERVAL_MS + DIALOG_SCAN_DELAY_MS;
+  // A dialog of an editor that exited meanwhile (it closed on the way out) is no reason to report one.
+  const scan = async (): Promise<EditorDialog[] | null> => {
+    lastScan = now();
+    const dialogs = await deps.findDialogs!();
+    return dialogs.length > 0 && deps.isAlive(pid) ? dialogs : null;
+  };
   while (now() < deadline) {
     if (!deps.isAlive(pid)) return { kind: 'exited' };
-    if (now() >= nextScan) {
-      const dialogs = await deps.findDialogs();
-      // A dialog that closed the editor on its way out is no reason to report one.
-      if (dialogs.length > 0 && deps.isAlive(pid)) return { kind: 'dialog', dialogs };
-      nextScan = now() + DIALOG_SCAN_INTERVAL_MS;
+    if (deps.findDialogs && now() - lastScan >= DIALOG_SCAN_INTERVAL_MS) {
+      const dialogs = await scan();
+      if (dialogs) return { kind: 'dialog', dialogs };
     }
     await sleep(250);
   }
   if (!deps.isAlive(pid)) return { kind: 'exited' };
-  const dialogs = await deps.findDialogs();
-  return dialogs.length > 0 && deps.isAlive(pid) ? { kind: 'dialog', dialogs } : { kind: 'timeout' };
+  // One more look unless a scan just ran: the dialog may have opened after the last one.
+  const dialogs = deps.findDialogs && now() - lastScan >= 1000 ? await scan() : null;
+  return dialogs ? { kind: 'dialog', dialogs } : { kind: 'timeout' };
+}
+
+/**
+ * The modal dialogs of editor `pid` (a project's editor): the process is known, so only the dialog list runs per
+ * scan. A `-batchmode` editor never shows one, so it is not scanned (checked once).
+ */
+function editorDialogScanner(projectPath: string, pid: number): () => Promise<EditorDialog[]> {
+  let batchMode: boolean | undefined;
+  return async () => {
+    batchMode ??= isBatchModeEditor(findUnityProcess(projectPath)?.commandLine ?? '');
+    if (batchMode) return [];
+    const listed = await listEditorDialogs([pid]);
+    return listed.kind === 'ok' ? listed.dialogs : [];
+  };
 }
 
 /** Why the editor did not quit: the dialog it waits on, and how to get past it. Exported for tests. */
 export function blockedByDialogMessage(pid: number, dialogs: EditorDialog[], force: boolean): string {
-  return `Unity Editor (PID ${pid}) did not quit: it is waiting on a modal dialog: ${dialogs.map(describeDialog).join('; ')}. ` +
-    'Answer it in the editor, or with `unity-mcp-cli dialog --press <button>`' +
-    (force ? '.' : ', or re-run with --force to hard-kill (unsaved changes are lost).');
+  return `Unity Editor (PID ${pid}) did not quit. ${awaitingInputError(dialogs).message}` +
+    (force ? '' : ' Or re-run with --force to hard-kill (unsaved changes are lost).');
 }
 
 /**
@@ -193,7 +212,7 @@ async function closeOwnedEditor(
     process.exit(0);
   }
   if (result.kind === 'still-running') {
-    const dialogs = await findBlockingDialogs(projectPath);
+    const dialogs = await editorDialogScanner(projectPath, result.pid)();
     if (dialogs.length > 0) {
       spinner.error(blockedByDialogMessage(result.pid, dialogs, force));
       process.exit(ExitCode.AwaitingInput);
@@ -278,13 +297,11 @@ export const closeCommand = new Command('close')
 
     spinner.text = `Waiting up to ${timeoutSeconds}s for PID ${pid} to exit...`;
     const timeoutMs = timeoutSeconds * 1000;
-    const waited = options.force
+    const waited = await waitForExitOrDialog(pid, timeoutMs, {
+      isAlive: p => isProcessAlive(p, platform),
       // --force hard-kills at the timeout anyway; a person may still answer a dialog until then.
-      ? ((await waitForExit(pid, timeoutMs, platform)) ? { kind: 'exited' as const } : { kind: 'timeout' as const })
-      : await waitForExitOrDialog(pid, timeoutMs, {
-        isAlive: p => isProcessAlive(p, platform),
-        findDialogs: () => findBlockingDialogs(projectPath),
-      });
+      findDialogs: options.force ? undefined : editorDialogScanner(projectPath, pid),
+    });
 
     if (waited.kind === 'exited') {
       spinner.success(`Unity Editor (PID ${pid}) exited cleanly`);

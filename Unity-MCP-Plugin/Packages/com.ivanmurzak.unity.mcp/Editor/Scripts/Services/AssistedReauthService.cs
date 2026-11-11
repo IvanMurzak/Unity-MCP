@@ -78,6 +78,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
     /// </summary>
     public static class AssistedReauthService
     {
+        /// <summary>Runs <paramref name="work"/> on the main thread, waiting through a modal window (the Editor's own work, not an MCP call).</summary>
+        static T RunWaitingThroughModalWindows<T>(Func<T> work)
+        {
+            using (UnityMainThread.WaitThroughModalWindows())
+                return MainThread.Instance.Run(work);
+        }
+
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(AssistedReauthService));
         static readonly object _gate = new object();
 
@@ -169,6 +176,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             // Fires from the provider's refresh path — possibly on a thread-pool thread and while
             // the provider's internal gate is held. Never call back into the provider synchronously
             // here; SessionState and the editor APIs are main-thread-only anyway.
+            using (UnityMainThread.WaitThroughModalWindows()) // the Editor's own work, not an MCP call
             MainThread.Instance.RunAsync(() => HandleVerdictOnMainThread());
         }
 
@@ -434,7 +442,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
                     onStatus: status => SetStatus(status), // plain field + event — no marshalling needed
                     // The commit runs ConfigureAwait(false), so this callback may fire on a
                     // background thread — the modal dialog must run on the editor main thread.
-                    confirmAccountSwitch: displaced => MainThread.Instance.Run(() => EditorUtility.DisplayDialog(
+                    // The dialog it opens holds the main thread: it must not be failed by the modal-window watchdog.
+                    confirmAccountSwitch: displaced => RunWaitingThroughModalWindows(() => EditorUtility.DisplayDialog(
                         "Switch account on this machine?",
                         "This machine is already signed in to a different AI Game Dev account.\n\n"
                         + "Continuing signs the other account out of every tool on this machine (engine plugins, CLIs, and the desktop app) and replaces it with the account you just authorized.",
@@ -460,6 +469,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             if (commit.Status != LoginCommitStatus.FullyCommitted)
                 return AssistedReauthOutcome.CommitFailed;
 
+            using (UnityMainThread.WaitThroughModalWindows()) // the Editor's own work, not an MCP call
             await MainThread.Instance.RunAsync(() =>
             {
                 if (UnityMcpPluginEditor.ConnectionMode != ConnectionMode.Cloud)

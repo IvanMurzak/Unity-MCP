@@ -442,6 +442,13 @@ describe('waitForExitOrDialog', () => {
     expect(scans).toBeGreaterThan(1); // scanned while waiting, and once more at the deadline
   });
 
+  it('does not scan without findDialogs (--force)', async () => {
+    const clock = fakeClock();
+    const result = await waitForExitOrDialog(4242, 30_000, { ...clock, isAlive: () => true });
+    expect(result).toEqual({ kind: 'timeout' });
+    expect(clock.now()).toBeGreaterThanOrEqual(30_000);
+  });
+
   it('does not report a dialog of an editor that exited meanwhile', async () => {
     const clock = fakeClock();
     let alive = true;

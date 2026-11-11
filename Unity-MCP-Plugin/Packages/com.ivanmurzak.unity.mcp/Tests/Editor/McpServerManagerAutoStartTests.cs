@@ -161,20 +161,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
     }
 
-    /// <summary>The decision to start the local server again after it exited on its own, and the backoff between tries.</summary>
+    /// <summary>The backoff between restarts of a local server that exited on its own (its gates are <see cref="McpServerManager.ShouldRestartAfterUpdate"/>'s).</summary>
     public class McpServerManagerUnexpectedExitRestartTests
     {
-
-        [Test]
-        public void RestartAfterUnexpectedExit_CustomHttpKeepRunning_IsTrue()
-            => Assert.IsTrue(McpServerManager.ShouldRestartAfterUnexpectedExit(ConnectionMode.Custom, Consts.MCP.Server.TransportMethod.streamableHttp, keepServerRunning: true));
-
-        [TestCase(ConnectionMode.Cloud, Consts.MCP.Server.TransportMethod.streamableHttp, true)]   // the cloud server is not ours
-        [TestCase(ConnectionMode.Custom, Consts.MCP.Server.TransportMethod.stdio, true)]           // the agent owns a stdio server
-        [TestCase(ConnectionMode.Custom, Consts.MCP.Server.TransportMethod.streamableHttp, false)] // the user does not keep it running
-        public void RestartAfterUnexpectedExit_OtherwiseIsFalse(ConnectionMode mode, Consts.MCP.Server.TransportMethod transport, bool keepServerRunning)
-            => Assert.IsFalse(McpServerManager.ShouldRestartAfterUnexpectedExit(mode, transport, keepServerRunning));
-
         [TestCase(0, 1)]
         [TestCase(1, 2)]
         [TestCase(2, 4)]

@@ -1989,30 +1989,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         // editor was restarted. Now it starts the server again, with a growing delay so a server that dies right away
         // does not restart in a tight loop; the connection loop reconnects once it listens.
 
-        const double RestartMaxDelaySeconds = 60.0;
+        const int RestartMaxDelaySeconds = 60;
         // A server that ran this long before it died starts the backoff over.
         const double RestartBackoffResetSeconds = 60.0;
 
         static int _restartAttempt;
         static DateTime _lastStartUtc = DateTime.MinValue;
-        static bool _restartScheduled;
+        static DateTime? _restartDueUtc; // null: no restart scheduled
 
-        /// <summary>
-        /// True when this editor should start its local server again after it exited unexpectedly: the same gates
-        /// as the auto-start (Custom mode, not stdio, Keep Server Running). Pure, for EditMode tests.
-        /// </summary>
-        internal static bool ShouldRestartAfterUnexpectedExit(ConnectionMode mode, TransportMethod transport, bool keepServerRunning)
-            => IsAutoStartAllowedForMode(mode) && IsAutoStartAllowedForTransport(transport) && keepServerRunning;
+        /// <summary>The auto-start gates (Custom mode, not stdio, Keep Server Running) under the current settings.</summary>
+        static bool ShouldRunLocalServer()
+            => ShouldRestartAfterUpdate(UnityMcpPluginEditor.KeepServerRunning, UnityMcpPluginEditor.ConnectionMode, UnityMcpPluginEditor.TransportMethod);
 
         /// <summary>The wait before restart attempt <paramref name="attempt"/> (0-based): 1, 2, 4, ... seconds, at most a minute.</summary>
         internal static TimeSpan RestartDelay(int attempt)
-            => TimeSpan.FromSeconds(Math.Min(RestartMaxDelaySeconds, Math.Pow(2, Math.Max(0, Math.Min(attempt, 16)))));
+            => TimeSpan.FromSeconds(Math.Min(RestartMaxDelaySeconds, 1 << Math.Max(0, Math.Min(attempt, 6))));
 
         static void ScheduleRestartAfterUnexpectedExit()
         {
-            if (McpDisable.IsDisabled || _restartScheduled)
+            if (McpDisable.IsDisabled || _restartDueUtc != null)
                 return;
-            if (!ShouldRestartAfterUnexpectedExit(UnityMcpPluginEditor.ConnectionMode, UnityMcpPluginEditor.TransportMethod, UnityMcpPluginEditor.KeepServerRunning))
+            if (!ShouldRunLocalServer())
             {
                 _logger.LogWarning("The MCP server is not restarted: Keep Server Running is off, or the connection mode or transport does not use a server started by this Editor.");
                 return;
@@ -2023,22 +2020,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             var delay = RestartDelay(_restartAttempt++);
             _logger.LogWarning("Restarting the MCP server in {seconds:F0}s (attempt {attempt})", delay.TotalSeconds, _restartAttempt);
 
-            _restartScheduled = true;
-            var due = DateTime.UtcNow + delay;
-            void RestartWhenDue()
-            {
-                if (DateTime.UtcNow < due)
-                    return;
-                EditorApplication.update -= RestartWhenDue;
-                _restartScheduled = false;
-                // Anything that happened meanwhile wins: a manual start or stop, a setting change, a binary update.
-                if (_serverStatus.CurrentValue != McpServerStatus.Stopped
-                    || !ShouldRestartAfterUnexpectedExit(UnityMcpPluginEditor.ConnectionMode, UnityMcpPluginEditor.TransportMethod, UnityMcpPluginEditor.KeepServerRunning))
-                    return;
-                // Checks the port first: when another server took it meanwhile (External), nothing is started.
-                StartServerIfNeeded();
-            }
+            _restartDueUtc = DateTime.UtcNow + delay;
             EditorApplication.update += RestartWhenDue;
+        }
+
+        static void RestartWhenDue()
+        {
+            if (DateTime.UtcNow < _restartDueUtc)
+                return;
+            EditorApplication.update -= RestartWhenDue;
+            _restartDueUtc = null;
+            // Anything that happened meanwhile wins: a manual start or stop, a setting change, a binary update.
+            if (_serverStatus.CurrentValue != McpServerStatus.Stopped || !ShouldRunLocalServer())
+                return;
+            // Checks the port first: when another server took it meanwhile (External), nothing is started.
+            StartServerIfNeeded();
         }
 
         #endregion
