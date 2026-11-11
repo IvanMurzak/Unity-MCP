@@ -5,10 +5,13 @@ import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
 import { antigravityConfigPaths, createTempHome, type TempHome } from './helpers/temp-home.js';
+import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
 import { ROOT_RQL_RECIPES, RQL_RECIPES } from '../src/lib/cli-guide.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
+
+afterEach(removeTempDirs);
 
 function runCli(
   args: string[],
@@ -159,7 +162,7 @@ describe('CLI integration', () => {
     });
 
     it('fails when project path has no manifest.json', () => {
-      const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'empty-'));
+      const emptyDir = makeTempDir('empty-');
       const { stdout, exitCode } = runCli([
         'install-plugin',
         '--path', emptyDir,
@@ -169,7 +172,6 @@ describe('CLI integration', () => {
       // T5/B1: the helpful failure lists exactly what marker was checked for.
       expect(stdout.toLowerCase()).toContain('not a valid unity project');
       expect(stdout).toContain(path.join('Packages', 'manifest.json'));
-      fs.rmSync(emptyDir, { recursive: true, force: true });
     });
 
     it('installs plugin into a fresh manifest', () => {
@@ -216,14 +218,13 @@ describe('CLI integration', () => {
     });
 
     it('fails when project path has no manifest.json', () => {
-      const emptyDir = fs.mkdtempSync(path.join(os.tmpdir(), 'empty-'));
+      const emptyDir = makeTempDir('empty-');
       const { stdout, exitCode } = runCli([
         'remove-plugin',
         '--path', emptyDir,
       ]);
       expect(exitCode).toBe(1);
       expect(stdout).toContain('Not a valid Unity project');
-      fs.rmSync(emptyDir, { recursive: true, force: true });
     });
 
     it('removes plugin from manifest', () => {

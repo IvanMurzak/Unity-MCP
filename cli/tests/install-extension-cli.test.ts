@@ -2,8 +2,8 @@ import { describe, it, expect, afterEach } from 'vitest';
 import { execFileSync } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import { fileURLToPath } from 'url';
+import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
 
 // The CLI-surface half of `installExtension`'s coverage: the library tests drive the
 // function in-process, these drive the real `unity-mcp-cli install-extension` binary so
@@ -30,10 +30,8 @@ function runCli(args: string[], options?: { cwd?: string }): { stdout: string; e
   }
 }
 
-const tmpDirs: string[] = [];
 function mkUnityProject(): string {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-ext-cli-'));
-  tmpDirs.push(tmpDir);
+  const tmpDir = makeTempDir('unity-mcp-ext-cli-');
   fs.mkdirSync(path.join(tmpDir, 'Packages'), { recursive: true });
   fs.writeFileSync(
     path.join(tmpDir, 'Packages', 'manifest.json'),
@@ -49,12 +47,7 @@ function readManifest(projectPath: string): {
   return JSON.parse(fs.readFileSync(path.join(projectPath, 'Packages', 'manifest.json'), 'utf-8'));
 }
 
-afterEach(() => {
-  while (tmpDirs.length) {
-    const dir = tmpDirs.pop();
-    if (dir) fs.rmSync(dir, { recursive: true, force: true });
-  }
-});
+afterEach(removeTempDirs);
 
 describe('install-extension CLI — registration and help', () => {
   it('is registered on the root command', () => {
@@ -101,8 +94,7 @@ describe('install-extension CLI — registration and help', () => {
 describe('install-extension CLI — --list', () => {
   it('lists the shipped extensions without needing a project or the network', () => {
     // Run from a directory that is NOT a Unity project: --list must not require one.
-    const notAProject = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-ext-cli-none-'));
-    tmpDirs.push(notAProject);
+    const notAProject = makeTempDir('unity-mcp-ext-cli-none-');
 
     const { stdout, exitCode } = runCli(['install-extension', '--list'], { cwd: notAProject });
     expect(exitCode).toBe(0);
@@ -128,8 +120,7 @@ describe('install-extension CLI — failure exit codes', () => {
   });
 
   it('exits 1 when the target directory is not a Unity project', () => {
-    const notAProject = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-ext-cli-none-'));
-    tmpDirs.push(notAProject);
+    const notAProject = makeTempDir('unity-mcp-ext-cli-none-');
     const { exitCode } = runCli([
       'install-extension',
       'Tilemap',

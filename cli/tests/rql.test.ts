@@ -1,13 +1,10 @@
 import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
-import * as os from 'os';
 import * as path from 'path';
+import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
 import { assetsWrittenSince, decodeQueryFile, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlToolCall, saveReceipt, stripToolName } from '../src/lib/rql.js';
 
-const dirs: string[] = [];
-afterEach(() => {
-  for (const dir of dirs.splice(0)) fs.rmSync(dir, { recursive: true, force: true });
-});
+afterEach(removeTempDirs);
 
 describe('rql query routing', () => {
   it('splits stages only on top-level pipes', () => {
@@ -38,8 +35,7 @@ describe('rqlErrorHint', () => {
 
 describe('assetsWrittenSince', () => {
   it('lists the scene / asset files under Assets written since a time', () => {
-    const project = fs.mkdtempSync(path.join(os.tmpdir(), 'rql-unity-'));
-    dirs.push(project);
+    const project = makeTempDir('rql-unity-');
     const scenes = path.join(project, 'Assets', 'Scenes');
     fs.mkdirSync(scenes, { recursive: true });
     const old = path.join(scenes, 'Old.unity');

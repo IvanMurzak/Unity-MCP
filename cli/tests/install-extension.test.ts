@@ -1,16 +1,16 @@
 import { describe, it, expect, beforeEach, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import * as os from 'os';
 import { installExtension } from '../src/lib.js';
 import { EXTENSIONS_CATALOG, findExtension } from '../src/utils/extensions-catalog.js';
 import type { ExtensionDescriptor, ProgressEvent } from '../src/lib.js';
+import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
 
 const TILEMAP_ID = 'com.ivanmurzak.unity.mcp.tilemap';
 const REGISTRY_NAME = 'package.openupm.com';
 
 function mkUnityProject(manifest: unknown = { dependencies: {} }): string {
-  const tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-ext-test-'));
+  const tmpDir = makeTempDir('unity-mcp-ext-test-');
   fs.mkdirSync(path.join(tmpDir, 'Packages'), { recursive: true });
   fs.writeFileSync(
     path.join(tmpDir, 'Packages', 'manifest.json'),
@@ -37,22 +37,13 @@ function stubOpenUpm(latest: string): ReturnType<typeof vi.fn> {
   return fetchMock;
 }
 
-const tmpDirs: string[] = [];
-function track(dir: string): string {
-  tmpDirs.push(dir);
-  return dir;
-}
-
 beforeEach(() => {
   vi.unstubAllGlobals();
 });
 
 afterEach(() => {
   vi.unstubAllGlobals();
-  while (tmpDirs.length) {
-    const dir = tmpDirs.pop();
-    if (dir) fs.rmSync(dir, { recursive: true, force: true });
-  }
+  removeTempDirs();
 });
 
 // ---------------------------------------------------------------------------
@@ -96,7 +87,7 @@ describe('findExtension', () => {
 
 describe('installExtension — failures', () => {
   it('fails with an actionable message for an unknown extension id', async () => {
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     const result = await installExtension({
       unityProjectPath: project,
       extensionId: 'com.example.nope',
@@ -111,7 +102,7 @@ describe('installExtension — failures', () => {
   });
 
   it('fails when the path is not a Unity project, and names the missing manifest', async () => {
-    const empty = track(fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-ext-empty-')));
+    const empty = makeTempDir('unity-mcp-ext-empty-');
     const result = await installExtension({ unityProjectPath: empty, extensionId: 'Tilemap' });
 
     expect(result.kind).toBe('failure');
@@ -124,7 +115,7 @@ describe('installExtension — failures', () => {
   it('resolves the catalogue BEFORE touching the filesystem', async () => {
     // An unknown id in a non-project directory must report the unknown extension, not
     // the missing manifest: the catalogue miss is the user's actual mistake.
-    const empty = track(fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-ext-empty-')));
+    const empty = makeTempDir('unity-mcp-ext-empty-');
     const result = await installExtension({ unityProjectPath: empty, extensionId: 'nope' });
 
     expect(result.kind).toBe('failure');
@@ -133,7 +124,7 @@ describe('installExtension — failures', () => {
   });
 
   it('returns a failure (not a throw) when the manifest is unparseable', async () => {
-    const project = track(mkUnityProject('{ this is not json'));
+    const project = mkUnityProject('{ this is not json');
     const result = await installExtension({
       unityProjectPath: project,
       extensionId: 'Tilemap',
@@ -150,7 +141,7 @@ describe('installExtension — failures', () => {
       'fetch',
       vi.fn(async () => ({ ok: false, status: 503, json: async () => ({}) })),
     );
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     const result = await installExtension({ unityProjectPath: project, extensionId: 'Tilemap' });
 
     expect(result.kind).toBe('failure');
@@ -168,7 +159,7 @@ describe('installExtension — failures', () => {
 
 describe('installExtension — add', () => {
   it('adds the dependency and the OpenUPM scoped registry with the required scopes', async () => {
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     const result = await installExtension({
       unityProjectPath: project,
       extensionId: 'Tilemap',
@@ -198,7 +189,7 @@ describe('installExtension — add', () => {
 
   it('resolves OpenUPM dist-tags.latest when no version is supplied', async () => {
     const fetchMock = stubOpenUpm('9.9.9');
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     const result = await installExtension({ unityProjectPath: project, extensionId: 'Tilemap' });
 
     expect(result.kind).toBe('success');
@@ -213,7 +204,7 @@ describe('installExtension — add', () => {
 
   it('does not hit the network when an explicit version is supplied', async () => {
     const fetchMock = stubOpenUpm('9.9.9');
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     await installExtension({
       unityProjectPath: project,
       extensionId: 'Tilemap',
@@ -223,14 +214,12 @@ describe('installExtension — add', () => {
   });
 
   it('preserves unrelated dependencies and an existing scoped registry entry', async () => {
-    const project = track(
-      mkUnityProject({
-        dependencies: { 'com.unity.modules.tilemap': '1.0.0' },
-        scopedRegistries: [
-          { name: REGISTRY_NAME, url: 'https://package.openupm.com', scopes: ['com.someoneelse'] },
-        ],
-      }),
-    );
+    const project = mkUnityProject({
+      dependencies: { 'com.unity.modules.tilemap': '1.0.0' },
+      scopedRegistries: [
+        { name: REGISTRY_NAME, url: 'https://package.openupm.com', scopes: ['com.someoneelse'] },
+      ],
+    });
     await installExtension({
       unityProjectPath: project,
       extensionId: 'Tilemap',
@@ -248,7 +237,7 @@ describe('installExtension — add', () => {
 
 describe('installExtension — update / idempotence', () => {
   it('is idempotent: a second identical run reports already-up-to-date and rewrites nothing', async () => {
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     await installExtension({ unityProjectPath: project, extensionId: 'Tilemap', version: '1.0.16' });
 
     const manifestPath = path.join(project, 'Packages', 'manifest.json');
@@ -270,7 +259,7 @@ describe('installExtension — update / idempotence', () => {
   });
 
   it('reports `updated` with both versions when a newer version is installed', async () => {
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     await installExtension({ unityProjectPath: project, extensionId: 'Tilemap', version: '1.0.10' });
     const result = await installExtension({
       unityProjectPath: project,
@@ -288,7 +277,7 @@ describe('installExtension — update / idempotence', () => {
   });
 
   it('never downgrades on an auto-resolved version, and warns instead', async () => {
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     await installExtension({ unityProjectPath: project, extensionId: 'Tilemap', version: '2.0.0' });
 
     stubOpenUpm('1.0.16');
@@ -303,7 +292,7 @@ describe('installExtension — update / idempotence', () => {
   });
 
   it('allows a downgrade when the version is explicit', async () => {
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     await installExtension({ unityProjectPath: project, extensionId: 'Tilemap', version: '2.0.0' });
     const result = await installExtension({
       unityProjectPath: project,
@@ -322,7 +311,7 @@ describe('installExtension — update / idempotence', () => {
   it('classifies as `added` even when the scoped registry also had to be created', async () => {
     // `addPackageToManifest` reports `modified: true` for a registry-only change too, so
     // the outcome must be derived from the dependency's prior presence, not from `modified`.
-    const project = track(mkUnityProject({ dependencies: {} }));
+    const project = mkUnityProject({ dependencies: {} });
     const result = await installExtension({
       unityProjectPath: project,
       extensionId: 'Tilemap',
@@ -337,7 +326,7 @@ describe('installExtension — update / idempotence', () => {
 describe('installExtension — progress + catalogue override', () => {
   it('emits start / dependencies-resolved / manifest-patched / done in order', async () => {
     stubOpenUpm('1.2.3');
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     const events: ProgressEvent[] = [];
     await installExtension({
       unityProjectPath: project,
@@ -354,7 +343,7 @@ describe('installExtension — progress + catalogue override', () => {
   });
 
   it('a throwing onProgress callback cannot abort the install', async () => {
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     const result = await installExtension({
       unityProjectPath: project,
       extensionId: 'Tilemap',
@@ -369,7 +358,7 @@ describe('installExtension — progress + catalogue override', () => {
   });
 
   it('honours a catalogue override, including an empty catalogue', async () => {
-    const project = track(mkUnityProject());
+    const project = mkUnityProject();
     const custom: ExtensionDescriptor[] = [
       {
         name: 'Custom',
