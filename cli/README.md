@@ -362,9 +362,10 @@ Show the **Unity account** the running Unity Editor is signed in to, and start i
 "My Assets" (the `assetStore` RQL source) needs it; a Personal license works without it, so an editor can run signed
 out. This is not the ai-game.dev account: that is [`login`](#login).
 
-`--sign-in` opens Unity's sign-in in that editor; the **user** completes it there (recent editors sign in through
-Unity Hub, and may first show a dialog about the Hub that blocks the editor until it is answered: `dialog` lists it).
-No credentials pass through the CLI. The command needs the project open in an editor with a window
+`--sign-in` opens Unity's sign-in in that editor; the **user** completes it there, through Unity Hub. An editor opened
+directly (not through the Hub, e.g. by an older `open`) cannot sign in: it only offers "Install Unity Hub", so the
+answer says to reopen the project with [`close`](#close) and [`open`](#open), which start it through the Hub. An editor
+opened so takes the account the Hub is signed in to without any sign-in. No credentials pass through the CLI. The command needs the project open in an editor with a window
 ([`open`](#open)) and never starts a headless one, which cannot show the sign-in. Agents can run the same queries with
 `rql`: `assetStore | select signedIn userName` and `assetStore | call SignIn()`.
 
@@ -387,6 +388,11 @@ Exits `0` with the editor's answer, `7` when no editor answers. A plugin too old
 ## `open`
 
 Open a Unity project in the Unity Editor. By default, sets MCP connection environment variables if connection options are provided. Use `--no-connect` to open without MCP connection.
+
+When Unity Hub is installed, the editor is opened through it as the Hub itself does (`-useHub -hubIPC`, no credentials:
+the editor asks the Hub for its session, starting the Hub in the background when it is not running). The editor then
+takes the Unity account the Hub is signed in to, which the Asset Store's "My Assets" needs (see
+[`unity-account`](#unity-account)). A headless (`--headless`) editor is opened as before.
 
 ```bash
 # Explicit path
@@ -733,6 +739,11 @@ dialogs.
 | **Windows** | Win32 (`EnumWindows`, `BM_CLICK`) through PowerShell | None |
 | **macOS** | System Events UI scripting through `osascript -l JavaScript`: the editor's dialog windows and sheets, their texts and buttons | **Accessibility permission** for the app that runs the CLI (your terminal or AI agent app): System Settings → Privacy & Security → Accessibility. Without it `dialog` fails with that hint, and the exit-18 check finds no dialogs. |
 | **Linux** | The AT-SPI accessibility bus through a `python3` helper (PyGObject): the editor's dialog and alert windows (GTK, which Unity's `EditorUtility.DisplayDialog` uses), their labels and push buttons, pressed through their `click` action. Works on X11 and Wayland | `python3` with PyGObject and the AT-SPI typelib (Debian/Ubuntu: `python3-gi gir1.2-atspi-2.0`; Fedora: `python3-gobject at-spi2-core`; Arch: `python-gobject at-spi2-core`) and a running accessibility bus (`at-spi2-core`, started on demand in GNOME, KDE and most desktops). Run the CLI in the desktop session that runs the editor. A missing package, an unreachable bus or no graphical session make `dialog` fail with a hint naming the fix, and the exit-18 check finds no dialogs. |
+
+Windows also lists Unity's own modal windows, such as "Missing signature" which Unity 6.6 shows before importing an
+unsigned `.unitypackage` (every Asset Store package): Unity draws their text and buttons itself, so the list shows only
+their title and one button, **Cancel**, which `--press Cancel` sends as the Escape key. Any other answer (Import Anyway)
+is the user's, in the editor.
 
 A dialog id comes from the list and stays the same while that dialog is open (Windows: its window handle; macOS and
 Linux: a hash of its pid, title, text and buttons). The button label is never put into a script, only passed as data.
