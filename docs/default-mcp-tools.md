@@ -46,10 +46,18 @@ All four take an optional `savePath`, for when the user wants the picture as a f
 ## 📦 Packages
 | Tool | ID | Default | Description |
 | :--- | :--- | :--- | :--- |
-| **Package / List** | `package-list` | hidden | List the packages installed in the project. |
-| **Package / Search** | `package-search` | hidden | Search the Unity Package Manager registry and installed packages. |
-| **Package / Add** | `package-add` | hidden | Install a package from the registry, a Git URL or a local path. |
-| **Package / Remove** | `package-remove` | hidden | Uninstall a package. |
+| **Package / List** | `package-list` | shown | List the packages installed in the project. |
+| **Package / Search** | `package-search` | shown | Search the Unity Package Manager registry and installed packages. |
+| **Package / Add** | `package-add` | shown | Install a package from the registry, a Git URL or a local path. |
+| **Package / Remove** | `package-remove` | shown | Uninstall a package. |
+
+## 🛒 Asset Store
+| Tool | ID | Default | Description |
+| :--- | :--- | :--- | :--- |
+| **Asset Store / Library** | `assetstore-library` | shown | List the Asset Store packages you own (My Assets, through the Editor's Unity sign-in) and the ones in the local download cache, filtered by words; each row says whether it is downloaded and already imported. |
+| **Asset Store / Add** | `assetstore-add` | shown | Import a downloaded package without the import dialog; returns its prefabs, materials, models, scenes and notes (render pipeline, scripts, nested packages). On Unity 6.6 the user confirms Unity's "Missing signature" window. |
+
+The RQL source `assetStore` holds the rest: `Contents(filter)` lists a package's files without importing it, `ImportFile(path)` imports a nested `.unitypackage` (e.g. a render-pipeline variant), `SignIn()` starts the Unity sign-in when the Editor is signed out (`rql-schema "assetStore"`).
 
 ## 🧰 Tool management
 | Tool | ID | Default | Description |

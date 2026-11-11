@@ -129,7 +129,8 @@ unity-mcp-cli open ./MyUnityProject
 - `script-update-or-create` — 根据提供的 C# 代码更新或创建脚本文件（默认隐藏）
 - `script-delete` — 删除脚本文件（默认隐藏）
 - `tests-run` — 执行 Unity 测试（EditMode/PlayMode）：对 `tests` 数据源的任意 RQL 选择一次运行，结果可用 RQL 过滤
-- `package-list`、`package-search`、`package-add`、`package-remove` — Unity Package Manager 包（默认隐藏）
+- `package-list`、`package-search`、`package-add`、`package-remove` — Unity Package Manager 包
+- `assetstore-library`、`assetstore-add` — 你拥有或已下载的 Asset Store 包：查找并导入（更多操作见 RQL 源 `assetStore`）
 
 </details>
 
