@@ -5,10 +5,13 @@ import * as os from 'os';
 import * as path from 'path';
 import { fileURLToPath } from 'url';
 import {
+  blockedByDialogMessage,
   isUnityProjectRoot,
   parseTimeoutSeconds,
   resolveCloseProjectPath,
+  waitForExitOrDialog,
 } from '../src/commands/close.js';
+import type { EditorDialog } from '../src/utils/editor-dialogs.js';
 import {
   forceKillSignal,
   gracefulShutdownSignal,
@@ -386,4 +389,81 @@ liveDescribe('close command — live editor (UMCP_LIVE=1)', () => {
     expect(stdout).toContain('exited cleanly');
     expect(stdout).not.toContain('no running Editor');
   }, 90_000);
+});
+
+// ─── close — a modal dialog keeps the editor from quitting ───────────────────
+
+const SAVE_PROMPT: EditorDialog = {
+  id: '1', pid: 4242, title: 'Scene(s) Have Been Modified', message: '', buttons: ['Save', "Don't Save", 'Cancel'],
+};
+
+/** A fake clock: `sleep` advances it, so the wait loop runs instantly. */
+function fakeClock() {
+  let t = 0;
+  return { now: () => t, sleep: async (ms: number) => { t += ms; } };
+}
+
+describe('waitForExitOrDialog', () => {
+  it('reports the dialog as soon as a scan finds it, not at the timeout', async () => {
+    const clock = fakeClock();
+    let scans = 0;
+    const result = await waitForExitOrDialog(4242, 30_000, {
+      ...clock,
+      isAlive: () => true,
+      findDialogs: async () => { scans++; return [SAVE_PROMPT]; },
+    });
+    expect(result).toEqual({ kind: 'dialog', dialogs: [SAVE_PROMPT] });
+    expect(scans).toBe(1);
+    expect(clock.now()).toBeLessThan(5_000);
+  });
+
+  it('returns exited when the editor quits, without a dialog scan before the first delay', async () => {
+    const clock = fakeClock();
+    let alive = 3;
+    let scans = 0;
+    const result = await waitForExitOrDialog(4242, 30_000, {
+      ...clock,
+      isAlive: () => alive-- > 0,
+      findDialogs: async () => { scans++; return []; },
+    });
+    expect(result).toEqual({ kind: 'exited' });
+    expect(scans).toBe(0);
+  });
+
+  it('times out when no dialog shows and the editor stays alive', async () => {
+    const clock = fakeClock();
+    let scans = 0;
+    const result = await waitForExitOrDialog(4242, 30_000, {
+      ...clock,
+      isAlive: () => true,
+      findDialogs: async () => { scans++; return []; },
+    });
+    expect(result).toEqual({ kind: 'timeout' });
+    expect(scans).toBeGreaterThan(1); // scanned while waiting, and once more at the deadline
+  });
+
+  it('does not report a dialog of an editor that exited meanwhile', async () => {
+    const clock = fakeClock();
+    let alive = true;
+    const result = await waitForExitOrDialog(4242, 30_000, {
+      ...clock,
+      isAlive: () => alive,
+      findDialogs: async () => { alive = false; return [SAVE_PROMPT]; },
+    });
+    expect(result).toEqual({ kind: 'exited' });
+  });
+});
+
+describe('blockedByDialogMessage', () => {
+  it('names the dialog and its buttons and offers --force', () => {
+    const message = blockedByDialogMessage(4242, [SAVE_PROMPT], false);
+    expect(message).toContain('PID 4242');
+    expect(message).toContain(`"Scene(s) Have Been Modified" [Save | Don't Save | Cancel]`);
+    expect(message).toContain('dialog --press');
+    expect(message).toContain('--force');
+  });
+
+  it('does not offer --force when it was already given', () => {
+    expect(blockedByDialogMessage(4242, [SAVE_PROMPT], true)).not.toContain('--force');
+  });
 });

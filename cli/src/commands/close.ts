@@ -7,6 +7,9 @@ import { verbose } from '../utils/ui.js';
 import { canonicalPath, findUnityProcess } from '../utils/unity-process.js';
 import { readSessionLease, type CloseOwnedResult } from '@baizor/gamedev-cli-core';
 import { createProjectSession } from '../lib/editor-session.js';
+import { describeDialog, findBlockingDialogs } from '../utils/awaiting-input.js';
+import type { EditorDialog } from '../utils/editor-dialogs.js';
+import { ExitCode } from '../utils/exit-codes.js';
 import {
   readLockfilePid,
   isProcessAlive,
@@ -23,6 +26,55 @@ export interface CloseOptions {
 }
 
 const DEFAULT_TIMEOUT_SECONDS = 30;
+
+/** First dialog scan after the polite quit, then every interval: a save prompt appears within a second or two. */
+const DIALOG_SCAN_DELAY_MS = 2000;
+const DIALOG_SCAN_INTERVAL_MS = 5000;
+
+export type ExitWaitResult =
+  | { kind: 'exited' }
+  | { kind: 'dialog'; dialogs: EditorDialog[] }
+  | { kind: 'timeout' };
+
+export interface ExitWaitDeps {
+  isAlive: (pid: number) => boolean;
+  findDialogs: () => Promise<EditorDialog[]>;
+  sleep?: (ms: number) => Promise<void>;
+  now?: () => number;
+}
+
+/**
+ * Wait until `pid` exits or `timeoutMs` elapses, scanning for modal dialogs meanwhile: a polite quit of an editor
+ * with unsaved changes (an untitled or modified scene) opens "Scene(s) Have Been Modified" and the editor then waits
+ * for a human, so waiting out the timeout would only end in a bare "did not exit". Exported for tests.
+ */
+export async function waitForExitOrDialog(pid: number, timeoutMs: number, deps: ExitWaitDeps): Promise<ExitWaitResult> {
+  const sleep = deps.sleep ?? (ms => new Promise<void>(resolve => setTimeout(resolve, ms)));
+  const now = deps.now ?? Date.now;
+  const start = now();
+  const deadline = start + timeoutMs;
+  let nextScan = start + DIALOG_SCAN_DELAY_MS;
+  while (now() < deadline) {
+    if (!deps.isAlive(pid)) return { kind: 'exited' };
+    if (now() >= nextScan) {
+      const dialogs = await deps.findDialogs();
+      // A dialog that closed the editor on its way out is no reason to report one.
+      if (dialogs.length > 0 && deps.isAlive(pid)) return { kind: 'dialog', dialogs };
+      nextScan = now() + DIALOG_SCAN_INTERVAL_MS;
+    }
+    await sleep(250);
+  }
+  if (!deps.isAlive(pid)) return { kind: 'exited' };
+  const dialogs = await deps.findDialogs();
+  return dialogs.length > 0 && deps.isAlive(pid) ? { kind: 'dialog', dialogs } : { kind: 'timeout' };
+}
+
+/** Why the editor did not quit: the dialog it waits on, and how to get past it. Exported for tests. */
+export function blockedByDialogMessage(pid: number, dialogs: EditorDialog[], force: boolean): string {
+  return `Unity Editor (PID ${pid}) did not quit: it is waiting on a modal dialog: ${dialogs.map(describeDialog).join('; ')}. ` +
+    'Answer it in the editor, or with `unity-mcp-cli dialog --press <button>`' +
+    (force ? '.' : ', or re-run with --force to hard-kill (unsaved changes are lost).');
+}
 
 /**
  * Resolve the project path argument to an absolute, canonical path.
@@ -141,6 +193,11 @@ async function closeOwnedEditor(
     process.exit(0);
   }
   if (result.kind === 'still-running') {
+    const dialogs = await findBlockingDialogs(projectPath);
+    if (dialogs.length > 0) {
+      spinner.error(blockedByDialogMessage(result.pid, dialogs, force));
+      process.exit(ExitCode.AwaitingInput);
+    }
     spinner.error(
       `Unity Editor (PID ${result.pid}) did not exit within ${timeoutSeconds}s.` +
         (force ? '' : ' Re-run with --force to hard-kill.'),
@@ -157,6 +214,7 @@ export const closeCommand = new Command('close')
   .option('--timeout <seconds>', `Polite-quit timeout in seconds (default: ${DEFAULT_TIMEOUT_SECONDS})`, String(DEFAULT_TIMEOUT_SECONDS))
   .option('--force', 'Hard-kill the Editor if it does not exit within --timeout')
   .option('--owned-only', 'Close only an Editor started by unity-mcp-cli (exec, open --headless); never one opened by the user')
+  .addHelpText('after', '\nExit codes: 0 closed (or none running), 1 failed or timed out, 18 a modal dialog (e.g. unsaved changes) keeps the editor from quitting.')
   .action(async (positionalPath: string | undefined, options: CloseOptions) => {
     const projectPath = resolveCloseProjectPath(positionalPath, process.cwd());
     verbose(`close invoked for project: ${projectPath}`);
@@ -220,11 +278,22 @@ export const closeCommand = new Command('close')
 
     spinner.text = `Waiting up to ${timeoutSeconds}s for PID ${pid} to exit...`;
     const timeoutMs = timeoutSeconds * 1000;
-    const exited = await waitForExit(pid, timeoutMs, platform);
+    const waited = options.force
+      // --force hard-kills at the timeout anyway; a person may still answer a dialog until then.
+      ? ((await waitForExit(pid, timeoutMs, platform)) ? { kind: 'exited' as const } : { kind: 'timeout' as const })
+      : await waitForExitOrDialog(pid, timeoutMs, {
+        isAlive: p => isProcessAlive(p, platform),
+        findDialogs: () => findBlockingDialogs(projectPath),
+      });
 
-    if (exited) {
+    if (waited.kind === 'exited') {
       spinner.success(`Unity Editor (PID ${pid}) exited cleanly`);
       process.exit(0);
+    }
+
+    if (waited.kind === 'dialog') {
+      spinner.error(blockedByDialogMessage(pid, waited.dialogs, false));
+      process.exit(ExitCode.AwaitingInput);
     }
 
     if (!options.force) {
