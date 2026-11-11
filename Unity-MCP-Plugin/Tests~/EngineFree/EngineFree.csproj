@@ -38,7 +38,7 @@
          testing yesterday's DLLs. McpPlugin is what makes this project a NuGet-mode consumer of the
          framework, which is also what lets a workspace-source override chain reach it. -->
     <PackageReference Include="com.IvanMurzak.McpPlugin" Version="8.21.0" />
-    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="5.5.1" />
+    <PackageReference Include="com.IvanMurzak.ReflectorNet" Version="5.5.2" />
   </ItemGroup>
 
   <!-- Pin-parity plumbing (see NuGetPinGateTests): export the DECLARED pins as assembly metadata, so
