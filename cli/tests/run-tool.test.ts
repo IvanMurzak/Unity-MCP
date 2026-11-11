@@ -451,8 +451,6 @@ describe('run-tool config resolution', () => {
   });
 
   it('without a config the project is in the plugin default Cloud mode: logged out, it uses the local server', () => {
-    // No config file written — tmpDir has no UserSettings/. The plugin would create one in Cloud mode, so a logged-out
-    // machine takes the local-server fallback (the deterministic port), which also tells a started editor to serve it.
     const { env, cleanup } = loggedOutEnv();
     try {
       const { stdout } = runCli([

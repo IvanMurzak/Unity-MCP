@@ -98,9 +98,7 @@ describe('resolveEditorConnection', () => {
   });
 
   it('a project the plugin has not configured yet is in its default Cloud mode: without a sign-in it falls back too', async () => {
-    // A fresh project has no config file until the plugin first loads (it then writes connectionMode: Cloud); an
-    // older file may lack the field. Both used to resolve to the local port with no fallback, so a started editor
-    // dialed the cloud while the CLI waited on a port nobody served.
+    // No config file until the plugin first loads; an older file may lack the field.
     const fresh = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-editor-conn-fresh-'));
     const noMode = project({ token: 'local-tok' });
     try {

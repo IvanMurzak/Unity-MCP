@@ -83,9 +83,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 if (sourceRt == null || !sourceRt.IsCreated())
                 {
-                    // A Game View that has not drawn yet has no render texture: one docked behind another tab (the
-                    // default layout puts it behind the Scene View), or one just opened, e.g. in a headless editor.
-                    // Show it in front: it renders on the next editor frame.
+                    // A Game View that has not drawn yet (behind another tab, as in the default layout, or just opened)
+                    // has no render texture. Show it in front: it renders on the next editor frame.
                     gameView.Show();
                     gameView.Focus();
                     gameView.Repaint();

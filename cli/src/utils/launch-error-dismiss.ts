@@ -235,7 +235,6 @@ async function tryDismissWindows(targetPid?: number): Promise<DismissOutcome> {
     execFile(
       'powershell',
       ['-NoProfile', '-NonInteractive', '-Command', windowsDismissScript(targetPid)],
-      // Add-Type compiles through TEMP: a machine-wide C:\Windows\Temp would fail it on every poll.
       { timeout: 5000, windowsHide: true, env: powerShellEnv() },
       (err, stdout) => {
         if (err) {

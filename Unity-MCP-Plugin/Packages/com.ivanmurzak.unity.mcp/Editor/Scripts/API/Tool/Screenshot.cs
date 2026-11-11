@@ -43,7 +43,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         // in editors that do have a device.
         internal static volatile bool NoGraphicsDevice;
 
-        /// <summary>The editor runs headless (-batchmode): it never draws its Game View.</summary>
+        /// <summary>The editor runs headless (-batchmode): it never draws its editor windows.</summary>
         internal static volatile bool BatchMode;
 
         [InitializeOnLoadMethod]
@@ -60,11 +60,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     "Start it with a graphics device: drop -nographics (headless -batchmode keeps rendering).")
                 : null;
 
-        // On a cold shader cache (a new project, a fresh editor) the first capture of a URP scene came back as background only:
-        // a render that compiles shader variants draws nothing, and so do further renders until the GPU work is read back.
-        // Measured on Unity 6000.3 URP: render, render, readback was empty; render, readback, render was right (every time).
-        // So a warm-up render, then a 1-pixel readback, compiles what the view needs (synchronously: async compilation would
-        // draw placeholders) before the capture render.
         /// <summary>
         /// A headless editor never draws its editor windows: a Game View capture is black and a Scene View's camera is
         /// never placed at its view, with no error from Unity either way. Say so instead of returning such an image.
@@ -76,6 +71,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     "open the project with a window (`unity-mcp-cli close --owned-only`, then `unity-mcp-cli open`).")
                 : null;
 
+        // On a cold shader cache (a new project, a fresh editor) the first capture of a URP scene came back as background only:
+        // a render that compiles shader variants draws nothing, and so do further renders until the GPU work is read back.
+        // Measured on Unity 6000.3 URP: render, render, readback was empty; render, readback, render was right (every time).
+        // So a warm-up render, then a 1-pixel readback, compiles what the view needs (synchronously: async compilation would
+        // draw placeholders) before the capture render.
         internal static void RenderSync(Camera camera)
         {
             var wasAsync = ShaderUtil.allowAsyncCompilation;
