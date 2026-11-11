@@ -431,9 +431,20 @@ export interface LaunchEditorCallbacks {
   onError?: (err: Error) => void;
 }
 
-/** The editor's command-line arguments for opening `projectPath` (`launchEditor` and an `openProject` `spawnImpl`). */
-export function editorLaunchArgs(projectPath: string): string[] {
-  return ['-projectPath', path.resolve(projectPath)];
+/**
+ * What Unity Hub adds when it opens a project, minus its session arguments (`-hubSessionId`, `-accessToken`): the
+ * editor then connects to the Hub (starting it in the background, `--silent`, when it is not running) and takes the
+ * Unity account the Hub is signed in to. Without them a signed-out editor stays signed out, and its sign-in only offers
+ * "Install Unity Hub". Never a credential: the editor fetches its session from the Hub itself.
+ */
+export const HUB_LAUNCH_ARGS: readonly string[] = ['-useHub', '-hubIPC'];
+
+/**
+ * The editor's command-line arguments for opening `projectPath` in a window (`launchEditor` and an `openProject`
+ * `spawnImpl`): through Unity Hub (`HUB_LAUNCH_ARGS`) when the Hub is installed (`hubPath`, found by default).
+ */
+export function editorLaunchArgs(projectPath: string, hubPath: string | null = findUnityHub()): string[] {
+  return ['-projectPath', path.resolve(projectPath), ...(hubPath ? HUB_LAUNCH_ARGS : [])];
 }
 
 /** The editor's full environment: `process.env`, then `env` (the MCP variables). */

@@ -4,12 +4,27 @@ import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
 import {
+  HUB_LAUNCH_ARGS,
+  editorLaunchArgs,
   getProjectEditorVersion,
   getSecondaryInstallPathFile,
   listEditorsByCommonLocations,
   readSecondaryInstallPaths,
   resolveEditorPath,
 } from '../src/utils/unity-editor.js';
+
+describe('editorLaunchArgs', () => {
+  it('opens the project through Unity Hub when it is installed: token-free flags only', () => {
+    const project = path.resolve('MyGame');
+    expect(editorLaunchArgs('MyGame', '/opt/unity-hub')).toEqual(['-projectPath', project, '-useHub', '-hubIPC']);
+    expect(HUB_LAUNCH_ARGS).toEqual(['-useHub', '-hubIPC']);
+    for (const arg of editorLaunchArgs('MyGame', '/opt/unity-hub')) expect(arg).not.toMatch(/token|session/i);
+  });
+
+  it('opens it directly without Unity Hub', () => {
+    expect(editorLaunchArgs('MyGame', null)).toEqual(['-projectPath', path.resolve('MyGame')]);
+  });
+});
 
 describe('resolveEditorPath', () => {
   describe('darwin', () => {

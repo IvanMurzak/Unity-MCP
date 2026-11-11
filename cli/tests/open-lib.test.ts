@@ -460,7 +460,8 @@ describe('openProject — explicit editor path override (mocked)', () => {
     expect(launchEditorMock).not.toHaveBeenCalled();
     const [command, args, env] = spawnImpl.mock.calls[0];
     expect(command).toBe(path.resolve(editorPath));
-    expect(args).toEqual(['-projectPath', path.resolve(tmpDir)]);
+    const { editorLaunchArgs } = await import('../src/utils/unity-editor.js');
+    expect(args).toEqual(editorLaunchArgs(tmpDir)); // + the Hub flags on a machine with Unity Hub
     expect(env).toMatchObject({ UNITY_MCP_HOST: 'http://localhost:9000', PATH: process.env.PATH });
     const launched = events.filter((e) => e.phase === 'editor-launched');
     expect(launched).toEqual([{ phase: 'editor-launched', message: 'Launched Unity Editor (PID: 4242)', pid: 4242 }]);
