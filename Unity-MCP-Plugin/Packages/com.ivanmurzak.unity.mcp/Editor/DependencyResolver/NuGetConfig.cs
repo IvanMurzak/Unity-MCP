@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "41";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "42";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -136,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // main thread by its SynchronizationContext, not managed thread id 1. The plugin replaces
             // MainThread.Instance with UnityMainThread (MainThreadDispatcher.MainThreadId), so Unity's
             // main-thread detection, including Unity 7 CoreCLR's id-2 main thread, does not rely on it.
-            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.5.1", includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.5.2", includeInBuild: true),
             // SignalR 8.0.33 requires 8.0.6; match the resolved version to avoid repeated restores.
             new NuGetPackage("System.Text.Json",                                      "8.0.6",  includeInBuild: true),
             // Keep SignalR on the patched v8 line (CVE-2026-70159).
