@@ -1,4 +1,5 @@
 import { describe, it, expect, vi } from 'vitest';
+import { classifyToolFailure } from '@baizor/gamedev-cli-core';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
@@ -72,7 +73,22 @@ describe('listTools', () => {
 
   it('reports an unreachable server', async () => {
     const fetchImpl = vi.fn(async () => { throw new Error('ECONNREFUSED'); });
-    expect(await listTools({ baseUrl: 'http://localhost:1', fetchImpl: fetchImpl as unknown as typeof fetch })).toMatchObject({ kind: 'failure' });
+    const result = await listTools({ baseUrl: 'http://localhost:1', fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect(result).toMatchObject({ kind: 'failure' });
+    expect(result.kind === 'failure' && classifyToolFailure(result.failure)).toEqual({ exitCode: 7, code: 'UNREACHABLE' });
+  });
+
+  it('classifies an HTTP error answer by the shared table, like run-tool', async () => {
+    const fetchImpl = vi.fn(async () => new Response('', { status: 401 }));
+    const local = await listTools({ baseUrl: 'http://localhost:1', fetchImpl: fetchImpl as unknown as typeof fetch });
+    expect(local.kind === 'failure' && classifyToolFailure(local.failure)).toEqual({ exitCode: 6, code: 'NOT_AUTHENTICATED', httpStatus: 401 });
+    // Through the cloud: the plugin's unity-tool-list call, with the server's own error text.
+    const invoke = vi.fn(async (): Promise<RunToolResult> => ({
+      kind: 'failure', success: false, endpoint: 'x', reason: 'http-error', httpStatus: 503, message: 'Service Unavailable',
+      data: { error: 'No game engine is connected for your account.' },
+    }));
+    const cloud = await listTools({ baseUrl: 'https://ai-game.dev/mcp', invoke });
+    expect(cloud.kind === 'failure' && classifyToolFailure(cloud.failure)).toEqual({ exitCode: 7, code: 'UNREACHABLE', httpStatus: 503 });
   });
 });
 

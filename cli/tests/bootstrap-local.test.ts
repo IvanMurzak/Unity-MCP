@@ -321,7 +321,7 @@ describe('bootstrap-local CLI integration', () => {
       '--url', 'http://localhost:5140',
       '--token', 'tok',
     ]);
-    expect(exitCode).toBe(1);
+    expect(exitCode).toBe(2);
     expect(stdout).toMatch(/does not exist/i);
   });
 });

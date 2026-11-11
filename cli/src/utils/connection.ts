@@ -6,8 +6,9 @@ import { readConfig, resolveConnectionFromConfig, isCloudMode, CLOUD_SERVER_URL,
 import { readCloudAccessToken } from './cloud-credentials.js';
 import * as ui from './ui.js';
 import { findUnityProcess } from './unity-process.js';
-import { decideLocalFallback, machineCredentialStatus, signedInButUnusableMessage } from '@baizor/gamedev-cli-core';
+import { activeCommandOutput, decideLocalFallback, machineCredentialStatus, signedInButUnusableMessage } from '@baizor/gamedev-cli-core';
 import { hasLiveSessionLease } from '../lib/editor-session.js';
+import { ExitCode } from './exit-codes.js';
 
 export interface ConnectionOptions {
   path?: string;
@@ -22,14 +23,21 @@ export function isUnityProject(dir: string): boolean {
   return fs.existsSync(path.join(dir, 'Assets'));
 }
 
+/** No project at the path: exit 2 NOT_FOUND (in the envelope when a json / ndjson command runs), as in the other CLIs. */
+function failNotFound(message: string, hint?: string): never {
+  activeCommandOutput()?.record('NOT_FOUND', message);
+  ui.error(message);
+  if (hint) ui.info(hint);
+  process.exit(ExitCode.Usage);
+}
+
 /**
  * Resolve the project path from positional arg, --path option, or cwd.
  */
 export function resolveProjectPath(positionalPath: string | undefined, options: ConnectionOptions): string {
   const resolved = path.resolve(positionalPath ?? options.path ?? process.cwd());
   if ((positionalPath !== undefined || options.path !== undefined) && !fs.existsSync(resolved)) {
-    ui.error(`Project path does not exist: ${resolved}`);
-    process.exit(1);
+    failNotFound(`Project path does not exist: ${resolved}`);
   }
   return resolved;
 }
@@ -47,9 +55,8 @@ export function resolveAndValidateProjectPath(positionalPath: string | undefined
   }
 
   if (!isUnityProject(resolved)) {
-    ui.error(`Not a Unity project (missing Assets folder): ${resolved}`);
-    ui.info('Provide a Unity project path as an argument, or use --url to connect to a server directly.');
-    process.exit(1);
+    failNotFound(`Not a Unity project (missing Assets folder): ${resolved}`,
+      'Provide a Unity project path as an argument, or use --url to connect to a server directly.');
   }
 
   return resolved;

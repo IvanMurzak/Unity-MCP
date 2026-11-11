@@ -21,8 +21,8 @@ function skillMetadataLines(): string[] {
 
 /** What each failing exit code asks of the agent (0 and 1 need nothing). A test keeps the codes in the core contract. */
 export const EXIT_CODE_ACTIONS: Readonly<Record<number, string>> = {
-  2: 'fix the command line',
-  6: 'failed, the message says why',
+  2: 'fix the command line (NOT_FOUND: no such tool, see `tools`)',
+  6: 'failed, the message says why (NOT_AUTHENTICATED: run `login`)',
   7: 'editor unreachable',
   8: 'tests failed',
   14: 'timeout',

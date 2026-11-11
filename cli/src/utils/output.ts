@@ -40,7 +40,7 @@ export class CommandOutput extends ContractOutput {
    */
   fail(exitCode: ExitCodeValue, errors: EnvelopeError | EnvelopeError[], data: unknown = null, hint?: string): never {
     const list = Array.isArray(errors) ? errors : [errors];
-    for (const err of list) this.record(err.code, err.message);
+    for (const err of list) this.record(err.code, err.message, err.httpStatus);
     if (this.machine) {
       this.emit(exitCode, data);
     } else {

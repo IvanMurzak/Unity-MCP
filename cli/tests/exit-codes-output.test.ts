@@ -29,17 +29,23 @@ describe('exit codes', () => {
   it('classify tool failures', () => {
     expect(classifyToolFailure(failure({ reason: 'timeout' }))).toEqual({ exitCode: 14, code: 'TIMEOUT' });
     expect(classifyToolFailure(failure({ reason: 'connection-refused' }))).toEqual({ exitCode: 7, code: 'UNREACHABLE' });
-    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 503 }))).toEqual({ exitCode: 17, code: 'BUSY' });
-    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 404 }))).toEqual({ exitCode: 2, code: 'NOT_FOUND' });
-    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 500 }))).toEqual({ exitCode: 6, code: 'TOOL_FAILED' });
-    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 504 }))).toEqual({ exitCode: 14, code: 'TIMEOUT' });
-    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 502 }))).toEqual({ exitCode: 7, code: 'UNREACHABLE' });
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 503 }))).toEqual({ exitCode: 17, code: 'BUSY', httpStatus: 503 });
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 404 }))).toEqual({ exitCode: 2, code: 'NOT_FOUND', httpStatus: 404 });
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 500 }))).toEqual({ exitCode: 6, code: 'TOOL_FAILED', httpStatus: 500 });
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 504 }))).toEqual({ exitCode: 14, code: 'TIMEOUT', httpStatus: 504 });
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 502 }))).toEqual({ exitCode: 7, code: 'UNREACHABLE', httpStatus: 502 });
     expect(classifyToolFailure(failure({ reason: 'invalid-input' }))).toEqual({ exitCode: 2, code: 'USAGE' });
     // What the server answered in a live run: a failed snippet, and arguments rejected before the tool ran.
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 422, data: { error: "Tool execution failed for 'Script / Execute': boom" } })))
-      .toEqual({ exitCode: 6, code: 'TOOL_FAILED' });
+      .toEqual({ exitCode: 6, code: 'TOOL_FAILED', httpStatus: 422 });
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 422, data: { error: "[invalid_params] Invalid params for tool 'package-add'" } })))
-      .toEqual({ exitCode: 2, code: 'USAGE' });
+      .toEqual({ exitCode: 2, code: 'USAGE', httpStatus: 422 });
+    // The same table as unreal-mcp-cli and godot-cli (cli-core): credentials, no plugin, an unclassified failure.
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 401 }))).toEqual({ exitCode: 6, code: 'NOT_AUTHENTICATED', httpStatus: 401 });
+    expect(classifyToolFailure(failure({ reason: 'not-authenticated' }))).toEqual({ exitCode: 6, code: 'NOT_AUTHENTICATED' });
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 503, data: { error: 'No engine plugin is connected to this session, so the request was not sent.' } })))
+      .toEqual({ exitCode: 7, code: 'UNREACHABLE', httpStatus: 503 });
+    expect(classifyToolFailure(failure({ reason: 'unknown' }))).toEqual({ exitCode: 1, code: 'ERROR' });
   });
 });
 
