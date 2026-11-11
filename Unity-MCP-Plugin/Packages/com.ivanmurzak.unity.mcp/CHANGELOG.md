@@ -168,6 +168,13 @@
 
 ### Fixed
 
+- `screenshot-game-view` and `screenshot-scene-view` no longer return an all-black image: when nothing drew into the
+  view (a Game View no camera renders to, e.g. in an editor started headless with no scene open) they answer with an
+  error that names the cause and points at `screenshot-camera`. `screenshot-scene-view` places the Scene View's camera at
+  the view before rendering, so a Scene View that never drew (headless) no longer renders from wherever its camera was
+  created; with no Scene View open the error says how to get one.
+- `screenshot-game-view` with the Game View behind another tab (the default layout) brings it to the front and asks for
+  one more call, instead of "ensure the Game View is visible".
 - **`script-execute`: a `Monitor.Pulse` in a snippet is no longer lost** (vendored Code-Exec 0.4.1). A `Pulse` /
   `PulseAll` sent while the guarded `Monitor.Wait` was between two of its slices did not wake it, so the waiter slept
   until the budget and the snippet ended with Timeout. The guard's per-thread state also moved from a `[ThreadStatic]`

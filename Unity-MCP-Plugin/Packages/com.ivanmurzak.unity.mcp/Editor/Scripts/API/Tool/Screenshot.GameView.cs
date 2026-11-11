@@ -79,8 +79,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var sourceRt = rtField?.GetValue(gameView) as RenderTexture;
 
                 if (sourceRt == null || !sourceRt.IsCreated())
-                    return ResponseCallTool.Error("Game View render texture is not available. " +
-                        "Ensure the Game View window is open and visible.");
+                {
+                    // A Game View that has not drawn yet (behind another tab, as in the default layout, or just opened)
+                    // has no render texture. Show it in front: it renders on the next editor frame.
+                    gameView.Show();
+                    gameView.Focus();
+                    gameView.Repaint();
+                    return ResponseCallTool.Error("The Game View had not drawn yet (it was hidden behind another tab, or just opened). " +
+                        "It is shown in front now: call screenshot-game-view again.");
+                }
 
                 // Read pixels from the GameView's internal render texture, then correct the
                 // orientation for graphics APIs that render with the origin at the top-left.
@@ -106,6 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 RenderTexture? scaledRt = null;
                 Texture2D? tex = null;
                 byte[]? pngBytes = null;
+                var black = false;
                 try
                 {
                     // When the Game View is within the limit (scale == 1) the read path is
@@ -137,7 +145,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     }
 
                     tex.Apply();
-                    pngBytes = tex.EncodeToPNG();
+                    black = IsAllBlack(tex);
+                    if (!black)
+                        pngBytes = tex.EncodeToPNG();
                 }
                 finally
                 {
@@ -147,6 +157,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (tex != null)
                         UnityEngine.Object.DestroyImmediate(tex);
                 }
+
+                if (black)
+                    return BlackFrameError(ScreenshotGameViewToolId, "Game View");
 
                 return CaptureResult(pngBytes!, $"Screenshot from Game View ({width}x{height})", saveTo);
             });

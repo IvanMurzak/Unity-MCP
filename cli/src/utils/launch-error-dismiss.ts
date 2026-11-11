@@ -1,5 +1,6 @@
 import { execFile, execFileSync } from 'child_process';
 import { platform as nodePlatform } from 'os';
+import { powerShellEnv } from './editor-dialogs.js';
 import { verbose } from './ui.js';
 
 /**
@@ -234,7 +235,7 @@ async function tryDismissWindows(targetPid?: number): Promise<DismissOutcome> {
     execFile(
       'powershell',
       ['-NoProfile', '-NonInteractive', '-Command', windowsDismissScript(targetPid)],
-      { timeout: 5000, windowsHide: true },
+      { timeout: 5000, windowsHide: true, env: powerShellEnv() },
       (err, stdout) => {
         if (err) {
           // ETIMEDOUT, ENOENT (powershell missing), etc. Treat as transient.

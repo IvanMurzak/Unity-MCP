@@ -9,6 +9,7 @@
 */
 
 #nullable enable
+using System.Linq;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -42,6 +43,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         // -----------------------------------------------------------------------
         // Helpers — mirror the exact checks the tool performs internally
         // -----------------------------------------------------------------------
+
+        /// <summary>
+        /// A headless (-batchmode) Game View with no camera rendering to it (the test scenes have none) reads back all
+        /// black, and the tool answers with its all-black error (the CI Graphics leg runs headless). A windowed Game View
+        /// draws its "no cameras rendering" notice instead, so there the tool must give an image.
+        /// </summary>
+        internal static bool IsHeadlessBlackFrame(ResponseCallTool result) =>
+            Application.isBatchMode && result.Status == ResponseStatus.Error
+            && string.Join("\n", result.Content.Select(c => c.Text)).Contains("all-black");
+
+        static void AssertImageOrHeadlessBlackFrame(ResponseCallTool result, string message)
+        {
+            if (IsHeadlessBlackFrame(result))
+                return;
+            Assert.AreNotEqual(ResponseStatus.Error, result.Status, message);
+        }
 
         private static bool GameViewTypeAvailable =>
             System.Type.GetType("UnityEditor.GameView,UnityEditor") != null;
@@ -83,7 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var result = new Tool_Screenshot().ScreenshotGameView();
 
             Assert.IsNotNull(result, "Result must never be null");
-            Assert.AreNotEqual(ResponseStatus.Error, result.Status,
+            AssertImageOrHeadlessBlackFrame(result,
                 "Should return a non-error response when the Game View is open and focused");
         }
 
@@ -109,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             var result = new Tool_Screenshot().ScreenshotGameView();
 
             Assert.IsNotNull(result);
-            Assert.AreNotEqual(ResponseStatus.Error, result.Status,
+            AssertImageOrHeadlessBlackFrame(result,
                 "Should return a non-error response when the Game View render texture is available");
         }
 
@@ -137,7 +154,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void ScreenshotGameView_ViaRunTool_WhenGameViewReady_Succeeds()
         {
             // Method takes no parameters; an empty JSON object is the correct input.
-            RunTool("screenshot-game-view", "{}");
+            if (!Application.isBatchMode)
+            {
+                RunTool("screenshot-game-view", "{}");
+                return;
+            }
+            LogAssert.ignoreFailingMessages = true;
+            try
+            {
+                var raw = RunToolRaw("screenshot-game-view", "{}");
+                Assert.IsTrue(raw.Contains("all-black") || !raw.Contains("\"Status\": \"Error\""),
+                    $"A headless capture is an image or the all-black error. Actual JSON:\n{raw}");
+            }
+            finally
+            {
+                LogAssert.ignoreFailingMessages = false;
+            }
         }
 
         [Test]
@@ -153,7 +185,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Assert.IsNotNull(raw, "Raw result must not be null");
                 Assert.IsTrue(
                     raw.Contains("No Game View window") ||
-                    raw.Contains("Game View render texture is not available"),
+                    raw.Contains("The Game View had not drawn yet"),
                     $"Expected a known error message. Actual JSON:\n{raw}");
             }
             finally

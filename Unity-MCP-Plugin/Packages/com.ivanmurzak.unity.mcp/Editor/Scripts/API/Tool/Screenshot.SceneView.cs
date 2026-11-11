@@ -76,7 +76,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     sceneView = SceneView.sceneViews[0] as SceneView;
 
                 if (sceneView == null)
-                    return ResponseCallTool.Error("No Scene View window is open.");
+                    return ResponseCallTool.Error("No Scene View window is open (an editor started headless has none). Open one " +
+                        "(Window > General > Scene) in a windowed editor (`unity-mcp-cli open`), or render a camera with screenshot-camera.");
 
                 var sceneCamera = sceneView.camera;
                 if (sceneCamera == null)
@@ -87,8 +88,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var prevActive = RenderTexture.active;
                 Texture2D? tex = null;
                 byte[]? pngBytes = null;
+                var black = false;
                 try
                 {
+                    // The Scene View places its camera when it draws, which a headless editor never does: place it at
+                    // the view's pivot, rotation and distance first (what the view does itself; a no-op once it drew).
+                    // The projection first: cameraDistance reads it, and is infinite for an orthographic view whose
+                    // camera never drew; a placement that is still not finite is skipped.
+                    sceneCamera.orthographic = sceneView.orthographic;
+                    if (sceneView.orthographic)
+                        sceneCamera.orthographicSize = sceneView.size;
+                    var position = sceneView.pivot + sceneView.rotation * new Vector3(0f, 0f, -sceneView.cameraDistance);
+                    if (float.IsFinite(position.x) && float.IsFinite(position.y) && float.IsFinite(position.z))
+                        sceneCamera.transform.SetPositionAndRotation(position, sceneView.rotation);
                     sceneCamera.targetTexture = rt;
                     RenderSync(sceneCamera);
 
@@ -97,7 +109,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     tex.ReadPixels(new Rect(0, 0, width, height), 0, 0);
                     tex.Apply();
 
-                    pngBytes = tex.EncodeToPNG();
+                    black = IsAllBlack(tex);
+                    if (!black)
+                        pngBytes = tex.EncodeToPNG();
                 }
                 finally
                 {
@@ -107,6 +121,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     if (tex != null)
                         Object.DestroyImmediate(tex);
                 }
+
+                if (black)
+                    return BlackFrameError(ScreenshotSceneViewToolId, "Scene View");
 
                 return CaptureResult(pngBytes!, $"Screenshot from Scene View ({width}x{height})", saveTo);
             });

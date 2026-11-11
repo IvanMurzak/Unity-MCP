@@ -450,15 +450,20 @@ describe('run-tool config resolution', () => {
     expect(stdout).toContain('http://localhost:9999');
   });
 
-  it('falls back to deterministic port when no config exists', () => {
-    // No config file written — tmpDir has no UserSettings/
-    const { stdout } = runCli([
-      'run-tool', 'test-tool',
-      '--path', tmpDir,
-      '--verbose',
-      '--raw',
-    ]);
-    expect(stdout).toContain('deterministic port');
+  it('without a config the project is in the plugin default Cloud mode: logged out, it uses the local server', () => {
+    const { env, cleanup } = loggedOutEnv();
+    try {
+      const { stdout } = runCli([
+        'run-tool', 'test-tool',
+        '--path', tmpDir,
+        '--verbose',
+        '--raw',
+      ], { env });
+      expect(stdout).toContain('plugin default: Cloud');
+      expect(stdout).toMatch(/using the project's local server http:\/\/localhost:\d+/);
+    } finally {
+      cleanup();
+    }
   });
 
   it('reads token from config in Custom mode (--verbose shows hasToken)', () => {

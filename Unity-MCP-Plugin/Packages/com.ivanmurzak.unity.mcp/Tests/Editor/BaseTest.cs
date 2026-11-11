@@ -186,18 +186,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             // (missing camera, invalid ref, unsupported state, etc.) — we are only
             // checking for main-thread violations here. Re-asserted at every helper
             // call because Unity's test framework resets this between SetUp and the
-            // test body.
-            string? mainJson = null;
-            yield return CallToolOnMainThreadCoop(toolName, json, (_, j) => mainJson = j);
-            Assert.IsNotNull(mainJson, $"[{toolName}] main-thread call produced no JSON.");
-            Assert.IsFalse(mainJson!.Contains(MainThreadViolationSnippet),
-                $"[{toolName}] main-thread call surfaced a thread-safety error:\n{mainJson}");
+            // test body. A violation that is only logged still fails the test: the
+            // logs of both calls are scanned for it.
+            var violations = new System.Collections.Concurrent.ConcurrentQueue<string>();
+            void Collect(string message, string stackTrace, LogType type)
+            {
+                if (message.Contains(MainThreadViolationSnippet))
+                    violations.Enqueue(message);
+            }
+            Application.logMessageReceivedThreaded += Collect;
+            try
+            {
+                string? mainJson = null;
+                LogAssert.ignoreFailingMessages = true;
+                yield return CallToolOnMainThreadCoop(toolName, json, (_, j) => mainJson = j);
+                Assert.IsNotNull(mainJson, $"[{toolName}] main-thread call produced no JSON.");
+                Assert.IsFalse(mainJson!.Contains(MainThreadViolationSnippet),
+                    $"[{toolName}] main-thread call surfaced a thread-safety error:\n{mainJson}");
 
-            var bgTask = CallToolFromBackgroundThreadInternal(toolName, json);
-            yield return WaitForTask(bgTask);
-            var bgJson = bgTask.Result.json;
-            Assert.IsFalse(bgJson.Contains(MainThreadViolationSnippet),
-                $"[{toolName}] background-thread call surfaced a thread-safety error:\n{bgJson}");
+                LogAssert.ignoreFailingMessages = true;
+                var bgTask = CallToolFromBackgroundThreadInternal(toolName, json);
+                yield return WaitForTask(bgTask);
+                var bgJson = bgTask.Result.json;
+                Assert.IsFalse(bgJson.Contains(MainThreadViolationSnippet),
+                    $"[{toolName}] background-thread call surfaced a thread-safety error:\n{bgJson}");
+                Assert.IsTrue(violations.IsEmpty,
+                    $"[{toolName}] a call logged a thread-safety error:\n{string.Join("\n", violations)}");
+            }
+            finally
+            {
+                Application.logMessageReceivedThreaded -= Collect;
+            }
         }
 
         /// <summary>
