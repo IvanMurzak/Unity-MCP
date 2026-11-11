@@ -5,7 +5,7 @@
 
 import * as fs from 'fs';
 import * as path from 'path';
-import { ensureAiGameDevGitignore, SESSION_DIR_NAME, writeFileAtomicSync } from '@baizor/gamedev-cli-core';
+import { ensureAiGameDevGitignore, SESSION_DIR_NAME, writeFileAtomicSync, type ToolFailureLike } from '@baizor/gamedev-cli-core';
 import { isLoopbackUrl } from './editor-session.js';
 import { runTool } from './run-tool.js';
 import { readToolResponse } from './exec.js';
@@ -120,8 +120,13 @@ export interface ListToolsOptions {
   invoke?: (options: RunToolOptions) => Promise<RunToolResult>;
 }
 
-/** A failure carries the server's HTTP status when it answered with an error status. */
-export type ListToolsResult = { kind: 'success'; catalog: ToolCatalog } | { kind: 'failure'; message: string; httpStatus?: number };
+/**
+ * A failure carries what the shared failure table reads (`classifyToolFailure` of @baizor/gamedev-cli-core): the
+ * server's HTTP answer, or why none came.
+ */
+export type ListToolsResult =
+  | { kind: 'success'; catalog: ToolCatalog }
+  | { kind: 'failure'; message: string; failure: ToolFailureLike };
 
 /**
  * Read the catalog from a running server. A local server is asked over MCP (`tools/list`, full input schemas). Through
@@ -143,7 +148,10 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
       method: 'POST', headers, signal: timeout(),
       body: JSON.stringify({ jsonrpc: '2.0', id: 1, method: 'initialize', params: { protocolVersion: '2025-03-26', capabilities: {}, clientInfo: { name: 'unity-mcp-cli', version: '1' } } }),
     });
-    if (!init.ok) return { kind: 'failure', message: `MCP initialize failed: HTTP ${init.status} at ${endpoint}`, httpStatus: init.status };
+    if (!init.ok) {
+      const message = `MCP initialize failed: HTTP ${init.status} at ${endpoint}`;
+      return { kind: 'failure', message, failure: { reason: 'http-error', httpStatus: init.status, data: await init.text().catch(() => undefined), message } };
+    }
     await init.text();
     const session = init.headers.get('mcp-session-id');
     const sessionHeaders = session ? { ...headers, 'mcp-session-id': session } : headers;
@@ -155,7 +163,8 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
       const message = parseMcpMessage(await listed.text());
       tools = (message?.result as { tools?: typeof tools } | undefined)?.tools;
       if (!listed.ok || !tools) {
-        return { kind: 'failure', message: message?.error?.message ?? `MCP tools/list failed: HTTP ${listed.status} at ${endpoint}`, httpStatus: listed.ok ? undefined : listed.status };
+        const text = message?.error?.message ?? `MCP tools/list failed: HTTP ${listed.status} at ${endpoint}`;
+        return { kind: 'failure', message: text, failure: listed.ok ? { reason: 'unknown', message: text } : { reason: 'http-error', httpStatus: listed.status, data: { error: text }, message: text } };
       }
     } finally {
       // End the MCP session whatever happened, so the server does not keep it.
@@ -175,7 +184,9 @@ export async function listTools(options: ListToolsOptions): Promise<ListToolsRes
       },
     };
   } catch (err) {
-    return { kind: 'failure', message: `Could not read the tool list at ${endpoint}: ${err instanceof Error ? err.message : String(err)}` };
+    const message = `Could not read the tool list at ${endpoint}: ${err instanceof Error ? err.message : String(err)}`;
+    const timedOut = err instanceof Error && (err.name === 'TimeoutError' || err.name === 'AbortError');
+    return { kind: 'failure', message, failure: { reason: timedOut ? 'timeout' : 'network-error', message } };
   }
 }
 
@@ -186,9 +197,12 @@ async function listToolsViaPlugin(options: ListToolsOptions): Promise<ListToolsR
     toolName: TOOL_LIST_TOOL, url: options.baseUrl, ...(options.token ? { token: options.token } : {}),
     input: { includeDescription: true, includeInputs: 'InputsWithDescription' }, timeoutMs: options.timeoutMs ?? 30_000,
   });
-  if (answer.kind === 'failure') return { kind: 'failure', message: answer.message, httpStatus: answer.httpStatus };
+  if (answer.kind === 'failure') return { kind: 'failure', message: answer.message, failure: answer };
   const records = parseToolRecords(readToolResponse(answer.data).text);
-  if (records.length === 0) return { kind: 'failure', message: 'The editor answered unity-tool-list in an unknown format.' };
+  if (records.length === 0) {
+    const message = 'The editor answered unity-tool-list in an unknown format.';
+    return { kind: 'failure', message, failure: { reason: 'unknown', message } };
+  }
   return {
     kind: 'success',
     catalog: {

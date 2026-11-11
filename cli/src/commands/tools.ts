@@ -1,5 +1,5 @@
 import { Command } from 'commander';
-import { DEFAULT_SESSION_READY_TIMEOUT_MS, classifyHttpFailure, type ToolFailureClass } from '@baizor/gamedev-cli-core';
+import { DEFAULT_SESSION_READY_TIMEOUT_MS, classifyToolFailure } from '@baizor/gamedev-cli-core';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
@@ -126,12 +126,12 @@ export const toolsCommand = new Command('tools')
           writeToolCache(projectPath, catalog);
         } else if (!cached) {
           spinner?.stop();
-          // An HTTP error answer by the shared table (401 → NOT_AUTHENTICATED, 503 → BUSY, ...); no answer: UNREACHABLE.
-          const failed: ToolFailureClass = listed.httpStatus === undefined
-            ? { exitCode: ExitCode.Unreachable, code: 'UNREACHABLE' }
-            : classifyHttpFailure(listed.httpStatus, listed.message);
-          out.fail(failed.exitCode, { code: failed.code, message: listed.message, httpStatus: failed.httpStatus },
-            null, 'Start the editor (`unity-mcp-cli open --headless`) or let this command start it (no --no-start).');
+          // The shared table, as run-tool: 401 → NOT_AUTHENTICATED, 503 → BUSY, no answer → UNREACHABLE, ...
+          const failed = classifyToolFailure(listed.failure);
+          out.fail(failed.exitCode, { code: failed.code, message: listed.message, httpStatus: failed.httpStatus }, null,
+            failed.code === 'NOT_AUTHENTICATED' ? 'Sign in again: unity-mcp-cli login'
+              : failed.code === 'UNREACHABLE' ? 'Start the editor (`unity-mcp-cli open --headless`) or let this command start it (no --no-start).'
+                : undefined);
         } else {
           out.warn(`${listed.message}; showing the list saved ${cached.readAt}.`);
         }
