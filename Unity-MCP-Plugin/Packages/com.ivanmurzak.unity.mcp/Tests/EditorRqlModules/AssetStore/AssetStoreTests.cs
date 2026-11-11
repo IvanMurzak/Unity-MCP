@@ -211,7 +211,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
             CollectionAssert.Contains(RqlUnity.Engine.Modules.Select(m => m.Module).ToList(), typeof(AssetStoreModule).FullName);
             StringAssert.Contains(AssetStoreModule.SourceName, RqlUnitySchema.Render(RqlUnity.Engine, null));
             var api = RqlUnitySchema.Render(RqlUnity.Engine, AssetStoreModule.SourceName);
-            foreach (var member in new[] { "signedIn", "cachePath", "packages", "Refresh(", "OpenStoreSearch(", "ImportFile(" })
+            foreach (var member in new[] { "signedIn", "cachePath", "packages", "Refresh(", "OpenStoreSearch(", "ImportFile(", "SignIn(" })
                 StringAssert.Contains(member, api);
             var package = RqlUnitySchema.Render(RqlUnity.Engine, nameof(AssetStorePackage));
             foreach (var member in new[] { "productId", "downloaded", "localPath", "Import(", "Contents(", "OpenInPackageManager(" })
@@ -232,6 +232,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
             Assert.AreEqual("false", Cell(r, 0, 4));
             Assert.AreEqual("false", Cell(Q("assetStore | select signedIn")));
             StringAssert.Contains("not signed in", Cell(Q("assetStore | select accountError")));
+            StringAssert.Contains("SignIn()", Cell(Q("assetStore | select accountError")));
         }
 
         [Test]
@@ -271,6 +272,90 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
             var r = M("assetStore | call ImportFile(\"C:/no/such/file.unitypackage\")", dryRun: true);
             Assert.IsFalse(r.Ok, Table(r));
             StringAssert.Contains("no file", Table(r));
+        }
+    }
+
+    /// <summary>
+    /// <c>assetStore | call SignIn()</c> with the sign-in UI replaced: tests never open Unity's sign-in or touch the account.
+    /// </summary>
+    public class AssetStoreSignInTests : AdapterTestBase
+    {
+        int _shown;
+        int _refreshed;
+        bool _batchMode;
+        Action? _showLogin;
+        Func<bool>? _isBatchMode;
+        Action? _refresh;
+
+        [SetUp]
+        public void ReplaceTheSignInUi()
+        {
+            AssetStoreEditorApi.AccountDisabled = true; // signed out, whatever the Editor running the tests is signed in to
+            _shown = _refreshed = 0;
+            _batchMode = false;
+            _showLogin = AssetStoreSignInFlow.ShowLogin;
+            _isBatchMode = AssetStoreSignInFlow.IsBatchMode;
+            _refresh = AssetStoreSignInFlow.RefreshAccessToken;
+            AssetStoreSignInFlow.ShowLogin = () => _shown++;
+            AssetStoreSignInFlow.IsBatchMode = () => _batchMode;
+            AssetStoreSignInFlow.RefreshAccessToken = () => _refreshed++;
+        }
+
+        [TearDown]
+        public void RestoreTheSignInUi()
+        {
+            AssetStoreEditorApi.AccountDisabled = false;
+            AssetStoreSignInFlow.ShowLogin = _showLogin!;
+            AssetStoreSignInFlow.IsBatchMode = _isBatchMode!;
+            AssetStoreSignInFlow.RefreshAccessToken = _refresh!;
+        }
+
+        [Test]
+        public void SignInOpensUnitysSignInWhenSignedOut()
+        {
+            var r = M("assetStore | call SignIn()");
+            Assert.IsTrue(r.Ok, Table(r));
+            Assert.AreEqual(1, _shown, Table(r));
+            StringAssert.Contains("sign-in", Table(r));
+            StringAssert.Contains("never", Table(r)); // the agent never types the credentials
+            StringAssert.Contains("select signedIn", Table(r));
+        }
+
+        [Test]
+        public void SignInInAHeadlessEditorSaysToOpenOneWithAWindow()
+        {
+            _batchMode = true;
+            var r = M("assetStore | call SignIn()");
+            Assert.IsTrue(r.Ok, Table(r));
+            Assert.AreEqual(0, _shown, Table(r));
+            StringAssert.Contains("headless", Table(r));
+        }
+
+        [Test]
+        public void SignInWhenSignedInOnlyRefreshesTheToken()
+        {
+            var answer = AssetStoreSignInFlow.Run(signedIn: true, userName: "someone");
+            Assert.AreEqual(0, _shown);
+            Assert.AreEqual(1, _refreshed);
+            Assert.IsTrue(answer.signedIn);
+            Assert.IsFalse(answer.opened);
+            StringAssert.Contains("already signed in as 'someone'", answer.next);
+        }
+
+        [Test]
+        public void ADryRunOpensNothing()
+        {
+            var r = M("assetStore | call SignIn()", dryRun: true);
+            Assert.IsTrue(r.Ok, Table(r));
+            Assert.AreEqual(0, _shown, Table(r));
+        }
+
+        [Test]
+        public void TheSchemaDescribesTheAnswer()
+        {
+            var answer = RqlUnitySchema.Render(RqlUnity.Engine, nameof(AssetStoreSignIn));
+            foreach (var member in new[] { "signedIn", "userName", "opened", "next" })
+                StringAssert.Contains(member, answer);
         }
     }
 }

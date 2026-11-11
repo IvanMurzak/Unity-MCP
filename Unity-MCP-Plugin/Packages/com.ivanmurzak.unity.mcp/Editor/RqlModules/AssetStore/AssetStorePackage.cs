@@ -117,8 +117,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             UnityEditor.PackageManager.UI.Window.Open(productId > 0 ? productId.ToString() : name);
             return downloaded
                 ? $"the Package Manager shows '{name}'; it is already downloaded: call Import()"
-                : $"the Package Manager shows '{name}': press Download there (My Assets), then assetStore | call Refresh() and Import()";
+                : $"the Package Manager shows '{name}': press Download there (My Assets), then assetStore | call Refresh() and Import()" +
+                  (AssetStoreEditorApi.AccessToken().Length == 0 ? SignInFirst : "");
         }
+
+        /// <summary>Appended to a download hint while the Editor has no Unity account signed in (My Assets needs one).</summary>
+        internal const string SignInFirst = "; the Editor is not signed in to a Unity account, which My Assets needs: " +
+                                            "assetStore | call SignIn() first";
 
         /// <summary>The package file to read, or why there is none (with the way to get it).</summary>
         string RequireFile()
@@ -152,7 +157,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                 }
             }
             throw new ArgumentException($"'{name}' is not downloaded yet: call OpenInPackageManager() on it and press Download " +
-                                        "(the Editor has no public download API), then assetStore | call Refresh() and Import()");
+                                        "(the Editor has no public download API), then assetStore | call Refresh() and Import()" +
+                                        (AssetStoreEditorApi.AccessToken().Length == 0 ? SignInFirst : ""));
         }
     }
 }

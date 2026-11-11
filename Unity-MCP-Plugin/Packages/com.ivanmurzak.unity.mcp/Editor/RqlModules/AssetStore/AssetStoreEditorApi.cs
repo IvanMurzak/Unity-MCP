@@ -42,7 +42,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
 
         // ------------------------------------------------------------ state
 
-        [RqlDescription("a Unity account is signed in to the Editor: needed for owned packages (the local cache works without)")]
+        [RqlDescription("a Unity account is signed in to the Editor: needed for owned packages (the local cache works without); " +
+                        "false: call SignIn() to open Unity's sign-in for the user")]
         public bool signedIn => !string.IsNullOrEmpty(AccessToken());
 
         [RqlDescription("the signed-in Unity account's user name (empty when signed out)")]
@@ -51,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         [RqlDescription("the local cache the Editor downloads asset packages into (ASSETSTORE_CACHE_PATH or the OS default)")]
         public string cachePath => AssetStoreCache.Root.Replace('\\', '/');
 
-        [RqlDescription("why the owned packages could not be read last time (sign-in, network), null when they were")]
+        [RqlDescription("why the owned packages could not be read last time (sign-in: see SignIn(), network), null when they were")]
         public string? accountError
         {
             get
@@ -77,6 +78,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             return BuildPackages().Count;
         }
 
+        [RqlCallable("open Unity's sign-in for the user when the Editor is not signed in to a Unity account (signedIn false; the " +
+                     "owned packages need it); the user signs in there (Unity 6: through Unity Hub; a dialog about the Hub may block the " +
+                     "Editor until the user answers it), never the agent; returns whether it opened and the next step")]
+        public AssetStoreSignIn SignIn() => AssetStoreSignInFlow.Run(signedIn, userName);
+
         [RqlCallable("open the Asset Store website's search for text in the user's browser, to find new packages (buying or " +
                      "adding one to My Assets is the user's step: then Refresh() and Import()); returns the URL")]
         public string OpenStoreSearch(string text)
@@ -99,6 +105,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             => AssetStorePackageImporter.Rejection(() => AssetStorePackageImporter.Check(PackageFile(path), allowProjectSettings));
 
         // ------------------------------------------------------------ internals
+
+        /// <summary>The answer when the Editor has no Unity account signed in, with the way out.</summary>
+        internal const string NotSignedIn = "not signed in to a Unity account in the Editor: only the local cache is listed; " +
+                                            "assetStore | call SignIn() opens Unity's sign-in for the user";
 
         /// <summary>Test seam: true lists the local cache only, without asking the store.</summary>
         internal static bool AccountDisabled;
@@ -128,7 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             var token = AccessToken();
             if (token.Length == 0)
             {
-                _accountError = "not signed in to a Unity account in the Editor: only the local cache is listed (sign in via the Account menu, top right)";
+                _accountError = NotSignedIn;
                 return new List<AssetStorePurchase>();
             }
 

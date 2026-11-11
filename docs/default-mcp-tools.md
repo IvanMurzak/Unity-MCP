@@ -22,7 +22,7 @@ Unity-MCP gives AI models a small set of tools for the Unity Editor and Runtime.
 | **RQL / Mutate** | `rql-mutate` | shown | Change Editor data or call Editor operations, e.g. `editor \| call CreateGameObject({name: "Ground", primitive: "Plane"})`. |
 | **RQL / Schema** | `rql-schema` | shown | Describe sources, types, members and calls; `rql-schema "guide:<topic>"` prints a guide. |
 
-RQL sources: `scenes`, `roots`, `objects` (every GameObject in the loaded scenes), `selection`, `prefab` (the prefab open in prefab mode), `editor` (create GameObjects, materials, folders and scenes; open and save scenes and prefabs; copy, move and delete assets; execute menu items), `settings`, `console` (captured Editor log entries), `shaders`, `componentTypes`, `tests`, `testResults`, `profiler`, `lighting`. Assets are addressed by path with `unity.asset("Assets/…")`.
+RQL sources: `scenes`, `roots`, `objects` (every GameObject in the loaded scenes), `selection`, `prefab` (the prefab open in prefab mode), `editor` (create GameObjects, materials, folders and scenes; open and save scenes and prefabs; copy, move and delete assets; execute menu items), `settings`, `console` (captured Editor log entries), `shaders`, `componentTypes`, `tests`, `testResults`, `profiler`, `lighting`, `assetStore` (owned and downloaded Asset Store packages with import; `SignIn()` opens Unity's sign-in for the user when the Editor is signed out). Assets are addressed by path with `unity.asset("Assets/…")`.
 
 ## 📸 Screenshots
 | Tool | ID | Default | Description |

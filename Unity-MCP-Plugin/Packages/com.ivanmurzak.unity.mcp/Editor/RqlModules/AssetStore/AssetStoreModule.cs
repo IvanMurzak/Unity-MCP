@@ -29,7 +29,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             ctx.AddSource(SourceName, () => AssetStoreEditorApi.Instance,
                 "Asset Store packages you own (My Assets, signed in) or downloaded: assetStore | get packages | where name contains " +
                 "\"tree\" | select productId name downloaded sizeMB, then call Import() (returns its prefabs / materials) or " +
-                "OpenInPackageManager() to download; calls Refresh, OpenStoreSearch(text), ImportFile(path) (rql-schema \"assetStore\")",
+                "OpenInPackageManager() to download; signedIn false: call SignIn() (opens Unity's sign-in for the user); calls Refresh, " +
+                "OpenStoreSearch(text), ImportFile(path) (rql-schema \"assetStore\")",
                 typeof(AssetStoreEditorApi));
     }
 }

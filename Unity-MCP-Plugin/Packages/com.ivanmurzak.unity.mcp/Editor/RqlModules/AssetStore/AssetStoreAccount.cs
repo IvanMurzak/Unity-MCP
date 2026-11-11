@@ -130,7 +130,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             using var response = await _http.SendAsync(request).ConfigureAwait(false);
             var body = await response.Content.ReadAsStringAsync().ConfigureAwait(false);
             if ((int)response.StatusCode == 401 || (int)response.StatusCode == 403)
-                throw new InvalidOperationException($"the Asset Store refused the Editor's sign-in ({(int)response.StatusCode}): sign in again in the Editor (Account menu, top right)");
+                throw new InvalidOperationException($"the Asset Store refused the Editor's sign-in ({(int)response.StatusCode}): sign in again: assetStore | call SignIn()");
             if (!response.IsSuccessStatusCode)
                 throw new InvalidOperationException($"the Asset Store answered {(int)response.StatusCode} for {pathAndQuery}");
             var doc = JsonDocument.Parse(body);
