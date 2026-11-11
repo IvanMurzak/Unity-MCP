@@ -5,6 +5,7 @@ import * as path from 'path';
 import * as os from 'os';
 import { fileURLToPath } from 'url';
 import { antigravityConfigPaths, createTempHome, type TempHome } from './helpers/temp-home.js';
+import { ROOT_RQL_RECIPES, RQL_RECIPES } from '../src/lib/cli-guide.js';
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const CLI_PATH = path.resolve(__dirname, '..', 'bin', 'unity-mcp-cli.js');
@@ -55,7 +56,7 @@ describe('CLI integration', () => {
       for (const name of ['compile', 'configure', 'create-project', 'exec', 'install-plugin', 'install-unity', 'open', 'remove-plugin', 'rql', 'run-tool', 'tools']) {
         expect(stdout, `help should name ${name}`).toMatch(new RegExp(`(^|[\\s:])${name}(\\s|$)`, 'm'));
       }
-      expect(stdout).toContain("rql 'objects | where name");
+      RQL_RECIPES.forEach(([query], i) => expect(stdout.includes(`rql '${query}'`), query).toBe(i < ROOT_RQL_RECIPES));
       // Agents read the root help first and re-read it on every later turn: keep it short.
       expect(stdout.length).toBeLessThan(2500);
     });
