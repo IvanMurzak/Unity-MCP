@@ -11,7 +11,7 @@ import { EXIT_CODES } from '@baizor/gamedev-cli-core';
 import { runCliAsync } from './helpers/cli.js';
 import { writeCliSkills } from '../src/lib/setup-skills.js';
 import { buildGuideFiles, buildInstallGuide, EXIT_CODE_ACTIONS } from '../src/lib/skill-guides.js';
-import { ROOT_RQL_RECIPES, RQL_LANGUAGE, RQL_RECIPES } from '../src/lib/cli-guide.js';
+import { RQL_LANGUAGE, RQL_RECIPES } from '../src/lib/cli-guide.js';
 
 const FILES = ['unity-mcp-cli/SKILL.md', 'unity-mcp-cli/references/rql.md', 'unity-mcp-cli/references/install.md', 'ai-game-dev-app/SKILL.md'];
 const skillMd = () => buildGuideFiles().find((f) => f.relativePath === 'unity-mcp-cli/SKILL.md')!.content;
@@ -35,12 +35,10 @@ describe('the unity-mcp-cli skill', () => {
     }
   });
 
-  it('shows the root help\'s recipes; its RQL reference has them all and the language (one source)', () => {
-    RQL_RECIPES.forEach(([query, what], i) => {
-      expect(skillMd().includes(`rql '${query}'  # ${what}`)).toBe(i < ROOT_RQL_RECIPES);
-    });
+  it('shows every recipe; its RQL reference adds the language, not the recipes again (one source)', () => {
+    for (const [query, what] of RQL_RECIPES) expect(skillMd()).toContain(`rql '${query}'  # ${what}`);
     const ref = buildGuideFiles().find((f) => f.relativePath === 'unity-mcp-cli/references/rql.md')!.content;
-    for (const [query] of RQL_RECIPES) expect(ref).toContain(`rql '${query}'`);
+    for (const [query] of RQL_RECIPES) expect(ref).not.toContain(query);
     for (const line of RQL_LANGUAGE) expect(ref).toContain(line);
   });
 
@@ -57,10 +55,17 @@ describe('the unity-mcp-cli skill', () => {
     expect(skillMd()).not.toMatch(/editor must be running/i);
   });
 
+  it('scopes the description to editor work and names only compile for script edits (naming tests sent agents into test fixes)', () => {
+    const description = skillMd().split('\n').find((l) => l.startsWith('description: '))!;
+    expect(description).toContain('read before the first editor command');
+    expect(description).toContain('Editing scripts alone needs only `unity-mcp-cli compile` (file:line errors).');
+    expect(description).not.toMatch(/\btest\b/);
+  });
+
   it('stays short (the agent re-reads every byte each turn) and uses neutral example names', () => {
-    expect(Buffer.byteLength(skillMd())).toBeLessThan(2600);
+    expect(Buffer.byteLength(skillMd())).toBeLessThan(2800);
     const all = buildGuideFiles().map((f) => f.content).join('\n');
-    expect(all).not.toMatch(/\b(Arena|Crate|Platform|Level1|EnemyStats|GameMath)\b/);
+    expect(all).not.toMatch(/\b(Arena|Crate|Platform|Lamp|Level1|EnemyStats|GameMath)\b/);
   });
 
   for (const platform of ['win32', 'linux', 'darwin'] as const) {

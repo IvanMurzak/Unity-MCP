@@ -10,12 +10,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - **`setup-skills` works without an editor.** It always writes the `unity-mcp-cli` skill offline (cold-start
-  workflow, `rql` recipes, `compile` / `test`, `--format json`, exit codes and `dialog`; `references/` for depth;
+  workflow, every `rql` recipe, `compile` / `test`, `--format json`, exit codes and `dialog`; `references/` for depth;
   rendered from `src/lib/cli-guide.ts`, the source of the root `--help`) and `ai-game-dev-app`, then asks a running
   editor for the plugin's per-tool skills as before. A closed editor, a rejected token or an old plugin is now a
   note, not exit 1; `--offline` skips the editor. It never starts a Cloud login any more (that opened a browser
   and signed the machine in from a setup step): a Cloud project without a sign-in gets the CLI skill and the
-  steps for the plugin's skills.
+  steps for the plugin's skills. `references/rql.md` holds the stages, operators, sources and members; the skill's
+  description says to read it before the first editor command and that editing scripts alone needs only `compile`.
 - **The exit codes, `--format`, the result envelope, the `commands` manifest and the local-server fallback rule
   now come from `@baizor/gamedev-cli-core` 0.9.0** (one contract for the three engine CLIs). `commands --format json` names the exit codes by their `ExitCode` key (`CommandFailed`, was `COMMAND_FAILED`) and adds option `choices`; a failure envelope no command handled names the program when no command is on the command line. An unreadable
   sign-in no longer prints PowerShell's DPAPI exception, and a forced close of an editor unity-mcp-cli started also kills its
