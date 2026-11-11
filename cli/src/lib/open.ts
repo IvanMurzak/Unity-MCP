@@ -239,9 +239,14 @@ export async function openProject(
       phase: 'detecting-editor-version',
       message: 'Detecting Unity Editor version',
     });
+    const projectVersion = getProjectEditorVersion(projectPath) ?? undefined;
     let version = options.unityVersion;
     if (!version) {
-      version = getProjectEditorVersion(projectPath) ?? undefined;
+      version = projectVersion;
+    } else if (projectVersion && version !== projectVersion && options.editorPath === undefined) {
+      // Asked on purpose: the windowed editor opens with Unity's upgrade / downgrade dialog, which waits for the user.
+      warnings.push(`The project was saved with Unity ${projectVersion}; Unity ${version} asks to upgrade (or downgrade) it ` +
+        `before it opens: answer that dialog in the Editor (it changes the project's files).`);
     }
     resolvedVersion = version;
 

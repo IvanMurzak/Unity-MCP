@@ -131,23 +131,32 @@ export async function findEditorPath(version?: string): Promise<string | null> {
     }
   }
 
-  // Return the highest installed editor by version-aware sorting.
-  // Cache discipline: only write under the requested key when the
-  // resolved editor's version actually matches the request. Otherwise
-  // (e.g. the user asked for `999.0.0f0` which is not installed)
-  // we still return the highest installed editor as a best-effort
-  // fallback, but DO NOT cache it — caching would silently return the
-  // wrong editor for that version forever after (issue #784). The
-  // version-less `__auto__` slot is always safe to cache.
+  // A requested version that is not installed is NEVER replaced by another editor: opening a project in a newer
+  // editor upgrades it (Unity blocks on a "Project Upgrade Required" dialog nobody answers) and in an older one
+  // downgrades it. The caller reports it as not installed, listing the installed editors. Only a version-less request takes the
+  // highest installed editor (cached under the auto key).
+  if (version) {
+    verbose(`findEditorPath: requested ${version} is not installed (installed: ${editors.map((e) => e.version).join(', ')})`);
+    return null;
+  }
   const sorted = [...editors].sort((a, b) => compareUnityVersions(b.version, a.version));
   const resolved = getEditorBinary(sorted[0].path);
-  if (version === undefined || sorted[0].version === version) {
-    writeCachedEditorPath(version, resolved);
-  } else {
-    verbose(`findEditorPath skipping cache write: requested ${version} did not match resolved ${sorted[0].version}`);
-  }
+  writeCachedEditorPath(version, resolved);
   verbose(`findEditorPath selected highest installed version ${sorted[0].version} in ${Date.now() - startedAt}ms`);
   return resolved;
+}
+
+/**
+ * The installed editor to suggest for a project whose version `requested` is missing: the oldest stable (`f`)
+ * release newer than it (the smallest upgrade), else the newest stable one, else the newest of any kind. Undefined
+ * when nothing is installed.
+ */
+export function suggestEditorVersion(requested: string, installed: string[]): string | undefined {
+  const stable = installed.filter((v) => /\d+\.\d+\.\d+f\d+/.test(v));
+  const newerStable = stable.filter((v) => compareUnityVersions(v, requested) > 0).sort(compareUnityVersions);
+  if (newerStable.length > 0) return newerStable[0];
+  const newestFirst = (list: string[]) => [...list].sort((a, b) => compareUnityVersions(b, a))[0];
+  return newestFirst(stable) ?? newestFirst(installed);
 }
 
 /**
@@ -498,9 +507,10 @@ export function printEditorNotFoundHelp(requestedVersion: string | undefined, co
         ui.label(editor.version, editor.path);
       }
       if (requestedVersion) {
+        const suggested = suggestEditorVersion(requestedVersion, editors.map((e) => e.version)) ?? editors[0].version;
         const hint = commandName === 'connect'
-          ? `npx unity-mcp-cli ${commandName} --unity ${editors[0].version} --path <path> --url <url>`
-          : `npx unity-mcp-cli ${commandName} <path> --unity ${editors[0].version}`;
+          ? `npx unity-mcp-cli ${commandName} --unity ${suggested} --path <path> --url <url>`
+          : `npx unity-mcp-cli ${commandName} <path> --unity ${suggested}`;
         ui.info(`Use a different version:  ${hint}`);
       }
     }

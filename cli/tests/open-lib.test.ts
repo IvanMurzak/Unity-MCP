@@ -331,6 +331,48 @@ describe('openProject — editor-version detection (mocked)', () => {
   });
 });
 
+describe('openProject — an explicit --unity other than the project version (mocked)', () => {
+  let tmpDir: string;
+
+  beforeEach(() => {
+    tmpDir = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-mismatch-'));
+    makeFakeUnityProject(tmpDir, '6000.5.0b8');
+    vi.resetModules();
+    vi.doMock('../src/utils/unity-editor.js', async (importOriginal) => {
+      const actual = await importOriginal<typeof import('../src/utils/unity-editor.js')>();
+      return { ...actual, findEditorPath: vi.fn(async (v?: string) => `/editors/${v}/Unity`) };
+    });
+  });
+
+  afterEach(() => {
+    fs.rmSync(tmpDir, { recursive: true, force: true });
+    vi.doUnmock('../src/utils/unity-editor.js');
+    vi.resetModules();
+  });
+
+  const open = async (unityVersion: string) => {
+    const { openProject: mockedOpenProject } = await import('../src/lib/open.js');
+    return mockedOpenProject({
+      projectPath: tmpDir,
+      unityVersion,
+      autoDismissLaunchErrors: false,
+      spawnImpl: vi.fn(async () => 4242),
+    });
+  };
+
+  it('warns that Unity will ask to upgrade the project', async () => {
+    const result = await open('6000.6.7f1');
+    expect(result.kind).toBe('success');
+    expect(result.warnings.some(w => w.startsWith('The project was saved with Unity 6000.5.0b8; Unity 6000.6.7f1 asks to upgrade'))).toBe(true);
+  });
+
+  it('says nothing when the versions match', async () => {
+    const result = await open('6000.5.0b8');
+    expect(result.kind).toBe('success');
+    expect(result.warnings.some(w => w.startsWith('The project was saved with Unity'))).toBe(false);
+  });
+});
+
 describe('openProject — explicit editor path override (mocked)', () => {
   let tmpDir: string;
   let editorDir: string;
