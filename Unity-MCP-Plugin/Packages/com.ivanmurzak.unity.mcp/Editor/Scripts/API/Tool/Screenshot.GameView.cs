@@ -62,6 +62,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (NoGraphicsError() is { } noGraphics)
                 return noGraphics;
 
+            if (HeadlessError(ScreenshotGameViewToolId, "Game View") is { } headless)
+                return headless;
+
             return MainThread.Instance.Run(() =>
             {
                 var gameViewType = Type.GetType("UnityEditor.GameView,UnityEditor");
@@ -79,8 +82,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 var sourceRt = rtField?.GetValue(gameView) as RenderTexture;
 
                 if (sourceRt == null || !sourceRt.IsCreated())
-                    return ResponseCallTool.Error("Game View render texture is not available. " +
-                        "Ensure the Game View window is open and visible.");
+                {
+                    // A Game View that has not drawn yet has no render texture: one docked behind another tab (the
+                    // default layout puts it behind the Scene View), or one just opened, e.g. in a headless editor.
+                    // Show it in front: it renders on the next editor frame.
+                    gameView.Show();
+                    gameView.Focus();
+                    gameView.Repaint();
+                    return ResponseCallTool.Error("The Game View had not drawn yet (it was hidden behind another tab, or just opened). " +
+                        "It is shown in front now: call screenshot-game-view again.");
+                }
 
                 // Read pixels from the GameView's internal render texture, then correct the
                 // orientation for graphics APIs that render with the origin at the top-left.

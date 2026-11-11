@@ -100,14 +100,16 @@ export async function resolveConnection(
   /** True when the Bearer came from the shared machine store (Cloud mode, no --token override). */
   tokenFromCloudStore: boolean;
 }> {
-  const config = readConfig(projectPath);
-  const fromConfig = config
-    ? await resolveConnectionFromConfig(config, {
-        readCloudToken: deps.readCloudToken ?? readCloudAccessToken,
-      })
-    : { url: undefined, token: undefined };
+  const saved = readConfig(projectPath);
+  // A project the plugin has not configured yet (no config file, or one without a connection mode) runs in the
+  // plugin's default mode, Cloud: resolving it as a local server would start an editor that dials ai-game.dev while
+  // the CLI waits on a local port nobody serves.
+  const config = { ...saved, connectionMode: saved?.connectionMode ?? 'Cloud' };
+  const fromConfig = await resolveConnectionFromConfig(config, {
+    readCloudToken: deps.readCloudToken ?? readCloudAccessToken,
+  });
 
-  verbose(`Config loaded: connectionMode=${config?.connectionMode ?? 'N/A'}, configUrl=${fromConfig.url ?? 'N/A'}, hasToken=${!!fromConfig.token}`);
+  verbose(`Config loaded: connectionMode=${saved?.connectionMode ?? 'N/A (plugin default: Cloud)'}, configUrl=${fromConfig.url ?? 'N/A'}, hasToken=${!!fromConfig.token}`);
 
   let url: string;
   let usingCloudUrl = false;
@@ -116,8 +118,8 @@ export async function resolveConnection(
     verbose(`Using explicit --url: ${url}`);
   } else if (fromConfig.url) {
     url = fromConfig.url.replace(/\/$/, '');
-    usingCloudUrl = !!config && isCloudMode(config);
-    verbose(`Using URL from config (${config?.connectionMode} mode): ${url}`);
+    usingCloudUrl = isCloudMode(config);
+    verbose(`Using URL from config (${config.connectionMode} mode): ${url}`);
   } else {
     const port = generatePortFromDirectory(projectPath);
     url = `http://localhost:${port}`;

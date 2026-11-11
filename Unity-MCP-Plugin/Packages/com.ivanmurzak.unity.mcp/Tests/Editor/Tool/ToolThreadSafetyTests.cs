@@ -223,11 +223,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return RunToolBothThreads(Tool_Screenshot.ScreenshotCameraToolId, @"{""width"":64,""height"":64}");
         }
 
-        [UnityTest, RequiresGraphicsDevice]
+        [UnityTest, RequiresGraphicsDevice, RequiresWindowedEditor]
         public IEnumerator ScreenshotGameView_ThreadSafetyOnly()
             => RunToolExpectNoThreadViolation(Tool_Screenshot.ScreenshotGameViewToolId, "{}");
 
-        [UnityTest, RequiresGraphicsDevice]
+        [UnityTest, RequiresGraphicsDevice, RequiresWindowedEditor]
         public IEnumerator ScreenshotSceneView_ThreadSafetyOnly()
             => RunToolExpectNoThreadViolation(Tool_Screenshot.ScreenshotSceneViewToolId, @"{""width"":64,""height"":64}");
 

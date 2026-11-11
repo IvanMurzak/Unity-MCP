@@ -481,28 +481,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.IsTrue(File.Exists(_full));
         }
 
-        [Test]
+        [Test, RequiresWindowedEditor]
         public void ScreenshotSceneView_SavePath_WritesAndDoesNotOverwrite()
         {
             OpenSceneView();
             AssertSavedThenNotOverwritten(() => Tool.ScreenshotSceneView(width: 64, height: 64, savePath: _relative));
         }
 
-        [Test]
+        [Test, RequiresWindowedEditor]
         public void ScreenshotSceneView_NoSavePath_IsUnchanged()
         {
             OpenSceneView();
             AssertDefaultUnchanged(() => Tool.ScreenshotSceneView(width: 64, height: 64));
         }
 
-        [Test]
+        [Test, RequiresWindowedEditor]
         public void ScreenshotGameView_SavePath_WritesAndDoesNotOverwrite()
         {
             OpenGameView();
             AssertSavedThenNotOverwritten(() => Tool.ScreenshotGameView(savePath: _relative));
         }
 
-        [Test]
+        [Test, RequiresWindowedEditor]
         public void ScreenshotGameView_NoSavePath_IsUnchanged()
         {
             OpenGameView();

@@ -97,6 +97,27 @@ describe('resolveEditorConnection', () => {
     }
   });
 
+  it('a project the plugin has not configured yet is in its default Cloud mode: without a sign-in it falls back too', async () => {
+    // A fresh project has no config file until the plugin first loads (it then writes connectionMode: Cloud); an
+    // older file may lack the field. Both used to resolve to the local port with no fallback, so a started editor
+    // dialed the cloud while the CLI waited on a port nobody served.
+    const fresh = fs.mkdtempSync(path.join(os.tmpdir(), 'unity-mcp-editor-conn-fresh-'));
+    const noMode = project({ token: 'local-tok' });
+    try {
+      for (const dir of [fresh, noMode]) {
+        const conn = await resolveEditorConnection(dir, {}, { readCloudToken: () => undefined, credentialState: () => 'missing', userEditorOpen: () => false });
+        expect(conn.localFallback).toBe(true);
+        expect(conn.url).toMatch(/^http:\/\/localhost:\d+$/);
+        expect(conn.overrideUrl).toBe(conn.url);
+      }
+      const signedIn = await resolveEditorConnection(fresh, {}, { readCloudToken: () => 'tok', credentialState: () => 'ok' });
+      expect(signedIn).toMatchObject({ url: 'https://ai-game.dev/mcp', token: 'tok', localFallback: false });
+    } finally {
+      fs.rmSync(fresh, { recursive: true, force: true });
+      fs.rmSync(noMode, { recursive: true, force: true });
+    }
+  });
+
   it('a sign-in or an explicit --url keeps the resolved connection', async () => {
     const dir = project({ connectionMode: 'Cloud' });
     try {

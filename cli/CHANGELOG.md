@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **A fresh project no longer hangs `tools` / `exec` / `run-tool` / `compile`.** A project the plugin has not configured
+  yet (no `UserSettings/AI-Game-Developer-Config.json`, or one without `connectionMode`) is in the plugin's default Cloud
+  mode, but it was resolved as a local server with no fallback: on a machine never signed in, the started editor dialed
+  ai-game.dev and the CLI waited on a local port nobody served until `--ready-timeout`. It now takes the same local-server
+  fallback as a project saved in Cloud mode.
+- **`dialog --press` checks that the dialog closed.** A click sent to an inactive dialog could be lost while the command
+  reported success; it now falls back to the dialog's own button notification and fails when the dialog stays open.
+- The launch-error auto-dismiss runs PowerShell with the user's temp folder, like `dialog` (`Add-Type` fails under
+  `C:\Windows\Temp`).
+
 ### Changed
 
 - **`setup-skills` works without an editor.** It always writes the `unity-mcp-cli` skill offline (cold-start

@@ -60,6 +60,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             if (NoGraphicsError() is { } noGraphics)
                 return noGraphics;
 
+            if (HeadlessError(ScreenshotSceneViewToolId, "Scene View") is { } headless)
+                return headless;
+
             if (width <= 0 || height <= 0)
                 return ResponseCallTool.Error($"Width and height must be greater than 0. Got {width}x{height}.");
             if (width > MaxDimension || height > MaxDimension)
@@ -76,7 +79,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     sceneView = SceneView.sceneViews[0] as SceneView;
 
                 if (sceneView == null)
-                    return ResponseCallTool.Error("No Scene View window is open.");
+                    return ResponseCallTool.Error("No Scene View window is open. Open one (Window > General > Scene), " +
+                        "or render a scene camera with screenshot-camera.");
 
                 var sceneCamera = sceneView.camera;
                 if (sceneCamera == null)

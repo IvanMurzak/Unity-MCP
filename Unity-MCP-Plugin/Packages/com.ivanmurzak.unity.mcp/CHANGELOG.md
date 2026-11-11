@@ -168,6 +168,11 @@
 
 ### Fixed
 
+- `screenshot-game-view` and `screenshot-scene-view` in a headless (`-batchmode`) editor answer that they need a windowed
+  editor and point at `screenshot-camera`, instead of a black Game View image or a Scene View image from a camera that
+  was never placed at the view.
+- `screenshot-game-view` with the Game View behind another tab (the default layout) brings it to the front and asks for
+  one more call, instead of "ensure the Game View is visible".
 - **`script-execute`: a `Monitor.Pulse` in a snippet is no longer lost** (vendored Code-Exec 0.4.1). A `Pulse` /
   `PulseAll` sent while the guarded `Monitor.Wait` was between two of its slices did not wake it, so the waiter slept
   until the budget and the snippet ended with Timeout. The guard's per-thread state also moved from a `[ThreadStatic]`

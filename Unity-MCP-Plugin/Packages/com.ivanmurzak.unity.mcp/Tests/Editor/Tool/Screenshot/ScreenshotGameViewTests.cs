@@ -19,7 +19,7 @@ using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
-    [RequiresGraphicsDevice]
+    [RequiresGraphicsDevice, RequiresWindowedEditor]
     public class ScreenshotGameViewTests : BaseTest
     {
         // -----------------------------------------------------------------------
@@ -153,7 +153,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 Assert.IsNotNull(raw, "Raw result must not be null");
                 Assert.IsTrue(
                     raw.Contains("No Game View window") ||
-                    raw.Contains("Game View render texture is not available"),
+                    raw.Contains("The Game View had not drawn yet"),
                     $"Expected a known error message. Actual JSON:\n{raw}");
             }
             finally

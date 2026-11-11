@@ -43,8 +43,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         // in editors that do have a device.
         internal static volatile bool NoGraphicsDevice;
 
+        /// <summary>The editor runs headless (-batchmode): it never draws its Game View.</summary>
+        internal static volatile bool BatchMode;
+
         [InitializeOnLoadMethod]
-        private static void ReadGraphicsDevice() => NoGraphicsDevice = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
+        private static void ReadGraphicsDevice()
+        {
+            NoGraphicsDevice = SystemInfo.graphicsDeviceType == GraphicsDeviceType.Null;
+            BatchMode = Application.isBatchMode;
+        }
 
         private static ResponseCallTool? NoGraphicsError() =>
             NoGraphicsDevice
@@ -58,6 +65,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         // Measured on Unity 6000.3 URP: render, render, readback was empty; render, readback, render was right (every time).
         // So a warm-up render, then a 1-pixel readback, compiles what the view needs (synchronously: async compilation would
         // draw placeholders) before the capture render.
+        /// <summary>
+        /// A headless editor never draws its editor windows: a Game View capture is black and a Scene View's camera is
+        /// never placed at its view, with no error from Unity either way. Say so instead of returning such an image.
+        /// </summary>
+        private static ResponseCallTool? HeadlessError(string toolId, string window) =>
+            BatchMode
+                ? ResponseCallTool.Error($"{toolId} needs a windowed Unity Editor: this one runs headless (-batchmode), " +
+                    $"which never draws the {window}. Use screenshot-camera (renders a scene camera, also headless), or " +
+                    "open the project with a window (`unity-mcp-cli close --owned-only`, then `unity-mcp-cli open`).")
+                : null;
+
         internal static void RenderSync(Camera camera)
         {
             var wasAsync = ShaderUtil.allowAsyncCompilation;
