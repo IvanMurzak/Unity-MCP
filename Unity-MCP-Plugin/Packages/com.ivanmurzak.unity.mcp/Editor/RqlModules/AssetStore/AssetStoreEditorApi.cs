@@ -36,6 +36,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         List<AssetStorePurchase>? _purchases;
         string? _purchasesUser;
         DateTime _purchasesAt;
+        DateTime _failedAt = DateTime.MinValue;
+
+        /// <summary>How long a failed read of the owned packages is not retried (each try can wait for the network).</summary>
+        static readonly TimeSpan FailureBackoff = TimeSpan.FromMinutes(1);
         string? _accountError;
 
         private AssetStoreEditorApi() { }
@@ -74,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         public int Refresh()
         {
             _purchases = null;
-            _purchasesUser = null;
+            _failedAt = DateTime.MinValue;
             return BuildPackages().Count;
         }
 
@@ -145,6 +149,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             var user = CloudProjectSettings.userId ?? "";
             if (_purchases != null && _purchasesUser == user && DateTime.UtcNow - _purchasesAt < PurchasesTtl)
                 return _purchases;
+            // The store was just unreachable: answer from what is known instead of waiting on the network again.
+            if (DateTime.UtcNow - _failedAt < FailureBackoff)
+                return _purchases ?? new List<AssetStorePurchase>();
 
             try
             {
@@ -156,7 +163,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             }
             catch (Exception e)
             {
-                _accountError = (e is AggregateException a && a.InnerException != null ? a.InnerException : e).Message;
+                _failedAt = DateTime.UtcNow;
+                _accountError = e.Message;
                 Debug.LogWarning($"[RQL] assetStore: owned packages unavailable: {_accountError}");
                 return _purchases ?? new List<AssetStorePurchase>();
             }
@@ -164,19 +172,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
 
         List<AssetStorePackage> BuildPackages()
         {
+            // Cached downloads by name key: each owned package claims the first file with its key, the rest stay cache-only.
+            var unclaimed = new Dictionary<string, Queue<AssetStoreCachedFile>>();
             var cached = AssetStoreCache.Scan(AssetStoreCache.Root);
-            var unclaimed = new List<AssetStoreCachedFile>(cached);
+            foreach (var file in cached)
+            {
+                var key = AssetStoreCache.MatchKey(file.name);
+                if (!unclaimed.TryGetValue(key, out var files)) unclaimed[key] = files = new Queue<AssetStoreCachedFile>();
+                files.Enqueue(file);
+            }
+            var claimed = new HashSet<AssetStoreCachedFile>();
             var result = new List<AssetStorePackage>();
-
             foreach (var purchase in OwnedPurchases())
             {
-                var key = AssetStoreCache.MatchKey(purchase.displayName);
-                var file = unclaimed.FirstOrDefault(f => AssetStoreCache.MatchKey(f.name) == key);
-                if (file != null) unclaimed.Remove(file);
+                AssetStoreCachedFile? file = null;
+                if (unclaimed.TryGetValue(AssetStoreCache.MatchKey(purchase.displayName), out var files) && files.Count > 0)
+                    claimed.Add(file = files.Dequeue());
                 result.Add(AssetStorePackage.Owned(purchase, file));
             }
-            foreach (var file in unclaimed)
-                result.Add(AssetStorePackage.CachedOnly(file));
+            foreach (var file in cached)
+                if (!claimed.Contains(file)) result.Add(AssetStorePackage.CachedOnly(file));
             return result;
         }
     }

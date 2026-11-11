@@ -1,7 +1,7 @@
 import { Command, Option } from 'commander';
 import { unityAccountToolCall } from '../lib/rql.js';
-import { runTool } from '../lib/run-tool.js';
 import { FORMAT_OPTION_DESCRIPTION } from '../utils/output.js';
+import { RQL_CALL } from './rql.js';
 import { runToolAction, type RunToolCall, type RunToolCliOptions } from './run-tool-builder.js';
 
 interface UnityAccountCliOptions extends Omit<RunToolCliOptions, 'input' | 'inputFile' | 'arg' | 'start' | 'once' | 'readyTimeout'> {
@@ -9,14 +9,7 @@ interface UnityAccountCliOptions extends Omit<RunToolCliOptions, 'input' | 'inpu
 }
 
 /** How `unity-account` calls the editor: as `rql` does. */
-const UNITY_ACCOUNT_CALL: RunToolCall = {
-  name: 'unity-account',
-  routePrefix: '/api/tools',
-  verboseLabel: 'Tool',
-  headingLabel: 'RQL',
-  errorNoun: 'tool',
-  invoke: runTool,
-};
+const UNITY_ACCOUNT_CALL: RunToolCall = { ...RQL_CALL, name: 'unity-account' };
 
 export const unityAccountCommand = new Command('unity-account')
   .description(

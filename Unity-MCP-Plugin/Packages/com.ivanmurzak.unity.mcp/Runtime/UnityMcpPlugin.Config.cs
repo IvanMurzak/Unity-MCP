@@ -334,13 +334,16 @@ namespace com.IvanMurzak.Unity.MCP
                 if (ToolDefaultsRevision >= CurrentToolDefaultsRevision)
                     return false;
                 foreach (var tool in Tools)
-                    if (tool.Name.StartsWith("package-", StringComparison.Ordinal))
+                    if (Array.IndexOf(ShownInRevision1, tool.Name) >= 0)
                         tool.Visible = true;
                 ToolDefaultsRevision = CurrentToolDefaultsRevision;
                 return true;
             }
 
             public const int CurrentToolDefaultsRevision = 1;
+
+            /// <summary>The tools revision 1 shows (the Editor's Tool_Package IDs; Runtime cannot reference the Editor assembly).</summary>
+            static readonly string[] ShownInRevision1 = { "package-list", "package-search", "package-add", "package-remove" };
 
             /// <summary>
             /// One tool / prompt / resource entry of the config file: whether MCP clients see it listed

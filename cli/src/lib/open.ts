@@ -39,6 +39,10 @@ import type {
  * Pure / no I/O — exported for tests and for the CLI command's own
  * use so the two paths can share resolution semantics.
  */
+
+/** The start of the warning `openProject` adds when `--unity` differs from the project's version (shown to the user). */
+export const VERSION_MISMATCH_WARNING = 'The project was saved with Unity';
+
 export function resolveProjectPath(
   optionPath: string | undefined,
   cwd: string,
@@ -245,7 +249,7 @@ export async function openProject(
       version = projectVersion;
     } else if (projectVersion && version !== projectVersion && options.editorPath === undefined) {
       // Asked on purpose: the windowed editor opens with Unity's upgrade / downgrade dialog, which waits for the user.
-      warnings.push(`The project was saved with Unity ${projectVersion}; Unity ${version} asks to upgrade (or downgrade) it ` +
+      warnings.push(`${VERSION_MISMATCH_WARNING} ${projectVersion}; Unity ${version} asks to upgrade (or downgrade) it ` +
         `before it opens: answer that dialog in the Editor (it changes the project's files).`);
     }
     resolvedVersion = version;

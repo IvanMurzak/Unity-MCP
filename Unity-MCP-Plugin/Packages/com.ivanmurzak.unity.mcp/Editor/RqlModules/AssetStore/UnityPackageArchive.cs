@@ -42,6 +42,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
     {
         const int BlockSize = 512;
         const int MaxPathnameBytes = 64 * 1024;
+        const int MaxCachedPackages = 32;
 
         static readonly Dictionary<string, (long length, DateTime written, List<UnityPackageEntry> entries)> _cache =
             new Dictionary<string, (long, DateTime, List<UnityPackageEntry>)>(StringComparer.OrdinalIgnoreCase);
@@ -65,7 +66,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                 entries = ReadEntries(gzip);
 
             lock (_cache)
+            {
+                if (_cache.Count >= MaxCachedPackages) _cache.Clear(); // a bound, not an LRU: re-reading is only slower
                 _cache[info.FullName] = (info.Length, info.LastWriteTimeUtc, entries);
+            }
             return entries;
         }
 

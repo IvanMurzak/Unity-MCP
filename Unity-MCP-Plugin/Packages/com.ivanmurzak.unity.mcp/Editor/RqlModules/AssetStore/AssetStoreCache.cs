@@ -25,7 +25,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         public string publisher = "";
         public string category = "";
         public long sizeBytes;
-        public DateTime downloadedAt;
     }
 
     /// <summary>
@@ -45,17 +44,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                 if (!string.IsNullOrWhiteSpace(custom))
                     return custom!.Trim();
                 var home = Environment.GetFolderPath(Environment.SpecialFolder.UserProfile);
-                switch (Environment.OSVersion.Platform)
+                switch (UnityEngine.Application.platform)
                 {
-                    case PlatformID.Win32NT:
+                    case UnityEngine.RuntimePlatform.WindowsEditor:
                         return Path.Combine(Environment.GetFolderPath(Environment.SpecialFolder.ApplicationData), "Unity", "Asset Store-5.x");
-                    case PlatformID.MacOSX:
+                    case UnityEngine.RuntimePlatform.OSXEditor:
                         return Path.Combine(home, "Library", "Unity", "Asset Store-5.x");
                     default:
-                        // Mono reports macOS as Unix: tell it apart by its Library folder.
-                        return Directory.Exists(Path.Combine(home, "Library", "Unity"))
-                            ? Path.Combine(home, "Library", "Unity", "Asset Store-5.x")
-                            : Path.Combine(home, ".local", "share", "unity3d", "Asset Store-5.x");
+                        return Path.Combine(home, ".local", "share", "unity3d", "Asset Store-5.x");
                 }
             }
         }
@@ -78,8 +74,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                     name = Path.GetFileNameWithoutExtension(file),
                     publisher = parts.Length >= 3 ? parts[0] : "",
                     category = parts.Length >= 3 ? parts[1] : parts.Length == 2 ? parts[0] : "",
-                    sizeBytes = info.Length,
-                    downloadedAt = info.LastWriteTimeUtc
+                    sizeBytes = info.Length
                 });
             }
             return list.OrderBy(f => f.name, StringComparer.OrdinalIgnoreCase).ToList();

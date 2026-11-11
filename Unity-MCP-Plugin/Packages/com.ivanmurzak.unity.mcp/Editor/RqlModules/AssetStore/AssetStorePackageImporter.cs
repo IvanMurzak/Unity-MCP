@@ -132,7 +132,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             Check(file, allowProjectSettings);
             var entries = UnityPackageArchive.ReadEntries(file);
             var assetFiles = entries.Where(e => e.isFile).ToList();
-            var replaced = assetFiles.Count(e => !string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(e.guid)) && File.Exists(AssetDatabase.GUIDToAssetPath(e.guid)));
+            var replaced = assetFiles.Count(InProject);
 
             if (AsksBeforeImport())
             {
@@ -163,8 +163,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             var files = UnityPackageArchive.ReadEntries(file)
                 .Where(e => e.isFile && e.path.StartsWith("Assets/", StringComparison.Ordinal))
                 .ToList();
-            return files.Count > 0 && files.All(e => !string.IsNullOrEmpty(AssetDatabase.GUIDToAssetPath(e.guid)) &&
-                                                      File.Exists(AssetDatabase.GUIDToAssetPath(e.guid)));
+            return files.Count > 0 && files.All(InProject);
+        }
+
+        /// <summary>The package file's GUID is a file of this project (imported earlier, or by this package).</summary>
+        static bool InProject(UnityPackageEntry e)
+        {
+            var path = AssetDatabase.GUIDToAssetPath(e.guid);
+            return path.Length > 0 && File.Exists(path);
         }
 
         /// <summary>The import report for a package's files (exposed for tests).</summary>
@@ -235,10 +241,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             // Only a pipeline that every material folder agrees on: packs that ship variants for several say both.
             var materialPaths = assetFiles.Where(e => e.path.EndsWith(".mat", StringComparison.OrdinalIgnoreCase)).Select(e => e.path).ToList();
             if (materialPaths.Count == 0) return null;
-            var hd = materialPaths.Count(p => Hdrp.IsMatch(p));
-            var ur = materialPaths.Count(p => Urp.IsMatch(p));
-            if (hd == materialPaths.Count) return "HDRP";
-            if (ur == materialPaths.Count) return "URP";
+            if (materialPaths.All(Hdrp.IsMatch)) return "HDRP";
+            if (materialPaths.All(Urp.IsMatch)) return "URP";
             return null;
         }
 

@@ -83,12 +83,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             return package;
         }
 
-        void UseFile(AssetStoreCachedFile file)
+        void UseFile(AssetStoreCachedFile file) => UseFile(file.path, file.publisher, file.category, file.sizeBytes);
+
+        void UseFile(string path, string filePublisher, string fileCategory, long sizeBytes)
         {
-            localPath = file.path;
-            publisher = file.publisher;
-            category = file.category;
-            sizeMB = Math.Round(file.sizeBytes / (1024.0 * 1024.0), 1);
+            localPath = path;
+            publisher = filePublisher;
+            category = fileCategory;
+            sizeMB = Math.Round(sizeBytes / (1024.0 * 1024.0), 1);
         }
 
         // ------------------------------------------------------------ operations
@@ -126,12 +128,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             return downloaded
                 ? $"the Package Manager shows '{name}'; it is already downloaded: call Import()"
                 : $"the Package Manager shows '{name}': press Download there (My Assets), then assetStore | call Refresh() and Import()" +
-                  (AssetStoreEditorApi.AccessToken().Length == 0 ? SignInFirst : "");
+                  SignInHint();
         }
 
         /// <summary>Appended to a download hint while the Editor has no Unity account signed in (My Assets needs one).</summary>
         internal const string SignInFirst = "; the Editor is not signed in to a Unity account, which My Assets needs: " +
                                             "assetStore | call SignIn() first";
+
+        static string SignInHint() => AssetStoreEditorApi.AccessToken().Length == 0 ? SignInFirst : "";
 
         /// <summary>The package file to read, or why there is none (with the way to get it).</summary>
         string RequireFile()
@@ -151,10 +155,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                         var path = AssetStoreCache.DownloadPath(AssetStoreCache.Root, target);
                         if (File.Exists(path))
                         {
-                            localPath = path;
-                            publisher = target.publisher;
-                            category = target.category;
-                            sizeMB = Math.Round(new FileInfo(path).Length / (1024.0 * 1024.0), 1);
+                            UseFile(path, target.publisher, target.category, new FileInfo(path).Length);
                             return path;
                         }
                     }
@@ -166,7 +167,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             }
             throw new ArgumentException($"'{name}' is not downloaded yet: call OpenInPackageManager() on it and press Download " +
                                         "(the Editor has no public download API), then assetStore | call Refresh() and Import()" +
-                                        (AssetStoreEditorApi.AccessToken().Length == 0 ? SignInFirst : ""));
+                                        SignInHint());
         }
     }
 }

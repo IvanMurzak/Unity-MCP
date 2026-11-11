@@ -4,7 +4,6 @@ import { spawn } from 'child_process';
 import { homedir, platform } from 'os';
 import { findUnityHub, ensureUnityHub, listInstalledEditors, type InstalledEditor } from './unity-hub.js';
 import { readCachedEditorPath, writeCachedEditorPath } from './editor-cache.js';
-import * as ui from './ui.js';
 import { verbose } from './ui.js';
 
 /**
@@ -121,27 +120,24 @@ export async function findEditorPath(version?: string): Promise<string | null> {
     return fallback;
   }
 
-  if (version) {
-    const match = editors.find((e) => e.version === version);
-    if (match) {
-      const resolved = getEditorBinary(match.path);
-      writeCachedEditorPath(version, resolved);
-      verbose(`findEditorPath matched requested version ${version} in ${Date.now() - startedAt}ms`);
-      return resolved;
-    }
-  }
-
   // A requested version that is not installed is NEVER replaced by another editor: opening a project in a newer
   // editor upgrades it (Unity blocks on a "Project Upgrade Required" dialog nobody answers) and in an older one
-  // downgrades it. The caller reports it as not installed, listing the installed editors. Only a version-less request takes the
-  // highest installed editor (cached under the auto key).
+  // downgrades it. The caller reports it as not installed, listing the installed editors. Only a version-less request
+  // takes the highest installed editor (cached under the auto key).
   if (version) {
-    verbose(`findEditorPath: requested ${version} is not installed (installed: ${editors.map((e) => e.version).join(', ')})`);
-    return null;
+    const match = editors.find((e) => e.version === version);
+    if (!match) {
+      verbose(`findEditorPath: requested ${version} is not installed (installed: ${editors.map((e) => e.version).join(', ')})`);
+      return null;
+    }
+    const resolved = getEditorBinary(match.path);
+    writeCachedEditorPath(version, resolved);
+    verbose(`findEditorPath matched requested version ${version} in ${Date.now() - startedAt}ms`);
+    return resolved;
   }
   const sorted = [...editors].sort((a, b) => compareUnityVersions(b.version, a.version));
   const resolved = getEditorBinary(sorted[0].path);
-  writeCachedEditorPath(version, resolved);
+  writeCachedEditorPath(undefined, resolved);
   verbose(`findEditorPath selected highest installed version ${sorted[0].version} in ${Date.now() - startedAt}ms`);
   return resolved;
 }
@@ -488,42 +484,4 @@ export function launchEditor(
 
   child.unref();
   return child;
-}
-
-/**
- * Print actionable help when a required Unity Editor version is not found.
- * Lists installed editors and suggests install or override commands.
- */
-export function printEditorNotFoundHelp(requestedVersion: string | undefined, commandName: string): void {
-  if (requestedVersion) {
-    ui.error(`Unity Editor ${requestedVersion} is not installed.`);
-  } else {
-    ui.error('No Unity Editor found.');
-  }
-
-  ui.heading('Options:');
-
-  if (requestedVersion) {
-    ui.info(`Install it:  npx unity-mcp-cli install-unity ${requestedVersion}`);
-  }
-  ui.info('Install latest stable:  npx unity-mcp-cli install-unity');
-
-  // Show installed editors as alternatives
-  const hubPath = findUnityHub();
-  if (hubPath) {
-    const editors = listInstalledEditors(hubPath);
-    if (editors.length > 0) {
-      ui.heading('Installed editors:');
-      for (const editor of editors) {
-        ui.label(editor.version, editor.path);
-      }
-      if (requestedVersion) {
-        const suggested = suggestEditorVersion(requestedVersion, editors.map((e) => e.version)) ?? editors[0].version;
-        const hint = commandName === 'connect'
-          ? `npx unity-mcp-cli ${commandName} --unity ${suggested} --path <path> --url <url>`
-          : `npx unity-mcp-cli ${commandName} <path> --unity ${suggested}`;
-        ui.info(`Use a different version:  ${hint}`);
-      }
-    }
-  }
 }

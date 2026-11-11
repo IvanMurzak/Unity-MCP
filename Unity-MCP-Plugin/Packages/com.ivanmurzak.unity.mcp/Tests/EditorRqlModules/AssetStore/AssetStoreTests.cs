@@ -340,7 +340,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.AssetStore
             Assert.AreEqual(1, result.Total);
             Assert.AreEqual("Low Poly Trees", result.Packages[0].Name);
             Assert.IsTrue(result.Packages[0].Downloaded);
-            Assert.IsFalse(result.Packages[0].Imported);
+            Assert.AreEqual(false, result.Packages[0].Imported);
             Assert.AreEqual(2, new Tool_AssetStore().Library("publisher").Total, "the publisher matches too");
         }
 

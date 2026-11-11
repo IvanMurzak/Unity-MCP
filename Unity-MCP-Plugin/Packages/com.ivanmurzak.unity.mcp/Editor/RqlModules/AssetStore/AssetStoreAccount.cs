@@ -39,7 +39,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
     /// <summary>
     /// The Asset Store REST API the Package Manager window's "My Assets" page uses (packages-v2.unity.com), called with the
     /// access token of the user signed in to the Editor (<c>CloudProjectSettings.accessToken</c>). Read-only: the list of owned
-    /// packages and where a product's download is stored. Blocking calls are made off the main thread.
+    /// packages and where a product's download is stored. The calls block their caller (the main thread, for RQL and the tools) while
+    /// the requests run on the thread pool: pages after the first are fetched in parallel, and the caller caches the result.
     /// </summary>
     public static class AssetStoreAccount
     {
@@ -59,18 +60,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
 
         static async Task<List<AssetStorePurchase>> FetchPurchasesAsync(string accessToken)
         {
-            var result = new List<AssetStorePurchase>();
-            for (var offset = 0; offset < MaxPackages; offset += PageSize)
-            {
-                using var doc = await GetJsonAsync($"/-/api/purchases?offset={offset}&limit={PageSize}&orderBy=purchased_date&order=desc", accessToken).ConfigureAwait(false);
-                var root = doc.RootElement;
-                var page = ParsePurchases(root);
+            // The first page says how many there are; the rest are fetched together.
+            var (first, total) = await FetchPageAsync(0, accessToken).ConfigureAwait(false);
+            var result = new List<AssetStorePurchase>(first);
+            if (first.Count < PageSize || total <= PageSize)
+                return result;
+            var pages = new List<Task<(List<AssetStorePurchase>, long)>>();
+            for (var offset = PageSize; offset < Math.Min(total, MaxPackages); offset += PageSize)
+                pages.Add(FetchPageAsync(offset, accessToken));
+            foreach (var (page, _) in await Task.WhenAll(pages).ConfigureAwait(false))
                 result.AddRange(page);
-                var total = root.TryGetProperty("total", out var t) && t.TryGetInt64(out var n) ? n : 0;
-                if (page.Count < PageSize || result.Count >= total)
-                    break;
-            }
             return result;
+        }
+
+        static async Task<(List<AssetStorePurchase> page, long total)> FetchPageAsync(int offset, string accessToken)
+        {
+            using var doc = await GetJsonAsync($"/-/api/purchases?offset={offset}&limit={PageSize}&orderBy=purchased_date&order=desc", accessToken).ConfigureAwait(false);
+            var root = doc.RootElement;
+            return (ParsePurchases(root), root.TryGetProperty("total", out var t) && t.TryGetInt64(out var n) ? n : 0);
         }
 
         /// <summary>Parses one page of <c>/-/api/purchases</c> (exposed for tests).</summary>

@@ -43,8 +43,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
         public bool Owned { get; set; }
         [Description("In the local cache: assetstore-add can import it. False: the user downloads it in the Package Manager first.")]
         public bool Downloaded { get; set; }
-        [Description("Already in this project.")]
-        public bool Imported { get; set; }
+        [Description("Already in this project; null when not checked: only a result of up to 5 rows is checked (it reads the package file), ask with a narrower query.")]
+        public bool? Imported { get; set; }
         public double SizeMB { get; set; }
     }
 
@@ -53,6 +53,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
     {
         public const string LibraryToolId = "assetstore-library";
         public const string AddToolId = "assetstore-add";
+
+        /// <summary>Rows whose Imported is checked: each check reads the package file's table of contents.</summary>
+        const int MaxImportedChecks = 5;
 
         [AiTool(LibraryToolId, Title = "Asset Store / Library", ReadOnlyHint = true, DestructiveHint = false, IdempotentHint = true, OpenWorldHint = true, Visible = true)]
         [Description("List the Unity Asset Store packages the user owns (My Assets, read with the Editor's Unity sign-in) and the ones " +
@@ -74,14 +77,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                 var words = (query ?? "").Split(new[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 var matches = api.packages
                     .Where(p => !onlyDownloaded || p.downloaded)
-                    .Where(p => words.All(w => $"{p.name} {p.publisher} {p.category}".IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0))
+                    .Where(p =>
+                    {
+                        var text = $"{p.name} {p.publisher} {p.category}";
+                        return words.All(w => text.IndexOf(w, StringComparison.OrdinalIgnoreCase) >= 0);
+                    })
                     .ToList();
+                var rows = matches.Take(Math.Max(1, maxResults)).ToList();
+                var checkImported = rows.Count <= MaxImportedChecks;
                 return new AssetStoreLibraryResult
                 {
                     SignedIn = api.signedIn,
                     AccountError = api.accountError,
                     Total = matches.Count,
-                    Packages = matches.Take(Math.Max(1, maxResults)).Select(p => new AssetStoreLibraryItem
+                    Packages = rows.Select(p => new AssetStoreLibraryItem
                     {
                         ProductId = p.productId,
                         Name = p.name,
@@ -89,7 +98,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                         Category = p.category,
                         Owned = p.owned,
                         Downloaded = p.downloaded,
-                        Imported = p.downloaded && p.imported,
+                        Imported = !p.downloaded ? false : checkImported ? p.imported : (bool?)null,
                         SizeMB = p.sizeMB
                     }).ToList()
                 };
@@ -121,9 +130,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
                     : all.FirstOrDefault(p => string.Equals(p.name, key, StringComparison.OrdinalIgnoreCase));
                 if (match == null)
                     throw new ArgumentException($"no Asset Store package '{key}' in the account or the cache: find it with {LibraryToolId}");
-                var rejection = match.ValidateImport(allowProjectSettings);
-                if (rejection != null)
-                    throw new InvalidOperationException(rejection);
                 return match.Import(allowProjectSettings, $"{LibraryToolId} with query \"{match.name}\" (Imported: true)");
             });
         }

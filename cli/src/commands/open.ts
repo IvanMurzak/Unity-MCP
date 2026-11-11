@@ -9,6 +9,7 @@ import { ExitCode } from '../utils/exit-codes.js';
 import { verbose } from '../utils/ui.js';
 import {
   openProject,
+  VERSION_MISMATCH_WARNING,
   resolveProjectPath as libResolveProjectPath,
   isUnityProjectDir as libIsUnityProjectDir,
 } from '../lib/open.js';
@@ -391,7 +392,7 @@ export const openCommand = new Command('open')
 
     // The version-mismatch warning needs the user's action in the Editor: always shown. The rest are diagnostics.
     for (const warning of result.warnings) {
-      if (warning.startsWith('The project was saved with Unity')) ui.warn(warning);
+      if (warning.startsWith(VERSION_MISMATCH_WARNING)) ui.warn(warning);
       else verbose(warning);
     }
     if (result.baseUrl) ui.success(`MCP server is ready at ${result.baseUrl}`);
