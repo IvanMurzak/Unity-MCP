@@ -17,7 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   and signed the machine in from a setup step): a Cloud project without a sign-in gets the CLI skill and the
   steps for the plugin's skills.
 - **The `unity-mcp-cli` skill shows every `rql` recipe** (components included), so an agent no longer opens
-  `references/rql.md` for a common edit (that file now holds the language only). Its description says it is for
+  `references/rql.md` for a common edit (that file keeps the language, sources and members). Its description says it is for
   editor work and that editing scripts alone needs only `compile`.
 - **The exit codes, `--format`, the result envelope, the `commands` manifest and the local-server fallback rule
   now come from `@baizor/gamedev-cli-core` 0.9.0** (one contract for the three engine CLIs). `commands --format json` names the exit codes by their `ExitCode` key (`CommandFailed`, was `COMMAND_FAILED`) and adds option `choices`; a failure envelope no command handled names the program when no command is on the command line. An unreadable

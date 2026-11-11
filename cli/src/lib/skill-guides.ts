@@ -34,7 +34,7 @@ const cmd = (args: string) => `${CLI_NAME} ${args}`;
 const recipeLine = ([query, what]: readonly [string, string]) => `rql '${query}'  # ${what}`;
 const usage = ([, use]: CommandRow) => `\`${use}\``;
 
-/** The skill's SKILL.md body: the root help's commands and recipes plus the rules, about 2 KB. Pure. */
+/** The skill's SKILL.md body: the commands, every RQL recipe and the rules, about 2.5 KB. Pure. */
 function buildCliSkill(): string {
   return [
     `# ${CLI_NAME}`,
