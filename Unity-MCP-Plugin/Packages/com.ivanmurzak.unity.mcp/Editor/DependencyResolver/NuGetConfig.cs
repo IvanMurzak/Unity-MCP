@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "43";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "44";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -156,7 +156,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             new NuGetPackage("Microsoft.Extensions.Options",                          "8.0.2",  includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.Caching.Abstractions",             "8.0.0",  includeInBuild: true),
             new NuGetPackage("Microsoft.Extensions.Hosting.Abstractions",             "8.0.1",  includeInBuild: true),
-            new NuGetPackage("R3",                                                    "1.3.0",  includeInBuild: true),
+            new NuGetPackage("R3",                                                    "1.3.1",  includeInBuild: true),
 
             // --- Editor-only dependencies (excluded from builds) ---
             // RQL (the query language of rql-query / rql-mutate and the tools' data layer): Editor-only, so it never
