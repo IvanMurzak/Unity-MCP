@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — dependencies: chalk 6, commander 15, TypeScript 7, vitest 5
+
+Help text, colours, exit codes and the JSON envelope are unchanged, except that a "too many arguments" usage error now
+names the extra arguments (`Expected 1 argument but got 3: a, b, c.`, on stderr and in the envelope `message`; still
+exit 2 `USAGE`), and a negative number such as `-1` given as a command argument (or as `rql --schema -1`) is now read
+as that value instead of being rejected as `unknown option '-1'`. chalk 6 and commander 15 declare Node.js >= 22; Node.js 20 still works but is no longer supported upstream.
+
 ### Fixed — a connection dropped mid-call exits 7 `UNREACHABLE`
 
 A socket the server took and then closed — before the answer's headers, in the middle of its body, a reset (`ECONNRESET`,
