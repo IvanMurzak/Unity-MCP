@@ -59,7 +59,7 @@
   },
   "homepage": "https://ai-game.dev",
   "engines": {
-    "node": "^20.19.0 || >=22.12.0"
+    "node": ">=22.14.0"
   },
   "dependencies": {
     "@baizor/gamedev-cli-core": "^0.11.1",

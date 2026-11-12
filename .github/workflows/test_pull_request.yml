@@ -60,7 +60,7 @@ jobs:
   # output empty, so they run in full. This job has no `if` and its steps cannot fail it: a skipped or failed job here
   # could skip what depends on it, through the reusable workflows and release_extensions.yml's `publish`.
   # Not gated: the jobs below that take about a minute and read no listed path. test-cli must not be, because a skipped
-  # caller never reports the `test-cli / test-cli (20|22)` contexts the "Required status checks" ruleset names.
+  # caller never reports the `test-cli / test-cli (22|24|26)` contexts the "Required status checks" ruleset names.
   changes:
     runs-on: ubuntu-latest
     timeout-minutes: 5
