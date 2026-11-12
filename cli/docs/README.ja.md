@@ -2,7 +2,7 @@
   <h1>Unity MCP — <i>CLI</i></h1>
 
 [![npm](https://img.shields.io/npm/v/unity-mcp-cli?label=npm&labelColor=333A41 'npmパッケージ')](https://www.npmjs.com/package/unity-mcp-cli)
-[![Node.js](https://img.shields.io/badge/Node.js-%5E20.19.0%20%7C%7C%20%3E%3D22.12.0-5FA04E?logo=nodedotjs&labelColor=333A41 'Node.js')](https://nodejs.org/)
+[![Node.js](https://img.shields.io/badge/Node.js-%3E%3D22.14.0-5FA04E?logo=nodedotjs&labelColor=333A41 'Node.js')](https://nodejs.org/)
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
@@ -82,7 +82,7 @@ unity-mcp-cli wait-for-ready ./MyUnityProject
 npx unity-mcp-cli install-plugin /path/to/unity/project
 ```
 
-> **必要要件:** [Node.js](https://nodejs.org/) ^20.19.0 || >=22.12.0。[Unity Hub](https://unity.com/download)は見つからない場合、自動的にインストールされます。
+> **必要要件:** [Node.js](https://nodejs.org/) 22.14 以降。[Unity Hub](https://unity.com/download)は見つからない場合、自動的にインストールされます。
 
 ![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
 

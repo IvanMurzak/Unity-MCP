@@ -58,8 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         {
             var markdown = Skill_Cli.Markdown;
 
-            Assert.That(markdown, Does.Contain("20.19.0"));
-            Assert.That(markdown, Does.Contain("22.12.0"));
+            Assert.That(markdown, Does.Contain("Node.js 22.14 or later"));
         }
 
         [Test]

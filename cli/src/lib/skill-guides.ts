@@ -95,7 +95,7 @@ const INSTALL_TEMPLATE = [
   '',
   '## Prerequisites',
   '',
-  'Node.js ^20.19.0 or >=22.12.0 and npm are required. Node.js 21 is unsupported.',
+  'Node.js 22.14 or later and npm are required.',
   'Check existing installations first:',
   '',
   '```@SHELL@',
