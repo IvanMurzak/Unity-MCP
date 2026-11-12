@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — dependencies: chalk 6, commander 15, TypeScript 7, vitest 5
+
+`chalk` ^6.0.1, `commander` ^15.1.0 and `yocto-spinner` ^1.2.2; for development `typescript` ^7.0.2 and `vitest` ^5.1.0
+(`@types/node` stays on 22). Help text, colours, exit codes and the JSON envelope are unchanged, with one exception: a
+"too many arguments" usage error now names the extra arguments, on stderr and in the envelope's `message`
+(`Expected 1 argument but got 3: a, b, c.`); its exit code (2) and error code (`USAGE`) are the same. chalk 6 and
+commander 15 declare Node.js 22 or later (as `@baizor/gamedev-cli-core` already did); the CLI still runs and passes
+its tests on Node.js 20.20.
+
 ### Fixed — a connection dropped mid-call exits 7 `UNREACHABLE`
 
 A socket the server took and then closed — before the answer's headers, in the middle of its body, a reset (`ECONNRESET`,
