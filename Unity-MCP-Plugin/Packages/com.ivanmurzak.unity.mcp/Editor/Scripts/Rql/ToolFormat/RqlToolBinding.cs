@@ -93,7 +93,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
         // ------------------------------------------------------------ schema
 
         public ToolSignature? Describe(string toolName, MethodInfo method, string? description) =>
-            _signatures.GetOrAdd(method, m => com.IvanMurzak.ReflectorNet.Utils.MainThread.Instance.Run(() => Build(m, description)));
+            // Waits through a modal window: a failed describe is cached for good (the tool would keep the ReflectorNet signature).
+            _signatures.GetOrAdd(method, m => com.IvanMurzak.Unity.MCP.Runtime.Utils.UnityMainThread.RunThroughModalWindows(() => Build(m, description)));
 
         /// <summary>Forget cached signatures (after modules / adapters change).</summary>
         public void Reset()

@@ -101,37 +101,41 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         /// </summary>
         public static void Post(Action action) => _pending.Enqueue(action);
 
-        static Task<T> Dispatch<T>(Func<T> body)
+        /// <summary>
+        /// Like <see cref="MainThread.RunAsync(Action)"/>, but exempt from the modal-window watchdog: from another thread
+        /// it waits for a modal window to be answered, as before. For the Editor's own (non-MCP-call) work: a dialog it
+        /// opens itself, a UI update that must not be dropped.
+        /// </summary>
+        public static Task RunAsyncThroughModalWindows(Action action)
+        {
+            if (MainThreadDispatcher.IsMainThread)
+            {
+                action();
+                return Task.CompletedTask;
+            }
+            return Dispatch(() => { action(); return true; }, watched: false);
+        }
+
+        /// <inheritdoc cref="RunAsyncThroughModalWindows(Action)"/>
+        public static Task<T> RunAsyncThroughModalWindows<T>(Func<T> func)
+            => MainThreadDispatcher.IsMainThread ? Task.FromResult(func()) : Dispatch(func, watched: false);
+
+        /// <inheritdoc cref="RunAsyncThroughModalWindows(Action)"/>
+        public static void RunThroughModalWindows(Action action) => RunAsyncThroughModalWindows(action).Wait();
+
+        /// <inheritdoc cref="RunAsyncThroughModalWindows(Action)"/>
+        public static T RunThroughModalWindows<T>(Func<T> func) => RunAsyncThroughModalWindows(func).Result;
+
+        static Task<T> Dispatch<T>(Func<T> body, bool watched = true)
         {
             var item = new WorkItem<T>(body);
-            if (!_waitThroughModalWindows.Value)
+            if (watched)
             {
                 _waiting.TryAdd(item, 0);
                 EnsureWatchdog();
             }
             _pending.Enqueue(item.Execute);
             return item.Task;
-        }
-
-        static readonly AsyncLocal<bool> _waitThroughModalWindows = new AsyncLocal<bool>();
-
-        /// <summary>
-        /// Until disposed, main-thread work posted from this flow is exempt from the modal-window watchdog: it waits
-        /// for the window to be answered, as before. For the Editor's own (non-MCP-call) code, e.g. a dialog it opens
-        /// itself through <see cref="MainThread.Run{T}(Func{T})"/>, or a UI update that must not be dropped.
-        /// </summary>
-        public static IDisposable WaitThroughModalWindows()
-        {
-            var previous = _waitThroughModalWindows.Value;
-            _waitThroughModalWindows.Value = true;
-            return new ModalExemption(previous);
-        }
-
-        sealed class ModalExemption : IDisposable
-        {
-            readonly bool _previous;
-            public ModalExemption(bool previous) => _previous = previous;
-            public void Dispose() => _waitThroughModalWindows.Value = _previous;
         }
 
         #region Modal-window watchdog

@@ -1640,8 +1640,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
 
                 // Ensure cleanup on the main thread. Posted, not waited on: a modal window that blocks the main
-                // thread must delay the cleanup, not drop it. Safe even if OnProcessExited already cleaned up.
-                UnityMainThread.Post(CleanupProcess);
+                // thread must delay the cleanup, not drop it. Only while this process is still the tracked one: by
+                // the time it runs, OnProcessExited may have cleaned up and a new server may have started.
+                UnityMainThread.Post(() =>
+                {
+                    if (ReferenceEquals(_serverProcess, process))
+                        CleanupProcess();
+                });
             });
         }
 

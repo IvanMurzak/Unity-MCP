@@ -404,7 +404,7 @@ function fakeClock() {
 }
 
 describe('waitForExitOrDialog', () => {
-  it('reports the dialog as soon as a scan finds it, not at the timeout', async () => {
+  it('reports the dialog once a second scan confirms it, not at the timeout', async () => {
     const clock = fakeClock();
     let scans = 0;
     const result = await waitForExitOrDialog(4242, 30_000, {
@@ -413,7 +413,7 @@ describe('waitForExitOrDialog', () => {
       findDialogs: async () => { scans++; return [SAVE_PROMPT]; },
     });
     expect(result).toEqual({ kind: 'dialog', dialogs: [SAVE_PROMPT] });
-    expect(scans).toBe(1);
+    expect(scans).toBe(2);
     expect(clock.now()).toBeLessThan(5_000);
   });
 
@@ -442,6 +442,27 @@ describe('waitForExitOrDialog', () => {
     expect(scans).toBeGreaterThan(1); // scanned while waiting, and once more at the deadline
   });
 
+  it('does not report a window seen by one scan only (shown while the editor quits by itself)', async () => {
+    const clock = fakeClock();
+    let scans = 0;
+    const result = await waitForExitOrDialog(4242, 30_000, {
+      ...clock,
+      isAlive: () => clock.now() < 4_000,
+      findDialogs: async () => (++scans === 1 ? [{ ...SAVE_PROMPT, id: 'progress' }] : []),
+    });
+    expect(result).toEqual({ kind: 'exited' });
+  });
+
+  it('ignores windows without buttons (nothing to answer)', async () => {
+    const clock = fakeClock();
+    const result = await waitForExitOrDialog(4242, 10_000, {
+      ...clock,
+      isAlive: () => true,
+      findDialogs: async () => [{ ...SAVE_PROMPT, buttons: [] }],
+    });
+    expect(result).toEqual({ kind: 'timeout' });
+  });
+
   it('does not scan without findDialogs (--force)', async () => {
     const clock = fakeClock();
     const result = await waitForExitOrDialog(4242, 30_000, { ...clock, isAlive: () => true });
@@ -455,7 +476,7 @@ describe('waitForExitOrDialog', () => {
     const result = await waitForExitOrDialog(4242, 30_000, {
       ...clock,
       isAlive: () => alive,
-      findDialogs: async () => { alive = false; return [SAVE_PROMPT]; },
+      findDialogs: async () => { if (clock.now() > 2_000) alive = false; return [SAVE_PROMPT]; },
     });
     expect(result).toEqual({ kind: 'exited' });
   });

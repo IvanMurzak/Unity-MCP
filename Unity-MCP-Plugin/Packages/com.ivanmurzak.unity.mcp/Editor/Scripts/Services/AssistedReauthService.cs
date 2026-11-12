@@ -80,10 +80,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
     {
         /// <summary>Runs <paramref name="work"/> on the main thread, waiting through a modal window (the Editor's own work, not an MCP call).</summary>
         static T RunWaitingThroughModalWindows<T>(Func<T> work)
-        {
-            using (UnityMainThread.WaitThroughModalWindows())
-                return MainThread.Instance.Run(work);
-        }
+            => UnityMainThread.RunThroughModalWindows(work);
 
         static readonly ILogger _logger = UnityLoggerFactory.LoggerFactory.CreateLogger(nameof(AssistedReauthService));
         static readonly object _gate = new object();
@@ -176,8 +173,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             // Fires from the provider's refresh path — possibly on a thread-pool thread and while
             // the provider's internal gate is held. Never call back into the provider synchronously
             // here; SessionState and the editor APIs are main-thread-only anyway.
-            using (UnityMainThread.WaitThroughModalWindows()) // the Editor's own work, not an MCP call
-            MainThread.Instance.RunAsync(() => HandleVerdictOnMainThread());
+            UnityMainThread.RunAsyncThroughModalWindows(() => HandleVerdictOnMainThread());
         }
 
         static void OnAuthStateChanged(AuthState state)
@@ -469,8 +465,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Services
             if (commit.Status != LoginCommitStatus.FullyCommitted)
                 return AssistedReauthOutcome.CommitFailed;
 
-            using (UnityMainThread.WaitThroughModalWindows()) // the Editor's own work, not an MCP call
-            await MainThread.Instance.RunAsync(() =>
+            await UnityMainThread.RunAsyncThroughModalWindows(() =>
             {
                 if (UnityMcpPluginEditor.ConnectionMode != ConnectionMode.Cloud)
                     return;

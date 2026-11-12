@@ -30,6 +30,8 @@ const DEFAULT_TIMEOUT_SECONDS = 30;
 /** First dialog scan after the polite quit, then every interval: a save prompt appears within a second or two. */
 const DIALOG_SCAN_DELAY_MS = 2000;
 const DIALOG_SCAN_INTERVAL_MS = 5000;
+/** A dialog seen once is confirmed by a second scan this much later. */
+const DIALOG_CONFIRM_DELAY_MS = 1000;
 
 export type ExitWaitResult =
   | { kind: 'exited' }
@@ -54,24 +56,32 @@ export async function waitForExitOrDialog(pid: number, timeoutMs: number, deps: 
   const now = deps.now ?? Date.now;
   const start = now();
   const deadline = start + timeoutMs;
-  let lastScan = start - DIALOG_SCAN_INTERVAL_MS + DIALOG_SCAN_DELAY_MS;
-  // A dialog of an editor that exited meanwhile (it closed on the way out) is no reason to report one.
+  let nextScan = start + DIALOG_SCAN_DELAY_MS;
+  let lastScanEnd = -Infinity;
+  let seen = new Set<string>();
+  // A dialog counts once two scans in a row see it: a window shown briefly while the editor quits by itself (a
+  // progress window) must not turn a clean quit into exit 18. Windows without buttons cannot wait for an answer.
+  // A dialog of an editor that exited meanwhile is no reason to report one either.
   const scan = async (): Promise<EditorDialog[] | null> => {
-    lastScan = now();
-    const dialogs = await deps.findDialogs!();
-    return dialogs.length > 0 && deps.isAlive(pid) ? dialogs : null;
+    const found = (await deps.findDialogs!()).filter(d => d.buttons.length > 0);
+    lastScanEnd = now();
+    const confirmed = found.filter(d => seen.has(d.id));
+    seen = new Set(found.map(d => d.id));
+    // Seen once: look again soon to confirm it, instead of a full interval later.
+    nextScan = lastScanEnd + (found.length > 0 && confirmed.length === 0 ? DIALOG_CONFIRM_DELAY_MS : DIALOG_SCAN_INTERVAL_MS);
+    return confirmed.length > 0 && deps.isAlive(pid) ? confirmed : null;
   };
   while (now() < deadline) {
     if (!deps.isAlive(pid)) return { kind: 'exited' };
-    if (deps.findDialogs && now() - lastScan >= DIALOG_SCAN_INTERVAL_MS) {
+    if (deps.findDialogs && now() >= nextScan) {
       const dialogs = await scan();
       if (dialogs) return { kind: 'dialog', dialogs };
     }
     await sleep(250);
   }
   if (!deps.isAlive(pid)) return { kind: 'exited' };
-  // One more look unless a scan just ran: the dialog may have opened after the last one.
-  const dialogs = deps.findDialogs && now() - lastScan >= 1000 ? await scan() : null;
+  // One more look unless a scan just ended: the dialog may have opened after the last one.
+  const dialogs = deps.findDialogs && now() - lastScanEnd >= 1000 ? await scan() : null;
   return dialogs ? { kind: 'dialog', dialogs } : { kind: 'timeout' };
 }
 
@@ -82,9 +92,14 @@ export async function waitForExitOrDialog(pid: number, timeoutMs: number, deps: 
 function editorDialogScanner(projectPath: string, pid: number): () => Promise<EditorDialog[]> {
   let batchMode: boolean | undefined;
   return async () => {
-    batchMode ??= isBatchModeEditor(findUnityProcess(projectPath)?.commandLine ?? '');
+    if (batchMode === undefined) {
+      // Unknown (the process was not enumerated): scan, and ask again next time.
+      const proc = findUnityProcess(projectPath);
+      if (proc) batchMode = isBatchModeEditor(proc.commandLine);
+    }
     if (batchMode) return [];
     const listed = await listEditorDialogs([pid]);
+    if (listed.kind === 'error') verbose(`Dialog scan failed: ${listed.message}`);
     return listed.kind === 'ok' ? listed.dialogs : [];
   };
 }
@@ -212,7 +227,8 @@ async function closeOwnedEditor(
     process.exit(0);
   }
   if (result.kind === 'still-running') {
-    const dialogs = await editorDialogScanner(projectPath, result.pid)();
+    // With --force, still-running means the hard kill failed: no dialog explains that.
+    const dialogs = force ? [] : (await editorDialogScanner(projectPath, result.pid)()).filter(d => d.buttons.length > 0);
     if (dialogs.length > 0) {
       spinner.error(blockedByDialogMessage(result.pid, dialogs, force));
       process.exit(ExitCode.AwaitingInput);

@@ -105,11 +105,15 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             [DllImport("user32.dll")] static extern bool EnumThreadWindows(uint threadId, EnumWindowsProc callback, IntPtr lParam);
             [DllImport("user32.dll")] static extern bool EnumChildWindows(IntPtr parent, EnumWindowsProc callback, IntPtr lParam);
             [DllImport("user32.dll")] static extern bool IsWindowVisible(IntPtr hWnd);
+            [DllImport("user32.dll")] static extern bool IsWindowEnabled(IntPtr hWnd);
+            [DllImport("user32.dll")] static extern IntPtr GetWindow(IntPtr hWnd, uint cmd);
             [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int GetClassNameW(IntPtr hWnd, StringBuilder text, int count);
             // Reads the text without sending WM_GETTEXT, which would wait on the window's owner: the blocked main thread.
             [DllImport("user32.dll", CharSet = CharSet.Unicode)] static extern int InternalGetWindowText(IntPtr hWnd, StringBuilder text, int count);
 
             const string DialogClass = "#32770";
+            const string ProgressClass = "msctls_progress32";
+            const uint GW_OWNER = 4;
 
             static string ClassName(IntPtr hWnd)
             {
@@ -127,34 +131,55 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
             public static EditorModalWindow? FindDialog(uint threadId)
             {
-                var dialog = IntPtr.Zero;
+                EditorModalWindow? found = null;
                 EnumThreadWindows(threadId, (hWnd, _) =>
                 {
-                    if (!IsWindowVisible(hWnd) || ClassName(hWnd) != DialogClass)
-                        return true;
-                    dialog = hWnd;
-                    return false;
+                    found = IsModalDialog(hWnd) ? Describe(hWnd) : null;
+                    return found == null;
                 }, IntPtr.Zero);
-                if (dialog == IntPtr.Zero)
-                    return null;
+                return found;
+            }
 
+            /// <summary>
+            /// A visible standard dialog that waits for an answer: a modal dialog disables its owner (the editor window).
+            /// Unity's progress bars are modeless dialogs of the same class over a busy, not blocked, main thread.
+            /// </summary>
+            static bool IsModalDialog(IntPtr hWnd)
+            {
+                if (!IsWindowVisible(hWnd) || ClassName(hWnd) != DialogClass)
+                    return false;
+                var owner = GetWindow(hWnd, GW_OWNER);
+                return owner == IntPtr.Zero || !IsWindowEnabled(owner);
+            }
+
+            /// <summary>The dialog's title, texts and buttons; null for one with a progress bar or nothing to press.</summary>
+            static EditorModalWindow? Describe(IntPtr dialog)
+            {
                 var texts = new List<string>();
                 var buttons = new List<string>();
+                var progress = false;
                 EnumChildWindows(dialog, (child, _) =>
                 {
+                    var cls = ClassName(child);
+                    if (cls == ProgressClass)
+                    {
+                        progress = true;
+                        return false;
+                    }
                     if (!IsWindowVisible(child))
                         return true;
                     var text = Text(child);
                     if (text.Length == 0)
                         return true;
-                    var cls = ClassName(child);
                     if (cls == "Button")
                         buttons.Add(text.Replace("&", string.Empty));
                     else if (cls == "Static")
                         texts.Add(text);
                     return true;
                 }, IntPtr.Zero);
-                return new EditorModalWindow(Text(dialog), string.Join("\n", texts), buttons);
+                return progress || buttons.Count == 0
+                    ? null
+                    : new EditorModalWindow(Text(dialog), string.Join("\n", texts), buttons);
             }
         }
     }

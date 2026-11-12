@@ -109,14 +109,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
             Assert.AreEqual(1, Volatile.Read(ref finishedBody), "Work that had started runs to its end.");
         }
 
-        [Test]
-        public void Post_IsNotFailedByTheWatchdog()
+        [UnityTest]
+        public IEnumerator Post_IsNotFailedByTheWatchdog_AndRunsOnceTheMainThreadIsFree()
         {
             UnityMainThread.FindBlockingWindow = () => Window;
             var ran = 0;
             UnityMainThread.Post(() => Interlocked.Exchange(ref ran, 1));
             Thread.Sleep(BlockFor); // blocked: the watchdog ticks, but posted work is not its to fail
-            Assert.AreEqual(0, Volatile.Read(ref ran), "Posted work waits for the main thread.");
+
+            for (var i = 0; i < 5 && Volatile.Read(ref ran) == 0; i++)
+                yield return null;
+            Assert.AreEqual(1, Volatile.Read(ref ran), "Posted work runs once the main thread is free.");
+        }
+
+        [UnityTest]
+        public IEnumerator RunThroughModalWindows_IsExemptFromTheWatchdog()
+        {
+            UnityMainThread.FindBlockingWindow = () => Window;
+            var call = Task.Run(() => UnityMainThread.RunThroughModalWindows(() => 5));
+
+            var finished = SpinWait.SpinUntil(() => call.IsCompleted, BlockFor);
+            Assert.IsFalse(finished, "The Editor's own work waits through a modal window instead of failing.");
+
+            var deadline = DateTime.UtcNow.AddSeconds(10);
+            while (!call.IsCompleted && DateTime.UtcNow < deadline)
+                yield return null;
+            Assert.IsTrue(call.IsCompleted && !call.IsFaulted);
+            Assert.AreEqual(5, call.Result);
         }
 
         [Test]
