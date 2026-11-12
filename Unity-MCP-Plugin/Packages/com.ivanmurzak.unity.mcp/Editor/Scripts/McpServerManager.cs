@@ -1463,6 +1463,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                     // Save PID for reconnection after domain reload
                     EditorPrefs.SetInt(ProcessIdKey, _serverProcess.Id);
+                    _lastStartUtc = DateTime.UtcNow;
 
                     // Keep status as Starting - it will be set to Running after verification
                     _logger.LogInformation("MCP server process started (PID: {pid}), awaiting verification...", _serverProcess.Id);
@@ -1638,9 +1639,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                     _logger.LogDebug("Process already exited or disposed while waiting for exit: {message}", ex.Message);
                 }
 
-                // Ensure cleanup on the main thread.
-                // Safe to call even if OnProcessExited already triggered cleanup.
-                MainThread.Instance.Run(CleanupProcess);
+                // Ensure cleanup on the main thread. Posted, not waited on: a modal window that blocks the main
+                // thread must delay the cleanup, not drop it. Only while this process is still the tracked one: by
+                // the time it runs, OnProcessExited may have cleaned up and a new server may have started.
+                UnityMainThread.Post(() =>
+                {
+                    if (ReferenceEquals(_serverProcess, process))
+                        CleanupProcess();
+                });
             });
         }
 
@@ -1890,7 +1896,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor
 
                     EditorApplication.update -= CheckProcess;
                     if (_serverStatus.CurrentValue == McpServerStatus.Starting)
+                    {
                         CleanupProcess();
+                        ScheduleRestartAfterUnexpectedExit();
+                    }
                     return;
                 }
 
@@ -1940,13 +1949,100 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             }
         }
 
+        // Marshal to main thread since this event is raised from a thread pool thread and CleanupProcess modifies
+        // reactive properties that may be observed on the main thread. Posted, not waited on: a modal window that
+        // blocks the main thread must delay the cleanup, not drop it.
         static void OnProcessExited(object? sender, EventArgs e)
+            => UnityMainThread.Post(() => OnServerProcessExited(sender as Process));
+
+        static void OnServerProcessExited(Process? exited)
         {
-            _logger.LogInformation("MCP server process exited");
-            // Marshal to main thread since this event is raised from a thread pool thread
-            // and CleanupProcess modifies reactive properties that may be observed on the main thread
-            MainThread.Instance.Run(CleanupProcess);
+            // An event of a process that is no longer ours (a newer one replaced it) changes nothing.
+            if (exited != null && _serverProcess != null && !ReferenceEquals(exited, _serverProcess))
+                return;
+
+            // Running or Starting: nobody asked it to stop (a stop sets Stopping first), so it died on its own.
+            var unexpected = _serverStatus.CurrentValue == McpServerStatus.Running
+                || _serverStatus.CurrentValue == McpServerStatus.Starting;
+            if (unexpected)
+                _logger.LogWarning("MCP server process (PID: {pid}) exited unexpectedly{exitCode}",
+                    SafePid(exited), ExitCodeSuffix(exited));
+            else
+                _logger.LogInformation("MCP server process exited");
+
+            CleanupProcess();
+            if (unexpected)
+                ScheduleRestartAfterUnexpectedExit();
         }
+
+        static string SafePid(Process? process)
+        {
+            try { return process?.Id.ToString() ?? "?"; }
+            catch (Exception) { return "?"; }
+        }
+
+        static string ExitCodeSuffix(Process? process)
+        {
+            try { return process != null && process.HasExited ? $" (exit code {process.ExitCode})" : string.Empty; }
+            catch (Exception) { return string.Empty; } // an adopted process (after a domain reload) may not expose it
+        }
+
+        #region Restart after an unexpected exit
+
+        // The server this editor started can disappear on its own (a crash, an external kill). Before, the plugin then
+        // only retried its connection to the dead port forever, so every agent call failed with ECONNREFUSED until the
+        // editor was restarted. Now it starts the server again, with a growing delay so a server that dies right away
+        // does not restart in a tight loop; the connection loop reconnects once it listens.
+
+        const int RestartMaxDelaySeconds = 60;
+        // A server that ran this long before it died starts the backoff over.
+        const double RestartBackoffResetSeconds = 60.0;
+
+        static int _restartAttempt;
+        static DateTime _lastStartUtc = DateTime.MinValue;
+        static DateTime? _restartDueUtc; // null: no restart scheduled
+
+        /// <summary>The auto-start gates (Custom mode, not stdio, Keep Server Running) under the current settings.</summary>
+        static bool ShouldRunLocalServer()
+            => ShouldRestartAfterUpdate(UnityMcpPluginEditor.KeepServerRunning, UnityMcpPluginEditor.ConnectionMode, UnityMcpPluginEditor.TransportMethod);
+
+        /// <summary>The wait before restart attempt <paramref name="attempt"/> (0-based): 1, 2, 4, ... seconds, at most a minute.</summary>
+        internal static TimeSpan RestartDelay(int attempt)
+            => TimeSpan.FromSeconds(Math.Min(RestartMaxDelaySeconds, 1 << Math.Max(0, Math.Min(attempt, 6))));
+
+        static void ScheduleRestartAfterUnexpectedExit()
+        {
+            if (McpDisable.IsDisabled || _restartDueUtc != null)
+                return;
+            if (!ShouldRunLocalServer())
+            {
+                _logger.LogWarning("The MCP server is not restarted: Keep Server Running is off, or the connection mode or transport does not use a server started by this Editor.");
+                return;
+            }
+
+            if ((DateTime.UtcNow - _lastStartUtc).TotalSeconds >= RestartBackoffResetSeconds)
+                _restartAttempt = 0;
+            var delay = RestartDelay(_restartAttempt++);
+            _logger.LogWarning("Restarting the MCP server in {seconds:F0}s (attempt {attempt})", delay.TotalSeconds, _restartAttempt);
+
+            _restartDueUtc = DateTime.UtcNow + delay;
+            EditorApplication.update += RestartWhenDue;
+        }
+
+        static void RestartWhenDue()
+        {
+            if (DateTime.UtcNow < _restartDueUtc)
+                return;
+            EditorApplication.update -= RestartWhenDue;
+            _restartDueUtc = null;
+            // Anything that happened meanwhile wins: a manual start or stop, a setting change, a binary update.
+            if (_serverStatus.CurrentValue != McpServerStatus.Stopped || !ShouldRunLocalServer())
+                return;
+            // Checks the port first: when another server took it meanwhile (External), nothing is started.
+            StartServerIfNeeded();
+        }
+
+        #endregion
 
         static void OnOutputDataReceived(object sender, DataReceivedEventArgs e)
         {

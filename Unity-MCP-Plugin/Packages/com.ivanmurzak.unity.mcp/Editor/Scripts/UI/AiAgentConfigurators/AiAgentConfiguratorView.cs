@@ -686,7 +686,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             RefreshConfigurationUI();
 
             var key = await resolve().ConfigureAwait(false); // ProjectKeyService never throws.
-            await MainThread.Instance.RunAsync(() =>
+            await com.IvanMurzak.Unity.MCP.Runtime.Utils.UnityMainThread.RunAsyncThroughModalWindows(() =>
             {
                 _busyText = null;
                 try

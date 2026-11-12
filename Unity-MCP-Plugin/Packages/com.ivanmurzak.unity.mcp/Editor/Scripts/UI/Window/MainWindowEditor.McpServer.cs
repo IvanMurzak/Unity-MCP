@@ -383,7 +383,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         DateTime.UtcNow);
                     return;
                 }
-                MainThread.Instance.Run(() =>
+                com.IvanMurzak.Unity.MCP.Runtime.Utils.UnityMainThread.RunThroughModalWindows(() =>
                 {
                     // Second check: close the TOCTOU window between the thread-pool check above
                     // and the main-thread callback execution.

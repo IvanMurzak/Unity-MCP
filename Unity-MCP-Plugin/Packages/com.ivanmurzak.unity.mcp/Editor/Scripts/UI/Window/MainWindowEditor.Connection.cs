@@ -408,7 +408,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 // Service events may fire on any thread. Use RunAsync (EditorApplication.update-
                 // based) instead of delayCall so the UI updates even when the Unity Editor window is
                 // not focused — delayCall is throttled/paused when Unity loses application focus.
-                MainThread.Instance.RunAsync(() =>
+                com.IvanMurzak.Unity.MCP.Runtime.Utils.UnityMainThread.RunAsyncThroughModalWindows(() =>
                 {
                     if (statusLabel != null)
                     {
@@ -450,7 +450,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 // before this await returns Committed.
                 var outcome = await AssistedReauthService.AuthorizeAsync();
 
-                await MainThread.Instance.RunAsync(() =>
+                await com.IvanMurzak.Unity.MCP.Runtime.Utils.UnityMainThread.RunAsyncThroughModalWindows(() =>
                 {
                     UpdateTokenDisplay();
                     UpdateRevokeButtonVisibility();

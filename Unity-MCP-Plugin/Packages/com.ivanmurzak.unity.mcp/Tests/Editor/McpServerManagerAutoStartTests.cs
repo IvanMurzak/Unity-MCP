@@ -160,4 +160,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 McpServerManager.DockerSetupRunCommand());
         }
     }
+
+    /// <summary>The backoff between restarts of a local server that exited on its own (its gates are <see cref="McpServerManager.ShouldRestartAfterUpdate"/>'s).</summary>
+    public class McpServerManagerUnexpectedExitRestartTests
+    {
+        [TestCase(0, 1)]
+        [TestCase(1, 2)]
+        [TestCase(2, 4)]
+        [TestCase(5, 32)]
+        [TestCase(6, 60)]
+        [TestCase(1000, 60)]
+        public void RestartDelay_DoublesUpToAMinute(int attempt, double expectedSeconds)
+            => Assert.AreEqual(expectedSeconds, McpServerManager.RestartDelay(attempt).TotalSeconds);
+    }
 }

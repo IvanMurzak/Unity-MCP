@@ -11,7 +11,11 @@
 #nullable enable
 using System;
 using System.Collections.Concurrent;
+using System.Diagnostics;
+using System.Linq;
+using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEditor;
 
@@ -75,6 +79,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         {
             EditorApplication.update -= Pump;
             EditorApplication.update += Pump;
+
+            _mainNativeThreadId = EditorModalWindow.CurrentNativeThreadId();
+            // The watchdog's timer must not outlive this domain's code.
+            AssemblyReloadEvents.beforeAssemblyReload -= StopWatchdog;
+            AssemblyReloadEvents.beforeAssemblyReload += StopWatchdog;
         }
 
         static void Pump()
@@ -85,16 +94,150 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 action();
         }
 
-        static Task<T> Dispatch<T>(Func<T> body)
+        /// <summary>
+        /// Runs <paramref name="action"/> on the main thread on a later tick, without waiting for it. Unlike
+        /// <see cref="MainThread.Run(Action)"/> it is never failed by the modal-window watchdog, so work that must
+        /// happen (state cleanup) still runs once a modal window is answered.
+        /// </summary>
+        public static void Post(Action action) => _pending.Enqueue(action);
+
+        /// <summary>
+        /// Like <see cref="MainThread.RunAsync(Action)"/>, but exempt from the modal-window watchdog: from another thread
+        /// it waits for a modal window to be answered, as before. For the Editor's own (non-MCP-call) work: a dialog it
+        /// opens itself, a UI update that must not be dropped.
+        /// </summary>
+        public static Task RunAsyncThroughModalWindows(Action action)
         {
-            var tcs = new TaskCompletionSource<T>();
-            _pending.Enqueue(() =>
+            if (MainThreadDispatcher.IsMainThread)
             {
-                try { tcs.SetResult(body()); }
-                catch (Exception ex) { tcs.SetException(ex); }
-            });
-            return tcs.Task;
+                action();
+                return Task.CompletedTask;
+            }
+            return Dispatch(() => { action(); return true; }, watched: false);
         }
+
+        /// <inheritdoc cref="RunAsyncThroughModalWindows(Action)"/>
+        public static Task<T> RunAsyncThroughModalWindows<T>(Func<T> func)
+            => MainThreadDispatcher.IsMainThread ? Task.FromResult(func()) : Dispatch(func, watched: false);
+
+        /// <inheritdoc cref="RunAsyncThroughModalWindows(Action)"/>
+        public static void RunThroughModalWindows(Action action) => RunAsyncThroughModalWindows(action).Wait();
+
+        /// <inheritdoc cref="RunAsyncThroughModalWindows(Action)"/>
+        public static T RunThroughModalWindows<T>(Func<T> func) => RunAsyncThroughModalWindows(func).Result;
+
+        static Task<T> Dispatch<T>(Func<T> body, bool watched = true)
+        {
+            var item = new WorkItem<T>(body);
+            if (watched)
+            {
+                _waiting.TryAdd(item, 0);
+                EnsureWatchdog();
+            }
+            _pending.Enqueue(item.Execute);
+            return item.Task;
+        }
+
+        #region Modal-window watchdog
+
+        // A modal window (a Win32 dialog) runs its own message loop on the main thread, so EditorApplication.update,
+        // and with it Pump, stops until a person answers it: every MCP call then waited silently until the client
+        // timed out (minutes). The watchdog fails the work the main thread has not finished after GraceSeconds
+        // while such a window is open, with an error that names the window, so the agent learns why at once.
+        // Only that case: work held by a busy (not blocked) main thread keeps waiting, as before.
+
+        /// <summary>How long queued work waits before the watchdog may fail it.</summary>
+        public const double GraceSeconds = 2.0;
+        const int WatchdogPeriodMs = 1000;
+
+        static readonly ConcurrentDictionary<IWorkItem, byte> _waiting = new ConcurrentDictionary<IWorkItem, byte>();
+        static readonly object _watchdogLock = new object();
+        static System.Threading.Timer? _watchdog;
+        static uint _mainNativeThreadId;
+
+        /// <summary>The modal window that blocks the main thread right now, if any (Windows; null elsewhere).</summary>
+        public static Func<EditorModalWindow?> FindBlockingWindow { get; set; } = () => EditorModalWindow.Find(_mainNativeThreadId);
+
+        static void EnsureWatchdog()
+        {
+            if (Volatile.Read(ref _watchdog) != null)
+                return;
+            lock (_watchdogLock)
+                _watchdog ??= new System.Threading.Timer(_ => CheckWaiting(), null, WatchdogPeriodMs, WatchdogPeriodMs);
+        }
+
+        static void StopWatchdog()
+        {
+            lock (_watchdogLock)
+            {
+                _watchdog?.Dispose();
+                _watchdog = null;
+            }
+        }
+
+        /// <summary>Fails the waiting work older than <see cref="GraceSeconds"/> when a modal window blocks the main thread.</summary>
+        static void CheckWaiting()
+        {
+            try
+            {
+                if (_waiting.IsEmpty)
+                    return;
+                // The lock-free enumerator: Keys would take every bucket lock against the Dispatch hot path.
+                var stale = _waiting.Where(entry => entry.Key.AgeSeconds >= GraceSeconds).Select(entry => entry.Key).ToList();
+                if (stale.Count == 0)
+                    return;
+                var window = FindBlockingWindow();
+                if (window == null)
+                    return;
+                foreach (var item in stale)
+                    item.FailBlocked(window);
+            }
+            catch (Exception)
+            {
+                // A watchdog failure must never take the timer thread down; the work keeps waiting as before.
+            }
+        }
+
+        interface IWorkItem
+        {
+            double AgeSeconds { get; }
+            void FailBlocked(EditorModalWindow window);
+        }
+
+        sealed class WorkItem<T> : IWorkItem
+        {
+            const int Queued = 0, Running = 1, Abandoned = 2;
+
+            readonly Func<T> _body;
+            readonly TaskCompletionSource<T> _tcs = new TaskCompletionSource<T>();
+            readonly long _startTimestamp = Stopwatch.GetTimestamp();
+            int _state = Queued;
+
+            public WorkItem(Func<T> body) => _body = body;
+
+            public Task<T> Task => _tcs.Task;
+            public double AgeSeconds => (double)(Stopwatch.GetTimestamp() - _startTimestamp) / Stopwatch.Frequency;
+
+            public void Execute()
+            {
+                // Failed before it started: the caller was told it did not run, so it must not run now.
+                if (Interlocked.CompareExchange(ref _state, Running, Queued) != Queued)
+                    return;
+                try { _tcs.TrySetResult(_body()); }
+                catch (Exception ex) { _tcs.TrySetException(ex); }
+                finally { _waiting.TryRemove(this, out _); }
+            }
+
+            public void FailBlocked(EditorModalWindow window)
+            {
+                var started = Interlocked.CompareExchange(ref _state, Abandoned, Queued) != Queued;
+                _waiting.TryRemove(this, out _);
+                // notExecuted stays false: a not-executed failure is re-sent by the server for its reconnect wait.
+                _tcs.TrySetException(new ToolUnavailableException(window.BlockedCallMessage(started)));
+            }
+        }
+
+        #endregion
     }
 }
 #endif
