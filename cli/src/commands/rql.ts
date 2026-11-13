@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { Command, Option } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
-import { RQL_MUTATE_TOOL, assetsWrittenSince, decodeQueryFile, rqlLastVerb, rqlToolCall, saveReceipt, stripToolName } from '../lib/rql.js';
+import { RQL_MUTATE_TOOL, assetsWrittenSince, decodeQueryFile, rqlTextVerb, rqlToolCall, saveReceipt, stripToolName } from '../lib/rql.js';
 import { runTool } from '../lib/run-tool.js';
 import { resolveAndValidateProjectPath } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
@@ -46,7 +46,7 @@ function readQuery(query: string | undefined, file: string | undefined): string 
 }
 
 export const rqlCommand = new Command('rql')
-  .description('Read or change the editor with one RQL query: scenes, GameObjects, components, assets (a query ending in set / call changes the project and saves it, any other only reads); starts a headless editor when none answers')
+  .description('Read or change the editor with RQL (one query, or several separated by ;): scenes, GameObjects, components, assets (a query ending in set / call changes the project and saves it, any other only reads); starts a headless editor when none answers')
   .argument('[query]', 'RQL query, e.g. \'objects | where name starts-with "Tree" | count\'')
   .option('--path <path>', 'Unity project path (defaults to cwd)')
   .option('-f, --file <file>', 'Read the query from a file ("-" for stdin)')
@@ -82,7 +82,7 @@ export const rqlCommand = new Command('rql')
       ? resolveAndValidateProjectPath(undefined, options) : undefined;
     await runToolAction(RQL_CALL, call.toolName, undefined, { ...options, input: JSON.stringify(call.input) }, ({ calledAt, local }) => {
       if (receiptFor === undefined || !local) return;
-      const receipt = saveReceipt(assetsWrittenSince(receiptFor, calledAt), rqlLastVerb(query!));
+      const receipt = saveReceipt(assetsWrittenSince(receiptFor, calledAt), rqlTextVerb(query!));
       if (receipt) console.log(receipt);
     });
   });

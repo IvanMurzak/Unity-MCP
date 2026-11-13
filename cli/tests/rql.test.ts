@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
-import { assetsWrittenSince, decodeQueryFile, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlToolCall, saveReceipt, stripToolName } from '../src/lib/rql.js';
+import { assetsWrittenSince, decodeQueryFile, isRqlChange, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlStatements, rqlTextVerb, rqlToolCall, saveReceipt, stripToolName } from '../src/lib/rql.js';
 
 afterEach(removeTempDirs);
 
@@ -70,6 +70,32 @@ describe('rqlToolCall', () => {
 
   it('treats backtick identifiers as opaque', () => {
     expect(rqlLastVerb("objects | where `Bob's` == 1 | set active = false")).toBe('set');
+  });
+});
+
+describe('several statements (;)', () => {
+  it('splits at ; outside strings, quoted identifiers and brackets, dropping blank statements', () => {
+    expect(rqlStatements('objects | count; roots | count')).toEqual(['objects | count', 'roots | count']);
+    expect(rqlStatements('objects | where name == "a;b" | count;')).toEqual(['objects | where name == "a;b" | count']);
+    expect(rqlStatements("objects | where `x;y` == 1 | count; ;")).toEqual(['objects | where `x;y` == 1 | count']);
+    expect(rqlStatements('editor | call F({a: "1;2"}, [1; 2]); objects | count')).toEqual(['editor | call F({a: "1;2"}, [1; 2])', 'objects | count']);
+    expect(rqlStatements(' ; ')).toEqual([';']);
+  });
+
+  it('routes to rql-mutate when any statement ends in set / call', () => {
+    expect(rqlToolCall('objects | where name == "A" | set active = false; objects | count', {}))
+      .toEqual({ toolName: 'rql-mutate', input: { query: 'objects | where name == "A" | set active = false; objects | count' } });
+    expect(rqlToolCall('editor | call CreateGameObject("A"); editor | call CreateGameObject("B")', { dryRun: true }))
+      .toEqual({ toolName: 'rql-mutate', input: { query: 'editor | call CreateGameObject("A"); editor | call CreateGameObject("B")', dry_run: true } });
+    expect(rqlToolCall('objects | count; roots | count', {})).toEqual({ toolName: 'rql-query', input: { query: 'objects | count; roots | count' } });
+    expect(rqlToolCall('objects | count; roots | count', { dryRun: true })).toHaveProperty('usage');
+    expect(isRqlChange('objects | where name == "set; call" | count')).toBe(false);
+  });
+
+  it('reports call before set for the save receipt', () => {
+    expect(rqlTextVerb('objects | set active = false; editor | call SaveScenes()')).toBe('call');
+    expect(rqlTextVerb('objects | count; objects | set active = false')).toBe('set');
+    expect(rqlTextVerb('objects | count; roots | count')).toBeUndefined();
   });
 });
 
