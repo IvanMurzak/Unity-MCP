@@ -12,7 +12,7 @@ Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme) ·
 You still need the [AI Game Developer](https://github.com/IvanMurzak/Unity-MCP#quick-start) plugin in your Unity
 project, set to **Custom** mode with the server's URL (see [connection modes](mcp-server.md#connection-modes)).
 
-![Docker launch](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/editor/docker-launch.gif)
+![Docker launch](img/editor/docker-launch.gif)
 
 ## HTTP (self-hosted, reachable from outside the container)
 

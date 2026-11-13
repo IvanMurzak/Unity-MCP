@@ -63,7 +63,7 @@ client works with the JSON config from the window.
 2. Open **Window ▸ AI Game Dev**.
 3. Click **Auto-generate** Skills (recommended), or **Configure** MCP for your agent.
 
-![AI Game Developer window](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/ai-connector-window.gif)
+![AI Game Developer window](img/ai-connector-window.gif)
 
 The same from the terminal:
 

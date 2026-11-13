@@ -156,6 +156,14 @@
         buttonText: 'Copy',
         successText: 'Copied'
       },
+      plugins: [
+        // The root README references images as docs/img/...; this site is served from docs/, so drop the prefix.
+        function (hook) {
+          hook.beforeEach(function (content) {
+            return content.replace(/(\]\(|src=")docs\/img\//g, '$1img/');
+          });
+        }
+      ],
       alias: {
         '/README.es': '/README.es.md',
         '/README.ja': '/README.ja.md',

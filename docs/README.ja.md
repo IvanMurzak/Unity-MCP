@@ -1,29 +1,29 @@
 <div align="center" width="100%">
 
-<img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/readme/hero.svg" alt="Unity 向け AI Game Developer: AI エージェントを Unity エディターと実行中のゲームにつなぐ Skills、MCP ツール、CLI" width="100%">
+<img src="img/readme/hero.svg" alt="Unity 向け AI Game Developer: AI エージェントを Unity エディターと実行中のゲームにつなぐ Skills、MCP ツール、CLI" width="100%">
 
-[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Downloads](https://img.shields.io/badge/dynamic/json?labelColor=333A41&label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp 'OpenUPM downloads')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![npm](https://img.shields.io/npm/v/unity-mcp-cli?label=unity-mcp-cli&labelColor=333A41 'npm package')](https://www.npmjs.com/package/unity-mcp-cli)
-[![Unity](https://img.shields.io/badge/Unity-2022.3%2B-2A2A2A?logo=unity&labelColor=333A41 'Unity 2022.3 or newer')](https://unity.com/releases/editor/archive)
-[![release](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml/badge.svg 'Release')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)
-[![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
-[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
+[![Downloads](https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9 'OpenUPM downloads')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
+[![CLI](https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D 'unity-mcp-cli on npm')](https://www.npmjs.com/package/unity-mcp-cli)
+[![Unity](https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white 'Unity 2022.3 or newer')](https://unity.com/releases/editor/archive)
+[![release](https://img.shields.io/github/actions/workflow/status/IvanMurzak/Unity-MCP/release.yml?label=release&logo=githubactions&style=for-the-badge&labelColor=0F172A&logoColor=white 'Release workflow')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)
+[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white 'Join')](https://discord.gg/cfbdMZX99G)
+[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857 'License')](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
 [![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
 
   <p>
-    <a href="https://claude.ai/download"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/claude-64.png" alt="Claude" title="Claude" height="36"></a>&nbsp;&nbsp;
-    <a href="https://openai.com/index/introducing-codex/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/codex-64.png" alt="Codex" title="Codex" height="36"></a>&nbsp;&nbsp;
-    <a href="https://www.cursor.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/cursor-64.png" alt="Cursor" title="Cursor" height="36"></a>&nbsp;&nbsp;
-    <a href="https://code.visualstudio.com/docs/copilot/overview"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/github-copilot-64.png" alt="GitHub Copilot" title="GitHub Copilot" height="36"></a>&nbsp;&nbsp;
-    <a href="https://gemini.google.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/gemini-64.png" alt="Gemini" title="Gemini" height="36"></a>&nbsp;&nbsp;
-    <a href="https://antigravity.google/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/antigravity-64.png" alt="Antigravity" title="Antigravity" height="36"></a>&nbsp;&nbsp;
-    <a href="https://code.visualstudio.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/vs-code-64.png" alt="VS Code" title="VS Code" height="36"></a>&nbsp;&nbsp;
-    <a href="https://www.jetbrains.com/rider/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/rider-64.png" alt="Rider" title="Rider" height="36"></a>&nbsp;&nbsp;
-    <a href="https://visualstudio.microsoft.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/visual-studio-64.png" alt="Visual Studio" title="Visual Studio" height="36"></a>&nbsp;&nbsp;
-    <a href="https://opencode.ai/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
-    <a href="https://github.com/cline/cline"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/cline-64.png" alt="Cline" title="Cline" height="36"></a>&nbsp;&nbsp;
-    <a href="https://github.com/Kilo-Org/kilocode"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
+    <a href="https://claude.ai/download"><img src="img/mcp-clients/claude-64.png" alt="Claude" title="Claude" height="36"></a>&nbsp;&nbsp;
+    <a href="https://openai.com/index/introducing-codex/"><img src="img/mcp-clients/codex-64.png" alt="Codex" title="Codex" height="36"></a>&nbsp;&nbsp;
+    <a href="https://www.cursor.com/"><img src="img/mcp-clients/cursor-64.png" alt="Cursor" title="Cursor" height="36"></a>&nbsp;&nbsp;
+    <a href="https://code.visualstudio.com/docs/copilot/overview"><img src="img/mcp-clients/github-copilot-64.png" alt="GitHub Copilot" title="GitHub Copilot" height="36"></a>&nbsp;&nbsp;
+    <a href="https://gemini.google.com/"><img src="img/mcp-clients/gemini-64.png" alt="Gemini" title="Gemini" height="36"></a>&nbsp;&nbsp;
+    <a href="https://antigravity.google/"><img src="img/mcp-clients/antigravity-64.png" alt="Antigravity" title="Antigravity" height="36"></a>&nbsp;&nbsp;
+    <a href="https://code.visualstudio.com/"><img src="img/mcp-clients/vs-code-64.png" alt="VS Code" title="VS Code" height="36"></a>&nbsp;&nbsp;
+    <a href="https://www.jetbrains.com/rider/"><img src="img/mcp-clients/rider-64.png" alt="Rider" title="Rider" height="36"></a>&nbsp;&nbsp;
+    <a href="https://visualstudio.microsoft.com/"><img src="img/mcp-clients/visual-studio-64.png" alt="Visual Studio" title="Visual Studio" height="36"></a>&nbsp;&nbsp;
+    <a href="https://opencode.ai/"><img src="img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
+    <a href="https://github.com/cline/cline"><img src="img/mcp-clients/cline-64.png" alt="Cline" title="Cline" height="36"></a>&nbsp;&nbsp;
+    <a href="https://github.com/Kilo-Org/kilocode"><img src="img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
   </p>
 
   <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md) | [فارسی](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.fa.md)</b>
@@ -37,7 +37,7 @@ C# コードを読み書きし、テストを実行し、スクリーンショ�
 
 ## 仕組み
 
-<img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/readme/architecture.svg" alt="AI エージェントまたは unity-mcp-cli が MCP でサーバー(既定は ai-game.dev Cloud、またはローカルの gamedev-mcp-server)と通信し、サーバーが Unity エディタープラグインと実行中のゲームのツールを呼び出す" width="100%">
+<img src="img/readme/architecture.svg" alt="AI エージェントまたは unity-mcp-cli が MCP でサーバー(既定は ai-game.dev Cloud、またはローカルの gamedev-mcp-server)と通信し、サーバーが Unity エディタープラグインと実行中のゲームのツールを呼び出す" width="100%">
 
 プラグインはツールを MCP サーバーに登録し、エージェントはそのサーバー経由でツールを呼び出します。既定では
 `https://ai-game.dev/mcp` の **Cloud** サーバーを使います。**Custom** モードでは
@@ -46,21 +46,20 @@ C# コードを読み書きし、テストを実行し、スクリーンショ�
 
 ## 特長
 
-| | |
-| --- | --- |
-| **少数で強力なツール** | エディター作業の大半は **RQL** で行います: `rql-query` が読み、`rql-mutate` が変更し、`rql-schema` が説明します。ほかに Roslyn による C# 実行、テスト、スクリーンショット、パッケージ。 |
-| **Skills または MCP** | ワンクリックでエージェント用の Skills を生成するか、MCP クライアントとして設定します。 |
-| **どのエージェントでも** | Claude Code、Codex、Cursor、Copilot、Gemini などは自動で設定されます。その他の MCP クライアントも JSON 設定で動作します。 |
-| **ランタイム(ゲーム内)** | ビルドしたゲームの中でも同じツールを使えます: NPC のロジック、ライブデバッグ、プレイヤーと AI のやり取り。 |
-| **独自ツール** | どの C# メソッドも属性ひとつ `[AiTool]` でツールになります。 |
-| **スクリプトと CI 向け CLI** | Unity とプラグインのインストール、プロジェクトを開く、クエリ、コンパイル、テストをターミナルから。 |
-| **拡張** | Animation、Cinemachine、Input System、Navigation、ParticleSystem、ProBuilder、Splines、Terrain、Tilemap、Timeline 用のオプションパック。 |
+| **RQL** | ひとつのクエリ言語でシーン、オブジェクト、アセット、設定を読み書き |
+| **C# とテスト** | Roslyn で C# をコンパイル・実行。EditMode / PlayMode テストを実行 |
+| **Skills または MCP** | ワンクリックで Skills を生成、または MCP クライアントとして接続 |
+| **どのエージェントでも** | Claude Code、Codex、Cursor、Copilot、Gemini などの MCP クライアント |
+| **ランタイム** | ビルドしたゲーム内でも同じツール: NPC ロジック、ライブデバッグ |
+| **独自ツール** | どの C# メソッドも `[AiTool]` 属性ひとつでツールに |
+| **CLI** | ターミナルや CI からインストール、起動、クエリ、コンパイル、テスト |
+| **拡張** | Animation から Timeline まで 10 個のオプションツールパック |
 
 ## クイックスタート
 
 **Unity 2022.3** 以降が必要です。プラグインのインストール方法をひとつ選んでください:
 
-[![インストーラーをダウンロード](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/button/button_download_ja.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
+[![インストーラーをダウンロード](img/button/button_download_ja.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
 - **インストーラー**: 上の `.unitypackage` をダウンロードし、Unity プロジェクトで開きます。
 - **OpenUPM**: `openupm add com.ivanmurzak.unity.mcp`
@@ -73,13 +72,13 @@ unity-mcp-cli login                             # ブラウザで ai-game.dev �
 unity-mcp-cli open ./MyUnityProject             # Unity を開く。接続して skills を生成
 ```
 
-<img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/readme/terminal.svg" alt="ターミナルの例: unity-mcp-cli のインストール、プラグインの追加、サインイン、Claude Code の設定、プロジェクトを開く" width="100%">
+<img src="img/readme/terminal.svg" alt="ターミナルの例: unity-mcp-cli のインストール、プラグインの追加、サインイン、Claude Code の設定、プロジェクトを開く" width="100%">
 
 次にエージェントを接続します: Unity で **Window ▸ AI Game Dev** を開き、**Auto-generate** Skills(推奨)または
 **Configure** MCP をクリックします。ターミナルでは `unity-mcp-cli setup-skills claude-code ./MyUnityProject` または
 `unity-mcp-cli setup-mcp claude-code ./MyUnityProject` です。
 
-![AI Game Developer ウィンドウ](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/editor/ai-game-developer-windows.png)
+![AI Game Developer ウィンドウ](img/editor/ai-game-developer-windows.png)
 
 エージェントに *「半径 2 の円上に立方体を 3 つ作って」* と頼んでみてください。詳しい手順、手動の MCP 設定、アンインストール:
 **[インストールガイド](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)**(英語)。
