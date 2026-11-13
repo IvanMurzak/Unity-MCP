@@ -380,8 +380,8 @@ describe('queryInstalledEditors — direct contract', () => {
       expect(ticks).toBeGreaterThan(2);
     });
 
-    it('keeps the list a Hub printed before it hung', async () => {
-      const hub = fakeHub('echo "6000.6.4f1 , installed at /opt/Unity/6000.6.4f1"\nexec sleep 30');
+    it('keeps the complete lines a Hub printed before it hung', async () => {
+      const hub = fakeHub('echo "6000.6.4f1 , installed at /opt/Unity/6000.6.4f1"\nprintf "2022.3.1f1 , installed at /opt/Un"\nexec sleep 30');
       expect(await queryInstalledEditors(hub, 500)).toEqual([{ version: '6000.6.4f1', path: '/opt/Unity/6000.6.4f1' }]);
     });
 

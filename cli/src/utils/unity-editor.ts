@@ -374,20 +374,20 @@ export function listEditorsByCommonLocations(): InstalledEditor[] {
       if (fs.existsSync(binary)) add({ version, path: binary });
     }
   }
-  readHubListedEditors(platform()).forEach(add);
+  readHubListedEditors(platform()).sort((a, b) => compareUnityVersions(b.version, a.version)).forEach(add);
   return editors;
 }
 
 /**
  * The installed editors, from disk first ({@link listEditorsByCommonLocations}); the Unity Hub CLI (`hubPath`) only
- * when the disk has none, or not `version`. Never empty because the Hub failed or timed out while the disk had some.
+ * when the disk has none, or not `version` — its editors are then added after the disk's (one entry per version).
  */
 export async function listInstalledEditorsDiskFirst(hubPath: string | null, version?: string): Promise<InstalledEditor[]> {
   const onDisk = listEditorsByCommonLocations();
   const enough = version ? onDisk.some((editor) => editor.version === version) : onDisk.length > 0;
   if (enough || !hubPath) return onDisk;
-  const listed = await listInstalledEditors(hubPath);
-  return listed.length > 0 ? listed : onDisk;
+  const known = new Set(onDisk.map((editor) => editor.version));
+  return [...onDisk, ...(await listInstalledEditors(hubPath)).filter((editor) => !known.has(editor.version))];
 }
 
 /**

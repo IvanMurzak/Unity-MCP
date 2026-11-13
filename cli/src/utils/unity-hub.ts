@@ -265,18 +265,22 @@ export async function queryInstalledEditors(
         windowsHide: true,
         maxBuffer: 16 * 1024 * 1024,
       }, (err, stdout, stderr) => {
-        // A Hub that printed its list but never exited (seen while the Hub app runs) still answered.
-        if (err && !(err.killed && stdout.split('\n').some((line) => parseInstalledEditorsLine(line) !== null))) {
-          reject(Object.assign(err, { stderr }));
-        } else {
+        if (!err) {
           resolve(stdout);
+          return;
         }
+        // A Hub that printed its list but never exited (seen while the Hub app runs) still answered: keep its
+        // complete lines (the last one may have been cut off by the kill).
+        const timedOut = err.killed === true && err.code !== 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER';
+        const complete = stdout.slice(0, stdout.lastIndexOf('\n') + 1);
+        if (timedOut && complete.split('\n').some((line) => parseInstalledEditorsLine(line) !== null)) resolve(complete);
+        else reject(Object.assign(err, { stderr, timedOut }));
       });
       child.stdin?.end();
     });
   } catch (err) {
     verbose(`queryInstalledEditors failed after ${Date.now() - execStartedAt}ms`);
-    const timedOut = (err as { killed?: boolean }).killed === true;
+    const timedOut = (err as { timedOut?: boolean }).timedOut === true;
     throw new Error(timedOut
       ? `Failed to list installed editors: Unity Hub did not answer within ${Math.round(timeoutMs / 1000)}s`
       : `Failed to list installed editors: ${formatExecError(err)}`);
