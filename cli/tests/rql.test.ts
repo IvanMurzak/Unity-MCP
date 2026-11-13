@@ -2,7 +2,7 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
-import { assetsWrittenSince, decodeQueryFile, isRqlChange, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlStatements, rqlTextVerb, rqlToolCall, saveReceipt, stripToolName } from '../src/lib/rql.js';
+import { assetsWrittenSince, decodeQueryFile, isRqlChange, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlStatements, rqlTextVerb, rqlToolCall, saveReceipt, stripToolName, stripToolNames } from '../src/lib/rql.js';
 
 afterEach(removeTempDirs);
 
@@ -79,7 +79,7 @@ describe('several statements (;)', () => {
     expect(rqlStatements('objects | where name == "a;b" | count;')).toEqual(['objects | where name == "a;b" | count']);
     expect(rqlStatements("objects | where `x;y` == 1 | count; ;")).toEqual(['objects | where `x;y` == 1 | count']);
     expect(rqlStatements('editor | call F({a: "1;2"}, [1; 2]); objects | count')).toEqual(['editor | call F({a: "1;2"}, [1; 2])', 'objects | count']);
-    expect(rqlStatements(' ; ')).toEqual([';']);
+    expect(rqlStatements(' ; ')).toEqual(['']);   // as RQL: the first (blank) segment, reported as an empty query
   });
 
   it('routes to rql-mutate when any statement ends in set / call', () => {
@@ -90,6 +90,11 @@ describe('several statements (;)', () => {
     expect(rqlToolCall('objects | count; roots | count', {})).toEqual({ toolName: 'rql-query', input: { query: 'objects | count; roots | count' } });
     expect(rqlToolCall('objects | count; roots | count', { dryRun: true })).toHaveProperty('usage');
     expect(isRqlChange('objects | where name == "set; call" | count')).toBe(false);
+  });
+
+  it('strips a pasted tool name from every statement', () => {
+    expect(stripToolNames('rql-query objects | count; rql-query roots | count')).toBe('objects | count; roots | count');
+    expect(stripToolNames('rql-mutate objects | where name == "a; b" | set active = false')).toBe('objects | where name == "a; b" | set active = false');
   });
 
   it('reports call before set for the save receipt', () => {

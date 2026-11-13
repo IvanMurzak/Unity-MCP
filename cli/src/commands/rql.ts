@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { Command, Option } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
-import { RQL_MUTATE_TOOL, assetsWrittenSince, decodeQueryFile, rqlTextVerb, rqlToolCall, saveReceipt, stripToolName } from '../lib/rql.js';
+import { RQL_MUTATE_TOOL, assetsWrittenSince, decodeQueryFile, rqlTextVerb, rqlToolCall, saveReceipt, stripToolNames } from '../lib/rql.js';
 import { runTool } from '../lib/run-tool.js';
 import { resolveAndValidateProjectPath } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
@@ -47,7 +47,7 @@ function readQuery(query: string | undefined, file: string | undefined): string 
 
 export const rqlCommand = new Command('rql')
   .description('Read or change the editor with RQL (one query, or several separated by ;): scenes, GameObjects, components, assets (a query ending in set / call changes the project and saves it, any other only reads); starts a headless editor when none answers')
-  .argument('[query]', 'RQL query, e.g. \'objects | where name starts-with "Tree" | count\'')
+  .argument('[query]', 'RQL query (several: separated by ;), e.g. \'objects | where name starts-with "Tree" | count\'')
   .option('--path <path>', 'Unity project path (defaults to cwd)')
   .option('-f, --file <file>', 'Read the query from a file ("-" for stdin)')
   .option('--schema [type]', 'List the RQL sources (or one type\'s members) instead of running a query')
@@ -68,7 +68,7 @@ export const rqlCommand = new Command('rql')
     let query: string | undefined;
     try {
       const text = readQuery(queryArg, options.file);
-      query = text === undefined ? undefined : stripToolName(text);
+      query = text === undefined ? undefined : stripToolNames(text);
     } catch (err) {
       out.fail(ExitCode.Usage, { code: 'USAGE', message: err instanceof Error ? err.message : String(err) });
     }
@@ -80,9 +80,10 @@ export const rqlCommand = new Command('rql')
     // check: only for an editor on this machine, and only files written since the tool call itself.
     const receiptFor = call.toolName === RQL_MUTATE_TOOL && !options.dryRun && !options.raw && !out.machine
       ? resolveAndValidateProjectPath(undefined, options) : undefined;
-    await runToolAction(RQL_CALL, call.toolName, undefined, { ...options, input: JSON.stringify(call.input) }, ({ calledAt, local }) => {
+    // A failed change still lists what it wrote: with several statements the ones before the failure stay and are saved.
+    await runToolAction(RQL_CALL, call.toolName, undefined, { ...options, input: JSON.stringify(call.input) }, ({ calledAt, local, ok }) => {
       if (receiptFor === undefined || !local) return;
-      const receipt = saveReceipt(assetsWrittenSince(receiptFor, calledAt), rqlTextVerb(query!));
+      const receipt = saveReceipt(assetsWrittenSince(receiptFor, calledAt), ok ? rqlTextVerb(query!) : undefined);
       if (receipt) console.log(receipt);
     });
   });

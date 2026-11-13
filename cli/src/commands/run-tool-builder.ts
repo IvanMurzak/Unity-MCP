@@ -124,8 +124,11 @@ export async function runToolAction(
   toolName: string,
   positionalPath: string | undefined,
   options: RunToolCliOptions,
-  /** After a successful call printed its answer: when the call went out, and whether the editor runs on this machine. */
-  onSuccess?: (call: { calledAt: number; local: boolean }) => void,
+  /**
+   * After a call the tool answered printed that answer (success or the tool's own error; the CLI then exits): when the
+   * call went out, whether the editor runs on this machine, and whether the tool succeeded.
+   */
+  onAnswered?: (call: { calledAt: number; local: boolean; ok: boolean }) => void,
 ): Promise<void> {
   const format = parseFormat(options.format);
   // Explicitly typed: `out.fail` returns `never`, which narrows only through a declared type.
@@ -217,8 +220,8 @@ export async function runToolAction(
       if (response.ok) console.log(response.text);
       else ui.error(withRqlHint(toolName, `${toolName} reported an error: ${response.text}`));
     }
+    onAnswered?.({ calledAt, local: isLoopbackUrl(baseUrl), ok: response.ok });
     if (!response.ok) process.exit(ExitCode.CommandFailed);
-    onSuccess?.({ calledAt, local: isLoopbackUrl(baseUrl) });
     return;
   }
 

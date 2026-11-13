@@ -34,8 +34,18 @@ export function rqlStatements(text: string): string[] {
     }
   }
   statements.push(text.slice(start).trim());
+  if (statements.length === 1) return statements;
   const nonBlank = statements.filter((s) => s !== '');
-  return nonBlank.length > 0 ? nonBlank : [text.trim()];
+  return nonBlank.length > 0 ? nonBlank : statements.slice(0, 1);
+}
+
+/**
+ * The text without a leading tool name on any statement (tool texts write "rql-query <source> | ...", and agents paste
+ * that, once per statement too). One statement comes back as {@link stripToolName} returns it.
+ */
+export function stripToolNames(text: string): string {
+  const statements = rqlStatements(text);
+  return statements.length === 1 ? stripToolName(text) : statements.map(stripToolName).join('; ');
 }
 
 /**
