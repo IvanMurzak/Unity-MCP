@@ -98,7 +98,7 @@ export async function createProject(
         );
       }
       const listEditors = options.listEditorsImpl ?? queryInstalledEditors;
-      editors = listEditors(hubPath);
+      editors = await listEditors(hubPath);
     }
 
     emitProgress(options.onProgress, {

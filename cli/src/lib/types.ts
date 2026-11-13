@@ -693,7 +693,7 @@ export interface CreateProjectOptions {
    * hold no match. Defaults to invoking the Unity Hub CLI
    * (`--headless editors --installed`).
    */
-  listEditorsImpl?: (hubPath: string) => CreateProjectEditorInfo[];
+  listEditorsImpl?: (hubPath: string) => CreateProjectEditorInfo[] | Promise<CreateProjectEditorInfo[]>;
   /**
    * Test injection — resolve an editor install path to its executable.
    * Defaults to the cross-platform executable resolution plus an

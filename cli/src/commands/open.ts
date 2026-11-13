@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
 import * as path from 'path';
-import { findUnityHub, listInstalledEditors } from '../utils/unity-hub.js';
-import { suggestEditorVersion } from '../utils/unity-editor.js';
+import { findUnityHub } from '../utils/unity-hub.js';
+import { listInstalledEditorsDiskFirst, suggestEditorVersion } from '../utils/unity-editor.js';
 import { findUnityProcess } from '../utils/unity-process.js';
 import * as ui from '../utils/ui.js';
 import { ExitCode } from '../utils/exit-codes.js';
@@ -87,7 +87,7 @@ export function parsePositiveIntFlag(
  * writes to the chalk-styled `ui` and we want to keep the `unity-editor.ts`
  * helpers library-safe.
  */
-function printEditorNotFoundHelp(requestedVersion: string | undefined, commandName: string): void {
+async function printEditorNotFoundHelp(requestedVersion: string | undefined, commandName: string): Promise<void> {
   if (requestedVersion) {
     ui.error(`Unity Editor ${requestedVersion} is not installed.`);
   } else {
@@ -101,22 +101,19 @@ function printEditorNotFoundHelp(requestedVersion: string | undefined, commandNa
   }
   ui.info('Install latest stable:  npx unity-mcp-cli install-unity');
 
-  const hubPath = findUnityHub();
-  if (hubPath) {
-    const editors = listInstalledEditors(hubPath);
-    if (editors.length > 0) {
-      ui.heading('Installed editors:');
-      for (const editor of editors) {
-        ui.label(editor.version, editor.path);
-      }
-      if (requestedVersion) {
-        const suggested = suggestEditorVersion(requestedVersion, editors.map((e) => e.version)) ?? editors[0].version;
-        const hint = commandName === 'connect'
-          ? `npx unity-mcp-cli ${commandName} --unity ${suggested} --path <path> --url <url>`
-          : `npx unity-mcp-cli ${commandName} <path> --unity ${suggested}`;
-        ui.info(`Use a different version:  ${hint}`);
-        ui.info(`  (Unity then asks to upgrade or downgrade the project, which changes its files)`);
-      }
+  const editors = await listInstalledEditorsDiskFirst(findUnityHub());
+  if (editors.length > 0) {
+    ui.heading('Installed editors:');
+    for (const editor of editors) {
+      ui.label(editor.version, editor.path);
+    }
+    if (requestedVersion) {
+      const suggested = suggestEditorVersion(requestedVersion, editors.map((e) => e.version)) ?? editors[0].version;
+      const hint = commandName === 'connect'
+        ? `npx unity-mcp-cli ${commandName} --unity ${suggested} --path <path> --url <url>`
+        : `npx unity-mcp-cli ${commandName} <path> --unity ${suggested}`;
+      ui.info(`Use a different version:  ${hint}`);
+      ui.info(`  (Unity then asks to upgrade or downgrade the project, which changes its files)`);
     }
   }
 }
@@ -372,9 +369,9 @@ export const openCommand = new Command('open')
         result.errorMessage.endsWith('is not installed.')
       ) {
         // The version may come from ProjectVersion.txt, not --unity.
-        printEditorNotFoundHelp(result.unityVersion ?? options.unity, 'open');
+        await printEditorNotFoundHelp(result.unityVersion ?? options.unity, 'open');
       } else if (result.errorMessage === 'No Unity Editor found.') {
-        printEditorNotFoundHelp(undefined, 'open');
+        await printEditorNotFoundHelp(undefined, 'open');
       } else {
         ui.error(result.errorMessage);
       }

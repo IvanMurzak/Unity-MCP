@@ -1,4 +1,6 @@
-import { describe, it, expect, vi } from 'vitest';
+import { afterEach, beforeEach, describe, it, expect, vi } from 'vitest';
+import * as fs from 'fs';
+import * as os from 'os';
 import * as path from 'path';
 import { createProject } from '../src/lib.js';
 import { queryInstalledEditors, runEditorCreateProject } from '../src/utils/unity-hub.js';
@@ -335,13 +337,60 @@ describe('createProject — editor invocation failure', () => {
 // ---------------------------------------------------------------------------
 
 describe('queryInstalledEditors — direct contract', () => {
-  it('re-throws an unrunnable hub as the formatted "Failed to list installed editors" error', () => {
-    // A path that cannot be executed makes the underlying execFileSync
-    // throw; the extracted silent core must re-throw with the message its
+  it('rejects an unrunnable hub with the formatted "Failed to list installed editors" error', async () => {
+    // A path that cannot be executed makes the underlying execFile call back
+    // with an error; the silent core must reject with the message its
     // callers (listInstalledEditors, the lib) rely on.
-    expect(() => queryInstalledEditors('/no/such/unity-hub-binary')).toThrow(
+    await expect(queryInstalledEditors('/no/such/unity-hub-binary')).rejects.toThrow(
       /Failed to list installed editors/,
     );
+  });
+
+  describe.skipIf(process.platform === 'win32')('with a fake Hub executable', () => {
+    let dir: string;
+    beforeEach(() => {
+      dir = fs.mkdtempSync(path.join(os.tmpdir(), 'fake-hub-'));
+    });
+    afterEach(() => {
+      fs.rmSync(dir, { recursive: true, force: true });
+    });
+
+    function fakeHub(script: string): string {
+      const file = path.join(dir, 'hub.sh');
+      fs.writeFileSync(file, `#!/bin/sh\n${script}\n`, { mode: 0o755 });
+      return file;
+    }
+
+    it('parses the installed editors the Hub prints, without blocking the event loop', async () => {
+      const hub = fakeHub([
+        'sleep 0.2',
+        'echo "6000.6.4f1 (Apple silicon) installed at /Applications/Unity/Hub/Editor/6000.6.4f1/Unity.app"',
+        'echo "2022.3.62f3 , installed at /opt/Unity/2022.3.62f3"',
+      ].join('\n'));
+      let ticks = 0;
+      const timer = setInterval(() => ticks++, 20);
+      try {
+        expect(await queryInstalledEditors(hub)).toEqual([
+          { version: '6000.6.4f1', path: '/Applications/Unity/Hub/Editor/6000.6.4f1/Unity.app' },
+          { version: '2022.3.62f3', path: '/opt/Unity/2022.3.62f3' },
+        ]);
+      } finally {
+        clearInterval(timer);
+      }
+      expect(ticks).toBeGreaterThan(2);
+    });
+
+    it('keeps the complete lines a Hub printed before it hung', async () => {
+      const hub = fakeHub('echo "6000.6.4f1 , installed at /opt/Unity/6000.6.4f1"\nprintf "2022.3.1f1 , installed at /opt/Un"\nexec sleep 30');
+      expect(await queryInstalledEditors(hub, 500)).toEqual([{ version: '6000.6.4f1', path: '/opt/Unity/6000.6.4f1' }]);
+    });
+
+    it('gives up on a Hub that does not answer within the timeout', async () => {
+      const hub = fakeHub('exec sleep 30');
+      const startedAt = Date.now();
+      await expect(queryInstalledEditors(hub, 300)).rejects.toThrow(/did not answer within/);
+      expect(Date.now() - startedAt).toBeLessThan(5_000);
+    });
   });
 });
 

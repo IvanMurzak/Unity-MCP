@@ -15,6 +15,7 @@ import {
   mcpReadinessProbe,
   unityAdapter,
   type EditorLaunchSpec,
+  type SessionLease,
   type SessionProcessOps,
 } from '@baizor/gamedev-cli-core';
 import { editorLaunchArgs, findEditorPath, getProjectEditorVersion } from '../utils/unity-editor.js';
@@ -22,7 +23,7 @@ import { findUnityHub } from '../utils/unity-hub.js';
 import { clearCachedEditorPath } from '../utils/editor-cache.js';
 import { resolveConnection, resolveProbeUrls } from '../utils/connection.js';
 import { CLOUD_SERVER_URL } from '../utils/config.js';
-import { findUnityProcess } from '../utils/unity-process.js';
+import { canonicalPath, findUnityProcess } from '../utils/unity-process.js';
 import { sendGracefulShutdown } from '../utils/unity-shutdown.js';
 import { runSystemTool } from './run-tool.js';
 import { readToolResponse } from './exec.js';
@@ -205,12 +206,28 @@ export function createUnitySession(options: UnitySessionOptions): EditorSession<
 
 /**
  * Whether the project has a session lease whose editor process may still run. Cheap (no process start-time check): a
- * dead lease, which an editor leaves behind when it exits, does not count; the session removes it.
+ * dead lease, which an editor leaves behind when it exits, does not count; the session removes it. Neither does a lease
+ * written for another folder (the project was copied with its `.ai-game-dev`): its editor has the original open.
  */
 export function hasLiveSessionLease(projectPath: string, isAlive: (pid: number) => boolean = defaultSessionProcessOps.isAlive): boolean {
   const lease = readSessionLease(projectPath);
+  if (lease === undefined) return false;
   // A lease of another machine (a shared folder) cannot be checked here: count it.
-  return lease !== undefined && (lease.hostId !== os.hostname() || isAlive(lease.pid));
+  if (lease.hostId !== os.hostname()) return true;
+  return isAlive(lease.pid) && leaseNamesProject(lease, projectPath);
+}
+
+/**
+ * False when the lease names another project folder. cli-core records the folder (`projectRoot`) since 0.12 and keeps
+ * it in `readSessionLease`; with an older cli-core, or a lease written before, nothing rules the lease out here (the
+ * session itself then checks the editor's command line). TODO: cli-core's `sessionLeaseNamesProject` once it is >= 0.12.
+ */
+function leaseNamesProject(lease: SessionLease, projectPath: string): boolean {
+  const { projectRoot } = lease as SessionLease & { projectRoot?: unknown };
+  if (typeof projectRoot !== 'string') return true;
+  const key = (p: string) => (process.platform === 'win32' || process.platform === 'darwin' ? p.toLowerCase() : p);
+  return key(path.resolve(projectRoot)) === key(path.resolve(projectPath))
+    || key(canonicalPath(projectRoot)) === key(canonicalPath(projectPath));
 }
 
 /**

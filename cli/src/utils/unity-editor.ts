@@ -63,8 +63,10 @@ export function getProjectEditorVersion(projectPath: string): string | null {
 }
 
 /**
- * Find the Unity Editor binary path for a specific version.
- * Uses Unity Hub to locate installed editors. Installs Unity Hub automatically if needed.
+ * Find the Unity Editor binary path for a specific version: the editor-path cache, then the editors on disk (the
+ * Hub's editor folders and the editors it lists in `editors-v2.json`, see {@link listEditorsByCommonLocations}), and
+ * only when those miss the Unity Hub CLI (asynchronous and time-bounded: it can hang while the Hub app is open).
+ * Installs Unity Hub automatically if needed.
  */
 export async function findEditorPath(version?: string): Promise<string | null> {
   const startedAt = Date.now();
@@ -109,7 +111,7 @@ export async function findEditorPath(version?: string): Promise<string | null> {
   }
 
   const listStartedAt = Date.now();
-  const editors = listInstalledEditors(hubPath);
+  const editors = await listInstalledEditors(hubPath);
   verbose(`findEditorPath listInstalledEditors completed in ${Date.now() - listStartedAt}ms (count=${editors.length})`);
   if (editors.length === 0) {
     const fallbackStartedAt = Date.now();
@@ -197,35 +199,67 @@ export function getSecondaryInstallPathFile(os: NodeJS.Platform): string | null 
  * machines.
  */
 export function readSecondaryInstallPaths(os: NodeJS.Platform): string[] {
+  const roots = getHubConfigDirs(os).flatMap((dir) => {
+    const parsed = readJsonFile(path.join(dir, 'secondaryInstallPath.json'));
+    return Array.isArray(parsed) ? parsed : [parsed];
+  });
+  return [...new Set(roots
+    .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
+    .map((p) => p.trim()))];
+}
+
+/**
+ * Unity Hub's settings folders for `os` (they hold `secondaryInstallPath.json` and `editors-v2.json`): the one of
+ * {@link getSecondaryInstallPathFile}, and on Linux also `$XDG_CONFIG_HOME/UnityHub` (a Flatpak or AppImage Hub may use
+ * either). Exported for tests.
+ */
+export function getHubConfigDirs(os: NodeJS.Platform): string[] {
   const file = getSecondaryInstallPathFile(os);
-  if (!file) return [];
-  if (!fs.existsSync(file)) return [];
+  const dirs = file ? [path.dirname(file)] : [];
+  const xdg = process.env['XDG_CONFIG_HOME'];
+  if (os === 'linux' && xdg) dirs.push(path.join(xdg, 'UnityHub'));
+  return [...new Set(dirs)];
+}
 
-  let raw: string;
+/** The parsed JSON of `file`; undefined when it is absent, empty, unreadable or not JSON. */
+function readJsonFile(file: string): unknown {
   try {
-    raw = fs.readFileSync(file, 'utf-8');
+    const raw = fs.readFileSync(file, 'utf-8');
+    return raw.trim() ? JSON.parse(raw) : undefined;
   } catch {
-    return [];
+    return undefined;
   }
-  if (!raw.trim()) return [];
+}
 
-  let parsed: unknown;
-  try {
-    parsed = JSON.parse(raw);
-  } catch {
-    return [];
+/**
+ * The editors Unity Hub lists in `editors-v2.json` (`{ data: [{ version, location: [path] }] }`): among them the ones
+ * added with "Locate" that live outside every editor root. Only entries whose executable exists; `path` is the
+ * executable. Exported for tests.
+ */
+export function readHubListedEditors(os: NodeJS.Platform): InstalledEditor[] {
+  const editors: InstalledEditor[] = [];
+  for (const dir of getHubConfigDirs(os)) {
+    const data = (readJsonFile(path.join(dir, 'editors-v2.json')) as { data?: unknown } | undefined)?.data;
+    if (!Array.isArray(data)) continue;
+    for (const entry of data as unknown[]) {
+      const { version, location } = (entry ?? {}) as { version?: unknown; location?: unknown };
+      if (typeof version !== 'string' || !version.trim()) continue;
+      const binary = (Array.isArray(location) ? location : [location])
+        .filter((l): l is string => typeof l === 'string' && l.trim().length > 0)
+        .map((l) => resolveEditorPath(l.trim(), os))
+        .find((candidate) => fs.existsSync(candidate));
+      if (binary) editors.push({ version: version.trim(), path: binary });
+    }
   }
+  return editors;
+}
 
-  if (typeof parsed === 'string') {
-    const trimmed = parsed.trim();
-    return trimmed ? [trimmed] : [];
-  }
-  if (Array.isArray(parsed)) {
-    return parsed
-      .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
-      .map((p) => p.trim());
-  }
-  return [];
+/**
+ * The Unity version a Hub editor folder holds: the folder name, or its version prefix when the Hub added a suffix
+ * (`2022.3.4f1-x86_64`, the Intel build next to the Apple silicon one).
+ */
+function editorFolderVersion(folder: string): string {
+  return /^\d+\.\d+\.\d+[abfpx]\d+(?:c\d+)?/.exec(folder)?.[0] ?? folder;
 }
 
 /**
@@ -305,36 +339,55 @@ function getEditorRootLayout(): {
 
 /**
  * List every editor installed under the Unity Hub editor roots (see
- * {@link getEditorRootLayout}) by reading the filesystem only — no Unity Hub
- * process is started. Each entry is `{ version, path }` with `path` pointing
- * at the editor executable, the same shape `queryInstalledEditors` returns.
- * Editors the Hub knows about outside these roots (e.g. ones added with
- * "Locate") are not found here; callers fall back to the Hub CLI for those.
- * Order: the default root first, then secondary roots; newest first within a
- * root. The first root that holds a version wins.
+ * {@link getEditorRootLayout}) and the editors the Hub lists in
+ * `editors-v2.json` (ones added with "Locate", {@link readHubListedEditors}) by
+ * reading the filesystem only — no Unity Hub process is started. Each entry is
+ * `{ version, path }` with `path` pointing at the editor executable, the same
+ * shape `queryInstalledEditors` returns. Order: the default root first, then
+ * secondary roots, newest first within a root (a folder named exactly by its
+ * version before a suffixed one, `2022.3.4f1-x86_64`), then the Hub-listed
+ * editors. The first place that holds a version wins.
  */
 export function listEditorsByCommonLocations(): InstalledEditor[] {
   const layout = getEditorRootLayout();
   if (!layout) return [];
   const editors: InstalledEditor[] = [];
   const seen = new Set<string>();
+  const add = (editor: InstalledEditor) => {
+    if (seen.has(editor.version)) return;
+    seen.add(editor.version);
+    editors.push(editor);
+  };
+  const newestFirst = (a: string, b: string) =>
+    compareUnityVersions(editorFolderVersion(b), editorFolderVersion(a)) || a.length - b.length;
   for (const root of [...layout.defaultRoots, ...layout.secondaryRoots]) {
-    let versions: string[];
+    let folders: string[];
     try {
-      versions = fs.readdirSync(root);
+      folders = fs.readdirSync(root);
     } catch {
       continue;
     }
-    for (const version of versions.sort((a, b) => compareUnityVersions(b, a))) {
+    for (const folder of folders.sort(newestFirst)) {
+      const version = editorFolderVersion(folder);
       if (seen.has(version)) continue;
-      const binary = layout.buildBinaryPath(root, version);
-      if (fs.existsSync(binary)) {
-        seen.add(version);
-        editors.push({ version, path: binary });
-      }
+      const binary = layout.buildBinaryPath(root, folder);
+      if (fs.existsSync(binary)) add({ version, path: binary });
     }
   }
+  readHubListedEditors(platform()).sort((a, b) => compareUnityVersions(b.version, a.version)).forEach(add);
   return editors;
+}
+
+/**
+ * The installed editors, from disk first ({@link listEditorsByCommonLocations}); the Unity Hub CLI (`hubPath`) only
+ * when the disk has none, or not `version` — its editors are then added after the disk's (one entry per version).
+ */
+export async function listInstalledEditorsDiskFirst(hubPath: string | null, version?: string): Promise<InstalledEditor[]> {
+  const onDisk = listEditorsByCommonLocations();
+  const enough = version ? onDisk.some((editor) => editor.version === version) : onDisk.length > 0;
+  if (enough || !hubPath) return onDisk;
+  const known = new Set(onDisk.map((editor) => editor.version));
+  return [...onDisk, ...(await listInstalledEditors(hubPath)).filter((editor) => !known.has(editor.version))];
 }
 
 /**
@@ -366,9 +419,12 @@ function findEditorPathByCommonLocations(version?: string): string | null {
   // installed" lookup (the default root is scanned before any secondary root).
   let hit: string | null = null;
   if (version) {
+    // The exact folder first (no directory listing), then the suffixed folders and the Hub-listed editors.
     hit = [...defaultRoots, ...secondaryRoots]
       .map((root) => buildBinaryPath(root, version))
-      .find((candidate) => fs.existsSync(candidate)) ?? null;
+      .find((candidate) => fs.existsSync(candidate))
+      ?? listEditorsByCommonLocations().find((editor) => editor.version === version)?.path
+      ?? null;
   } else {
     hit = listEditorsByCommonLocations()[0]?.path ?? null;
   }

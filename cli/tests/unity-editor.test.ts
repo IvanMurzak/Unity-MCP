@@ -9,6 +9,7 @@ import {
   getProjectEditorVersion,
   getSecondaryInstallPathFile,
   listEditorsByCommonLocations,
+  readHubListedEditors,
   readSecondaryInstallPaths,
   resolveEditorPath,
 } from '../src/utils/unity-editor.js';
@@ -704,6 +705,47 @@ describe('listEditorsByCommonLocations', () => {
 
   it('returns [] when no root exists', () => {
     expect(listEditorsByCommonLocations()).toEqual([]);
+  });
+
+  /** Point secondaryInstallPath.json at `root`. */
+  function useSecondaryRoot(root: string): void {
+    const file = getSecondaryInstallPathFile(process.platform);
+    if (!file) throw new Error('unsupported platform for this test');
+    fs.mkdirSync(path.dirname(file), { recursive: true });
+    fs.writeFileSync(file, JSON.stringify(root), 'utf-8');
+  }
+
+  it('reads a suffixed Hub folder (2022.3.4f1-x86_64) as its version, after the exact folder', () => {
+    const root = path.join(tmpDir, 'UnityEditor');
+    const intelOnly = install(root, '2019.4.4f1-x86_64');
+    const native = install(root, '6000.9.9f1');
+    install(root, '6000.9.9f1-x86_64');
+    useSecondaryRoot(root);
+
+    const editors = listEditorsByCommonLocations().filter((e) => e.path.startsWith(tmpDir));
+    expect(editors).toEqual([
+      { version: '6000.9.9f1', path: native },
+      { version: '2019.4.4f1', path: intelOnly },
+    ]);
+  });
+
+  it('lists the editors Unity Hub lists in editors-v2.json (added with "Locate"), when their executable exists', () => {
+    const located = install(path.join(tmpDir, 'Elsewhere'), '2021.3.45f1');
+    const location = process.platform === 'darwin' ? path.dirname(path.dirname(path.dirname(located))) : located;
+    const hubDir = path.dirname(getSecondaryInstallPathFile(process.platform)!);
+    fs.mkdirSync(hubDir, { recursive: true });
+    fs.writeFileSync(path.join(hubDir, 'editors-v2.json'), JSON.stringify({
+      schema_version: '2',
+      data: [
+        { version: '2021.3.45f1', location: [location] },
+        { version: '2020.1.1f1', location: [path.join(tmpDir, 'gone')] },
+        { version: 7, location: [location] },
+      ],
+    }), 'utf-8');
+
+    expect(readHubListedEditors(process.platform)).toEqual([{ version: '2021.3.45f1', path: located }]);
+    expect(listEditorsByCommonLocations().filter((e) => e.path.startsWith(tmpDir)))
+      .toEqual([{ version: '2021.3.45f1', path: located }]);
   });
 });
 
