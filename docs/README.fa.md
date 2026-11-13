@@ -2,14 +2,11 @@
 
 <img src="img/readme/hero.svg" alt="AI Game Developer برای Unity: Skills، ابزارهای MCP و یک CLI که عامل‌های هوش مصنوعی را به ویرایشگر Unity و بازیِ در حال اجرا وصل می‌کنند" width="100%">
 
-[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Downloads](https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9 'OpenUPM downloads')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![CLI](https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D 'unity-mcp-cli on npm')](https://www.npmjs.com/package/unity-mcp-cli)
-[![Unity](https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white 'Unity 2022.3 or newer')](https://unity.com/releases/editor/archive)
-[![release](https://img.shields.io/github/actions/workflow/status/IvanMurzak/Unity-MCP/release.yml?label=release&logo=githubactions&style=for-the-badge&labelColor=0F172A&logoColor=white 'Release workflow')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white 'Join')](https://discord.gg/cfbdMZX99G)
-[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857 'License')](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
-[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+<p align="center">
+<a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM version"></a> <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM downloads per month"></a> <a href="https://www.npmjs.com/package/unity-mcp-cli"><img src="https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D" alt="unity-mcp-cli on npm"></a> <a href="https://unity.com/releases/editor/archive"><img src="https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Unity 2022.3 or newer"></a>
+<br>
+<a href="https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/IvanMurzak/Unity-MCP/release.yml?label=release&logo=githubactions&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Release workflow status"></a> <a href="https://discord.gg/cfbdMZX99G"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Discord"></a> <a href="https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE"><img src="https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857" alt="License"></a> <a href="https://stand-with-ukraine.pp.ua"><img src="https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg" alt="Stand With Ukraine"></a>
+</p>
 
   <p>
     <a href="https://claude.ai/download"><img src="img/mcp-clients/claude-64.png" alt="Claude" title="Claude" height="36"></a>&nbsp;&nbsp;
@@ -30,30 +27,26 @@
 
 </div>
 
-**AI Game Developer** (Unity-MCP) عامل هوش مصنوعی شما را به Unity وصل می‌کند. Claude Code، Codex، Cursor، GitHub Copilot،
-Gemini یا هر کلاینت [MCP](https://modelcontextprotocol.io/) دیگری می‌تواند در **ویرایشگر Unity** صحنه‌ها، پریفب‌ها، دارایی‌ها و
-کد C# را بخواند و تغییر دهد، تست اجرا کند و اسکرین‌شات بگیرد، و **درون بازیِ کامپایل‌شده** ابزارهایی را که خودتان نوشته‌اید فراخوانی کند.
-این پروژه به صورت یک پکیج رایگان Unity (`com.ivanmurzak.unity.mcp`)، یک ابزار خط فرمان (`unity-mcp-cli`) و ده افزونه اختیاری ارائه می‌شود.
+<div dir="rtl">
+
+‏**AI Game Developer** (Unity-MCP) عامل هوش مصنوعی شما را به Unity وصل می‌کند. Claude Code، Codex، Cursor، GitHub Copilot، Gemini یا هر کلاینت [MCP](https://modelcontextprotocol.io/) دیگری می‌تواند در **ویرایشگر Unity** صحنه‌ها، پریفب‌ها، دارایی‌ها و کد C# را بخواند و تغییر دهد، تست اجرا کند و اسکرین‌شات بگیرد، و **درون بازیِ کامپایل‌شده** ابزارهایی را که خودتان نوشته‌اید فراخوانی کند. این پروژه به صورت یک پکیج رایگان Unity (`com.ivanmurzak.unity.mcp`)، یک ابزار خط فرمان (`unity-mcp-cli`) و ده افزونه اختیاری ارائه می‌شود.
 
 ## چگونه کار می‌کند
 
 <img src="img/readme/architecture.svg" alt="یک عامل هوش مصنوعی یا unity-mcp-cli با پروتکل MCP با یک سرور صحبت می‌کند (به طور پیش‌فرض ai-game.dev Cloud یا یک gamedev-mcp-server محلی) و سرور ابزارهای پلاگین ویرایشگر Unity و بازیِ در حال اجرا را فراخوانی می‌کند" width="100%">
 
-پلاگین ابزارهایش را در یک سرور MCP ثبت می‌کند و عامل شما از طریق همان سرور آن‌ها را فراخوانی می‌کند. به طور پیش‌فرض پلاگین
-از سرور **Cloud** در `https://ai-game.dev/mcp` استفاده می‌کند. در حالت **Custom** فایل اجرایی محلی
-[GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) را اجرا می‌کند، یا به سروری که خودتان میزبانی می‌کنید
-(فایل اجرایی یا Docker) وصل می‌شود. عامل به جای ابزارهای MCP می‌تواند از **Skills** تولیدشده هم استفاده کند.
+پلاگین ابزارهایش را در یک سرور MCP ثبت می‌کند و عامل شما از طریق همان سرور آن‌ها را فراخوانی می‌کند. به طور پیش‌فرض پلاگین از سرور **Cloud** در `https://ai-game.dev/mcp` استفاده می‌کند. در حالت **Custom** فایل اجرایی محلی [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) را اجرا می‌کند، یا به سروری که خودتان میزبانی می‌کنید (فایل اجرایی یا Docker) وصل می‌شود. عامل به جای ابزارهای MCP می‌تواند از **Skills** تولیدشده هم استفاده کند.
 
 ## ویژگی‌ها
 
-| **RQL** | خواندن و تغییر صحنه‌ها، اشیا، دارایی‌ها و تنظیمات با یک زبان کوئری |
-| **C# و تست** | کامپایل و اجرای C# با Roslyn؛ اجرای تست‌های EditMode و PlayMode |
-| **Skills یا MCP** | ساخت Skills با یک کلیک، یا اتصال به عنوان کلاینت MCP |
-| **هر عاملی** | Claude Code، Codex، Cursor، Copilot، Gemini و دیگر کلاینت‌های MCP |
-| **Runtime** | همان ابزارها درون بازیِ ساخته‌شده: منطق NPC، دیباگ زنده |
-| **ابزارهای خودتان** | هر متد C# با اتریبیوت `[AiTool]` به ابزار تبدیل می‌شود |
-| **CLI** | نصب، باز کردن، کوئری، کامپایل و تست از ترمینال یا CI |
-| **افزونه‌ها** | ده بسته ابزار اختیاری، از Animation تا Timeline |
+‏✅ ‏**RQL** — خواندن و تغییر صحنه‌ها، اشیا، دارایی‌ها و تنظیمات با یک زبان کوئری\
+‏✅ ‏**C# و تست** — کامپایل و اجرای C# با Roslyn؛ اجرای تست‌های EditMode و PlayMode\
+‏✅ ‏**Skills یا MCP** — ساخت Skills با یک کلیک، یا اتصال به عنوان کلاینت MCP\
+‏✅ ‏**هر عاملی** — Claude Code، Codex، Cursor، Copilot، Gemini و دیگر کلاینت‌های MCP\
+‏✅ ‏**Runtime** — همان ابزارها درون بازیِ ساخته‌شده: منطق NPC، دیباگ زنده\
+‏✅ ‏**ابزارهای خودتان** — هر متد C# با اتریبیوت `[AiTool]` به ابزار تبدیل می‌شود\
+‏✅ ‏**CLI** — نصب، باز کردن، کوئری، کامپایل و تست از ترمینال یا CI\
+‏✅ ‏**افزونه‌ها** — ده بسته ابزار اختیاری، از Animation تا Timeline
 
 ## شروع سریع
 
@@ -74,14 +67,16 @@ unity-mcp-cli open ./MyUnityProject             # open Unity; it connects and ge
 
 <img src="img/readme/terminal.svg" alt="نمونه ترمینال: نصب unity-mcp-cli، افزودن پلاگین، ورود، پیکربندی Claude Code و باز کردن پروژه" width="100%">
 
-سپس عامل را وصل کنید: در Unity منوی **Window ▸ AI Game Dev** را باز کنید و روی **Auto-generate** Skills (توصیه‌شده) یا
-**Configure** MCP کلیک کنید. معادل آن در ترمینال `unity-mcp-cli setup-skills claude-code ./MyUnityProject` یا
-`unity-mcp-cli setup-mcp claude-code ./MyUnityProject` است.
+سپس عامل را وصل کنید: در Unity منوی **Window ▸ AI Game Dev** را باز کنید و روی **Auto-generate** Skills (توصیه‌شده) یا **Configure** MCP کلیک کنید. یا از ترمینال:
+
+```bash
+unity-mcp-cli setup-skills claude-code ./MyUnityProject
+unity-mcp-cli setup-mcp claude-code ./MyUnityProject
+```
 
 ![پنجره AI Game Developer](img/editor/ai-game-developer-windows.png)
 
-از عامل بخواهید *«۳ مکعب روی دایره‌ای به شعاع ۲ بساز»* و نتیجه را ببینید. مراحل کامل، پیکربندی دستی MCP و حذف پلاگین:
-**[راهنمای نصب](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)** (به انگلیسی).
+از عامل بخواهید *«۳ مکعب روی دایره‌ای به شعاع ۲ بساز»* و نتیجه را ببینید. مراحل کامل، پیکربندی دستی MCP و حذف پلاگین: **[راهنمای نصب](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)** (به انگلیسی).
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
@@ -95,10 +90,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 همه پریفب‌های دشمن بدون Rigidbody را پیدا کن و به هر کدام یکی اضافه کن
 ```
 
-**ابزارها.** به طور پیش‌فرض نمایش داده می‌شوند: `rql-query`، `rql-mutate`، `rql-schema`، `script-execute`، `tests-run`،
-`screenshot-isolated`، ابزارهای `package-*` و `assetstore-*` و `unity-tool-list`. ابزارهای دیگر نصب شده‌اند ولی
-تا زمانی که نمایششان ندهید پنهان هستند. فهرست کامل: **[ابزارهای پیش‌فرض MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)**
-یا [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+**ابزارها.** به طور پیش‌فرض نمایش داده می‌شوند: `rql-query`، `rql-mutate`، `rql-schema`، `script-execute`، `tests-run`، `screenshot-isolated`، ابزارهای `package-*` و `assetstore-*` و `unity-tool-list`. ابزارهای دیگر نصب شده‌اند ولی تا زمانی که نمایششان ندهید پنهان هستند. فهرست کامل: **[ابزارهای پیش‌فرض MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** یا [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **از ترمینال** (اگر ویرایشگری در حال اجرا نباشد، یک ویرایشگر بدون رابط گرافیکی اجرا می‌کند):
 
@@ -131,18 +123,9 @@ public class Tool_Score
 
 ## افزونه‌ها
 
-از بخش **Extensions** در پنجره AI Game Developer نصب کنید، یا با
-`unity-mcp-cli install-extension <name>`:
-[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) ·
-[Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) ·
-[InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) ·
-[Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) ·
-[ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) ·
-[ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) ·
-[Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) ·
-[Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) ·
-[Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) ·
-[Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
+از بخش **Extensions** در پنجره AI Game Developer نصب کنید، یا با `unity-mcp-cli install-extension <name>`.
+
+[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) · [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) · [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) · [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) · [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) · [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) · [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) · [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) · [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) · [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
 
 ## مستندات
 
@@ -158,17 +141,16 @@ public class Tool_Score
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | آموزش‌ها، راهنماها و پرسش‌های متداول |
 | [راهنمای توسعه](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) | ساختار مخزن، سبک کد، تست‌ها و CI برای مشارکت‌کنندگان |
 
-مرتبط: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (سرور MCP مشترک) ·
-[ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
+مرتبط: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (سرور MCP مشترک) · [ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
 
 صفحات مستندات به زبان انگلیسی هستند.
 
 ## مشارکت
 
-ایده‌ها، گزارش باگ و Pull Request ها خوش‌آمدند.
-[راهنمای توسعه](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) را بخوانید، مخزن را fork کنید،
-`./Unity-MCP-Plugin` را در Unity باز کنید و یک Pull Request به `main` بفرستید. اگر پروژه به شما کمک کرد، به آن ستاره بدهید.
+ایده‌ها، گزارش باگ و Pull Request ها خوش‌آمدند. [راهنمای توسعه](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) را بخوانید، مخزن را fork کنید، `./Unity-MCP-Plugin` را در Unity باز کنید و یک Pull Request به `main` بفرستید. اگر پروژه به شما کمک کرد، به آن ستاره بدهید.
 
 ## مجوز
 
 [Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+
+</div>

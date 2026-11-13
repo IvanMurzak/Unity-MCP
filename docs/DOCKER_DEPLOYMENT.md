@@ -1,16 +1,12 @@
 # Docker deployment
 
-Run the MCP server in a container, for cloud hosting or an isolated environment.
-Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme) ·
-[MCP server and connection](mcp-server.md).
+Run the MCP server in a container, for cloud hosting or an isolated environment. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme) · [MCP server and connection](mcp-server.md).
 
-- **Image:** [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server), built from the shared
-  [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repository
+- **Image:** [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server), built from the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repository
 - **Tags:** `latest` and release versions `X.Y.Z`
 - **Port:** `8080` (exposed)
 
-You still need the [AI Game Developer](https://github.com/IvanMurzak/Unity-MCP#quick-start) plugin in your Unity
-project, set to **Custom** mode with the server's URL (see [connection modes](mcp-server.md#connection-modes)).
+You still need the [AI Game Developer](https://github.com/IvanMurzak/Unity-MCP#quick-start) plugin in your Unity project, set to **Custom** mode with the server's URL (see [connection modes](mcp-server.md#connection-modes)).
 
 ![Docker launch](img/editor/docker-launch.gif)
 
@@ -42,8 +38,7 @@ Replace the URL with your real endpoint when the server runs elsewhere.
 
 ### With a shared token
 
-`token` mode requires one bearer secret from both the agent and the Unity plugin (`UNITY_MCP_TOKEN`, or the token
-field in the AI Game Developer window). The secret crosses plain HTTP unless TLS terminates in front of the server.
+`token` mode requires one bearer secret from both the agent and the Unity plugin (`UNITY_MCP_TOKEN`, or the token field in the AI Game Developer window). The secret crosses plain HTTP unless TLS terminates in front of the server.
 
 ```bash
 docker run -p 8080:8080 \
@@ -96,6 +91,4 @@ The agent talks to the server over the container's stdin and stdout; the publish
 
 ## Configuration
 
-All server options are environment variables (`-e NAME=value`). Common ones are listed in
-[MCP server and connection](mcp-server.md#common-server-options); the full list, including OAuth mode and Redis-backed
-sessions, is in the [GameDev-MCP-Server README](https://github.com/IvanMurzak/GameDev-MCP-Server#configuration).
+All server options are environment variables (`-e NAME=value`). Common ones are listed in [MCP server and connection](mcp-server.md#common-server-options); the full list, including OAuth mode and Redis-backed sessions, is in the [GameDev-MCP-Server README](https://github.com/IvanMurzak/GameDev-MCP-Server#configuration).

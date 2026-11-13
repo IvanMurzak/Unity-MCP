@@ -10,11 +10,13 @@ from xml.sax.saxutils import escape
 
 W = 1000            # canvas width
 CW = 9.1            # character width the commands are pinned to (textLength), 15px monospace
-NOTE_CW = 7.6       # approx character width of the 12.5px notes
+NOTE_CW = 8.4       # approx character width of the 14px notes
 X0, Y0, LH = 36, 84, 27
 TYPE_STEP = 0.045   # seconds per typed character
 SHOW = 0.25         # fade-in of an output line
-HOLD, OUT = 4.8, 0.8  # finished screen on show, then fade-out
+PRE = 5.0           # the loop opens on the finished session (also the first frame)
+CLEAR = 0.4         # fade-out of the finished session before typing starts
+HOLD = 3.0          # finished session at the end of the loop; it wraps into PRE
 
 BG = "#0b1222"
 COLORS = {
@@ -39,7 +41,7 @@ PROMPT_PAUSE = 0.6
 
 def schedule():
     """Absolute start time and typed length of every line, then the final prompt's start."""
-    t, out = 0.0, []
+    t, out = PRE + CLEAR + 0.3, []
     for kind, content, pause, _ in LINES:
         start = t + pause
         n = len(content) + 2 if kind == "cmd" else 0  # "❯ " + command
@@ -49,8 +51,7 @@ def schedule():
 
 
 TIMES, PROMPT_AT = schedule()
-FADE_OUT = PROMPT_AT + HOLD
-T = round(FADE_OUT + OUT, 2)
+T = round(PROMPT_AT + HOLD, 2)
 
 
 def k(t):
@@ -58,15 +59,16 @@ def k(t):
 
 
 def fade(start):
-    """Hidden until `start`, shown until FADE_OUT. Static renderers show the line."""
+    """Shown at the loop start (finished session), cleared, then shown again from `start`.
+    Static renderers show the line."""
     return (f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" '
-            f'values="0;0;1;1;0;0" keyTimes="0;{k(start)};{k(start + SHOW)};{k(FADE_OUT)};{k(FADE_OUT + OUT / 2)};1"/>')
+            f'values="1;1;0;0;1;1" keyTimes="0;{k(PRE)};{k(PRE + CLEAR)};{k(start)};{k(start + SHOW)};1"/>')
 
 
 def typing_cover(y, start, n):
     """A background-coloured rect that steps right one character at a time, revealing the command."""
     gone = round((n + 1) * CW + W, 1)
-    frames = [(0, 0), (0, start)]
+    frames = [(gone, 0), (gone, PRE), (0, PRE + CLEAR), (0, start)]
     frames += [(round(i * CW, 1), start + 0.15 + i * TYPE_STEP) for i in range(1, n + 1)]
     frames += [(gone, start + 0.15 + (n + 1) * TYPE_STEP), (gone, T)]
     values = ";".join(f"{x} 0" for x, _ in frames)
@@ -104,7 +106,7 @@ svg = f'''<svg xmlns="http://www.w3.org/2000/svg" width="{W}" height="{H}" viewB
   </defs>
   <style>
     .m {{ font-family: "JetBrains Mono", "Cascadia Code", Consolas, Menlo, monospace; font-size: 15px; white-space: pre; }}
-    .note {{ fill: #7c87a6; font-size: 12.5px; font-style: italic; }}
+    .note {{ fill: #94a3b8; font-size: 14px; font-style: italic; }}
     @media (prefers-reduced-motion: reduce) {{ * {{ animation: none !important; }} }}
   </style>
   <g clip-path="url(#frame)">

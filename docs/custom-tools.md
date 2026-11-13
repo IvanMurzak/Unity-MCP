@@ -1,10 +1,8 @@
 # Custom tools and runtime
 
-Add your own **MCP tools** and **prompts** in project code, and use MCP inside a built game.
-Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).
+Add your own **MCP tools** and **prompts** in project code, and use MCP inside a built game. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).
 
-The plugin finds these by attribute and sends them to the MCP server, so every connected agent sees them. Agents that
-read Skills get them in the next skill generation.
+The plugin finds these by attribute and sends them to the MCP server, so every connected agent sees them. Agents that read Skills get them in the next skill generation.
 
 ## Concepts
 
@@ -21,8 +19,7 @@ read Skills get them in the next skill generation.
 3. Optional: `[Description]` on the method and on each parameter, so the model knows when and how to call it.
 4. Optional: nullable parameters with default values (`string? name = null`) are optional for the model.
 
-Unity APIs must run on the main thread: wrap that part in `MainThread.Instance.Run(...)`. Work that does not touch
-Unity APIs can stay on the background thread.
+Unity APIs must run on the main thread: wrap that part in `MainThread.Instance.Run(...)`. Work that does not touch Unity APIs can stay on the background thread.
 
 ```csharp
 [AiToolType]
@@ -47,9 +44,7 @@ public class Tool_GameObject
 }
 ```
 
-`Visible = false` on `[AiTool]` hides a tool from the agent's tool list by default (it still runs when called by
-name). Show or hide any tool in the AI Game Developer window, with the `tool-set-visibility` tool, or with
-`unity-mcp-cli configure <path> --enable-tools <ids>`.
+`Visible = false` on `[AiTool]` hides a tool from the agent's tool list by default (it still runs when called by name). Show or hide any tool in the AI Game Developer window, with the `tool-set-visibility` tool, or with `unity-mcp-cli configure <path> --enable-tools <ids>`.
 
 ## Add a prompt
 
@@ -68,9 +63,7 @@ public static class Prompt_ScriptingCode
 
 ## Runtime (in-game)
 
-The plugin also runs inside a built game. There are no default tools at runtime; you register your own. In the Editor
-(Edit and Play mode) the editor plugin is configured from `UserSettings/AI-Game-Developer-Config.json`; in a build,
-configure it from code:
+The plugin also runs inside a built game. There are no default tools at runtime; you register your own. In the Editor (Edit and Play mode) the editor plugin is configured from `UserSettings/AI-Game-Developer-Config.json`; in a build, configure it from code:
 
 ```csharp
 [RuntimeInitializeOnLoadMethod(RuntimeInitializeLoadType.BeforeSceneLoad)]
@@ -95,9 +88,7 @@ static void SetupMcp()
 
 ### Example: a chess bot
 
-Let the model play the bot side of a chess game. Mark game-only tools with
-`[AiToolType(Target = ToolTarget.Runtime)]` (`using com.IvanMurzak.McpPlugin.Common;`): only the game registers them,
-and the MCP server sends their calls to the running game even while the Editor is connected.
+Let the model play the bot side of a chess game. Mark game-only tools with `[AiToolType(Target = ToolTarget.Runtime)]` (`using com.IvanMurzak.McpPlugin.Common;`): only the game registers them, and the MCP server sends their calls to the running game even while the Editor is connected.
 
 ```csharp
 [AiToolType(Target = ToolTarget.Runtime)]

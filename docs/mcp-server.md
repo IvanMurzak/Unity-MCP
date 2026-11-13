@@ -1,7 +1,6 @@
 # MCP server and connection
 
-How the plugin reaches an MCP server, the environment variables that override its settings, and how to run a server
-yourself. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).
+How the plugin reaches an MCP server, the environment variables that override its settings, and how to run a server yourself. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).
 
 <div align="center">
 
@@ -9,29 +8,22 @@ yourself. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).
 
 </div>
 
-The server is not in this repository. It is the shared, engine-agnostic
-**[GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)** (binary `gamedev-mcp-server`, Docker image
-`aigamedeveloper/mcp-server`), also used by Godot-MCP and Unreal-MCP. Its README is the reference for every server
-option. The agent connects to the server over `stdio` or `streamableHttp`; the plugin connects to it with SignalR.
+The server is not in this repository. It is the shared, engine-agnostic **[GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)** (binary `gamedev-mcp-server`, Docker image `aigamedeveloper/mcp-server`), also used by Godot-MCP and Unreal-MCP. Its README is the reference for every server option. The agent connects to the server over `stdio` or `streamableHttp`; the plugin connects to it with SignalR.
 
 ## Connection modes
 
-The mode is chosen in the AI Game Developer window (**Window ▸ AI Game Dev**) and saved in
-`UserSettings/AI-Game-Developer-Config.json`.
+The mode is chosen in the AI Game Developer window (**Window ▸ AI Game Dev**) and saved in `UserSettings/AI-Game-Developer-Config.json`.
 
 | Mode | Server | Notes |
 | --- | --- | --- |
 | **Cloud** (default) | `https://ai-game.dev/mcp` | Sign in with the window or `unity-mcp-cli login`. Never starts a local server, even if `keepServerRunning` is `true`. |
 | **Custom** | Local `gamedev-mcp-server`, or any URL you host | The saved `host` field is used only in this mode. To use a local server, select **Custom** in the window, or set `"connectionMode": "Custom"` while Unity is closed. |
 
-In Custom mode with a local server, the plugin downloads the server release pinned by `ServerVersion` in
-`McpServerManager.cs` into `Library/mcp-server/<rid>/` and starts it. **Tools ▸ AI Game Developer ▸ Server** has
-*Download Binaries* and *Open Server Logs*.
+In Custom mode with a local server, the plugin downloads the server release pinned by `ServerVersion` in `McpServerManager.cs` into `Library/mcp-server/<rid>/` and starts it. **Tools ▸ AI Game Developer ▸ Server** has *Download Binaries* and *Open Server Logs*.
 
 ## Plugin environment variables
 
-Read at Editor startup. They override the saved config **in memory only** and are never written back, so the window
-still shows the saved choice. Command-line arguments win over environment variables.
+Read at Editor startup. They override the saved config **in memory only** and are never written back, so the window still shows the saved choice. Command-line arguments win over environment variables.
 
 | Environment variable | Command-line arg | Values | Effect |
 | --- | --- | --- | --- |
@@ -59,21 +51,15 @@ Unity.exe -batchmode -nographics \
 
 ### `UNITY_MCP_SERVER_PATH` (server development and CI)
 
-The Editor launches the named file instead of the pinned release and skips the download and the version check. Use it
-when developing the server or when CI builds the server from source.
+The Editor launches the named file instead of the pinned release and skips the download and the version check. Use it when developing the server or when CI builds the server from source.
 
-- Read from the process environment, then from a `.env` file in the Unity project root, so an Editor started from
-  the GUI or an IDE can pick it up.
-- Use an **absolute** path. If the file does not exist, the plugin silently behaves as if the variable were unset;
-  the console line `Starting MCP server: <path> …` names the binary that was really launched.
-- The override also becomes the `command` in generated agent configs, and *Open Server Logs* follows it.
-  *Download Binaries* still downloads into `Library/mcp-server/<rid>/`.
+- Read from the process environment, then from a `.env` file in the Unity project root, so an Editor started from the GUI or an IDE can pick it up.
+- Use an **absolute** path. If the file does not exist, the plugin silently behaves as if the variable were unset; the console line `Starting MCP server: <path> …` names the binary that was really launched.
+- The override also becomes the `command` in generated agent configs, and *Open Server Logs* follows it. *Download Binaries* still downloads into `Library/mcp-server/<rid>/`.
 
 ## Run a server yourself
 
-Use this for a self-hosted or remote setup. Download a release zip
-(`gamedev-mcp-server-<rid>.zip`) from [GameDev-MCP-Server releases](https://github.com/IvanMurzak/GameDev-MCP-Server/releases),
-or use [Docker](DOCKER_DEPLOYMENT.md).
+Use this for a self-hosted or remote setup. Download a release zip (`gamedev-mcp-server-<rid>.zip`) from [GameDev-MCP-Server releases](https://github.com/IvanMurzak/GameDev-MCP-Server/releases), or use [Docker](DOCKER_DEPLOYMENT.md).
 
 ```bash
 # stdio: the agent starts the server itself
@@ -100,8 +86,7 @@ The plugin must use the same port: set **Custom** mode and the same host and por
 
 ### Common server options
 
-Command-line arguments override environment variables. Arguments also work with one `-` or none (`port=8080`).
-Defaults and the full list: [GameDev-MCP-Server configuration](https://github.com/IvanMurzak/GameDev-MCP-Server#configuration).
+Command-line arguments override environment variables. Arguments also work with one `-` or none (`port=8080`). Defaults and the full list: [GameDev-MCP-Server configuration](https://github.com/IvanMurzak/GameDev-MCP-Server#configuration).
 
 | Environment variable | Argument | Meaning |
 | --- | --- | --- |
@@ -114,7 +99,4 @@ Defaults and the full list: [GameDev-MCP-Server configuration](https://github.co
 | `MCP_BIND` | `--bind` | Bind address: `loopback` (default), `any`, or an IP |
 | `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | Close idle streamableHttp sessions after this many seconds |
 
-Hosted deployments can also call webhooks on tool, prompt, resource and connection events and authorize incoming
-connections: `MCP_PLUGIN_WEBHOOK_TOOL_URL`, `MCP_PLUGIN_WEBHOOK_PROMPT_URL`, `MCP_PLUGIN_WEBHOOK_RESOURCE_URL`,
-`MCP_PLUGIN_WEBHOOK_CONNECTION_URL`, `MCP_PLUGIN_WEBHOOK_AUTHORIZATION_URL`, `MCP_PLUGIN_WEBHOOK_AUTHORIZATION_FAIL_OPEN`,
-`MCP_PLUGIN_WEBHOOK_TOKEN`, `MCP_PLUGIN_WEBHOOK_HEADER` and `MCP_PLUGIN_WEBHOOK_TIMEOUT` (all optional, unset by default).
+Hosted deployments can also call webhooks on tool, prompt, resource and connection events and authorize incoming connections: `MCP_PLUGIN_WEBHOOK_TOOL_URL`, `MCP_PLUGIN_WEBHOOK_PROMPT_URL`, `MCP_PLUGIN_WEBHOOK_RESOURCE_URL`, `MCP_PLUGIN_WEBHOOK_CONNECTION_URL`, `MCP_PLUGIN_WEBHOOK_AUTHORIZATION_URL`, `MCP_PLUGIN_WEBHOOK_AUTHORIZATION_FAIL_OPEN`, `MCP_PLUGIN_WEBHOOK_TOKEN`, `MCP_PLUGIN_WEBHOOK_HEADER` and `MCP_PLUGIN_WEBHOOK_TIMEOUT` (all optional, unset by default).

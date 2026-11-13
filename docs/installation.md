@@ -1,7 +1,6 @@
 # Installation guide
 
-Install the **AI Game Developer** plugin into a Unity project, connect an AI agent, and remove it again if needed.
-Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).
+Install the **AI Game Developer** plugin into a Unity project, connect an AI agent, and remove it again if needed. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).
 
 ## Requirements
 
@@ -26,8 +25,7 @@ openupm add com.ivanmurzak.unity.mcp
 
 ### Option 3: CLI
 
-[`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) edits `Packages/manifest.json`
-for you, so the Editor does not need to be open:
+[`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) edits `Packages/manifest.json` for you, so the Editor does not need to be open:
 
 ```bash
 npm install -g unity-mcp-cli
@@ -42,18 +40,11 @@ unity-mcp-cli wait-for-ready ./MyUnityProject    # wait until tools can be calle
 
 `npx unity-mcp-cli <command>` works without a global install.
 
-**Sign-in and project pinning.** `login` stores the credential in `~/.ai-game-dev/credentials.json`; there is no token
-to paste. By default the agent config written by `setup-mcp` points at a per-project **pinned** endpoint
-(`https://ai-game.dev/mcp/p/<pin>`); pass `--no-pin` for the shared `https://ai-game.dev/mcp`. Teams can share access
-with an enrollment code: `unity-mcp-cli install-plugin --enroll <code>`.
+**Sign-in and project pinning.** `login` stores the credential in `~/.ai-game-dev/credentials.json`; there is no token to paste. By default the agent config written by `setup-mcp` points at a per-project **pinned** endpoint (`https://ai-game.dev/mcp/p/<pin>`); pass `--no-pin` for the shared `https://ai-game.dev/mcp`. Teams can share access with an enrollment code: `unity-mcp-cli install-plugin --enroll <code>`.
 
 ## 2. Pick an AI agent
 
-You need one agent; it is the chat window you work in. It must support Skills or MCP tools that update while it runs.
-Claude Code is recommended. The AI Game Developer window and `unity-mcp-cli setup-mcp` write the config for you for
-Claude Code, Claude Desktop, Codex, Cursor, Gemini, GitHub Copilot (CLI, VS Code, Visual Studio), Antigravity, Cline,
-Open Code, Rider (Junie), Unity AI and others; `unity-mcp-cli setup-mcp --list` prints the full list. Any other MCP
-client works with the JSON config from the window.
+You need one agent; it is the chat window you work in. It must support Skills or MCP tools that update while it runs. Claude Code is recommended. The AI Game Developer window and `unity-mcp-cli setup-mcp` write the config for you for Claude Code, Claude Desktop, Codex, Cursor, Gemini, GitHub Copilot (CLI, VS Code, Visual Studio), Antigravity, Cline, Open Code, Rider (Junie), Unity AI and others; `unity-mcp-cli setup-mcp --list` prints the full list. Any other MCP client works with the JSON config from the window.
 
 ## 3. Connect the agent
 
@@ -77,9 +68,7 @@ unity-mcp-cli setup-mcp cursor ./MyUnityProject --transport stdio
 
 If your agent is not in the list, copy the JSON shown in the AI Game Developer window into its MCP configuration.
 
-For an agent that adds servers from its own command line, build the `<command>` that starts the local server
-(Custom mode). Replace `<unityProjectPath>` with the full project path and `<port>` with the port from the
-AI Game Developer window:
+For an agent that adds servers from its own command line, build the `<command>` that starts the local server (Custom mode). Replace `<unityProjectPath>` with the full project path and `<port>` with the port from the AI Game Developer window:
 
 | Platform | `<command>` |
 | --- | --- |
@@ -98,23 +87,17 @@ claude mcp add ai-game-developer <command>    # Claude Code
 gemini mcp add ai-game-developer <command>    # Gemini CLI
 ```
 
-GitHub Copilot CLI: run `copilot`, then `/mcp add` with server name `ai-game-developer`, type `local` and the
-`<command>` above.
+GitHub Copilot CLI: run `copilot`, then `/mcp add` with server name `ai-game-developer`, type `local` and the `<command>` above.
 
 > In VS Code with Copilot, make sure **Agent** mode is enabled.
 
 ## Team settings: update notifications
 
-The plugin shows an update popup at Editor startup when OpenUPM has a newer version. *"Do not show again"* is a
-per-user setting. To turn the popup off for the **whole team**, open **Edit ▸ Project Settings ▸ AI Game Developer**
-and enable *"Disable update notifications for the entire team"*. The setting is saved to
-`ProjectSettings/AI-Game-Developer-UpdateSettings.asset`; commit that file. The same toggle is in
-**Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)**.
+The plugin shows an update popup at Editor startup when OpenUPM has a newer version. *"Do not show again"* is a per-user setting. To turn the popup off for the **whole team**, open **Edit ▸ Project Settings ▸ AI Game Developer** and enable *"Disable update notifications for the entire team"*. The setting is saved to `ProjectSettings/AI-Game-Developer-UpdateSettings.asset`; commit that file. The same toggle is in **Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)**.
 
 ## Uninstall
 
-1. Open **Window ▸ Package Manager**, select **AI Game Developer — MCP**, and click **Remove**
-   (or run `unity-mcp-cli remove-plugin ./MyUnityProject`).
+1. Open **Window ▸ Package Manager**, select **AI Game Developer — MCP**, and click **Remove** (or run `unity-mcp-cli remove-plugin ./MyUnityProject`).
 2. Close Unity, then delete the `Assets/Plugins/NuGet` folder and its `Assets/Plugins/NuGet.meta` file.
 
 ## Next

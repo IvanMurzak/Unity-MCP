@@ -2,14 +2,11 @@
 
 <img src="docs/img/readme/hero.svg" alt="AI Game Developer for Unity: Skills, MCP tools and a CLI that connect AI agents to the Unity Editor and to your running game" width="100%">
 
-[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Downloads](https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9 'OpenUPM downloads')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![CLI](https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D 'unity-mcp-cli on npm')](https://www.npmjs.com/package/unity-mcp-cli)
-[![Unity](https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white 'Unity 2022.3 or newer')](https://unity.com/releases/editor/archive)
-[![release](https://img.shields.io/github/actions/workflow/status/IvanMurzak/Unity-MCP/release.yml?label=release&logo=githubactions&style=for-the-badge&labelColor=0F172A&logoColor=white 'Release workflow')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white 'Join')](https://discord.gg/cfbdMZX99G)
-[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857 'License')](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
-[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+<p align="center">
+<a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM version"></a> <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM downloads per month"></a> <a href="https://www.npmjs.com/package/unity-mcp-cli"><img src="https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D" alt="unity-mcp-cli on npm"></a> <a href="https://unity.com/releases/editor/archive"><img src="https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Unity 2022.3 or newer"></a>
+<br>
+<a href="https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/IvanMurzak/Unity-MCP/release.yml?label=release&logo=githubactions&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Release workflow status"></a> <a href="https://discord.gg/cfbdMZX99G"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Discord"></a> <a href="https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE"><img src="https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857" alt="License"></a> <a href="https://stand-with-ukraine.pp.ua"><img src="https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg" alt="Stand With Ukraine"></a>
+</p>
 
   <p>
     <a href="https://claude.ai/download"><img src="docs/img/mcp-clients/claude-64.png" alt="Claude" title="Claude" height="36"></a>&nbsp;&nbsp;
@@ -30,31 +27,24 @@
 
 </div>
 
-**AI Game Developer** (Unity-MCP) connects your AI agent to Unity. Claude Code, Codex, Cursor, GitHub Copilot,
-Gemini or any other [MCP](https://modelcontextprotocol.io/) client can read and change scenes, prefabs, assets and
-C# code, run tests and take screenshots in the **Unity Editor**, and call tools you write **inside your compiled game**.
-It ships as a free Unity package (`com.ivanmurzak.unity.mcp`), a command-line tool (`unity-mcp-cli`) and ten optional
-extensions.
+**AI Game Developer** (Unity-MCP) connects your AI agent to Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini or any other [MCP](https://modelcontextprotocol.io/) client can read and change scenes, prefabs, assets and C# code, run tests and take screenshots in the **Unity Editor**, and call tools you write **inside your compiled game**. It ships as a free Unity package (`com.ivanmurzak.unity.mcp`), a command-line tool (`unity-mcp-cli`) and ten optional extensions.
 
 ## How it works
 
 <img src="docs/img/readme/architecture.svg" alt="An AI agent or unity-mcp-cli talks MCP to a server, ai-game.dev Cloud by default or a local gamedev-mcp-server, which calls the tools of the Unity Editor plugin and of your running game" width="100%">
 
-The plugin registers its tools with an MCP server; your agent calls them through that server. By default the plugin
-uses the **Cloud** server at `https://ai-game.dev/mcp`. In **Custom** mode it starts the local
-[GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) binary, or connects to one you host
-(binary or Docker). Instead of MCP tools, the agent can also use generated **Skills**.
+The plugin registers its tools with an MCP server; your agent calls them through that server. By default the plugin uses the **Cloud** server at `https://ai-game.dev/mcp`. In **Custom** mode it starts the local [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) binary, or connects to one you host (binary or Docker). Instead of MCP tools, the agent can also use generated **Skills**.
 
 ## Features
 
-- ✅ **RQL** — read and change scenes, objects, assets and settings with one query language
-- ✅ **C# and tests** — compile and run C# with Roslyn; run EditMode and PlayMode tests
-- ✅ **Skills or MCP** — generate Skills in one click, or connect as an MCP client
-- ✅ **Any agent** — Claude Code, Codex, Cursor, Copilot, Gemini and other MCP clients
-- ✅ **Runtime** — the same tools inside your built game: NPC logic, live debugging
-- ✅ **Your own tools** — any C# method becomes a tool with one `[AiTool]` attribute
-- ✅ **CLI** — install, open, query, compile and test from the terminal or CI
-- ✅ **Extensions** — ten optional tool packs, from Animation to Timeline
+✅ **RQL** — read and change scenes, objects, assets and settings with one query language\
+✅ **C# and tests** — compile and run C# with Roslyn; run EditMode and PlayMode tests\
+✅ **Skills or MCP** — generate Skills in one click, or connect as an MCP client\
+✅ **Any agent** — Claude Code, Codex, Cursor, Copilot, Gemini and other MCP clients\
+✅ **Runtime** — the same tools inside your built game: NPC logic, live debugging\
+✅ **Your own tools** — any C# method becomes a tool with one `[AiTool]` attribute\
+✅ **CLI** — install, open, query, compile and test from the terminal or CI\
+✅ **Extensions** — ten optional tool packs, from Animation to Timeline
 
 ## Quick start
 
@@ -75,14 +65,16 @@ unity-mcp-cli open ./MyUnityProject             # open Unity; it connects and ge
 
 <img src="docs/img/readme/terminal.svg" alt="Terminal session: install unity-mcp-cli, add the plugin, sign in, configure Claude Code and open the project" width="100%">
 
-Then connect your agent: in Unity open **Window ▸ AI Game Dev** and click **Auto-generate** Skills (recommended) or
-**Configure** MCP. From the terminal the same is `unity-mcp-cli setup-skills claude-code ./MyUnityProject` or
-`unity-mcp-cli setup-mcp claude-code ./MyUnityProject`.
+Then connect your agent: in Unity open **Window ▸ AI Game Dev** and click **Auto-generate** Skills (recommended) or **Configure** MCP. Or from the terminal:
+
+```bash
+unity-mcp-cli setup-skills claude-code ./MyUnityProject
+unity-mcp-cli setup-mcp claude-code ./MyUnityProject
+```
 
 ![AI Game Developer window](docs/img/editor/ai-game-developer-windows.png)
 
-Ask your agent *"Create 3 cubes in a circle with radius 2"* and watch it happen. Full steps, manual MCP configuration
-and uninstall: **[Installation guide](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)**.
+Ask your agent *"Create 3 cubes in a circle with radius 2"* and watch it happen. Full steps, manual MCP configuration and uninstall: **[Installation guide](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)**.
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
@@ -96,10 +88,7 @@ Create metallic golden material and attach it to a new sphere
 Find every enemy prefab without a Rigidbody and add one
 ```
 
-**Tools.** Shown by default: `rql-query`, `rql-mutate`, `rql-schema`, `script-execute`, `tests-run`,
-`screenshot-isolated`, the `package-*` and `assetstore-*` tools and `unity-tool-list`. More tools are installed but
-hidden until you show them. Full list: **[Default MCP tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)**
-or [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+**Tools.** Shown by default: `rql-query`, `rql-mutate`, `rql-schema`, `script-execute`, `tests-run`, `screenshot-isolated`, the `package-*` and `assetstore-*` tools and `unity-tool-list`. More tools are installed but hidden until you show them. Full list: **[Default MCP tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** or [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **From the terminal** (starts a headless editor when none is running):
 
@@ -132,18 +121,9 @@ Prompts, runtime (in-game) tools and a full example: **[Custom tools and runtime
 
 ## Extensions
 
-Install from the **Extensions** section of the AI Game Developer window, or with
-`unity-mcp-cli install-extension <name>`:
-[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) ·
-[Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) ·
-[InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) ·
-[Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) ·
-[ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) ·
-[ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) ·
-[Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) ·
-[Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) ·
-[Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) ·
-[Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
+Install from the **Extensions** section of the AI Game Developer window, or with `unity-mcp-cli install-extension <name>`.
+
+[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) · [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) · [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) · [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) · [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) · [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) · [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) · [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) · [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) · [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
 
 ## Documentation
 
@@ -159,14 +139,11 @@ Install from the **Extensions** section of the AI Game Developer window, or with
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Tutorials, guides and FAQ |
 | [Development guide](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) | Repository layout, code style, tests and CI for contributors |
 
-Related: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (the shared MCP server) ·
-[ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
+Related: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (the shared MCP server) · [ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
 
 ## Contributing
 
-Ideas, bug reports and pull requests are welcome. Read the
-[Development guide](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md), fork the repository,
-open `./Unity-MCP-Plugin` in Unity, and send a pull request to `main`. If the project helps you, please give it a star.
+Ideas, bug reports and pull requests are welcome. Read the [Development guide](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md), fork the repository, open `./Unity-MCP-Plugin` in Unity, and send a pull request to `main`. If the project helps you, please give it a star.
 
 ## License
 

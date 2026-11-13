@@ -2,14 +2,11 @@
 
 <img src="img/readme/hero.svg" alt="Unity 版 AI Game Developer:通过 Skills、MCP 工具和 CLI 将 AI 智能体连接到 Unity 编辑器和正在运行的游戏" width="100%">
 
-[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Downloads](https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9 'OpenUPM downloads')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![CLI](https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D 'unity-mcp-cli on npm')](https://www.npmjs.com/package/unity-mcp-cli)
-[![Unity](https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white 'Unity 2022.3 or newer')](https://unity.com/releases/editor/archive)
-[![release](https://img.shields.io/github/actions/workflow/status/IvanMurzak/Unity-MCP/release.yml?label=release&logo=githubactions&style=for-the-badge&labelColor=0F172A&logoColor=white 'Release workflow')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)
-[![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white 'Join')](https://discord.gg/cfbdMZX99G)
-[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857 'License')](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
-[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+<p align="center">
+<a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM version"></a> <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM downloads per month"></a> <a href="https://www.npmjs.com/package/unity-mcp-cli"><img src="https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D" alt="unity-mcp-cli on npm"></a> <a href="https://unity.com/releases/editor/archive"><img src="https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Unity 2022.3 or newer"></a>
+<br>
+<a href="https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml"><img src="https://img.shields.io/github/actions/workflow/status/IvanMurzak/Unity-MCP/release.yml?label=release&logo=githubactions&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Release workflow status"></a> <a href="https://discord.gg/cfbdMZX99G"><img src="https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Discord"></a> <a href="https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE"><img src="https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857" alt="License"></a> <a href="https://stand-with-ukraine.pp.ua"><img src="https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg" alt="Stand With Ukraine"></a>
+</p>
 
   <p>
     <a href="https://claude.ai/download"><img src="img/mcp-clients/claude-64.png" alt="Claude" title="Claude" height="36"></a>&nbsp;&nbsp;
@@ -30,30 +27,24 @@
 
 </div>
 
-**AI Game Developer**(Unity-MCP)把你的 AI 智能体连接到 Unity。Claude Code、Codex、Cursor、GitHub Copilot、
-Gemini 或任何其他 [MCP](https://modelcontextprotocol.io/) 客户端都可以在 **Unity 编辑器**中读取和修改场景、预制体、资源和
-C# 代码,运行测试并截图,还能在**编译后的游戏内**调用你编写的工具。
-它以免费的 Unity 包(`com.ivanmurzak.unity.mcp`)、命令行工具(`unity-mcp-cli`)和十个可选扩展的形式提供。
+**AI Game Developer**(Unity-MCP)把你的 AI 智能体连接到 Unity。Claude Code、Codex、Cursor、GitHub Copilot、 Gemini 或任何其他 [MCP](https://modelcontextprotocol.io/) 客户端都可以在 **Unity 编辑器**中读取和修改场景、预制体、资源和 C# 代码,运行测试并截图,还能在**编译后的游戏内**调用你编写的工具。 它以免费的 Unity 包(`com.ivanmurzak.unity.mcp`)、命令行工具(`unity-mcp-cli`)和十个可选扩展的形式提供。
 
 ## 工作原理
 
 <img src="img/readme/architecture.svg" alt="AI 智能体或 unity-mcp-cli 通过 MCP 与服务器通信(默认是 ai-game.dev Cloud,或本地 gamedev-mcp-server),服务器调用 Unity 编辑器插件和正在运行的游戏中的工具" width="100%">
 
-插件把它的工具注册到 MCP 服务器,智能体通过该服务器调用这些工具。默认情况下插件使用
-`https://ai-game.dev/mcp` 上的 **Cloud** 服务器。在 **Custom** 模式下,它会启动本地的
-[GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) 程序,或连接到你自己托管的服务器
-(二进制或 Docker)。除了 MCP 工具,智能体也可以使用生成的 **Skills**。
+插件把它的工具注册到 MCP 服务器,智能体通过该服务器调用这些工具。默认情况下插件使用 `https://ai-game.dev/mcp` 上的 **Cloud** 服务器。在 **Custom** 模式下,它会启动本地的 [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) 程序,或连接到你自己托管的服务器 (二进制或 Docker)。除了 MCP 工具,智能体也可以使用生成的 **Skills**。
 
 ## 功能
 
-| **RQL** | 用一种查询语言读取和修改场景、对象、资源和设置 |
-| **C# 与测试** | 用 Roslyn 编译并运行 C#;运行 EditMode 和 PlayMode 测试 |
-| **Skills 或 MCP** | 一键生成 Skills,或作为 MCP 客户端连接 |
-| **任意智能体** | Claude Code、Codex、Cursor、Copilot、Gemini 及其他 MCP 客户端 |
-| **运行时** | 在构建好的游戏中使用同样的工具:NPC 逻辑、实时调试 |
-| **自定义工具** | 任何 C# 方法加上 `[AiTool]` 特性即成为工具 |
-| **CLI** | 在终端或 CI 中安装、打开、查询、编译和测试 |
-| **扩展** | 十个可选工具包,从 Animation 到 Timeline |
+✅ **RQL** — 用一种查询语言读取和修改场景、对象、资源和设置\
+✅ **C# 与测试** — 用 Roslyn 编译并运行 C#;运行 EditMode 和 PlayMode 测试\
+✅ **Skills 或 MCP** — 一键生成 Skills,或作为 MCP 客户端连接\
+✅ **任意智能体** — Claude Code、Codex、Cursor、Copilot、Gemini 及其他 MCP 客户端\
+✅ **运行时** — 在构建好的游戏中使用同样的工具:NPC 逻辑、实时调试\
+✅ **自定义工具** — 任何 C# 方法加上 `[AiTool]` 特性即成为工具\
+✅ **CLI** — 在终端或 CI 中安装、打开、查询、编译和测试\
+✅ **扩展** — 十个可选工具包,从 Animation 到 Timeline
 
 ## 快速开始
 
@@ -74,14 +65,16 @@ unity-mcp-cli open ./MyUnityProject             # 打开 Unity;自动连接并�
 
 <img src="img/readme/terminal.svg" alt="终端示例:安装 unity-mcp-cli、添加插件、登录、配置 Claude Code 并打开项目" width="100%">
 
-然后连接智能体:在 Unity 中打开 **Window ▸ AI Game Dev**,点击 **Auto-generate** Skills(推荐)或
-**Configure** MCP。在终端中对应 `unity-mcp-cli setup-skills claude-code ./MyUnityProject` 或
-`unity-mcp-cli setup-mcp claude-code ./MyUnityProject`。
+然后连接智能体:在 Unity 中打开 **Window ▸ AI Game Dev**,点击 **Auto-generate** Skills(推荐)或 **Configure** MCP。或在终端中:
+
+```bash
+unity-mcp-cli setup-skills claude-code ./MyUnityProject
+unity-mcp-cli setup-mcp claude-code ./MyUnityProject
+```
 
 ![AI Game Developer 窗口](img/editor/ai-game-developer-windows.png)
 
-让智能体 *“在半径为 2 的圆上创建 3 个立方体”*,看着它完成。完整步骤、手动 MCP 配置和卸载:
-**[安装指南](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)**(英文)。
+让智能体 *“在半径为 2 的圆上创建 3 个立方体”*,看着它完成。完整步骤、手动 MCP 配置和卸载: **[安装指南](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)**(英文)。
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
@@ -95,10 +88,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 找到所有没有 Rigidbody 的敌人预制体并添加一个
 ```
 
-**工具。** 默认显示:`rql-query`、`rql-mutate`、`rql-schema`、`script-execute`、`tests-run`、
-`screenshot-isolated`、`package-*` 和 `assetstore-*` 工具以及 `unity-tool-list`。其他工具已安装,
-但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)**
-或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+**工具。** 默认显示:`rql-query`、`rql-mutate`、`rql-schema`、`script-execute`、`tests-run`、 `screenshot-isolated`、`package-*` 和 `assetstore-*` 工具以及 `unity-tool-list`。其他工具已安装, 但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** 或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **在终端中**(没有编辑器运行时会启动一个无界面编辑器):
 
@@ -131,18 +121,9 @@ public class Tool_Score
 
 ## 扩展
 
-在 AI Game Developer 窗口的 **Extensions** 部分安装,或使用
-`unity-mcp-cli install-extension <name>`:
-[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) ·
-[Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) ·
-[InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) ·
-[Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) ·
-[ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) ·
-[ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) ·
-[Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) ·
-[Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) ·
-[Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) ·
-[Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
+在 AI Game Developer 窗口的 **Extensions** 部分安装,或使用 `unity-mcp-cli install-extension <name>`。
+
+[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) · [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) · [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) · [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) · [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) · [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) · [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) · [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) · [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) · [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
 
 ## 文档
 
@@ -158,16 +139,13 @@ public class Tool_Score
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | 教程、指南和常见问题 |
 | [开发指南](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) | 面向贡献者:仓库结构、代码风格、测试和 CI |
 
-相关:[GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)(共享的 MCP 服务器)·
-[ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
+相关:[GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)(共享的 MCP 服务器)· [ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
 
 文档页面为英文。
 
 ## 参与贡献
 
-欢迎提出想法、报告问题和提交 Pull Request。请阅读
-[开发指南](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md),fork 本仓库,
-在 Unity 中打开 `./Unity-MCP-Plugin`,然后向 `main` 提交 Pull Request。如果项目对你有帮助,请点个 Star。
+欢迎提出想法、报告问题和提交 Pull Request。请阅读 [开发指南](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md),fork 本仓库, 在 Unity 中打开 `./Unity-MCP-Plugin`,然后向 `main` 提交 Pull Request。如果项目对你有帮助,请点个 Star。
 
 ## 许可证
 
