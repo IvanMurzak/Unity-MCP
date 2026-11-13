@@ -6,6 +6,10 @@
     <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#A8C2D2" fill-opacity="0.08"/></pattern>
     <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF002A" stop-opacity="0"/><stop offset="0.3" stop-color="#FF2448" stop-opacity="0.6"/><stop offset="0.7" stop-color="#3B9BFF" stop-opacity="0.55"/><stop offset="1" stop-color="#3B9BFF" stop-opacity="0"/></linearGradient>
     <linearGradient id="card" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C1620"/><stop offset="1" stop-color="#070D14"/></linearGradient>
+    <linearGradient id="logoL" gradientUnits="userSpaceOnUse" x1="512" y1="190" x2="512" y2="785"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#8395AD"/></linearGradient>
+    <linearGradient id="logoR" gradientUnits="userSpaceOnUse" x1="512" y1="190" x2="512" y2="785"><stop offset="0" stop-color="#E1E8F1"/><stop offset="1" stop-color="#455974"/></linearGradient>
+    <linearGradient id="logoB" gradientUnits="userSpaceOnUse" x1="512" y1="190" x2="512" y2="785"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#AABBD0"/></linearGradient>
+    <radialGradient id="logoGlow"><stop offset="0" stop-color="#6FA8D0" stop-opacity=".18"/><stop offset="1" stop-color="#6FA8D0" stop-opacity="0"/></radialGradient>
     <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF5A73"/><stop offset="1" stop-color="#6FA8D0"/></linearGradient>
     <clipPath id="frame"><rect width="1200" height="520" rx="18"/></clipPath>
   </defs>

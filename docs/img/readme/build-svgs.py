@@ -1,8 +1,7 @@
 """Regenerate the README images (hero, architecture, terminal) with the shared svgkit style.
 
 Usage: python docs/img/readme/build-svgs.py
-svgkit.py next to this file is a copy of the shared kit (one local change: the terminal loop opens on the
-finished session, see terminal()).
+svgkit.py next to this file is an unmodified copy of the shared kit.
 """
 import os
 import sys

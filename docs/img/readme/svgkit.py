@@ -65,6 +65,10 @@ def panel(w, h, body, label, extra_css="", haze=True):
     <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#A8C2D2" fill-opacity="0.08"/></pattern>
     <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="{RED}" stop-opacity="0"/><stop offset="0.3" stop-color="#FF2448" stop-opacity="0.6"/><stop offset="0.7" stop-color="{BLUE2}" stop-opacity="0.55"/><stop offset="1" stop-color="{BLUE2}" stop-opacity="0"/></linearGradient>
     <linearGradient id="card" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C1620"/><stop offset="1" stop-color="#070D14"/></linearGradient>
+    <linearGradient id="logoL" gradientUnits="userSpaceOnUse" x1="512" y1="190" x2="512" y2="785"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#8395AD"/></linearGradient>
+    <linearGradient id="logoR" gradientUnits="userSpaceOnUse" x1="512" y1="190" x2="512" y2="785"><stop offset="0" stop-color="#E1E8F1"/><stop offset="1" stop-color="#455974"/></linearGradient>
+    <linearGradient id="logoB" gradientUnits="userSpaceOnUse" x1="512" y1="190" x2="512" y2="785"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#AABBD0"/></linearGradient>
+    <radialGradient id="logoGlow"><stop offset="0" stop-color="#6FA8D0" stop-opacity=".18"/><stop offset="1" stop-color="#6FA8D0" stop-opacity="0"/></radialGradient>
     <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="{RED_TEXT}"/><stop offset="1" stop-color="{BLUE}"/></linearGradient>
     <clipPath id="frame"><rect width="{w}" height="{h}" rx="18"/></clipPath>
   </defs>
@@ -126,16 +130,24 @@ def wire(d, color=BLUE, dur=2.4, begin=0.0, reverse=False):
             f'<circle r="4" fill="{color}"><animateMotion dur="{dur}s" begin="-{begin}s" repeatCount="indefinite"{kp}><mpath href="#{pid}"/></animateMotion></circle>')
 
 
+def logo(cx, cy, size=120):
+    """The AI Game Dev brand mark (the 'vertex' logo of the desktop app, packages/desktop/src/assets/logo.svg),
+    centred at (cx, cy), `size` px tall. Uses the logoL/logoR/logoB gradients defined by panel()."""
+    s = size / 650
+    tx, ty = cx - 512 * s, cy - 495 * s
+    return (f'<g transform="translate({tx:.2f} {ty:.2f}) scale({s:.4f})">'
+            '<path d="M512 194 L512 504 L366 785 L185 785 Z" fill="url(#logoL)"/>'
+            '<path d="M512 194 L839 785 L658 785 L512 504 Z" fill="url(#logoR)"/>'
+            '<path d="M512 194 L512 294 L223 767 L185 785 Z" fill="url(#logoB)"/></g>')
+
+
 def mark(cx, cy, size=120):
-    """Abstract brand-style mark: hexagon outline + diamond in the red→blue gradient, with slow orbit rings."""
-    s = size / 24
-    hexp = " ".join(f"{cx + (px - 12) * s},{cy + (py - 12) * s}" for px, py in [(12, 2), (21, 7), (21, 17), (12, 22), (3, 17), (3, 7)])
-    dia = " ".join(f"{cx + (px - 12) * s},{cy + (py - 12) * s}" for px, py in [(12, 7), (16, 12), (12, 17), (8, 12)])
-    r1, r2 = size * 0.78, size * 1.02
-    return (f'<circle class="spin" cx="{cx}" cy="{cy}" r="{r1}" fill="none" stroke="{RED_TEXT}" stroke-opacity=".35" stroke-dasharray="2 10"/>'
+    """Hero visual: the brand logo with slow red/blue orbit rings and a soft glow."""
+    r1, r2 = size * 0.95, size * 1.22
+    return (f'<circle cx="{cx}" cy="{cy}" r="{size * 0.9}" fill="url(#logoGlow)"/>'
+            f'<circle class="spin" cx="{cx}" cy="{cy}" r="{r1}" fill="none" stroke="{RED_TEXT}" stroke-opacity=".35" stroke-dasharray="2 10"/>'
             f'<circle class="spin r" cx="{cx}" cy="{cy}" r="{r2}" fill="none" stroke="{BLUE}" stroke-opacity=".25" stroke-dasharray="36 18"/>'
-            f'<g class="pulse"><polygon points="{hexp}" fill="{BG2}" stroke="url(#brand)" stroke-width="{1.6 * s}" stroke-linejoin="round"/>'
-            f'<polygon points="{dia}" fill="url(#brand)" opacity=".9"/></g>')
+            f'<g class="pulse">{logo(cx, cy, size * 1.25)}</g>')
 
 
 def hero(title, accent="", eyebrow_text="", subtitle=(), chip_items=(), right=None, w=1200, h=380, label=None):
@@ -151,7 +163,7 @@ def hero(title, accent="", eyebrow_text="", subtitle=(), chip_items=(), right=No
     return panel(w, h, body, label or f"{title}{accent} — {' '.join(subtitle)}")
 
 
-def terminal(lines, title="~/project", w=1200, label="A terminal session", hold=6.0, note_x=None, opening=5.0):
+def terminal(lines, title="~/project", w=1200, label="A terminal session", hold=6.0, note_x=None, open_finished=True):
     """Animated terminal in the site style. lines: list of dicts
         {"cmd": "unity-mcp-cli login"}                       typed command
         {"out": [("muted","Open "),("link","https://..."),("ok","✓ ")], "note": "deviceLogin()"}
@@ -161,24 +173,34 @@ def terminal(lines, title="~/project", w=1200, label="A terminal session", hold=
            "red": RED_TEXT, "key": "#A5C8E4", "str": "#F5D08A", "num": "#F59AB0"}
     CW, X0, Y0, LH, STEP = 10.2, 40, 92, 32, 0.042
     note_x = note_x or w - 40
-    # Unity-MCP local change: the loop opens on the finished session for `opening` seconds (so the first frame,
-    # which static renderers and screenshots show, is never blank), clears it, then types it again.
-    t, sched = opening + 0.7, []
+    t, sched = 0.4, []
     for ln in lines:
         start = t + (0.5 if "cmd" in ln else ln.get("pause", 0.35))
         n = len(ln["cmd"]) + 2 if "cmd" in ln else 0
         t = start + (0.15 + (n + 1) * STEP if n else 0.25)
         sched.append((start, n))
     prompt_at = t + 0.5
-    T = round(prompt_at + hold, 2)
-    k = lambda x: round(x / T, 4)
-    fade = lambda s: (f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" values="1;1;0;0;1;1" '
-                      f'keyTimes="0;{k(opening)};{k(opening + .4)};{k(s)};{k(s + .25)};1"/>')
+    if open_finished:
+        # Unreal-MCP variant: the loop opens on the finished screen (also the static image), holds it, fades out,
+        # replays the session and ends finished again, so the first frame is never blank.
+        s0 = hold + 0.8
+        sched = [(st + s0, n) for st, n in sched]
+        prompt_at += s0
+        T = round(prompt_at + 1.5, 2)
+        k = lambda x: round(x / T, 4)
+        fade = lambda s: (f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" values="1;1;0;0;1;1" '
+                          f'keyTimes="0;{k(hold)};{k(hold + .4)};{k(s)};{k(s + .25)};1"/>')
+    else:
+        fade_out = prompt_at + hold
+        T = round(fade_out + 0.8, 2)
+        k = lambda x: round(x / T, 4)
+        fade = lambda s: (f'<animate attributeName="opacity" dur="{T}s" repeatCount="indefinite" values="0;0;1;1;0;0" '
+                          f'keyTimes="0;{k(s)};{k(s + .25)};{k(fade_out)};{k(fade_out + .4)};1"/>')
     body, y = [], Y0
     for ln, (start, n) in zip(lines, sched):
         if "cmd" in ln:
             gone = round((n + 1) * CW + w, 1)
-            fr = [(gone, 0), (gone, opening), (0, opening + .4), (0, start)] + [(round(i * CW, 1), start + .15 + i * STEP) for i in range(1, n + 1)] + [(gone, start + .15 + (n + 1) * STEP), (gone, T)]
+            fr = ([(gone, 0), (0, hold + .4), (0, start)] if open_finished else [(0, 0), (0, start)]) + [(round(i * CW, 1), start + .15 + i * STEP) for i in range(1, n + 1)] + [(gone, start + .15 + (n + 1) * STEP), (gone, T)]
             body.append(f'<g>{fade(start)}<text x="{X0}" y="{y}" class="m" font-size="18" textLength="{round(n * CW, 1)}" lengthAdjust="spacing">'
                         f'<tspan fill="{RED_TEXT}">❯</tspan> <tspan fill="{TEXT}">{esc(ln["cmd"])}</tspan></text>'
                         f'<rect x="{X0 - 2}" y="{y - 22}" width="{w}" height="30" fill="#070D14" transform="translate({w * 2} 0)">'
