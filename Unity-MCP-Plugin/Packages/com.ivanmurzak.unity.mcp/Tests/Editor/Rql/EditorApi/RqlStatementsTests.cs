@@ -36,14 +36,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
         {
             new GameObject("Alpha");
             new GameObject("Beta");
-            var r = Q("objects | where name == \"Alpha\" | count; objects | where name == \"Beta\" | select name");
+            const string Query = "objects | where name == \"Alpha\" | count; objects | where name == \"Beta\" | select name";
+            var r = Q(Query);
             AssertOk(r);
             Assert.AreEqual(2, r.Statements!.Count);
             Assert.AreEqual(1L, r.Statements[0].Result!.Value!.GetValue<long>());
             Assert.AreEqual("Beta", Cell(r.Statements[1].Result!));
 
-            var response = CallThroughMcpPlugin(Tool_Rql.QueryToolId,
-                JsonSerializer.Serialize(new { query = "objects | where name == \"Alpha\" | count; objects | where name == \"Beta\" | select name" }));
+            var response = CallThroughMcpPlugin(Tool_Rql.QueryToolId, JsonSerializer.Serialize(new { query = Query }));
             Assert.AreEqual(ResponseStatus.Success, response.Value!.Status);
             var text = Text(response.Value);
             StringAssert.Contains("[1/2] objects | where name == \"Alpha\" | count", text);
