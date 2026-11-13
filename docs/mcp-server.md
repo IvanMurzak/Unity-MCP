@@ -23,21 +23,21 @@ In Custom mode with a local server, the plugin downloads the server release pinn
 
 ## Plugin environment variables
 
-Read at Editor startup. They override the saved config **in memory only** and are never written back, so the window still shows the saved choice. Command-line arguments win over environment variables.
+Read at Editor startup. They override the saved config **in memory only** and are never written back, so the window still shows the saved choice. Command-line arguments win over environment variables. Each variable is also accepted as a command-line argument `-NAME=value` (for example `-UNITY_MCP_TRANSPORT=stdio`); `-url`, `-auth` and `-token` are short aliases. Rows marked *env only* have no argument.
 
-| Environment variable | Command-line arg | Values | Effect |
-| --- | --- | --- | --- |
-| `UNITY_MCP_CLOUD_URL` | `-url` | URL | MCP server URL (`UNITY_MCP_HOST` is a legacy alias) |
-| `UNITY_MCP_CONNECTION_MODE` | `-UNITY_MCP_CONNECTION_MODE` | `Cloud` / `Custom` | Connection mode (a loopback URL implies `Custom`) |
-| `UNITY_MCP_KEEP_CONNECTED` | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false` | Keep the connection active |
-| `UNITY_MCP_AUTH_OPTION` | `-auth` | `none` / `oauth` / `token` | Authentication mode (legacy `required` becomes `token`) |
-| `UNITY_MCP_TOKEN` | `-token` | string | Authentication token |
-| `UNITY_MCP_TRANSPORT` | `-UNITY_MCP_TRANSPORT` | `stdio` / `streamableHttp` | Client transport the plugin configures |
-| `UNITY_MCP_START_SERVER` | `-UNITY_MCP_START_SERVER` | `true` / `false` | Keep a local server process running |
-| `UNITY_MCP_TOOLS` | `-UNITY_MCP_TOOLS` | comma-separated tool ids | Show only these tools; the rest are hidden (still callable by name). Unknown ids are logged as errors. |
-| `UNITY_MCP_CREDENTIALS_DIR` | — | absolute folder path | Read the machine credential store from this folder instead of `~/.ai-game-dev` (development and test Editors). A relative value is ignored. |
-| `UNITY_MCP_SERVER_PATH` | — | absolute path to a `gamedev-mcp-server` | Launch this binary instead of the pinned release (see below) |
-| `UNITY_MCP_DISABLE` | — | `1` / `true` | Skip plugin initialization; see [Disable in CI](ci-disable.md) |
+| Variable | Values | Effect |
+| --- | --- | --- |
+| `UNITY_MCP_CLOUD_URL` | URL | MCP server URL (`UNITY_MCP_HOST` is a legacy alias) |
+| `UNITY_MCP_CONNECTION_MODE` | `Cloud` / `Custom` | Connection mode (a loopback URL implies `Custom`) |
+| `UNITY_MCP_KEEP_CONNECTED` | `true` / `false` | Keep the connection active |
+| `UNITY_MCP_AUTH_OPTION` | `none` / `oauth` / `token` | Authentication mode (legacy `required` becomes `token`) |
+| `UNITY_MCP_TOKEN` | string | Authentication token |
+| `UNITY_MCP_TRANSPORT` | `stdio` / `streamableHttp` | Client transport the plugin configures |
+| `UNITY_MCP_START_SERVER` | `true` / `false` | Keep a local server process running |
+| `UNITY_MCP_TOOLS` | comma-separated tool ids | Show only these tools; the rest are hidden (still callable by name). Unknown ids are logged as errors. |
+| `UNITY_MCP_CREDENTIALS_DIR` | absolute folder path | *env only.* Read the machine credential store from this folder instead of `~/.ai-game-dev` (development and test Editors). A relative value is ignored. |
+| `UNITY_MCP_SERVER_PATH` | absolute path to a `gamedev-mcp-server` | *env only.* Launch this binary instead of the pinned release (see below) |
+| `UNITY_MCP_DISABLE` | `1` / `true` | *env only.* Skip plugin initialization; see [Disable in CI](ci-disable.md) |
 
 Example, batch mode against a local server with a token:
 

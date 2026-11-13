@@ -1,6 +1,6 @@
 <div align="center" width="100%">
 
-<img src="img/readme/hero.svg" alt="Unity 版 AI Game Developer:通过 Skills、MCP 工具和 CLI 将 AI 智能体连接到 Unity 编辑器和正在运行的游戏" width="100%">
+<p align="center"><img src="img/readme/hero.svg" alt="Unity 版 AI Game Developer:通过 Skills、MCP 工具和 CLI 将 AI 智能体连接到 Unity 编辑器和正在运行的游戏" width="100%"></p>
 
 <p align="center">
 <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM version"></a> <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM downloads per month"></a> <a href="https://www.npmjs.com/package/unity-mcp-cli"><img src="https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D" alt="unity-mcp-cli on npm"></a> <a href="https://unity.com/releases/editor/archive"><img src="https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Unity 2022.3 or newer"></a>
@@ -31,7 +31,7 @@
 
 ## 工作原理
 
-<img src="img/readme/architecture.svg" alt="AI 智能体或 unity-mcp-cli 通过 MCP 与服务器通信(默认是 ai-game.dev Cloud,或本地 gamedev-mcp-server),服务器调用 Unity 编辑器插件和正在运行的游戏中的工具" width="100%">
+<p align="center"><img src="img/readme/architecture.svg" alt="AI 智能体或 unity-mcp-cli 通过 MCP 与服务器通信(默认是 ai-game.dev Cloud,或本地 gamedev-mcp-server),服务器调用 Unity 编辑器插件和正在运行的游戏中的工具" width="100%"></p>
 
 插件把它的工具注册到 MCP 服务器,智能体通过该服务器调用这些工具。默认情况下插件使用 `https://ai-game.dev/mcp` 上的 **Cloud** 服务器。在 **Custom** 模式下,它会启动本地的 [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) 程序,或连接到你自己托管的服务器 (二进制或 Docker)。除了 MCP 工具,智能体也可以使用生成的 **Skills**。
 
@@ -63,7 +63,7 @@ unity-mcp-cli login                             # 在浏览器中登录 ai-game.
 unity-mcp-cli open ./MyUnityProject             # 打开 Unity;自动连接并生成 skills
 ```
 
-<img src="img/readme/terminal.svg" alt="终端示例:安装 unity-mcp-cli、添加插件、登录、配置 Claude Code 并打开项目" width="100%">
+<p align="center"><img src="img/readme/terminal.svg" alt="终端示例:安装 unity-mcp-cli、添加插件、登录、配置 Claude Code 并打开项目" width="100%"></p>
 
 然后连接智能体:在 Unity 中打开 **Window ▸ AI Game Dev**,点击 **Auto-generate** Skills(推荐)或 **Configure** MCP。或在终端中:
 

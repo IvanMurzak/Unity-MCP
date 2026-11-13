@@ -1,6 +1,6 @@
 <div align="center" width="100%">
 
-<img src="img/readme/hero.svg" alt="AI Game Developer para Unity: Skills, herramientas MCP y una CLI que conectan agentes de IA con el Editor de Unity y con tu juego en ejecución" width="100%">
+<p align="center"><img src="img/readme/hero.svg" alt="AI Game Developer para Unity: Skills, herramientas MCP y una CLI que conectan agentes de IA con el Editor de Unity y con tu juego en ejecución" width="100%"></p>
 
 <p align="center">
 <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM version"></a> <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM downloads per month"></a> <a href="https://www.npmjs.com/package/unity-mcp-cli"><img src="https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D" alt="unity-mcp-cli on npm"></a> <a href="https://unity.com/releases/editor/archive"><img src="https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Unity 2022.3 or newer"></a>
@@ -31,7 +31,7 @@
 
 ## Cómo funciona
 
-<img src="img/readme/architecture.svg" alt="Un agente de IA o unity-mcp-cli habla MCP con un servidor, ai-game.dev Cloud por defecto o un gamedev-mcp-server local, que llama a las herramientas del plugin del Editor de Unity y de tu juego en ejecución" width="100%">
+<p align="center"><img src="img/readme/architecture.svg" alt="Un agente de IA o unity-mcp-cli habla MCP con un servidor, ai-game.dev Cloud por defecto o un gamedev-mcp-server local, que llama a las herramientas del plugin del Editor de Unity y de tu juego en ejecución" width="100%"></p>
 
 El plugin registra sus herramientas en un servidor MCP; tu agente las llama a través de ese servidor. Por defecto el plugin usa el servidor **Cloud** en `https://ai-game.dev/mcp`. En modo **Custom** inicia el binario local de [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server), o se conecta a uno que tú alojas (binario o Docker). En lugar de herramientas MCP, el agente también puede usar **Skills** generadas.
 
@@ -63,7 +63,7 @@ unity-mcp-cli login                             # inicia sesión en ai-game.dev 
 unity-mcp-cli open ./MyUnityProject             # abre Unity; se conecta y genera skills
 ```
 
-<img src="img/readme/terminal.svg" alt="Sesión de terminal: instalar unity-mcp-cli, añadir el plugin, iniciar sesión, configurar Claude Code y abrir el proyecto" width="100%">
+<p align="center"><img src="img/readme/terminal.svg" alt="Sesión de terminal: instalar unity-mcp-cli, añadir el plugin, iniciar sesión, configurar Claude Code y abrir el proyecto" width="100%"></p>
 
 Después conecta tu agente: en Unity abre **Window ▸ AI Game Dev** y pulsa **Auto-generate** Skills (recomendado) o **Configure** MCP. O desde la terminal:
 

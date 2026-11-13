@@ -3,39 +3,9 @@
 Every command and option of [`unity-mcp-cli`](../README.md), exit codes, machine-readable output and the library API.
 Run `unity-mcp-cli <command> --help` for the same details in the terminal.
 
-- [Commands](#commands)
-  - [`configure`](#configure)
-  - [`create-project`](#create-project)
-  - [`update`](#update)
-  - [`install-extension`](#install-extension)
-  - [`install-plugin`](#install-plugin)
-  - [`install-unity`](#install-unity)
-  - [`login`](#login)
-  - [`unity-account`](#unity-account)
-  - [`open`](#open)
-  - [`close`](#close)
-  - [`tools`](#tools)
-  - [`rql`](#rql)
-  - [`run-tool`](#run-tool)
-  - [`exec`](#exec)
-  - [`test`](#test)
-  - [`compile`](#compile)
-  - [`dialog`](#dialog)
-  - [`commands`](#commands-1)
-  - [`wait-for-ready`](#wait-for-ready)
-  - [`setup-mcp`](#setup-mcp)
-  - [`setup-skills`](#setup-skills)
-  - [`remove-plugin`](#remove-plugin)
-  - [`status`](#status)
-  - [Global Options](#global-options)
-  - [Exit Codes and Machine-Readable Output](#exit-codes-and-machine-readable-output)
-- [Full Automation Example](#full-automation-example)
-- [How It Works](#how-it-works)
-    - [Deterministic Port](#deterministic-port)
-    - [Plugin Installation](#plugin-installation)
-    - [Configuration File](#configuration-file)
-    - [Unity Hub Integration](#unity-hub-integration)
-- [Library API](#library-api-v0670)
+**Commands:** [`configure`](#configure) · [`create-project`](#create-project) · [`update`](#update) · [`install-extension`](#install-extension) · [`install-plugin`](#install-plugin) · [`install-unity`](#install-unity) · [`login`](#login) · [`unity-account`](#unity-account) · [`open`](#open) · [`close`](#close) · [`tools`](#tools) · [`rql`](#rql) · [`run-tool`](#run-tool) · [`exec`](#exec) · [`test`](#test) · [`compile`](#compile) · [`dialog`](#dialog) · [`commands`](#commands-1) · [`wait-for-ready`](#wait-for-ready) · [`setup-mcp`](#setup-mcp) · [`setup-skills`](#setup-skills) · [`remove-plugin`](#remove-plugin) · [`status`](#status)
+
+**Also:** [Global options](#global-options) · [Exit codes and machine-readable output](#exit-codes-and-machine-readable-output) · [Full automation example](#full-automation-example) · [How it works](#how-it-works) · [Library API](#library-api-v0670)
 
 # Commands
 

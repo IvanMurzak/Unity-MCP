@@ -1,6 +1,6 @@
 <div align="center" width="100%">
 
-<img src="img/readme/hero.svg" alt="AI Game Developer برای Unity: Skills، ابزارهای MCP و یک CLI که عامل‌های هوش مصنوعی را به ویرایشگر Unity و بازیِ در حال اجرا وصل می‌کنند" width="100%">
+<p align="center"><img src="img/readme/hero.svg" alt="AI Game Developer برای Unity: Skills، ابزارهای MCP و یک CLI که عامل‌های هوش مصنوعی را به ویرایشگر Unity و بازیِ در حال اجرا وصل می‌کنند" width="100%"></p>
 
 <p align="center">
 <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM version"></a> <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM downloads per month"></a> <a href="https://www.npmjs.com/package/unity-mcp-cli"><img src="https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D" alt="unity-mcp-cli on npm"></a> <a href="https://unity.com/releases/editor/archive"><img src="https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Unity 2022.3 or newer"></a>
@@ -33,7 +33,7 @@
 
 ## چگونه کار می‌کند
 
-<img src="img/readme/architecture.svg" alt="یک عامل هوش مصنوعی یا unity-mcp-cli با پروتکل MCP با یک سرور صحبت می‌کند (به طور پیش‌فرض ai-game.dev Cloud یا یک gamedev-mcp-server محلی) و سرور ابزارهای پلاگین ویرایشگر Unity و بازیِ در حال اجرا را فراخوانی می‌کند" width="100%">
+<p align="center"><img src="img/readme/architecture.svg" alt="یک عامل هوش مصنوعی یا unity-mcp-cli با پروتکل MCP با یک سرور صحبت می‌کند (به طور پیش‌فرض ai-game.dev Cloud یا یک gamedev-mcp-server محلی) و سرور ابزارهای پلاگین ویرایشگر Unity و بازیِ در حال اجرا را فراخوانی می‌کند" width="100%"></p>
 
 پلاگین ابزارهایش را در یک سرور MCP ثبت می‌کند و عامل شما از طریق همان سرور آن‌ها را فراخوانی می‌کند. به طور پیش‌فرض پلاگین از سرور **Cloud** در `https://ai-game.dev/mcp` استفاده می‌کند. در حالت **Custom** فایل اجرایی محلی [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) را اجرا می‌کند، یا به سروری که خودتان میزبانی می‌کنید (فایل اجرایی یا Docker) وصل می‌شود. عامل به جای ابزارهای MCP می‌تواند از **Skills** تولیدشده هم استفاده کند.
 
@@ -58,6 +58,8 @@
 - **OpenUPM**: `openupm add com.ivanmurzak.unity.mcp`
 - **CLI** (Node.js 22.14+)، بدون نیاز به ویرایشگر:
 
+</div>
+
 ```bash
 npm install -g unity-mcp-cli
 unity-mcp-cli install-plugin ./MyUnityProject   # add the plugin to Packages/manifest.json
@@ -65,24 +67,36 @@ unity-mcp-cli login                             # sign in to ai-game.dev in the 
 unity-mcp-cli open ./MyUnityProject             # open Unity; it connects and generates skills
 ```
 
-<img src="img/readme/terminal.svg" alt="نمونه ترمینال: نصب unity-mcp-cli، افزودن پلاگین، ورود، پیکربندی Claude Code و باز کردن پروژه" width="100%">
+<div dir="rtl">
+
+<p align="center"><img src="img/readme/terminal.svg" alt="نمونه ترمینال: نصب unity-mcp-cli، افزودن پلاگین، ورود، پیکربندی Claude Code و باز کردن پروژه" width="100%"></p>
 
 سپس عامل را وصل کنید: در Unity منوی **Window ▸ AI Game Dev** را باز کنید و روی **Auto-generate** Skills (توصیه‌شده) یا **Configure** MCP کلیک کنید. یا از ترمینال:
+
+</div>
 
 ```bash
 unity-mcp-cli setup-skills claude-code ./MyUnityProject
 unity-mcp-cli setup-mcp claude-code ./MyUnityProject
 ```
 
+<div dir="rtl">
+
 ![پنجره AI Game Developer](img/editor/ai-game-developer-windows.png)
 
 از عامل بخواهید *«۳ مکعب روی دایره‌ای به شعاع ۲ بساز»* و نتیجه را ببینید. مراحل کامل، پیکربندی دستی MCP و حذف پلاگین: **[راهنمای نصب](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)** (به انگلیسی).
 
+</div>
+
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
+
+<div dir="rtl">
 
 ## استفاده
 
 **با عامل صحبت کنید.** نتیجه‌ای را که می‌خواهید توصیف کنید؛ هر چه دقیق‌تر، بهتر.
+
+</div>
 
 ```text
 سلسله‌مراتب صحنه من را توضیح بده
@@ -90,9 +104,13 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 همه پریفب‌های دشمن بدون Rigidbody را پیدا کن و به هر کدام یکی اضافه کن
 ```
 
+<div dir="rtl">
+
 **ابزارها.** به طور پیش‌فرض نمایش داده می‌شوند: `rql-query`، `rql-mutate`، `rql-schema`، `script-execute`، `tests-run`، `screenshot-isolated`، ابزارهای `package-*` و `assetstore-*` و `unity-tool-list`. ابزارهای دیگر نصب شده‌اند ولی تا زمانی که نمایششان ندهید پنهان هستند. فهرست کامل: **[ابزارهای پیش‌فرض MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** یا [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **از ترمینال** (اگر ویرایشگری در حال اجرا نباشد، یک ویرایشگر بدون رابط گرافیکی اجرا می‌کند):
+
+</div>
 
 ```bash
 unity-mcp-cli rql 'objects | where name starts-with "Tree" | count'
@@ -100,7 +118,11 @@ unity-mcp-cli compile ./MyGame
 unity-mcp-cli test ./MyGame --mode PlayMode
 ```
 
+<div dir="rtl">
+
 **ابزار خودتان.** یک کلاس با `[AiToolType]` و یک متد با `[AiTool]` کافی است:
+
+</div>
 
 ```csharp
 [AiToolType]
@@ -118,6 +140,8 @@ public class Tool_Score
     }
 }
 ```
+
+<div dir="rtl">
 
 پرامپت‌ها، ابزارهای Runtime (درون بازی) و یک نمونه کامل: **[ابزارهای سفارشی و Runtime](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md)**.
 

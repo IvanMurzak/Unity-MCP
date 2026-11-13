@@ -1,6 +1,6 @@
 <div align="center" width="100%">
 
-<img src="img/readme/hero.svg" alt="Unity 向け AI Game Developer: AI エージェントを Unity エディターと実行中のゲームにつなぐ Skills、MCP ツール、CLI" width="100%">
+<p align="center"><img src="img/readme/hero.svg" alt="Unity 向け AI Game Developer: AI エージェントを Unity エディターと実行中のゲームにつなぐ Skills、MCP ツール、CLI" width="100%"></p>
 
 <p align="center">
 <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM version"></a> <a href="https://openupm.com/packages/com.ivanmurzak.unity.mcp/"><img src="https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=6D28D9" alt="OpenUPM downloads per month"></a> <a href="https://www.npmjs.com/package/unity-mcp-cli"><img src="https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D" alt="unity-mcp-cli on npm"></a> <a href="https://unity.com/releases/editor/archive"><img src="https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white" alt="Unity 2022.3 or newer"></a>
@@ -31,7 +31,7 @@
 
 ## 仕組み
 
-<img src="img/readme/architecture.svg" alt="AI エージェントまたは unity-mcp-cli が MCP でサーバー(既定は ai-game.dev Cloud、またはローカルの gamedev-mcp-server)と通信し、サーバーが Unity エディタープラグインと実行中のゲームのツールを呼び出す" width="100%">
+<p align="center"><img src="img/readme/architecture.svg" alt="AI エージェントまたは unity-mcp-cli が MCP でサーバー(既定は ai-game.dev Cloud、またはローカルの gamedev-mcp-server)と通信し、サーバーが Unity エディタープラグインと実行中のゲームのツールを呼び出す" width="100%"></p>
 
 プラグインはツールを MCP サーバーに登録し、エージェントはそのサーバー経由でツールを呼び出します。既定では `https://ai-game.dev/mcp` の **Cloud** サーバーを使います。**Custom** モードでは [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) のローカルバイナリを起動するか、 自分でホストしたサーバー(バイナリまたは Docker)に接続します。MCP ツールの代わりに、生成した **Skills** を使うこともできます。
 
@@ -63,7 +63,7 @@ unity-mcp-cli login                             # ブラウザで ai-game.dev �
 unity-mcp-cli open ./MyUnityProject             # Unity を開く。接続して skills を生成
 ```
 
-<img src="img/readme/terminal.svg" alt="ターミナルの例: unity-mcp-cli のインストール、プラグインの追加、サインイン、Claude Code の設定、プロジェクトを開く" width="100%">
+<p align="center"><img src="img/readme/terminal.svg" alt="ターミナルの例: unity-mcp-cli のインストール、プラグインの追加、サインイン、Claude Code の設定、プロジェクトを開く" width="100%"></p>
 
 次にエージェントを接続します: Unity で **Window ▸ AI Game Dev** を開き、**Auto-generate** Skills(推奨)または **Configure** MCP をクリックします。ターミナルからは次のとおりです:
 
