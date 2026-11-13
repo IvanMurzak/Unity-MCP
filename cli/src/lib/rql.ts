@@ -4,94 +4,40 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { RQL_MUTATE_TOOL, RQL_QUERY_TOOL, RQL_SCHEMA_TOOL, decodeQueryFile, isRqlMutation, rqlLastVerb, rqlStages, stripToolName } from '@baizor/gamedev-cli-core';
+import {
+  RQL_MUTATE_TOOL,
+  RQL_QUERY_TOOL,
+  RQL_SCHEMA_TOOL,
+  decodeQueryFile,
+  isRqlMutation,
+  rqlLastVerb,
+  rqlStages,
+  rqlTextVerb,
+  rqlToolCall,
+  rqlToolFor,
+  splitRqlStatements,
+  stripRqlToolNames,
+  stripToolName,
+} from '@baizor/gamedev-cli-core';
 
-export { RQL_MUTATE_TOOL, RQL_QUERY_TOOL, RQL_SCHEMA_TOOL, decodeQueryFile, isRqlMutation, rqlLastVerb, rqlStages, stripToolName };
+export {
+  RQL_MUTATE_TOOL,
+  RQL_QUERY_TOOL,
+  RQL_SCHEMA_TOOL,
+  decodeQueryFile,
+  isRqlMutation,
+  rqlLastVerb,
+  rqlStages,
+  rqlTextVerb,
+  rqlToolCall,
+  rqlToolFor,
+  splitRqlStatements,
+  stripRqlToolNames,
+  stripToolName,
+};
 
-/**
- * The statements of RQL text: split at each `;` outside strings, quoted identifiers and brackets, blank ones dropped,
- * as RQL itself splits them (spec §14). Text without a separator is one statement.
- */
-export function rqlStatements(text: string): string[] {
-  const statements: string[] = [];
-  let depth = 0;
-  let quote: string | undefined;
-  let start = 0;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    if (quote) {
-      if (ch === '\\' && quote !== '`') i++;
-      else if (ch === quote) quote = undefined;
-    } else if (ch === '"' || ch === "'" || ch === '`') {
-      quote = ch;
-    } else if (ch === '(' || ch === '[' || ch === '{') {
-      depth++;
-    } else if (ch === ')' || ch === ']' || ch === '}') {
-      depth = Math.max(0, depth - 1);
-    } else if (ch === ';' && depth === 0) {
-      statements.push(text.slice(start, i).trim());
-      start = i + 1;
-    }
-  }
-  statements.push(text.slice(start).trim());
-  if (statements.length === 1) return statements;
-  const nonBlank = statements.filter((s) => s !== '');
-  return nonBlank.length > 0 ? nonBlank : statements.slice(0, 1);
-}
-
-/**
- * The text without a leading tool name on any statement (tool texts write "rql-query <source> | ...", and agents paste
- * that, once per statement too). One statement comes back as {@link stripToolName} returns it.
- */
-export function stripToolNames(text: string): string {
-  const statements = rqlStatements(text);
-  return statements.length === 1 ? stripToolName(text) : statements.map(stripToolName).join('; ');
-}
-
-/**
- * The write of RQL text for the save receipt: `call` when a statement ends in call (a call may write nothing on
- * purpose), else `set` when one ends in set, else undefined (a read).
- */
-export function rqlTextVerb(text: string): 'set' | 'call' | undefined {
-  const verbs = rqlStatements(text).map(rqlLastVerb);
-  return verbs.includes('call') ? 'call' : verbs.includes('set') ? 'set' : undefined;
-}
-
-/**
- * RQL text that changes the editor (rql-mutate): any statement ends in set / call. rql-mutate refuses text in which
- * another statement only reads, so that mix fails with RQL's own message instead of running its reads.
- */
-export function isRqlChange(text: string): boolean {
-  return rqlTextVerb(text) !== undefined;
-}
-
-export interface RqlCallOptions {
-  /** `--schema [type]`: true without a type. */
-  schema?: string | boolean;
-  dryRun?: boolean;
-  maxTargets?: number;
-}
-
-/** The rql-* tool and its input for a command-line query, or why the command line is wrong. */
-export function rqlToolCall(query: string | undefined, options: RqlCallOptions):
-  { toolName: string; input: Record<string, unknown> } | { usage: string } {
-  const { schema, dryRun, maxTargets } = options;
-  if (schema !== undefined) {
-    // `rql --schema 'objects | count'` hands the query to --schema as its value.
-    if (query !== undefined || (typeof schema === 'string' && /[|\s]/.test(schema.trim()))) {
-      return { usage: 'Pass either a query or --schema [type] (a type name), not both.' };
-    }
-    return { toolName: RQL_SCHEMA_TOOL, input: typeof schema === 'string' ? { type: schema } : {} };
-  }
-  if (query === undefined || query.trim() === '') {
-    return { usage: 'No query given: rql \'objects | where name starts-with "Tree" | count\' (recipes: rql --help)' };
-  }
-  if (!isRqlChange(query)) {
-    if (dryRun || maxTargets !== undefined) return { usage: '--dry-run and --max-targets are for a query ending in set / call.' };
-    return { toolName: RQL_QUERY_TOOL, input: { query } };
-  }
-  return { toolName: RQL_MUTATE_TOOL, input: { query, ...(dryRun ? { dry_run: true } : {}), ...(maxTargets !== undefined ? { max_targets: maxTargets } : {}) } };
-}
+/** `rql` without a query (cli-core's {@link rqlToolCall} returns it as the usage error). */
+export const RQL_NO_QUERY_USAGE = 'No query given: rql \'objects | where name starts-with "Tree" | count\' (recipes: rql --help)';
 
 /** `unity-account`: the Unity account the editor is signed in to (the plugin's `assetStore` source). */
 export const UNITY_ACCOUNT_QUERY = 'assetStore | select signedIn userName';

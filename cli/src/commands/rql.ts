@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import { Command, Option } from 'commander';
 import { DEFAULT_SESSION_READY_TIMEOUT_MS } from '@baizor/gamedev-cli-core';
-import { RQL_MUTATE_TOOL, assetsWrittenSince, decodeQueryFile, rqlTextVerb, rqlToolCall, saveReceipt, stripToolNames } from '../lib/rql.js';
+import { RQL_MUTATE_TOOL, RQL_NO_QUERY_USAGE, assetsWrittenSince, decodeQueryFile, rqlTextVerb, rqlToolCall, saveReceipt } from '../lib/rql.js';
 import { runTool } from '../lib/run-tool.js';
 import { resolveAndValidateProjectPath } from '../utils/connection.js';
 import { ExitCode } from '../utils/exit-codes.js';
@@ -67,14 +67,15 @@ export const rqlCommand = new Command('rql')
     const out: CommandOutput = new CommandOutput('rql', parseFormat(options.format));
     let query: string | undefined;
     try {
-      const text = readQuery(queryArg, options.file);
-      query = text === undefined ? undefined : stripToolNames(text);
+      query = readQuery(queryArg, options.file);
     } catch (err) {
       out.fail(ExitCode.Usage, { code: 'USAGE', message: err instanceof Error ? err.message : String(err) });
     }
     const maxTargets = options.maxTargets === undefined ? undefined : parsePositiveIntFlag(options.maxTargets, '--max-targets', 200);
-    const call = rqlToolCall(query, { schema: options.schema, dryRun: options.dryRun, maxTargets });
+    // cli-core strips a pasted tool name from each statement and picks rql-query / rql-mutate for the whole text.
+    const call = rqlToolCall(query, { schema: options.schema, dryRun: options.dryRun, maxTargets }, RQL_NO_QUERY_USAGE);
     if ('usage' in call) out.fail(ExitCode.Usage, { code: 'USAGE', message: call.usage });
+    const sent = String(call.input['query'] ?? '');
 
     // Unity saves a set / call to disk; which files it wrote is read from the disk, so nobody re-opens the scene to
     // check: only for an editor on this machine, and only files written since the tool call itself.
@@ -83,7 +84,7 @@ export const rqlCommand = new Command('rql')
     // A failed change still lists what it wrote: with several statements the ones before the failure stay and are saved.
     await runToolAction(RQL_CALL, call.toolName, undefined, { ...options, input: JSON.stringify(call.input) }, ({ calledAt, local, ok }) => {
       if (receiptFor === undefined || !local) return;
-      const receipt = saveReceipt(assetsWrittenSince(receiptFor, calledAt), ok ? rqlTextVerb(query!) : undefined);
+      const receipt = saveReceipt(assetsWrittenSince(receiptFor, calledAt), ok ? rqlTextVerb(sent) : undefined);
       if (receipt) console.log(receipt);
     });
   });

@@ -2,7 +2,26 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
-import { assetsWrittenSince, decodeQueryFile, isRqlChange, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlStatements, rqlTextVerb, rqlToolCall, saveReceipt, stripToolName, stripToolNames } from '../src/lib/rql.js';
+import {
+  RQL_NO_QUERY_USAGE,
+  assetsWrittenSince,
+  decodeQueryFile,
+  isRqlMutation,
+  rqlErrorHint,
+  rqlLastVerb,
+  rqlStages,
+  rqlTextVerb,
+  rqlToolCall as coreRqlToolCall,
+  rqlToolFor,
+  saveReceipt,
+  splitRqlStatements,
+  stripRqlToolNames,
+  stripToolName,
+} from '../src/lib/rql.js';
+
+/** The call `rql` makes: cli-core's routing with this CLI's own usage line. */
+const rqlToolCall = (query: string | undefined, options: Parameters<typeof coreRqlToolCall>[1]) =>
+  coreRqlToolCall(query, options, RQL_NO_QUERY_USAGE);
 
 afterEach(removeTempDirs);
 
@@ -75,11 +94,11 @@ describe('rqlToolCall', () => {
 
 describe('several statements (;)', () => {
   it('splits at ; outside strings, quoted identifiers and brackets, dropping blank statements', () => {
-    expect(rqlStatements('objects | count; roots | count')).toEqual(['objects | count', 'roots | count']);
-    expect(rqlStatements('objects | where name == "a;b" | count;')).toEqual(['objects | where name == "a;b" | count']);
-    expect(rqlStatements("objects | where `x;y` == 1 | count; ;")).toEqual(['objects | where `x;y` == 1 | count']);
-    expect(rqlStatements('editor | call F({a: "1;2"}, [1; 2]); objects | count')).toEqual(['editor | call F({a: "1;2"}, [1; 2])', 'objects | count']);
-    expect(rqlStatements(' ; ')).toEqual(['']);   // as RQL: the first (blank) segment, reported as an empty query
+    expect(splitRqlStatements('objects | count; roots | count')).toEqual(['objects | count', 'roots | count']);
+    expect(splitRqlStatements('objects | where name == "a;b" | count;')).toEqual(['objects | where name == "a;b" | count']);
+    expect(splitRqlStatements("objects | where `x;y` == 1 | count; ;")).toEqual(['objects | where `x;y` == 1 | count']);
+    expect(splitRqlStatements('editor | call F({a: "1;2"}, [1; 2]); objects | count')).toEqual(['editor | call F({a: "1;2"}, [1; 2])', 'objects | count']);
+    expect(splitRqlStatements(' ; ')).toEqual(['']);   // as RQL: the first (blank) segment, reported as an empty query
   });
 
   it('routes to rql-mutate when any statement ends in set / call', () => {
@@ -89,12 +108,12 @@ describe('several statements (;)', () => {
       .toEqual({ toolName: 'rql-mutate', input: { query: 'editor | call CreateGameObject("A"); editor | call CreateGameObject("B")', dry_run: true } });
     expect(rqlToolCall('objects | count; roots | count', {})).toEqual({ toolName: 'rql-query', input: { query: 'objects | count; roots | count' } });
     expect(rqlToolCall('objects | count; roots | count', { dryRun: true })).toHaveProperty('usage');
-    expect(isRqlChange('objects | where name == "set; call" | count')).toBe(false);
+    expect(rqlToolFor('objects | where name == "set; call" | count')).toBe('rql-query');
   });
 
   it('strips a pasted tool name from every statement', () => {
-    expect(stripToolNames('rql-query objects | count; rql-query roots | count')).toBe('objects | count; roots | count');
-    expect(stripToolNames('rql-mutate objects | where name == "a; b" | set active = false')).toBe('objects | where name == "a; b" | set active = false');
+    expect(stripRqlToolNames('rql-query objects | count; rql-query roots | count')).toBe('objects | count; roots | count');
+    expect(stripRqlToolNames('rql-mutate objects | where name == "a; b" | set active = false')).toBe('objects | where name == "a; b" | set active = false');
   });
 
   it('reports call before set for the save receipt', () => {
