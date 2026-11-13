@@ -92,7 +92,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "- Vectors and colors the host marks as component-wise compute component by component: set Scale = Scale * 1.5, Position + [0, 1, 0], Position - Offset, -Velocity, v / 2. Adding a number to a vector is a type-mismatch (add [x, y, z] instead); quaternions and other types without that mark stay type-mismatch. Lists of numbers are vectors too: [x, 0, z] * k, [1, 2] + [3, 4]. Vector functions work on both: length(v) (or v.length(), magnitude), normalize(v), distance(a, b), dot(a, b), lerp(a, b, t); len(x) stays the size of a string or list.\n" +
             "- Trigonometry is in radians: sin, cos, tan, asin, acos, atan, atan2(y, x), pi(), deg(x), rad(x); trigonometric results are rounded (sin(pi()) is 0). In a set value or call argument $count is the number of items entering the stage ($index runs 0 to $count - 1), so set position = [5 * cos(2 * pi() * $index / $count), 0, 5 * sin(2 * pi() * $index / $count)] lays the items out on a circle of radius 5.\n" +
             "- A missing map entry reads as null: props[\"k\"] == null and props[\"k\"] is null are true without the entry, and has(props[\"k\"]) tests whether it exists. A misspelt member is not null: it stays unknown and is reported.\n" +
-            "- Arguments by name: call Method({name: value, ...}) with one object literal that no overload takes as a whole binds each key to the parameter of that name; parameters left out keep their defaults, and an unknown name fails listing the parameters: range(0, 10) | call editor.CreateGameObject({name: \"Tile\" + $, primitive: \"Cube\", position: [$ * 2, 0, 0]}). Engine objects (scene objects, nodes, actors) are never built from an object literal: pass an existing one, e.g. ref(\"Type#id\"). Value-like assets and owned subobjects that the host marks are built from a typed literal: set mesh = {$type: \"TypeName\", size: 2}.\n";
+            "- Arguments by name: call Method({name: value, ...}) with one object literal that no overload takes as a whole binds each key to the parameter of that name; parameters left out keep their defaults, and an unknown name fails listing the parameters: range(0, 10) | call editor.CreateGameObject({name: \"Tile\" + $, primitive: \"Cube\", position: [$ * 2, 0, 0]}). Engine objects (scene objects, nodes, actors) are never built from an object literal: pass an existing one, e.g. ref(\"Type#id\"). Value-like assets and owned subobjects that the host marks are built from a typed literal: set mesh = {$type: \"TypeName\", size: 2}.\n" +
+            "- Several statements in one call: separate them with ; and they run in order, each with its own result block headed [i/n] (at most 10 per call). A read runs every statement. In a change every statement must end with set or call and is its own all-or-nothing change that sees the earlier ones; nothing runs unless every statement parses and ends with set or call, and the first one that fails (a misspelt member included) stops the rest (the earlier changes stay).\n";
 
         /// <summary>The example calls of <see cref="LanguageRules"/>: calls that work in Unity (CreateGameObject takes a name first).</summary>
         public static RqlRuleExamples RuleExamples => new RqlRuleExamples
@@ -112,7 +113,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public const string QueryDescription =
             "Run a read-only RQL query against the live Unity Editor scene and return compact rows. One precise query beats many " +
-            "exploratory calls. Changes need rql-mutate.\n" + DocsLine + "\n" + Language + "\n\nExamples:\n" +
+            "exploratory calls; several queries separated by ; run in one call. Changes need rql-mutate.\n" + DocsLine + "\n" + Language + "\n\nExamples:\n" +
             "  objects | where name contains \"Enemy\" and active | select $ref name transform.position\n" +
             "  objects | get components | where $ is Light and intensity > 2 | select gameObject.name intensity color\n" +
             "  roots | recurse children | where components.count() == 1 | select $path name\n" +
@@ -207,16 +208,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
-            "value is checked before anything is written; a failure changes nothing. Undoable: one Undo step per call (Ctrl+Z; from an " +
+            "value is checked before anything is written; a failure changes nothing. Undoable: one Undo step per statement (Ctrl+Z; from an " +
             "agent: script-execute UnityEditor.Undo.PerformUndo(), then editor | call SaveScenes() and editor | call SaveAssets()). Changed assets, " +
             "scenes and the open prefab are saved to disk automatically; an untitled scene needs SaveAs(path). " +
-            "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Do exactly the change requested; " +
+            "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Several changes in one call: separate " +
+            "statements with ; (each ends with set or call and is its own all-or-nothing change; the first that fails stops the rest, " +
+            "the earlier ones stay applied and saved). Do exactly the change requested; " +
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             DocsLine +
             MutateStages + MutateExamples +
             "Object literals build values: set settings = {speed: 2, $type: \"FastSettings\"}, and so do Materials and data ScriptableObjects " +
             "(into a scene object; an asset or the open prefab cannot hold a new one: create the asset and pass its path). GameObjects, components and other " +
-            "assets are never built from a literal: pass unity.find(\"Name\"), ref(\"Type#id\") or an asset path. At most 200 targets (or bulk-create items) per call; " +
+            "assets are never built from a literal: pass unity.find(\"Name\"), ref(\"Type#id\") or an asset path. At most 200 targets (or bulk-create items) per statement; " +
             "max_targets raises the limit (up to 1000) for an intended bulk change. The receipt lists the assignments that change a " +
             "value; \"N unchanged\" counts the ones whose target already held it (written anyway). A misspelt member that empties the stream of set / call " +
             "fails with unknown-member (nothing changed); a real member that no matched item has is a no-op.\n" +

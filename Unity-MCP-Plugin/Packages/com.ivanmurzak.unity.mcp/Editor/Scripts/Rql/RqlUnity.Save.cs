@@ -49,6 +49,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// runs after failed queries too when calls completed before the failure (they are not rolled back); a query that
         /// applied nothing (a parse error, no matching items, a set the engine rolled back) saves nothing, so it never
         /// persists unrelated unsaved edits. Untitled scenes (no path yet) stay in memory and are reported as a warning.
+        /// Several statements (separated by ;) are one save: the statements before a failed one stay applied and are saved.
         /// </summary>
         public static QueryResult Mutate(string query, bool dryRun = false, int? maxTargets = null)
         {

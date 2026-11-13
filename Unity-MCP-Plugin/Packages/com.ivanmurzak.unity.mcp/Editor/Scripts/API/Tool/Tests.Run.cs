@@ -261,6 +261,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 error = "query failed: " + Rql.ToolFormat.RqlToolBinding.Instance.Show(r);
                 return false;
             }
+            if (r.Statements != null)
+            {
+                error = "a test selection is one query: run the queries separated by ; in separate calls";
+                return false;
+            }
             if (r.Truncated)
             {
                 error = $"the query selects more tests than one run takes ({r.Total}); narrow it down";

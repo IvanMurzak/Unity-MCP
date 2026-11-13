@@ -73,7 +73,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             // Checks that span the targets of one set / call stage (two SaveAsPrefab to one path; a component removed with or
             // without the components that require it), before anything runs, dry runs included.
             engine.Mutations.ValidateBatch = ValidateBatch;
-            // One Undo group per mutation: recorded owners, created / destroyed objects and added components undo together.
+            // One Undo group per mutation statement (RQL runs these hooks once per ;-separated statement): recorded owners, created /
+            // destroyed objects and added components undo together.
             engine.Mutations.BeforeWrite = records =>
             {
                 Undo.IncrementCurrentGroup();

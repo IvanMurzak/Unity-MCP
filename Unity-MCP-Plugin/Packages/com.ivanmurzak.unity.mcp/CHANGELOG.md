@@ -4,6 +4,12 @@
 
 ### Added
 
+- **Several RQL statements in one call** (RQL 0.4.0). `rql-query` and `rql-mutate` take statements separated by `;` (at
+  most 10), run in order, each answered in its own `[i/n]` block. In `rql-mutate` every statement must end with `set` /
+  `call` and is its own all-or-nothing change and Undo step, with its own `max_targets` limit; nothing runs unless every
+  statement parses, and the first that fails stops the rest: the earlier changes stay and are saved once for the
+  request. `dry_run` previews all of them. The tool descriptions and the shared language rules say so; `tests-run query`
+  refuses a selection of several statements.
 - Extensions section of the main window: **Install All** (installs every extension not installed yet) and **Update All**
   (shown only when an installed extension has a newer version) beside the title. A bulk action resolves packages once, and a failure restores `manifest.json`; Update All skips `file:`/git installs.
 - Updating the plugin also updates the installed extensions to their latest versions, in the same package request.
