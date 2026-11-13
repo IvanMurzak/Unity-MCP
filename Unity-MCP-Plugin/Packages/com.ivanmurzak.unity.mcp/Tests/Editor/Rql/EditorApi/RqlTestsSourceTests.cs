@@ -154,6 +154,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             var broken = Text(TestResultCollector.ProjectedResponse(summary, "where"));
             StringAssert.Contains("result query failed", broken);
             StringAssert.StartsWith("Failed: 1 passed", broken);
+            var several = Text(TestResultCollector.ProjectedResponse(summary, "where status == \"Failed\" | count; count"));
+            StringAssert.Contains("'result' is one query", several);
         }
 
         [Test]

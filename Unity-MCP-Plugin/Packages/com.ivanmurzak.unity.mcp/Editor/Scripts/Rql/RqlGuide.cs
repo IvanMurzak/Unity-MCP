@@ -213,7 +213,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             "scenes and the open prefab are saved to disk automatically; an untitled scene needs SaveAs(path). " +
             "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Several changes in one call: separate " +
             "statements with ; (each ends with set or call and is its own all-or-nothing change; the first that fails stops the rest, " +
-            "the earlier ones stay applied and saved). Do exactly the change requested; " +
+            "the earlier ones stay applied and saved; a dry run checks each statement without the changes of the earlier ones). " +
+            "Do exactly the change requested; " +
             "a read-only member fails with readonly-member instead of being approximated.\n" +
             DocsLine +
             MutateStages + MutateExamples +

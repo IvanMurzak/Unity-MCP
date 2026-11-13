@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
     /// <summary>
     /// The RQL engine over the live Editor state: engine factory, stable references, and the Editor integration for writes
-    /// (one Undo group per mutation, SetDirty / scene dirty after). Sources, functions and adapters come from modules
+    /// (one Undo group per mutation statement, SetDirty / scene dirty after). Sources, functions and adapters come from modules
     /// (<see cref="UnityCoreModule"/> plus any installed module). One engine per domain (static fields reset on domain
     /// reload). Every call must run on the main thread.
     /// </summary>
@@ -33,7 +33,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         /// <summary>Most assets <c>unity.assets(...)</c> loads per call (loading assets is expensive).</summary>
         public const int MaxAssets = 200;
 
-        /// <summary>Targets one rql-mutate call may change without <c>max_targets</c>.</summary>
+        /// <summary>Targets one rql-mutate statement may change without <c>max_targets</c>.</summary>
         public const int DefaultMaxTargets = 200;
 
         private static RqlEngine? _engine;
@@ -64,7 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             engine.ResolveStableRef = ResolveStableRef;
 
             engine.Mutations.Enabled = true;
-            // One mutation is one Undo step, so the limit guards breadth only (RQL spec §8: editor hosts default to ~200).
+            // One mutation statement is one Undo step, so the limit guards breadth only (RQL spec §8: editor hosts default to ~200).
             engine.Mutations.MaxTargets = DefaultMaxTargets;
             engine.Mutations.LimitArgument = "max_targets";
             // Scene objects and most assets are engine objects (never built from a literal; data ScriptableObjects and Materials
@@ -87,10 +87,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
             // later call threw. A set the engine rolled back never gets here, so it does not trigger Mutate's save.
             engine.Mutations.Committed = records =>
             {
+                CloseUndoGroup(); // first: the next statement's BeforeWrite opens its own group even if a line below throws
                 Destroying = null;
                 KeepLiterals(); // the objects literals built are referenced now
                 if (records.Any(ChangesProjectState)) _wrote = true; // Mutate saves only after writes that change project state
-                CloseUndoGroup();
                 var scenes = new HashSet<Scene>();
                 var owners = Owners(records, out var sceneSettings);
                 foreach (var o in owners)

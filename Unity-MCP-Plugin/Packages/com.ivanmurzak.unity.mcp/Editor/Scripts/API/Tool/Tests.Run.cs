@@ -254,16 +254,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             names = new List<string>();
             mode = TestMode.EditMode;
             error = null;
+            if (global::Rql.RqlParser.SplitStatements(query).Count > 1)
+            {
+                error = "a test selection is one query: run the queries separated by ; in separate calls";
+                return false;
+            }
             // The whole selection is needed, not a page of it: lift the row / output budgets to the engine's hard limits.
             var r = Rql.RqlUnity.Engine.Execute(query, new global::Rql.Budgets { MaxRows = 10_000, MaxOutputBytes = 64 * 1024 * 1024 });
             if (!r.Ok)
             {
                 error = "query failed: " + Rql.ToolFormat.RqlToolBinding.Instance.Show(r);
-                return false;
-            }
-            if (r.Statements != null)
-            {
-                error = "a test selection is one query: run the queries separated by ; in separate calls";
                 return false;
             }
             if (r.Truncated)
