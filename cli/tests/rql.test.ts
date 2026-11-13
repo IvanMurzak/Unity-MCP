@@ -78,7 +78,8 @@ describe('rqlToolCall', () => {
     expect(rqlToolCall('objects | count', { schema: true })).toHaveProperty('usage');
     expect(rqlToolCall(undefined, { schema: 'objects | count' })).toHaveProperty('usage');
     expect(rqlToolCall('objects | count', { dryRun: true })).toHaveProperty('usage');
-    expect(rqlToolCall(undefined, {})).toHaveProperty('usage');
+    expect(rqlToolCall(undefined, {})).toEqual({ usage: RQL_NO_QUERY_USAGE });
+    expect(rqlToolCall(' ; ;', {})).toEqual({ usage: RQL_NO_QUERY_USAGE }); // only separators: RQL's empty query
   });
 
   it('reads || as or and decodes a UTF-16 query file', () => {
