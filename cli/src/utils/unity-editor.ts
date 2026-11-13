@@ -200,15 +200,13 @@ export function getSecondaryInstallPathFile(os: NodeJS.Platform): string | null 
  */
 export function readSecondaryInstallPaths(os: NodeJS.Platform): string[] {
   const roots = getHubConfigDirs(os).flatMap((dir) => {
-    const parsed = readJsonFile(path.join(dir, SECONDARY_INSTALL_PATH_FILE));
+    const parsed = readJsonFile(path.join(dir, 'secondaryInstallPath.json'));
     return Array.isArray(parsed) ? parsed : [parsed];
   });
   return [...new Set(roots
     .filter((p): p is string => typeof p === 'string' && p.trim().length > 0)
     .map((p) => p.trim()))];
 }
-
-const SECONDARY_INSTALL_PATH_FILE = 'secondaryInstallPath.json';
 
 /**
  * Unity Hub's settings folders for `os` (they hold `secondaryInstallPath.json` and `editors-v2.json`): the one of
@@ -360,6 +358,8 @@ export function listEditorsByCommonLocations(): InstalledEditor[] {
     seen.add(editor.version);
     editors.push(editor);
   };
+  const newestFirst = (a: string, b: string) =>
+    compareUnityVersions(editorFolderVersion(b), editorFolderVersion(a)) || a.length - b.length;
   for (const root of [...layout.defaultRoots, ...layout.secondaryRoots]) {
     let folders: string[];
     try {
@@ -367,8 +367,6 @@ export function listEditorsByCommonLocations(): InstalledEditor[] {
     } catch {
       continue;
     }
-    const newestFirst = (a: string, b: string) =>
-      compareUnityVersions(editorFolderVersion(b), editorFolderVersion(a)) || a.length - b.length;
     for (const folder of folders.sort(newestFirst)) {
       const version = editorFolderVersion(folder);
       if (seen.has(version)) continue;
