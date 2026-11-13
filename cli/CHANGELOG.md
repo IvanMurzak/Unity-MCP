@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed — finding the installed Unity editor no longer blocks on Unity Hub
+
+The editor of a project's version is looked up on disk first: the Hub's editor folders (default and
+`secondaryInstallPath.json`, also a suffixed folder such as `2022.3.4f1-x86_64`) and now the editors Unity Hub lists
+in `editors-v2.json` (ones added with "Locate"; on Linux also under `$XDG_CONFIG_HOME/UnityHub`). Only when none of them
+has it does the CLI ask Unity Hub (`-- --headless editors --installed`), now asynchronously and for at most 30 s (was
+a blocking call of up to 120 s, which hung while the Hub app was open); a list the Hub printed before it hung is kept.
+`install-unity` and the "not installed" help list the editors on disk first too. Library: `listEditorsImpl` of
+`createProject` may return a promise.
+
+### Fixed — a copied project's lease no longer counts as a live session
+
+`.ai-game-dev/session.json` copied along with a project names the original project's editor. With
+`@baizor/gamedev-cli-core` 0.12 (which records the lease's project folder and checks the editor's command line), the
+copy's `close`, `open` and `run-tests` never close that editor: the lease is stale in the copy, which starts its own.
+
 ### Changed — Node.js 22.14 or later is required
 
 `engines.node` is now `>=22.14.0` (was `^20.19.0 || >=22.12.0`): Node.js 20 is no longer supported. chalk 6, commander 15,

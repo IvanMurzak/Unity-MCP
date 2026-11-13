@@ -227,6 +227,23 @@ describe('createUnitySession', () => {
     expect(hasLiveSessionLease(project, pid => pid === 999)).toBe(true);
   });
 
+  it('hasLiveSessionLease: a lease written for another folder (a copied project) does not count', ctx => {
+    const lease = {
+      pid: 999, nonce: 'n', engine: 'unity', mode: 'headless', startedAt: '2026-10-18T00:00:00Z', ownedBy: 'cli',
+      hostId: os.hostname(), processStart: 'start-999',
+    };
+    const write = (projectRoot: string) => {
+      fs.mkdirSync(path.join(project, '.ai-game-dev'), { recursive: true });
+      fs.writeFileSync(path.join(project, '.ai-game-dev', 'session.json'), JSON.stringify({ ...lease, projectRoot }));
+    };
+    write(project);
+    // cli-core < 0.12 drops `projectRoot` when it reads a lease: nothing to check yet.
+    if ((readSessionLease(project) as { projectRoot?: string } | undefined)?.projectRoot === undefined) ctx.skip();
+    expect(hasLiveSessionLease(project, pid => pid === 999)).toBe(true);
+    write(`${project} copy`);
+    expect(hasLiveSessionLease(project, pid => pid === 999)).toBe(false);
+  });
+
   it('never targets the server URL of a dead lease, even when that URL answers', async () => {
     const other = 'http://localhost:53888'; // now served by another project's editor
     const writeDeadLease = () => {

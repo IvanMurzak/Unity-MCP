@@ -199,6 +199,12 @@ export interface InstalledEditor {
 }
 
 /**
+ * How long the Hub CLI may take to list the installed editors. A cold Hub answers in about 15 s; with the Hub app
+ * open the call can hang, and the editor folders were already checked on disk before it (`findEditorPath`).
+ */
+export const HUB_LIST_EDITORS_TIMEOUT_MS = 30_000;
+
+/**
  * Pull the `stderr` capture off an `execFileSync` error and merge it
  * into the error message. Returns the bare `err.message` when no
  * stderr was captured (e.g. spawn failures before the child ran).
@@ -211,9 +217,6 @@ function formatExecError(err: unknown): string {
   return text ? `${message}\n${text}` : message;
 }
 
-/**
- * List installed Unity editors via Unity Hub CLI.
- */
 /**
  * Parse a single line from Unity Hub `--installed` output into an InstalledEditor entry.
  * Handles formats such as:
@@ -237,26 +240,46 @@ export function parseInstalledEditorsLine(line: string): InstalledEditor | null 
  * Query Unity Hub for installed editors — the silent core shared by
  * the spinner-wrapped {@link listInstalledEditors} (CLI surface) and
  * the library's `createProject` (which must not write to stdout).
- * Throws an `Error` with the formatted Hub CLI failure on exec error;
- * callers decide how to surface it.
+ * Asynchronous (the Hub is an Electron app and may take seconds, or hang
+ * while its window is open) and bounded by `timeoutMs`. Rejects with an
+ * `Error` carrying the formatted Hub CLI failure; callers decide how to
+ * surface it.
  */
-export function queryInstalledEditors(hubPath: string): InstalledEditor[] {
+export async function queryInstalledEditors(
+  hubPath: string,
+  timeoutMs: number = HUB_LIST_EDITORS_TIMEOUT_MS,
+): Promise<InstalledEditor[]> {
   verbose(`queryInstalledEditors invoking Unity Hub CLI: ${hubPath} -- --headless editors --installed`);
   const execStartedAt = Date.now();
   let output: string;
   try {
-    // stdio: pipe stderr instead of inheriting it — Unity Hub is an
-    // Electron app and Chromium routinely logs benign quota_database
-    // errors to stderr that would otherwise pollute the CLI output.
-    // formatExecError re-surfaces captured stderr on real failures.
-    output = execFileSync(hubPath, ['--', '--headless', 'editors', '--installed'], {
-      encoding: 'utf-8',
-      timeout: 120000,
-      stdio: ['ignore', 'pipe', 'pipe'],
+    // stderr is captured, not inherited — Unity Hub is an Electron app and
+    // Chromium routinely logs benign quota_database errors to stderr that
+    // would otherwise pollute the CLI output. formatExecError re-surfaces
+    // captured stderr on real failures.
+    output = await new Promise<string>((resolve, reject) => {
+      const child = execFile(hubPath, ['--', '--headless', 'editors', '--installed'], {
+        encoding: 'utf-8',
+        timeout: timeoutMs,
+        killSignal: 'SIGKILL',
+        windowsHide: true,
+        maxBuffer: 16 * 1024 * 1024,
+      }, (err, stdout, stderr) => {
+        // A Hub that printed its list but never exited (seen while the Hub app runs) still answered.
+        if (err && !(err.killed && stdout.split('\n').some((line) => parseInstalledEditorsLine(line) !== null))) {
+          reject(Object.assign(err, { stderr }));
+        } else {
+          resolve(stdout);
+        }
+      });
+      child.stdin?.end();
     });
   } catch (err) {
     verbose(`queryInstalledEditors failed after ${Date.now() - execStartedAt}ms`);
-    throw new Error(`Failed to list installed editors: ${formatExecError(err)}`);
+    const timedOut = (err as { killed?: boolean }).killed === true;
+    throw new Error(timedOut
+      ? `Failed to list installed editors: Unity Hub did not answer within ${Math.round(timeoutMs / 1000)}s`
+      : `Failed to list installed editors: ${formatExecError(err)}`);
   }
   verbose(`queryInstalledEditors Unity Hub CLI returned in ${Date.now() - execStartedAt}ms`);
 
@@ -272,11 +295,11 @@ export function queryInstalledEditors(hubPath: string): InstalledEditor[] {
   return editors;
 }
 
-export function listInstalledEditors(hubPath: string): InstalledEditor[] {
+export async function listInstalledEditors(hubPath: string): Promise<InstalledEditor[]> {
   const spinner = ui.startSpinner('Listing installed editors...');
   const startedAt = Date.now();
   try {
-    const editors = queryInstalledEditors(hubPath);
+    const editors = await queryInstalledEditors(hubPath);
     spinner.success(`Found ${editors.length} installed editor${editors.length !== 1 ? 's' : ''}`);
     verbose(`listInstalledEditors completed in ${Date.now() - startedAt}ms`);
     return editors;

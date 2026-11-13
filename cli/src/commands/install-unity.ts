@@ -1,8 +1,8 @@
 import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
-import { ensureUnityHub, installEditor, listInstalledEditors, listAvailableReleases, findLatestStableRelease } from '../utils/unity-hub.js';
-import { getProjectEditorVersion } from '../utils/unity-editor.js';
+import { ensureUnityHub, installEditor, listAvailableReleases, findLatestStableRelease } from '../utils/unity-hub.js';
+import { getProjectEditorVersion, listInstalledEditorsDiskFirst } from '../utils/unity-editor.js';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 
@@ -50,7 +50,7 @@ export const installUnityCommand = new Command('install-unity')
 
       if (!latest) {
         ui.error('No stable releases found');
-        const editors = listInstalledEditors(hubPath);
+        const editors = await listInstalledEditorsDiskFirst(hubPath);
         if (editors.length > 0) {
           ui.heading('Currently installed editors:');
           for (const editor of editors) {
@@ -65,7 +65,7 @@ export const installUnityCommand = new Command('install-unity')
     }
 
     // Check if already installed
-    const editors = listInstalledEditors(hubPath);
+    const editors = await listInstalledEditorsDiskFirst(hubPath, version);
     const alreadyInstalled = editors.find((e) => e.version === version);
     if (alreadyInstalled) {
       ui.success(`Unity Editor ${version} is already installed at: ${alreadyInstalled.path}`);
