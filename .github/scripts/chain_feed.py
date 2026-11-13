@@ -24,7 +24,7 @@ ARTIFACT it was read from (`project.assets.json`, a DLL sha256, `chain-identity.
 an exit code.
 """
 
-CHAIN_FEED_VERSION = "8"
+CHAIN_FEED_VERSION = "10"
 
 import argparse
 import hashlib
@@ -393,6 +393,15 @@ RECIPES = {
                 ],
             },
             {
+                "ref": "rql/nupkg", "node": "rql", "artifact": "nupkg",
+                "mode": "nuget",
+                "pins": [
+                    "Godot-MCP.csproj",
+                    "Godot-MCP.Tests/Godot-MCP.Tests.csproj",
+                    "Godot-Tests/Godot-Tests.csproj",
+                ],
+            },
+            {
                 "ref": "gamedev-mcp-server/binary", "node": "gamedev-mcp-server", "artifact": "binary",
                 "mode": "server-binary", "env": "GODOT_MCP_SERVER_PATH",
                 "pins": [
@@ -428,6 +437,10 @@ RECIPES = {
                 "mode": "nuget", "pins": ["bridge/src/com.IvanMurzak.Unreal.MCP.Bridge.csproj"],
             },
             {
+                "ref": "rql/nupkg", "node": "rql", "artifact": "nupkg",
+                "mode": "nuget", "pins": ["bridge/src/com.IvanMurzak.Unreal.MCP.Bridge.csproj"],
+            },
+            {
                 "ref": "gamedev-mcp-server/binary", "node": "gamedev-mcp-server", "artifact": "binary",
                 "mode": "server-binary", "env": "UNREAL_MCP_SERVER_PATH",
                 "pins": [
@@ -438,6 +451,38 @@ RECIPES = {
             {
                 "ref": "cli-core/tgz", "node": "cli-core", "artifact": "tgz",
                 "mode": "npm", "path": "cli", "pins": ["cli/package.json"],
+            },
+        ],
+    },
+    # PRIVATE repo, CENTRAL package management: its pins are `<PackageVersion>` items in one
+    # `Directory.Packages.props`. It vendors no leg yet (the manifest declares `legs: []`;
+    # `apply`'s NuGet override does not support CPM), so this row only keeps `recipes-check`
+    # exact and `vendored: False` keeps it out of VENDOR_NODES.
+    "brutal-mcp": {
+        "vendored": False,
+        "path": "engines/brutal/Brutal-MCP",
+        "slug": "IvanMurzak/Brutal-MCP",
+        "ecosystem": "dotnet",
+        "kind": "repo",
+        "build": "dotnet build Brutal-MCP.sln -c Release -p:Version={ws_version}",
+        "pack": [
+            "dotnet pack Brutal-MCP.sln -c Release --no-build -o {feed} -p:Version={ws_version}",
+        ],
+        "artifacts": {
+            "nupkg": {"kind": "nupkg", "id": "com.IvanMurzak.Brutal.MCP"},
+        },
+        "consumes": [
+            {
+                "ref": "reflectornet/nupkg", "node": "reflectornet", "artifact": "nupkg",
+                "mode": "nuget", "pins": ["Directory.Packages.props"],
+            },
+            {
+                "ref": "mcp-plugin-dotnet/mcpplugin", "node": "mcp-plugin-dotnet", "artifact": "mcpplugin",
+                "mode": "nuget", "pins": ["Directory.Packages.props"],
+            },
+            {
+                "ref": "rql/nupkg", "node": "rql", "artifact": "nupkg",
+                "mode": "nuget", "pins": ["Directory.Packages.props"],
             },
         ],
     },
@@ -521,8 +566,10 @@ RECIPES = {
     },
 }
 
-#: Which nodes a `p2-dispatch-*` row vendors this file into (`kind: repo`).
-VENDOR_NODES = tuple(sorted(nid for nid, body in RECIPES.items() if body.get("kind") == "repo"))
+#: Which nodes a `p2-dispatch-*` row vendors this file into (`kind: repo`, unless the row says
+#: `vendored: False`: a repo node with no chain leg yet).
+VENDOR_NODES = tuple(sorted(nid for nid, body in RECIPES.items()
+                            if body.get("kind") == "repo" and body.get("vendored", True)))
 
 #: Unity is the one leg whose workflow has no `concurrency:` today and needs a NEW block
 #: (`04` §2). Everything else either keeps its existing expression or needs none.
@@ -1917,6 +1964,129 @@ def drop_patch_key_text(raw, key):
     return "\n".join(lines), True
 
 
+# `pnpm-workspace.yaml` `patchedDependencies:` — the minimal stdlib reader of overrides/pnpm.py.
+# pnpm 11+ reads `patchedDependencies` ONLY from that file; pnpm 10 also reads package.json `pnpm`.
+# Exactly one shape is read — a top-level block mapping of one-line `key: value` scalars — and
+# everything else (flow style, anchors/aliases/tags, multi-line or nested values, escapes,
+# duplicate keys) is refused: an entry it cannot read with confidence could be mis-edited.
+
+PNPM_PACKAGE_JSON = "package.json"
+PNPM_WORKSPACE_YAML = "pnpm-workspace.yaml"
+_YAML_HEADER_RE = re.compile(
+    r"""^(?:patchedDependencies|"patchedDependencies"|'patchedDependencies')[ \t]*:(?P<rest>.*)$"""
+)
+_YAML_SCALAR = r"""(?:"[^"\\\r\n]*"|'[^'\r\n]*'|[A-Za-z0-9._/~+=<^-][^\s'"#:,\[\]{}]*)"""
+_YAML_ENTRY_RE = re.compile(
+    r"^(?P<indent> +)(?P<key>" + _YAML_SCALAR + r")[ \t]*:[ \t]+(?P<value>" + _YAML_SCALAR
+    + r")(?:[ \t]+#.*)?[ \t]*$"
+)
+_YAML_NON_STRING_RE = re.compile(
+    r"(?i:null|true|false|yes|no|on|off|~)|[-+]?(?:[0-9][0-9_.]*|\.[0-9]+)(?:e[-+]?[0-9]+)?"
+)
+
+
+def _yaml_unquote(scalar):
+    return scalar[1:-1] if scalar[:1] in ("'", '"') else scalar
+
+
+def _workspace_patch_block(text):
+    """`(header line index or None, [(line index, key, value)])` of the top-level
+    `patchedDependencies:` mapping in raw `pnpm-workspace.yaml` TEXT (lines split on `\\n`)."""
+    lines = text.split("\n")
+    headers = []
+    for index, line in enumerate(lines):
+        match = _YAML_HEADER_RE.match(line.rstrip("\r").lstrip("\ufeff") if index == 0 else line.rstrip("\r"))
+        if match:
+            headers.append((index, match.group("rest")))
+    if not headers:
+        return None, []
+    if len(headers) > 1:
+        raise Refusal("pnpm-workspace.yaml declares `patchedDependencies:` more than once — refusing")
+    header, rest = headers[0]
+    rest = rest.strip()
+    if rest and not rest.startswith("#"):
+        if re.fullmatch(r"\{\s*\}(?:\s+#.*)?", rest):
+            return header, []
+        raise Refusal(
+            "pnpm-workspace.yaml `patchedDependencies:` is not a block mapping (%r); only one-line "
+            "`key: value` entries are read — refusing" % rest
+        )
+    entries = []
+    seen = set()
+    indent = None
+    for index in range(header + 1, len(lines)):
+        body = lines[index].rstrip("\r")
+        stripped = body.strip()
+        if not stripped or stripped.startswith("#"):
+            continue
+        if body[0] not in " \t":
+            break
+        match = _YAML_ENTRY_RE.match(body)
+        if match is None or (indent is not None and match.group("indent") != indent):
+            raise Refusal(
+                "pnpm-workspace.yaml line %d: cannot read this `patchedDependencies` entry with "
+                "confidence (%r); only one-line `key: value` scalars at one indentation are read "
+                "— refusing" % (index + 1, stripped)
+            )
+        indent = match.group("indent")
+        key = _yaml_unquote(match.group("key"))
+        raw_value = match.group("value")
+        if raw_value[:1] not in ("'", '"') and _YAML_NON_STRING_RE.fullmatch(raw_value):
+            raise Refusal(
+                "pnpm-workspace.yaml patchedDependencies[%r] is not a patch-file path: %r"
+                % (key, raw_value)
+            )
+        if key in seen:
+            raise Refusal("pnpm-workspace.yaml declares patchedDependencies[%r] twice — refusing" % key)
+        seen.add(key)
+        entries.append((index, key, _yaml_unquote(raw_value)))
+    return header, entries
+
+
+def workspace_patched_dependencies(text):
+    return dict((key, value) for _, key, value in _workspace_patch_block(text)[1])
+
+
+def rekey_workspace_yaml_text(raw, pkg, old_ver, new_ver):
+    """Re-point `<pkg>@<old>` to `<pkg>@<new>` on that ONE `patchedDependencies` line."""
+    old_token = "%s@%s" % (pkg, old_ver)
+    new_token = "%s@%s" % (pkg, new_ver)
+    lines = raw.split("\n")
+    for index, entry_key, _ in _workspace_patch_block(raw)[1]:
+        if entry_key == old_token:
+            end = _YAML_ENTRY_RE.match(lines[index].rstrip("\r")).end("value")
+            entry, tail = lines[index][:end], lines[index][end:]
+            lines[index] = entry.replace(old_token, new_token) + tail
+            return "\n".join(lines), entry.count(old_token)
+    return raw, 0
+
+
+def drop_workspace_patch_key_text(raw, key):
+    """Remove the `key: value` line; the LAST entry takes the `patchedDependencies:` header too."""
+    header, entries = _workspace_patch_block(raw)
+    hits = [index for index, entry_key, _ in entries if entry_key == key]
+    if not hits:
+        return raw, False
+    doomed = {hits[0]} if len(entries) > 1 else {hits[0], header}
+    lines = raw.split("\n")
+    return "\n".join(line for i, line in enumerate(lines) if i not in doomed), True
+
+
+def _workspace_yaml_view(text):
+    """The comparable form of the file: its mapping, and every line outside it."""
+    header, entries = _workspace_patch_block(text)
+    skip = {header} | set(index for index, _, _ in entries)
+    return {
+        "patched": dict((key, value) for _, key, value in entries),
+        "rest": [line for i, line in enumerate(text.split("\n")) if i not in skip],
+    }
+
+
+#: The text surgery per declaring file: `(raw, pkg, old_ver, new_ver)` and `(raw, key)`.
+PNPM_PATCH_REKEY = {PNPM_PACKAGE_JSON: rekey_package_json_text, PNPM_WORKSPACE_YAML: rekey_workspace_yaml_text}
+PNPM_PATCH_DROP = {PNPM_PACKAGE_JSON: drop_patch_key_text, PNPM_WORKSPACE_YAML: drop_workspace_patch_key_text}
+
+
 def git_blob_sha1(data):
     header = b"blob " + str(len(data)).encode("ascii") + b"\x00"
     return hashlib.sha1(header + data).hexdigest()  # noqa: S324 - git's own blob hash
@@ -1954,11 +2124,32 @@ def read_tarball_member(tgz, in_package_relpath):
 
 
 def _patched_dependencies(app_dir):
-    data = json.loads(read_text(Path(app_dir) / "package.json"))
+    """`{file name: patchedDependencies}` from BOTH places pnpm reads them (11+: the YAML only)."""
+    data = json.loads(read_text(Path(app_dir) / PNPM_PACKAGE_JSON))
     block = (data.get("pnpm") or {}).get("patchedDependencies") or {}
     if not isinstance(block, dict):
         raise Refusal("package.json: pnpm.patchedDependencies is not an object")
-    return block
+    workspace_yaml = Path(app_dir) / PNPM_WORKSPACE_YAML
+    workspace = workspace_patched_dependencies(read_text(workspace_yaml)) if workspace_yaml.is_file() else {}
+    return {PNPM_PACKAGE_JSON: block, PNPM_WORKSPACE_YAML: workspace}
+
+
+def patch_entries_for(patched, prefix):
+    """`[(file name, key)]` of every `<prefix>*` entry; one package in BOTH files is refused."""
+    hits = [(name, key) for name, block in patched.items()
+            for key in block if isinstance(key, str) and key.startswith(prefix)]
+    if len(set(name for name, _ in hits)) > 1:
+        raise Refusal(
+            "`%s*` is declared in BOTH package.json pnpm.patchedDependencies and "
+            "pnpm-workspace.yaml patchedDependencies (%s) — ambiguous (pnpm 11+ reads only the "
+            "workspace file); keep one. Refusing" % (prefix, [key for _, key in hits])
+        )
+    if len(hits) > 1:
+        raise Refusal(
+            "expected at most one `%s*` patchedDependencies entry, found %d: %s"
+            % (prefix, len(hits), [key for _, key in hits])
+        )
+    return hits
 
 
 def rekey_pnpm_patches(ctx, app_dir, plans):
@@ -1970,27 +2161,23 @@ def rekey_pnpm_patches(ctx, app_dir, plans):
     never regenerated: only the operator may decide a patch guarding a crash is obsolete.
     """
     notes = []
-    package_json = Path(app_dir) / "package.json"
+    package_json = Path(app_dir) / PNPM_PACKAGE_JSON
     if not package_json.is_file():
         raise Refusal("no package.json at %s" % as_posix_abs(app_dir))
     patched = _patched_dependencies(app_dir)
     for plan in plans:
         prefix = "%s@" % plan["package_id"]
-        keys = [key for key in patched if isinstance(key, str) and key.startswith(prefix)]
-        if not keys:
+        hits = patch_entries_for(patched, prefix)
+        if not hits:
             continue
-        if len(keys) > 1:
-            raise Refusal(
-                "expected at most one `%s*` patchedDependencies entry, found %d: %s"
-                % (prefix, len(keys), keys)
-            )
-        old_key = keys[0]
+        name, old_key = hits[0]
+        target = Path(app_dir) / name
         old_ver = old_key[len(prefix):]
         new_key = "%s@%s" % (plan["package_id"], plan["ws_version"])
         if old_key == new_key:
             notes.append("patch already keyed to %s (idempotent)" % new_key)
             continue
-        old_value = patched[old_key]
+        old_value = patched[name][old_key]
         if not isinstance(old_value, str) or not old_value:
             raise Refusal("patchedDependencies[%r] is not a patch-file path: %r" % (old_key, old_value))
         new_value = old_value.replace(old_key, new_key)
@@ -2013,7 +2200,7 @@ def rekey_pnpm_patches(ctx, app_dir, plans):
                 "%s has no `package/%s` member (the patched file) — cannot verify the patch base"
                 % (plan["tarball_abs"], relpath)
             )
-        raw = read_text(package_json)
+        raw = read_text(target)
         recorded = info["from_hash"]
         matches = bool(recorded) and published[: len(recorded)].lower() == recorded.lower()
         if matches:
@@ -2021,27 +2208,27 @@ def rekey_pnpm_patches(ctx, app_dir, plans):
                 if run(["git", "mv", old_value, new_value], cwd=app_dir,
                        env=dict(os.environ, **_GIT_ENV)) != 0:
                     raise Refusal("`git mv %s %s` failed in %s" % (old_value, new_value, as_posix_abs(app_dir)))
-            updated, count = rekey_package_json_text(raw, plan["package_id"], old_ver, plan["ws_version"])
+            updated, count = PNPM_PATCH_REKEY[name](raw, plan["package_id"], old_ver, plan["ws_version"])
             if count == 0:
-                raise Refusal("expected to re-point `%s` in package.json but found no occurrence" % old_key)
-            _assert_only_patch_entry_changed(raw, updated, old_key, new_key, new_value)
-            write_text(package_json, updated)
+                raise Refusal("expected to re-point `%s` in %s but found no occurrence" % (old_key, name))
+            _assert_only_patch_entry_changed(name, raw, updated, old_key, new_key, new_value)
+            write_text(target, updated)
             notes.append(
-                "patch re-keyed: %s -> %s (base blob %s matches the ws tarball's %s); patch "
-                "file renamed to %s" % (old_key, new_key, recorded, relpath, new_value)
+                "patch re-keyed in %s: %s -> %s (base blob %s matches the ws tarball's %s); patch "
+                "file renamed to %s" % (name, old_key, new_key, recorded, relpath, new_value)
             )
         else:
-            updated, removed = drop_patch_key_text(raw, old_key)
+            updated, removed = PNPM_PATCH_DROP[name](raw, old_key)
             if not removed:
-                raise Refusal("could not locate the `%s` line in package.json to drop it" % old_key)
-            _assert_only_patch_entry_changed(raw, updated, old_key, None, None)
-            write_text(package_json, updated)
+                raise Refusal("could not locate the `%s` line in %s to drop it" % (old_key, name))
+            _assert_only_patch_entry_changed(name, raw, updated, old_key, None, None)
+            write_text(target, updated)
             message = (
                 "patch dropped: base mismatch (%s vs ws %s) — the patch's recorded base blob %s "
-                "is not the ws tarball's %s (%s); the key was removed for this checkout and %s "
-                "was left in place. NEVER regenerated here." % (
+                "is not the ws tarball's %s (%s); the key was removed from %s for this checkout "
+                "and %s was left in place. NEVER regenerated here." % (
                     old_key, plan["ws_version"], recorded, relpath,
-                    published[: len(recorded)], old_value,
+                    published[: len(recorded)], name, old_value,
                 )
             )
             log(message)
@@ -2050,16 +2237,23 @@ def rekey_pnpm_patches(ctx, app_dir, plans):
     return notes
 
 
-def _assert_only_patch_entry_changed(before_raw, after_raw, old_key, new_key, new_value):
-    before = json.loads(before_raw)
-    after = json.loads(after_raw)
-    patched = before.setdefault("pnpm", {}).setdefault("patchedDependencies", {})
+def _assert_only_patch_entry_changed(name, before_raw, after_raw, old_key, new_key, new_value):
+    """Structural proof the surgical edit changed ONLY that entry (YAML: the parsed mapping plus
+    every line outside the `patchedDependencies` block byte for byte)."""
+    if name == PNPM_WORKSPACE_YAML:
+        before = _workspace_yaml_view(before_raw)
+        after = _workspace_yaml_view(after_raw)
+        patched = before["patched"]
+    else:
+        before = json.loads(before_raw)
+        after = json.loads(after_raw)
+        patched = before.setdefault("pnpm", {}).setdefault("patchedDependencies", {})
     patched.pop(old_key, None)
     if new_key is not None:
         patched[new_key] = new_value
     if before != after:
         raise Refusal(
-            "package.json edit touched more than the `%s` patch entry — refusing" % old_key
+            "%s edit touched more than the `%s` patch entry — refusing" % (name, old_key)
         )
 
 
