@@ -33,7 +33,7 @@ AI-powered tools for the Unity [Cinemachine](https://docs.unity3d.com/Packages/c
 
 ## AI Cinemachine Tools
 
-14 tools, grouped by purpose:
+Tools, grouped by purpose:
 
 ### Camera lifecycle
 

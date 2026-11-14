@@ -24,7 +24,7 @@
 
 </div>
 
-**AI Game Developer**(Unity-MCP)は、AI エージェントを Unity につなぎます。Claude Code、Codex、Cursor、GitHub Copilot、Gemini など任意の [MCP](https://modelcontextprotocol.io/) クライアントが、**Unity エディター**でシーン、プレハブ、アセット、C# コードを読み書きし、テストを実行し、スクリーンショットを撮り、**ビルドしたゲームの中**ではあなたが書いたツールを呼び出せます。無料の Unity パッケージ(`com.ivanmurzak.unity.mcp`)、コマンドラインツール(`unity-mcp-cli`)、10 個のオプション拡張として提供されます。
+**AI Game Developer**(Unity-MCP)は、AI エージェントを Unity につなぎます。Claude Code、Codex、Cursor、GitHub Copilot、Gemini など任意の [MCP](https://modelcontextprotocol.io/) クライアントが、**Unity エディター**でシーン、プレハブ、アセット、C# コードを読み書きし、テストを実行し、スクリーンショットを撮り、**ビルドしたゲームの中**ではあなたが書いたツールを呼び出せます。無料の Unity パッケージ(`com.ivanmurzak.unity.mcp`)、コマンドラインツール(`unity-mcp-cli`)、オプション拡張として提供されます。
 
 **ステータス:** [最新リリース](https://github.com/IvanMurzak/Unity-MCP/releases/latest)と[変更履歴](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md)。プラグインと `unity-mcp-cli` は同じバージョンを共有します。**Windows、macOS、Linux** でテスト済み・サポート対象です。Unity **2022.3** 以降が必要です。CI は Unity 2022.3、6000.0、6000.3、6000.6 で EditMode、PlayMode、スタンドアロンビルドのテストを実行します。
 
@@ -38,13 +38,15 @@
 | --- | --- | --- |
 | サーバー | プラグインが `127.0.0.1` で起動する [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)、または自分でホストするサーバー | `https://ai-game.dev/mcp` |
 | アカウント | 不要 | ai-game.dev にサインイン |
-| プロジェクトのデータ | あなたのマシンから出ません | ツール呼び出しはリレーを経由します。リレーはメタデータのみを 90 日間保持し、リクエストやレスポンスの内容は保持しません |
+| プロジェクトのデータ | あなたのマシンから出ません | ツール呼び出しはステートレスなリレーを経由します。リレーはその内容を検査も永続化もせず、イベントのメタデータを記録します([プライバシーポリシー](https://ai-game.dev/legal/privacy)) |
 | 料金 | 無料 | 無料 |
 
 **Cloud が既定である理由:** ポートを開く必要がなく、ほかのプログラムとのポート競合を避けられ、無料です。Local はオフラインやエアギャップ環境での作業向けの対等な選択肢です。詳細: [セキュリティとプライバシー](#セキュリティとプライバシー)。
 
 ## 特長
 
+✅ **エディターをカバー** — Unity エディターであなたができることは、ほぼ何でもエージェントにもできます\
+✅ **コンパクトで効率的** — エージェント向けに作られたツール: 呼び出し回数もトークンも少なく、エージェントはより速く、より安く作業できます([計測結果](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))\
 ✅ **RQL** — ひとつのクエリ言語でシーン、オブジェクト、アセット、設定を読み書き\
 ✅ **C# とテスト** — Roslyn で C# をコンパイル・実行。EditMode / PlayMode テストを実行\
 ✅ **Skills または MCP** — ワンクリックで Skills を生成、または MCP クライアントとして接続\
@@ -52,7 +54,7 @@
 ✅ **ランタイム** — ビルドしたゲーム内でも同じツール: NPC ロジック、ライブデバッグ\
 ✅ **独自ツール** — どの C# メソッドも `[AiTool]` 属性ひとつでツールに\
 ✅ **CLI** — ターミナルや CI からインストール、起動、クエリ、コンパイル、テスト\
-✅ **拡張** — Animation から Timeline まで 10 個のオプションツールパック
+✅ **拡張** — Animation から Timeline までのオプションツールパック
 
 ## クイックスタート
 
@@ -121,7 +123,7 @@ Rigidbody のない敵プレハブをすべて探して Rigidbody を追加し�
 | パッケージと Asset Store | `package-*`、`assetstore-*` | *「Cinemachine をインストールして」* |
 | ツール一覧 | `unity-tool-list` | *「ここで使えるツールは?」* |
 
-RQL を覚える必要はありません。エージェントが RQL を書き、必要なソース、型、呼び出しごとに `rql-schema` に問い合わせます。ほかのツールもインストール済みですが、表示するまで隠れています。全一覧: **[既定の MCP ツール](default-mcp-tools.ja.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+RQL を覚える必要はありません。エージェントが RQL を書き、必要なソース、型、呼び出しごとに `rql-schema` に問い合わせます。Unity エディターでのエージェントベンチマークでは、これらのツールは以前の「1 アクションにつき 1 ツール」のカタログと同じ成功率を、タスクあたり約 5 分の 1 のプロンプトトークンと、より少ないターン数・ツール呼び出しで達成しました([レポート](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))。ほかのツールもインストール済みですが、表示するまで隠れています。全一覧: **[既定の MCP ツール](default-mcp-tools.ja.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **ターミナルから**(エディターが起動していなければヘッドレスで起動します):
 
@@ -212,7 +214,7 @@ tool_timeout_sec = 300
 ✅ **ローカルサーバーはループバック上** — ホスティング用に `MCP_BIND` を設定しない限り、`gamedev-mcp-server` は `127.0.0.1` にバインドします。\
 ✅ **オリジンチェック** — 許可されていない `Origin` を持つブラウザからのリクエストは、どの認証モードでも拒否されます(403)。\
 ✅ **認証モード** — `none`(ローカルの既定)、`token`(エージェントとプラグインの両方が送信する必要がある共有シークレット 1 つ)、`oauth`(ai-game.dev アカウント)。\
-✅ **Cloud リレー** — ツール呼び出しを中継し、送信した内容は保存しません。リクエストやレスポンスの内容は一切保存されません。保持するのはメタデータ(IP、時刻、ツール名、サイズ)のみで、期間は 90 日間です。\
+✅ **Cloud リレー** — ステートレスなリレーです。エージェントとエディターの間でツール呼び出しを中継しますが、その内容を検査も永続化もせず、会話、ソースコード、プロジェクトファイル、アセット、シーンデータも収集しません。記録するのは MCP イベントのメタデータ(イベントの種類、タイミング、ステータス、セッション識別子、ツール・プロンプト・リソースの名前、エラーの詳細)で、ローリング方式の 90 日間の期間内で使用されます([プライバシーポリシー](https://ai-game.dev/legal/privacy))。\
 ⚠️ **保護されないもの** — `none` モードでは、ポートに到達できるマシン上のどのプロセスもツールを呼び出せ、ツールはエディターの権限で実行されます(`script-execute` は C# を実行します)。共有マシンでは `token` モードを使ってください。
 
 サーバーのオプションと Docker: [MCP サーバーと接続](mcp-server.ja.md)。

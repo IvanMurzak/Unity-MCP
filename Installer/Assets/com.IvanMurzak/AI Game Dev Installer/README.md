@@ -24,7 +24,7 @@
 
 </div>
 
-**AI Game Developer** (Unity-MCP) connects your AI agent to Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini or any other [MCP](https://modelcontextprotocol.io/) client can read and change scenes, prefabs, assets and C# code, run tests and take screenshots in the **Unity Editor**, and call tools you write **inside your compiled game**. It ships as a free Unity package (`com.ivanmurzak.unity.mcp`), a command-line tool (`unity-mcp-cli`) and ten optional extensions.
+**AI Game Developer** (Unity-MCP) connects your AI agent to Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini or any other [MCP](https://modelcontextprotocol.io/) client can read and change scenes, prefabs, assets and C# code, run tests and take screenshots in the **Unity Editor**, and call tools you write **inside your compiled game**. It ships as a free Unity package (`com.ivanmurzak.unity.mcp`), a command-line tool (`unity-mcp-cli`) and optional extensions.
 
 **Status:** [latest release](https://github.com/IvanMurzak/Unity-MCP/releases/latest) and [changelog](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md). The plugin and `unity-mcp-cli` share one version. Tested and supported on **Windows, macOS and Linux**. Requires Unity **2022.3** or newer; CI runs EditMode, PlayMode and standalone-build tests on Unity 2022.3, 6000.0, 6000.3 and 6000.6.
 
@@ -38,13 +38,15 @@ The plugin registers its tools with an MCP server; your agent calls them through
 | --- | --- | --- |
 | Server | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) started by the plugin on `127.0.0.1`, or one you host | `https://ai-game.dev/mcp` |
 | Account | Not needed | Sign in to ai-game.dev |
-| Your project data | Stays on your machine | Tool calls pass through the relay; it keeps only metadata for 90 days, never request or response content |
+| Your project data | Stays on your machine | Tool calls pass through a stateless relay that does not inspect or persist their contents; it records event metadata ([Privacy Policy](https://ai-game.dev/legal/privacy)) |
 | Cost | Free | Free |
 
 **Why Cloud is the default:** it needs no open ports and avoids port conflicts with other programs, and it is free. Local is an equal option for offline or air-gapped work. Details: [Security and privacy](#security-and-privacy).
 
 ## Features
 
+✅ **Covers the Editor** — the agent can do virtually anything you can do in the Unity Editor\
+✅ **Compact and efficient** — tools built for agents: fewer calls and fewer tokens, so the agent works faster and cheaper ([measured](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))\
 ✅ **RQL** — read and change scenes, objects, assets and settings with one query language\
 ✅ **C# and tests** — compile and run C# with Roslyn; run EditMode and PlayMode tests\
 ✅ **Skills or MCP** — generate Skills in one click, or connect as an MCP client\
@@ -52,7 +54,7 @@ The plugin registers its tools with an MCP server; your agent calls them through
 ✅ **Runtime** — the same tools inside your built game: NPC logic, live debugging\
 ✅ **Your own tools** — any C# method becomes a tool with one `[AiTool]` attribute\
 ✅ **CLI** — install, open, query, compile and test from the terminal or CI\
-✅ **Extensions** — ten optional tool packs, from Animation to Timeline
+✅ **Extensions** — optional tool packs, from Animation to Timeline
 
 ## Quick start
 
@@ -121,7 +123,7 @@ Find every enemy prefab without a Rigidbody and add one
 | Packages and Asset Store | `package-*`, `assetstore-*` | *"Install Cinemachine"* |
 | Tool list | `unity-tool-list` | *"Which tools can you use here?"* |
 
-You do not learn RQL: the agent writes it and asks `rql-schema` for every source, type and call it needs. More tools are installed but hidden until you show them. Full list: **[Default MCP tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** or [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+You do not learn RQL: the agent writes it and asks `rql-schema` for every source, type and call it needs. In an agent benchmark in the Unity Editor, these tools reached the same success rate as the earlier one-tool-per-action catalog with about 5× fewer prompt tokens per task and fewer turns and tool calls ([report](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md)). More tools are installed but hidden until you show them. Full list: **[Default MCP tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** or [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **From the terminal** (starts a headless editor when none is running):
 
@@ -212,7 +214,7 @@ Other agents and manual setup: [Installation guide](https://github.com/IvanMurza
 ✅ **Local server on loopback** — `gamedev-mcp-server` binds to `127.0.0.1` unless you set `MCP_BIND` for hosting.\
 ✅ **Origin checks** — browser requests with a non-allowed `Origin` are rejected (403) in every auth mode.\
 ✅ **Auth modes** — `none` (local default), `token` (one shared secret the agent and the plugin must both send), `oauth` (ai-game.dev account).\
-✅ **Cloud relay** — routes tool calls and does not store what you send: no request or response content. It keeps only metadata (IP, time, tool name, sizes) for 90 days.\
+✅ **Cloud relay** — a stateless relay: it routes tool calls between your agent and the Editor without inspecting or persisting their contents, and does not collect conversations, source code, project files, assets or scene data. It records MCP event metadata (event type, timing, status, session identifiers, the tool, prompt or resource name, error details), used within a rolling 90-day window ([Privacy Policy](https://ai-game.dev/legal/privacy)).\
 ⚠️ **Not protected** — in `none` mode any process on your machine that reaches the port can call tools, and tools run with Editor rights (`script-execute` runs C#). Use `token` mode on shared machines.
 
 Server options and Docker: [MCP server and connection](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md).

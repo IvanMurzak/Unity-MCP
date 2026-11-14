@@ -21,7 +21,7 @@ The mode is chosen in the AI Game Developer window (**Window ▸ AI Game Dev**) 
 | **Cloud** (default) | `https://ai-game.dev/mcp` | Sign in with the window or `unity-mcp-cli login`. Never starts a local server, even if `keepServerRunning` is `true`. |
 | **Custom** | Local `gamedev-mcp-server`, or any URL you host | The saved `host` field is used only in this mode. To use a local server, select **Custom** in the window, or set `"connectionMode": "Custom"` while Unity is closed. |
 
-**Why Cloud is the default:** it needs no open ports and avoids port conflicts with other programs, and it is free. The relay keeps only metadata (IP, time, tool name, sizes) for 90 days and never stores request or response content. **Custom** is an equal option for offline or air-gapped work.
+**Why Cloud is the default:** it needs no open ports and avoids port conflicts with other programs, and it is free. The relay is stateless: it does not inspect or persist tool-call contents, and it records MCP event metadata (event type, timing, status, session identifiers, the tool, prompt or resource name, error details), used within a rolling 90-day window ([Privacy Policy](https://ai-game.dev/legal/privacy)). **Custom** is an equal option for offline or air-gapped work.
 
 In Custom mode with a local server, the plugin downloads the server release pinned by `ServerVersion` in `McpServerManager.cs` into `Library/mcp-server/<rid>/` and starts it. **Tools ▸ AI Game Developer ▸ Server** has *Download Binaries* and *Open Server Logs*.
 

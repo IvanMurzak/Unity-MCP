@@ -24,7 +24,7 @@
 
 </div>
 
-**AI Game Developer**(Unity-MCP)把你的 AI 智能体连接到 Unity。Claude Code、Codex、Cursor、GitHub Copilot、Gemini 或任何其他 [MCP](https://modelcontextprotocol.io/) 客户端都可以在 **Unity 编辑器**中读取和修改场景、预制体、资源和 C# 代码,运行测试并截图,还能在**编译后的游戏内**调用你编写的工具。它以免费的 Unity 包(`com.ivanmurzak.unity.mcp`)、命令行工具(`unity-mcp-cli`)和十个可选扩展的形式提供。
+**AI Game Developer**(Unity-MCP)把你的 AI 智能体连接到 Unity。Claude Code、Codex、Cursor、GitHub Copilot、Gemini 或任何其他 [MCP](https://modelcontextprotocol.io/) 客户端都可以在 **Unity 编辑器**中读取和修改场景、预制体、资源和 C# 代码,运行测试并截图,还能在**编译后的游戏内**调用你编写的工具。它以免费的 Unity 包(`com.ivanmurzak.unity.mcp`)、命令行工具(`unity-mcp-cli`)和可选扩展的形式提供。
 
 **状态:** [最新版本](https://github.com/IvanMurzak/Unity-MCP/releases/latest)和[更新日志](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md)。插件和 `unity-mcp-cli` 共用同一个版本号。已在 **Windows、macOS 和 Linux** 上测试并支持。需要 Unity **2022.3** 或更高版本;CI 在 Unity 2022.3、6000.0、6000.3 和 6000.6 上运行 EditMode、PlayMode 和独立构建测试。
 
@@ -38,13 +38,15 @@
 | --- | --- | --- |
 | 服务器 | 由插件在 `127.0.0.1` 上启动的 [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server),或你自己托管的服务器 | `https://ai-game.dev/mcp` |
 | 账号 | 不需要 | 登录 ai-game.dev |
-| 你的项目数据 | 保留在你的电脑上 | 工具调用经由中继转发;中继只保留元数据 90 天,从不保存请求或响应内容 |
+| 你的项目数据 | 保留在你的电脑上 | 工具调用经由无状态中继转发,中继不检查也不持久保存其内容;它会记录事件元数据([隐私政策](https://ai-game.dev/legal/privacy)) |
 | 费用 | 免费 | 免费 |
 
 **为什么默认使用 Cloud:** 它不需要开放任何端口,避免与其他程序发生端口冲突,而且免费。本地模式是同样可行的选择,适用于离线或物理隔离(air-gapped)环境。详情:[安全与隐私](#安全与隐私)。
 
 ## 功能
 
+✅ **覆盖编辑器** — 你在 Unity 编辑器中能做的事,智能体几乎都能做\
+✅ **紧凑高效** — 专为智能体打造的工具:调用更少、token 更少,智能体工作更快、成本更低([实测](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))\
 ✅ **RQL** — 用一种查询语言读取和修改场景、对象、资源和设置\
 ✅ **C# 与测试** — 用 Roslyn 编译并运行 C#;运行 EditMode 和 PlayMode 测试\
 ✅ **Skills 或 MCP** — 一键生成 Skills,或作为 MCP 客户端连接\
@@ -52,7 +54,7 @@
 ✅ **运行时** — 在构建好的游戏中使用同样的工具:NPC 逻辑、实时调试\
 ✅ **自定义工具** — 任何 C# 方法加上 `[AiTool]` 特性即成为工具\
 ✅ **CLI** — 在终端或 CI 中安装、打开、查询、编译和测试\
-✅ **扩展** — 十个可选工具包,从 Animation 到 Timeline
+✅ **扩展** — 可选工具包,从 Animation 到 Timeline
 
 ## 快速开始
 
@@ -121,7 +123,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 | 包和 Asset Store | `package-*`、`assetstore-*` | *“安装 Cinemachine”* |
 | 工具列表 | `unity-tool-list` | *“你在这里可以使用哪些工具?”* |
 
-你不需要学习 RQL:智能体会自己编写,并向 `rql-schema` 查询所需的每个数据源、类型和调用。其他工具已安装,但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](default-mcp-tools.zh-CN.md)** 或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+你不需要学习 RQL:智能体会自己编写,并向 `rql-schema` 查询所需的每个数据源、类型和调用。在 Unity 编辑器中的智能体基准测试里,这些工具与早期"每个操作一个工具"的目录达到了相同的成功率,而每个任务的提示 token 约少 5 倍,轮次和工具调用也更少([报告](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))。其他工具已安装,但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](default-mcp-tools.zh-CN.md)** 或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **在终端中**(没有编辑器运行时会启动一个无界面编辑器):
 
@@ -212,7 +214,7 @@ tool_timeout_sec = 300
 ✅ **本地服务器仅监听回环地址** — `gamedev-mcp-server` 绑定到 `127.0.0.1`,除非你为托管设置了 `MCP_BIND`。\
 ✅ **来源检查** — 在所有认证模式下,带有不被允许的 `Origin` 的浏览器请求都会被拒绝(403)。\
 ✅ **认证模式** — `none`(本地默认)、`token`(智能体和插件都必须发送的同一个共享密钥)、`oauth`(ai-game.dev 账号)。\
-✅ **Cloud 中继** — 转发工具调用,不保存你发送的内容:不保存任何请求或响应内容。它只保留元数据(IP、时间、工具名称、数据大小)90 天。\
+✅ **Cloud 中继** — 无状态中继:它在你的智能体和编辑器之间转发工具调用,不检查也不持久保存其内容,也不收集对话、源代码、项目文件、资源或场景数据。它会记录 MCP 事件元数据(事件类型、时间、状态、会话标识符、工具、提示或资源名称、错误详情),这些数据在滚动的 90 天窗口内使用([隐私政策](https://ai-game.dev/legal/privacy))。\
 ⚠️ **不受保护的情况** — 在 `none` 模式下,你电脑上任何能访问该端口的进程都可以调用工具,而工具以编辑器权限运行(`script-execute` 会运行 C#)。在共享电脑上请使用 `token` 模式。
 
 服务器选项和 Docker:[MCP 服务器与连接](mcp-server.zh-CN.md)。

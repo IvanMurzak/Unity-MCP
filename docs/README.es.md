@@ -24,7 +24,7 @@
 
 </div>
 
-**AI Game Developer** (Unity-MCP) conecta tu agente de IA con Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini o cualquier otro cliente [MCP](https://modelcontextprotocol.io/) puede leer y cambiar escenas, prefabs, assets y código C#, ejecutar tests y tomar capturas en el **Editor de Unity**, y llamar a herramientas que tú escribes **dentro de tu juego compilado**. Se distribuye como un paquete de Unity gratuito (`com.ivanmurzak.unity.mcp`), una herramienta de línea de comandos (`unity-mcp-cli`) y diez extensiones opcionales.
+**AI Game Developer** (Unity-MCP) conecta tu agente de IA con Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini o cualquier otro cliente [MCP](https://modelcontextprotocol.io/) puede leer y cambiar escenas, prefabs, assets y código C#, ejecutar tests y tomar capturas en el **Editor de Unity**, y llamar a herramientas que tú escribes **dentro de tu juego compilado**. Se distribuye como un paquete de Unity gratuito (`com.ivanmurzak.unity.mcp`), una herramienta de línea de comandos (`unity-mcp-cli`) y extensiones opcionales.
 
 **Estado:** [última versión](https://github.com/IvanMurzak/Unity-MCP/releases/latest) y [registro de cambios](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md). El plugin y `unity-mcp-cli` comparten la misma versión. Probado y compatible con **Windows, macOS y Linux**. Requiere Unity **2022.3** o posterior; CI ejecuta tests EditMode, PlayMode y de build standalone en Unity 2022.3, 6000.0, 6000.3 y 6000.6.
 
@@ -38,13 +38,15 @@ El plugin registra sus herramientas en un servidor MCP; tu agente las llama a tr
 | --- | --- | --- |
 | Servidor | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) iniciado por el plugin en `127.0.0.1`, o uno que tú alojas | `https://ai-game.dev/mcp` |
 | Cuenta | No hace falta | Inicia sesión en ai-game.dev |
-| Datos de tu proyecto | Se quedan en tu máquina | Las llamadas a herramientas pasan por el relay; solo guarda metadatos durante 90 días, nunca el contenido de solicitudes o respuestas |
+| Datos de tu proyecto | Se quedan en tu máquina | Las llamadas a herramientas pasan por un relay sin estado que no inspecciona ni conserva su contenido; registra metadatos de eventos ([Política de privacidad](https://ai-game.dev/legal/privacy)) |
 | Coste | Gratis | Gratis |
 
 **Por qué Cloud es el predeterminado:** no necesita puertos abiertos, evita conflictos de puertos con otros programas y es gratuito. Local es una opción igual de válida para trabajar sin conexión o en entornos aislados (air-gapped). Detalles: [Seguridad y privacidad](#seguridad-y-privacidad).
 
 ## Características
 
+✅ **Cubre el Editor** — el agente puede hacer prácticamente cualquier cosa que tú puedas hacer en el Editor de Unity\
+✅ **Compacto y eficiente** — herramientas pensadas para agentes: menos llamadas y menos tokens, así el agente trabaja más rápido y más barato ([medido](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))\
 ✅ **RQL** — lee y cambia escenas, objetos, assets y ajustes con un solo lenguaje de consultas\
 ✅ **C# y tests** — compila y ejecuta C# con Roslyn; ejecuta tests EditMode y PlayMode\
 ✅ **Skills o MCP** — genera Skills con un clic, o conéctate como cliente MCP\
@@ -52,7 +54,7 @@ El plugin registra sus herramientas en un servidor MCP; tu agente las llama a tr
 ✅ **Runtime** — las mismas herramientas en tu juego compilado: lógica de NPC, depuración en vivo\
 ✅ **Tus herramientas** — cualquier método C# se convierte en herramienta con un solo atributo `[AiTool]`\
 ✅ **CLI** — instala, abre, consulta, compila y prueba desde la terminal o CI\
-✅ **Extensiones** — diez paquetes opcionales de herramientas, de Animation a Timeline
+✅ **Extensiones** — paquetes opcionales de herramientas, de Animation a Timeline
 
 ## Inicio rápido
 
@@ -121,7 +123,7 @@ Encuentra cada prefab de enemigo sin Rigidbody y añádele uno
 | Paquetes y Asset Store | `package-*`, `assetstore-*` | *"Instala Cinemachine"* |
 | Lista de herramientas | `unity-tool-list` | *"¿Qué herramientas puedes usar aquí?"* |
 
-No necesitas aprender RQL: el agente lo escribe y consulta `rql-schema` para cada fuente, tipo y llamada que necesita. Hay más herramientas instaladas pero ocultas hasta que las muestres. Lista completa: **[Herramientas MCP por defecto](default-mcp-tools.es.md)** o [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+No necesitas aprender RQL: el agente lo escribe y consulta `rql-schema` para cada fuente, tipo y llamada que necesita. En un benchmark de agentes en el Editor de Unity, estas herramientas alcanzaron la misma tasa de éxito que el catálogo anterior de una herramienta por acción, con unas 5 veces menos tokens de prompt por tarea y menos turnos y llamadas a herramientas ([informe](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md)). Hay más herramientas instaladas pero ocultas hasta que las muestres. Lista completa: **[Herramientas MCP por defecto](default-mcp-tools.es.md)** o [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **Desde la terminal** (inicia un editor headless si no hay ninguno en ejecución):
 
@@ -212,7 +214,7 @@ Otros agentes y configuración manual: [Guía de instalación](installation.es.m
 ✅ **Servidor local en loopback** — `gamedev-mcp-server` se enlaza a `127.0.0.1` salvo que definas `MCP_BIND` para alojarlo.\
 ✅ **Comprobación de origen** — las solicitudes del navegador con un `Origin` no permitido se rechazan (403) en todos los modos de autenticación.\
 ✅ **Modos de autenticación** — `none` (predeterminado en local), `token` (un secreto compartido que el agente y el plugin deben enviar), `oauth` (cuenta de ai-game.dev).\
-✅ **Relay de Cloud** — enruta las llamadas a herramientas y no almacena lo que envías: ningún contenido de solicitudes ni respuestas. Solo guarda metadatos (IP, hora, nombre de la herramienta, tamaños) durante 90 días.\
+✅ **Relay de Cloud** — un relay sin estado: enruta las llamadas a herramientas entre tu agente y el Editor sin inspeccionar ni conservar su contenido, y no recopila conversaciones, código fuente, archivos del proyecto, assets ni datos de escenas. Registra metadatos de eventos MCP (tipo de evento, tiempos, estado, identificadores de sesión, el nombre de la herramienta, del prompt o del recurso, detalles de errores), que se usan dentro de una ventana móvil de 90 días ([Política de privacidad](https://ai-game.dev/legal/privacy)).\
 ⚠️ **Sin protección** — en modo `none` cualquier proceso de tu máquina que alcance el puerto puede llamar a herramientas, y las herramientas se ejecutan con los permisos del Editor (`script-execute` ejecuta C#). Usa el modo `token` en máquinas compartidas.
 
 Opciones del servidor y Docker: [Servidor MCP y conexión](mcp-server.es.md).
