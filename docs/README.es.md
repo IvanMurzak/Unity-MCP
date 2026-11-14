@@ -1,722 +1,172 @@
 <div align="center" width="100%">
-  <h1>✨ Desarrollador de Juegos con IA — <i>Unity SKILLS, MCP</i></h1>
 
-[![MCP](https://badge.mcpx.dev 'Servidor MCP')](https://modelcontextprotocol.io/introduction)
-[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'Paquete OpenUPM')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Imagen Docker')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
-[![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor compatible')](https://unity.com/releases/editor/archive)
-[![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime compatible')](https://unity.com/releases/editor/archive)
-[![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Pruebas superadas')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
-[![Discord](https://img.shields.io/badge/Discord-Unirse-7289da?logo=discord&logoColor=white&labelColor=333A41 'Unirse')](https://discord.gg/cfbdMZX99G)
-[![OpenUPM](https://img.shields.io/badge/dynamic/json?labelColor=333A41&label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp)](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Estrellas')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
-[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
-[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+<p align="center"><img src="img/readme/hero.svg" alt="AI Game Developer para Unity: Skills, herramientas MCP y una CLI que conectan agentes de IA con el Editor de Unity y con tu juego en ejecución" width="100%"></p>
 
-  <img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/promo/ai-developer-banner.jpg" alt="Trabajo con IA" title="Construcción de niveles" width="100%">
+[![OpenUPM version](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&style=for-the-badge&labelColor=0F172A&logoColor=white&color=2F6F9F)](https://openupm.com/packages/com.ivanmurzak.unity.mcp/) [![OpenUPM downloads per month](https://img.shields.io/badge/dynamic/json?label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp&style=for-the-badge&labelColor=0F172A&logoColor=white&color=2F6F9F)](https://openupm.com/packages/com.ivanmurzak.unity.mcp/) [![unity-mcp-cli on npm](https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D)](https://www.npmjs.com/package/unity-mcp-cli) [![Unity 2022.3 or newer](https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://unity.com/releases/editor/archive)\
+[![Release workflow status](https://img.shields.io/github/actions/workflow/status/IvanMurzak/Unity-MCP/release.yml?label=release&logo=github&color=15803D&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml) [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://discord.gg/cfbdMZX99G) [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE) [![Stand with Ukraine](https://raw.githubusercontent.com/IvanMurzak/IvanMurzak/main/images/ukraine/flag-badge.svg)](https://stand-with-ukraine.pp.ua)
 
   <p>
-    <a href="https://claude.ai/download"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/claude-64.png" alt="Claude" title="Claude" height="36"></a>&nbsp;&nbsp;
-    <a href="https://openai.com/index/introducing-codex/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/codex-64.png" alt="Codex" title="Codex" height="36"></a>&nbsp;&nbsp;
-    <a href="https://www.cursor.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/cursor-64.png" alt="Cursor" title="Cursor" height="36"></a>&nbsp;&nbsp;
-    <a href="https://code.visualstudio.com/docs/copilot/overview"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/github-copilot-64.png" alt="GitHub Copilot" title="GitHub Copilot" height="36"></a>&nbsp;&nbsp;
-    <a href="https://gemini.google.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/gemini-64.png" alt="Gemini" title="Gemini" height="36"></a>&nbsp;&nbsp;
-    <a href="https://antigravity.google/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/antigravity-64.png" alt="Antigravity" title="Antigravity" height="36"></a>&nbsp;&nbsp;
-    <a href="https://code.visualstudio.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/vs-code-64.png" alt="VS Code" title="VS Code" height="36"></a>&nbsp;&nbsp;
-    <a href="https://www.jetbrains.com/rider/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/rider-64.png" alt="Rider" title="Rider" height="36"></a>&nbsp;&nbsp;
-    <a href="https://visualstudio.microsoft.com/"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/visual-studio-64.png" alt="Visual Studio" title="Visual Studio" height="36"></a>&nbsp;&nbsp;
-    <a href="https://github.com/anthropics/claude-code"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
-    <a href="https://github.com/cline/cline"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/cline-64.png" alt="Cline" title="Cline" height="36"></a>&nbsp;&nbsp;
-    <a href="https://github.com/Kilo-Org/kilocode"><img src="https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
+    <a href="https://claude.ai/download"><img src="img/mcp-clients/claude-64.png" alt="Claude" title="Claude" height="36"></a>&nbsp;&nbsp;
+    <a href="https://openai.com/index/introducing-codex/"><img src="img/mcp-clients/codex-64.png" alt="Codex" title="Codex" height="36"></a>&nbsp;&nbsp;
+    <a href="https://www.cursor.com/"><img src="img/mcp-clients/cursor-64.png" alt="Cursor" title="Cursor" height="36"></a>&nbsp;&nbsp;
+    <a href="https://code.visualstudio.com/docs/copilot/overview"><img src="img/mcp-clients/github-copilot-64.png" alt="GitHub Copilot" title="GitHub Copilot" height="36"></a>&nbsp;&nbsp;
+    <a href="https://gemini.google.com/"><img src="img/mcp-clients/gemini-64.png" alt="Gemini" title="Gemini" height="36"></a>&nbsp;&nbsp;
+    <a href="https://antigravity.google/"><img src="img/mcp-clients/antigravity-64.png" alt="Antigravity" title="Antigravity" height="36"></a>&nbsp;&nbsp;
+    <a href="https://code.visualstudio.com/"><img src="img/mcp-clients/vs-code-64.png" alt="VS Code" title="VS Code" height="36"></a>&nbsp;&nbsp;
+    <a href="https://www.jetbrains.com/rider/"><img src="img/mcp-clients/rider-64.png" alt="Rider" title="Rider" height="36"></a>&nbsp;&nbsp;
+    <a href="https://visualstudio.microsoft.com/"><img src="img/mcp-clients/visual-studio-64.png" alt="Visual Studio" title="Visual Studio" height="36"></a>&nbsp;&nbsp;
+    <a href="https://opencode.ai/"><img src="img/mcp-clients/open-code-64.png" alt="Open Code" title="Open Code" height="36"></a>&nbsp;&nbsp;
+    <a href="https://github.com/cline/cline"><img src="img/mcp-clients/cline-64.png" alt="Cline" title="Cline" height="36"></a>&nbsp;&nbsp;
+    <a href="https://github.com/Kilo-Org/kilocode"><img src="img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
   </p>
 
-  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md)</b>
+  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [فارسی](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.fa.md) | [हिन्दी](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.hi.md) | [العربية](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ar.md)</b>
 
 </div>
 
-`Unity MCP` es un asistente de desarrollo de juegos impulsado por IA **para Editor y Runtime**. Conecta **Claude**, **Cursor** y **Windsurf** a Unity mediante MCP. Automatiza flujos de trabajo, genera código y **habilita la IA dentro de tus juegos**.
+**AI Game Developer** (Unity-MCP) conecta tu agente de IA con Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini o cualquier otro cliente [MCP](https://modelcontextprotocol.io/) puede leer y cambiar escenas, prefabs, assets y código C#, ejecutar tests y tomar capturas en el **Editor de Unity**, y llamar a herramientas que tú escribes **dentro de tu juego compilado**. Se distribuye como un paquete de Unity gratuito (`com.ivanmurzak.unity.mcp`), una herramienta de línea de comandos (`unity-mcp-cli`) y extensiones opcionales.
 
-A diferencia de otras herramientas, este plugin funciona **dentro de tu juego compilado**, permitiendo depuración en tiempo real con IA e interacción jugador-IA.
+**Estado:** [última versión](https://github.com/IvanMurzak/Unity-MCP/releases/latest) y [registro de cambios](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md). El plugin y `unity-mcp-cli` comparten la misma versión. Probado y compatible con **Windows, macOS y Linux**. Requiere Unity **2022.3** o posterior; CI ejecuta tests EditMode, PlayMode y de build standalone en Unity 2022.3, 6000.0, 6000.3 y 6000.6.
 
-> **[💬 Únete a nuestro servidor de Discord](https://discord.gg/cfbdMZX99G)** - ¡Haz preguntas, muestra tu trabajo y conecta con otros desarrolladores!
+## Cómo funciona
 
-## ![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-features.es.svg?raw=true)
+<p align="center"><img src="img/readme/architecture.svg" alt="Un agente de IA o unity-mcp-cli habla MCP con un servidor, ai-game.dev Cloud por defecto o un gamedev-mcp-server local, que llama a las herramientas del plugin del Editor de Unity y de tu juego en ejecución" width="100%"></p>
 
-- ✔️ **Agentes de IA** - Usa los mejores agentes de **Anthropic**, **OpenAI**, **Microsoft** o cualquier otro proveedor sin dependencia de un solo proveedor
-- ✔️ **Herramientas** - Una amplia gama de [Herramientas MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) predeterminadas para operar en Unity Editor
-- ✔️ **Skills** - Genera skills para la IA basadas en el sistema operativo, la versión de Unity y los plugins del proyecto
-- ✔️ **Código y pruebas** - Desarrolla mecánicas de juego y pruébalas con agentes de IA
-- ✔️ **Runtime (en el juego)** - Usa LLMs directamente dentro de tu juego compilado para comportamiento dinámico de NPCs o depuración
-- ✔️ **Soporte de depuración** - Deja que la IA depure y corrija los problemas de un proyecto
-- ✔️ **Conversación natural** - Chatea con la IA como lo harías con un humano
-- ✔️ **Despliegue flexible** - Funciona localmente (stdio) y de forma remota (http) mediante configuración
-- ✔️ **Extensible** - [Crea herramientas personalizadas en el código de tu proyecto](#add-custom-tool)
+El plugin registra sus herramientas en un servidor MCP; tu agente las llama a través de ese servidor. En lugar de herramientas MCP, el agente también puede usar **Skills** generadas. Tú eliges dónde se ejecuta el servidor:
 
-[![DESCARGAR INSTALADOR](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/button/button_download_es.svg?raw=true)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
+| | **Local** (modo Custom, sin cuenta) | **Cloud** (ajuste predeterminado) |
+| --- | --- | --- |
+| Servidor | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) iniciado por el plugin en `127.0.0.1`, o uno que tú alojas | `https://ai-game.dev/mcp` |
+| Cuenta | No hace falta | Inicia sesión en ai-game.dev |
+| Datos de tu proyecto | Se quedan en tu máquina | Las llamadas a herramientas pasan por un relay sin estado que no inspecciona ni conserva su contenido; registra metadatos de eventos MCP, que se usan dentro de una ventana móvil de 90 días ([Política de privacidad](https://ai-game.dev/legal/privacy)) |
+| Coste | Gratis | Gratis |
+
+**Por qué Cloud es el predeterminado:** no necesita puertos abiertos, evita conflictos de puertos con otros programas y es gratuito. Local es una opción igual de válida para trabajar sin conexión o en entornos aislados (air-gapped). Detalles: [Seguridad y privacidad](#seguridad-y-privacidad).
+
+## Características
+
+✅ **Cubre el Editor** — el agente puede hacer prácticamente cualquier cosa que tú puedas hacer en el Editor de Unity\
+✅ **Compacto y eficiente** — herramientas pensadas para agentes: menos llamadas y menos tokens, así el agente trabaja más rápido y más barato ([medido en el Editor de Unity](benchmark.es.md))\
+✅ **RQL** — lee y cambia escenas, objetos, assets y ajustes con un solo lenguaje de consultas\
+✅ **C# y tests** — compila y ejecuta C# con Roslyn; ejecuta tests EditMode y PlayMode\
+✅ **Skills o MCP** — genera Skills con un clic, o conéctate como cliente MCP\
+✅ **Cualquier agente** — Claude Code, Codex, Cursor, Copilot, Gemini y otros clientes MCP\
+✅ **Runtime** — las mismas herramientas en tu juego compilado: lógica de NPC, depuración en vivo\
+✅ **Tus herramientas** — cualquier método C# se convierte en herramienta con un solo atributo `[AiTool]`\
+✅ **CLI** — instala, abre, consulta, compila y prueba desde la terminal o CI\
+✅ **Extensiones** — paquetes opcionales de herramientas, de Animation a Timeline
+
+## Inicio rápido
+
+Requiere **Unity 2022.3** o posterior.
+
+**1. Instala el plugin** (recomendado: el Instalador, no hace falta instalar nada más):
+
+[![DESCARGAR INSTALADOR](img/button/button_download_es.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
+
+Abre el `.unitypackage` descargado con tu proyecto abierto (haz doble clic en él, o usa **Assets ▸ Import Package ▸ Custom Package**).
+
+<details>
+<summary>Otras formas de instalar: OpenUPM / Package Manager, o la CLI para scripts y CI</summary>
+
+- **OpenUPM** — `openupm add com.ivanmurzak.unity.mcp`, o sin ninguna CLI: añade un registro con ámbito en **Edit ▸ Project Settings ▸ Package Manager** (URL `https://package.openupm.com`, ámbitos `com.ivanmurzak` y `extensions.unity`), y después **Window ▸ Package Manager ▸ + ▸ Add package by name** → `com.ivanmurzak.unity.mcp`.
+- **unity-mcp-cli** (Node.js 22.14+) — para scripts y CI, sin necesidad del Editor:
+
+  ```bash
+  npm install -g unity-mcp-cli
+  unity-mcp-cli install-plugin ./MyUnityProject   # añade el plugin a Packages/manifest.json
+  unity-mcp-cli open ./MyUnityProject             # abre el proyecto en Unity
+  ```
+
+  <p align="center"><img src="img/readme/terminal.svg" alt="Sesión de terminal: instalar unity-mcp-cli, añadir el plugin, iniciar sesión, configurar Claude Code y abrir el proyecto" width="100%"></p>
+
+</details>
+
+**2. Conecta tu agente** — elige una opción; ambas son totalmente compatibles:
+
+| | **Local** (sin cuenta) | **Cloud** (ajuste predeterminado) |
+| --- | --- | --- |
+| En **Window ▸ AI Game Dev** | conexión **Custom** | conexión **Cloud**, después **Authorize** (inicio de sesión en el navegador) |
+| Configuración del agente | **Configure** para tu agente | **Configure** para tu agente |
+| Lo mismo desde la CLI | `unity-mcp-cli setup-mcp claude-code ./MyUnityProject --transport stdio` | `unity-mcp-cli login`, después `unity-mcp-cli setup-mcp claude-code ./MyUnityProject` |
+
+**Auto-generate** Skills en la misma ventana es la alternativa a MCP. Otros agentes: [configuración de clientes](#configuración-de-clientes).
+
+**3. Solo en local: elige quién puede llamar a tus herramientas.** El servidor local se inicia con autenticación `none`: solo escucha en `127.0.0.1` y rechaza orígenes de navegador ajenos, pero cualquier programa de tu máquina puede alcanzarlo. Si otras personas o programas no fiables usan la máquina, cambia a `token` en un solo paso: **Window ▸ AI Game Dev** → **Authorization Token** → `token`. El servidor se reinicia con un secreto generado; pulsa **Configure** de nuevo para que tu agente lo envíe.
+
+![Ventana de AI Game Developer](img/editor/ai-game-developer-windows.png)
+
+Pide a tu agente *"Crea 3 cubos en un círculo de radio 2"* y mira cómo sucede. Pasos completos, configuración MCP manual y desinstalación: **[Guía de instalación](installation.es.md)**.
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
-### O usa la CLI
+## Uso
+
+**Habla con tu agente.** Describe el resultado que quieres; cuanto más preciso, mejor.
+
+```text
+Explica la jerarquía de mi escena
+Crea un material dorado metálico y asígnalo a una nueva esfera
+Encuentra cada prefab de enemigo sin Rigidbody y añádele uno
+```
+
+**Lo que puede hacer tu agente** (herramientas visibles por defecto):
+
+| Capacidad | Herramienta | Prompt de ejemplo |
+| --- | --- | --- |
+| Escenas y GameObjects | `rql-query`, `rql-mutate` | *"Lista todos los GameObjects desactivados en la escena abierta"* |
+| Assets y prefabs | `rql-query`, `rql-mutate` | *"Crea un material rojo y asígnalo a todos los cubos"* |
+| Consola y estado del Editor | `rql-query` | *"¿Qué errores hay en la consola?"* |
+| C# en el Editor | `script-execute` | *"Ejecuta C# que coloque 100 árboles en puntos aleatorios del terreno"* |
+| Tests | `tests-run` | *"Ejecuta los tests EditMode y arregla lo que falle"* |
+| Capturas de pantalla | `screenshot-isolated` | *"Muéstrame el modelo del Player de frente"* |
+| Paquetes y Asset Store | `package-*`, `assetstore-*` | *"Instala Cinemachine"* |
+| Lista de herramientas | `unity-tool-list` | *"¿Qué herramientas puedes usar aquí?"* |
+
+No necesitas aprender RQL: el agente lo escribe y consulta `rql-schema` para cada fuente, tipo y llamada que necesita. Medido en el Editor de Unity: las mismas tareas requirieron unas 5 veces menos tokens de prompt y menos llamadas a herramientas que con una herramienta por acción, con la misma tasa de éxito ([benchmark](benchmark.es.md)). En un mundo de juego de prueba (sandbox), con RQL un agente necesita unas 2–3 llamadas a herramientas y 7–8k tokens por tarea, con un 100% de éxito, frente a 30–37 llamadas y 125–170k tokens, con un 67–91% de éxito, usando herramientas de reflexión simples ([resultados](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools)). Hay más herramientas instaladas pero ocultas hasta que las muestres. Lista completa: **[Herramientas MCP por defecto](default-mcp-tools.es.md)** o [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+
+**Desde la terminal** (inicia un editor headless si no hay ninguno en ejecución):
 
 ```bash
-# 1. Instalar unity-mcp-cli
-npm install -g unity-mcp-cli
-
-# 2. Instalar "AI Game Developer" en el proyecto de Unity
-unity-mcp-cli install-plugin ./MyUnityProject
-
-# 3. Iniciar sesión en el servidor cloud
-unity-mcp-cli login ./MyUnityProject
-
-# 4. Abrir proyecto de Unity (auto-conecta y genera skills)
-unity-mcp-cli open ./MyUnityProject
+unity-mcp-cli rql 'objects | where name starts-with "Tree" | count'
+unity-mcp-cli compile ./MyGame
+unity-mcp-cli test ./MyGame --mode PlayMode
 ```
 
-![AI Game Developer Windows](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/ai-game-developer-windows.png?raw=true)
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-# Inicio rápido
-
-Ponte en marcha en tres pasos:
-
-1. **[Instalar el plugin](#step-1-install-unity-mcp-plugin)** — descarga el instalador `.unitypackage` o ejecuta `openupm add com.ivanmurzak.unity.mcp`
-   > **Alternativa:** `npx unity-mcp-cli install-plugin ./MyUnityProject` — ver [documentación de la CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
-2. **[Elegir un agente de IA](#step-2-install-ai-agent)** — Claude Code, Claude Desktop, GitHub Copilot, Cursor o cualquier otro
-3. **[Configurar el agente de IA](#step-3-configure-ai-agent)** — abre `Window/AI Game Dev` en Unity y haz clic en **Auto-generate skills** (recomendado) o **Configure MCP**
-  ![Setup AI Skills](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/setup-skills.jpg?raw=true)
-   > **Alternativa:** `npx unity-mcp-cli setup-skills claude-code ./MyUnityProject` — ver [documentación de la CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
-
-
-Eso es todo. Pídele a tu IA *"Crea 3 cubos en un círculo con radio 2"* y observa cómo sucede. ✨
-
----
-
-# Referencia de Skills y herramientas
-
-Desde la versión 1.0.0 el plugin expone un conjunto reducido de herramientas, y la mayor parte del trabajo en el Editor pasa por **RQL**, un lenguaje de consultas sobre los datos del Editor: `rql-query` lee, `rql-mutate` modifica y `rql-schema` describe las fuentes, tipos y llamadas (empieza por ahí si tienes dudas). Las herramientas de una acción por herramienta de versiones anteriores (`gameobject-create`, `scene-save`, `console-get-logs` y otras) fueron reemplazadas por RQL en [#1017](https://github.com/IvanMurzak/Unity-MCP/pull/1017). Consulta [docs/default-mcp-tools.md](default-mcp-tools.md) para la referencia completa.
-
-> 🧰 Explora el registro completo de herramientas MCP en línea: [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)
-
-Visibles para el agente de IA por defecto: `rql-query`, `rql-mutate`, `rql-schema`, `screenshot-isolated`, `script-execute`, `tests-run`, `unity-tool-list`. Las demás herramientas están instaladas pero ocultas en la lista de herramientas del agente (una herramienta oculta se sigue ejecutando si se la llama por su nombre). Muéstralas con `tool-set-visibility`, en la ventana de AI Game Developer o con `unity-mcp-cli configure <path> --enable-tools <ids>`.
-
-<details>
-  <summary>RQL (escenas, GameObjects, componentes, assets, consola, editor)</summary>
-
-- `rql-query` - Lee datos del Editor con una consulta RQL, p. ej. `roots | recurse children | select name active`
-- `rql-mutate` - Modifica datos del Editor o llama a operaciones del Editor, p. ej. `editor | call CreateGameObject({name: "Ground", primitive: "Plane"})`
-- `rql-schema` - Describe las fuentes, tipos, miembros y llamadas que RQL puede usar, y muestra las guías temáticas
-- Fuentes: `scenes`, `roots`, `objects` (todos los GameObjects de las escenas cargadas), `selection`, `prefab` (el prefab abierto en modo prefab), `editor` (crear GameObjects, materiales, carpetas y escenas; abrir y guardar escenas y prefabs; copiar, mover y eliminar assets; ejecutar elementos de menú; …), `settings`, `console` (entradas de log del Editor capturadas), `shaders`, `componentTypes`, `tests`, `testResults`, `profiler`, `lighting`; assets por ruta con `unity.asset("Assets/…")`
-
-</details>
-
-<details>
-  <summary>Capturas de pantalla</summary>
-
-- `screenshot-isolated` - Renderiza un GameObject de forma aislada desde un ángulo elegido (vista compuesta 2x2 opcional)
-- `screenshot-scene-view` - Captura una captura de pantalla de la vista de escena del Unity Editor (oculta por defecto)
-- `screenshot-game-view` - Captura una captura de pantalla de la vista de juego del Unity Editor (oculta por defecto)
-- `screenshot-camera` - Captura una captura de pantalla desde una cámara y la devuelve como imagen (oculta por defecto)
-- Las cuatro aceptan un `savePath` opcional, para cuando el usuario quiere la imagen como archivo: el PNG también se escribe dentro del proyecto (nunca sobre un archivo existente) y el resultado indica `Saved to <ruta absoluta>`; bajo `Assets/` se importa como un asset de Unity
-
-</details>
-
-<details>
-  <summary>Scripting, pruebas y paquetes</summary>
-
-- `script-execute` - Compila y ejecuta código C# dinámicamente usando Roslyn
-- `script-read` - Lee el contenido de un archivo de script (oculta por defecto)
-- `script-update-or-create` - Actualiza o crea un archivo de script con el código C# proporcionado (oculta por defecto)
-- `script-delete` - Elimina el/los archivo(s) de script (oculta por defecto)
-- `tests-run` - Ejecuta pruebas de Unity (EditMode/PlayMode): cualquier selección RQL sobre la fuente `tests` en una sola ejecución, resultados filtrados con RQL
-- `package-list`, `package-search`, `package-add`, `package-remove` - Paquetes de Unity Package Manager
-- `assetstore-library`, `assetstore-add` - Paquetes del Asset Store que posees o descargaste: buscar uno e importarlo (más a través de la fuente RQL `assetStore`)
-
-</details>
-
-<details>
-  <summary>Gestión de herramientas</summary>
-
-- `unity-tool-list` - Lista todas las herramientas e indica si el agente las ve
-- `tool-set-visibility` - Muestra u oculta herramientas en la lista de herramientas del agente (oculta por defecto)
-- `tool-set-enabled-state` - Alias obsoleto de `tool-set-visibility` (oculta por defecto)
-
-</details>
-
-<details>
-  <summary>Profiling y diagnóstico</summary>
-
-- Fuente RQL `profiler` (con `rql-query` / `rql-mutate`) - instantáneas de memoria, renderizado, scripts y frame, indicadores de módulos; `Start`, `Stop`, `ClearFrames`, `EnableModule`, `Save`, `Load`
-
-</details>
-
-<details>
-  <summary>Iluminación</summary>
-
-- Fuente RQL `lighting` (con `rql-query` / `rql-mutate`) - el entorno de la escena activa (ambiente, niebla, skybox, sol, reflejos; se puede deshacer), su asset Lighting Settings y el bake: `CreateSettings`, `UseSettings`, `Bake`, `CancelBake`, `ClearBakedData`, `BakeReflectionProbes`
-- `LightProbeGroup.PlaceGrid(size, spacing)` - llena una caja con sondas de luz espaciadas uniformemente; `ReflectionProbe.Bake()` - hace el bake de una sonda Custom junto a su escena
-
-</details>
-
-## Instalar skills y herramientas adicionales
-
-Instala extensiones cuando necesites más herramientas o [crea tus propias herramientas](#add-custom-tool).
-
-| Extensión | Descripción |
-| --- | --- |
-| **[AI Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md)** | Conjunto de herramientas adicionales para animaciones de Unity |
-| **[AI Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md)** | Herramientas MCP para Cinemachine |
-| **[AI InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md)** | Herramientas MCP para el Input System de Unity |
-| **[AI Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md)** | Herramientas MCP para AI Navigation (superficies NavMesh, horneado, agentes y enlaces) |
-| **[AI ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md)** | Conjunto de herramientas adicionales para el sistema de partículas de Unity |
-| **[AI ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md)** | Conjunto de herramientas adicionales para Unity ProBuilder |
-| **[AI Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md)** | Herramientas MCP para Unity Splines |
-| **[AI Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md)** | Conjunto de herramientas adicionales para el Terreno de Unity |
-| **[AI Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md)** | Herramientas MCP para Tilemaps 2D de Unity |
-| **[AI Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)** | Herramientas MCP para escenas y secuencias de Unity Timeline |
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-# Contenidos
-
-- [Inicio rápido](#inicio-rápido)
-- [Referencia de Skills y herramientas](#referencia-de-skills-y-herramientas)
-  - [Instalar skills y herramientas adicionales](#instalar-skills-y-herramientas-adicionales)
-- [Contenidos](#contenidos)
-  - [Más documentación](#más-documentación)
-- [Instalación](#instalación)
-  - [Paso 1: Instalar `Unity MCP Plugin`](#paso-1-instalar-unity-mcp-plugin)
-    - [Opción 1 - Instalador](#opción-1---instalador)
-    - [Opción 2 - CLI (recomendado)](#opción-2---cli-recomendado)
-  - [Paso 2: Instalar `agente de IA`](#paso-2-instalar-agente-de-ia)
-  - [Paso 3: Configurar `agente de IA`](#paso-3-configurar-agente-de-ia)
-    - [Configuración automática](#configuración-automática)
-    - [Configuración manual](#configuración-manual)
-      - [Configuración por línea de comandos](#configuración-por-línea-de-comandos)
-- [Ejemplos de flujo de trabajo con IA](#ejemplos-de-flujo-de-trabajo-con-ia)
-  - [Funcionalidades avanzadas para LLM](#funcionalidades-avanzadas-para-llm)
-    - [Capacidades principales](#capacidades-principales)
-    - [Funcionalidades impulsadas por Reflection](#funcionalidades-impulsadas-por-reflection)
-- [Personalizar herramientas](#personalizar-herramientas)
-  - [Añadir `Tool` personalizada](#añadir-tool-personalizada)
-  - [Añadir `MCP Prompt` personalizado](#añadir-mcp-prompt-personalizado)
-- [Uso en Runtime (en el juego)](#uso-en-runtime-en-el-juego)
-  - [Ejemplo: Bot de ajedrez impulsado por IA](#ejemplo-bot-de-ajedrez-impulsado-por-ia)
-  - [¿Por qué se necesita el uso en Runtime?](#por-qué-se-necesita-el-uso-en-runtime)
-- [Configuración del `MCP Server` de Unity](#configuración-del-mcp-server-de-unity)
-  - [Variables](#variables)
-  - [Variables del Plugin](#variables-del-plugin)
-  - [Docker 📦](#docker-)
-    - [Transporte `streamableHttp`](#transporte-streamablehttp)
-    - [Transporte `stdio`](#transporte-stdio)
-    - [`port` personalizado](#port-personalizado)
-  - [Ejecutable binario](#ejecutable-binario)
-- [Cómo funciona la arquitectura de Unity MCP](#cómo-funciona-la-arquitectura-de-unity-mcp)
-  - [¿Qué es `MCP`?](#qué-es-mcp)
-  - [¿Qué es un `agente de IA`?](#qué-es-un-agente-de-ia)
-  - [¿Qué es el `MCP Server`?](#qué-es-el-mcp-server)
-  - [¿Qué es un `MCP Tool`?](#qué-es-un-mcp-tool)
-    - [Cuándo usar un `Tool`](#cuándo-usar-un-tool)
-  - [¿Qué es un `MCP Resource`?](#qué-es-un-mcp-resource)
-    - [Cuándo usar un `MCP Resource`](#cuándo-usar-un-mcp-resource)
-  - [¿Qué es un `MCP Prompt`?](#qué-es-un-mcp-prompt)
-    - [Cuándo usar un `MCP Prompt`](#cuándo-usar-un-mcp-prompt)
-- [Contribución 💙💛](#contribución-)
-
-## Más documentación
-
-| Documento | Descripción |
-| -------- | ----------- |
-| [Herramientas MCP predeterminadas](default-mcp-tools.md) | Referencia completa de todas las herramientas integradas con descripciones |
-| [Configuración del MCP Server](docs/mcp-server.md) | Configuración del servidor, variables de entorno, hosting remoto |
-| [Despliegue con Docker](docs/DOCKER_DEPLOYMENT.md) | Guía paso a paso para despliegue con Docker |
-| [Guía de desarrollo](docs/dev/Development.md) | Arquitectura, estilo de código, CI/CD — para contribuidores |
-| [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Primeros pasos, tutoriales, referencia de API, preguntas frecuentes |
-| [Herramienta CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | Instalar plugins, configurar y conectar por línea de comandos |
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-# Instalación
-
-## Paso 1: Instalar `Unity MCP Plugin`
-
-<details>
-  <summary><b>⚠️ Requisitos (clic)</b></summary>
-
-> [!IMPORTANT]
-> **La ruta del proyecto no puede contener espacios**
->
-> - ✅ `C:/MyProjects/MyProject`
-> - ❌ `C:/My Projects/MyProject`
-> - ❌ `C:/My Projects/My Project`
-> - ❌ `C:/MyProjects/My Project`
-
-</details>
-
-### Opción 1 - Instalador
-
-- **[⬇️ Descargar instalador](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)**
-- **📂 Importar el instalador en el proyecto de Unity**
-  > - Puedes hacer doble clic en el archivo - Unity lo abrirá automáticamente
-  > - O bien: Abre Unity Editor primero, luego haz clic en `Assets/Import Package/Custom Package` y elige el archivo
-
-### Opción 2 - CLI (recomendado)
-
-Instala el plugin mediante [`unity-mcp-cli`](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) — no se necesita Unity Editor:
-
-```bash
-# 1.1 Instalar unity-mcp-cli                                  #  ┌────────────────────┐
-npm install -g unity-mcp-cli                               #  │ Available AI agent │
-                                                           #  ├────────────────────┤
-# 1.2 (Opcional) Instalar Unity                               #  │ antigravity        │
-unity-mcp-cli install-unity                                #  │ claude-code        │
-                                                           #  │ claude-desktop     │
-# 1.3 (Opcional) Crear proyecto de Unity                   #  │ cline              │
-unity-mcp-cli create-project ./MyUnityProject              #  │ codex              │
-                                                           #  │ cursor             │
-# 2. Instalar "AI Game Developer" en el proyecto de Unity  #  │ gemini             │
-unity-mcp-cli install-plugin ./MyUnityProject              #  │ github-copilot-cli │
-                                                           #  │ kilo-code          │
-# 3. Iniciar sesión en el servidor cloud                   #  │ open-code          │
-unity-mcp-cli login ./MyUnityProject                       #  │ rider-junie        │
-                                                           #  │ unity-ai           │
-# 4. Abrir proyecto (auto-conecta y genera skills)         #  │ vs-copilot         │
-unity-mcp-cli open ./MyUnityProject                        #  │ vscode-copilot     │
-                                                           #  └────────────────────┘
-# 5. Esperar a que Unity Editor esté listo
-unity-mcp-cli wait-for-ready ./MyUnityProject
-```
-
-> Consulta la [documentación completa de la CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) para ver todos los comandos disponibles.
-
-## Paso 2: Instalar `agente de IA`
-
-Elige un solo `agente de IA` de tu preferencia - no necesitas instalar todos. Este será tu ventana de chat principal para comunicarte con el LLM.
-
-- [Claude Code](https://github.com/anthropics/claude-code) **(recomendado)**
-- [Claude Desktop](https://claude.ai/download)
-- [GitHub Copilot en VS Code](https://code.visualstudio.com/docs/copilot/overview)
-- [Antigravity](https://antigravity.google/)
-- [Cursor](https://www.cursor.com/)
-- [Windsurf](https://windsurf.com)
-- Cualquier otro compatible
-
-> AI Game Developer es bastante universal, por lo que puedes usar cualquier agente de IA que prefieras - funcionará igual de bien que cualquier otro. El único requisito importante es que el agente de IA debe soportar Skills o actualizaciones dinámicas de MCP Tool.
-
-## Paso 3: Configurar `agente de IA`
-
-### Configuración automática
-
-- Abre el proyecto de Unity
-- Abre `Window/AI Game Dev`
-- Opción 1: Haz clic en `Auto-generate` Skills **(recomendado)**
-- Opción 2: Haz clic en `Configure` Model Context Protocol (MCP)
-
-![Unity_AI](https://github.com/IvanMurzak/Unity-MCP/raw/main/docs/img/ai-connector-window.gif)
-
-> Si tu cliente MCP no está en la lista, usa el JSON sin procesar que se muestra en la ventana para inyectarlo en tu cliente MCP. Lee las instrucciones de tu cliente MCP específico sobre cómo hacerlo.
-
-### Configuración manual
-
-Si la configuración automática no funciona por cualquier motivo, usa el JSON de la ventana `AI Game Developer (Unity-MCP)` para configurar cualquier `MCP Client` manualmente.
-
-#### Configuración por línea de comandos
-
-<details>
-  <summary><b>Crear <code>command</code></b></summary>
-
-**1. Elige tu `<command>` para tu entorno**
-
-| Plataforma          | `<command>`                                                                                                 |
-| ------------------- | ----------------------------------------------------------------------------------------------------------- |
-| Windows x64         | `"<unityProjectPath>/Library/mcp-server/win-x64/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows x86         | `"<unityProjectPath>/Library/mcp-server/win-x86/gamedev-mcp-server.exe" port=<port> client-transport=stdio`   |
-| Windows arm64       | `"<unityProjectPath>/Library/mcp-server/win-arm64/gamedev-mcp-server.exe" port=<port> client-transport=stdio` |
-| MacOS Apple-Silicon | `"<unityProjectPath>/Library/mcp-server/osx-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
-| MacOS Apple-Intel   | `"<unityProjectPath>/Library/mcp-server/osx-x64/gamedev-mcp-server" port=<port> client-transport=stdio`       |
-| Linux x64           | `"<unityProjectPath>/Library/mcp-server/linux-x64/gamedev-mcp-server" port=<port> client-transport=stdio`     |
-| Linux arm64         | `"<unityProjectPath>/Library/mcp-server/linux-arm64/gamedev-mcp-server" port=<port> client-transport=stdio`   |
-
-**2. Reemplaza `<unityProjectPath>` con la ruta completa al proyecto de Unity**
-
-**3. Reemplaza `<port>` con tu puerto de la configuración de AI Game Developer**
-
-**4. Añade el servidor MCP usando la línea de comandos**
-
-</details>
-
-<details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/gemini-64.png?raw=true" width="16" height="16" alt="Gemini CLI"> Gemini CLI</summary>
-
-  ```bash
-  gemini mcp add ai-game-developer <command>
-  ```
-
-  > Reemplaza `<command>` de la tabla anterior
-</details>
-
-<details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/claude-64.png?raw=true" width="16" height="16" alt="Claude Code CLI"> Claude Code CLI</summary>
-
-  ```bash
-  claude mcp add ai-game-developer <command>
-  ```
-
-  > Reemplaza `<command>` de la tabla anterior
-</details>
-
-<details>
-  <summary><img src="https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/mcp-clients/github-copilot-64.png?raw=true" width="16" height="16" alt="GitHub Copilot CLI"> GitHub Copilot CLI</summary>
-
-  ```bash
-  copilot
-  ```
-
-  ```bash
-  /mcp add
-  ```
-
-  Nombre del servidor: `ai-game-developer`
-  Tipo de servidor: `local`
-  Comando: `<command>`
-  > Reemplaza `<command>` de la tabla anterior
-</details>
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-# Ejemplos de flujo de trabajo con IA
-
-Comunícate con la IA (LLM) en tu `agente de IA`. Pídele que haga lo que quieras. Cuanto mejor describas tu tarea o idea, mejor realizará el trabajo.
-
-Algunos `agentes de IA` permiten elegir diferentes modelos LLM. Presta atención a esta función, ya que algunos modelos pueden funcionar mucho mejor que otros.
-
-**Ejemplos de prompts:**
-
-```text
-Explain my scene hierarchy
-```
-
-```text
-Create 3 spheres on top of each other
-```
-
-```text
-Create metallic golden material and attach it to a new sphere gameObject
-```
-
-> Asegúrate de que el modo `Agent` esté activado si usas VS Code con Copilot
-
-## Desactivar las notificaciones de actualización para todo el equipo
-
-El plugin muestra una ventana emergente de actualización al iniciar el Editor cuando hay una versión nueva disponible en OpenUPM. Por defecto, cada miembro del equipo ve esta ventana hasta que pulsa *"No volver a mostrar"* (que es una configuración por usuario almacenada en su máquina).
-
-En proyectos Unity con varios miembros, donde un ingeniero gestiona las versiones del plugin, puedes desactivar la ventana emergente para **todo el equipo** abriendo **Edit ▸ Project Settings ▸ AI Game Developer** y activando *"Disable update notifications for the entire team"*. El ajuste se guarda en `ProjectSettings/AI-Game-Developer-UpdateSettings.asset` y solo debe configurarse una vez por proyecto — al confirmar (commit) ese archivo, todos los miembros del equipo que descarguen el commit verán la ventana suprimida.
-
-El mismo conmutador también está disponible en **Tools ▸ AI Game Developer ▸ Updates ▸ Disable Update Notifications (Team)** en la barra de menús.
-
-## Funcionalidades avanzadas para LLM
-
-Unity MCP proporciona herramientas avanzadas que permiten al LLM trabajar de forma más rápida y efectiva, evitando errores y autocorrigiéndose cuando ocurren. Todo está diseñado para alcanzar tus objetivos de manera eficiente.
-
-### Capacidades principales
-
-- ✔️ **Herramientas listas para agentes** - Encuentra cualquier cosa que necesites en 1-2 pasos
-- ✔️ **Compilación instantánea** - Compilación y ejecución de código C# usando `Roslyn` para iteraciones más rápidas
-- ✔️ **Acceso completo a assets** - Acceso de lectura/escritura a assets y scripts C#
-- ✔️ **Retroalimentación inteligente** - Retroalimentación positiva y negativa bien descrita para una correcta comprensión de los problemas
-
-### Funcionalidades impulsadas por Reflection
-
-- ✔️ **Referencias a objetos** - Proporciona referencias a objetos existentes para código C# instantáneo
-- ✔️ **Acceso a datos del proyecto** - Obtén acceso completo a todos los datos del proyecto en un formato legible
-- ✔️ **Modificaciones granulares** - Rellena y modifica cualquier dato del proyecto
-- ✔️ **Descubrimiento de métodos** - Encuentra cualquier método en todo el código base, incluyendo archivos DLL compilados
-- ✔️ **Ejecución de métodos** - Llama a cualquier método en todo el código base
-- ✔️ **Parámetros avanzados** - Proporciona cualquier propiedad para llamadas a métodos, incluso referencias a objetos existentes en memoria
-- ✔️ **API de Unity en vivo** - API de Unity disponible al instante - incluso cuando Unity cambia, obtienes la API actualizada
-- ✔️ **Auto-documentado** - Accede a descripciones legibles de cualquier `class`, `method` o `property` mediante atributos `Description`
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-# Personalizar herramientas
-
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** soporta el desarrollo personalizado de `MCP Tool`, `MCP Resource` y `MCP Prompt` por parte de los propietarios del proyecto. El servidor MCP toma datos del `Unity MCP Plugin` y los expone al cliente. Cualquier participante en la cadena de comunicación MCP recibirá información sobre las nuevas funcionalidades MCP, que el LLM puede decidir utilizar en algún momento.
-
-## Añadir `Tool` personalizada
-
-Para añadir una `Tool` personalizada, necesitas:
-
-1. Una clase con el atributo `AiToolType`
-2. Un método en la clase con el atributo `AiTool`
-3. *Opcional:* Añadir un atributo `Description` a cada argumento del método para ayudar al LLM a comprenderlo
-4. *Opcional:* Usar propiedades `string? optional = null` con `?` y valores predeterminados para marcarlas como `optional` para el LLM
-
-> Ten en cuenta que la línea `MainThread.Instance.Run(() =>` te permite ejecutar código en el hilo principal, lo cual es necesario para interactuar con la API de Unity. Si no necesitas esto y ejecutar la herramienta en un hilo secundario es aceptable, evita usar el hilo principal por razones de eficiencia.
+**Tu propia herramienta.** Basta con una clase con `[AiToolType]` y un método con `[AiTool]`:
 
 ```csharp
 [AiToolType]
-public class Tool_GameObject
+public class Tool_Score
 {
-    [AiTool
-    (
-        "MyCustomTask",
-        Title = "Create a new GameObject"
-    )]
-    [Description("Explain here to LLM what is this, when it should be called.")]
-    public string CustomTask
-    (
-        [Description("Explain to LLM what is this.")]
-        string inputData
-    )
+    [AiTool("score-reset", Title = "Reset the score")]
+    [Description("Sets the player's score to zero.")]
+    public string Reset()
     {
-        // do anything in background thread
-
         return MainThread.Instance.Run(() =>
         {
-            // do something in main thread if needed
-
-            return $"[Success] Operation completed.";
+            ScoreManager.Instance.Score = 0;
+            return "[Success] Score reset.";
         });
     }
 }
 ```
 
-## Añadir `MCP Prompt` personalizado
+Prompts, herramientas en runtime (en el juego) y un ejemplo completo: **[Herramientas propias y runtime](custom-tools.es.md)**.
 
-`MCP Prompt` te permite inyectar prompts personalizados en la conversación con el LLM. Soporta dos roles de emisor: User y Assistant. Es una forma rápida de instruir al LLM para que realice tareas específicas. Puedes generar prompts usando datos personalizados, proporcionando listas o cualquier otra información relevante.
+## Configuración de clientes
 
-```csharp
-[AiPromptType]
-public static class Prompt_ScriptingCode
-{
-    [AiPrompt(Name = "add-event-system", Role = Role.User)]
-    [Description("Implement UnityEvent-based communication system between GameObjects.")]
-    public string AddEventSystem()
-    {
-        return "Create event system using UnityEvents, UnityActions, or custom event delegates for decoupled communication between game systems and components.";
-    }
-}
-```
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-# Uso en Runtime (en el juego)
-
-Usa **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** en tu juego/aplicación. Utiliza Tools, Resources o Prompts. Por defecto no hay herramientas disponibles, necesitarás implementar las tuyas propias.
-
-```csharp
-// Build MCP plugin
-var mcpPlugin = UnityMcpPluginRuntime.Initialize(builder =>
-    {
-        builder.WithConfig(config =>
-        {
-            config.Host = "http://localhost:8080";
-            config.Token = "your-token";
-        });
-        // Automatically register all tools from the current assembly
-        builder.WithToolsFromAssembly(Assembly.GetExecutingAssembly());
-    })
-    .Build();
-
-await mcpPlugin.Connect(); // Start active connection with retry to the MCP server
-
-await mcpPlugin.Disconnect(); // Stop active connection and close existed connection
-```
-
-## Ejemplo: Bot de ajedrez impulsado por IA
-
-Tenemos un juego de ajedrez clásico. Vamos a externalizar al LLM la lógica del bot. El bot debe hacer su turno siguiendo las reglas del juego.
-
-Marca las herramientas exclusivas del juego con `[AiToolType(Target = ToolTarget.Runtime)]` (`using com.IvanMurzak.McpPlugin.Common;`): solo el juego las registra, y el servidor MCP envía sus llamadas al juego en ejecución incluso mientras el Editor está conectado.
-
-```csharp
-[AiToolType(Target = ToolTarget.Runtime)]
-public static class ChessGameAI
-{
-    [AiTool("chess-do-turn", Title = "Do the turn")]
-    [Description("Do the turn in the chess game. Returns true if the turn was accepted, false otherwise.")]
-    public static Task<bool> DoTurn(int figureId, Vector2Int position)
-    {
-        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.DoTurn(figureId, position));
-    }
-
-    [AiTool("chess-get-board", Title = "Get the board")]
-    [Description("Get the current state of the chess board.")]
-    public static Task<BoardData> GetBoard()
-    {
-        return MainThread.Instance.RunAsync(() => ChessGameController.Instance.GetBoardData());
-    }
-}
-```
-
-## ¿Por qué se necesita el uso en Runtime?
-
-Hay muchos casos de uso. Imagina que estás trabajando en un juego de ajedrez con un bot. Puedes externalizar la toma de decisiones del bot al LLM escribiendo unas pocas líneas de código.
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-# Configuración del `MCP Server` de Unity
-
-El servidor de **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** soporta muchas opciones de ejecución diferentes y despliegue con Docker. Ambos protocolos de transporte son compatibles: `streamableHttp` y `stdio`. Si necesitas personalizar o desplegar Unity MCP Server en la nube, esta sección es para ti. [Leer más...](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md)
-
-## Variables
-
-Independientemente de la opción de ejecución que elijas, todas soportan configuración personalizada usando tanto variables de entorno como argumentos de línea de comandos. Funcionará con los valores predeterminados, así que si solo necesitas ejecutarlo, no pierdas tiempo con las variables. Solo asegúrate de que el Unity Plugin también tenga valores predeterminados, especialmente el `--port`, que deben ser iguales.
-
-| Variable de entorno          | Args de línea de comandos | Descripción                                                                  |
-| ---------------------------- | -------------------- | ---------------------------------------------------------------------------- |
-| `MCP_PLUGIN_PORT`            | `--port`             | Puerto de conexión **Client** -> **Server** <- **Plugin** (por defecto: 8080)       |
-| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `--plugin-timeout`   | Tiempo de espera de conexión **Plugin** -> **Server** (ms) (por defecto: 10000)            |
-| `MCP_PLUGIN_TOOL_TIMEOUT`     | `--tool-timeout`     | Tiempo que el **Server** espera una llamada a herramienta (ms). La llamada se envía al **Plugin** una sola vez, sin reenvíos (por defecto: 300000, o `--plugin-timeout` si es mayor; servidores basados en McpPlugin 8.11.0+) |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `--client-transport` | Tipo de transporte **Client** -> **Server**: `stdio` o `streamableHttp` (por defecto: `streamableHttp`) |
-| `MCP_AUTHORIZATION`           | `--authorization`        | Modo de autenticación para conexiones entrantes del **Client**: `none` o `required` (por defecto: `none`) |
-| `MCP_PLUGIN_TOKEN`            | `--token`                | Token Bearer requerido del **Client** cuando `--authorization=required` (por defecto: sin definir) |
-| `MCP_PLUGIN_IDLE_TIMEOUT_SECONDS` | `--idle-timeout-seconds` | Apaga el servidor tras estos segundos sin conexiones (por defecto: 600) |
-
-> Los argumentos de línea de comandos también soportan la opción con un solo prefijo `-` (`-port`) y la opción sin prefijo (`port`).
-
-> Para las variables de **webhook** de analítica y autorización (`MCP_PLUGIN_WEBHOOK_*`), consulta [docs/mcp-server.md](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md).
-
-> **Elegir un transporte:** Usa `stdio` cuando el cliente MCP ejecuta el binario del servidor directamente (uso local — esta es la configuración más común). Usa `streamableHttp` cuando ejecutes el servidor como un proceso independiente o en Docker/nube, y te conectes por HTTP.
-
-## Variables del Plugin
-
-El Unity MCP Plugin lee las siguientes variables de entorno (y argumentos de línea de comandos) al iniciar para sobrescribir los valores del archivo de configuración guardado. Las sobrescrituras se aplican solo en memoria y **nunca se escriben en el archivo de configuración** (`UserSettings/AI-Game-Developer-Config.json`), por lo que los valores guardados (por ejemplo `connectionMode` o `transportMethod`) siguen mostrando lo que se eligió en la ventana de AI Game Developer. Para cambiar un ajuste de forma permanente, cámbialo en la ventana, en un Editor iniciado sin esa sobrescritura (mientras una sobrescritura está activa, un cambio del mismo ajuste en la ventana no se conserva).
-
-| Variable de entorno         | Arg de línea de comandos    | Valores              | Descripción                                   |
-| --------------------------- | --------------------------- | ------------------- | --------------------------------------------- |
-| `UNITY_MCP_CLOUD_URL`       | `-url`                      | URL string                    | Sobrescribe la URL del MCP Server (`UNITY_MCP_HOST` es un alias heredado) |
-| `UNITY_MCP_CONNECTION_MODE` | `-UNITY_MCP_CONNECTION_MODE`| `Cloud` / `Custom`            | Fuerza el modo de conexión (una URL loopback implica `Custom`)          |
-| `UNITY_MCP_KEEP_CONNECTED`  | `-UNITY_MCP_KEEP_CONNECTED` | `true` / `false`              | Fuerza activar o desactivar la conexión activa                       |
-| `UNITY_MCP_AUTH_OPTION`     | `-auth`                     | `none` / `required`           | Fuerza el modo de autenticación                                   |
-| `UNITY_MCP_TOKEN`           | `-token`                    | string                        | Fuerza el token de autenticación                                  |
-| `UNITY_MCP_TRANSPORT`       | `-UNITY_MCP_TRANSPORT`      | `stdio` / `streamableHttp`    | Fuerza el transporte de cliente que configura el plugin                    |
-| `UNITY_MCP_START_SERVER`    | `-UNITY_MCP_START_SERVER`   | `true` / `false`              | Fuerza si el plugin mantiene un proceso de servidor local en ejecución       |
-| `UNITY_MCP_TOOLS`           | `-UNITY_MCP_TOOLS`          | IDs de herramientas separados por comas      | Muestra a los clientes MCP solo las herramientas listadas (tools/list); las demás se ocultan (una herramienta oculta sigue ejecutándose si se llama por su nombre). Los IDs desconocidos se registran como errores. |
-| `UNITY_MCP_CREDENTIALS_DIR` | — (solo entorno)            | ruta absoluta de carpeta      | Lee (y renueva) el almacén de credenciales de la máquina desde esta carpeta en lugar de `~/.ai-game-dev`. Para Editors de desarrollo/prueba cuyo lanzador inicia sesión con otro perfil (el dev stand local de AI Game Dev App); una ruta, nunca un token. Un valor relativo se registra y se ignora |
-
-> Los argumentos de línea de comandos tienen prioridad sobre las variables de entorno. Ambos sobrescriben el valor del archivo de configuración guardado. Las banderas cortas `-url`, `-token` y `-auth` son alias; los nombres de argumento completos `-UNITY_MCP_*` también se aceptan.
->
-> **Modo Cloud frente a Custom en `UserSettings/AI-Game-Developer-Config.json`:** `connectionMode` es `Cloud` por defecto: se conecta a `https://ai-game.dev/mcp` y nunca inicia automáticamente el servidor local (aunque `keepServerRunning` sea `true`). El campo guardado `"host"` solo se usa cuando `connectionMode` es `"Custom"`; editar `"host"` en el archivo no cambia el modo. Para usar un servidor local, selecciona **Custom** en la ventana AI Game Dev o establece `"connectionMode": "Custom"` con Unity cerrado.
-
-**Ejemplo (modo batch CI/CD):**
-
-```bash
-Unity.exe -batchmode -nographics \
-  -UNITY_MCP_HOST=http://localhost:8080 \
-  -UNITY_MCP_KEEP_CONNECTED=true \
-  -UNITY_MCP_AUTH_OPTION=required \
-  -UNITY_MCP_TOKEN=my-secret-token
-```
-
-## Docker 📦
-
-[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Imagen Docker')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
-
-Asegúrate de que Docker esté instalado. Y por favor verifica que Docker Desktop esté ejecutándose si estás en un sistema operativo Windows.
-
-[Lee las instrucciones avanzadas de configuración de Docker](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/DOCKER_DEPLOYMENT.md).
-
-### Transporte `streamableHttp`
-
-```bash
-docker run -p 8080:8080 aigamedeveloper/mcp-server
-```
+El botón **Configure** de la ventana de AI Game Developer, o `unity-mcp-cli setup-mcp <agent> ./MyUnityProject`, escribe estos archivos por ti (Cloud por defecto, local con `--transport stdio`). A mano, para un servidor local: pon el plugin en **Custom**, toma `<port>` de la ventana y usa el binario de tu plataforma desde `<project>/Library/mcp-server/<rid>/` (`win-x64/gamedev-mcp-server.exe`, `osx-arm64/gamedev-mcp-server`, `linux-x64/gamedev-mcp-server`, …).
 
 <details>
-  <summary>Configuración del <code>MCP Client</code>:</summary>
-
-```json
-{
-  "mcpServers": {
-    "ai-game-developer": {
-      "url": "http://localhost:8080"
-    }
-  }
-}
-```
-
-> Reemplaza `url` con tu endpoint real si está alojado en la nube.
-
-</details>
-
-### Transporte `stdio`
-
-Para usar esta variante, el `MCP Client` debe ejecutar el `MCP Server` en Docker. Esto se logra mediante la configuración modificada del `MCP Client`.
-
-```bash
-docker run -t -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio -p 8080:8080 aigamedeveloper/mcp-server
-```
-
-<details>
-  <summary>Configuración del <code>MCP Client</code>:</summary>
-
-```json
-{
-  "mcpServers": {
-    "ai-game-developer": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-t",
-        "-e",
-        "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
-        "-p",
-        "8080:8080",
-        "aigamedeveloper/mcp-server"
-      ]
-    }
-  }
-}
-```
-
-</details>
-
-### `port` personalizado
-
-```bash
-docker run -e MCP_PLUGIN_PORT=123 -p 123:123 aigamedeveloper/mcp-server
-```
-
-<details>
-  <summary>Configuración del <code>MCP Client</code>:</summary>
-
-```json
-{
-  "mcpServers": {
-    "ai-game-developer": {
-      "url": "http://localhost:123"
-    }
-  }
-}
-```
-
-> Reemplaza `url` con tu endpoint real si está alojado en la nube
-</details>
-
-## Ejecutable binario
-
-Puedes ejecutar el `MCP Server` de Unity directamente desde un archivo binario. Necesitarás tener un binario compilado específicamente para la arquitectura de tu CPU. Consulta la [página de releases en GitHub](https://github.com/IvanMurzak/GameDev-MCP-Server/releases), que contiene binarios precompilados para todas las arquitecturas de CPU.
-
-```bash
-./gamedev-mcp-server --port 8080 --plugin-timeout 10000 --client-transport stdio
-```
-
-<details>
-  <summary>Configuración del <code>MCP Client</code>:</summary>
-
-> Reemplaza `<project>` con la ruta de tu proyecto de Unity.
+<summary><b>Claude Code</b> — <code>.mcp.json</code> en la raíz del proyecto</summary>
 
 ```json
 {
   "mcpServers": {
     "ai-game-developer": {
       "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
-      "args": [
-        "--port=8080",
-        "--plugin-timeout=10000",
-        "--client-transport=stdio"
-      ]
+      "args": ["port=<port>", "client-transport=stdio"]
     }
   }
 }
@@ -724,130 +174,95 @@ Puedes ejecutar el `MCP Server` de Unity directamente desde un archivo binario. 
 
 </details>
 
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+<details>
+<summary><b>Cursor</b> — <code>.cursor/mcp.json</code></summary>
 
-# Cómo funciona la arquitectura de Unity MCP
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "type": "stdio",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
 
-**[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** sirve como puente entre los LLMs y Unity. Expone y explica las herramientas de Unity al LLM, que luego comprende la interfaz y utiliza las herramientas según las solicitudes del usuario.
+</details>
 
-Conecta **[Unity MCP](https://github.com/IvanMurzak/Unity-MCP)** a clientes LLM como [Claude](https://claude.ai/download) o [Cursor](https://www.cursor.com/) usando la ventana integrada `AI Connector`. También se soportan clientes personalizados.
+<details>
+<summary><b>Codex</b> — <code>.codex/config.toml</code></summary>
 
-El sistema es altamente extensible - puedes definir `MCP Tools`, `MCP Resource` o `MCP Prompt` personalizados directamente en el código de tu proyecto de Unity, exponiendo nuevas capacidades a clientes de IA o automatización. Esto convierte a Unity MCP en una base flexible para construir flujos de trabajo avanzados, prototipado rápido e integración de funcionalidades impulsadas por IA en tu proceso de desarrollo.
+```toml
+[mcp_servers.ai-game-developer]
+enabled = true
+command = "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe"
+args = ["port=<port>", "client-transport=stdio"]
+tool_timeout_sec = 300
+```
 
-## ¿Qué es `MCP`?
+</details>
 
-MCP - Model Context Protocol. En pocas palabras, es el `USB Type-C` para la IA, específicamente para LLM (Large Language Model). Enseña al LLM cómo usar funcionalidades externas. Como Unity Engine en este caso, o incluso tu método C# personalizado en tu código. [Documentación oficial](https://modelcontextprotocol.io/).
+Otros agentes y configuración manual: [Guía de instalación](installation.es.md).
 
-## ¿Qué es un `agente de IA`?
+## Seguridad y privacidad
 
-Es una aplicación con una ventana de chat. Puede tener agentes inteligentes para operar mejor, puede tener herramientas MCP avanzadas integradas. En general, un MCP Client bien hecho es el 50% del éxito de la IA al ejecutar una tarea. Por eso es muy importante elegir el mejor para su uso.
+**Configuración más privada:** conexión **Custom** (servidor local en `127.0.0.1`, sin cuenta, los datos del proyecto se quedan en tu máquina) con **Authorization Token** en `token` en **Window ▸ AI Game Dev**, y después **Configure** de nuevo para que tu agente envíe el secreto.
 
-## ¿Qué es el `MCP Server`?
+✅ **El plugin no abre ningún puerto** — se conecta hacia fuera al servidor MCP.\
+✅ **Servidor local en loopback** — `gamedev-mcp-server` se enlaza a `127.0.0.1` salvo que definas `MCP_BIND` para alojarlo.\
+✅ **Comprobación de origen** — las solicitudes del navegador con un `Origin` no permitido se rechazan (403) en todos los modos de autenticación.\
+✅ **Modos de autenticación** — `none` (predeterminado en local), `token` (un secreto compartido que el agente y el plugin deben enviar), `oauth` (cuenta de ai-game.dev).\
+✅ **Relay de Cloud** — un relay sin estado: enruta las llamadas a herramientas entre tu agente y el Editor sin inspeccionar ni conservar su contenido, y no recopila conversaciones, código fuente, archivos del proyecto, assets ni datos de escenas. Registra metadatos de eventos MCP (tipo de evento, tiempos, estado, identificadores de sesión, el nombre de la herramienta, del prompt o del recurso, detalles de errores), que se usan dentro de una ventana móvil de 90 días ([Política de privacidad](https://ai-game.dev/legal/privacy)).\
+⚠️ **Sin protección** — en modo `none` cualquier proceso de tu máquina que alcance el puerto puede llamar a herramientas, y las herramientas se ejecutan con los permisos del Editor (`script-execute` ejecuta C#). Usa el modo `token` en máquinas compartidas.
 
-Es un puente entre el `MCP Client` y "algo más", en este caso particular es Unity Engine. Este proyecto incluye el `MCP Server`.
+Opciones del servidor y Docker: [Servidor MCP y conexión](mcp-server.es.md).
 
-## ¿Qué es un `MCP Tool`?
+## Extensiones
 
-`MCP Tool` es una función o método que el LLM puede llamar para interactuar con Unity. Estas herramientas actúan como puente entre las solicitudes en lenguaje natural y las operaciones reales de Unity. Cuando le pides a la IA que "cree un cubo" o "cambie el color del material", usa MCP Tools para ejecutar esas acciones.
+Las extensiones son paquetes UPM opcionales que añaden herramientas para funciones concretas de Unity.
 
-**Características clave:**
+```bash
+unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityProject
+```
 
-- **Funciones ejecutables** que realizan operaciones específicas
-- **Parámetros tipados** con descripciones para ayudar al LLM a entender qué datos proporcionar
-- **Valores de retorno** que dan retroalimentación sobre el éxito o fracaso de la operación
-- **Consciente de hilos** - puede ejecutarse en el hilo principal para llamadas a la API de Unity o en un hilo secundario para procesamiento pesado
+| Extensión | Añade | Requiere |
+| --- | --- | --- |
+| [Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) | AnimationClips y AnimatorControllers |  |
+| [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) | Cámaras virtuales, objetivos y el pipeline de cámara | `com.unity.cinemachine` 3.1.6+ |
+| [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) | Assets de acciones de entrada, mapas, acciones y bindings | `com.unity.inputsystem` 1.8.2+ |
+| [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) | Superficies NavMesh, horneado, agentes y enlaces | `com.unity.ai.navigation` 1.1.7+ |
+| [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) | Emisión, forma, curvas y gradientes de ParticleSystem |  |
+| [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) | Mallas editables: formas, extrusión, bisel, materiales | `com.unity.probuilder` 5.2.4+ |
+| [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) | Contenedores de splines, nudos y tangentes | `com.unity.splines` 2.8.4+ |
+| [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) | Terrenos: heightmaps, esculpido y muestreo |  |
+| [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) | Grids y tilemaps: pintar, rellenar y leer tiles | `com.unity.2d.tilemap.extras` 3.1.3+ |
+| [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md) | Assets de Timeline, pistas, clips y marcadores | `com.unity.timeline` 1.8.12+ |
 
-### Cuándo usar un `Tool`
+Los paquetes de Unity necesarios se instalan con la extensión. También puedes instalar extensiones desde la sección **Extensions** de la ventana de AI Game Developer.
 
-- **Automatizar tareas repetitivas** - Crea herramientas para operaciones comunes que realizas frecuentemente
-- **Operaciones complejas** - Agrupa múltiples llamadas a la API de Unity en una sola herramienta fácil de usar
-- **Flujos de trabajo específicos del proyecto** - Construye herramientas que entiendan la estructura y convenciones específicas de tu proyecto
-- **Tareas propensas a errores** - Crea herramientas que incluyan validación y manejo de errores
-- **Lógica de juego personalizada** - Expón los sistemas de tu juego a la IA para creación dinámica de contenido
+## Documentación
 
-**Ejemplos:**
+| Página | Contenido |
+| --- | --- |
+| [Guía de instalación](installation.es.md) | Opciones de instalación, conectar un agente, configuración MCP manual, ajustes de equipo, desinstalación |
+| [Benchmark](benchmark.es.md) | Mediciones en el Editor de Unity y en el sandbox: tokens, llamadas a herramientas y éxito con las herramientas RQL |
+| [Herramientas MCP por defecto](default-mcp-tools.es.md) | Todas las herramientas integradas, fuentes RQL, herramientas eliminadas en 1.0.0 y sus equivalentes RQL |
+| [Herramientas propias y runtime](custom-tools.es.md) | Escribe herramientas y prompts; usa MCP dentro de tu juego |
+| [Servidor MCP y conexión](mcp-server.es.md) | Modos Cloud y Custom, variables de entorno del plugin, servidor local |
+| [Despliegue con Docker](DOCKER_DEPLOYMENT.es.md) | Ejecuta el servidor MCP en un contenedor |
+| [Desactivar en CI](ci-disable.es.md) | Mantén el plugin fuera de las ejecuciones de tests normales en CI |
+| [Referencia de la CLI](../cli/docs/README.es.md) | Todos los comandos y opciones de `unity-mcp-cli` |
+| [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Tutoriales, guías y FAQ |
+| [Guía de desarrollo](dev/Development.es.md) | Estructura del repositorio, estilo de código, tests y CI para colaboradores |
 
-- Crear y configurar GameObjects con componentes específicos
-- Procesamiento por lotes de assets (texturas, materiales, prefabs)
-- Configurar iluminación y efectos de post-procesamiento
-- Generar geometría de niveles o colocar objetos proceduralmente
-- Configurar ajustes de física o capas de colisión
+Relacionado: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (el servidor MCP compartido) · [ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
 
-## ¿Qué es un `MCP Resource`?
+## Contribuir
 
-`MCP Resource` proporciona acceso de solo lectura a datos dentro de tu proyecto de Unity. A diferencia de los MCP Tools que realizan acciones, los Resources permiten al LLM inspeccionar y comprender el estado actual de tu proyecto, assets y configuración. Piensa en ellos como "sensores" que dan contexto a la IA sobre tu proyecto.
+Las ideas, los reportes de errores y los pull requests son bienvenidos. Lee la [Guía de desarrollo](dev/Development.es.md), haz un fork del repositorio, abre `./Unity-MCP-Plugin` en Unity y envía un pull request a `main`. Si el proyecto te ayuda, dale una estrella.
 
-**Características clave:**
+## Licencia
 
-- **Acceso de solo lectura** a datos del proyecto y objetos de Unity
-- **Información estructurada** presentada en un formato que el LLM puede entender
-- **Datos en tiempo real** que reflejan el estado actual de tu proyecto
-- **Consciencia contextual** que ayuda a la IA a tomar decisiones informadas
-
-### Cuándo usar un `MCP Resource`
-
-- **Análisis del proyecto** - Permite que la IA comprenda la estructura, assets y organización de tu proyecto
-- **Asistencia en depuración** - Proporciona información del estado actual para resolución de problemas
-- **Sugerencias inteligentes** - Dale contexto a la IA para hacer mejores recomendaciones
-- **Generación de documentación** - Crea documentación automáticamente basada en el estado del proyecto
-- **Gestión de assets** - Ayuda a la IA a entender qué assets están disponibles y sus propiedades
-
-**Ejemplos:**
-
-- Exponer la jerarquía de la escena y propiedades de GameObjects
-- Listar materiales, texturas disponibles y sus configuraciones
-- Mostrar dependencias de scripts y relaciones entre componentes
-- Mostrar la configuración actual de iluminación y pipeline de renderizado
-- Proporcionar información sobre fuentes de audio, animaciones y sistemas de partículas
-
-## ¿Qué es un `MCP Prompt`?
-
-`MCP Prompt` te permite inyectar prompts predefinidos en la conversación con el LLM. Son plantillas inteligentes que pueden proporcionar contexto, instrucciones o conocimiento para guiar el comportamiento de la IA. Los prompts pueden ser texto estático o generados dinámicamente basándose en el estado actual de tu proyecto.
-
-**Características clave:**
-
-- **Guía contextual** que influye en cómo responde la IA
-- **Basado en roles** - puede simular diferentes personas (solicitudes de usuario o conocimiento del asistente)
-- **Contenido dinámico** - puede incluir datos del proyecto en tiempo real
-- **Plantillas reutilizables** para escenarios y flujos de trabajo comunes
-
-### Cuándo usar un `MCP Prompt`
-
-- **Proporcionar conocimiento del dominio** - Comparte mejores prácticas y estándares de código específicos de tu proyecto
-- **Establecer convenciones de código** - Define convenciones de nomenclatura, patrones de arquitectura y estilo de código
-- **Dar contexto sobre la estructura del proyecto** - Explica cómo está organizado tu proyecto y por qué
-- **Compartir instrucciones de flujo de trabajo** - Proporciona procedimientos paso a paso para tareas comunes
-- **Inyectar conocimiento especializado** - Añade información sobre funcionalidades específicas de Unity, assets de terceros o sistemas personalizados
-
-**Ejemplos:**
-
-- "Siempre usa PascalCase para métodos públicos y camelCase para campos privados"
-- "Este proyecto usa un sistema de eventos personalizado ubicado en Scripts/Events/"
-- "Al crear elementos de UI, siempre añádelos al Canvas en Scene/UI/MainCanvas"
-- "El rendimiento es crítico - prefiere el object pooling para objetos que se instancian frecuentemente"
-- "Este proyecto sigue los principios SOLID - explica cualquier decisión arquitectónica"
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-# Desinstalación 🧹
-
-Para eliminar por completo el plugin de tu proyecto de Unity:
-
-1. Abre **Window ▸ Package Manager**, selecciona el paquete **AI Game Developer — MCP** y haz clic en **Remove**.
-2. Cierra Unity y luego elimina la carpeta `Assets/Plugins/NuGet` (junto con su archivo `Assets/Plugins/NuGet.meta`).
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-# Contribución 💙💛
-
-Las contribuciones son muy apreciadas. ¡Trae tus ideas y hagamos que el desarrollo de juegos sea más simple que nunca! ¿Tienes una idea para una nueva `Tool` o funcionalidad, o encontraste un bug y sabes cómo solucionarlo?
-
-**¡Por favor dale una estrella 🌟 a este proyecto si te resulta útil!**
-
-1. 👉 [Lee la documentación de desarrollo](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md)
-2. 👉 [Haz un fork del proyecto](https://github.com/IvanMurzak/Unity-MCP/fork)
-3. Clona el fork y abre la carpeta `./Unity-MCP-Plugin` en Unity
-4. Implementa cosas nuevas en el proyecto, haz commit y push a GitHub
-5. Crea un Pull Request apuntando al repositorio original [Unity-MCP](https://github.com/IvanMurzak/Unity-MCP/compare), rama `main`.
-
-![AI Game Developer — Unity SKILLS and MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+**Gratis para el desarrollo de juegos, incluidos los juegos comerciales.** El plugin usa la licencia [Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE). Utiliza [RQL](https://github.com/IvanMurzak/RQL) y [Code-Exec](https://github.com/IvanMurzak/Code-Exec), con licencia PolyForm Shield 1.0.0: esa licencia solo restringe a las empresas que crean herramientas de IA competidoras para el desarrollo de juegos. Los desarrolladores de juegos pueden usarlo todo libremente.

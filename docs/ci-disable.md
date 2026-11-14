@@ -1,3 +1,5 @@
+<b>English</b> | [中文](ci-disable.zh-CN.md) | [日本語](ci-disable.ja.md) | [Español](ci-disable.es.md) | [فارسی](ci-disable.fa.md) | [हिन्दी](ci-disable.hi.md) | [العربية](ci-disable.ar.md)
+
 # Disable Unity-MCP in CI
 
 Introduced in core **1.6.2** and first-party extensions **2.1.1**.

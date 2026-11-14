@@ -1,26 +1,33 @@
 - **Getting Started**
   - [Home](/)
   - [Quick Start](/#quick-start)
-  - [Installation](/#installation)
+  - [Installation guide](/installation.md)
 
 - **Tools & Features**
-  - [Skills and Tools Reference](/#skills-and-tools-reference)
   - [Default MCP Tools](/default-mcp-tools.md)
-  - [Customize Tools](/#customize-tools)
-  - [Runtime Usage](/#runtime-usage-in-game)
+  - [Custom Tools & Runtime](/custom-tools.md)
+  - [Benchmark](/benchmark.md)
 
 - **Server & Deployment**
-  - [MCP Server Setup](/mcp-server.md)
+  - [MCP Server & Connection](/mcp-server.md)
   - [Docker Deployment](/DOCKER_DEPLOYMENT.md)
+  - [Disable in CI](/ci-disable.md)
 
 - **Development**
   - [Development Guide](/dev/Development.md)
+  - [Extensions](/dev/extensions.md)
   - [Version Management](/version-management.md)
   - [OpenUPM Package Signing](/openupm-signing.md)
-  - [Architecture](/#how-unity-mcp-architecture-works)
+
+- **Links**
+  - [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki)
+  - [CLI reference](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md)
 
 - **Languages**
   - [English](/)
   - [Español](/README.es)
   - [日本語](/README.ja)
   - [中文](/README.zh-CN)
+  - [فارسی](/README.fa)
+  - [हिन्दी](/README.hi)
+  - [العربية](/README.ar)

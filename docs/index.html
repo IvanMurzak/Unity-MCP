@@ -142,7 +142,8 @@
     window.$docsify = {
       name: 'AI Game Developer — Unity MCP',
       repo: 'https://github.com/IvanMurzak/Unity-MCP',
-      homepage: 'README.md',
+      // The root README.md is not inside docs/, so the home page loads it from main.
+      homepage: 'https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/main/README.md',
       loadSidebar: true,
       subMaxLevel: 3,
       auto2top: true,
@@ -158,7 +159,10 @@
       alias: {
         '/README.es': '/README.es.md',
         '/README.ja': '/README.ja.md',
-        '/README.zh-CN': '/README.zh-CN.md'
+        '/README.zh-CN': '/README.zh-CN.md',
+        '/README.fa': '/README.fa.md',
+        '/README.hi': '/README.hi.md',
+        '/README.ar': '/README.ar.md'
       }
     };
   </script>

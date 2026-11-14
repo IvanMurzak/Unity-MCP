@@ -1,0 +1,50 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="520" viewBox="0 0 1200 520" role="img" aria-label="Sandbox benchmark: tokens per task 169,190 with plain reflection tools vs 7,817 with RQL; tool calls per task 36.9 vs 1.9; tasks solved 66.7% vs 100%">
+  <defs>
+    <linearGradient id="bg" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#080F17"/><stop offset="1" stop-color="#030609"/></linearGradient>
+    <radialGradient id="hzR" cx="0.18" cy="0" r="0.6"><stop offset="0" stop-color="#FF002A" stop-opacity="0.16"/><stop offset="1" stop-color="#FF002A" stop-opacity="0"/></radialGradient>
+    <radialGradient id="hzB" cx="0.85" cy="0" r="0.6"><stop offset="0" stop-color="#3B9BFF" stop-opacity="0.14"/><stop offset="1" stop-color="#3B9BFF" stop-opacity="0"/></radialGradient>
+    <pattern id="dots" width="28" height="28" patternUnits="userSpaceOnUse"><circle cx="1" cy="1" r="1" fill="#A8C2D2" fill-opacity="0.08"/></pattern>
+    <linearGradient id="rule" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#FF002A" stop-opacity="0"/><stop offset="0.3" stop-color="#FF2448" stop-opacity="0.6"/><stop offset="0.7" stop-color="#3B9BFF" stop-opacity="0.55"/><stop offset="1" stop-color="#3B9BFF" stop-opacity="0"/></linearGradient>
+    <linearGradient id="card" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#0C1620"/><stop offset="1" stop-color="#070D14"/></linearGradient>
+    <linearGradient id="logoL" gradientUnits="userSpaceOnUse" x1="512" y1="190" x2="512" y2="785"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#8395AD"/></linearGradient>
+    <linearGradient id="logoR" gradientUnits="userSpaceOnUse" x1="512" y1="190" x2="512" y2="785"><stop offset="0" stop-color="#E1E8F1"/><stop offset="1" stop-color="#455974"/></linearGradient>
+    <linearGradient id="logoB" gradientUnits="userSpaceOnUse" x1="512" y1="190" x2="512" y2="785"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#AABBD0"/></linearGradient>
+    <radialGradient id="logoGlow"><stop offset="0" stop-color="#6FA8D0" stop-opacity=".18"/><stop offset="1" stop-color="#6FA8D0" stop-opacity="0"/></radialGradient>
+    <linearGradient id="brand" x1="0" y1="0" x2="1" y2="1"><stop offset="0" stop-color="#FF5A73"/><stop offset="1" stop-color="#6FA8D0"/></linearGradient>
+    <clipPath id="frame"><rect width="1200" height="520" rx="18"/></clipPath>
+  </defs>
+  <style>
+    .s { font-family: Inter, 'Segoe UI', system-ui, -apple-system, Helvetica, Arial, sans-serif; } .m { font-family: 'JetBrains Mono', 'Cascadia Code', Consolas, Menlo, monospace; white-space: pre; }
+    .pulse { animation: pulse 3.2s ease-in-out infinite; transform-box: fill-box; transform-origin: center; }
+    @keyframes pulse { 0%,100% { opacity: .85; transform: scale(1); } 50% { opacity: 1; transform: scale(1.04); } }
+    .spin { animation: spin 40s linear infinite; transform-box: fill-box; transform-origin: center; }
+    .spin.r { animation-duration: 60s; animation-direction: reverse; }
+    @keyframes spin { to { transform: rotate(360deg); } }
+    .blink { animation: blink 1.1s steps(1) infinite; } @keyframes blink { 50% { opacity: 0; } }
+
+    .gl { pointer-events: none; }
+    .gl-r { fill: #FF2448; opacity: 0; animation: glr 2.8s steps(1) infinite; }
+    .gl-c { fill: #2EE6FF; opacity: 0; animation: glc 2.8s steps(1) infinite; }
+    .gl-s { opacity: 0; animation: gls 2.8s steps(1) infinite; }
+    .gl-base { animation: glb 2.8s steps(1) infinite; }
+    @keyframes glr { 0% { opacity:.75; transform:translate(-2px,0) } 6% { transform:translate(-4px,1px) } 9% { transform:translate(-1px,-1px) }
+      12% { opacity:.55; transform:translate(-2px,0) } 40% { opacity:.85; transform:translate(-6px,1px) } 43% { transform:translate(3px,-1px) }
+      46% { opacity:.55; transform:translate(-2px,0) } 72% { opacity:.9; transform:translate(-5px,2px) } 75% { transform:translate(-1px,0) } 78% { opacity:.6; transform:translate(-2px,0) } }
+    @keyframes glc { 0% { opacity:.7; transform:translate(2px,0) } 6% { transform:translate(4px,-1px) } 9% { transform:translate(1px,1px) }
+      12% { opacity:.5; transform:translate(2px,0) } 40% { opacity:.85; transform:translate(6px,-1px) } 43% { transform:translate(-3px,1px) }
+      46% { opacity:.5; transform:translate(2px,0) } 72% { opacity:.9; transform:translate(5px,-2px) } 75% { transform:translate(1px,0) } 78% { opacity:.55; transform:translate(2px,0) } }
+    @keyframes gls { 0%,39%,47%,71%,79%,100% { opacity:0; transform:none } 40% { opacity:1; transform:translate(9px,0) } 43% { opacity:1; transform:translate(-7px,0) }
+      72% { opacity:1; transform:translate(-10px,0) } 75% { opacity:1; transform:translate(6px,0) } }
+    @keyframes glb { 0%,100% { transform:none } 40% { transform:translate(1px,0) } 43% { transform:translate(-1px,0) } 46% { transform:none }
+      72% { transform:translate(-1px,1px) } 75% { transform:none } }
+    
+    @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
+  </style>
+  <g clip-path="url(#frame)">
+    <rect width="1200" height="520" fill="url(#bg)"/><rect width="1200" height="520" fill="url(#hzR)"/><rect width="1200" height="520" fill="url(#hzB)"/>
+    <rect width="1200" height="520" fill="url(#dots)"/>
+    <defs><linearGradient id="emb" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="700" y2="0" spreadMethod="reflect"><stop offset="0" stop-color="#FF2448"/><stop offset=".35" stop-color="#FF5A73"/><stop offset=".65" stop-color="#FF8A5B"/><stop offset="1" stop-color="#FF4F86"/><animateTransform attributeName="gradientTransform" type="translate" values="0 0;700 0" dur="9s" repeatCount="indefinite"/></linearGradient></defs><text x="40" y="62" text-anchor="start" class="s" font-size="16" font-weight="700" letter-spacing="2.4" fill="#FF5A73">BENCHMARK · SANDBOX GAME WORLD</text><defs><linearGradient id="axg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="900" y2="0" spreadMethod="reflect"><stop offset="0" stop-color="#FF2448"/><stop offset=".35" stop-color="#FF5A73"/><stop offset=".65" stop-color="#FF8A5B"/><stop offset="1" stop-color="#FF4F86"/><animateTransform attributeName="gradientTransform" type="translate" values="0 0;900 0" dur="9s" repeatCount="indefinite"/></linearGradient></defs><text x="40" y="112" class="s" font-size="40" font-weight="800" letter-spacing="-2"><tspan fill="#FAFFFD">Fresh tasks, </tspan><tspan fill="url(#axg)">100% solved</tspan></text><rect x="1093" y="98" width="16" height="16" rx="4" fill="url(#emb)"/><text x="1117" y="112" class="s" font-size="16" fill="#A8C2D2">RQL</text><rect x="909" y="98" width="16" height="16" rx="4" fill="#6FA8D0" fill-opacity=".45"/><text x="933" y="112" class="s" font-size="16" fill="#A8C2D2">Reflection tools</text><rect x="40" y="150" width="360" height="300" rx="14" fill="url(#card)" stroke="rgba(111,168,208,0.16)"/><text x="62" y="190" class="s" font-size="21" font-weight="700" fill="#FAFFFD">Tokens per task</text><text x="62" y="216" class="s" font-size="16" fill="#8AA6B8">lower is better</text><text x="62" y="268" class="s" font-size="16" fill="#A8C2D2">Reflection tools</text><text x="378" y="268" text-anchor="end" class="m" font-size="18" font-weight="700" fill="#FAFFFD">169,190</text><rect x="62" y="282" width="316" height="22" rx="11" fill="#0D1A25"/><rect x="62" y="282" width="316" height="22" rx="11" fill="#6FA8D0" fill-opacity=".45"/><text x="62" y="360" class="s" font-size="16" fill="#A8C2D2">RQL</text><text x="378" y="360" text-anchor="end" class="m" font-size="18" font-weight="700" fill="#FAFFFD">7,817</text><rect x="62" y="374" width="316" height="22" rx="11" fill="#0D1A25"/><rect x="62" y="374" width="15" height="22" rx="11" fill="url(#emb)"/><rect x="420" y="150" width="360" height="300" rx="14" fill="url(#card)" stroke="rgba(111,168,208,0.16)"/><text x="442" y="190" class="s" font-size="21" font-weight="700" fill="#FAFFFD">Tool calls per task</text><text x="442" y="216" class="s" font-size="16" fill="#8AA6B8">lower is better</text><text x="442" y="268" class="s" font-size="16" fill="#A8C2D2">Reflection tools</text><text x="758" y="268" text-anchor="end" class="m" font-size="18" font-weight="700" fill="#FAFFFD">36.9</text><rect x="442" y="282" width="316" height="22" rx="11" fill="#0D1A25"/><rect x="442" y="282" width="316" height="22" rx="11" fill="#6FA8D0" fill-opacity=".45"/><text x="442" y="360" class="s" font-size="16" fill="#A8C2D2">RQL</text><text x="758" y="360" text-anchor="end" class="m" font-size="18" font-weight="700" fill="#FAFFFD">1.9</text><rect x="442" y="374" width="316" height="22" rx="11" fill="#0D1A25"/><rect x="442" y="374" width="16" height="22" rx="11" fill="url(#emb)"/><rect x="800" y="150" width="360" height="300" rx="14" fill="url(#card)" stroke="rgba(111,168,208,0.16)"/><text x="822" y="190" class="s" font-size="21" font-weight="700" fill="#FAFFFD">Tasks solved</text><text x="822" y="216" class="s" font-size="16" fill="#8AA6B8">higher is better</text><text x="822" y="268" class="s" font-size="16" fill="#A8C2D2">Reflection tools</text><text x="1138" y="268" text-anchor="end" class="m" font-size="18" font-weight="700" fill="#FAFFFD">66.7%</text><rect x="822" y="282" width="316" height="22" rx="11" fill="#0D1A25"/><rect x="822" y="282" width="211" height="22" rx="11" fill="#6FA8D0" fill-opacity=".45"/><text x="822" y="360" class="s" font-size="16" fill="#A8C2D2">RQL</text><text x="1138" y="360" text-anchor="end" class="m" font-size="18" font-weight="700" fill="#FAFFFD">100%</text><rect x="822" y="374" width="316" height="22" rx="11" fill="#0D1A25"/><rect x="822" y="374" width="316" height="22" rx="11" fill="url(#emb)"/><text x="600.0" y="490" text-anchor="middle" class="s" font-size="16" fill="#8AA6B8">30 tasks written after tuning was frozen × 3 runs, one model (DeepSeek V4.1-Flash)</text>
+    <rect x="0" y="518" width="1200" height="2" fill="url(#rule)"/>
+  </g>
+  <rect x=".5" y=".5" width="1199" height="519" rx="18" fill="none" stroke="rgba(111,168,208,0.16)"/>
+</svg>

@@ -1,94 +1,31 @@
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/ai-developer-header.svg?raw=true)
+<b>English</b> | [中文](DOCKER_DEPLOYMENT.zh-CN.md) | [日本語](DOCKER_DEPLOYMENT.ja.md) | [Español](DOCKER_DEPLOYMENT.es.md) | [فارسی](DOCKER_DEPLOYMENT.fa.md) | [हिन्दी](DOCKER_DEPLOYMENT.hi.md) | [العربية](DOCKER_DEPLOYMENT.ar.md)
 
-[![MCP](https://badge.mcpx.dev 'MCP Server')](https://modelcontextprotocol.io/introduction)
-[![OpenUPM](https://img.shields.io/npm/v/com.ivanmurzak.unity.mcp?label=OpenUPM&registry_uri=https://package.openupm.com&labelColor=333A41 'OpenUPM package')](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Docker Image](https://img.shields.io/docker/image-size/aigamedeveloper/mcp-server/latest?label=Docker%20Image&logo=docker&labelColor=333A41 'Docker Image')](https://hub.docker.com/r/aigamedeveloper/mcp-server)
-[![Unity Editor](https://img.shields.io/badge/Editor-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Editor supported')](https://unity.com/releases/editor/archive)
-[![Unity Runtime](https://img.shields.io/badge/Runtime-X?style=flat&logo=unity&labelColor=333A41&color=2A2A2A 'Unity Runtime supported')](https://unity.com/releases/editor/archive)
-[![r](https://github.com/IvanMurzak/Unity-MCP/workflows/release/badge.svg 'Tests Passed')](https://github.com/IvanMurzak/Unity-MCP/actions/workflows/release.yml)</br>
-[![Discord](https://img.shields.io/badge/Discord-Join-7289da?logo=discord&logoColor=white&labelColor=333A41 'Join')](https://discord.gg/cfbdMZX99G)
-[![OpenUPM](https://img.shields.io/badge/dynamic/json?labelColor=333A41&label=Downloads&query=%24.downloads&suffix=%2Fmonth&url=https%3A%2F%2Fpackage.openupm.com%2Fdownloads%2Fpoint%2Flast-month%2Fcom.ivanmurzak.unity.mcp)](https://openupm.com/packages/com.ivanmurzak.unity.mcp/)
-[![Stars](https://img.shields.io/github/stars/IvanMurzak/Unity-MCP 'Stars')](https://github.com/IvanMurzak/Unity-MCP/stargazers)
-[![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&labelColor=333A41)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
-[![Stand With Ukraine](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/badges/StandWithUkraine.svg)](https://stand-with-ukraine.pp.ua)
+# Docker deployment
 
-The MCP Server is available as a lightweight Docker container, ideal for cloud deployments or isolating the AI server environment. The server lives in its own shared repository: [IvanMurzak/GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)
+Run the MCP server in a container, for cloud hosting or an isolated environment. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme) · [MCP server and connection](mcp-server.md).
 
-- **Image**: `aigamedeveloper/mcp-server`
-- **Tags**: `latest`, `X.Y.Z` (e.g., `8.0.0`)
-- **Architectures**: `linux/amd64`, `linux/arm64` (Apple Silicon compatible)
+- **Image:** [`aigamedeveloper/mcp-server`](https://hub.docker.com/r/aigamedeveloper/mcp-server), built from the shared [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) repository
+- **Tags:** `latest` and release versions `X.Y.Z`
+- **Port:** `8080` (exposed)
 
-![Docker Launch](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/editor/docker-launch.gif?raw=true)
+You still need the [AI Game Developer](https://github.com/IvanMurzak/Unity-MCP#quick-start) plugin in your Unity project, set to **Custom** mode with the server's URL (see [connection modes](mcp-server.md#connection-modes)).
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+![Docker launch](img/editor/docker-launch.gif)
 
-## 🚀 Quick Start
+## HTTP (self-hosted, reachable from outside the container)
 
-Run the server on port `8080`:
+The server binds to loopback by default, which is not reachable through a published port. Set `MCP_BIND=any`:
 
 ```bash
-docker run -p 8080:8080 aigamedeveloper/mcp-server:latest
+docker run -p 8080:8080 \
+  -e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp \
+  -e MCP_PLUGIN_PORT=8080 \
+  -e MCP_BIND=any \
+  aigamedeveloper/mcp-server
 ```
 
-> ⚠️ **Required:**
-> 1. Install [Unity Editor](https://unity.com)
-> 2. Install [AI Game Developer](https://github.com/IvanMurzak/Unity-MCP) plugin in Unity project.
+Agent config:
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## ⚙️ Configuration
-
-The server can be configured using environment variables.
-
-| Variable                      | Default          | Description                                                                             |
-| :---------------------------- | :--------------- | :-------------------------------------------------------------------------------------- |
-| `MCP_PLUGIN_PORT`             | `8080`           | The port the server listens on for both Client (HTTP) and Plugin (SignalR) connections. |
-| `MCP_PLUGIN_CLIENT_TRANSPORT` | `streamableHttp` | Transport for the Client connection: `streamableHttp` or `stdio`.                       |
-| `MCP_PLUGIN_CLIENT_TIMEOUT`   | `10000`          | Timeout in milliseconds for Plugin responses.                                           |
-| `MCP_PLUGIN_TOOL_TIMEOUT`     | `300000`         | How long the server waits for one tool call, in milliseconds. A tool call is sent to the Plugin once and never re-sent; when unset, `MCP_PLUGIN_CLIENT_TIMEOUT` if larger. Servers built on McpPlugin 8.11.0+. |
-| `MCP_AUTHORIZATION`           | `none`           | Authentication mode for incoming Client connections: `none` or `required`.              |
-| `MCP_PLUGIN_TOKEN`            | *(unset)*        | Bearer token is optional. If set - server accept only connection with this exact token. Works only with `MCP_AUTHORIZATION=required`. |
-
-### Example: Custom Port
-
-Run on port `9090`:
-
-```bash
-docker run \
-  -e MCP_PLUGIN_PORT=9090 \
-  -p 9090:9090 \
-  aigamedeveloper/mcp-server:latest
-```
-
-### Example: STDIO Mode
-STDIO mode is used when the MCP Client manages the Docker process directly.
-
-```bash
-docker run -i \
-  -e MCP_PLUGIN_CLIENT_TRANSPORT=stdio \
-  -p 8080:8080 \
-  aigamedeveloper/mcp-server:latest
-```
-
-### Example: Bearer Token Authentication
-
-Require a bearer token from the MCP Client:
-
-```bash
-docker run \
-  -e MCP_AUTHORIZATION=required \
-  -e MCP_PLUGIN_TOKEN=your-secret-token \
-  -p 8080:8080 \
-  aigamedeveloper/mcp-server:latest
-```
-
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
-
-## 💻 Client Configuration
-
-To use the Dockerized server with your AI Client (e.g., Claude):
-
-### HTTP Mode (Recommended for Remote/Cloud)
 ```json
 {
   "mcpServers": {
@@ -99,58 +36,61 @@ To use the Dockerized server with your AI Client (e.g., Claude):
 }
 ```
 
-With bearer token authentication (`MCP_AUTHORIZATION=required`):
+Replace the URL with your real endpoint when the server runs elsewhere.
+
+### With a shared token
+
+`token` mode requires one bearer secret from both the agent and the Unity plugin (`UNITY_MCP_TOKEN`, or the token field in the AI Game Developer window). The secret crosses plain HTTP unless TLS terminates in front of the server.
+
+```bash
+docker run -p 8080:8080 \
+  -e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp -e MCP_PLUGIN_PORT=8080 -e MCP_BIND=any \
+  -e MCP_AUTH=token -e MCP_PLUGIN_TOKEN=<secret> \
+  aigamedeveloper/mcp-server
+```
+
 ```json
 {
   "mcpServers": {
     "ai-game-developer": {
       "url": "http://localhost:8080",
-      "headers": {
-        "Authorization": "Bearer your-secret-token"
-      }
+      "headers": { "Authorization": "Bearer <secret>" }
     }
   }
 }
 ```
 
-### STDIO Mode (Managed by Client)
+### Custom port
+
+Publish the same port you set in `MCP_PLUGIN_PORT`:
+
+```bash
+docker run -p 9090:9090 \
+  -e MCP_PLUGIN_CLIENT_TRANSPORT=streamableHttp -e MCP_PLUGIN_PORT=9090 -e MCP_BIND=any \
+  aigamedeveloper/mcp-server
+```
+
+## stdio (the agent starts the container)
+
 ```json
 {
   "mcpServers": {
     "ai-game-developer": {
       "command": "docker",
       "args": [
-        "run",
-        "-t",
-        "--rm",
+        "run", "-i", "--rm",
         "-e", "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
+        "-e", "MCP_BIND=any",
         "-p", "8080:8080",
-        "aigamedeveloper/mcp-server:latest"
+        "aigamedeveloper/mcp-server"
       ]
     }
   }
 }
 ```
 
-With bearer token authentication (`MCP_AUTHORIZATION=required`):
-```json
-{
-  "mcpServers": {
-    "ai-game-developer": {
-      "command": "docker",
-      "args": [
-        "run",
-        "-t",
-        "--rm",
-        "-e", "MCP_PLUGIN_CLIENT_TRANSPORT=stdio",
-        "-e", "MCP_AUTHORIZATION=required",
-        "-e", "MCP_PLUGIN_TOKEN=your-secret-token",
-        "-p", "8080:8080",
-        "aigamedeveloper/mcp-server:latest"
-      ]
-    }
-  }
-}
-```
+The agent talks to the server over the container's stdin and stdout; the published port is for the Unity plugin.
 
-![AI Game Developer — Unity MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/img/promo/hazzard-divider.svg?raw=true)
+## Configuration
+
+All server options are environment variables (`-e NAME=value`). Common ones are listed in [MCP server and connection](mcp-server.md#common-server-options); the full list, including OAuth mode and Redis-backed sessions, is in the [GameDev-MCP-Server README](https://github.com/IvanMurzak/GameDev-MCP-Server#configuration).
