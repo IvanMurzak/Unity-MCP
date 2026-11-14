@@ -24,13 +24,24 @@
 
 </div>
 
-**AI Game Developer**(Unity-MCP)は、AI エージェントを Unity につなぎます。Claude Code、Codex、Cursor、GitHub Copilot、 Gemini など任意の [MCP](https://modelcontextprotocol.io/) クライアントが、**Unity エディター**でシーン、プレハブ、アセット、 C# コードを読み書きし、テストを実行し、スクリーンショットを撮り、**ビルドしたゲームの中**ではあなたが書いたツールを呼び出せます。 無料の Unity パッケージ(`com.ivanmurzak.unity.mcp`)、コマンドラインツール(`unity-mcp-cli`)、10 個のオプション拡張として提供されます。
+**AI Game Developer**(Unity-MCP)は、AI エージェントを Unity につなぎます。Claude Code、Codex、Cursor、GitHub Copilot、Gemini など任意の [MCP](https://modelcontextprotocol.io/) クライアントが、**Unity エディター**でシーン、プレハブ、アセット、C# コードを読み書きし、テストを実行し、スクリーンショットを撮り、**ビルドしたゲームの中**ではあなたが書いたツールを呼び出せます。無料の Unity パッケージ(`com.ivanmurzak.unity.mcp`)、コマンドラインツール(`unity-mcp-cli`)、10 個のオプション拡張として提供されます。
+
+**ステータス:** [最新リリース](https://github.com/IvanMurzak/Unity-MCP/releases/latest)と[変更履歴](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md)。プラグインと `unity-mcp-cli` は同じバージョンを共有します。**Windows、macOS、Linux** でテスト済み・サポート対象です。Unity **2022.3** 以降が必要です。CI は Unity 2022.3、6000.0、6000.3、6000.6 で EditMode、PlayMode、スタンドアロンビルドのテストを実行します。
 
 ## 仕組み
 
 <p align="center"><img src="img/readme/architecture.svg" alt="AI エージェントまたは unity-mcp-cli が MCP でサーバー(既定は ai-game.dev Cloud、またはローカルの gamedev-mcp-server)と通信し、サーバーが Unity エディタープラグインと実行中のゲームのツールを呼び出す" width="100%"></p>
 
-プラグインはツールを MCP サーバーに登録し、エージェントはそのサーバー経由でツールを呼び出します。既定では `https://ai-game.dev/mcp` の **Cloud** サーバーを使います。**Custom** モードでは [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) のローカルバイナリを起動するか、 自分でホストしたサーバー(バイナリまたは Docker)に接続します。MCP ツールの代わりに、生成した **Skills** を使うこともできます。
+プラグインはツールを MCP サーバーに登録し、エージェントはそのサーバー経由でツールを呼び出します。MCP ツールの代わりに、生成した **Skills** を使うこともできます。サーバーをどこで動かすかを選べます:
+
+| | **Local**(Custom モード、アカウント不要) | **Cloud**(既定の設定) |
+| --- | --- | --- |
+| サーバー | プラグインが `127.0.0.1` で起動する [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)、または自分でホストするサーバー | `https://ai-game.dev/mcp` |
+| アカウント | 不要 | ai-game.dev にサインイン |
+| プロジェクトのデータ | あなたのマシンから出ません | ツール呼び出しはリレーを経由します。リレーはメタデータのみを 90 日間保持し、リクエストやレスポンスの内容は保持しません |
+| 料金 | 無料 | 無料 |
+
+**Cloud が既定である理由:** ポートを開く必要がなく、ほかのプログラムとのポート競合を避けられ、無料です。Local はオフラインやエアギャップ環境での作業向けの対等な選択肢です。詳細: [セキュリティとプライバシー](#セキュリティとプライバシー)。
 
 ## 特長
 
@@ -45,29 +56,41 @@
 
 ## クイックスタート
 
-**Unity 2022.3** 以降が必要です。プラグインのインストール方法をひとつ選んでください:
+**Unity 2022.3** 以降が必要です。
+
+**1. プラグインをインストールする**(推奨: インストーラー。ほかに何もインストールする必要はありません):
 
 [![インストーラーをダウンロード](img/button/button_download_ja.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
-- **インストーラー**: 上の `.unitypackage` をダウンロードし、Unity プロジェクトで開きます。
-- **OpenUPM**: `openupm add com.ivanmurzak.unity.mcp`
-- **CLI**(Node.js 22.14+)、エディター不要:
+プロジェクトを開いた状態で、ダウンロードした `.unitypackage` を開きます(ダブルクリック、または **Assets ▸ Import Package ▸ Custom Package**)。
 
-```bash
-npm install -g unity-mcp-cli
-unity-mcp-cli install-plugin ./MyUnityProject   # Packages/manifest.json にプラグインを追加
-unity-mcp-cli login                             # ブラウザで ai-game.dev にサインイン
-unity-mcp-cli open ./MyUnityProject             # Unity を開く。接続して skills を生成
-```
+<details>
+<summary>その他のインストール方法: OpenUPM / Package Manager、またはスクリプトや CI 向けの CLI</summary>
 
-<p align="center"><img src="img/readme/terminal.svg" alt="ターミナルの例: unity-mcp-cli のインストール、プラグインの追加、サインイン、Claude Code の設定、プロジェクトを開く" width="100%"></p>
+- **OpenUPM** — `openupm add com.ivanmurzak.unity.mcp`。CLI を使わない場合は、**Edit ▸ Project Settings ▸ Package Manager** でスコープ付きレジストリを追加し(URL `https://package.openupm.com`、スコープ `com.ivanmurzak` と `extensions.unity`)、**Window ▸ Package Manager ▸ + ▸ Add package by name** → `com.ivanmurzak.unity.mcp` を指定します。
+- **unity-mcp-cli**(Node.js 22.14+)— スクリプトや CI 向け、エディター不要:
 
-次にエージェントを接続します: Unity で **Window ▸ AI Game Dev** を開き、**Auto-generate** Skills(推奨)または **Configure** MCP をクリックします。ターミナルからは次のとおりです:
+  ```bash
+  npm install -g unity-mcp-cli
+  unity-mcp-cli install-plugin ./MyUnityProject   # Packages/manifest.json にプラグインを追加
+  unity-mcp-cli open ./MyUnityProject             # プロジェクトを Unity で開く
+  ```
 
-```bash
-unity-mcp-cli setup-skills claude-code ./MyUnityProject
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject
-```
+  <p align="center"><img src="img/readme/terminal.svg" alt="ターミナルの例: unity-mcp-cli のインストール、プラグインの追加、サインイン、Claude Code の設定、プロジェクトを開く" width="100%"></p>
+
+</details>
+
+**2. エージェントを接続する** — どちらかを選んでください。どちらも完全にサポートされています:
+
+| | **Local**(アカウント不要) | **Cloud**(既定の設定) |
+| --- | --- | --- |
+| **Window ▸ AI Game Dev** で | 接続を **Custom** に | 接続を **Cloud** にし、**Authorize**(ブラウザでサインイン) |
+| エージェントの設定 | 使うエージェントで **Configure** | 使うエージェントで **Configure** |
+| CLI で同じことをする | `unity-mcp-cli setup-mcp claude-code ./MyUnityProject --transport stdio` | `unity-mcp-cli login` の後、`unity-mcp-cli setup-mcp claude-code ./MyUnityProject` |
+
+MCP の代わりに、同じウィンドウで Skills を **Auto-generate** することもできます。その他のエージェント: [クライアント設定](#クライアント設定)。
+
+**3. Local のみ: ツールを呼び出せる相手を選ぶ。** ローカルサーバーは認証 `none` で起動します。`127.0.0.1` でのみ待ち受け、外部のブラウザオリジンは拒否しますが、あなたのマシン上のどのプログラムからも到達できます。ほかの人や信頼できないプログラムがそのマシンを使う場合は、ワンステップで `token` に切り替えてください: **Window ▸ AI Game Dev** → **Authorization Token** → `token`。サーバーは生成されたシークレットで再起動します。エージェントがそれを送信するよう、もう一度 **Configure** を押してください。
 
 ![AI Game Developer ウィンドウ](img/editor/ai-game-developer-windows.png)
 
@@ -85,7 +108,20 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 Rigidbody のない敵プレハブをすべて探して Rigidbody を追加して
 ```
 
-**ツール。** 既定で表示: `rql-query`、`rql-mutate`、`rql-schema`、`script-execute`、`tests-run`、 `screenshot-isolated`、`package-*` と `assetstore-*` のツール、`unity-tool-list`。ほかのツールもインストール済みですが、 表示するまで隠れています。全一覧: **[既定の MCP ツール](default-mcp-tools.ja.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+**エージェントにできること**(既定で表示されるツール):
+
+| 機能 | ツール | プロンプトの例 |
+| --- | --- | --- |
+| シーンと GameObject | `rql-query`、`rql-mutate` | *「開いているシーンで無効になっている GameObject をすべて一覧にして」* |
+| アセットとプレハブ | `rql-query`、`rql-mutate` | *「赤いマテリアルを作って、すべての立方体に割り当てて」* |
+| コンソールとエディターの状態 | `rql-query` | *「コンソールにどんなエラーが出ている?」* |
+| エディターでの C# | `script-execute` | *「テレイン上のランダムな位置に木を 100 本配置する C# を実行して」* |
+| テスト | `tests-run` | *「EditMode テストを実行して、失敗したものを修正して」* |
+| スクリーンショット | `screenshot-isolated` | *「Player モデルを正面から見せて」* |
+| パッケージと Asset Store | `package-*`、`assetstore-*` | *「Cinemachine をインストールして」* |
+| ツール一覧 | `unity-tool-list` | *「ここで使えるツールは?」* |
+
+RQL を覚える必要はありません。エージェントが RQL を書き、必要なソース、型、呼び出しごとに `rql-schema` に問い合わせます。ほかのツールもインストール済みですが、表示するまで隠れています。全一覧: **[既定の MCP ツール](default-mcp-tools.ja.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **ターミナルから**(エディターが起動していなければヘッドレスで起動します):
 
@@ -115,6 +151,71 @@ public class Tool_Score
 ```
 
 プロンプト、ランタイム(ゲーム内)ツール、完全な例: **[独自ツールとランタイム](custom-tools.ja.md)**。
+
+## クライアント設定
+
+AI Game Developer ウィンドウの **Configure** ボタン、または `unity-mcp-cli setup-mcp <agent> ./MyUnityProject` が、これらのファイルを書き込みます(既定は Cloud、`--transport stdio` でローカル)。ローカルサーバー用に手動で設定する場合: プラグインを **Custom** にし、ウィンドウで `<port>` を確認し、`<project>/Library/mcp-server/<rid>/` にあるお使いのプラットフォーム用のバイナリを使います(`win-x64/gamedev-mcp-server.exe`、`osx-arm64/gamedev-mcp-server`、`linux-x64/gamedev-mcp-server` など)。
+
+<details>
+<summary><b>Claude Code</b> — プロジェクトルートの <code>.mcp.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b> — <code>.cursor/mcp.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "type": "stdio",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Codex</b> — <code>.codex/config.toml</code></summary>
+
+```toml
+[mcp_servers.ai-game-developer]
+enabled = true
+command = "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe"
+args = ["port=<port>", "client-transport=stdio"]
+tool_timeout_sec = 300
+```
+
+</details>
+
+その他のエージェントと手動設定: [インストールガイド](installation.ja.md)。
+
+## セキュリティとプライバシー
+
+**最もプライベートな構成:** 接続を **Custom** にし(`127.0.0.1` 上のローカルサーバー、アカウント不要、プロジェクトのデータはあなたのマシンから出ません)、**Window ▸ AI Game Dev** で **Authorization Token** を `token` に設定してから、エージェントがシークレットを送信するようもう一度 **Configure** を押します。
+
+✅ **プラグインはポートを開きません** — プラグインから MCP サーバーへ外向きに接続します。\
+✅ **ローカルサーバーはループバック上** — ホスティング用に `MCP_BIND` を設定しない限り、`gamedev-mcp-server` は `127.0.0.1` にバインドします。\
+✅ **オリジンチェック** — 許可されていない `Origin` を持つブラウザからのリクエストは、どの認証モードでも拒否されます(403)。\
+✅ **認証モード** — `none`(ローカルの既定)、`token`(エージェントとプラグインの両方が送信する必要がある共有シークレット 1 つ)、`oauth`(ai-game.dev アカウント)。\
+✅ **Cloud リレー** — ツール呼び出しを中継し、送信した内容は保存しません。リクエストやレスポンスの内容は一切保存されません。保持するのはメタデータ(IP、時刻、ツール名、サイズ)のみで、期間は 90 日間です。\
+⚠️ **保護されないもの** — `none` モードでは、ポートに到達できるマシン上のどのプロセスもツールを呼び出せ、ツールはエディターの権限で実行されます(`script-execute` は C# を実行します)。共有マシンでは `token` モードを使ってください。
+
+サーバーのオプションと Docker: [MCP サーバーと接続](mcp-server.ja.md)。
 
 ## 拡張
 
@@ -157,8 +258,8 @@ unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityPr
 
 ## コントリビュート
 
-アイデア、バグ報告、プルリクエストを歓迎します。 [開発ガイド](dev/Development.ja.md) を読み、リポジトリをフォークし、 Unity で `./Unity-MCP-Plugin` を開いて、`main` へプルリクエストを送ってください。役に立ったらスターをお願いします。
+アイデア、バグ報告、プルリクエストを歓迎します。[開発ガイド](dev/Development.ja.md)を読み、リポジトリをフォークし、Unity で `./Unity-MCP-Plugin` を開いて、`main` へプルリクエストを送ってください。役に立ったらスターをお願いします。
 
 ## ライセンス
 
-[Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+**ゲーム開発には無料で使えます。商用ゲームも含みます。** プラグインは [Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE) です。[RQL](https://github.com/IvanMurzak/RQL) と [Code-Exec](https://github.com/IvanMurzak/Code-Exec) を使用しており、これらは PolyForm Shield 1.0.0 でライセンスされています。このライセンスが制限するのは、ゲーム開発向けの競合 AI ツールを作る企業だけです。ゲーム開発者はすべてを自由に使えます。

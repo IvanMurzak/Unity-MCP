@@ -6,7 +6,7 @@
 
 ## 要件
 
-- **Unity 2022.3** 以降。
+- **Windows、macOS、Linux** 上の **Unity 2022.3** 以降(3 つすべてでテスト済み・サポート対象)。
 - **スペースを含まない**プロジェクトパス。パスにスペースが含まれていると、プラグインは起動時にエラーをログに出力します。
   - ✅ `C:/MyProjects/MyProject`
   - ❌ `C:/My Projects/MyProject`

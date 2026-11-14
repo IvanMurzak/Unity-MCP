@@ -24,13 +24,24 @@
 
 </div>
 
-**AI Game Developer**(Unity-MCP)把你的 AI 智能体连接到 Unity。Claude Code、Codex、Cursor、GitHub Copilot、 Gemini 或任何其他 [MCP](https://modelcontextprotocol.io/) 客户端都可以在 **Unity 编辑器**中读取和修改场景、预制体、资源和 C# 代码,运行测试并截图,还能在**编译后的游戏内**调用你编写的工具。 它以免费的 Unity 包(`com.ivanmurzak.unity.mcp`)、命令行工具(`unity-mcp-cli`)和十个可选扩展的形式提供。
+**AI Game Developer**(Unity-MCP)把你的 AI 智能体连接到 Unity。Claude Code、Codex、Cursor、GitHub Copilot、Gemini 或任何其他 [MCP](https://modelcontextprotocol.io/) 客户端都可以在 **Unity 编辑器**中读取和修改场景、预制体、资源和 C# 代码,运行测试并截图,还能在**编译后的游戏内**调用你编写的工具。它以免费的 Unity 包(`com.ivanmurzak.unity.mcp`)、命令行工具(`unity-mcp-cli`)和十个可选扩展的形式提供。
+
+**状态:** [最新版本](https://github.com/IvanMurzak/Unity-MCP/releases/latest)和[更新日志](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md)。插件和 `unity-mcp-cli` 共用同一个版本号。已在 **Windows、macOS 和 Linux** 上测试并支持。需要 Unity **2022.3** 或更高版本;CI 在 Unity 2022.3、6000.0、6000.3 和 6000.6 上运行 EditMode、PlayMode 和独立构建测试。
 
 ## 工作原理
 
 <p align="center"><img src="img/readme/architecture.svg" alt="AI 智能体或 unity-mcp-cli 通过 MCP 与服务器通信(默认是 ai-game.dev Cloud,或本地 gamedev-mcp-server),服务器调用 Unity 编辑器插件和正在运行的游戏中的工具" width="100%"></p>
 
-插件把它的工具注册到 MCP 服务器,智能体通过该服务器调用这些工具。默认情况下插件使用 `https://ai-game.dev/mcp` 上的 **Cloud** 服务器。在 **Custom** 模式下,它会启动本地的 [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) 程序,或连接到你自己托管的服务器 (二进制或 Docker)。除了 MCP 工具,智能体也可以使用生成的 **Skills**。
+插件把它的工具注册到 MCP 服务器,智能体通过该服务器调用这些工具。除了 MCP 工具,智能体也可以使用生成的 **Skills**。你可以选择服务器运行的位置:
+
+| | **本地**(Custom 模式,无需账号) | **Cloud**(默认设置) |
+| --- | --- | --- |
+| 服务器 | 由插件在 `127.0.0.1` 上启动的 [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server),或你自己托管的服务器 | `https://ai-game.dev/mcp` |
+| 账号 | 不需要 | 登录 ai-game.dev |
+| 你的项目数据 | 保留在你的电脑上 | 工具调用经由中继转发;中继只保留元数据 90 天,从不保存请求或响应内容 |
+| 费用 | 免费 | 免费 |
+
+**为什么默认使用 Cloud:** 它不需要开放任何端口,避免与其他程序发生端口冲突,而且免费。本地模式是同样可行的选择,适用于离线或物理隔离(air-gapped)环境。详情:[安全与隐私](#安全与隐私)。
 
 ## 功能
 
@@ -45,33 +56,45 @@
 
 ## 快速开始
 
-需要 **Unity 2022.3** 或更高版本。选择一种方式安装插件:
+需要 **Unity 2022.3** 或更高版本。
+
+**1. 安装插件**(推荐使用安装器,无需安装其他任何东西):
 
 [![下载安装器](img/button/button_download_zh-CN.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
-- **安装器**:下载上面的 `.unitypackage` 并在 Unity 项目中打开。
-- **OpenUPM**: `openupm add com.ivanmurzak.unity.mcp`
-- **CLI**(Node.js 22.14+),无需打开编辑器:
+在项目已打开的状态下打开下载的 `.unitypackage`(双击它,或使用 **Assets ▸ Import Package ▸ Custom Package**)。
 
-```bash
-npm install -g unity-mcp-cli
-unity-mcp-cli install-plugin ./MyUnityProject   # 把插件加入 Packages/manifest.json
-unity-mcp-cli login                             # 在浏览器中登录 ai-game.dev
-unity-mcp-cli open ./MyUnityProject             # 打开 Unity;自动连接并生成 skills
-```
+<details>
+<summary>其他安装方式:OpenUPM / Package Manager,或用于脚本和 CI 的 CLI</summary>
 
-<p align="center"><img src="img/readme/terminal.svg" alt="终端示例:安装 unity-mcp-cli、添加插件、登录、配置 Claude Code 并打开项目" width="100%"></p>
+- **OpenUPM** — `openupm add com.ivanmurzak.unity.mcp`;或者不使用任何 CLI:在 **Edit ▸ Project Settings ▸ Package Manager** 中添加作用域注册表(URL `https://package.openupm.com`,作用域 `com.ivanmurzak` 和 `extensions.unity`),然后通过 **Window ▸ Package Manager ▸ + ▸ Add package by name** → `com.ivanmurzak.unity.mcp`。
+- **unity-mcp-cli**(Node.js 22.14+)— 用于脚本和 CI,无需打开编辑器:
 
-然后连接智能体:在 Unity 中打开 **Window ▸ AI Game Dev**,点击 **Auto-generate** Skills(推荐)或 **Configure** MCP。或在终端中:
+  ```bash
+  npm install -g unity-mcp-cli
+  unity-mcp-cli install-plugin ./MyUnityProject   # 把插件加入 Packages/manifest.json
+  unity-mcp-cli open ./MyUnityProject             # 在 Unity 中打开项目
+  ```
 
-```bash
-unity-mcp-cli setup-skills claude-code ./MyUnityProject
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject
-```
+  <p align="center"><img src="img/readme/terminal.svg" alt="终端示例:安装 unity-mcp-cli、添加插件、登录、配置 Claude Code 并打开项目" width="100%"></p>
+
+</details>
+
+**2. 连接智能体** — 任选其一,两种方式都完全支持:
+
+| | **本地**(无需账号) | **Cloud**(默认设置) |
+| --- | --- | --- |
+| 在 **Window ▸ AI Game Dev** 中 | 连接方式选 **Custom** | 连接方式选 **Cloud**,然后点击 **Authorize**(在浏览器中登录) |
+| 智能体配置 | 为你的智能体点击 **Configure** | 为你的智能体点击 **Configure** |
+| 用 CLI 完成同样操作 | `unity-mcp-cli setup-mcp claude-code ./MyUnityProject --transport stdio` | `unity-mcp-cli login`,然后 `unity-mcp-cli setup-mcp claude-code ./MyUnityProject` |
+
+在同一窗口中 **Auto-generate** Skills 是 MCP 之外的另一种选择。其他智能体:[客户端设置](#客户端设置)。
+
+**3. 仅限本地:选择谁可以调用你的工具。** 本地服务器以 `none` 认证模式启动:它只监听 `127.0.0.1` 并拒绝外部浏览器来源,但你电脑上的任何程序都能访问它。如果有其他人或不受信任的程序使用这台电脑,一步切换到 `token`:**Window ▸ AI Game Dev** → **Authorization Token** → `token`。服务器会用生成的密钥重启;再次点击 **Configure**,让智能体发送该密钥。
 
 ![AI Game Developer 窗口](img/editor/ai-game-developer-windows.png)
 
-让智能体 *“在半径为 2 的圆上创建 3 个立方体”*,看着它完成。完整步骤、手动 MCP 配置和卸载: **[安装指南](installation.zh-CN.md)**。
+让智能体 *“在半径为 2 的圆上创建 3 个立方体”*,看着它完成。完整步骤、手动 MCP 配置和卸载:**[安装指南](installation.zh-CN.md)**。
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
@@ -85,7 +108,20 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 找到所有没有 Rigidbody 的敌人预制体并添加一个
 ```
 
-**工具。** 默认显示:`rql-query`、`rql-mutate`、`rql-schema`、`script-execute`、`tests-run`、 `screenshot-isolated`、`package-*` 和 `assetstore-*` 工具以及 `unity-tool-list`。其他工具已安装, 但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](default-mcp-tools.zh-CN.md)** 或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+**智能体能做什么**(默认显示的工具):
+
+| 能力 | 工具 | 示例提示词 |
+| --- | --- | --- |
+| 场景和 GameObject | `rql-query`、`rql-mutate` | *“列出当前打开场景中所有被禁用的 GameObject”* |
+| 资源和预制体 | `rql-query`、`rql-mutate` | *“创建一个红色材质并赋给所有立方体”* |
+| 控制台和编辑器状态 | `rql-query` | *“控制台里有哪些错误?”* |
+| 编辑器中的 C# | `script-execute` | *“运行 C#,在地形上的随机位置放置 100 棵树”* |
+| 测试 | `tests-run` | *“运行 EditMode 测试并修复失败的部分”* |
+| 截图 | `screenshot-isolated` | *“给我看 Player 模型的正面”* |
+| 包和 Asset Store | `package-*`、`assetstore-*` | *“安装 Cinemachine”* |
+| 工具列表 | `unity-tool-list` | *“你在这里可以使用哪些工具?”* |
+
+你不需要学习 RQL:智能体会自己编写,并向 `rql-schema` 查询所需的每个数据源、类型和调用。其他工具已安装,但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](default-mcp-tools.zh-CN.md)** 或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **在终端中**(没有编辑器运行时会启动一个无界面编辑器):
 
@@ -115,6 +151,71 @@ public class Tool_Score
 ```
 
 提示词、运行时(游戏内)工具和完整示例:**[自定义工具与运行时](custom-tools.zh-CN.md)**。
+
+## 客户端设置
+
+AI Game Developer 窗口中的 **Configure** 按钮,或 `unity-mcp-cli setup-mcp <agent> ./MyUnityProject`,会替你写好这些文件(默认使用 Cloud,加 `--transport stdio` 则使用本地)。若要手动配置本地服务器:把插件设为 **Custom**,从窗口中获取 `<port>`,并使用 `<project>/Library/mcp-server/<rid>/` 中对应你平台的二进制文件(`win-x64/gamedev-mcp-server.exe`、`osx-arm64/gamedev-mcp-server`、`linux-x64/gamedev-mcp-server` 等)。
+
+<details>
+<summary><b>Claude Code</b> — 项目根目录下的 <code>.mcp.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b> — <code>.cursor/mcp.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "type": "stdio",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Codex</b> — <code>.codex/config.toml</code></summary>
+
+```toml
+[mcp_servers.ai-game-developer]
+enabled = true
+command = "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe"
+args = ["port=<port>", "client-transport=stdio"]
+tool_timeout_sec = 300
+```
+
+</details>
+
+其他智能体和手动设置:[安装指南](installation.zh-CN.md)。
+
+## 安全与隐私
+
+**最私密的设置:** 连接方式选 **Custom**(本地服务器运行在 `127.0.0.1`,无需账号,项目数据保留在你的电脑上),并在 **Window ▸ AI Game Dev** 中把 **Authorization Token** 设为 `token`,然后再次点击 **Configure**,让智能体发送该密钥。
+
+✅ **插件不开放任何端口** — 它主动向外连接 MCP 服务器。\
+✅ **本地服务器仅监听回环地址** — `gamedev-mcp-server` 绑定到 `127.0.0.1`,除非你为托管设置了 `MCP_BIND`。\
+✅ **来源检查** — 在所有认证模式下,带有不被允许的 `Origin` 的浏览器请求都会被拒绝(403)。\
+✅ **认证模式** — `none`(本地默认)、`token`(智能体和插件都必须发送的同一个共享密钥)、`oauth`(ai-game.dev 账号)。\
+✅ **Cloud 中继** — 转发工具调用,不保存你发送的内容:不保存任何请求或响应内容。它只保留元数据(IP、时间、工具名称、数据大小)90 天。\
+⚠️ **不受保护的情况** — 在 `none` 模式下,你电脑上任何能访问该端口的进程都可以调用工具,而工具以编辑器权限运行(`script-execute` 会运行 C#)。在共享电脑上请使用 `token` 模式。
+
+服务器选项和 Docker:[MCP 服务器与连接](mcp-server.zh-CN.md)。
 
 ## 扩展
 
@@ -157,8 +258,8 @@ unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityPr
 
 ## 参与贡献
 
-欢迎提出想法、报告问题和提交 Pull Request。请阅读 [开发指南](dev/Development.zh-CN.md),fork 本仓库, 在 Unity 中打开 `./Unity-MCP-Plugin`,然后向 `main` 提交 Pull Request。如果项目对你有帮助,请点个 Star。
+欢迎提出想法、报告问题和提交 Pull Request。请阅读[开发指南](dev/Development.zh-CN.md),fork 本仓库,在 Unity 中打开 `./Unity-MCP-Plugin`,然后向 `main` 提交 Pull Request。如果项目对你有帮助,请点个 Star。
 
 ## 许可证
 
-[Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+**可免费用于游戏开发,包括商业游戏。** 插件采用 [Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE) 许可证。它使用了 [RQL](https://github.com/IvanMurzak/RQL) 和 [Code-Exec](https://github.com/IvanMurzak/Code-Exec),二者采用 PolyForm Shield 1.0.0 许可证:该许可证仅限制开发与之竞争的游戏开发 AI 工具的公司。游戏开发者可以自由使用全部内容。

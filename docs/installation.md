@@ -6,7 +6,7 @@ Install the **AI Game Developer** plugin into a Unity project, connect an AI age
 
 ## Requirements
 
-- **Unity 2022.3** or newer.
+- **Unity 2022.3** or newer on **Windows, macOS or Linux** (all three are tested and supported).
 - A project path **without spaces**. The plugin logs an error at startup when the path contains one.
   - ✅ `C:/MyProjects/MyProject`
   - ❌ `C:/My Projects/MyProject`

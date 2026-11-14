@@ -6,7 +6,7 @@ Instala el plugin **AI Game Developer** en un proyecto de Unity, conecta un agen
 
 ## Requisitos
 
-- **Unity 2022.3** o posterior.
+- **Unity 2022.3** o posterior en **Windows, macOS o Linux** (los tres están probados y son compatibles).
 - Una ruta de proyecto **sin espacios**. El plugin registra un error al iniciarse cuando la ruta contiene alguno.
   - ✅ `C:/MyProjects/MyProject`
   - ❌ `C:/My Projects/MyProject`

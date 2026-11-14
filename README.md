@@ -26,7 +26,7 @@
 
 **AI Game Developer** (Unity-MCP) connects your AI agent to Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini or any other [MCP](https://modelcontextprotocol.io/) client can read and change scenes, prefabs, assets and C# code, run tests and take screenshots in the **Unity Editor**, and call tools you write **inside your compiled game**. It ships as a free Unity package (`com.ivanmurzak.unity.mcp`), a command-line tool (`unity-mcp-cli`) and ten optional extensions.
 
-**Status:** current version **1.11.1** — see [GitHub Releases](https://github.com/IvanMurzak/Unity-MCP/releases) and the [changelog](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md). The plugin and `unity-mcp-cli` share one version. Requires Unity **2022.3** or newer; CI runs EditMode, PlayMode and standalone-build tests on Unity 2022.3, 6000.0, 6000.3 and 6000.6.
+**Status:** [latest release](https://github.com/IvanMurzak/Unity-MCP/releases/latest) and [changelog](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md). The plugin and `unity-mcp-cli` share one version. Tested and supported on **Windows, macOS and Linux**. Requires Unity **2022.3** or newer; CI runs EditMode, PlayMode and standalone-build tests on Unity 2022.3, 6000.0, 6000.3 and 6000.6.
 
 ## How it works
 
@@ -38,9 +38,10 @@ The plugin registers its tools with an MCP server; your agent calls them through
 | --- | --- | --- |
 | Server | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) started by the plugin on `127.0.0.1`, or one you host | `https://ai-game.dev/mcp` |
 | Account | Not needed | Sign in to ai-game.dev |
-| Your project data | Stays on your machine | Tool calls pass through the relay; their contents are not stored ([privacy](https://ai-game.dev/legal/privacy)) |
+| Your project data | Stays on your machine | Tool calls pass through the relay; it keeps only metadata for 90 days, never request or response content |
+| Cost | Free | Free |
 
-See [Security and privacy](#security-and-privacy) for details.
+**Why Cloud is the default:** it needs no open ports and avoids port conflicts with other programs, and it is free. Local is an equal option for offline or air-gapped work. Details: [Security and privacy](#security-and-privacy).
 
 ## Features
 
@@ -211,7 +212,7 @@ Other agents and manual setup: [Installation guide](https://github.com/IvanMurza
 ✅ **Local server on loopback** — `gamedev-mcp-server` binds to `127.0.0.1` unless you set `MCP_BIND` for hosting.\
 ✅ **Origin checks** — browser requests with a non-allowed `Origin` are rejected (403) in every auth mode.\
 ✅ **Auth modes** — `none` (local default), `token` (one shared secret the agent and the plugin must both send), `oauth` (ai-game.dev account).\
-✅ **Cloud relay** — routes tool calls without inspecting or storing their contents; it logs metadata such as IP, time, tool name and sizes ([privacy policy](https://ai-game.dev/legal/privacy)).\
+✅ **Cloud relay** — routes tool calls and does not store what you send: no request or response content. It keeps only metadata (IP, time, tool name, sizes) for 90 days.\
 ⚠️ **Not protected** — in `none` mode any process on your machine that reaches the port can call tools, and tools run with Editor rights (`script-execute` runs C#). Use `token` mode on shared machines.
 
 Server options and Docker: [MCP server and connection](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md).
@@ -261,4 +262,4 @@ Ideas, bug reports and pull requests are welcome. Read the [Development guide](h
 
 ## License
 
-[Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+**Free for game development, commercial games included.** The plugin is [Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE). It uses [RQL](https://github.com/IvanMurzak/RQL) and [Code-Exec](https://github.com/IvanMurzak/Code-Exec), licensed under PolyForm Shield 1.0.0: that license restricts only companies that build competing AI tools for game development. Game developers can use everything freely.

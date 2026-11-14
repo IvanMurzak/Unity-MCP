@@ -6,7 +6,7 @@
 
 ## 要求
 
-- **Unity 2022.3** 或更高版本。
+- **Unity 2022.3** 或更高版本，运行于 **Windows、macOS 或 Linux**（三者均已测试并支持）。
 - 项目路径**不能包含空格**。路径中含有空格时，插件会在启动时记录一条错误。
   - ✅ `C:/MyProjects/MyProject`
   - ❌ `C:/My Projects/MyProject`

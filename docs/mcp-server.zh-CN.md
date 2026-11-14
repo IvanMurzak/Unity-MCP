@@ -21,6 +21,8 @@
 | **Cloud**（默认） | `https://ai-game.dev/mcp` | 通过窗口或 `unity-mcp-cli login` 登录。从不启动本地服务器，即使 `keepServerRunning` 为 `true` 也是如此。 |
 | **Custom** | 本地 `gamedev-mcp-server`，或你托管的任意 URL | 保存的 `host` 字段仅在此模式下使用。要使用本地服务器，请在窗口中选择 **Custom**，或在 Unity 关闭时设置 `"connectionMode": "Custom"`。 |
 
+**为什么默认使用 Cloud：** 它不需要开放任何端口，避免与其他程序发生端口冲突，而且免费。中继只保留元数据（IP、时间、工具名称、数据大小）90 天，从不保存请求或响应内容。**Custom** 是同样可行的选择，适用于离线或物理隔离（air-gapped）环境。
+
 在使用本地服务器的 Custom 模式下，插件会将 `McpServerManager.cs` 中 `ServerVersion` 固定的服务器版本下载到 `Library/mcp-server/<rid>/` 并启动它。**Tools ▸ AI Game Developer ▸ Server** 中提供 *Download Binaries* 和 *Open Server Logs*。
 
 ## 插件环境变量

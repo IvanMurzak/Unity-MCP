@@ -26,11 +26,22 @@
 
 **AI Game Developer** (Unity-MCP) आपके AI एजेंट को Unity से जोड़ता है। Claude Code, Codex, Cursor, GitHub Copilot, Gemini या कोई भी दूसरा [MCP](https://modelcontextprotocol.io/) क्लाइंट **Unity Editor** में सीन, प्रीफ़ैब, एसेट और C# कोड पढ़ और बदल सकता है, टेस्ट चला सकता है और स्क्रीनशॉट ले सकता है, और **आपके कंपाइल किए गए गेम के अंदर** आपके लिखे टूल कॉल कर सकता है। यह एक मुफ़्त Unity पैकेज (`com.ivanmurzak.unity.mcp`), एक कमांड-लाइन टूल (`unity-mcp-cli`) और दस वैकल्पिक एक्सटेंशन के रूप में आता है।
 
+**स्थिति:** [नवीनतम रिलीज़](https://github.com/IvanMurzak/Unity-MCP/releases/latest) और [चेंजलॉग](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md)। प्लगइन और `unity-mcp-cli` का वर्ज़न एक ही होता है। **Windows, macOS और Linux** पर टेस्ट किया गया और समर्थित। Unity **2022.3** या नया चाहिए; CI Unity 2022.3, 6000.0, 6000.3 और 6000.6 पर EditMode, PlayMode और स्टैंडअलोन-बिल्ड टेस्ट चलाता है।
+
 ## यह कैसे काम करता है
 
 <p align="center"><img src="img/readme/architecture.svg" alt="एक AI एजेंट या unity-mcp-cli एक सर्वर से MCP पर बात करता है (डिफ़ॉल्ट रूप से ai-game.dev Cloud, या एक लोकल gamedev-mcp-server), जो Unity Editor प्लगइन और आपके चलते हुए गेम के टूल कॉल करता है" width="100%"></p>
 
-प्लगइन अपने टूल एक MCP सर्वर में रजिस्टर करता है; आपका एजेंट उन्हें उसी सर्वर के ज़रिए कॉल करता है। डिफ़ॉल्ट रूप से प्लगइन `https://ai-game.dev/mcp` पर **Cloud** सर्वर का उपयोग करता है। **Custom** मोड में यह लोकल [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) बाइनरी शुरू करता है, या आपके होस्ट किए सर्वर (बाइनरी या Docker) से जुड़ता है। MCP टूल की जगह एजेंट जनरेट किए गए **Skills** भी इस्तेमाल कर सकता है।
+प्लगइन अपने टूल एक MCP सर्वर में रजिस्टर करता है; आपका एजेंट उन्हें उसी सर्वर के ज़रिए कॉल करता है। MCP टूल की जगह एजेंट जनरेट किए गए **Skills** भी इस्तेमाल कर सकता है। सर्वर कहाँ चले, यह आप चुनते हैं:
+
+| | **Local** (Custom मोड, अकाउंट नहीं) | **Cloud** (डिफ़ॉल्ट सेटिंग) |
+| --- | --- | --- |
+| सर्वर | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server), जिसे प्लगइन `127.0.0.1` पर शुरू करता है, या आपका होस्ट किया हुआ | `https://ai-game.dev/mcp` |
+| अकाउंट | ज़रूरत नहीं | ai-game.dev पर साइन इन करें |
+| आपके प्रोजेक्ट का डेटा | आपकी मशीन पर ही रहता है | टूल कॉल रिले से होकर जाते हैं; रिले 90 दिनों तक केवल मेटाडेटा रखता है, अनुरोध या प्रतिक्रिया की सामग्री कभी नहीं |
+| लागत | मुफ़्त | मुफ़्त |
+
+**Cloud डिफ़ॉल्ट क्यों है:** इसमें कोई पोर्ट खोलने की ज़रूरत नहीं होती, यह दूसरे प्रोग्रामों के साथ पोर्ट टकराव से बचाता है, और यह मुफ़्त है। ऑफ़लाइन या एयर-गैप्ड काम के लिए Local एक बराबर का विकल्प है। विवरण: [सुरक्षा और गोपनीयता](#सुरक्षा-और-गोपनीयता)।
 
 ## विशेषताएँ
 
@@ -45,29 +56,41 @@
 
 ## जल्दी शुरू करें
 
-**Unity 2022.3** या नया चाहिए। प्लगइन इंस्टॉल करने का एक तरीका चुनें:
+**Unity 2022.3** या नया चाहिए।
+
+**1. प्लगइन इंस्टॉल करें** (सुझाया गया: इंस्टॉलर, इसके अलावा कुछ इंस्टॉल नहीं करना पड़ता):
 
 [![इंस्टॉलर डाउनलोड करें](img/button/button_download_hi.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
-- **इंस्टॉलर**: ऊपर से `.unitypackage` डाउनलोड करें और अपने Unity प्रोजेक्ट में खोलें।
-- **OpenUPM**: `openupm add com.ivanmurzak.unity.mcp`
-- **CLI** (Node.js 22.14+), Editor की ज़रूरत नहीं:
+प्रोजेक्ट खुला रखते हुए डाउनलोड किया गया `.unitypackage` खोलें (उस पर डबल-क्लिक करें, या **Assets ▸ Import Package ▸ Custom Package**)।
 
-```bash
-npm install -g unity-mcp-cli
-unity-mcp-cli install-plugin ./MyUnityProject   # प्लगइन को Packages/manifest.json में जोड़ें
-unity-mcp-cli login                             # ब्राउज़र में ai-game.dev पर साइन इन करें
-unity-mcp-cli open ./MyUnityProject             # Unity खोलें; यह जुड़ता है और skills बनाता है
-```
+<details>
+<summary>इंस्टॉल करने के दूसरे तरीके: OpenUPM / Package Manager, या स्क्रिप्टिंग और CI के लिए CLI</summary>
 
-<p align="center"><img src="img/readme/terminal.svg" alt="टर्मिनल सत्र: unity-mcp-cli इंस्टॉल करना, प्लगइन जोड़ना, साइन इन करना, Claude Code कॉन्फ़िगर करना और प्रोजेक्ट खोलना" width="100%"></p>
+- **OpenUPM** — `openupm add com.ivanmurzak.unity.mcp`, या बिना किसी CLI के: **Edit ▸ Project Settings ▸ Package Manager** में एक scoped registry जोड़ें (URL `https://package.openupm.com`, scopes `com.ivanmurzak` और `extensions.unity`), फिर **Window ▸ Package Manager ▸ + ▸ Add package by name** → `com.ivanmurzak.unity.mcp`।
+- **unity-mcp-cli** (Node.js 22.14+) — स्क्रिप्ट और CI के लिए, Editor की ज़रूरत नहीं:
 
-फिर अपना एजेंट जोड़ें: Unity में **Window ▸ AI Game Dev** खोलें और **Auto-generate** Skills (सुझाया गया) या **Configure** MCP पर क्लिक करें। या टर्मिनल से:
+  ```bash
+  npm install -g unity-mcp-cli
+  unity-mcp-cli install-plugin ./MyUnityProject   # प्लगइन को Packages/manifest.json में जोड़ें
+  unity-mcp-cli open ./MyUnityProject             # प्रोजेक्ट को Unity में खोलें
+  ```
 
-```bash
-unity-mcp-cli setup-skills claude-code ./MyUnityProject
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject
-```
+  <p align="center"><img src="img/readme/terminal.svg" alt="टर्मिनल सत्र: unity-mcp-cli इंस्टॉल करना, प्लगइन जोड़ना, साइन इन करना, Claude Code कॉन्फ़िगर करना और प्रोजेक्ट खोलना" width="100%"></p>
+
+</details>
+
+**2. अपना एजेंट जोड़ें** — कोई एक चुनें; दोनों पूरी तरह समर्थित हैं:
+
+| | **Local** (अकाउंट नहीं) | **Cloud** (डिफ़ॉल्ट सेटिंग) |
+| --- | --- | --- |
+| **Window ▸ AI Game Dev** में | कनेक्शन **Custom** | कनेक्शन **Cloud**, फिर **Authorize** (ब्राउज़र में साइन इन) |
+| एजेंट कॉन्फ़िग | अपने एजेंट के लिए **Configure** | अपने एजेंट के लिए **Configure** |
+| CLI से यही | `unity-mcp-cli setup-mcp claude-code ./MyUnityProject --transport stdio` | `unity-mcp-cli login`, फिर `unity-mcp-cli setup-mcp claude-code ./MyUnityProject` |
+
+उसी विंडो में Skills के लिए **Auto-generate** MCP का विकल्प है। दूसरे एजेंट: [क्लाइंट सेटअप](#क्लाइंट-सेटअप)।
+
+**3. केवल Local: चुनें कि आपके टूल कौन कॉल कर सकता है।** लोकल सर्वर auth `none` के साथ शुरू होता है: यह केवल `127.0.0.1` पर सुनता है और बाहरी ब्राउज़र origin अस्वीकार करता है, लेकिन आपकी मशीन का कोई भी प्रोग्राम उस तक पहुँच सकता है। अगर मशीन का उपयोग दूसरे लोग या अविश्वसनीय प्रोग्राम करते हैं, तो एक कदम में `token` पर स्विच करें: **Window ▸ AI Game Dev** → **Authorization Token** → `token`। सर्वर एक जनरेट किए गए सीक्रेट के साथ फिर से शुरू होता है; **Configure** फिर से दबाएँ ताकि आपका एजेंट उसे भेजे।
 
 ![AI Game Developer विंडो](img/editor/ai-game-developer-windows.png)
 
@@ -85,7 +108,20 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 Rigidbody के बिना हर दुश्मन प्रीफ़ैब ढूँढो और उसमें एक जोड़ो
 ```
 
-**टूल।** डिफ़ॉल्ट रूप से दिखते हैं: `rql-query`, `rql-mutate`, `rql-schema`, `script-execute`, `tests-run`, `screenshot-isolated`, `package-*` और `assetstore-*` टूल और `unity-tool-list`। और टूल इंस्टॉल हैं पर जब तक आप उन्हें न दिखाएँ, छिपे रहते हैं। पूरी सूची: **[डिफ़ॉल्ट MCP टूल](default-mcp-tools.hi.md)** या [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)।
+**आपका एजेंट क्या कर सकता है** (डिफ़ॉल्ट रूप से दिखने वाले टूल):
+
+| क्षमता | टूल | उदाहरण प्रॉम्प्ट |
+| --- | --- | --- |
+| सीन और GameObject | `rql-query`, `rql-mutate` | *"खुले सीन में हर निष्क्रिय GameObject की सूची दो"* |
+| एसेट और प्रीफ़ैब | `rql-query`, `rql-mutate` | *"एक लाल मटीरियल बनाओ और उसे सभी क्यूब पर लगाओ"* |
+| कंसोल और Editor की स्थिति | `rql-query` | *"कंसोल में कौन-सी एरर हैं?"* |
+| Editor में C# | `script-execute` | *"ऐसा C# चलाओ जो टेरेन पर रैंडम जगहों पर 100 पेड़ रखे"* |
+| टेस्ट | `tests-run` | *"EditMode टेस्ट चलाओ और जो फ़ेल हों उन्हें ठीक करो"* |
+| स्क्रीनशॉट | `screenshot-isolated` | *"मुझे Player मॉडल सामने से दिखाओ"* |
+| पैकेज और Asset Store | `package-*`, `assetstore-*` | *"Cinemachine इंस्टॉल करो"* |
+| टूल की सूची | `unity-tool-list` | *"तुम यहाँ कौन-से टूल इस्तेमाल कर सकते हो?"* |
+
+आपको RQL सीखने की ज़रूरत नहीं: एजेंट उसे खुद लिखता है और जिस भी सोर्स, टाइप और कॉल की उसे ज़रूरत हो, उसके लिए `rql-schema` से पूछता है। और टूल इंस्टॉल हैं पर जब तक आप उन्हें न दिखाएँ, छिपे रहते हैं। पूरी सूची: **[डिफ़ॉल्ट MCP टूल](default-mcp-tools.hi.md)** या [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)।
 
 **टर्मिनल से** (कोई एडिटर न चल रहा हो तो एक हेडलेस एडिटर शुरू करता है):
 
@@ -115,6 +151,71 @@ public class Tool_Score
 ```
 
 प्रॉम्प्ट, रनटाइम (गेम के अंदर) टूल और पूरा उदाहरण: **[कस्टम टूल और रनटाइम](custom-tools.hi.md)**।
+
+## क्लाइंट सेटअप
+
+AI Game Developer विंडो का **Configure** बटन, या `unity-mcp-cli setup-mcp <agent> ./MyUnityProject`, ये फ़ाइलें आपके लिए लिख देता है (डिफ़ॉल्ट रूप से Cloud, `--transport stdio` के साथ लोकल)। लोकल सर्वर के लिए हाथ से: प्लगइन को **Custom** पर सेट करें, विंडो से `<port>` लें, और अपने प्लेटफ़ॉर्म की बाइनरी `<project>/Library/mcp-server/<rid>/` से इस्तेमाल करें (`win-x64/gamedev-mcp-server.exe`, `osx-arm64/gamedev-mcp-server`, `linux-x64/gamedev-mcp-server`, …)।
+
+<details>
+<summary><b>Claude Code</b> — प्रोजेक्ट रूट में <code>.mcp.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b> — <code>.cursor/mcp.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "type": "stdio",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Codex</b> — <code>.codex/config.toml</code></summary>
+
+```toml
+[mcp_servers.ai-game-developer]
+enabled = true
+command = "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe"
+args = ["port=<port>", "client-transport=stdio"]
+tool_timeout_sec = 300
+```
+
+</details>
+
+दूसरे एजेंट और मैनुअल सेटअप: [इंस्टॉलेशन गाइड](installation.hi.md)।
+
+## सुरक्षा और गोपनीयता
+
+**सबसे निजी सेटअप:** कनेक्शन **Custom** (`127.0.0.1` पर लोकल सर्वर, अकाउंट नहीं, प्रोजेक्ट का डेटा आपकी मशीन पर ही रहता है), साथ में **Window ▸ AI Game Dev** में **Authorization Token** को `token` पर सेट करें, फिर **Configure** दोबारा दबाएँ ताकि आपका एजेंट सीक्रेट भेजे।
+
+✅ **प्लगइन कोई पोर्ट नहीं खोलता** — यह MCP सर्वर से बाहर की ओर कनेक्ट होता है।\
+✅ **लूपबैक पर लोकल सर्वर** — `gamedev-mcp-server` `127.0.0.1` पर बाइंड होता है, जब तक आप होस्टिंग के लिए `MCP_BIND` सेट न करें।\
+✅ **Origin जाँच** — जिन ब्राउज़र अनुरोधों का `Origin` अनुमत नहीं है, वे हर auth मोड में अस्वीकार (403) होते हैं।\
+✅ **Auth मोड** — `none` (लोकल डिफ़ॉल्ट), `token` (एक साझा सीक्रेट जिसे एजेंट और प्लगइन दोनों को भेजना होगा), `oauth` (ai-game.dev अकाउंट)।\
+✅ **Cloud रिले** — टूल कॉल आगे पहुँचाता है और आप जो भेजते हैं उसे संग्रहीत नहीं करता: अनुरोध या प्रतिक्रिया की कोई सामग्री नहीं। यह 90 दिनों तक केवल मेटाडेटा (IP, समय, टूल का नाम, आकार) रखता है।\
+⚠️ **सुरक्षित नहीं** — `none` मोड में आपकी मशीन की कोई भी प्रोसेस जो पोर्ट तक पहुँचती है, टूल कॉल कर सकती है, और टूल Editor के अधिकारों के साथ चलते हैं (`script-execute` C# चलाता है)। साझा मशीनों पर `token` मोड इस्तेमाल करें।
+
+सर्वर विकल्प और Docker: [MCP सर्वर और कनेक्शन](mcp-server.hi.md)।
 
 ## एक्सटेंशन
 
@@ -161,4 +262,4 @@ unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityPr
 
 ## लाइसेंस
 
-[Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+**गेम डेवलपमेंट के लिए मुफ़्त, व्यावसायिक गेम सहित।** प्लगइन [Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE) के तहत है। यह [RQL](https://github.com/IvanMurzak/RQL) और [Code-Exec](https://github.com/IvanMurzak/Code-Exec) का उपयोग करता है, जो PolyForm Shield 1.0.0 के तहत लाइसेंस हैं: यह लाइसेंस केवल उन कंपनियों पर रोक लगाता है जो गेम डेवलपमेंट के लिए प्रतिस्पर्धी AI टूल बनाती हैं। गेम डेवलपर सब कुछ स्वतंत्र रूप से इस्तेमाल कर सकते हैं।

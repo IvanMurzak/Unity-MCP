@@ -21,6 +21,8 @@
 | **Cloud** (デフォルト) | `https://ai-game.dev/mcp` | ウィンドウまたは `unity-mcp-cli login` でサインインします。`keepServerRunning` が `true` でも、ローカルサーバーを起動することはありません。 |
 | **Custom** | ローカルの `gamedev-mcp-server`、または自分でホストする任意の URL | 保存された `host` フィールドはこのモードでのみ使われます。ローカルサーバーを使うには、ウィンドウで **Custom** を選択するか、Unity を閉じた状態で `"connectionMode": "Custom"` を設定します。 |
 
+**Cloud が既定である理由:** ポートを開く必要がなく、ほかのプログラムとのポート競合を避けられ、無料です。リレーはメタデータ(IP、時刻、ツール名、サイズ)のみを 90 日間保持し、リクエストやレスポンスの内容は一切保存しません。**Custom** はオフラインやエアギャップ環境での作業向けの対等な選択肢です。
+
 ローカルサーバーを使う Custom モードでは、プラグインは `McpServerManager.cs` の `ServerVersion` で固定されたサーバーリリースを `Library/mcp-server/<rid>/` にダウンロードして起動します。**Tools ▸ AI Game Developer ▸ Server** には *Download Binaries* と *Open Server Logs* があります。
 
 ## プラグインの環境変数

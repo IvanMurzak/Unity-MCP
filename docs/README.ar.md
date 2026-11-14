@@ -28,11 +28,22 @@
 
 ‏**AI Game Developer** (Unity-MCP) يربط وكيل الذكاء الاصطناعي الخاص بك بـ Unity. يستطيع Claude Code أو Codex أو Cursor أو GitHub Copilot أو Gemini أو أي عميل [MCP](https://modelcontextprotocol.io/) آخر قراءة المشاهد والـ prefabs والأصول وشيفرة C# وتعديلها، وتشغيل الاختبارات والتقاط لقطات الشاشة في **محرر Unity**، واستدعاء أدوات تكتبها أنت **داخل لعبتك المُصرَّفة**. يأتي في صورة حزمة Unity مجانية (`com.ivanmurzak.unity.mcp`) وأداة سطر أوامر (`unity-mcp-cli`) وعشر إضافات اختيارية.
 
+**الحالة:** [أحدث إصدار](https://github.com/IvanMurzak/Unity-MCP/releases/latest) و[سجل التغييرات](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md). تشترك الإضافة و`unity-mcp-cli` في رقم إصدار واحد. مُختبَر ومدعوم على **Windows وmacOS وLinux**. يتطلب Unity **2022.3** أو أحدث؛ وتشغّل CI اختبارات EditMode وPlayMode واختبارات البناء المستقل (standalone) على Unity 2022.3 و6000.0 و6000.3 و6000.6.
+
 ## كيف يعمل
 
 <p align="center"><img src="img/readme/architecture.svg" alt="يتواصل وكيل ذكاء اصطناعي أو unity-mcp-cli عبر MCP مع خادم (ai-game.dev Cloud افتراضيًا، أو gamedev-mcp-server محلي) يستدعي أدوات إضافة محرر Unity وأدوات لعبتك أثناء تشغيلها" width="100%"></p>
 
-تسجّل الإضافة أدواتها في خادم MCP، ويستدعيها وكيلك عبر ذلك الخادم. تستخدم الإضافة افتراضيًا خادم **Cloud** على `https://ai-game.dev/mcp`. في وضع **Custom** تشغّل الملف التنفيذي المحلي لـ [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)، أو تتصل بخادم تستضيفه أنت (ملف تنفيذي أو Docker). ويمكن للوكيل أيضًا استخدام **Skills** مُولَّدة بدلًا من أدوات MCP.
+تسجّل الإضافة أدواتها في خادم MCP، ويستدعيها وكيلك عبر ذلك الخادم. ويمكن للوكيل أيضًا استخدام **Skills** مُولَّدة بدلًا من أدوات MCP. أنت تختار أين يعمل الخادم:
+
+| | **محلي** (وضع Custom، بلا حساب) | **Cloud** (الإعداد الافتراضي) |
+| --- | --- | --- |
+| الخادم | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) تشغّله الإضافة على `127.0.0.1`، أو خادم تستضيفه أنت | `https://ai-game.dev/mcp` |
+| الحساب | غير مطلوب | تسجيل الدخول إلى ai-game.dev |
+| بيانات مشروعك | تبقى على جهازك | تمر استدعاءات الأدوات عبر الـ relay؛ ولا يحتفظ إلا بالبيانات الوصفية لمدة 90 يومًا، ولا يحتفظ أبدًا بمحتوى الطلبات أو الردود |
+| التكلفة | مجاني | مجاني |
+
+‏**لماذا Cloud هو الافتراضي:** لا يحتاج إلى فتح منافذ ويتجنب تعارض المنافذ مع البرامج الأخرى، وهو مجاني. والوضع المحلي خيار مكافئ للعمل دون اتصال أو في البيئات المعزولة (air-gapped). التفاصيل: [الأمان والخصوصية](#الأمان-والخصوصية).
 
 ## الميزات
 
@@ -47,37 +58,49 @@
 
 ## البدء السريع
 
-يتطلب **Unity 2022.3** أو أحدث. اختر طريقة لتثبيت الإضافة:
+يتطلب **Unity 2022.3** أو أحدث.
+
+‏**1. ثبّت الإضافة** (موصى به: المُثبِّت، دون الحاجة إلى تثبيت أي شيء آخر):
 
 [![تنزيل المُثبِّت](img/button/button_download_ar.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
-- **المُثبِّت**: نزّل ملف `.unitypackage` أعلاه وافتحه في مشروع Unity.
-- **OpenUPM**: `openupm add com.ivanmurzak.unity.mcp`
-- **CLI** (Node.js 22.14+)، دون الحاجة إلى المحرر:
+افتح ملف `.unitypackage` الذي نزّلته بينما مشروعك مفتوح (انقر عليه نقرًا مزدوجًا، أو عبر **Assets ▸ Import Package ▸ Custom Package**).
+
+</div>
+
+<details>
+<summary>طرق أخرى للتثبيت: OpenUPM / Package Manager، أو CLI للسكربتات وCI</summary>
+
+<div dir="rtl">
+
+- ‏**OpenUPM** — `openupm add com.ivanmurzak.unity.mcp`، أو دون أي CLI: أضف سجلًا محدد النطاق (scoped registry) في **Edit ▸ Project Settings ▸ Package Manager** (العنوان `https://package.openupm.com`، والنطاقان `com.ivanmurzak` و`extensions.unity`)، ثم **Window ▸ Package Manager ▸ + ▸ Add package by name** ← `com.ivanmurzak.unity.mcp`.
+- ‏**unity-mcp-cli** (Node.js 22.14+) — للسكربتات وCI، دون الحاجة إلى المحرر:
 
 </div>
 
 ```bash
 npm install -g unity-mcp-cli
 unity-mcp-cli install-plugin ./MyUnityProject   # add the plugin to Packages/manifest.json
-unity-mcp-cli login                             # sign in to ai-game.dev in the browser
-unity-mcp-cli open ./MyUnityProject             # open Unity; it connects and generates skills
+unity-mcp-cli open ./MyUnityProject             # open the project in Unity
 ```
-
-<div dir="rtl">
 
 <p align="center"><img src="img/readme/terminal.svg" alt="جلسة طرفية: تثبيت unity-mcp-cli وإضافة الإضافة وتسجيل الدخول وإعداد Claude Code وفتح المشروع" width="100%"></p>
 
-ثم صِل وكيلك: في Unity افتح **Window ▸ AI Game Dev** وانقر **Auto-generate** Skills (موصى به) أو **Configure** MCP. أو من الطرفية:
-
-</div>
-
-```bash
-unity-mcp-cli setup-skills claude-code ./MyUnityProject
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject
-```
+</details>
 
 <div dir="rtl">
+
+‏**2. صِل وكيلك** — اختر أحد الخيارين؛ وكلاهما مدعوم بالكامل:
+
+| | **محلي** (بلا حساب) | **Cloud** (الإعداد الافتراضي) |
+| --- | --- | --- |
+| في **Window ▸ AI Game Dev** | الاتصال **Custom** | الاتصال **Cloud**، ثم **Authorize** (تسجيل الدخول عبر المتصفح) |
+| إعداد الوكيل | ‏**Configure** لوكيلك | ‏**Configure** لوكيلك |
+| الأمر نفسه من CLI | `unity-mcp-cli setup-mcp claude-code ./MyUnityProject --transport stdio` | `unity-mcp-cli login`، ثم `unity-mcp-cli setup-mcp claude-code ./MyUnityProject` |
+
+‏**Auto-generate** لـ Skills في النافذة نفسها هو البديل عن MCP. الوكلاء الآخرون: [إعداد العملاء](#إعداد-العملاء).
+
+‏**3. للوضع المحلي فقط: اختر من يحق له استدعاء أدواتك.** يبدأ الخادم المحلي بوضع المصادقة `none`: فهو يستمع على `127.0.0.1` فقط ويرفض مصادر (origins) المتصفح الأجنبية، لكن أي برنامج على جهازك يستطيع الوصول إليه. إذا كان أشخاص آخرون أو برامج غير موثوقة يستخدمون الجهاز، فانتقل إلى `token` بخطوة واحدة: **Window ▸ AI Game Dev** ← **Authorization Token** ← `token`. يُعاد تشغيل الخادم بسرّ مُولَّد؛ اضغط **Configure** مرة أخرى كي يرسله وكيلك.
 
 ![نافذة AI Game Developer](img/editor/ai-game-developer-windows.png)
 
@@ -91,7 +114,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
 ## الاستخدام
 
-**تحدّث مع وكيلك.** صِف النتيجة التي تريدها؛ كلما كنت أدق كان أفضل.
+‏**تحدّث مع وكيلك.** صِف النتيجة التي تريدها؛ كلما كنت أدق كان أفضل.
 
 </div>
 
@@ -103,9 +126,22 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
 <div dir="rtl">
 
-**الأدوات.** الظاهرة افتراضيًا: `rql-query` و`rql-mutate` و`rql-schema` و`script-execute` و`tests-run` و`screenshot-isolated` وأدوات `package-*` و`assetstore-*` و`unity-tool-list`. هناك أدوات أخرى مثبتة لكنها مخفية حتى تُظهرها. القائمة الكاملة: **[أدوات MCP الافتراضية](default-mcp-tools.ar.md)** أو [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+‏**ما يستطيع وكيلك فعله** (الأدوات الظاهرة افتراضيًا):
 
-**من الطرفية** (يشغّل محررًا بلا واجهة إن لم يكن هناك محرر يعمل):
+| القدرة | الأداة | مثال على طلب |
+| --- | --- | --- |
+| المشاهد وكائنات GameObject | `rql-query`، `rql-mutate` | *«اعرض كل GameObject معطّل في المشهد المفتوح»* |
+| الأصول والـ prefabs | `rql-query`، `rql-mutate` | *«أنشئ مادة حمراء وطبّقها على كل المكعبات»* |
+| الكونسول وحالة المحرر | `rql-query` | *«ما الأخطاء الموجودة في الكونسول؟»* |
+| ‏C# في المحرر | `script-execute` | *«شغّل كود C# يضع 100 شجرة في نقاط عشوائية على التضاريس»* |
+| الاختبارات | `tests-run` | *«شغّل اختبارات EditMode وأصلح ما يفشل»* |
+| لقطات الشاشة | `screenshot-isolated` | *«أرني نموذج Player من الأمام»* |
+| الحزم وAsset Store | `package-*`، `assetstore-*` | *«ثبّت Cinemachine»* |
+| قائمة الأدوات | `unity-tool-list` | *«ما الأدوات التي يمكنك استخدامها هنا؟»* |
+
+لا تحتاج إلى تعلّم RQL: الوكيل يكتبها ويسأل `rql-schema` عن كل مصدر ونوع واستدعاء يحتاجه. هناك أدوات أخرى مثبتة لكنها مخفية حتى تُظهرها. القائمة الكاملة: **[أدوات MCP الافتراضية](default-mcp-tools.ar.md)** أو [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+
+‏**من الطرفية** (يشغّل محررًا بلا واجهة إن لم يكن هناك محرر يعمل):
 
 </div>
 
@@ -117,7 +153,7 @@ unity-mcp-cli test ./MyGame --mode PlayMode
 
 <div dir="rtl">
 
-**أداتك الخاصة.** يكفي صنف عليه `[AiToolType]` ودالة عليها `[AiTool]`:
+‏**أداتك الخاصة.** يكفي صنف عليه `[AiToolType]` ودالة عليها `[AiTool]`:
 
 </div>
 
@@ -141,6 +177,75 @@ public class Tool_Score
 <div dir="rtl">
 
 الموجّهات وأدوات وقت التشغيل (داخل اللعبة) ومثال كامل: **[الأدوات المخصصة ووقت التشغيل](custom-tools.ar.md)**.
+
+## إعداد العملاء
+
+زر **Configure** في نافذة AI Game Developer، أو الأمر `unity-mcp-cli setup-mcp <agent> ./MyUnityProject`، يكتب هذه الملفات نيابةً عنك (Cloud افتراضيًا، ومحلي مع `--transport stdio`). للإعداد اليدوي لخادم محلي: اضبط الإضافة على **Custom**، وخذ `<port>` من النافذة، واستخدم الملف التنفيذي المناسب لمنصتك من `<project>/Library/mcp-server/<rid>/` (`win-x64/gamedev-mcp-server.exe`، `osx-arm64/gamedev-mcp-server`، `linux-x64/gamedev-mcp-server`، …).
+
+</div>
+
+<details>
+<summary><b>Claude Code</b> — <code>.mcp.json</code> في جذر المشروع</summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b> — <code>.cursor/mcp.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "type": "stdio",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Codex</b> — <code>.codex/config.toml</code></summary>
+
+```toml
+[mcp_servers.ai-game-developer]
+enabled = true
+command = "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe"
+args = ["port=<port>", "client-transport=stdio"]
+tool_timeout_sec = 300
+```
+
+</details>
+
+<div dir="rtl">
+
+الوكلاء الآخرون والإعداد اليدوي: [دليل التثبيت](installation.ar.md).
+
+## الأمان والخصوصية
+
+‏**الإعداد الأكثر خصوصية:** الاتصال **Custom** (خادم محلي على `127.0.0.1`، بلا حساب، وتبقى بيانات المشروع على جهازك) مع ضبط **Authorization Token** على `token` في **Window ▸ AI Game Dev**، ثم **Configure** مرة أخرى كي يرسل وكيلك السرّ.
+
+‏✅ ‏**الإضافة لا تفتح أي منفذ** — بل تتصل هي بخادم MCP.\
+‏✅ ‏**الخادم المحلي على واجهة loopback** — يرتبط `gamedev-mcp-server` بالعنوان `127.0.0.1` ما لم تضبط `MCP_BIND` للاستضافة.\
+‏✅ ‏**التحقق من Origin** — تُرفض طلبات المتصفح ذات `Origin` غير المسموح (403) في كل أوضاع المصادقة.\
+‏✅ ‏**أوضاع المصادقة** — `none` (الافتراضي محليًا)، و`token` (سرّ مشترك واحد يجب أن يرسله الوكيل والإضافة كلاهما)، و`oauth` (حساب ai-game.dev).\
+‏✅ ‏**الـ relay السحابي** — يوجّه استدعاءات الأدوات ولا يخزّن ما ترسله: لا محتوى للطلبات أو الردود. ولا يحتفظ إلا بالبيانات الوصفية (عنوان IP، والوقت، واسم الأداة، والأحجام) لمدة 90 يومًا.\
+‏⚠️ ‏**غير محمي** — في وضع `none` يستطيع أي برنامج على جهازك يصل إلى المنفذ استدعاء الأدوات، والأدوات تعمل بصلاحيات المحرر (`script-execute` يشغّل C#). استخدم وضع `token` على الأجهزة المشتركة.
+
+خيارات الخادم وDocker: [خادم MCP والاتصال](mcp-server.ar.md).
 
 ## الإضافات
 
@@ -191,6 +296,6 @@ unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityPr
 
 ## الترخيص
 
-[Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE)
+‏**مجاني لتطوير الألعاب، بما في ذلك الألعاب التجارية.** الإضافة مرخّصة بموجب [Apache-2.0](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE). وهي تستخدم [RQL](https://github.com/IvanMurzak/RQL) و[Code-Exec](https://github.com/IvanMurzak/Code-Exec)، المرخّصتين بموجب PolyForm Shield 1.0.0: وهذا الترخيص لا يقيّد إلا الشركات التي تبني أدوات ذكاء اصطناعي منافسة لتطوير الألعاب. ويمكن لمطوري الألعاب استخدام كل شيء بحرية.
 
 </div>
