@@ -26,7 +26,7 @@
 
 **AI Game Developer** (Unity-MCP) connects your AI agent to Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini or any other [MCP](https://modelcontextprotocol.io/) client can read and change scenes, prefabs, assets and C# code, run tests and take screenshots in the **Unity Editor**, and call tools you write **inside your compiled game**. It ships as a free Unity package (`com.ivanmurzak.unity.mcp`), a command-line tool (`unity-mcp-cli`) and ten optional extensions.
 
-**Status:** current release **1.11.1** (November 2026) on [GitHub Releases](https://github.com/IvanMurzak/Unity-MCP/releases/latest) and [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/); the 1.x line started with 1.0.0 in October 2026, and the plugin and `unity-mcp-cli` share one version · Unity **2022.3** or newer · CI runs EditMode, PlayMode and standalone-build tests on Unity 2022.3, 6000.0, 6000.3 and 6000.6.
+**Status:** current version **1.11.1**, released 12 November 2026. Releases are frequent: 16 since 1.0.0 on 15 October 2026. History and notes: [GitHub Releases](https://github.com/IvanMurzak/Unity-MCP/releases) and the [changelog](https://github.com/IvanMurzak/Unity-MCP/blob/main/Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/CHANGELOG.md). The plugin and `unity-mcp-cli` share one version. Requires Unity **2022.3** or newer; CI runs EditMode, PlayMode and standalone-build tests on Unity 2022.3, 6000.0, 6000.3 and 6000.6.
 
 ## How it works
 
@@ -85,7 +85,7 @@ unity-mcp-cli open ./MyUnityProject             # open the project in Unity
 
 The **Configure** button in the same window writes the same config; **Auto-generate** Skills is the alternative to MCP (`unity-mcp-cli setup-skills claude-code ./MyUnityProject`). Other agents: [client setup](#client-setup).
 
-**Lock the local server with a token** (one step): in **Window ▸ AI Game Dev** set **Authorization Token** to `token`. The server restarts with a generated secret; press **Configure** again so your agent sends it. The local default is `none` because the server listens only on `127.0.0.1` and rejects foreign browser origins; switch to `token` when other people or untrusted programs use the same machine.
+**3. Local only: choose who may call your tools.** The local server starts with auth `none`: it listens only on `127.0.0.1` and rejects foreign browser origins, but any program on your machine can reach it. If other people or untrusted programs use the machine, switch to `token` in one step: **Window ▸ AI Game Dev** → **Authorization Token** → `token`. The server restarts with a generated secret; press **Configure** again so your agent sends it.
 
 <p align="center"><img src="docs/img/readme/terminal.svg" alt="Terminal session: install unity-mcp-cli, add the plugin, sign in, configure Claude Code and open the project" width="100%"></p>
 
