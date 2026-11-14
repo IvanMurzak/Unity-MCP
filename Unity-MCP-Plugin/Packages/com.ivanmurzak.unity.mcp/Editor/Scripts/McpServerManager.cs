@@ -181,7 +181,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
         /// <c>v&lt;ServerVersion&gt;</c> release with all 7 RID zips exists on GameDev-MCP-Server
         /// BEFORE cutting a plugin release that pins it — otherwise the download 404s).
         /// </summary>
-        public const string ServerVersion = "9.5.3";
+        public const string ServerVersion = "9.5.4";
 
         public const string ExecutableName = "gamedev-mcp-server";
 
