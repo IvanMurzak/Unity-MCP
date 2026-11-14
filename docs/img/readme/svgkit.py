@@ -321,7 +321,7 @@ def accent_title(x, y, before, accent, size, fx, spacing=-2):
     elif fx == "flow":
         defs = (f'<linearGradient id="axg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="600" y2="0" spreadMethod="reflect">'
                 f'<stop offset="0" stop-color="#FF2448"/><stop offset=".35" stop-color="{RED_TEXT}"/><stop offset=".65" stop-color="#FF8A5B"/><stop offset="1" stop-color="#FF4F86"/>'
-                f'<animateTransform attributeName="gradientTransform" type="translate" values="0 0;600 0" dur="6s" repeatCount="indefinite"/></linearGradient>')
+                f'<animateTransform attributeName="gradientTransform" type="translate" values="0 0;1200 0" dur="12s" repeatCount="indefinite"/></linearGradient>')
         main = "url(#axg)"
     elif fx == "glow":
         defs = '<filter id="axb" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>'
