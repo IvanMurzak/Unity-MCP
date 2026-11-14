@@ -239,7 +239,7 @@ El componente Runtime proporciona la infraestructura principal compartida entre 
    - Ejecución basada en cola en el bucle Update de Unity
    - Fundamental para la ejecución segura de operaciones MCP
 
-3. **Serialización de tipos Unity** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/JsonConverters/))
+3. **Serialización de tipos Unity** ([Converter/Reflection/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/), [Converter/Json/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/))
    - Serialización JSON personalizada para tipos de Unity (GameObject, Component, Transform, Vector3, Quaternion, etc.)
    - Convierte objetos de Unity a formato de referencia (`GameObjectRef`, `ComponentRef`) con seguimiento de instanceID
    - Se integra con ReflectorNet para la introspección de objetos y la serialización de componentes
@@ -291,7 +291,7 @@ public static class Prompt_ScriptingCode
 {
     [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
-    public string AddEventSystem()
+    public static string AddEventSystem()
     {
         return "Create event system using UnityEvents, UnityActions, or custom event delegates for decoupled communication between game systems and components.";
     }

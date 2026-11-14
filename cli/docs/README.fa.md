@@ -72,7 +72,7 @@ unity-mcp-cli install-extension Tilemap ./MyGame
 | حساب | `login` · `unity-account` |
 | عامل‌های هوش مصنوعی | `setup-mcp` · `setup-skills` · `configure` |
 | ویرایشگر | `open` · `close` · `wait-for-ready` · `status` · `dialog` |
-| ابزارها | `tools` · `rql` · `run-tool` · `exec` |
+| ابزارها | `tools` · `rql` · `run-tool` · `run-system-tool` · `exec` |
 | ساخت و تست | `compile` · `test` |
 | کشف | `commands` |
 

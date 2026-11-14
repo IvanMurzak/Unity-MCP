@@ -9,7 +9,7 @@
 
 **الأوامر:** [`configure`](#configure) · [`create-project`](#create-project) · [`update`](#update) · [`install-extension`](#install-extension) · [`install-plugin`](#install-plugin) · [`install-unity`](#install-unity) · [`login`](#login) · [`unity-account`](#unity-account) · [`open`](#open) · [`close`](#close) · [`tools`](#tools) · [`rql`](#rql) · [`run-tool`](#run-tool) · [`exec`](#exec) · [`test`](#test) · [`compile`](#compile) · [`dialog`](#dialog) · [`commands`](#commands) · [`wait-for-ready`](#wait-for-ready) · [`setup-mcp`](#setup-mcp) · [`setup-skills`](#setup-skills) · [`remove-plugin`](#remove-plugin) · [`status`](#status)
 
-**أيضًا:** [الخيارات العامة](#الخيارات-العامة) · [رموز الخروج والمخرجات القابلة للقراءة آليًا](#رموز-الخروج-والمخرجات-القابلة-للقراءة-آليًا) · [مثال أتمتة كامل](#مثال-أتمتة-كامل) · [كيف يعمل](#كيف-يعمل) · [واجهة المكتبة البرمجية](#واجهة-المكتبة-البرمجية-v0670)
+**أيضًا:** [الخيارات العامة](#الخيارات-العامة) · [رموز الخروج والمخرجات القابلة للقراءة آليًا](#رموز-الخروج-والمخرجات-القابلة-للقراءة-آليًا) · [مثال أتمتة كامل](#مثال-أتمتة-كامل) · [كيف يعمل](#كيف-يعمل) · [واجهة المكتبة البرمجية](#واجهة-المكتبة-البرمجية)
 
 # الأوامر
 
@@ -845,7 +845,7 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ## `setup-mcp`
 
-اكتب ملفات إعداد MCP لوكلاء الذكاء الاصطناعي، مما يتيح الإعداد دون واجهة أو في CI دون واجهة محرر Unity. يدعم الوكلاء الـ 14 جميعهم (Claude Code وCursor وGemini وCodex وغيرها).
+اكتب ملفات إعداد MCP لوكلاء الذكاء الاصطناعي، مما يتيح الإعداد دون واجهة أو في CI دون واجهة محرر Unity. يدعم كل الوكلاء الذين يعرضهم ‏`setup-mcp --list` (Claude Code وCursor وGemini وCodex وغيرها).
 
 يكون الإعداد **مثبّتًا** على هذا المشروع عبر عنوان URL خاص بكل مشروع (`https://ai-game.dev/mcp/p/<pin>` لنقل http، أو الوسيط `project=<pin>` لـ stdio). ولنقل http السحابي يحمل أيضًا **مفتاح المشروع** الخاص بهذا المشروع (`Authorization: Bearer agd_pk_…`) لكل وكيل: بيانات اعتماد لا تنتهي صلاحيتها وقابلة للإلغاء ومرتبطة بهذا المشروع وحده، يُعاد استخدامها من `~/.ai-game-dev/project-keys.json` أو تُصدر بالحساب الذي سجّلت الدخول به عبر [`login`](#login). بدون تسجيل دخول (أو إذا تعذّر الحصول على المفتاح) يكون الإعداد عنوان URL فقط ويسجّل الوكيل الدخول عبر OAuth الخاص به. مرّر `--oauth` لكتابة إعداد عنوان URL فقط دائمًا، و`--regenerate-key` لاستبدال المفتاح (تُنقل إعدادات الوكلاء الأخرى لهذا المشروع التي تحمل المفتاح السابق إلى المفتاح الجديد وتُطبع، ثم يُلغى المفتاح السابق؛ وإذا تعذّرت إعادة كتابة أيٍّ منها، يُترك المفتاح السابق نشطًا ويسمّيه تحذير)، و`--token` لكتابة PAT صريح بدلًا من ذلك، أو `--no-pin` لنقطة النهاية المشتركة غير المثبّتة. لا تحمل إعدادات stdio والخادم المحلي مفتاح مشروع أبدًا. يقرأ Antigravity إما `~/.gemini/config/mcp_config.json` أو `~/.gemini/antigravity/mcp_config.json` بحسب التثبيت، لذا يُكتب الملفان كلاهما ويُطبع كل مسار مكتوب؛ وإذا تعذّرت كتابة أيٍّ منهما يفشل الأمر. تطابق هذه المخرجات زر **Configure** في محرر Unity.
 
@@ -1154,7 +1154,7 @@ unity-mcp-cli test ./MyAIGame --junit-output junit.xml
 - ‏**macOS** — ينزّل ملف DMG ويركّبه وينسخ `Unity Hub.app` إلى `/Applications`
 - ‏**Linux** — ينزّل `UnityHub.AppImage` إلى `~/Applications/`
 
-# واجهة المكتبة البرمجية (v0.67.0+)
+# واجهة المكتبة البرمجية
 
 إضافةً إلى الملف التنفيذي لـ CLI، يكشف `unity-mcp-cli` أوامره الأساسية كمكتبة ذات أنواع وخالية من الآثار الجانبية، كي تتمكن أدوات Node.js / TypeScript الأخرى من تضمين تدفق التثبيت والإعداد نفسه دون استدعاء الصدفة.
 
@@ -1165,7 +1165,7 @@ import { installPlugin, removePlugin, configure, setupMcp } from 'unity-mcp-cli'
 
 const result = await installPlugin({
   unityProjectPath: './MyUnityProject',
-  // version: '0.67.0',        // optional — defaults to latest from OpenUPM
+  // version: 'x.y.z',        // optional — defaults to latest from OpenUPM
   onProgress: (event) => {
     // phase is one of: 'start' | 'dependencies-resolved' | 'manifest-patched' | 'done'
     console.log(event.phase, event.message);
@@ -1186,6 +1186,6 @@ for (const step of result.nextSteps) console.log(step);
 
 تُعيد كل دالة كائن نتيجة ذا أنواع `{ success, ... }`؛ ولا تُرمى الأخطاء أبدًا خارج الحدود العامة. ولا يحتوي مدخل المكتبة على آثار جانبية على المستوى الأعلى — فـ `import 'unity-mcp-cli'` لا يحلل argv أبدًا ولا يكتب أبدًا إلى stdout أو stderr.
 
-راجع [`CHANGELOG.md`](../CHANGELOG.md#0670---2026-04-21) للاطلاع على القائمة الكاملة للدوال والأنواع المُصدَّرة.
+راجع [`CHANGELOG.md`](../CHANGELOG.md) للاطلاع على القائمة الكاملة للدوال والأنواع المُصدَّرة.
 
 </div>

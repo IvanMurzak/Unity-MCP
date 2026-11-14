@@ -7,7 +7,7 @@
 
 **コマンド:** [`configure`](#configure) · [`create-project`](#create-project) · [`update`](#update) · [`install-extension`](#install-extension) · [`install-plugin`](#install-plugin) · [`install-unity`](#install-unity) · [`login`](#login) · [`unity-account`](#unity-account) · [`open`](#open) · [`close`](#close) · [`tools`](#tools) · [`rql`](#rql) · [`run-tool`](#run-tool) · [`exec`](#exec) · [`test`](#test) · [`compile`](#compile) · [`dialog`](#dialog) · [`commands`](#commands) · [`wait-for-ready`](#wait-for-ready) · [`setup-mcp`](#setup-mcp) · [`setup-skills`](#setup-skills) · [`remove-plugin`](#remove-plugin) · [`status`](#status)
 
-**その他:** [グローバルオプション](#グローバルオプション) · [終了コードと機械可読な出力](#終了コードと機械可読な出力) · [完全な自動化の例](#完全な自動化の例) · [仕組み](#仕組み) · [ライブラリ API](#ライブラリ-api-v0670)
+**その他:** [グローバルオプション](#グローバルオプション) · [終了コードと機械可読な出力](#終了コードと機械可読な出力) · [完全な自動化の例](#完全な自動化の例) · [仕組み](#仕組み) · [ライブラリ API](#ライブラリ-api)
 
 # コマンド
 
@@ -675,7 +675,7 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ## `setup-mcp`
 
-AI エージェント用の MCP 設定ファイルを書き出し、Unity Editor の UI なしでのヘッドレス/CI セットアップを可能にします。14 のエージェントすべて (Claude Code、Cursor、Gemini、Codex など) をサポートしています。
+AI エージェント用の MCP 設定ファイルを書き出し、Unity Editor の UI なしでのヘッドレス/CI セットアップを可能にします。`setup-mcp --list` に表示されるすべてのエージェント (Claude Code、Cursor、Gemini、Codex など) をサポートしています。
 
 設定はプロジェクトごとの URL (http トランスポートの場合は `https://ai-game.dev/mcp/p/<pin>`、stdio の場合は `project=<pin>` 引数) によってこのプロジェクトに**固定**されます。Cloud の http トランスポートの場合は、すべてのエージェントについてこのプロジェクトの**プロジェクトキー** (`Authorization: Bearer agd_pk_…`) も含まれます: このプロジェクトだけに紐づく、有効期限のない取り消し可能な認証情報で、`~/.ai-game-dev/project-keys.json` から再利用されるか、[`login`](#login) でサインインしたアカウントで発行されます。サインインしていない場合 (またはキーを取得できない場合)、設定は URL のみとなり、エージェントは自身の OAuth でサインインします。常に URL のみの設定を書き出すには `--oauth` を、キーを置き換えるには `--regenerate-key` を (以前のキーを含むこのプロジェクトの他のエージェント設定は新しいキーに移行されて表示され、その後以前のキーが取り消されます。いずれかを書き換えられない場合、以前のキーは有効なまま残され、警告でそれが示されます)、代わりに明示的な PAT を書き出すには `--token` を、共有の固定されていないエンドポイントには `--no-pin` を指定します。stdio とローカルサーバーの設定にプロジェクトキーが含まれることはありません。Antigravity はインストールによって `~/.gemini/config/mcp_config.json` または `~/.gemini/antigravity/mcp_config.json` のどちらかを読み込むため、両方のファイルが書き出され、書き出されたすべてのパスが表示されます。いずれかを書き出せない場合、コマンドは失敗します。この出力は Unity Editor の **Configure** ボタンと一致します。
 
@@ -932,7 +932,7 @@ CLI は、各 Unity プロジェクトのディレクトリパスに基づいて
 - **macOS** — DMG をダウンロードしてマウントし、`Unity Hub.app` を `/Applications` にコピーします
 - **Linux** — `UnityHub.AppImage` を `~/Applications/` にダウンロードします
 
-# ライブラリ API (v0.67.0+)
+# ライブラリ API
 
 CLI バイナリに加えて、`unity-mcp-cli` はそのコアコマンドを型付きで副作用のないライブラリとして公開しているため、他の Node.js / TypeScript ツールはシェルを呼び出さずに同じインストール / 設定フローを組み込めます。
 
@@ -941,7 +941,7 @@ import { installPlugin, removePlugin, configure, setupMcp } from 'unity-mcp-cli'
 
 const result = await installPlugin({
   unityProjectPath: './MyUnityProject',
-  // version: '0.67.0',        // optional — defaults to latest from OpenUPM
+  // version: 'x.y.z',        // optional — defaults to latest from OpenUPM
   onProgress: (event) => {
     // phase is one of: 'start' | 'dependencies-resolved' | 'manifest-patched' | 'done'
     console.log(event.phase, event.message);
@@ -960,4 +960,4 @@ for (const step of result.nextSteps) console.log(step);
 
 各関数は型付きの `{ success, ... }` 結果オブジェクトを返し、エラーが公開境界を越えてスローされることはありません。ライブラリのエントリにはトップレベルの副作用がありません — `import 'unity-mcp-cli'` が argv を解析したり、stdout や stderr に書き込んだりすることはありません。
 
-エクスポートされている関数と型の完全な一覧は [`CHANGELOG.md`](../CHANGELOG.md#0670---2026-04-21) を参照してください。
+エクスポートされている関数と型の完全な一覧は [`CHANGELOG.md`](../CHANGELOG.md) を参照してください。

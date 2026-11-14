@@ -9,7 +9,7 @@
 
 **دستورها:** [`configure`](#configure) · [`create-project`](#create-project) · [`update`](#update) · [`install-extension`](#install-extension) · [`install-plugin`](#install-plugin) · [`install-unity`](#install-unity) · [`login`](#login) · [`unity-account`](#unity-account) · [`open`](#open) · [`close`](#close) · [`tools`](#tools) · [`rql`](#rql) · [`run-tool`](#run-tool) · [`exec`](#exec) · [`test`](#test) · [`compile`](#compile) · [`dialog`](#dialog) · [`commands`](#commands-1) · [`wait-for-ready`](#wait-for-ready) · [`setup-mcp`](#setup-mcp) · [`setup-skills`](#setup-skills) · [`remove-plugin`](#remove-plugin) · [`status`](#status)
 
-**همچنین:** [گزینه‌های سراسری](#global-options) · [کدهای خروج و خروجی قابل خواندن برای ماشین](#exit-codes-and-machine-readable-output) · [مثال کامل خودکارسازی](#full-automation-example) · [نحوه کار](#how-it-works) · [API کتابخانه](#library-api-v0670)
+**همچنین:** [گزینه‌های سراسری](#global-options) · [کدهای خروج و خروجی قابل خواندن برای ماشین](#exit-codes-and-machine-readable-output) · [مثال کامل خودکارسازی](#full-automation-example) · [نحوه کار](#how-it-works) · [API کتابخانه](#library-api)
 
 # Commands
 
@@ -797,7 +797,7 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ## `setup-mcp`
 
-فایل‌های پیکربندی MCP را برای عامل‌های هوش مصنوعی می‌نویسد و راه‌اندازی headless/CI را بدون رابط کاربری ویرایشگر Unity ممکن می‌کند. از همه 14 عامل (Claude Code، Cursor، Gemini، Codex و غیره) پشتیبانی می‌کند.
+فایل‌های پیکربندی MCP را برای عامل‌های هوش مصنوعی می‌نویسد و راه‌اندازی headless/CI را بدون رابط کاربری ویرایشگر Unity ممکن می‌کند. از همه عامل‌هایی که ‏`setup-mcp --list` نشان می‌دهد (Claude Code، Cursor، Gemini، Codex و غیره) پشتیبانی می‌کند.
 
 پیکربندی از طریق یک URL مخصوص هر پروژه (`https://ai-game.dev/mcp/p/<pin>` برای transport از نوع http، یا آرگومان `project=<pin>` برای stdio) به این پروژه **پین** می‌شود. برای transport ابری http، همچنین **کلید پروژه** این پروژه (`Authorization: Bearer agd_pk_…`) را برای هر عامل در خود دارد: یک اعتبارنامه بدون انقضا و قابل لغو که فقط به این پروژه وابسته است، که از `~/.ai-game-dev/project-keys.json` دوباره استفاده می‌شود یا با حسابی که با [`login`](#login) وارد شده‌اید صادر می‌شود. بدون ورود (یا اگر کلید به‌دست نیاید) پیکربندی فقط شامل URL است و عامل با OAuth خودش وارد می‌شود. `--oauth` را بدهید تا همیشه پیکربندی فقط-URL نوشته شود، `--regenerate-key` را برای جایگزینی کلید (پیکربندی‌های دیگر عامل‌های این پروژه که کلید قبلی را دارند به کلید جدید منتقل و چاپ می‌شوند، سپس کلید قبلی لغو می‌شود؛ اگر هر کدام از آن‌ها قابل بازنویسی نباشد، کلید قبلی فعال باقی می‌ماند و یک هشدار نام آن را می‌برد)، `--token` را برای نوشتن یک PAT صریح به‌جای آن، یا `--no-pin` را برای endpoint مشترک و بدون پین. پیکربندی‌های stdio و سرور محلی هرگز کلید پروژه ندارند. Antigravity بسته به نصب، یا `~/.gemini/config/mcp_config.json` یا `~/.gemini/antigravity/mcp_config.json` را می‌خواند، بنابراین هر دو فایل نوشته می‌شوند و هر مسیر نوشته‌شده چاپ می‌شود؛ اگر هر کدام از آن‌ها قابل نوشتن نباشد، دستور شکست می‌خورد. این خروجی با دکمه **Configure** ویرایشگر Unity مطابقت دارد.
 
@@ -1092,7 +1092,7 @@ CLI برای هر پروژه Unity بر اساس مسیر پوشه آن یک **�
 - **macOS** — فایل DMG را دانلود و mount می‌کند و `Unity Hub.app` را در `/Applications` کپی می‌کند
 - **Linux** — فایل `UnityHub.AppImage` را در `~/Applications/` دانلود می‌کند
 
-# Library API (v0.67.0+)
+# Library API
 
 علاوه بر فایل اجرایی CLI، `unity-mcp-cli` دستورهای اصلی خود را به‌صورت یک کتابخانه نوع‌دار و بدون اثر جانبی در اختیار می‌گذارد، تا ابزارهای دیگر Node.js / TypeScript بتوانند همان روند نصب / پیکربندی را بدون فراخوانی shell در خود جای دهند.
 
@@ -1103,7 +1103,7 @@ import { installPlugin, removePlugin, configure, setupMcp } from 'unity-mcp-cli'
 
 const result = await installPlugin({
   unityProjectPath: './MyUnityProject',
-  // version: '0.67.0',        // optional — defaults to latest from OpenUPM
+  // version: 'x.y.z',        // optional — defaults to latest from OpenUPM
   onProgress: (event) => {
     // phase is one of: 'start' | 'dependencies-resolved' | 'manifest-patched' | 'done'
     console.log(event.phase, event.message);
@@ -1124,6 +1124,6 @@ for (const step of result.nextSteps) console.log(step);
 
 هر تابع یک شیء نتیجه نوع‌دار `{ success, ... }` برمی‌گرداند؛ خطاها هرگز از مرز عمومی بیرون پرتاب نمی‌شوند. ورودی کتابخانه هیچ اثر جانبی در سطح بالا ندارد — `import 'unity-mcp-cli'` هرگز argv را تجزیه نمی‌کند و هرگز در stdout یا stderr نمی‌نویسد.
 
-برای فهرست کامل توابع و نوع‌های export‌شده، [`CHANGELOG.md`](../CHANGELOG.md#0670---2026-04-21) را ببینید.
+برای فهرست کامل توابع و نوع‌های export‌شده، [`CHANGELOG.md`](../CHANGELOG.md) را ببینید.
 
 </div>

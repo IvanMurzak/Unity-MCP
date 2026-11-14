@@ -38,7 +38,7 @@ El plugin registra sus herramientas en un servidor MCP; tu agente las llama a tr
 | --- | --- | --- |
 | Servidor | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) iniciado por el plugin en `127.0.0.1`, o uno que tú alojas | `https://ai-game.dev/mcp` |
 | Cuenta | No hace falta | Inicia sesión en ai-game.dev |
-| Datos de tu proyecto | Se quedan en tu máquina | Las llamadas a herramientas pasan por un relay sin estado que no inspecciona ni conserva su contenido; registra metadatos de eventos ([Política de privacidad](https://ai-game.dev/legal/privacy)) |
+| Datos de tu proyecto | Se quedan en tu máquina | Las llamadas a herramientas pasan por un relay sin estado que no inspecciona ni conserva su contenido; registra metadatos de eventos MCP, que se usan dentro de una ventana móvil de 90 días ([Política de privacidad](https://ai-game.dev/legal/privacy)) |
 | Coste | Gratis | Gratis |
 
 **Por qué Cloud es el predeterminado:** no necesita puertos abiertos, evita conflictos de puertos con otros programas y es gratuito. Local es una opción igual de válida para trabajar sin conexión o en entornos aislados (air-gapped). Detalles: [Seguridad y privacidad](#seguridad-y-privacidad).

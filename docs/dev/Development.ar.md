@@ -289,7 +289,7 @@ graph LR
    - تنفيذ قائم على قائمة انتظار في حلقة Update الخاصة بـ Unity
    - ضروري لتنفيذ عمليات MCP بأمان من حيث الخيوط
 
-3. **تسلسل أنواع Unity** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/ReflectionConverters/)، [JsonConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/JsonConverters/))
+3. **تسلسل أنواع Unity** ([Converter/Reflection/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/)، [Converter/Json/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/))
    - تسلسل JSON مخصص لأنواع Unity (GameObject وComponent وTransform وVector3 وQuaternion وغيرها)
    - يحوّل كائنات Unity إلى صيغة مرجعية (`GameObjectRef`، `ComponentRef`) مع تتبع instanceID
    - يتكامل مع ReflectorNet لفحص الكائنات وتسلسل المكوّنات
@@ -347,7 +347,7 @@ public static class Prompt_ScriptingCode
 {
     [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
-    public string AddEventSystem()
+    public static string AddEventSystem()
     {
         return "Create event system using UnityEvents, UnityActions, or custom event delegates for decoupled communication between game systems and components.";
     }

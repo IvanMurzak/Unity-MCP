@@ -7,7 +7,7 @@
 
 **命令：** [`configure`](#configure) · [`create-project`](#create-project) · [`update`](#update) · [`install-extension`](#install-extension) · [`install-plugin`](#install-plugin) · [`install-unity`](#install-unity) · [`login`](#login) · [`unity-account`](#unity-account) · [`open`](#open) · [`close`](#close) · [`tools`](#tools) · [`rql`](#rql) · [`run-tool`](#run-tool) · [`exec`](#exec) · [`test`](#test) · [`compile`](#compile) · [`dialog`](#dialog) · [`commands`](#commands) · [`wait-for-ready`](#wait-for-ready) · [`setup-mcp`](#setup-mcp) · [`setup-skills`](#setup-skills) · [`remove-plugin`](#remove-plugin) · [`status`](#status)
 
-**另见：** [全局选项](#全局选项) · [退出码与机器可读输出](#退出码与机器可读输出) · [完整自动化示例](#完整自动化示例) · [工作原理](#工作原理) · [库 API](#库-api-v0670)
+**另见：** [全局选项](#全局选项) · [退出码与机器可读输出](#退出码与机器可读输出) · [完整自动化示例](#完整自动化示例) · [工作原理](#工作原理) · [库 API](#库-api)
 
 # 命令
 
@@ -675,7 +675,7 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ## `setup-mcp`
 
-为 AI 智能体写入 MCP 配置文件，无需 Unity 编辑器 UI 即可完成无界面/CI 设置。支持全部 14 种智能体（Claude Code、Cursor、Gemini、Codex 等）。
+为 AI 智能体写入 MCP 配置文件，无需 Unity 编辑器 UI 即可完成无界面/CI 设置。支持 `setup-mcp --list` 列出的所有智能体（Claude Code、Cursor、Gemini、Codex 等）。
 
 配置通过按项目区分的 URL **固定**到此项目（http 传输使用 `https://ai-game.dev/mcp/p/<pin>`，stdio 使用 `project=<pin>` 参数）。对于 Cloud http 传输，它还会为每个智能体携带此项目的**项目密钥**（`Authorization: Bearer agd_pk_…`）：这是一种永不过期、可撤销、仅绑定到此项目的凭据，会复用 `~/.ai-game-dev/project-keys.json` 中已有的密钥，或使用你通过 [`login`](#login) 登录的账户签发。未登录时（或无法获取密钥时），配置只包含 URL，智能体会使用其自身的 OAuth 登录。传入 `--oauth` 可始终写入仅含 URL 的配置；传入 `--regenerate-key` 可替换密钥（此项目中其他携带旧密钥的智能体配置会被迁移到新密钥并打印出来，然后撤销旧密钥；如果其中任何一个无法重写，旧密钥会保持有效，并有警告说明）；传入 `--token` 可改为写入显式的 PAT；传入 `--no-pin` 则使用共享的、未固定的端点。stdio 和本地服务器配置从不携带项目密钥。Antigravity 根据安装方式读取 `~/.gemini/config/mcp_config.json` 或 `~/.gemini/antigravity/mcp_config.json`，因此两个文件都会被写入，并打印每个写入的路径；如果其中任何一个无法写入，命令就会失败。此输出与 Unity 编辑器中 **Configure** 按钮的结果一致。
 
@@ -932,7 +932,7 @@ CLI 会根据每个 Unity 项目的目录路径为其生成一个**确定性端�
 - **macOS**——下载 DMG，挂载它，并将 `Unity Hub.app` 复制到 `/Applications`
 - **Linux**——将 `UnityHub.AppImage` 下载到 `~/Applications/`
 
-# 库 API (v0.67.0+)
+# 库 API
 
 除了 CLI 可执行文件之外，`unity-mcp-cli` 还将其核心命令公开为一个类型化、无副作用的库，以便其他 Node.js / TypeScript 工具无需调用 shell 即可嵌入相同的安装 / 配置流程。
 
@@ -941,7 +941,7 @@ import { installPlugin, removePlugin, configure, setupMcp } from 'unity-mcp-cli'
 
 const result = await installPlugin({
   unityProjectPath: './MyUnityProject',
-  // version: '0.67.0',        // optional — defaults to latest from OpenUPM
+  // version: 'x.y.z',        // optional — defaults to latest from OpenUPM
   onProgress: (event) => {
     // phase is one of: 'start' | 'dependencies-resolved' | 'manifest-patched' | 'done'
     console.log(event.phase, event.message);
@@ -960,4 +960,4 @@ for (const step of result.nextSteps) console.log(step);
 
 每个函数都返回一个类型化的 `{ success, ... }` 结果对象；错误从不会被抛出到公共边界之外。库入口没有任何顶层副作用——`import 'unity-mcp-cli'` 从不解析 argv，也从不向 stdout 或 stderr 写入内容。
 
-完整的导出函数和类型列表请参见 [`CHANGELOG.md`](../CHANGELOG.md#0670---2026-04-21)。
+完整的导出函数和类型列表请参见 [`CHANGELOG.md`](../CHANGELOG.md)。

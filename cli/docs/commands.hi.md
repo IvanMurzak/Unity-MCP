@@ -7,7 +7,7 @@
 
 **कमांड्स:** [`configure`](#configure) · [`create-project`](#create-project) · [`update`](#update) · [`install-extension`](#install-extension) · [`install-plugin`](#install-plugin) · [`install-unity`](#install-unity) · [`login`](#login) · [`unity-account`](#unity-account) · [`open`](#open) · [`close`](#close) · [`tools`](#tools) · [`rql`](#rql) · [`run-tool`](#run-tool) · [`exec`](#exec) · [`test`](#test) · [`compile`](#compile) · [`dialog`](#dialog) · [`commands`](#commands-1) · [`wait-for-ready`](#wait-for-ready) · [`setup-mcp`](#setup-mcp) · [`setup-skills`](#setup-skills) · [`remove-plugin`](#remove-plugin) · [`status`](#status)
 
-**यह भी:** [ग्लोबल विकल्प](#global-options) · [एग्ज़िट कोड और मशीन-पठनीय आउटपुट](#exit-codes-and-machine-readable-output) · [पूर्ण ऑटोमेशन उदाहरण](#full-automation-example) · [यह कैसे काम करता है](#how-it-works) · [लाइब्रेरी API](#library-api-v0670)
+**यह भी:** [ग्लोबल विकल्प](#global-options) · [एग्ज़िट कोड और मशीन-पठनीय आउटपुट](#exit-codes-and-machine-readable-output) · [पूर्ण ऑटोमेशन उदाहरण](#full-automation-example) · [यह कैसे काम करता है](#how-it-works) · [लाइब्रेरी API](#library-api)
 
 # Commands
 
@@ -675,7 +675,7 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ## `setup-mcp`
 
-AI एजेंट के लिए MCP कॉन्फ़िग फ़ाइलें लिखें, जिससे Unity Editor UI के बिना headless/CI सेटअप संभव हो। सभी 14 एजेंट (Claude Code, Cursor, Gemini, Codex, आदि) समर्थित हैं।
+AI एजेंट के लिए MCP कॉन्फ़िग फ़ाइलें लिखें, जिससे Unity Editor UI के बिना headless/CI सेटअप संभव हो। `setup-mcp --list` में दिखने वाले सभी एजेंट (Claude Code, Cursor, Gemini, Codex और अन्य) समर्थित हैं।
 
 कॉन्फ़िग एक प्रति-प्रोजेक्ट URL (http ट्रांसपोर्ट के लिए `https://ai-game.dev/mcp/p/<pin>`, या stdio के लिए `project=<pin>` आर्ग्युमेंट) के ज़रिए इस प्रोजेक्ट पर **पिन** होता है। Cloud http ट्रांसपोर्ट के लिए इसमें हर एजेंट के लिए इस प्रोजेक्ट की **project key** (`Authorization: Bearer agd_pk_…`) भी होती है: एक कभी समाप्त न होने वाला, रद्द करने योग्य क्रेडेंशियल जो केवल इस प्रोजेक्ट से बँधा है, `~/.ai-game-dev/project-keys.json` से फिर से उपयोग किया जाता है या उस खाते से बनाया जाता है जिससे आपने [`login`](#login) के ज़रिए साइन इन किया। साइन-इन के बिना (या यदि key प्राप्त नहीं की जा सकती) कॉन्फ़िग केवल-URL होता है और एजेंट अपने स्वयं के OAuth से साइन इन करता है। हमेशा केवल-URL कॉन्फ़िग लिखने के लिए `--oauth` पास करें, key बदलने के लिए `--regenerate-key` (इस प्रोजेक्ट के अन्य एजेंट कॉन्फ़िग जिनमें पिछली key है उन्हें नई key पर ले जाया जाता है और प्रिंट किया जाता है, फिर पिछली key रद्द कर दी जाती है; यदि उनमें से कोई फिर से नहीं लिखा जा सकता, तो पिछली key सक्रिय छोड़ दी जाती है और एक चेतावनी उसका नाम बताती है), इसके बजाय एक स्पष्ट PAT लिखने के लिए `--token`, या साझा, बिना पिन वाले एंडपॉइंट के लिए `--no-pin`। stdio और लोकल-सर्वर कॉन्फ़िग में कभी project key नहीं होती। Antigravity इंस्टॉल के आधार पर `~/.gemini/config/mcp_config.json` या `~/.gemini/antigravity/mcp_config.json` में से कोई एक पढ़ता है, इसलिए दोनों फ़ाइलें लिखी जाती हैं और लिखा गया हर पाथ प्रिंट किया जाता है; यदि उनमें से कोई नहीं लिखी जा सकती तो कमांड विफल होती है। यह आउटपुट Unity Editor के **Configure** बटन से मेल खाता है।
 
@@ -932,7 +932,7 @@ CLI हर Unity प्रोजेक्ट के लिए उसके ड�
 - **macOS** — DMG डाउनलोड करता है, उसे माउंट करता है, और `Unity Hub.app` को `/Applications` में कॉपी करता है
 - **Linux** — `UnityHub.AppImage` को `~/Applications/` में डाउनलोड करता है
 
-# Library API (v0.67.0+)
+# Library API
 
 CLI बाइनरी के अतिरिक्त, `unity-mcp-cli` अपनी मुख्य कमांड्स को एक टाइप्ड, side-effect-मुक्त लाइब्रेरी के रूप में उजागर करता है ताकि अन्य Node.js / TypeScript टूल्स शेल को बुलाए बिना वही install / configure फ़्लो एम्बेड कर सकें।
 
@@ -941,7 +941,7 @@ import { installPlugin, removePlugin, configure, setupMcp } from 'unity-mcp-cli'
 
 const result = await installPlugin({
   unityProjectPath: './MyUnityProject',
-  // version: '0.67.0',        // optional — defaults to latest from OpenUPM
+  // version: 'x.y.z',        // optional — defaults to latest from OpenUPM
   onProgress: (event) => {
     // phase is one of: 'start' | 'dependencies-resolved' | 'manifest-patched' | 'done'
     console.log(event.phase, event.message);
@@ -960,4 +960,4 @@ for (const step of result.nextSteps) console.log(step);
 
 हर फ़ंक्शन एक टाइप्ड `{ success, ... }` परिणाम ऑब्जेक्ट लौटाता है; एरर कभी सार्वजनिक सीमा के पार नहीं फेंके जाते। लाइब्रेरी एंट्री में कोई top-level side effects नहीं हैं — `import 'unity-mcp-cli'` कभी argv पार्स नहीं करता और कभी stdout या stderr पर नहीं लिखता।
 
-निर्यात किए गए फ़ंक्शन और टाइप्स की पूरी सूची के लिए [`CHANGELOG.md`](../CHANGELOG.md#0670---2026-04-21) देखें।
+निर्यात किए गए फ़ंक्शन और टाइप्स की पूरी सूची के लिए [`CHANGELOG.md`](../CHANGELOG.md) देखें।

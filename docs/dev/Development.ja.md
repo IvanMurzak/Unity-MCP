@@ -239,7 +239,7 @@ Unity 環境に統合されます。`Unity-MCP-Common` を使用して、リフ�
    - Unity の Update ループでのキューベース実行
    - スレッドセーフな MCP 操作実行のための重要なコンポーネント
 
-3. **Unity 型のシリアライゼーション** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/ReflectionConverters/)、[JsonConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/JsonConverters/))
+3. **Unity 型のシリアライゼーション** ([Converter/Reflection/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/)、[Converter/Json/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/))
    - Unity 型（GameObject、Component、Transform、Vector3、Quaternion など）のカスタム JSON シリアライゼーション
    - instanceID トラッキングによる Unity オブジェクトの参照形式（`GameObjectRef`、`ComponentRef`）への変換
    - オブジェクト内省とコンポーネントシリアライゼーションのための ReflectorNet との統合
@@ -291,7 +291,7 @@ public static class Prompt_ScriptingCode
 {
     [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("GameObject 間の UnityEvent ベースの通信システムを実装します。")]
-    public string AddEventSystem()
+    public static string AddEventSystem()
     {
         return "Create event system using UnityEvents, UnityActions, or custom event delegates for decoupled communication between game systems and components.";
     }

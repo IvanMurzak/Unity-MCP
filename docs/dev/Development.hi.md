@@ -247,7 +247,7 @@ Runtime कंपोनेंट Editor और Runtime मोड के बी�
    - Unity के Update लूप में क्यू-आधारित एक्ज़िक्यूशन
    - थ्रेड-सुरक्षित MCP ऑपरेशन एक्ज़िक्यूशन के लिए अत्यंत महत्वपूर्ण
 
-3. **Unity टाइप सीरियलाइज़ेशन** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/ReflectionConverters/), [JsonConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/JsonConverters/))
+3. **Unity टाइप सीरियलाइज़ेशन** ([Converter/Reflection/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/), [Converter/Json/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/))
    - Unity टाइप्स (GameObject, Component, Transform, Vector3, Quaternion, आदि) के लिए कस्टम JSON सीरियलाइज़ेशन
    - instanceID ट्रैकिंग के साथ Unity ऑब्जेक्ट्स को रेफ़रेंस फ़ॉर्मैट (`GameObjectRef`, `ComponentRef`) में बदलता है
    - ऑब्जेक्ट introspection और कंपोनेंट सीरियलाइज़ेशन के लिए ReflectorNet के साथ एकीकृत होता है
@@ -299,7 +299,7 @@ public static class Prompt_ScriptingCode
 {
     [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
-    public string AddEventSystem()
+    public static string AddEventSystem()
     {
         return "Create event system using UnityEvents, UnityActions, or custom event delegates for decoupled communication between game systems and components.";
     }

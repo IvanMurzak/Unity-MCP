@@ -7,7 +7,7 @@ Run `unity-mcp-cli <command> --help` for the same details in the terminal.
 
 **Commands:** [`configure`](#configure) · [`create-project`](#create-project) · [`update`](#update) · [`install-extension`](#install-extension) · [`install-plugin`](#install-plugin) · [`install-unity`](#install-unity) · [`login`](#login) · [`unity-account`](#unity-account) · [`open`](#open) · [`close`](#close) · [`tools`](#tools) · [`rql`](#rql) · [`run-tool`](#run-tool) · [`exec`](#exec) · [`test`](#test) · [`compile`](#compile) · [`dialog`](#dialog) · [`commands`](#commands-1) · [`wait-for-ready`](#wait-for-ready) · [`setup-mcp`](#setup-mcp) · [`setup-skills`](#setup-skills) · [`remove-plugin`](#remove-plugin) · [`status`](#status)
 
-**Also:** [Global options](#global-options) · [Exit codes and machine-readable output](#exit-codes-and-machine-readable-output) · [Full automation example](#full-automation-example) · [How it works](#how-it-works) · [Library API](#library-api-v0670)
+**Also:** [Global options](#global-options) · [Exit codes and machine-readable output](#exit-codes-and-machine-readable-output) · [Full automation example](#full-automation-example) · [How it works](#how-it-works) · [Library API](#library-api)
 
 # Commands
 
@@ -677,7 +677,7 @@ unity-mcp-cli wait-for-ready --url http://localhost:8080 --timeout 30000
 
 ## `setup-mcp`
 
-Write MCP config files for AI agents, enabling headless/CI setup without the Unity Editor UI. Supports all 14 agents (Claude Code, Cursor, Gemini, Codex, etc.).
+Write MCP config files for AI agents, enabling headless/CI setup without the Unity Editor UI. Supports every agent that `setup-mcp --list` shows (Claude Code, Cursor, Gemini, Codex and more).
 
 The config is **pinned** to this project via a per-project URL (`https://ai-game.dev/mcp/p/<pin>` for http transport, or a `project=<pin>` argument for stdio). For the Cloud http transport it also carries this project's **project key** (`Authorization: Bearer agd_pk_…`) for every agent: a non-expiring, revocable credential bound to this project only, reused from `~/.ai-game-dev/project-keys.json` or minted with the account you signed in with via [`login`](#login). Without a sign-in (or if the key cannot be obtained) the config is URL-only and the agent signs in with its own OAuth. Pass `--oauth` to always write the URL-only config, `--regenerate-key` to replace the key (this project's other agent configs that carry the previous key are moved to the new one and printed, then the previous key is revoked; if any of them cannot be rewritten, the previous key is left active and a warning names it), `--token` to write an explicit PAT instead, or `--no-pin` for the shared, unpinned endpoint. stdio and local-server configs never carry a project key. Antigravity reads either `~/.gemini/config/mcp_config.json` or `~/.gemini/antigravity/mcp_config.json` depending on the install, so both files are written and every path written is printed; if any of them cannot be written the command fails. This output matches the Unity Editor's **Configure** button.
 
@@ -934,7 +934,7 @@ Commands that manage editors or create projects use the **Unity Hub CLI** (`--he
 - **macOS** — downloads the DMG, mounts it, and copies `Unity Hub.app` to `/Applications`
 - **Linux** — downloads `UnityHub.AppImage` to `~/Applications/`
 
-# Library API (v0.67.0+)
+# Library API
 
 In addition to the CLI binary, `unity-mcp-cli` exposes its core commands as a typed, side-effect-free library so other Node.js / TypeScript tools can embed the same install / configure flow without shelling out.
 
@@ -943,7 +943,7 @@ import { installPlugin, removePlugin, configure, setupMcp } from 'unity-mcp-cli'
 
 const result = await installPlugin({
   unityProjectPath: './MyUnityProject',
-  // version: '0.67.0',        // optional — defaults to latest from OpenUPM
+  // version: 'x.y.z',        // optional — defaults to latest from OpenUPM
   onProgress: (event) => {
     // phase is one of: 'start' | 'dependencies-resolved' | 'manifest-patched' | 'done'
     console.log(event.phase, event.message);
@@ -962,4 +962,4 @@ for (const step of result.nextSteps) console.log(step);
 
 Each function returns a typed `{ success, ... }` result object; errors are never thrown past the public boundary. The library entry has no top-level side effects — `import 'unity-mcp-cli'` never parses argv and never writes to stdout or stderr.
 
-See [`CHANGELOG.md`](../CHANGELOG.md#0670---2026-04-21) for the full list of exported functions and types.
+See [`CHANGELOG.md`](../CHANGELOG.md) for the full list of exported functions and types.

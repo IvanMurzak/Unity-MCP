@@ -58,7 +58,7 @@ unity-mcp-cli install-extension Tilemap ./MyGame
 | 账户 | `login` · `unity-account` |
 | AI 智能体 | `setup-mcp` · `setup-skills` · `configure` |
 | 编辑器 | `open` · `close` · `wait-for-ready` · `status` · `dialog` |
-| 工具 | `tools` · `rql` · `run-tool` · `exec` |
+| 工具 | `tools` · `rql` · `run-tool` · `run-system-tool` · `exec` |
 | 编译测试 | `compile` · `test` |
 | 查询 | `commands` |
 

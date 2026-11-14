@@ -58,7 +58,7 @@ unity-mcp-cli install-extension Tilemap ./MyGame
 | खाता | `login` · `unity-account` |
 | AI एजेंट | `setup-mcp` · `setup-skills` · `configure` |
 | Editor | `open` · `close` · `wait-for-ready` · `status` · `dialog` |
-| टूल | `tools` · `rql` · `run-tool` · `exec` |
+| टूल | `tools` · `rql` · `run-tool` · `run-system-tool` · `exec` |
 | बिल्ड, टेस्ट | `compile` · `test` |
 | खोज | `commands` |
 

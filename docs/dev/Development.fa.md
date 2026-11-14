@@ -277,7 +277,7 @@ graph LR
    - اجرای مبتنی بر صف در حلقه Update یونیتی
    - برای اجرای thread-safe عملیات MCP حیاتی است
 
-3. **سریال‌سازی نوع‌های Unity** ([ReflectionConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/ReflectionConverters/)، [JsonConverters/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/JsonConverters/))
+3. **سریال‌سازی نوع‌های Unity** ([Converter/Reflection/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Reflection/)، [Converter/Json/](../../Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Runtime/Converter/Json/))
    - سریال‌سازی سفارشی JSON برای نوع‌های Unity (GameObject، Component، Transform، Vector3، Quaternion و غیره)
    - اشیای Unity را به قالب ارجاع (`GameObjectRef`، `ComponentRef`) با ردیابی instanceID تبدیل می‌کند
    - با ReflectorNet برای درون‌نگری اشیا و سریال‌سازی کامپوننت‌ها یکپارچه می‌شود
@@ -335,7 +335,7 @@ public static class Prompt_ScriptingCode
 {
     [AiPrompt(Name = "add-event-system", Role = Role.User)]
     [Description("Implement UnityEvent-based communication system between GameObjects.")]
-    public string AddEventSystem()
+    public static string AddEventSystem()
     {
         return "Create event system using UnityEvents, UnityActions, or custom event delegates for decoupled communication between game systems and components.";
     }

@@ -40,7 +40,7 @@
 | --- | --- | --- |
 | سرور | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) که پلاگین روی `127.0.0.1` اجرا می‌کند، یا سروری که خودتان میزبانی می‌کنید | `https://ai-game.dev/mcp` |
 | حساب کاربری | لازم نیست | ورود به ai-game.dev |
-| داده‌های پروژه شما | روی دستگاه شما می‌ماند | فراخوانی‌های ابزار از یک رله بدون حالت (stateless) عبور می‌کنند که محتوای آن‌ها را بررسی یا ذخیره نمی‌کند؛ رله فراداده رویدادها را ثبت می‌کند ([سیاست حریم خصوصی](https://ai-game.dev/legal/privacy)) |
+| داده‌های پروژه شما | روی دستگاه شما می‌ماند | فراخوانی‌های ابزار از یک رله بدون حالت (stateless) عبور می‌کنند که محتوای آن‌ها را بررسی یا ذخیره نمی‌کند؛ رله فراداده رویدادهای MCP را ثبت می‌کند که در یک بازه چرخشی ۹۰ روزه استفاده می‌شود ([سیاست حریم خصوصی](https://ai-game.dev/legal/privacy)) |
 | هزینه | رایگان | رایگان |
 
 **چرا Cloud پیش‌فرض است:** به هیچ پورت بازی نیاز ندارد، از تداخل پورت با برنامه‌های دیگر جلوگیری می‌کند و رایگان است. حالت محلی گزینه‌ای هم‌ارز برای کار آفلاین یا در محیط‌های ایزوله (air-gapped) است. جزئیات: [امنیت و حریم خصوصی](#امنیت-و-حریم-خصوصی).
@@ -64,7 +64,7 @@
 
 **۱. پلاگین را نصب کنید** (توصیه‌شده: نصب‌کننده، بدون نیاز به نصب چیز دیگری):
 
-[![DOWNLOAD INSTALLER](img/button/button_download.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
+[![دانلود نصب‌کننده](img/button/button_download_fa.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
 فایل `.unitypackage` دانلودشده را در حالی که پروژه‌تان باز است باز کنید (روی آن دوبار کلیک کنید، یا از **Assets ▸ Import Package ▸ Custom Package** استفاده کنید).
 
