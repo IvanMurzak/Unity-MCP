@@ -24,7 +24,7 @@ ARTIFACT it was read from (`project.assets.json`, a DLL sha256, `chain-identity.
 an exit code.
 """
 
-CHAIN_FEED_VERSION = "10"
+CHAIN_FEED_VERSION = "12"
 
 import argparse
 import hashlib
@@ -123,6 +123,9 @@ UNITY_MANIFEST_NAME = ".nuget-installed.json"
 UNITY_RESOLVER_CONFIG_NAME = "NuGetConfig.cs"
 UNITY_RESOLVER_PIN_TEMPLATE = r'new\s+NuGetPackage\(\s*"{id}"\s*,\s*"([^"]+)"'
 
+#: `mode: vendored` (v12): the consumer COMMITS a verbatim copy of the producer's source files.
+VENDORED_MODE = "vendored"
+
 SERVER_MARKER_NAME = "chain-identity.json"
 SERVER_MARKER_FIELDS = ("ws_version", "sha", "rid", "publish_cmd", "exe_sha256", "product_version")
 
@@ -176,6 +179,33 @@ RECIPES = {
             "nupkg": {
                 "kind": "nupkg", "id": "com.IvanMurzak.Rql",
                 "dlls": ["Rql.Contracts.dll", "Rql.Execution.dll", "Rql.Parser.dll"],
+            },
+        },
+        "consumes": [],
+    },
+    # TWO packages at one version (the Core and the SOURCE-ONLY Roslyn adapter: no `lib/`, so its
+    # own-pack proof reads the nuspec version) and two `source` artifacts vendored as committed
+    # copies (`mode: vendored`): `trees` x `glob`, one consumer drop per tree, in order.
+    "code-exec": {
+        "path": "shared/Code-Exec",
+        "slug": "IvanMurzak/Code-Exec",
+        "ecosystem": "dotnet",
+        "kind": "repo",
+        "build": "dotnet build dotnet/CodeExec.Roslyn/CodeExec.Roslyn.csproj -c Release -p:Version={ws_version}",
+        "pack": [
+            "dotnet pack dotnet/CodeExec/CodeExec.csproj -c Release --output {feed} -p:Version={ws_version}",
+            "dotnet pack dotnet/CodeExec.Roslyn/CodeExec.Roslyn.csproj -c Release --output {feed} -p:Version={ws_version}",
+        ],
+        "artifacts": {
+            "core": {"kind": "nupkg", "id": "com.IvanMurzak.CodeExec", "dlls": ["com.IvanMurzak.CodeExec.dll"]},
+            "roslyn": {"kind": "nupkg", "id": "com.IvanMurzak.CodeExec.Roslyn", "source_only": True},
+            "csharp": {
+                "kind": "source", "id": "code-exec-csharp",
+                "trees": ["dotnet/CodeExec", "dotnet/CodeExec.Roslyn/src"], "glob": "*.cs",
+            },
+            "python": {
+                "kind": "source", "id": "code-exec-python",
+                "trees": ["python/code_exec"], "glob": "*.py",
             },
         },
         "consumes": [],
@@ -340,6 +370,15 @@ RECIPES = {
                 ],
             },
             {
+                "ref": "code-exec/csharp", "node": "code-exec", "artifact": "csharp",
+                "mode": "vendored", "header": 4,
+                "pins": ["Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/VENDORED.md"],
+                "drops": [
+                    "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/Core",
+                    "Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/Scripts/CodeExec/Roslyn",
+                ],
+            },
+            {
                 "ref": "gamedev-mcp-server/binary", "node": "gamedev-mcp-server", "artifact": "binary",
                 "mode": "server-binary", "env": "UNITY_MCP_SERVER_PATH",
                 "pins": [
@@ -402,6 +441,24 @@ RECIPES = {
                 ],
             },
             {
+                "ref": "code-exec/core", "node": "code-exec", "artifact": "core",
+                "mode": "nuget",
+                "pins": [
+                    "Godot-MCP.csproj",
+                    "Godot-MCP.Tests/Godot-MCP.Tests.csproj",
+                    "Godot-Tests/Godot-Tests.csproj",
+                ],
+            },
+            {
+                "ref": "code-exec/roslyn", "node": "code-exec", "artifact": "roslyn",
+                "mode": "nuget",
+                "pins": [
+                    "Godot-MCP.csproj",
+                    "Godot-MCP.Tests/Godot-MCP.Tests.csproj",
+                    "Godot-Tests/Godot-Tests.csproj",
+                ],
+            },
+            {
                 "ref": "gamedev-mcp-server/binary", "node": "gamedev-mcp-server", "artifact": "binary",
                 "mode": "server-binary", "env": "GODOT_MCP_SERVER_PATH",
                 "pins": [
@@ -439,6 +496,12 @@ RECIPES = {
             {
                 "ref": "rql/nupkg", "node": "rql", "artifact": "nupkg",
                 "mode": "nuget", "pins": ["bridge/src/com.IvanMurzak.Unreal.MCP.Bridge.csproj"],
+            },
+            {
+                "ref": "code-exec/python", "node": "code-exec", "artifact": "python",
+                "mode": "vendored",
+                "pins": ["UnrealMCP/Content/Python/Lib/site-packages/code_exec/VENDORED.md"],
+                "drops": ["UnrealMCP/Content/Python/Lib/site-packages/code_exec"],
             },
             {
                 "ref": "gamedev-mcp-server/binary", "node": "gamedev-mcp-server", "artifact": "binary",
@@ -482,6 +545,14 @@ RECIPES = {
             },
             {
                 "ref": "rql/nupkg", "node": "rql", "artifact": "nupkg",
+                "mode": "nuget", "pins": ["Directory.Packages.props"],
+            },
+            {
+                "ref": "code-exec/core", "node": "code-exec", "artifact": "core",
+                "mode": "nuget", "pins": ["Directory.Packages.props"],
+            },
+            {
+                "ref": "code-exec/roslyn", "node": "code-exec", "artifact": "roslyn",
                 "mode": "nuget", "pins": ["Directory.Packages.props"],
             },
         ],
@@ -1318,10 +1389,16 @@ def feed_artifact_path(ctx, node_id, body):
     return ctx.feed_npm / tarball_filename(body["id"], ws_version)
 
 
+def builds_from_feed(edge):
+    """Does `edge` restore a PACKED artifact? A `project` edge builds from source, and a
+    `vendored` one is a committed copy of the producer's files: neither needs the producer built."""
+    return edge["mode"] not in ("project", VENDORED_MODE)
+
+
 def lower_closure(ctx, edges):
     """Every lower node this leg must self-build, transitively, in topological order."""
     wanted = set()
-    stack = [edge["node"] for edge in edges]
+    stack = [edge["node"] for edge in edges if builds_from_feed(edge)]
     while stack:
         node_id = stack.pop()
         if node_id in wanted or node_id == ctx.node:
@@ -1330,7 +1407,7 @@ def lower_closure(ctx, edges):
             continue
         wanted.add(node_id)
         for edge in RECIPES[node_id]["consumes"]:
-            if edge["mode"] != "project" and ctx.ws_version(edge["node"]):
+            if builds_from_feed(edge) and ctx.ws_version(edge["node"]):
                 stack.append(edge["node"])
     return topological_order(wanted)
 
@@ -1493,9 +1570,20 @@ def twin_sha(ctx, twin):
     return sha
 
 
+def twin_lower_edges(ctx):
+    """The `nuget` edges of every pinned twin whose producer moves in this lock.
+
+    A twin checkout restores its own packages, so a producer it pins at an UNRELEASED version
+    (`ReflectorNet >= 5.5.3` while 5.5.3 is only this lock's ws build) fails NU1102 unless the leg
+    self-builds that producer into the feed and overrides it in the twin, exactly as it does for a
+    lower node's clone."""
+    return [edge for twin in pinned_twins(ctx) for edge in moving_nuget_edges(ctx, twin["node"])]
+
+
 def twin_plan(ctx):
-    """Every pinned twin as `{twin, sha, dir, env, clone}`, with ZERO side effects: `apply` runs
-    exactly the clone `dry-run` prints. A twin whose state claims a sha it lacks is refused here."""
+    """Every pinned twin as `{twin, sha, dir, env, clone, override}`, with ZERO side effects:
+    `apply` runs exactly the clone and writes exactly the override `dry-run` prints. A twin whose
+    state claims a sha it lacks is refused here."""
     plan = []
     for twin in pinned_twins(ctx):
         sha = twin_sha(ctx, twin)
@@ -1503,6 +1591,7 @@ def twin_plan(ctx):
         plan.append({
             "twin": twin, "sha": sha, "dir": as_posix_abs(directory), "env": twin_env(twin),
             "clone": clone_argv(twin["node"], sha, directory, twin_slug(twin)),
+            "override": nuget_rows_for_node(ctx, twin["node"]),
         })
     return plan
 
@@ -1688,12 +1777,17 @@ def nuget_rows_for(ctx, edges):
     return sorted(rows.values(), key=lambda r: (order.get(r["node"], 0), r["package_id"]))
 
 
-def nuget_rows_for_node(ctx, node_id):
-    """The rows a node's OWN checkout/clone needs — used by the plan and by the lower builds."""
-    edges = [
+def moving_nuget_edges(ctx, node_id):
+    """`node_id`'s own `nuget` edges whose producer is IN this lock with a ws_version."""
+    return [
         edge for edge in RECIPES[node_id]["consumes"]
         if edge["mode"] == "nuget" and ctx.ws_version(edge["node"])
     ]
+
+
+def nuget_rows_for_node(ctx, node_id):
+    """The rows a node's OWN checkout/clone needs — used by the plan, the lower builds and twins."""
+    edges = moving_nuget_edges(ctx, node_id)
     return nuget_rows_for(ctx, edges) if edges else []
 
 
@@ -1892,6 +1986,126 @@ def apply_unity_dll(ctx, edges):
 # ----------------------------------------------------------------------
 # override: pnpm (parity with overrides/pnpm.py)
 # ----------------------------------------------------------------------
+
+
+# ----------------------------------------------------------------------
+# mode: vendored (v12) — a committed verbatim copy of the producer's source files
+# ----------------------------------------------------------------------
+#
+# A `kind: source` artifact names `trees` (producer-relative directories) and a file-name
+# `glob`; the consumer's edge names one `drops` directory per tree, in order, and `header`: how
+# many lines of its OWN header (a license / provenance comment) precede each copied file. The
+# leg copies the files of the lock's producer clone below each existing header, never adds or
+# removes a file (a new source file needs a hand change, e.g. a Unity `.meta`), and proves each
+# file's body equals the producer's bytes at the lock sha.
+
+
+def vendored_pairs(edge):
+    """`[(producer tree, consumer drop)]` of a vendored edge, in order. A count mismatch refuses."""
+    body = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]
+    trees, drops = list(body.get("trees") or ()), list(edge.get("drops") or ())
+    if not trees or len(trees) != len(drops):
+        raise Refusal("%s: %d source tree(s) but %d drop(s); one drop per tree"
+                      % (edge["ref"], len(trees), len(drops)))
+    return list(zip(trees, drops))
+
+
+def vendored_names(directory, glob):
+    """The sorted top-level file names in `directory` matching `glob` (never recursive)."""
+    directory = Path(directory)
+    if not directory.is_dir():
+        return []
+    return sorted(p.name for p in directory.iterdir() if p.is_file() and p.match(glob))
+
+
+def split_header(data, lines):
+    """`(header bytes, body bytes)`: the first `lines` lines of `data`, and the rest."""
+    head, rest = b"", data
+    for _ in range(lines):
+        cut = rest.find(b"\n")
+        if cut < 0:
+            raise Refusal("a vendored file is shorter than its %d-line header" % lines)
+        head, rest = head + rest[:cut + 1], rest[cut + 1:]
+    return head, rest
+
+
+def vendored_file_set_problem(edge, glob, tree, drop, upstream, current):
+    """A refusal message when the producer's file set and the consumer's differ, else None."""
+    if upstream == current:
+        return None
+    return ("%s: %s/%s %s vs %s %s: new %s, gone %s (add or remove the vendored file by hand)"
+            % (edge["ref"], tree, glob, upstream, drop, current,
+               sorted(set(upstream) - set(current)), sorted(set(current) - set(upstream))))
+
+
+def apply_vendored(ctx, edges):
+    """Copy each vendored edge's producer files (from the lock clone) under the consumer header."""
+    written = []
+    for edge in edges:
+        body = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]
+        source = ctx.clone_dir(edge["node"])
+        lines = int(edge.get("header") or 0)
+        for tree, drop in vendored_pairs(edge):
+            upstream = vendored_names(source / tree, body["glob"])
+            current = vendored_names(ctx.checkout / drop, body["glob"])
+            problem = vendored_file_set_problem(edge, body["glob"], tree, drop, upstream, current)
+            if problem or not upstream:
+                raise Refusal(problem or "%s: no %s under %s" % (edge["ref"], body["glob"], tree))
+            for name in upstream:
+                target = ctx.checkout / drop / name
+                head, _ = split_header(target.read_bytes(), lines)
+                data = (source / tree / name).read_bytes()
+                if b"\r\n" in head:  # keep the consumer checkout's line endings
+                    data = data.replace(b"\r\n", b"\n").replace(b"\n", b"\r\n")
+                target.write_bytes(head + data)
+                written.append(as_posix_abs(target))
+        log("chain: vendored %s @ %s -> %s" % (edge["ref"], ctx.sha(edge["node"]),
+                                               ", ".join(edge.get("drops") or ())))
+    return written
+
+
+def _vendored_proofs(ctx, edges):
+    """One row per vendored edge: every file's body (below the consumer header) is byte-equal,
+    line endings normalised, to the producer's file at the LOCK sha (its clone)."""
+    proofs = []
+    for edge in edges:
+        body = RECIPES[edge["node"]]["artifacts"][edge["artifact"]]
+        sha = ctx.sha(edge["node"]) or ""
+        source = ctx.clone_dir(edge["node"])
+        lines = int(edge.get("header") or 0)
+        expected, observed, bad, pairs = [], [], [], []
+        try:
+            head, why = git_head(source)
+            if head != sha:
+                raise Refusal("producer clone %s is not at the lock sha %s (HEAD %s)"
+                              % (as_posix_abs(source), sha, head or why))
+            pairs = vendored_pairs(edge)
+            for tree, drop in pairs:
+                upstream = vendored_names(source / tree, body["glob"])
+                current = vendored_names(ctx.checkout / drop, body["glob"])
+                problem = vendored_file_set_problem(edge, body["glob"], tree, drop, upstream, current)
+                if problem:
+                    raise Refusal(problem)
+                for name in upstream:
+                    want = sha256_bytes(normalize_newlines((source / tree / name).read_bytes()))
+                    _, got_body = split_header((ctx.checkout / drop / name).read_bytes(), lines)
+                    got = sha256_bytes(normalize_newlines(got_body))
+                    expected.append(want)
+                    observed.append(got)
+                    if want != got:
+                        bad.append("%s/%s" % (drop, name))
+        except (OSError, Refusal) as exc:
+            proofs.append(_proof(ctx.node, "%s: %s" % (edge["ref"], exc), body["id"], None, sha, False))
+            continue
+        digest = lambda rows: sha256_bytes("\n".join(rows).encode("ascii"))  # noqa: E731
+        source_text = ("%d vendored file(s) under %s vs %s@%s %s"
+                       % (len(expected), ", ".join(edge.get("drops") or ()), edge["node"], sha[:8],
+                          ", ".join(t for t, _ in pairs)))
+        if bad:
+            source_text += "; differ: " + ", ".join(bad)
+        proofs.append(_proof(ctx.node, source_text, body["id"], digest(observed), digest(expected),
+                             bool(expected) and not bad))
+    return proofs
 
 
 def _eol(text):
@@ -2724,19 +2938,25 @@ def cmd_apply(args):
     })
     ctx.lock_path.write_text(json.dumps(ctx.lock, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
-    # 1. the lower layers IN THIS JOB'S SCOPE, in topological order, each built AND packed at
-    #    its ws version (A4).
-    for entry in build_plan(ctx, edges):
+    # a twin the lock cannot pin, or whose old checkout survives its delete, refuses here,
+    # before anything is built
+    twin_entries = twin_plan(ctx)
+    for twin_entry in twin_entries:
+        twin_dir = ctx.twin_dir(twin_entry["twin"]["node"])
+        if twin_dir.exists():
+            shutil.rmtree(str(twin_dir), ignore_errors=True)
+            if twin_dir.exists():
+                raise Refusal(
+                    "twin %s: %s survived its delete (a locked or read-only file); refusing to clone "
+                    "into a stale checkout" % (twin_repo(twin_entry["twin"]), twin_entry["dir"])
+                )
+
+    # 1. the lower layers IN THIS JOB'S SCOPE, plus those a pinned twin restores, in topological
+    #    order, each built AND packed at its ws version (A4).
+    for entry in build_plan(ctx, edges + twin_lower_edges(ctx)):
         node_id = entry["node"]
         clone_dir = ctx.clone_dir(node_id)
-        if clone_dir.exists():
-            shutil.rmtree(str(clone_dir), ignore_errors=True)
-        clone_dir.mkdir(parents=True, exist_ok=True)
-        git_env = dict(os.environ, **_GIT_ENV)
-        require_tool("git", "the leg clones each lower node at the lock sha")
-        for argv in entry["clone"]:
-            if run(argv, env=git_env) != 0:
-                raise Refusal("clone of %s at %s failed" % (node_id, entry["sha"]))
+        fresh_clone(node_id, clone_dir, entry["clone"], entry["sha"], "the leg clones each lower node at the lock sha")
         write_nuget_override(ctx, clone_dir, entry["override"])
         npm_preinstall(ctx, clone_dir, entry["npm"])
         env = ctx.command_env()
@@ -2763,16 +2983,9 @@ def cmd_apply(args):
     # 1b. the twins the lock pins, each cloned at the LOCK's sha — never a branch. A bogus or
     #     unreachable sha fails the fetch, and that is a refusal (exit 2), not a fallback. A twin
     #     the lock RELEASES has no sha: nothing is cloned or exported, and `record` names the gap.
-    for twin_entry in twin_plan(ctx):
+    for twin_entry in twin_entries:
         twin = twin_entry["twin"]
         twin_dir = ctx.twin_dir(twin["node"])
-        if twin_dir.exists():
-            shutil.rmtree(str(twin_dir), ignore_errors=True)
-            if twin_dir.exists():
-                raise Refusal(
-                    "twin %s: %s survived its delete (a locked or read-only file); refusing to clone "
-                    "into a stale checkout" % (twin_repo(twin), twin_entry["dir"])
-                )
         twin_dir.parent.mkdir(parents=True, exist_ok=True)
         require_tool("git", "the leg clones the %s twin at the lock sha" % twin_repo(twin))
         git_env = dict(os.environ, **_GIT_ENV)
@@ -2784,6 +2997,8 @@ def cmd_apply(args):
                     "falling back to a branch)"
                     % (twin_repo(twin), " ".join(argv), status, twin_slug(twin), twin["node"], twin_entry["sha"])
                 )
+        # the twin restores like a lower node's clone: its moving producers come from the feed
+        write_nuget_override(ctx, twin_dir, twin_entry["override"])
         exported[twin_entry["env"]] = twin_entry["dir"]
         twins.append({"node": twin["node"], "sha": twin_entry["sha"], "dir": twin_entry["dir"], "env": twin_entry["env"]})
         log("chain: twin %s @ %s -> %s (%s)" % (twin_repo(twin), twin_entry["sha"], twin_entry["dir"], twin_entry["env"]))
@@ -2810,6 +3025,11 @@ def cmd_apply(args):
     server_edges = [e for e in edges if e["mode"] == "server-binary"]
     if server_edges:
         exported.update(server_env(ctx, server_edges))
+    vendored_edges = [e for e in edges if e["mode"] == VENDORED_MODE]
+    for node_id in sorted({e["node"] for e in vendored_edges}):
+        clone_vendored_producer(ctx, node_id)
+    if vendored_edges:
+        written.extend(apply_vendored(ctx, vendored_edges))
     npm_edges = [e for e in edges if e["mode"] == "npm"]
     written.extend(npm_preinstall(ctx, ctx.checkout, npm_edges))
     for edge in npm_edges:
@@ -2851,6 +3071,28 @@ def cmd_apply(args):
         log("chain: " + line)
     log("chain: override active for %s (modes: %s)" % (ctx.node, ", ".join(modes) or "none in this job's scope"))
     return EXIT_OK
+
+
+def fresh_clone(node_id, clone_dir, argvs, sha, why):
+    """Delete `clone_dir` and clone `node_id` into it at `sha` (`clone_argv`); a failure refuses."""
+    if clone_dir.exists():
+        shutil.rmtree(str(clone_dir), ignore_errors=True)
+    clone_dir.mkdir(parents=True, exist_ok=True)
+    require_tool("git", why)
+    git_env = dict(os.environ, **_GIT_ENV)
+    for argv in argvs:
+        if run(argv, env=git_env) != 0:
+            raise Refusal("clone of %s at %s failed" % (node_id, sha))
+
+
+def clone_vendored_producer(ctx, node_id):
+    """The producer of a vendored edge, cloned FRESH at the lock sha (no build): a clone left in a
+    reused RUNNER_TEMP could carry an edited file that the proof, reading the same clone, would
+    call GREEN."""
+    clone_dir = ctx.clone_dir(node_id)
+    sha = ctx.sha(node_id) or ""
+    fresh_clone(node_id, clone_dir, clone_argv(node_id, sha, clone_dir, RECIPES[node_id]["slug"]), sha,
+                "the leg clones %s at the lock sha for its vendored sources" % node_id)
 
 
 def _default_skips(ctx):
@@ -2982,11 +3224,16 @@ def cmd_dry_run(args):
         log("chain: twin %s @ %s — job %s of %s" % (twin_repo(twin), sha, twin["job"], twin["workflow"]))
         for argv in entry["clone"]:
             log("chain:   clone   %s" % " ".join(str(a) for a in argv))
+        for row in entry["override"]:
+            log("chain:   nuget   %s -> [%s]" % (row["package_id"], row["ws_version"]))
+        if entry["override"]:
+            log("chain:   write   %s/%s" % (entry["dir"], NUGET_CONFIG_NAME))
+            log("chain:   write   %s/%s" % (entry["dir"], TARGETS_NAME))
         log("chain:   export  %s=%s" % (entry["env"], entry["dir"]))
         log("chain:   prove   %s: git -C %s rev-parse HEAD == %s" % (twin_consumer(twin), entry["dir"], sha))
     for row in twin_skips(ctx):
         log("chain:   skip    %s: %s" % (row["step"], row["reason"]))
-    for entry in build_plan(ctx, edges):
+    for entry in build_plan(ctx, edges + twin_lower_edges(ctx)):
         log("")
         log("chain: --- %s @ %s (%s) ---" % (entry["node"], entry["ws_version"], entry["sha"]))
         for argv in entry["clone"]:
@@ -3030,6 +3277,16 @@ def cmd_dry_run(args):
         elif mode == "npm":
             for plan in npm_preinstall_plans(ctx, ctx.checkout, mode_edges):
                 log("chain:   npm     " + describe_npm_preinstall(plan))
+        elif mode == VENDORED_MODE:
+            for edge in mode_edges:
+                node_id = edge["node"]
+                body = RECIPES[node_id]["artifacts"][edge["artifact"]]
+                clone_dir = ctx.clone_dir(node_id)
+                for argv in clone_argv(node_id, ctx.sha(node_id) or "", clone_dir, RECIPES[node_id]["slug"]):
+                    log("chain:   clone   %s" % " ".join(str(a) for a in argv))
+                for tree, drop in vendored_pairs(edge):
+                    log("chain:   vendor  %s/%s/%s -> %s (below %d header line(s))"
+                        % (as_posix_abs(clone_dir), tree, body["glob"], drop, int(edge.get("header") or 0)))
         elif mode == "server-binary":
             ws_version = ctx.ws_version("gamedev-mcp-server")
             artifact_id = RECIPES["gamedev-mcp-server"]["artifacts"]["binary"]["id"]
@@ -3482,6 +3739,21 @@ def _own_dll_proof(ctx, found, package_id, wanted, ws_version):
     )
 
 
+def _own_nuspec_proof(ctx, found, package_id, ws_version):
+    """A SOURCE-ONLY nupkg ships no assembly to read a `ProductVersion` from: its proof is the
+    `<version>` the pack stamped into its own `.nuspec`."""
+    try:
+        with zipfile.ZipFile(str(found)) as archive:
+            names = [n for n in archive.namelist() if "/" not in n and n.lower().endswith(".nuspec")]
+            text = archive.read(names[0]).decode("utf-8-sig") if len(names) == 1 else None
+    except (OSError, zipfile.BadZipFile, KeyError, UnicodeDecodeError) as exc:
+        return _proof(ctx.node, "%s unreadable: %s" % (found.name, exc), package_id, None, ws_version, False)
+    match = re.search(r"<version>\s*([^<\s]+)\s*</version>", text or "")
+    observed = match.group(1) if match else None
+    return _proof(ctx.node, "%s!.nuspec <version> (source-only package)" % found.name,
+                  package_id, observed, ws_version, observed == ws_version)
+
+
 def _own_pack_proofs(ctx, artifacts):
     """A ROOT leg's evidence: its OWN pack at the lock's ws version (§C4 root nodes).
 
@@ -3517,6 +3789,9 @@ def _own_pack_proofs(ctx, artifacts):
                 observed, ws_version, observed == ws_version,
             ))
             continue
+        if body.get("source_only"):
+            proofs.append(_own_nuspec_proof(ctx, found, package_id, ws_version))
+            continue
         try:
             wanted_dlls = artifact_dll_names(body)
         except Refusal as exc:
@@ -3550,6 +3825,8 @@ def identity_proofs(ctx, edges, own):
             proofs.extend(_npm_proofs(ctx, group, pnpm=True))
         elif mode == "server-binary":
             proofs.extend(_server_proofs(ctx, group))
+        elif mode == VENDORED_MODE:
+            proofs.extend(_vendored_proofs(ctx, group))
     if edges and not proofs:
         proofs.append(_proof(
             ctx.node, "NO identity evidence for this leg", "", None, None, False
