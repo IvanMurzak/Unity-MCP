@@ -46,7 +46,7 @@
 ## 功能
 
 ✅ **覆盖编辑器** — 你在 Unity 编辑器中能做的事,智能体几乎都能做\
-✅ **紧凑高效** — 专为智能体打造的工具:调用更少、token 更少,智能体工作更快、成本更低([实测](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))\
+✅ **紧凑高效** — 专为智能体打造的工具:调用更少、token 更少,智能体工作更快、成本更低([实测](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))\
 ✅ **RQL** — 用一种查询语言读取和修改场景、对象、资源和设置\
 ✅ **C# 与测试** — 用 Roslyn 编译并运行 C#;运行 EditMode 和 PlayMode 测试\
 ✅ **Skills 或 MCP** — 一键生成 Skills,或作为 MCP 客户端连接\
@@ -123,7 +123,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 | 包和 Asset Store | `package-*`、`assetstore-*` | *“安装 Cinemachine”* |
 | 工具列表 | `unity-tool-list` | *“你在这里可以使用哪些工具?”* |
 
-你不需要学习 RQL:智能体会自己编写,并向 `rql-schema` 查询所需的每个数据源、类型和调用。在 Unity 编辑器中的智能体基准测试里,这些工具与早期"每个操作一个工具"的目录达到了相同的成功率,而每个任务的提示 token 约少 5 倍,轮次和工具调用也更少([报告](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))。其他工具已安装,但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](default-mcp-tools.zh-CN.md)** 或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+你不需要学习 RQL:智能体会自己编写,并向 `rql-schema` 查询所需的每个数据源、类型和调用。在一个沙盒游戏世界中实测:使用 RQL 时,智能体每个任务约需 2–3 次工具调用和 7–8k token,成功率 100%;而使用普通反射工具时需要 30–37 次调用和 125–170k token,成功率 67–91%([结果](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))。其他工具已安装,但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](default-mcp-tools.zh-CN.md)** 或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **在终端中**(没有编辑器运行时会启动一个无界面编辑器):
 

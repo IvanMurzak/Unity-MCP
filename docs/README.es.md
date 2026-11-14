@@ -46,7 +46,7 @@ El plugin registra sus herramientas en un servidor MCP; tu agente las llama a tr
 ## Características
 
 ✅ **Cubre el Editor** — el agente puede hacer prácticamente cualquier cosa que tú puedas hacer en el Editor de Unity\
-✅ **Compacto y eficiente** — herramientas pensadas para agentes: menos llamadas y menos tokens, así el agente trabaja más rápido y más barato ([medido](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))\
+✅ **Compacto y eficiente** — herramientas pensadas para agentes: menos llamadas y menos tokens, así el agente trabaja más rápido y más barato ([medido](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))\
 ✅ **RQL** — lee y cambia escenas, objetos, assets y ajustes con un solo lenguaje de consultas\
 ✅ **C# y tests** — compila y ejecuta C# con Roslyn; ejecuta tests EditMode y PlayMode\
 ✅ **Skills o MCP** — genera Skills con un clic, o conéctate como cliente MCP\
@@ -123,7 +123,7 @@ Encuentra cada prefab de enemigo sin Rigidbody y añádele uno
 | Paquetes y Asset Store | `package-*`, `assetstore-*` | *"Instala Cinemachine"* |
 | Lista de herramientas | `unity-tool-list` | *"¿Qué herramientas puedes usar aquí?"* |
 
-No necesitas aprender RQL: el agente lo escribe y consulta `rql-schema` para cada fuente, tipo y llamada que necesita. En un benchmark de agentes en el Editor de Unity, estas herramientas alcanzaron la misma tasa de éxito que el catálogo anterior de una herramienta por acción, con unas 5 veces menos tokens de prompt por tarea y menos turnos y llamadas a herramientas ([informe](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md)). Hay más herramientas instaladas pero ocultas hasta que las muestres. Lista completa: **[Herramientas MCP por defecto](default-mcp-tools.es.md)** o [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+No necesitas aprender RQL: el agente lo escribe y consulta `rql-schema` para cada fuente, tipo y llamada que necesita. Medido en un mundo de juego de prueba (sandbox): con RQL un agente necesita unas 2–3 llamadas a herramientas y 7–8k tokens por tarea, con un 100% de éxito, frente a 30–37 llamadas y 125–170k tokens, con un 67–91% de éxito, usando herramientas de reflexión simples ([resultados](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools)). Hay más herramientas instaladas pero ocultas hasta que las muestres. Lista completa: **[Herramientas MCP por defecto](default-mcp-tools.es.md)** o [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **Desde la terminal** (inicia un editor headless si no hay ninguno en ejecución):
 

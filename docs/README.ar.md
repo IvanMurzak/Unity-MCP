@@ -48,7 +48,7 @@
 ## الميزات
 
 ‏✅ ‏**يغطي المحرر** — يستطيع الوكيل فعل أي شيء تقريبًا مما تفعله في محرر Unity\
-‏✅ ‏**مدمجة وفعّالة** — أدوات مصممة للوكلاء: استدعاءات أقل ورموز (tokens) أقل، فيعمل الوكيل أسرع وبتكلفة أقل ([نتائج القياس](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))\
+‏✅ ‏**مدمجة وفعّالة** — أدوات مصممة للوكلاء: استدعاءات أقل ورموز (tokens) أقل، فيعمل الوكيل أسرع وبتكلفة أقل ([نتائج القياس](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))\
 ‏✅ ‏**RQL** — اقرأ المشاهد والكائنات والأصول والإعدادات وعدّلها بلغة استعلام واحدة\
 ‏✅ ‏**C# والاختبارات** — صرّف C# وشغّله عبر Roslyn؛ شغّل اختبارات EditMode وPlayMode\
 ‏✅ ‏**Skills أو MCP** — ولّد Skills بنقرة واحدة، أو اتصل كعميل MCP\
@@ -141,7 +141,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 | الحزم وAsset Store | `package-*`، `assetstore-*` | *«ثبّت Cinemachine»* |
 | قائمة الأدوات | `unity-tool-list` | *«ما الأدوات التي يمكنك استخدامها هنا؟»* |
 
-لا تحتاج إلى تعلّم RQL: الوكيل يكتبها ويسأل `rql-schema` عن كل مصدر ونوع واستدعاء يحتاجه. في اختبار أداء (benchmark) للوكلاء داخل محرر Unity، حققت هذه الأدوات معدل النجاح نفسه الذي حققه الكتالوج السابق (أداة واحدة لكل إجراء)، مع رموز موجّه (prompt tokens) أقل بنحو 5 أضعاف لكل مهمة، وعدد أقل من الأدوار واستدعاءات الأدوات ([التقرير](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md)). هناك أدوات أخرى مثبتة لكنها مخفية حتى تُظهرها. القائمة الكاملة: **[أدوات MCP الافتراضية](default-mcp-tools.ar.md)** أو [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+لا تحتاج إلى تعلّم RQL: الوكيل يكتبها ويسأل `rql-schema` عن كل مصدر ونوع واستدعاء يحتاجه. تم القياس على عالم لعبة تجريبي (sandbox): مع RQL يحتاج الوكيل إلى نحو 2–3 استدعاءات أدوات و7–8 آلاف رمز (token) لكل مهمة بنسبة نجاح 100%، مقابل 30–37 استدعاءً و125–170 ألف رمز بنسبة نجاح 67–91% مع أدوات الانعكاس (reflection) البسيطة ([النتائج](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools)). هناك أدوات أخرى مثبتة لكنها مخفية حتى تُظهرها. القائمة الكاملة: **[أدوات MCP الافتراضية](default-mcp-tools.ar.md)** أو [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 ‏**من الطرفية** (يشغّل محررًا بلا واجهة إن لم يكن هناك محرر يعمل):
 

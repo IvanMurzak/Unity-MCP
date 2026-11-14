@@ -46,7 +46,7 @@ The plugin registers its tools with an MCP server; your agent calls them through
 ## Features
 
 ✅ **Covers the Editor** — the agent can do virtually anything you can do in the Unity Editor\
-✅ **Compact and efficient** — tools built for agents: fewer calls and fewer tokens, so the agent works faster and cheaper ([measured](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))\
+✅ **Compact and efficient** — tools built for agents: fewer calls and fewer tokens, so the agent works faster and cheaper ([measured](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))\
 ✅ **RQL** — read and change scenes, objects, assets and settings with one query language\
 ✅ **C# and tests** — compile and run C# with Roslyn; run EditMode and PlayMode tests\
 ✅ **Skills or MCP** — generate Skills in one click, or connect as an MCP client\
@@ -123,7 +123,7 @@ Find every enemy prefab without a Rigidbody and add one
 | Packages and Asset Store | `package-*`, `assetstore-*` | *"Install Cinemachine"* |
 | Tool list | `unity-tool-list` | *"Which tools can you use here?"* |
 
-You do not learn RQL: the agent writes it and asks `rql-schema` for every source, type and call it needs. In an agent benchmark in the Unity Editor, these tools reached the same success rate as the earlier one-tool-per-action catalog with about 5× fewer prompt tokens per task and fewer turns and tool calls ([report](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md)). More tools are installed but hidden until you show them. Full list: **[Default MCP tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** or [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+You do not learn RQL: the agent writes it and asks `rql-schema` for every source, type and call it needs. Measured on a sandbox game world: with RQL an agent needs about 2–3 tool calls and 7–8k tokens per task at 100% success, versus 30–37 calls and 125–170k tokens at 67–91% success with plain reflection tools ([results](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools)). More tools are installed but hidden until you show them. Full list: **[Default MCP tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** or [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **From the terminal** (starts a headless editor when none is running):
 

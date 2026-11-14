@@ -46,7 +46,7 @@
 ## 特長
 
 ✅ **エディターをカバー** — Unity エディターであなたができることは、ほぼ何でもエージェントにもできます\
-✅ **コンパクトで効率的** — エージェント向けに作られたツール: 呼び出し回数もトークンも少なく、エージェントはより速く、より安く作業できます([計測結果](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))\
+✅ **コンパクトで効率的** — エージェント向けに作られたツール: 呼び出し回数もトークンも少なく、エージェントはより速く、より安く作業できます([計測結果](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))\
 ✅ **RQL** — ひとつのクエリ言語でシーン、オブジェクト、アセット、設定を読み書き\
 ✅ **C# とテスト** — Roslyn で C# をコンパイル・実行。EditMode / PlayMode テストを実行\
 ✅ **Skills または MCP** — ワンクリックで Skills を生成、または MCP クライアントとして接続\
@@ -123,7 +123,7 @@ Rigidbody のない敵プレハブをすべて探して Rigidbody を追加し�
 | パッケージと Asset Store | `package-*`、`assetstore-*` | *「Cinemachine をインストールして」* |
 | ツール一覧 | `unity-tool-list` | *「ここで使えるツールは?」* |
 
-RQL を覚える必要はありません。エージェントが RQL を書き、必要なソース、型、呼び出しごとに `rql-schema` に問い合わせます。Unity エディターでのエージェントベンチマークでは、これらのツールは以前の「1 アクションにつき 1 ツール」のカタログと同じ成功率を、タスクあたり約 5 分の 1 のプロンプトトークンと、より少ないターン数・ツール呼び出しで達成しました([レポート](https://github.com/IvanMurzak/RQL/blob/main/evaluation/reports/unity-mcp-old-vs-rql-branch.md))。ほかのツールもインストール済みですが、表示するまで隠れています。全一覧: **[既定の MCP ツール](default-mcp-tools.ja.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+RQL を覚える必要はありません。エージェントが RQL を書き、必要なソース、型、呼び出しごとに `rql-schema` に問い合わせます。サンドボックスのゲームワールドで計測した結果、RQL を使うエージェントはタスクあたり約 2〜3 回のツール呼び出しと 7〜8k トークンで成功率 100% でした。単純なリフレクションツールでは 30〜37 回の呼び出しと 125〜170k トークンが必要で、成功率は 67〜91% でした([結果](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))。ほかのツールもインストール済みですが、表示するまで隠れています。全一覧: **[既定の MCP ツール](default-mcp-tools.ja.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **ターミナルから**(エディターが起動していなければヘッドレスで起動します):
 
