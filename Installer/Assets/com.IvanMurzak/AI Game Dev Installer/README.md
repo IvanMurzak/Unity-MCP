@@ -195,12 +195,12 @@ Other agents and manual setup: [Installation guide](https://github.com/IvanMurza
 
 ## Security and privacy
 
-- ✅ **The plugin opens no port** — it connects out to the MCP server.
-- ✅ **Local server on loopback** — `gamedev-mcp-server` binds to `127.0.0.1` unless you set `MCP_BIND` for hosting.
-- ✅ **Origin checks** — browser requests with a non-allowed `Origin` are rejected (403) in every auth mode.
-- ✅ **Auth modes** — `none` (local default), `token` (one shared secret the agent and the plugin must both send), `oauth` (ai-game.dev account).
-- ✅ **Cloud relay** — routes tool calls without inspecting or storing their contents; it logs metadata such as IP, time, tool name and sizes ([privacy policy](https://ai-game.dev/legal/privacy)).
-- ⚠️ **Not protected** — in `none` mode any process on your machine that reaches the port can call tools, and tools run with Editor rights (`script-execute` runs C#). Use `token` mode on shared machines.
+✅ **The plugin opens no port** — it connects out to the MCP server.\
+✅ **Local server on loopback** — `gamedev-mcp-server` binds to `127.0.0.1` unless you set `MCP_BIND` for hosting.\
+✅ **Origin checks** — browser requests with a non-allowed `Origin` are rejected (403) in every auth mode.\
+✅ **Auth modes** — `none` (local default), `token` (one shared secret the agent and the plugin must both send), `oauth` (ai-game.dev account).\
+✅ **Cloud relay** — routes tool calls without inspecting or storing their contents; it logs metadata such as IP, time, tool name and sizes ([privacy policy](https://ai-game.dev/legal/privacy)).\
+⚠️ **Not protected** — in `none` mode any process on your machine that reaches the port can call tools, and tools run with Editor rights (`script-execute` runs C#). Use `token` mode on shared machines.
 
 Server options and Docker: [MCP server and connection](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md).
 
