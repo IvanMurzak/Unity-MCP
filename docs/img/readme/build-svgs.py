@@ -78,7 +78,7 @@ K.write(out("terminal.svg"), K.terminal(title="~/games — unity-mcp-cli", label
 
 # --- CLI hero (cli/README.md, shown on npm) ---------------------------------------------------------------------
 K.write(out("cli-hero.svg"), K.hero(
-    title="unity-mcp-", accent="cli", eyebrow_text="AI Game Developer · Unity",
+    title="unity-mcp-", accent="cli", eyebrow_text="AI Game Developer · Unity", accent_fx="flow",
     subtitle=["Install Unity and the plugin, connect AI agents,", "run tools, compile and test from the terminal."],
     chip_items=["Node.js 22.14+", "Windows", "macOS", "Linux", "CI"],
     label="unity-mcp-cli: install Unity and the AI Game Developer plugin, connect AI agents, run tools, compile and "
