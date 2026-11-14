@@ -21,6 +21,22 @@
     .spin.r { animation-duration: 60s; animation-direction: reverse; }
     @keyframes spin { to { transform: rotate(360deg); } }
     .blink { animation: blink 1.1s steps(1) infinite; } @keyframes blink { 50% { opacity: 0; } }
+
+    .gl { pointer-events: none; }
+    .gl-r { fill: #FF2448; opacity: 0; animation: glr 2.8s steps(1) infinite; }
+    .gl-c { fill: #2EE6FF; opacity: 0; animation: glc 2.8s steps(1) infinite; }
+    .gl-s { opacity: 0; animation: gls 2.8s steps(1) infinite; }
+    .gl-base { animation: glb 2.8s steps(1) infinite; }
+    @keyframes glr { 0% { opacity:.75; transform:translate(-2px,0) } 6% { transform:translate(-4px,1px) } 9% { transform:translate(-1px,-1px) }
+      12% { opacity:.55; transform:translate(-2px,0) } 40% { opacity:.85; transform:translate(-6px,1px) } 43% { transform:translate(3px,-1px) }
+      46% { opacity:.55; transform:translate(-2px,0) } 72% { opacity:.9; transform:translate(-5px,2px) } 75% { transform:translate(-1px,0) } 78% { opacity:.6; transform:translate(-2px,0) } }
+    @keyframes glc { 0% { opacity:.7; transform:translate(2px,0) } 6% { transform:translate(4px,-1px) } 9% { transform:translate(1px,1px) }
+      12% { opacity:.5; transform:translate(2px,0) } 40% { opacity:.85; transform:translate(6px,-1px) } 43% { transform:translate(-3px,1px) }
+      46% { opacity:.5; transform:translate(2px,0) } 72% { opacity:.9; transform:translate(5px,-2px) } 75% { transform:translate(1px,0) } 78% { opacity:.55; transform:translate(2px,0) } }
+    @keyframes gls { 0%,39%,47%,71%,79%,100% { opacity:0; transform:none } 40% { opacity:1; transform:translate(9px,0) } 43% { opacity:1; transform:translate(-7px,0) }
+      72% { opacity:1; transform:translate(-10px,0) } 75% { opacity:1; transform:translate(6px,0) } }
+    @keyframes glb { 0%,100% { transform:none } 40% { transform:translate(1px,0) } 43% { transform:translate(-1px,0) } 46% { transform:none }
+      72% { transform:translate(-1px,1px) } 75% { transform:none } }
     
     @media (prefers-reduced-motion: reduce) { * { animation: none !important; } }
   </style>

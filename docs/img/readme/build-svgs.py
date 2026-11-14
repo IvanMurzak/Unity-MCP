@@ -17,7 +17,7 @@ def out(name):
 
 # --- hero -------------------------------------------------------------------------------------------------------
 K.write(out("hero.svg"), K.hero(
-    title="Unity ", accent="MCP", eyebrow_text="AI Game Developer",
+    title="Unity ", accent="MCP", eyebrow_text="AI Game Developer", glitch=True,
     subtitle=["Let your AI agent build, test and debug", "Unity projects, in the Editor and in your game."],
     chip_items=["Unity 2022.3+", "MCP", "Skills", "CLI", "Runtime"],
     label="AI Game Developer, Unity MCP: Skills, MCP tools and a CLI that connect AI agents to the Unity Editor "
@@ -83,3 +83,13 @@ K.write(out("cli-hero.svg"), K.hero(
     chip_items=["Node.js 22.14+", "Windows", "macOS", "Linux", "CI"],
     label="unity-mcp-cli: install Unity and the AI Game Developer plugin, connect AI agents, run tools, compile and "
           "test Unity projects from the terminal"))
+
+# --- download buttons (README "Download Installer" link; translated READMEs use their own language) --------------
+BUTTONS = os.path.join(HERE, "..", "button")
+for name, text, kw in [
+    ("button_download.svg", "Download Installer", {}),
+    ("button_download_es.svg", "Descargar instalador", {"w": 560}),
+    ("button_download_ja.svg", "インストーラーをダウンロード", {"w": 520, "icon": False}),
+    ("button_download_zh-CN.svg", "下载安装器", {"w": 360, "icon": False}),
+]:
+    K.write(os.path.join(BUTTONS, name), K.button(text, label="Download the AI Game Developer installer", **kw))

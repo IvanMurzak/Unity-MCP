@@ -49,6 +49,22 @@ def _style(extra=""):
     .spin.r {{ animation-duration: 60s; animation-direction: reverse; }}
     @keyframes spin {{ to {{ transform: rotate(360deg); }} }}
     .blink {{ animation: blink 1.1s steps(1) infinite; }} @keyframes blink {{ 50% {{ opacity: 0; }} }}
+
+    .gl {{ pointer-events: none; }}
+    .gl-r {{ fill: #FF2448; opacity: 0; animation: glr 2.8s steps(1) infinite; }}
+    .gl-c {{ fill: #2EE6FF; opacity: 0; animation: glc 2.8s steps(1) infinite; }}
+    .gl-s {{ opacity: 0; animation: gls 2.8s steps(1) infinite; }}
+    .gl-base {{ animation: glb 2.8s steps(1) infinite; }}
+    @keyframes glr {{ 0% {{ opacity:.75; transform:translate(-2px,0) }} 6% {{ transform:translate(-4px,1px) }} 9% {{ transform:translate(-1px,-1px) }}
+      12% {{ opacity:.55; transform:translate(-2px,0) }} 40% {{ opacity:.85; transform:translate(-6px,1px) }} 43% {{ transform:translate(3px,-1px) }}
+      46% {{ opacity:.55; transform:translate(-2px,0) }} 72% {{ opacity:.9; transform:translate(-5px,2px) }} 75% {{ transform:translate(-1px,0) }} 78% {{ opacity:.6; transform:translate(-2px,0) }} }}
+    @keyframes glc {{ 0% {{ opacity:.7; transform:translate(2px,0) }} 6% {{ transform:translate(4px,-1px) }} 9% {{ transform:translate(1px,1px) }}
+      12% {{ opacity:.5; transform:translate(2px,0) }} 40% {{ opacity:.85; transform:translate(6px,-1px) }} 43% {{ transform:translate(-3px,1px) }}
+      46% {{ opacity:.5; transform:translate(2px,0) }} 72% {{ opacity:.9; transform:translate(5px,-2px) }} 75% {{ transform:translate(1px,0) }} 78% {{ opacity:.55; transform:translate(2px,0) }} }}
+    @keyframes gls {{ 0%,39%,47%,71%,79%,100% {{ opacity:0; transform:none }} 40% {{ opacity:1; transform:translate(9px,0) }} 43% {{ opacity:1; transform:translate(-7px,0) }}
+      72% {{ opacity:1; transform:translate(-10px,0) }} 75% {{ opacity:1; transform:translate(6px,0) }} }}
+    @keyframes glb {{ 0%,100% {{ transform:none }} 40% {{ transform:translate(1px,0) }} 43% {{ transform:translate(-1px,0) }} 46% {{ transform:none }}
+      72% {{ transform:translate(-1px,1px) }} 75% {{ transform:none }} }}
     {extra}
     @media (prefers-reduced-motion: reduce) {{ * {{ animation: none !important; }} }}
   </style>"""
@@ -150,12 +166,15 @@ def mark(cx, cy, size=120):
             f'<g class="pulse">{logo(cx, cy, size * 1.25)}</g>')
 
 
-def hero(title, accent="", eyebrow_text="", subtitle=(), chip_items=(), right=None, w=1200, h=380, label=None):
+def hero(title, accent="", eyebrow_text="", subtitle=(), chip_items=(), right=None, w=1200, h=380, label=None, glitch=False):
     """Page hero: eyebrow, big Inter-800 title (accent words in the site red), subtitle lines, chips; a visual on
     the right (default: the brand-style mark). `right` is SVG markup drawn in the 760..1180 x-range."""
     tsize = 68 if len(title + accent) <= 16 else 56 if len(title + accent) <= 22 else 46
-    t = (f'<text x="64" y="176" class="s" font-size="{tsize}" font-weight="800" letter-spacing="-2" fill="{TEXT}">{esc(title)}'
-         + (f'<tspan fill="{RED_TEXT}">{esc(accent)}</tspan>' if accent else "") + "</text>")
+    if glitch and accent:
+        t = glitch_text(64, 176, accent, tsize, RED_TEXT, spacing=-2, before=title)
+    else:
+        t = (f'<text x="64" y="176" class="s" font-size="{tsize}" font-weight="800" letter-spacing="-2" fill="{TEXT}">{esc(title)}'
+             + (f'<tspan fill="{RED_TEXT}">{esc(accent)}</tspan>' if accent else "") + "</text>")
     subs = "".join(f'<text x="64" y="{226 + i * 32}" class="s" font-size="22" fill="{SECOND}">{esc(line)}</text>' for i, line in enumerate(subtitle))
     cy = 226 + len(subtitle) * 32 + 14
     body = (eyebrow(64, 104, eyebrow_text) if eyebrow_text else "") + t + subs + chips(64, cy, chip_items)
@@ -229,3 +248,45 @@ def write(path, svg):
     with open(path, "w", encoding="utf-8", newline="\n") as f:
         f.write(svg)
     print("wrote", path)
+
+
+_gl_n = [0]
+
+
+def glitch_text(x, y, text, size, fill, weight=800, spacing=0, cls="s", anchor="start", before="", before_fill=TEXT):
+    """Text with the RGB-split glitch: a red and a cyan copy jitter around the base text, and a horizontal slice
+    tears sideways in short bursts. `before` is plain (non-glitching) text drawn first on the same line, so only
+    `text` glitches (copies keep the same layout by drawing `before` transparent). Fully readable without animation."""
+    _gl_n[0] += 1
+    cid = f"gls{_gl_n[0]}"
+    attrs = f'x="{x}" y="{y}" class="{cls}" font-size="{size}" font-weight="{weight}" letter-spacing="{spacing}" text-anchor="{anchor}"'
+    lead = lambda f: f'<tspan fill="{f}">{esc(before)}</tspan>' if before else ""
+    def line(lead_fill, main_fill, extra=""):
+        return f'<text {attrs}{extra}>{lead(lead_fill)}<tspan fill="{main_fill}">{esc(text)}</tspan></text>'
+    band_y = y - size * 0.55
+    return (f'<clipPath id="{cid}"><rect x="0" y="{band_y:.1f}" width="4000" height="{size * 0.22:.1f}"/></clipPath>'
+            f'<g class="gl gl-r">{line("transparent", "#FF2448")}</g>'
+            f'<g class="gl gl-c">{line("transparent", "#2EE6FF")}</g>'
+            f'<g class="gl-base">{line(before_fill, fill)}</g>'
+            f'<g class="gl gl-s" clip-path="url(#{cid})">{line("transparent", fill)}</g>')
+
+
+def button(text, w=480, h=84, label=None, icon=True):
+    """Call-to-action button in the site style (the red CTA gradient) with the glitch effect on its label."""
+    body = (f'<defs><linearGradient id="cta" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FF1F45"/><stop offset="1" stop-color="#C8001C"/></linearGradient>'
+            f'<pattern id="scan" width="4" height="4" patternUnits="userSpaceOnUse"><rect width="4" height="1" fill="#000" fill-opacity=".14"/></pattern></defs>'
+            f'<rect x="6" y="6" width="{w - 12}" height="{h - 12}" rx="14" fill="url(#cta)"/>'
+            f'<rect x="6" y="6" width="{w - 12}" height="{h - 12}" rx="14" fill="url(#scan)"/>'
+            f'<rect x="6.5" y="6.5" width="{w - 13}" height="{h - 13}" rx="14" fill="none" stroke="#FF8095" stroke-opacity=".7"/>'
+            f'<rect x="7" y="7" width="{w - 14}" height="1.5" rx=".75" fill="#fff" fill-opacity=".25"/>')
+    tx = w / 2 + (18 if icon else 0)
+    if icon:
+        ix, iy = w / 2 - len(text) * 10.4 - 18, h / 2
+        body += (f'<g stroke="#fff" stroke-width="3" fill="none" stroke-linecap="round" stroke-linejoin="round">'
+                 f'<path d="M{ix} {iy - 13} V{iy + 5} M{ix - 8} {iy - 3} L{ix} {iy + 5} L{ix + 8} {iy - 3} M{ix - 11} {iy + 13} H{ix + 11}"/></g>')
+    body += glitch_text(tx, h / 2 + 10, text.upper(), 28, "#FFFFFF", weight=800, spacing=2, anchor="middle")
+    return f"""<svg xmlns="http://www.w3.org/2000/svg" width="{w}" height="{h}" viewBox="0 0 {w} {h}" role="img" aria-label="{esc(label or text)}">
+  {_style()}
+  {body}
+</svg>
+"""
