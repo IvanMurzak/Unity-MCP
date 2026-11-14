@@ -20,7 +20,7 @@
     <a href="https://github.com/Kilo-Org/kilocode"><img src="img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
   </p>
 
-  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md) | [فارسی](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.fa.md)</b>
+  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md) | [فارسی](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.fa.md) | [हिन्दी](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.hi.md) | [العربية](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ar.md)</b>
 
 </div>
 
@@ -71,7 +71,7 @@ unity-mcp-cli setup-mcp claude-code ./MyUnityProject
 
 ![AI Game Developer ウィンドウ](img/editor/ai-game-developer-windows.png)
 
-エージェントに *「半径 2 の円上に立方体を 3 つ作って」* と頼んでみてください。詳しい手順、手動の MCP 設定、アンインストール: **[インストールガイド](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)**(英語)。
+エージェントに *「半径 2 の円上に立方体を 3 つ作って」* と頼んでみてください。詳しい手順、手動の MCP 設定、アンインストール: **[インストールガイド](installation.ja.md)**。
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
@@ -85,7 +85,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 Rigidbody のない敵プレハブをすべて探して Rigidbody を追加して
 ```
 
-**ツール。** 既定で表示: `rql-query`、`rql-mutate`、`rql-schema`、`script-execute`、`tests-run`、 `screenshot-isolated`、`package-*` と `assetstore-*` のツール、`unity-tool-list`。ほかのツールもインストール済みですが、 表示するまで隠れています。全一覧: **[既定の MCP ツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+**ツール。** 既定で表示: `rql-query`、`rql-mutate`、`rql-schema`、`script-execute`、`tests-run`、 `screenshot-isolated`、`package-*` と `assetstore-*` のツール、`unity-tool-list`。ほかのツールもインストール済みですが、 表示するまで隠れています。全一覧: **[既定の MCP ツール](default-mcp-tools.ja.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **ターミナルから**(エディターが起動していなければヘッドレスで起動します):
 
@@ -114,7 +114,7 @@ public class Tool_Score
 }
 ```
 
-プロンプト、ランタイム(ゲーム内)ツール、完全な例: **[独自ツールとランタイム](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md)**。
+プロンプト、ランタイム(ゲーム内)ツール、完全な例: **[独自ツールとランタイム](custom-tools.ja.md)**。
 
 ## 拡張
 
@@ -126,23 +126,21 @@ AI Game Developer ウィンドウの **Extensions** セクション、または 
 
 | ページ | 内容 |
 | --- | --- |
-| [インストールガイド](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md) | インストール方法、エージェントの接続、手動 MCP 設定、チーム設定、アンインストール |
-| [既定の MCP ツール](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) | すべての組み込みツール、RQL ソース、1.0.0 で削除されたツールと RQL での置き換え |
-| [独自ツールとランタイム](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md) | ツールとプロンプトを書く。ゲーム内で MCP を使う |
-| [MCP サーバーと接続](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md) | Cloud / Custom モード、プラグインの環境変数、ローカルサーバー |
-| [Docker デプロイ](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/DOCKER_DEPLOYMENT.md) | MCP サーバーをコンテナで実行 |
-| [CI で無効化](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/ci-disable.md) | 通常の CI テスト実行からプラグインを外す |
-| [CLI リファレンス](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | `unity-mcp-cli` のすべてのコマンドとオプション |
+| [インストールガイド](installation.ja.md) | インストール方法、エージェントの接続、手動 MCP 設定、チーム設定、アンインストール |
+| [既定の MCP ツール](default-mcp-tools.ja.md) | すべての組み込みツール、RQL ソース、1.0.0 で削除されたツールと RQL での置き換え |
+| [独自ツールとランタイム](custom-tools.ja.md) | ツールとプロンプトを書く。ゲーム内で MCP を使う |
+| [MCP サーバーと接続](mcp-server.ja.md) | Cloud / Custom モード、プラグインの環境変数、ローカルサーバー |
+| [Docker デプロイ](DOCKER_DEPLOYMENT.ja.md) | MCP サーバーをコンテナで実行 |
+| [CI で無効化](ci-disable.ja.md) | 通常の CI テスト実行からプラグインを外す |
+| [CLI リファレンス](../cli/docs/README.ja.md) | `unity-mcp-cli` のすべてのコマンドとオプション |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | チュートリアル、ガイド、FAQ |
-| [開発ガイド](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) | コントリビューター向け: リポジトリ構成、コードスタイル、テスト、CI |
+| [開発ガイド](dev/Development.ja.md) | コントリビューター向け: リポジトリ構成、コードスタイル、テスト、CI |
 
 関連: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)(共有 MCP サーバー)· [ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
 
-ドキュメントページは英語です。
-
 ## コントリビュート
 
-アイデア、バグ報告、プルリクエストを歓迎します。 [開発ガイド](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) を読み、リポジトリをフォークし、 Unity で `./Unity-MCP-Plugin` を開いて、`main` へプルリクエストを送ってください。役に立ったらスターをお願いします。
+アイデア、バグ報告、プルリクエストを歓迎します。 [開発ガイド](dev/Development.ja.md) を読み、リポジトリをフォークし、 Unity で `./Unity-MCP-Plugin` を開いて、`main` へプルリクエストを送ってください。役に立ったらスターをお願いします。
 
 ## ライセンス
 

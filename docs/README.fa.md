@@ -20,7 +20,7 @@
     <a href="https://github.com/Kilo-Org/kilocode"><img src="img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
   </p>
 
-  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md)</b>
+  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md) | [हिन्दी](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.hi.md) | [العربية](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ar.md)</b>
 
 </div>
 
@@ -81,7 +81,7 @@ unity-mcp-cli setup-mcp claude-code ./MyUnityProject
 
 ![پنجره AI Game Developer](img/editor/ai-game-developer-windows.png)
 
-از عامل بخواهید *«۳ مکعب روی دایره‌ای به شعاع ۲ بساز»* و نتیجه را ببینید. مراحل کامل، پیکربندی دستی MCP و حذف پلاگین: **[راهنمای نصب](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)** (به انگلیسی).
+از عامل بخواهید *«۳ مکعب روی دایره‌ای به شعاع ۲ بساز»* و نتیجه را ببینید. مراحل کامل، پیکربندی دستی MCP و حذف پلاگین: **[راهنمای نصب](installation.fa.md)**.
 
 </div>
 
@@ -103,7 +103,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
 <div dir="rtl">
 
-**ابزارها.** به طور پیش‌فرض نمایش داده می‌شوند: `rql-query`، `rql-mutate`، `rql-schema`، `script-execute`، `tests-run`، `screenshot-isolated`، ابزارهای `package-*` و `assetstore-*` و `unity-tool-list`. ابزارهای دیگر نصب شده‌اند ولی تا زمانی که نمایششان ندهید پنهان هستند. فهرست کامل: **[ابزارهای پیش‌فرض MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** یا [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+**ابزارها.** به طور پیش‌فرض نمایش داده می‌شوند: `rql-query`، `rql-mutate`، `rql-schema`، `script-execute`، `tests-run`، `screenshot-isolated`، ابزارهای `package-*` و `assetstore-*` و `unity-tool-list`. ابزارهای دیگر نصب شده‌اند ولی تا زمانی که نمایششان ندهید پنهان هستند. فهرست کامل: **[ابزارهای پیش‌فرض MCP](default-mcp-tools.fa.md)** یا [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **از ترمینال** (اگر ویرایشگری در حال اجرا نباشد، یک ویرایشگر بدون رابط گرافیکی اجرا می‌کند):
 
@@ -140,7 +140,7 @@ public class Tool_Score
 
 <div dir="rtl">
 
-پرامپت‌ها، ابزارهای Runtime (درون بازی) و یک نمونه کامل: **[ابزارهای سفارشی و Runtime](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md)**.
+پرامپت‌ها، ابزارهای Runtime (درون بازی) و یک نمونه کامل: **[ابزارهای سفارشی و Runtime](custom-tools.fa.md)**.
 
 ## افزونه‌ها
 
@@ -152,23 +152,21 @@ public class Tool_Score
 
 | صفحه | محتوا |
 | --- | --- |
-| [راهنمای نصب](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md) | روش‌های نصب، اتصال عامل، پیکربندی دستی MCP، تنظیمات تیمی، حذف |
-| [ابزارهای پیش‌فرض MCP](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) | همه ابزارهای داخلی، منابع RQL، ابزارهای حذف‌شده در 1.0.0 و معادل RQL آن‌ها |
-| [ابزارهای سفارشی و Runtime](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md) | نوشتن ابزار و پرامپت؛ استفاده از MCP درون بازی |
-| [سرور MCP و اتصال](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md) | حالت‌های Cloud و Custom، متغیرهای محیطی پلاگین، سرور محلی |
-| [استقرار با Docker](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/DOCKER_DEPLOYMENT.md) | اجرای سرور MCP در کانتینر |
-| [غیرفعال کردن در CI](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/ci-disable.md) | خارج نگه داشتن پلاگین از اجرای معمولی تست‌ها در CI |
-| [مرجع CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | همه دستورها و گزینه‌های `unity-mcp-cli` |
+| [راهنمای نصب](installation.fa.md) | روش‌های نصب، اتصال عامل، پیکربندی دستی MCP، تنظیمات تیمی، حذف |
+| [ابزارهای پیش‌فرض MCP](default-mcp-tools.fa.md) | همه ابزارهای داخلی، منابع RQL، ابزارهای حذف‌شده در 1.0.0 و معادل RQL آن‌ها |
+| [ابزارهای سفارشی و Runtime](custom-tools.fa.md) | نوشتن ابزار و پرامپت؛ استفاده از MCP درون بازی |
+| [سرور MCP و اتصال](mcp-server.fa.md) | حالت‌های Cloud و Custom، متغیرهای محیطی پلاگین، سرور محلی |
+| [استقرار با Docker](DOCKER_DEPLOYMENT.fa.md) | اجرای سرور MCP در کانتینر |
+| [غیرفعال کردن در CI](ci-disable.fa.md) | خارج نگه داشتن پلاگین از اجرای معمولی تست‌ها در CI |
+| [مرجع CLI](../cli/docs/README.fa.md) | همه دستورها و گزینه‌های `unity-mcp-cli` |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | آموزش‌ها، راهنماها و پرسش‌های متداول |
-| [راهنمای توسعه](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) | ساختار مخزن، سبک کد، تست‌ها و CI برای مشارکت‌کنندگان |
+| [راهنمای توسعه](dev/Development.fa.md) | ساختار مخزن، سبک کد، تست‌ها و CI برای مشارکت‌کنندگان |
 
 مرتبط: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (سرور MCP مشترک) · [ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
 
-صفحات مستندات به زبان انگلیسی هستند.
-
 ## مشارکت
 
-ایده‌ها، گزارش باگ و Pull Request ها خوش‌آمدند. [راهنمای توسعه](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) را بخوانید، مخزن را fork کنید، `./Unity-MCP-Plugin` را در Unity باز کنید و یک Pull Request به `main` بفرستید. اگر پروژه به شما کمک کرد، به آن ستاره بدهید.
+ایده‌ها، گزارش باگ و Pull Request ها خوش‌آمدند. [راهنمای توسعه](dev/Development.fa.md) را بخوانید، مخزن را fork کنید، `./Unity-MCP-Plugin` را در Unity باز کنید و یک Pull Request به `main` بفرستید. اگر پروژه به شما کمک کرد، به آن ستاره بدهید.
 
 ## مجوز
 

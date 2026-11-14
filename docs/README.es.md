@@ -20,7 +20,7 @@
     <a href="https://github.com/Kilo-Org/kilocode"><img src="img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
   </p>
 
-  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [فارسی](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.fa.md)</b>
+  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [中文](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.zh-CN.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [فارسی](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.fa.md) | [हिन्दी](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.hi.md) | [العربية](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ar.md)</b>
 
 </div>
 
@@ -71,7 +71,7 @@ unity-mcp-cli setup-mcp claude-code ./MyUnityProject
 
 ![Ventana de AI Game Developer](img/editor/ai-game-developer-windows.png)
 
-Pide a tu agente *"Crea 3 cubos en un círculo de radio 2"* y mira cómo sucede. Pasos completos, configuración MCP manual y desinstalación: **[Guía de instalación](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)** (en inglés).
+Pide a tu agente *"Crea 3 cubos en un círculo de radio 2"* y mira cómo sucede. Pasos completos, configuración MCP manual y desinstalación: **[Guía de instalación](installation.es.md)**.
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
@@ -85,7 +85,7 @@ Crea un material dorado metálico y asígnalo a una nueva esfera
 Encuentra cada prefab de enemigo sin Rigidbody y añádele uno
 ```
 
-**Herramientas.** Visibles por defecto: `rql-query`, `rql-mutate`, `rql-schema`, `script-execute`, `tests-run`, `screenshot-isolated`, las herramientas `package-*` y `assetstore-*` y `unity-tool-list`. Hay más herramientas instaladas pero ocultas hasta que las muestres. Lista completa: **[Herramientas MCP por defecto](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** o [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+**Herramientas.** Visibles por defecto: `rql-query`, `rql-mutate`, `rql-schema`, `script-execute`, `tests-run`, `screenshot-isolated`, las herramientas `package-*` y `assetstore-*` y `unity-tool-list`. Hay más herramientas instaladas pero ocultas hasta que las muestres. Lista completa: **[Herramientas MCP por defecto](default-mcp-tools.es.md)** o [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **Desde la terminal** (inicia un editor headless si no hay ninguno en ejecución):
 
@@ -114,7 +114,7 @@ public class Tool_Score
 }
 ```
 
-Prompts, herramientas en runtime (en el juego) y un ejemplo completo: **[Herramientas propias y runtime](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md)**.
+Prompts, herramientas en runtime (en el juego) y un ejemplo completo: **[Herramientas propias y runtime](custom-tools.es.md)**.
 
 ## Extensiones
 
@@ -126,23 +126,21 @@ Instálalas desde la sección **Extensions** de la ventana de AI Game Developer,
 
 | Página | Contenido |
 | --- | --- |
-| [Guía de instalación](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md) | Opciones de instalación, conectar un agente, configuración MCP manual, ajustes de equipo, desinstalación |
-| [Herramientas MCP por defecto](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) | Todas las herramientas integradas, fuentes RQL, herramientas eliminadas en 1.0.0 y sus equivalentes RQL |
-| [Herramientas propias y runtime](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md) | Escribe herramientas y prompts; usa MCP dentro de tu juego |
-| [Servidor MCP y conexión](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md) | Modos Cloud y Custom, variables de entorno del plugin, servidor local |
-| [Despliegue con Docker](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/DOCKER_DEPLOYMENT.md) | Ejecuta el servidor MCP en un contenedor |
-| [Desactivar en CI](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/ci-disable.md) | Mantén el plugin fuera de las ejecuciones de tests normales en CI |
-| [Referencia de la CLI](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | Todos los comandos y opciones de `unity-mcp-cli` |
+| [Guía de instalación](installation.es.md) | Opciones de instalación, conectar un agente, configuración MCP manual, ajustes de equipo, desinstalación |
+| [Herramientas MCP por defecto](default-mcp-tools.es.md) | Todas las herramientas integradas, fuentes RQL, herramientas eliminadas en 1.0.0 y sus equivalentes RQL |
+| [Herramientas propias y runtime](custom-tools.es.md) | Escribe herramientas y prompts; usa MCP dentro de tu juego |
+| [Servidor MCP y conexión](mcp-server.es.md) | Modos Cloud y Custom, variables de entorno del plugin, servidor local |
+| [Despliegue con Docker](DOCKER_DEPLOYMENT.es.md) | Ejecuta el servidor MCP en un contenedor |
+| [Desactivar en CI](ci-disable.es.md) | Mantén el plugin fuera de las ejecuciones de tests normales en CI |
+| [Referencia de la CLI](../cli/docs/README.es.md) | Todos los comandos y opciones de `unity-mcp-cli` |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | Tutoriales, guías y FAQ |
-| [Guía de desarrollo](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) | Estructura del repositorio, estilo de código, tests y CI para colaboradores |
+| [Guía de desarrollo](dev/Development.es.md) | Estructura del repositorio, estilo de código, tests y CI para colaboradores |
 
 Relacionado: [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) (el servidor MCP compartido) · [ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
 
-Las páginas de documentación están en inglés.
-
 ## Contribuir
 
-Las ideas, los reportes de errores y los pull requests son bienvenidos. Lee la [Guía de desarrollo](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md), haz un fork del repositorio, abre `./Unity-MCP-Plugin` en Unity y envía un pull request a `main`. Si el proyecto te ayuda, dale una estrella.
+Las ideas, los reportes de errores y los pull requests son bienvenidos. Lee la [Guía de desarrollo](dev/Development.es.md), haz un fork del repositorio, abre `./Unity-MCP-Plugin` en Unity y envía un pull request a `main`. Si el proyecto te ayuda, dale una estrella.
 
 ## Licencia
 

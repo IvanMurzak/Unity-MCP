@@ -1,3 +1,5 @@
+<b>English</b> | [中文](custom-tools.zh-CN.md) | [日本語](custom-tools.ja.md) | [Español](custom-tools.es.md) | [فارسی](custom-tools.fa.md) | [हिन्दी](custom-tools.hi.md) | [العربية](custom-tools.ar.md)
+
 # Custom tools and runtime
 
 Add your own **MCP tools** and **prompts** in project code, and use MCP inside a built game. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).

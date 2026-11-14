@@ -28,3 +28,5 @@
   - [日本語](/README.ja)
   - [中文](/README.zh-CN)
   - [فارسی](/README.fa)
+  - [हिन्दी](/README.hi)
+  - [العربية](/README.ar)

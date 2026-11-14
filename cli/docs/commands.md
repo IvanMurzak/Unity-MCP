@@ -1,3 +1,5 @@
+<b>English</b> | [中文](commands.zh-CN.md) | [日本語](commands.ja.md) | [Español](commands.es.md) | [فارسی](commands.fa.md) | [हिन्दी](commands.hi.md) | [العربية](commands.ar.md)
+
 # unity-mcp-cli reference
 
 Every command and option of [`unity-mcp-cli`](../README.md), exit codes, machine-readable output and the library API.

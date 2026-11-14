@@ -20,7 +20,7 @@
     <a href="https://github.com/Kilo-Org/kilocode"><img src="img/mcp-clients/kilo-code-64.png" alt="Kilo Code" title="Kilo Code" height="36"></a>
   </p>
 
-  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md) | [فارسی](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.fa.md)</b>
+  <b>[English](https://github.com/IvanMurzak/Unity-MCP/blob/main/README.md) | [日本語](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ja.md) | [Español](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.es.md) | [فارسی](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.fa.md) | [हिन्दी](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.hi.md) | [العربية](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/README.ar.md)</b>
 
 </div>
 
@@ -71,7 +71,7 @@ unity-mcp-cli setup-mcp claude-code ./MyUnityProject
 
 ![AI Game Developer 窗口](img/editor/ai-game-developer-windows.png)
 
-让智能体 *“在半径为 2 的圆上创建 3 个立方体”*,看着它完成。完整步骤、手动 MCP 配置和卸载: **[安装指南](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)**(英文)。
+让智能体 *“在半径为 2 的圆上创建 3 个立方体”*,看着它完成。完整步骤、手动 MCP 配置和卸载: **[安装指南](installation.zh-CN.md)**。
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 
@@ -85,7 +85,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 找到所有没有 Rigidbody 的敌人预制体并添加一个
 ```
 
-**工具。** 默认显示:`rql-query`、`rql-mutate`、`rql-schema`、`script-execute`、`tests-run`、 `screenshot-isolated`、`package-*` 和 `assetstore-*` 工具以及 `unity-tool-list`。其他工具已安装, 但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** 或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+**工具。** 默认显示:`rql-query`、`rql-mutate`、`rql-schema`、`script-execute`、`tests-run`、 `screenshot-isolated`、`package-*` 和 `assetstore-*` 工具以及 `unity-tool-list`。其他工具已安装, 但在你显示之前处于隐藏状态。完整列表:**[默认 MCP 工具](default-mcp-tools.zh-CN.md)** 或 [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **在终端中**(没有编辑器运行时会启动一个无界面编辑器):
 
@@ -114,7 +114,7 @@ public class Tool_Score
 }
 ```
 
-提示词、运行时(游戏内)工具和完整示例:**[自定义工具与运行时](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md)**。
+提示词、运行时(游戏内)工具和完整示例:**[自定义工具与运行时](custom-tools.zh-CN.md)**。
 
 ## 扩展
 
@@ -126,23 +126,21 @@ public class Tool_Score
 
 | 页面 | 内容 |
 | --- | --- |
-| [安装指南](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md) | 安装方式、连接智能体、手动 MCP 配置、团队设置、卸载 |
-| [默认 MCP 工具](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md) | 所有内置工具、RQL 数据源、1.0.0 中移除的工具及其 RQL 等价写法 |
-| [自定义工具与运行时](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md) | 编写工具和提示词;在游戏中使用 MCP |
-| [MCP 服务器与连接](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md) | Cloud 和 Custom 模式、插件环境变量、本地服务器 |
-| [Docker 部署](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/DOCKER_DEPLOYMENT.md) | 在容器中运行 MCP 服务器 |
-| [在 CI 中禁用](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/ci-disable.md) | 让插件不参与普通的 CI 测试运行 |
-| [CLI 参考](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/README.md) | `unity-mcp-cli` 的所有命令和选项 |
+| [安装指南](installation.zh-CN.md) | 安装方式、连接智能体、手动 MCP 配置、团队设置、卸载 |
+| [默认 MCP 工具](default-mcp-tools.zh-CN.md) | 所有内置工具、RQL 数据源、1.0.0 中移除的工具及其 RQL 等价写法 |
+| [自定义工具与运行时](custom-tools.zh-CN.md) | 编写工具和提示词;在游戏中使用 MCP |
+| [MCP 服务器与连接](mcp-server.zh-CN.md) | Cloud 和 Custom 模式、插件环境变量、本地服务器 |
+| [Docker 部署](DOCKER_DEPLOYMENT.zh-CN.md) | 在容器中运行 MCP 服务器 |
+| [在 CI 中禁用](ci-disable.zh-CN.md) | 让插件不参与普通的 CI 测试运行 |
+| [CLI 参考](../cli/docs/README.zh-CN.md) | `unity-mcp-cli` 的所有命令和选项 |
 | [Wiki](https://github.com/IvanMurzak/Unity-MCP/wiki) | 教程、指南和常见问题 |
-| [开发指南](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md) | 面向贡献者:仓库结构、代码风格、测试和 CI |
+| [开发指南](dev/Development.zh-CN.md) | 面向贡献者:仓库结构、代码风格、测试和 CI |
 
 相关:[GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server)(共享的 MCP 服务器)· [ai-game.dev](https://ai-game.dev) · [Discord](https://discord.gg/cfbdMZX99G)
 
-文档页面为英文。
-
 ## 参与贡献
 
-欢迎提出想法、报告问题和提交 Pull Request。请阅读 [开发指南](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/dev/Development.md),fork 本仓库, 在 Unity 中打开 `./Unity-MCP-Plugin`,然后向 `main` 提交 Pull Request。如果项目对你有帮助,请点个 Star。
+欢迎提出想法、报告问题和提交 Pull Request。请阅读 [开发指南](dev/Development.zh-CN.md),fork 本仓库, 在 Unity 中打开 `./Unity-MCP-Plugin`,然后向 `main` 提交 Pull Request。如果项目对你有帮助,请点个 Star。
 
 ## 许可证
 

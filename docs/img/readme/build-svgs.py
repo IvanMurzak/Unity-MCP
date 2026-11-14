@@ -91,5 +91,7 @@ for name, text, kw in [
     ("button_download_es.svg", "Descargar instalador", {"w": 560}),
     ("button_download_ja.svg", "インストーラーをダウンロード", {"w": 520, "icon": False}),
     ("button_download_zh-CN.svg", "下载安装器", {"w": 360, "icon": False}),
+    ("button_download_hi.svg", "इंस्टॉलर डाउनलोड करें", {"w": 480, "icon": False}),
+    ("button_download_ar.svg", "تنزيل المُثبِّت", {"w": 360, "icon": False}),
 ]:
     K.write(os.path.join(BUTTONS, name), K.button(text, label="Download the AI Game Developer installer", **kw))

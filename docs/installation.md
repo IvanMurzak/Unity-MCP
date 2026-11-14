@@ -1,3 +1,5 @@
+<b>English</b> | [中文](installation.zh-CN.md) | [日本語](installation.ja.md) | [Español](installation.es.md) | [فارسی](installation.fa.md) | [हिन्दी](installation.hi.md) | [العربية](installation.ar.md)
+
 # Installation guide
 
 Install the **AI Game Developer** plugin into a Unity project, connect an AI agent, and remove it again if needed. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).

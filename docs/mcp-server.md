@@ -1,3 +1,5 @@
+<b>English</b> | [中文](mcp-server.zh-CN.md) | [日本語](mcp-server.ja.md) | [Español](mcp-server.es.md) | [فارسی](mcp-server.fa.md) | [हिन्दी](mcp-server.hi.md) | [العربية](mcp-server.ar.md)
+
 # MCP server and connection
 
 How the plugin reaches an MCP server, the environment variables that override its settings, and how to run a server yourself. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme).

@@ -1,3 +1,5 @@
+<b>English</b> | [中文](default-mcp-tools.zh-CN.md) | [日本語](default-mcp-tools.ja.md) | [Español](default-mcp-tools.es.md) | [فارسی](default-mcp-tools.fa.md) | [हिन्दी](default-mcp-tools.hi.md) | [العربية](default-mcp-tools.ar.md)
+
 # Default MCP Tools
 
 Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme). Browse the same registry online at [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).

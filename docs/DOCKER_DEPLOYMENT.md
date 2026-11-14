@@ -1,3 +1,5 @@
+<b>English</b> | [中文](DOCKER_DEPLOYMENT.zh-CN.md) | [日本語](DOCKER_DEPLOYMENT.ja.md) | [Español](DOCKER_DEPLOYMENT.es.md) | [فارسی](DOCKER_DEPLOYMENT.fa.md) | [हिन्दी](DOCKER_DEPLOYMENT.hi.md) | [العربية](DOCKER_DEPLOYMENT.ar.md)
+
 # Docker deployment
 
 Run the MCP server in a container, for cloud hosting or an isolated environment. Back to the [README](https://github.com/IvanMurzak/Unity-MCP#readme) · [MCP server and connection](mcp-server.md).
