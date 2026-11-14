@@ -1,6 +1,6 @@
 <div align="center">
 
-<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/docs/readme-refresh/docs/img/readme/cli-hero.svg" alt="unity-mcp-cli: نصب Unity و پلاگین AI Game Developer، اتصال عامل‌های هوش مصنوعی، اجرای ابزارها، کامپایل و تست از ترمینال" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/main/docs/img/readme/cli-hero.svg" alt="unity-mcp-cli: نصب Unity و پلاگین AI Game Developer، اتصال عامل‌های هوش مصنوعی، اجرای ابزارها، کامپایل و تست از ترمینال" width="100%"></p>
 
 [![unity-mcp-cli on npm](https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D)](https://www.npmjs.com/package/unity-mcp-cli) [![Node.js 22.14 or newer](https://img.shields.io/badge/Node.js-22.14%2B-0E7490?logo=nodedotjs&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://nodejs.org/) [![Unity 2022.3 or newer](https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://unity.com/releases/editor/archive)\
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE) [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://discord.gg/cfbdMZX99G) [![Stand with Ukraine](https://raw.githubusercontent.com/IvanMurzak/IvanMurzak/main/images/ukraine/flag-badge.svg)](https://stand-with-ukraine.pp.ua)
@@ -43,7 +43,7 @@ unity-mcp-cli wait-for-ready ./MyGame        # until tools can be called
 
 </div>
 
-<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/docs/readme-refresh/docs/img/readme/terminal.svg" alt="نمونه ترمینال: نصب unity-mcp-cli، افزودن پلاگین، ورود، پیکربندی Claude Code و باز کردن پروژه" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/main/docs/img/readme/terminal.svg" alt="نمونه ترمینال: نصب unity-mcp-cli، افزودن پلاگین، ورود، پیکربندی Claude Code و باز کردن پروژه" width="100%"></p>
 
 <div dir="rtl">
 
@@ -76,7 +76,7 @@ unity-mcp-cli install-extension Tilemap ./MyGame
 | ساخت و تست | `compile` · `test` |
 | کشف | `commands` |
 
-همه گزینه‌ها، کدهای خروج و خروجی JSON: **[مرجع دستورها](https://github.com/IvanMurzak/Unity-MCP/blob/docs/readme-refresh/cli/docs/commands.fa.md)**، یا `unity-mcp-cli <command> --help`.
+همه گزینه‌ها، کدهای خروج و خروجی JSON: **[مرجع دستورها](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/commands.fa.md)**، یا `unity-mcp-cli <command> --help`.
 
 ## کتابخانه
 

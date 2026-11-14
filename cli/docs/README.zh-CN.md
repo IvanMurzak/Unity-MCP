@@ -1,6 +1,6 @@
 <div align="center">
 
-<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/docs/readme-refresh/docs/img/readme/cli-hero.svg" alt="unity-mcp-cli:在终端中安装 Unity 和 AI Game Developer 插件、连接 AI 智能体、运行工具、编译和测试" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/main/docs/img/readme/cli-hero.svg" alt="unity-mcp-cli:在终端中安装 Unity 和 AI Game Developer 插件、连接 AI 智能体、运行工具、编译和测试" width="100%"></p>
 
 [![unity-mcp-cli on npm](https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D)](https://www.npmjs.com/package/unity-mcp-cli) [![Node.js 22.14 or newer](https://img.shields.io/badge/Node.js-22.14%2B-0E7490?logo=nodedotjs&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://nodejs.org/) [![Unity 2022.3 or newer](https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://unity.com/releases/editor/archive)\
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE) [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://discord.gg/cfbdMZX99G) [![Stand with Ukraine](https://raw.githubusercontent.com/IvanMurzak/IvanMurzak/main/images/ukraine/flag-badge.svg)](https://stand-with-ukraine.pp.ua)
@@ -35,7 +35,7 @@ unity-mcp-cli wait-for-ready ./MyGame        # 等到可以调用工具
 
 无需全局安装:`npx unity-mcp-cli <command>`。需要 Node.js 22.14 或更高版本;缺少 Unity Hub 时会自动安装。
 
-<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/docs/readme-refresh/docs/img/readme/terminal.svg" alt="终端示例:安装 unity-mcp-cli、添加插件、登录、配置 Claude Code 并打开项目" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/main/docs/img/readme/terminal.svg" alt="终端示例:安装 unity-mcp-cli、添加插件、登录、配置 Claude Code 并打开项目" width="100%"></p>
 
 ## 使用
 
@@ -62,7 +62,7 @@ unity-mcp-cli install-extension Tilemap ./MyGame
 | 编译测试 | `compile` · `test` |
 | 查询 | `commands` |
 
-所有选项、退出码和 JSON 输出:**[命令参考](https://github.com/IvanMurzak/Unity-MCP/blob/docs/readme-refresh/cli/docs/commands.zh-CN.md)**,或 `unity-mcp-cli <command> --help`。
+所有选项、退出码和 JSON 输出:**[命令参考](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/commands.zh-CN.md)**,或 `unity-mcp-cli <command> --help`。
 
 ## 库
 

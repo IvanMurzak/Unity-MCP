@@ -1,6 +1,6 @@
 <div align="center">
 
-<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/docs/readme-refresh/docs/img/readme/cli-hero.svg" alt="unity-mcp-cli: install Unity and the AI Game Developer plugin, connect AI agents, run tools, compile and test from the terminal" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/main/docs/img/readme/cli-hero.svg" alt="unity-mcp-cli: install Unity and the AI Game Developer plugin, connect AI agents, run tools, compile and test from the terminal" width="100%"></p>
 
 [![unity-mcp-cli on npm](https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D)](https://www.npmjs.com/package/unity-mcp-cli) [![Node.js 22.14 or newer](https://img.shields.io/badge/Node.js-22.14%2B-0E7490?logo=nodedotjs&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://nodejs.org/) [![Unity 2022.3 or newer](https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://unity.com/releases/editor/archive)\
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE) [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://discord.gg/cfbdMZX99G) [![Stand with Ukraine](https://raw.githubusercontent.com/IvanMurzak/IvanMurzak/main/images/ukraine/flag-badge.svg)](https://stand-with-ukraine.pp.ua)
@@ -35,7 +35,7 @@ unity-mcp-cli wait-for-ready ./MyGame        # until tools can be called
 
 No global install: `npx unity-mcp-cli <command>`. Requires Node.js 22.14 or newer; Unity Hub is installed automatically when missing.
 
-<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/docs/readme-refresh/docs/img/readme/terminal.svg" alt="A terminal session: install unity-mcp-cli, add the plugin, sign in, configure Claude Code and open the project" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/main/docs/img/readme/terminal.svg" alt="A terminal session: install unity-mcp-cli, add the plugin, sign in, configure Claude Code and open the project" width="100%"></p>
 
 ## Usage
 
@@ -62,7 +62,7 @@ unity-mcp-cli install-extension Tilemap ./MyGame
 | Build, test | `compile` · `test` |
 | Discovery | `commands` |
 
-Every option, exit codes and JSON output: **[command reference](https://github.com/IvanMurzak/Unity-MCP/blob/docs/readme-refresh/cli/docs/commands.md)**, or `unity-mcp-cli <command> --help`.
+Every option, exit codes and JSON output: **[command reference](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/commands.md)**, or `unity-mcp-cli <command> --help`.
 
 ## Library
 

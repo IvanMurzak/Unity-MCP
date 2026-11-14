@@ -1,6 +1,6 @@
 <div align="center">
 
-<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/docs/readme-refresh/docs/img/readme/cli-hero.svg" alt="unity-mcp-cli: टर्मिनल से Unity और AI Game Developer प्लगइन इंस्टॉल करें, AI एजेंट जोड़ें, टूल चलाएँ, कंपाइल और टेस्ट करें" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/main/docs/img/readme/cli-hero.svg" alt="unity-mcp-cli: टर्मिनल से Unity और AI Game Developer प्लगइन इंस्टॉल करें, AI एजेंट जोड़ें, टूल चलाएँ, कंपाइल और टेस्ट करें" width="100%"></p>
 
 [![unity-mcp-cli on npm](https://img.shields.io/npm/v/unity-mcp-cli?label=CLI&logo=npm&style=for-the-badge&labelColor=0F172A&logoColor=white&color=BE185D)](https://www.npmjs.com/package/unity-mcp-cli) [![Node.js 22.14 or newer](https://img.shields.io/badge/Node.js-22.14%2B-0E7490?logo=nodedotjs&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://nodejs.org/) [![Unity 2022.3 or newer](https://img.shields.io/badge/Unity-2022.3%2B-0E7490?logo=unity&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://unity.com/releases/editor/archive)\
 [![License](https://img.shields.io/github/license/IvanMurzak/Unity-MCP?label=License&style=for-the-badge&labelColor=0F172A&logoColor=white&color=047857)](https://github.com/IvanMurzak/Unity-MCP/blob/main/LICENSE) [![Discord](https://img.shields.io/badge/Discord-Join-5865F2?logo=discord&style=for-the-badge&labelColor=0F172A&logoColor=white)](https://discord.gg/cfbdMZX99G) [![Stand with Ukraine](https://raw.githubusercontent.com/IvanMurzak/IvanMurzak/main/images/ukraine/flag-badge.svg)](https://stand-with-ukraine.pp.ua)
@@ -35,7 +35,7 @@ unity-mcp-cli wait-for-ready ./MyGame        # जब तक टूल कॉल
 
 बिना ग्लोबल इंस्टॉल के: `npx unity-mcp-cli <command>`। Node.js 22.14 या नया चाहिए; Unity Hub न हो तो अपने-आप इंस्टॉल हो जाता है।
 
-<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/docs/readme-refresh/docs/img/readme/terminal.svg" alt="टर्मिनल सत्र: unity-mcp-cli इंस्टॉल करना, प्लगइन जोड़ना, साइन इन करना, Claude Code कॉन्फ़िगर करना और प्रोजेक्ट खोलना" width="100%"></p>
+<p align="center"><img src="https://raw.githubusercontent.com/IvanMurzak/Unity-MCP/main/docs/img/readme/terminal.svg" alt="टर्मिनल सत्र: unity-mcp-cli इंस्टॉल करना, प्लगइन जोड़ना, साइन इन करना, Claude Code कॉन्फ़िगर करना और प्रोजेक्ट खोलना" width="100%"></p>
 
 ## उपयोग
 
@@ -62,7 +62,7 @@ unity-mcp-cli install-extension Tilemap ./MyGame
 | बिल्ड, टेस्ट | `compile` · `test` |
 | खोज | `commands` |
 
-हर विकल्प, एग्ज़िट कोड और JSON आउटपुट: **[कमांड संदर्भ](https://github.com/IvanMurzak/Unity-MCP/blob/docs/readme-refresh/cli/docs/commands.hi.md)**, या `unity-mcp-cli <command> --help`।
+हर विकल्प, एग्ज़िट कोड और JSON आउटपुट: **[कमांड संदर्भ](https://github.com/IvanMurzak/Unity-MCP/blob/main/cli/docs/commands.hi.md)**, या `unity-mcp-cli <command> --help`।
 
 ## लाइब्रेरी
 
