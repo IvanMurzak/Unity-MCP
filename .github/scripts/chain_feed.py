@@ -3086,12 +3086,11 @@ def fresh_clone(node_id, clone_dir, argvs, sha, why):
 
 
 def clone_vendored_producer(ctx, node_id):
-    """The producer of a vendored edge, cloned at the lock sha (no build): reused when the build
-    plan already cloned it at that sha, else cloned fresh."""
+    """The producer of a vendored edge, cloned FRESH at the lock sha (no build): a clone left in a
+    reused RUNNER_TEMP could carry an edited file that the proof, reading the same clone, would
+    call GREEN."""
     clone_dir = ctx.clone_dir(node_id)
     sha = ctx.sha(node_id) or ""
-    if clone_dir.is_dir() and git_head(clone_dir)[0] == sha:
-        return
     fresh_clone(node_id, clone_dir, clone_argv(node_id, sha, clone_dir, RECIPES[node_id]["slug"]), sha,
                 "the leg clones %s at the lock sha for its vendored sources" % node_id)
 
