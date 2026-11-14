@@ -46,7 +46,7 @@
 ## 特長
 
 ✅ **エディターをカバー** — Unity エディターであなたができることは、ほぼ何でもエージェントにもできます\
-✅ **コンパクトで効率的** — エージェント向けに作られたツール: 呼び出し回数もトークンも少なく、エージェントはより速く、より安く作業できます([計測結果](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))\
+✅ **コンパクトで効率的** — エージェント向けに作られたツール: 呼び出し回数もトークンも少なく、エージェントはより速く、より安く作業できます([Unity エディターで計測](benchmark.ja.md))\
 ✅ **RQL** — ひとつのクエリ言語でシーン、オブジェクト、アセット、設定を読み書き\
 ✅ **C# とテスト** — Roslyn で C# をコンパイル・実行。EditMode / PlayMode テストを実行\
 ✅ **Skills または MCP** — ワンクリックで Skills を生成、または MCP クライアントとして接続\
@@ -123,7 +123,7 @@ Rigidbody のない敵プレハブをすべて探して Rigidbody を追加し�
 | パッケージと Asset Store | `package-*`、`assetstore-*` | *「Cinemachine をインストールして」* |
 | ツール一覧 | `unity-tool-list` | *「ここで使えるツールは?」* |
 
-RQL を覚える必要はありません。エージェントが RQL を書き、必要なソース、型、呼び出しごとに `rql-schema` に問い合わせます。サンドボックスのゲームワールドで計測した結果、RQL を使うエージェントはタスクあたり約 2〜3 回のツール呼び出しと 7〜8k トークンで成功率 100% でした。単純なリフレクションツールでは 30〜37 回の呼び出しと 125〜170k トークンが必要で、成功率は 67〜91% でした([結果](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))。ほかのツールもインストール済みですが、表示するまで隠れています。全一覧: **[既定の MCP ツール](default-mcp-tools.ja.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
+RQL を覚える必要はありません。エージェントが RQL を書き、必要なソース、型、呼び出しごとに `rql-schema` に問い合わせます。Unity エディターで計測したところ、同じタスクで、操作ごとに 1 つのツールを使う場合に比べてプロンプトトークンは約 5 分の 1、ツール呼び出しも少なく、成功率は同じでした([ベンチマーク](benchmark.ja.md))。サンドボックスのゲームワールドでは、RQL を使うエージェントはタスクあたり約 2〜3 回のツール呼び出しと 7〜8k トークンで成功率 100% でした。単純なリフレクションツールでは 30〜37 回の呼び出しと 125〜170k トークンが必要で、成功率は 67〜91% でした([結果](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))。ほかのツールもインストール済みですが、表示するまで隠れています。全一覧: **[既定の MCP ツール](default-mcp-tools.ja.md)** または [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools)。
 
 **ターミナルから**(エディターが起動していなければヘッドレスで起動します):
 
@@ -247,6 +247,7 @@ unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityPr
 | ページ | 内容 |
 | --- | --- |
 | [インストールガイド](installation.ja.md) | インストール方法、エージェントの接続、手動 MCP 設定、チーム設定、アンインストール |
+| [ベンチマーク](benchmark.ja.md) | Unity エディターとサンドボックスでの計測: RQL ツールを使った場合のトークン、ツール呼び出し、成功率 |
 | [既定の MCP ツール](default-mcp-tools.ja.md) | すべての組み込みツール、RQL ソース、1.0.0 で削除されたツールと RQL での置き換え |
 | [独自ツールとランタイム](custom-tools.ja.md) | ツールとプロンプトを書く。ゲーム内で MCP を使う |
 | [MCP サーバーと接続](mcp-server.ja.md) | Cloud / Custom モード、プラグインの環境変数、ローカルサーバー |

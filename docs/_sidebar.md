@@ -6,6 +6,7 @@
 - **Tools & Features**
   - [Default MCP Tools](/default-mcp-tools.md)
   - [Custom Tools & Runtime](/custom-tools.md)
+  - [Benchmark](/benchmark.md)
 
 - **Server & Deployment**
   - [MCP Server & Connection](/mcp-server.md)

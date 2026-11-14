@@ -48,7 +48,7 @@
 ## الميزات
 
 ‏✅ ‏**يغطي المحرر** — يستطيع الوكيل فعل أي شيء تقريبًا مما تفعله في محرر Unity\
-‏✅ ‏**مدمجة وفعّالة** — أدوات مصممة للوكلاء: استدعاءات أقل ورموز (tokens) أقل، فيعمل الوكيل أسرع وبتكلفة أقل ([نتائج القياس](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools))\
+‏✅ ‏**مدمجة وفعّالة** — أدوات مصممة للوكلاء: استدعاءات أقل ورموز (tokens) أقل، فيعمل الوكيل أسرع وبتكلفة أقل ([مقيسة في محرر Unity](benchmark.ar.md))\
 ‏✅ ‏**RQL** — اقرأ المشاهد والكائنات والأصول والإعدادات وعدّلها بلغة استعلام واحدة\
 ‏✅ ‏**C# والاختبارات** — صرّف C# وشغّله عبر Roslyn؛ شغّل اختبارات EditMode وPlayMode\
 ‏✅ ‏**Skills أو MCP** — ولّد Skills بنقرة واحدة، أو اتصل كعميل MCP\
@@ -141,7 +141,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 | الحزم وAsset Store | `package-*`، `assetstore-*` | *«ثبّت Cinemachine»* |
 | قائمة الأدوات | `unity-tool-list` | *«ما الأدوات التي يمكنك استخدامها هنا؟»* |
 
-لا تحتاج إلى تعلّم RQL: الوكيل يكتبها ويسأل `rql-schema` عن كل مصدر ونوع واستدعاء يحتاجه. تم القياس على عالم لعبة تجريبي (sandbox): مع RQL يحتاج الوكيل إلى نحو 2–3 استدعاءات أدوات و7–8 آلاف رمز (token) لكل مهمة بنسبة نجاح 100%، مقابل 30–37 استدعاءً و125–170 ألف رمز بنسبة نجاح 67–91% مع أدوات الانعكاس (reflection) البسيطة ([النتائج](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools)). هناك أدوات أخرى مثبتة لكنها مخفية حتى تُظهرها. القائمة الكاملة: **[أدوات MCP الافتراضية](default-mcp-tools.ar.md)** أو [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+لا تحتاج إلى تعلّم RQL: الوكيل يكتبها ويسأل `rql-schema` عن كل مصدر ونوع واستدعاء يحتاجه. تم القياس في محرر Unity: أُنجزت المهام نفسها برموز موجّه (prompt tokens) أقل بنحو 5 أضعاف وباستدعاءات أدوات أقل مقارنةً بأدوات تخصّص أداة لكل إجراء، وبنسبة النجاح نفسها ([اختبار الأداء](benchmark.ar.md)). وعلى عالم لعبة تجريبي (sandbox)، مع RQL يحتاج الوكيل إلى نحو 2–3 استدعاءات أدوات و7–8 آلاف رمز (token) لكل مهمة بنسبة نجاح 100%، مقابل 30–37 استدعاءً و125–170 ألف رمز بنسبة نجاح 67–91% مع أدوات الانعكاس (reflection) البسيطة ([النتائج](https://github.com/IvanMurzak/RQL/blob/main/RESULTS.md#33-rql-vs-conventional-reflection-tools)). هناك أدوات أخرى مثبتة لكنها مخفية حتى تُظهرها. القائمة الكاملة: **[أدوات MCP الافتراضية](default-mcp-tools.ar.md)** أو [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 ‏**من الطرفية** (يشغّل محررًا بلا واجهة إن لم يكن هناك محرر يعمل):
 
@@ -281,6 +281,7 @@ unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityPr
 | الصفحة | المحتوى |
 | --- | --- |
 | [دليل التثبيت](installation.ar.md) | خيارات التثبيت، ربط وكيل، إعداد MCP يدويًا، إعدادات الفريق، إلغاء التثبيت |
+| [اختبار الأداء](benchmark.ar.md) | قياسات محرر Unity وعالم اللعبة التجريبي (sandbox): الرموز (tokens) واستدعاءات الأدوات ونسبة النجاح مع أدوات RQL |
 | [أدوات MCP الافتراضية](default-mcp-tools.ar.md) | كل أداة مدمجة، ومصادر RQL، والأدوات المحذوفة في 1.0.0 وبدائلها في RQL |
 | [الأدوات المخصصة ووقت التشغيل](custom-tools.ar.md) | اكتب أدوات وموجّهات؛ استخدم MCP داخل لعبتك |
 | [خادم MCP والاتصال](mcp-server.ar.md) | وضعا Cloud وCustom، متغيرات بيئة الإضافة، الخادم المحلي |

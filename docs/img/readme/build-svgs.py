@@ -95,3 +95,62 @@ for name, text, kw in [
     ("button_download_ar.svg", "تنزيل المُثبِّت", {"w": 360, "icon": False}),
 ]:
     K.write(os.path.join(BUTTONS, name), K.button(text, label="Download the AI Game Developer installer", **kw))
+
+# --- benchmark charts (docs/benchmark.md) --------------------------------------------------------------------------
+# Numbers copied from IvanMurzak/RQL: evaluation/reports/unity-mcp-old-vs-rql-branch.md (Unity Editor) and
+# RESULTS.md section 3.4 (sandbox game world, holdout2). Labels stay English in every language: they are data names.
+EMBER = ('<linearGradient id="emb" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="700" y2="0" spreadMethod="reflect">'
+         '<stop offset="0" stop-color="#FF2448"/><stop offset=".35" stop-color="#FF5A73"/><stop offset=".65" stop-color="#FF8A5B"/>'
+         '<stop offset="1" stop-color="#FF4F86"/><animateTransform attributeName="gradientTransform" type="translate" '
+         'values="0 0;700 0" dur="9s" repeatCount="indefinite"/></linearGradient>')
+
+
+def bench_chart(path, eyebrow, before, accent, metrics, names, note, label):
+    W, H = 1200, 520
+    CX, CWID, GAP, TOP = 40, 360, 20, 150
+    parts = [f"<defs>{EMBER}</defs>", K.eyebrow(CX, 62, eyebrow), K.accent_title(CX, 112, before, accent, 40, "ember")]
+    # legend
+    lx = 1160
+    for i, (nm, fill) in enumerate(reversed([(names[0], K.BLUE), (names[1], "url(#emb)")])):
+        w = len(nm) * 9 + 40
+        lx -= w
+        op = ' fill-opacity=".45"' if i == 1 else ""
+        parts.append(f'<rect x="{lx}" y="98" width="16" height="16" rx="4" fill="{fill}"{op}/>'
+                     f'<text x="{lx + 24}" y="112" class="s" font-size="16" fill="{K.SECOND}">{K.esc(nm)}</text>')
+    for i, (title, sub, vals, texts) in enumerate(metrics):
+        x = CX + i * (CWID + GAP)
+        parts.append(f'<rect x="{x}" y="{TOP}" width="{CWID}" height="300" rx="14" fill="url(#card)" stroke="{K.HAIR}"/>')
+        parts.append(f'<text x="{x + 22}" y="{TOP + 40}" class="s" font-size="21" font-weight="700" fill="{K.TEXT}">{K.esc(title)}</text>')
+        parts.append(f'<text x="{x + 22}" y="{TOP + 66}" class="s" font-size="16" fill="{K.MUTED}">{K.esc(sub)}</text>')
+        top = max(vals)
+        for j, (v, t) in enumerate(zip(vals, texts)):
+            by = TOP + 100 + j * 92
+            bw = max(8, round((CWID - 44) * v / top))
+            fill = K.BLUE if j == 0 else "url(#emb)"
+            op = ' fill-opacity=".45"' if j == 0 else ""
+            parts.append(f'<text x="{x + 22}" y="{by + 18}" class="s" font-size="16" fill="{K.SECOND}">{K.esc(names[j])}</text>')
+            parts.append(f'<text x="{x + CWID - 22}" y="{by + 18}" text-anchor="end" class="m" font-size="18" font-weight="700" '
+                         f'fill="{K.TEXT}">{K.esc(t)}</text>')
+            parts.append(f'<rect x="{x + 22}" y="{by + 32}" width="{CWID - 44}" height="22" rx="11" fill="{K.SURF}"/>')
+            parts.append(f'<rect x="{x + 22}" y="{by + 32}" width="{bw}" height="22" rx="11" fill="{fill}"{op}/>')
+    parts.append(f'<text x="{W / 2}" y="{H - 30}" text-anchor="middle" class="s" font-size="16" fill="{K.MUTED}">{K.esc(note)}</text>')
+    K.write(path, K.panel(W, H, "".join(parts), label=label))
+
+
+DOCS_ASSETS = os.path.join(HERE, "..", "benchmark")
+bench_chart(os.path.join(DOCS_ASSETS, "unity-editor.svg"), "Benchmark · Unity Editor", "Same tasks, ", "fewer tokens",
+            [("Prompt tokens per task", "lower is better", [138272, 26013], ["138,272", "26,013"]),
+             ("Tool calls per task", "lower is better", [5.5, 3.8], ["5.5", "3.8"]),
+             ("Tasks solved", "higher is better", [59, 59], ["59 / 60", "59 / 60"])],
+            ["Per-action tools", "RQL tools"],
+            "20 tasks × 3 runs in the Unity Editor, one model (DeepSeek Flash), temperature 0",
+            "Unity Editor benchmark: prompt tokens per task 138,272 with per-action tools vs 26,013 with RQL tools; "
+            "tool calls per task 5.5 vs 3.8; tasks solved 59 of 60 in both")
+bench_chart(os.path.join(DOCS_ASSETS, "sandbox.svg"), "Benchmark · sandbox game world", "Fresh tasks, ", "100% solved",
+            [("Tokens per task", "lower is better", [169190, 7817], ["169,190", "7,817"]),
+             ("Tool calls per task", "lower is better", [36.86, 1.91], ["36.9", "1.9"]),
+             ("Tasks solved", "higher is better", [66.7, 100], ["66.7%", "100%"])],
+            ["Reflection tools", "RQL"],
+            "30 tasks written after tuning was frozen × 3 runs, one model (DeepSeek V4.1-Flash)",
+            "Sandbox benchmark: tokens per task 169,190 with plain reflection tools vs 7,817 with RQL; tool calls per "
+            "task 36.9 vs 1.9; tasks solved 66.7% vs 100%")
