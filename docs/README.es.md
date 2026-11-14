@@ -118,9 +118,26 @@ Prompts, herramientas en runtime (en el juego) y un ejemplo completo: **[Herrami
 
 ## Extensiones
 
-Instálalas desde la sección **Extensions** de la ventana de AI Game Developer, o con `unity-mcp-cli install-extension <name>`.
+Las extensiones son paquetes UPM opcionales que añaden herramientas para funciones concretas de Unity.
 
-[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) · [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) · [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) · [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) · [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) · [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) · [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) · [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) · [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) · [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
+```bash
+unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityProject
+```
+
+| Extensión | Añade | Requiere |
+| --- | --- | --- |
+| [Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) | AnimationClips y AnimatorControllers |  |
+| [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) | Cámaras virtuales, objetivos y el pipeline de cámara | `com.unity.cinemachine` 3.1.6+ |
+| [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) | Assets de acciones de entrada, mapas, acciones y bindings | `com.unity.inputsystem` 1.8.2+ |
+| [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) | Superficies NavMesh, horneado, agentes y enlaces | `com.unity.ai.navigation` 1.1.7+ |
+| [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) | Emisión, forma, curvas y gradientes de ParticleSystem |  |
+| [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) | Mallas editables: formas, extrusión, bisel, materiales | `com.unity.probuilder` 5.2.4+ |
+| [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) | Contenedores de splines, nudos y tangentes | `com.unity.splines` 2.8.4+ |
+| [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) | Terrenos: heightmaps, esculpido y muestreo |  |
+| [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) | Grids y tilemaps: pintar, rellenar y leer tiles | `com.unity.2d.tilemap.extras` 3.1.3+ |
+| [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md) | Assets de Timeline, pistas, clips y marcadores | `com.unity.timeline` 1.8.12+ |
+
+Los paquetes de Unity necesarios se instalan con la extensión. También puedes instalar extensiones desde la sección **Extensions** de la ventana de AI Game Developer.
 
 ## Documentación
 

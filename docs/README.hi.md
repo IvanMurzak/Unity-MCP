@@ -118,9 +118,26 @@ public class Tool_Score
 
 ## एक्सटेंशन
 
-AI Game Developer विंडो के **Extensions** सेक्शन से, या `unity-mcp-cli install-extension <name>` से इंस्टॉल करें।
+एक्सटेंशन वैकल्पिक UPM पैकेज हैं जो Unity की खास सुविधाओं के लिए टूल जोड़ते हैं।
 
-[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) · [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) · [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) · [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) · [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) · [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) · [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) · [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) · [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) · [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
+```bash
+unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityProject
+```
+
+| एक्सटेंशन | क्या जोड़ता है | ज़रूरत |
+| --- | --- | --- |
+| [Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) | AnimationClip और AnimatorController |  |
+| [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) | वर्चुअल कैमरा, टारगेट और कैमरा पाइपलाइन | `com.unity.cinemachine` 3.1.6+ |
+| [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) | इनपुट एक्शन एसेट, मैप, एक्शन और बाइंडिंग | `com.unity.inputsystem` 1.8.2+ |
+| [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) | NavMesh सरफ़ेस, बेकिंग, एजेंट और लिंक | `com.unity.ai.navigation` 1.1.7+ |
+| [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) | ParticleSystem का एमिशन, शेप, कर्व और ग्रेडिएंट |  |
+| [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) | एडिट करने योग्य मेश: शेप, एक्सट्रूड, बेवल, मटीरियल | `com.unity.probuilder` 5.2.4+ |
+| [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) | स्प्लाइन कंटेनर, नॉट और टैंजेंट | `com.unity.splines` 2.8.4+ |
+| [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) | टेरेन: हाइटमैप, स्कल्प्टिंग और सैंपलिंग |  |
+| [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) | Grid और Tilemap: टाइल पेंट, फ़िल और पढ़ना | `com.unity.2d.tilemap.extras` 3.1.3+ |
+| [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md) | Timeline एसेट, ट्रैक, क्लिप और मार्कर | `com.unity.timeline` 1.8.12+ |
+
+ज़रूरी Unity पैकेज एक्सटेंशन के साथ इंस्टॉल हो जाते हैं। आप AI Game Developer विंडो के **Extensions** सेक्शन से भी एक्सटेंशन इंस्टॉल कर सकते हैं।
 
 ## दस्तावेज़
 

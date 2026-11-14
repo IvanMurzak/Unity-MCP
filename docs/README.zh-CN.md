@@ -118,9 +118,26 @@ public class Tool_Score
 
 ## 扩展
 
-在 AI Game Developer 窗口的 **Extensions** 部分安装,或使用 `unity-mcp-cli install-extension <name>`。
+扩展是可选的 UPM 包,为特定的 Unity 功能添加工具。
 
-[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) · [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) · [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) · [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) · [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) · [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) · [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) · [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) · [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) · [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
+```bash
+unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityProject
+```
+
+| 扩展 | 新增 | 依赖 |
+| --- | --- | --- |
+| [Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) | AnimationClip 和 AnimatorController |  |
+| [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) | 虚拟相机、目标和相机管线 | `com.unity.cinemachine` 3.1.6+ |
+| [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) | 输入动作资源、映射、动作和绑定 | `com.unity.inputsystem` 1.8.2+ |
+| [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) | NavMesh 表面、烘焙、代理和链接 | `com.unity.ai.navigation` 1.1.7+ |
+| [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) | ParticleSystem 的发射、形状、曲线和渐变 |  |
+| [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) | 可编辑网格:形状、挤出、倒角、材质 | `com.unity.probuilder` 5.2.4+ |
+| [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) | 样条容器、节点和切线 | `com.unity.splines` 2.8.4+ |
+| [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) | 地形:高度图、雕刻和采样 |  |
+| [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) | Grid 和 Tilemap:绘制、填充和读取瓦片 | `com.unity.2d.tilemap.extras` 3.1.3+ |
+| [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md) | Timeline 资源、轨道、片段和标记 | `com.unity.timeline` 1.8.12+ |
+
+所需的 Unity 包会随扩展一起安装。也可以在 AI Game Developer 窗口的 **Extensions** 部分安装扩展。
 
 ## 文档
 

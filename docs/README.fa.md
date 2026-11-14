@@ -144,9 +144,30 @@ public class Tool_Score
 
 ## افزونه‌ها
 
-از بخش **Extensions** در پنجره AI Game Developer نصب کنید، یا با `unity-mcp-cli install-extension <name>`.
+افزونه‌ها پکیج‌های اختیاری UPM هستند که برای قابلیت‌های مشخصی از Unity ابزار اضافه می‌کنند.
 
-[Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) · [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) · [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) · [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) · [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) · [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) · [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) · [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) · [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) · [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md)
+</div>
+
+```bash
+unity-mcp-cli install-extension com.ivanmurzak.unity.mcp.cinemachine ./MyUnityProject
+```
+
+<div dir="rtl">
+
+| افزونه | چه اضافه می‌کند | پیش‌نیاز |
+| --- | --- | --- |
+| [Animation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Animation/README.md) | AnimationClip و AnimatorController |  |
+| [Cinemachine](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Cinemachine/README.md) | دوربین‌های مجازی، هدف‌ها و خط لوله دوربین | `com.unity.cinemachine` 3.1.6+ |
+| [InputSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/InputSystem/README.md) | دارایی‌های اکشن ورودی، نقشه‌ها، اکشن‌ها و اتصال‌ها | `com.unity.inputsystem` 1.8.2+ |
+| [Navigation](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Navigation/README.md) | سطوح NavMesh، بیک، عامل‌ها و لینک‌ها | `com.unity.ai.navigation` 1.1.7+ |
+| [ParticleSystem](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ParticleSystem/README.md) | انتشار، شکل، منحنی‌ها و گرادیان‌های ParticleSystem |  |
+| [ProBuilder](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/ProBuilder/README.md) | مش‌های قابل ویرایش: شکل‌ها، اکستروژن، بِوِل، متریال | `com.unity.probuilder` 5.2.4+ |
+| [Splines](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Splines/README.md) | کانتینرهای اسپلاین، گره‌ها و مماس‌ها | `com.unity.splines` 2.8.4+ |
+| [Terrain](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Terrain/README.md) | زمین‌ها: نقشه ارتفاع، حجاری و نمونه‌برداری |  |
+| [Tilemap](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Tilemap/README.md) | Grid و Tilemap: نقاشی، پر کردن و خواندن تایل‌ها | `com.unity.2d.tilemap.extras` 3.1.3+ |
+| [Timeline](https://github.com/IvanMurzak/Unity-MCP/blob/main/extensions/Timeline/README.md) | دارایی‌های Timeline، ترک‌ها، کلیپ‌ها و نشانگرها | `com.unity.timeline` 1.8.12+ |
+
+پکیج‌های لازم Unity همراه افزونه نصب می‌شوند. افزونه‌ها را از بخش **Extensions** در پنجره AI Game Developer هم می‌توانید نصب کنید.
 
 ## مستندات
 
