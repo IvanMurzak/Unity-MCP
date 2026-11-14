@@ -17,7 +17,7 @@ def out(name):
 
 # --- hero -------------------------------------------------------------------------------------------------------
 K.write(out("hero.svg"), K.hero(
-    title="Unity ", accent="MCP", eyebrow_text="AI Game Developer", glitch=True,
+    title="Unity ", accent="MCP", eyebrow_text="AI Game Developer", accent_fx="flow",
     subtitle=["Let your AI agent build, test and debug", "Unity projects, in the Editor and in your game."],
     chip_items=["Unity 2022.3+", "MCP", "Skills", "CLI", "Runtime"],
     label="AI Game Developer, Unity MCP: Skills, MCP tools and a CLI that connect AI agents to the Unity Editor "

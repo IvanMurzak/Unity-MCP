@@ -166,11 +166,13 @@ def mark(cx, cy, size=120):
             f'<g class="pulse">{logo(cx, cy, size * 1.25)}</g>')
 
 
-def hero(title, accent="", eyebrow_text="", subtitle=(), chip_items=(), right=None, w=1200, h=380, label=None, glitch=False):
+def hero(title, accent="", eyebrow_text="", subtitle=(), chip_items=(), right=None, w=1200, h=380, label=None, glitch=False, accent_fx=None):
     """Page hero: eyebrow, big Inter-800 title (accent words in the site red), subtitle lines, chips; a visual on
     the right (default: the brand-style mark). `right` is SVG markup drawn in the 760..1180 x-range."""
     tsize = 68 if len(title + accent) <= 16 else 56 if len(title + accent) <= 22 else 46
-    if glitch and accent:
+    if accent_fx and accent:
+        t = accent_title(64, 176, title, accent, tsize, accent_fx)
+    elif glitch and accent:
         t = glitch_text(64, 176, accent, tsize, RED_TEXT, spacing=-2, before=title)
     else:
         t = (f'<text x="64" y="176" class="s" font-size="{tsize}" font-weight="800" letter-spacing="-2" fill="{TEXT}">{esc(title)}'
@@ -290,3 +292,61 @@ def button(text, w=480, h=84, label=None, icon=True):
   {body}
 </svg>
 """
+
+
+ACCENT_FX = ("shimmer", "flow", "glow", "neon", "scan", "ember")
+
+
+def accent_title(x, y, before, accent, size, fx, spacing=-2):
+    """Title line `before` + `accent` where only the colours of the accent word animate; the glyphs never move.
+    Effects:
+      shimmer — a light band sweeps through the red word every few seconds
+      flow    — a warm red → coral → orange → pink gradient (the ember palette) flows through the word
+      glow    — the word breathes: a soft red glow behind it swells and fades
+      neon    — neon-sign feel: steady glow with rare short flickers
+      scan    — a thin bright scanline passes across the word
+      ember   — red ↔ warm orange/pink colour drift, like hot metal
+    Static renderers / reduced motion show the plain red word."""
+    attrs = f'x="{x}" y="{y}" class="s" font-size="{size}" font-weight="800" letter-spacing="{spacing}"'
+    L = lambda lead, main, extra="": f'<text {attrs}{extra}><tspan fill="{lead}">{esc(before)}</tspan><tspan fill="{main}">{esc(accent)}</tspan></text>'
+    W = 1200
+    defs, under, over, css = "", "", "", ""
+    main = RED_TEXT
+    if fx == "shimmer":
+        defs = (f'<linearGradient id="axg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="{W}" y2="0" spreadMethod="repeat">'
+                f'<stop offset="0" stop-color="{RED_TEXT}"/><stop offset=".40" stop-color="{RED_TEXT}"/><stop offset=".47" stop-color="#FFD1DA"/>'
+                f'<stop offset=".54" stop-color="{RED_TEXT}"/><stop offset="1" stop-color="{RED_TEXT}"/>'
+                f'<animateTransform attributeName="gradientTransform" type="translate" values="-{W} 0;0 0;0 0" keyTimes="0;.55;1" dur="4.5s" repeatCount="indefinite"/></linearGradient>')
+        main = "url(#axg)"
+    elif fx == "flow":
+        defs = (f'<linearGradient id="axg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="600" y2="0" spreadMethod="reflect">'
+                f'<stop offset="0" stop-color="#FF2448"/><stop offset=".35" stop-color="{RED_TEXT}"/><stop offset=".65" stop-color="#FF8A5B"/><stop offset="1" stop-color="#FF4F86"/>'
+                f'<animateTransform attributeName="gradientTransform" type="translate" values="0 0;600 0" dur="6s" repeatCount="indefinite"/></linearGradient>')
+        main = "url(#axg)"
+    elif fx == "glow":
+        defs = '<filter id="axb" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="9"/></filter>'
+        css = ".axglow { animation: axglow 3.6s ease-in-out infinite; } @keyframes axglow { 0%,100% { opacity: .15 } 50% { opacity: .85 } }"
+        under = f'<g class="axglow" filter="url(#axb)">{L("transparent", RED)}</g>'
+    elif fx == "neon":
+        defs = '<filter id="axb" x="-20%" y="-50%" width="140%" height="200%"><feGaussianBlur stdDeviation="7"/></filter>'
+        css = (".axneon { animation: axneon 5s steps(1) infinite; } "
+               "@keyframes axneon { 0% { opacity:.8 } 62% { opacity:.25 } 63% { opacity:.8 } 66% { opacity:.1 } 67% { opacity:.85 } 90% { opacity:.4 } 91% { opacity:.8 } }"
+               ".axneonw { animation: axneonw 5s steps(1) infinite; } @keyframes axneonw { 0% { opacity:1 } 66% { opacity:.55 } 67% { opacity:1 } }")
+        under = f'<g class="axneon" filter="url(#axb)">{L("transparent", "#FF2448")}</g>'
+        over = ""
+        main = RED_TEXT
+    elif fx == "scan":
+        defs = (f'<linearGradient id="axg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="0" y2="{size}" spreadMethod="pad">'
+                f'<stop offset="0" stop-color="{RED_TEXT}"/><stop offset=".45" stop-color="{RED_TEXT}"/><stop offset=".5" stop-color="#FFE3E9"/>'
+                f'<stop offset=".55" stop-color="{RED_TEXT}"/><stop offset="1" stop-color="{RED_TEXT}"/>'
+                f'<animateTransform attributeName="gradientTransform" type="translate" values="0 {y - size * 1.6};0 {y + size * .3};0 {y + size * .3}" keyTimes="0;.45;1" dur="3.4s" repeatCount="indefinite"/></linearGradient>')
+        main = "url(#axg)"
+    elif fx == "ember":
+        defs = (f'<linearGradient id="axg" gradientUnits="userSpaceOnUse" x1="0" y1="0" x2="900" y2="0" spreadMethod="reflect">'
+                f'<stop offset="0" stop-color="#FF2448"/><stop offset=".35" stop-color="{RED_TEXT}"/><stop offset=".65" stop-color="#FF8A5B"/><stop offset="1" stop-color="#FF4F86"/>'
+                f'<animateTransform attributeName="gradientTransform" type="translate" values="0 0;900 0" dur="9s" repeatCount="indefinite"/></linearGradient>')
+        main = "url(#axg)"
+    else:
+        raise ValueError(fx)
+    style = f"<style>{css}</style>" if css else ""
+    return f"<defs>{defs}</defs>{style}{under}{L(TEXT, main)}{over}"
