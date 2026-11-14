@@ -2073,13 +2073,14 @@ def _vendored_proofs(ctx, edges):
         sha = ctx.sha(edge["node"]) or ""
         source = ctx.clone_dir(edge["node"])
         lines = int(edge.get("header") or 0)
-        expected, observed, bad = [], [], []
+        expected, observed, bad, pairs = [], [], [], []
         try:
             head, why = git_head(source)
             if head != sha:
                 raise Refusal("producer clone %s is not at the lock sha %s (HEAD %s)"
                               % (as_posix_abs(source), sha, head or why))
-            for tree, drop in vendored_pairs(edge):
+            pairs = vendored_pairs(edge)
+            for tree, drop in pairs:
                 upstream = vendored_names(source / tree, body["glob"])
                 current = vendored_names(ctx.checkout / drop, body["glob"])
                 problem = vendored_file_set_problem(edge, body["glob"], tree, drop, upstream, current)
@@ -2099,7 +2100,7 @@ def _vendored_proofs(ctx, edges):
         digest = lambda rows: sha256_bytes("\n".join(rows).encode("ascii"))  # noqa: E731
         source_text = ("%d vendored file(s) under %s vs %s@%s %s"
                        % (len(expected), ", ".join(edge.get("drops") or ()), edge["node"], sha[:8],
-                          ", ".join(t for t, _ in vendored_pairs(edge))))
+                          ", ".join(t for t, _ in pairs)))
         if bad:
             source_text += "; differ: " + ", ".join(bad)
         proofs.append(_proof(ctx.node, source_text, body["id"], digest(observed), digest(expected),
@@ -2955,14 +2956,7 @@ def cmd_apply(args):
     for entry in build_plan(ctx, edges + twin_lower_edges(ctx)):
         node_id = entry["node"]
         clone_dir = ctx.clone_dir(node_id)
-        if clone_dir.exists():
-            shutil.rmtree(str(clone_dir), ignore_errors=True)
-        clone_dir.mkdir(parents=True, exist_ok=True)
-        git_env = dict(os.environ, **_GIT_ENV)
-        require_tool("git", "the leg clones each lower node at the lock sha")
-        for argv in entry["clone"]:
-            if run(argv, env=git_env) != 0:
-                raise Refusal("clone of %s at %s failed" % (node_id, entry["sha"]))
+        fresh_clone(node_id, clone_dir, entry["clone"], entry["sha"], "the leg clones each lower node at the lock sha")
         write_nuget_override(ctx, clone_dir, entry["override"])
         npm_preinstall(ctx, clone_dir, entry["npm"])
         env = ctx.command_env()
@@ -3079,6 +3073,18 @@ def cmd_apply(args):
     return EXIT_OK
 
 
+def fresh_clone(node_id, clone_dir, argvs, sha, why):
+    """Delete `clone_dir` and clone `node_id` into it at `sha` (`clone_argv`); a failure refuses."""
+    if clone_dir.exists():
+        shutil.rmtree(str(clone_dir), ignore_errors=True)
+    clone_dir.mkdir(parents=True, exist_ok=True)
+    require_tool("git", why)
+    git_env = dict(os.environ, **_GIT_ENV)
+    for argv in argvs:
+        if run(argv, env=git_env) != 0:
+            raise Refusal("clone of %s at %s failed" % (node_id, sha))
+
+
 def clone_vendored_producer(ctx, node_id):
     """The producer of a vendored edge, cloned at the lock sha (no build): reused when the build
     plan already cloned it at that sha, else cloned fresh."""
@@ -3086,14 +3092,8 @@ def clone_vendored_producer(ctx, node_id):
     sha = ctx.sha(node_id) or ""
     if clone_dir.is_dir() and git_head(clone_dir)[0] == sha:
         return
-    if clone_dir.exists():
-        shutil.rmtree(str(clone_dir), ignore_errors=True)
-    clone_dir.mkdir(parents=True, exist_ok=True)
-    require_tool("git", "the leg clones %s at the lock sha for its vendored sources" % node_id)
-    git_env = dict(os.environ, **_GIT_ENV)
-    for argv in clone_argv(node_id, sha, clone_dir, RECIPES[node_id]["slug"]):
-        if run(argv, env=git_env) != 0:
-            raise Refusal("clone of %s at %s failed" % (node_id, sha))
+    fresh_clone(node_id, clone_dir, clone_argv(node_id, sha, clone_dir, RECIPES[node_id]["slug"]), sha,
+                "the leg clones %s at the lock sha for its vendored sources" % node_id)
 
 
 def _default_skips(ctx):
