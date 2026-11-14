@@ -26,7 +26,7 @@
 
 **AI Game Developer** (Unity-MCP) connects your AI agent to Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini or any other [MCP](https://modelcontextprotocol.io/) client can read and change scenes, prefabs, assets and C# code, run tests and take screenshots in the **Unity Editor**, and call tools you write **inside your compiled game**. It ships as a free Unity package (`com.ivanmurzak.unity.mcp`), a command-line tool (`unity-mcp-cli`) and ten optional extensions.
 
-**Status:** latest release on [GitHub Releases](https://github.com/IvanMurzak/Unity-MCP/releases/latest) and [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/) (1.x) · Unity **2022.3** or newer · CI runs EditMode, PlayMode and standalone-build tests on Unity 2022.3, 6000.0, 6000.3 and 6000.6.
+**Status:** current release **1.11.1** (November 2026) on [GitHub Releases](https://github.com/IvanMurzak/Unity-MCP/releases/latest) and [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/); the 1.x line started with 1.0.0 in October 2026, and the plugin and `unity-mcp-cli` share one version · Unity **2022.3** or newer · CI runs EditMode, PlayMode and standalone-build tests on Unity 2022.3, 6000.0, 6000.3 and 6000.6.
 
 ## How it works
 
@@ -34,11 +34,11 @@
 
 The plugin registers its tools with an MCP server; your agent calls them through that server. Instead of MCP tools, the agent can also use generated **Skills**. You choose where the server runs:
 
-| | **Cloud** (default) | **Custom** (local, no account) |
+| | **Local** (Custom mode, no account) | **Cloud** (default setting) |
 | --- | --- | --- |
-| Server | `https://ai-game.dev/mcp` | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) started by the plugin on `127.0.0.1`, or one you host |
-| Account | Sign in to ai-game.dev | Not needed |
-| Your project data | Tool calls pass through the relay; their contents are not stored ([privacy](https://ai-game.dev/legal/privacy)) | Stays on your machine |
+| Server | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) started by the plugin on `127.0.0.1`, or one you host | `https://ai-game.dev/mcp` |
+| Account | Not needed | Sign in to ai-game.dev |
+| Your project data | Stays on your machine | Tool calls pass through the relay; their contents are not stored ([privacy](https://ai-game.dev/legal/privacy)) |
 
 See [Security and privacy](#security-and-privacy) for details.
 
@@ -55,33 +55,41 @@ See [Security and privacy](#security-and-privacy) for details.
 
 ## Quick start
 
-Requires **Unity 2022.3** or newer. Pick one way to install the plugin:
+Requires **Unity 2022.3** or newer.
+
+**1. Install the plugin** (recommended: the CLI, Node.js 22.14+):
+
+```bash
+npm install -g unity-mcp-cli
+unity-mcp-cli install-plugin ./MyUnityProject   # add the plugin to Packages/manifest.json
+unity-mcp-cli open ./MyUnityProject             # open the project in Unity
+```
+
+<details>
+<summary>Other ways to install: Installer package or OpenUPM</summary>
 
 [![DOWNLOAD INSTALLER](docs/img/button/button_download.svg)](https://github.com/IvanMurzak/Unity-MCP/releases/latest/download/AI-Game-Dev-Installer.unitypackage)
 
 - **Installer** — download the `.unitypackage` above and open it in your Unity project.
 - **OpenUPM** — `openupm add com.ivanmurzak.unity.mcp`
-- **CLI** (Node.js 22.14+) — no Editor needed:
 
-```bash
-npm install -g unity-mcp-cli
-unity-mcp-cli install-plugin ./MyUnityProject   # add the plugin to Packages/manifest.json
-unity-mcp-cli login                             # sign in to ai-game.dev in the browser
-unity-mcp-cli open ./MyUnityProject             # open Unity; it connects and generates skills
-```
+</details>
+
+**2. Connect your agent** — pick one; both are fully supported:
+
+| | **Local** (no account) | **Cloud** (default setting) |
+| --- | --- | --- |
+| In Unity | **Window ▸ AI Game Dev** → connection **Custom** | **Window ▸ AI Game Dev** → connection **Cloud** |
+| Sign in | — | `unity-mcp-cli login` |
+| Agent config | `unity-mcp-cli setup-mcp claude-code ./MyUnityProject --transport stdio` | `unity-mcp-cli setup-mcp claude-code ./MyUnityProject` |
+
+The **Configure** button in the same window writes the same config; **Auto-generate** Skills is the alternative to MCP (`unity-mcp-cli setup-skills claude-code ./MyUnityProject`). Other agents: [client setup](#client-setup).
+
+**Lock the local server with a token** (one step): in **Window ▸ AI Game Dev** set **Authorization Token** to `token`. The server restarts with a generated secret; press **Configure** again so your agent sends it. The local default is `none` because the server listens only on `127.0.0.1` and rejects foreign browser origins; switch to `token` when other people or untrusted programs use the same machine.
 
 <p align="center"><img src="docs/img/readme/terminal.svg" alt="Terminal session: install unity-mcp-cli, add the plugin, sign in, configure Claude Code and open the project" width="100%"></p>
 
-Then connect your agent: in Unity open **Window ▸ AI Game Dev** and click **Auto-generate** Skills (recommended) or **Configure** MCP. Or from the terminal:
-
-```bash
-unity-mcp-cli setup-skills claude-code ./MyUnityProject
-unity-mcp-cli setup-mcp claude-code ./MyUnityProject
-```
-
 ![AI Game Developer window](docs/img/editor/ai-game-developer-windows.png)
-
-**Local only, no account:** skip `login`, open **Window ▸ AI Game Dev**, switch the connection to **Custom**, and connect your agent over stdio with `unity-mcp-cli setup-mcp claude-code ./MyUnityProject --transport stdio` or the [client snippets](#client-setup) below.
 
 Ask your agent *"Create 3 cubes in a circle with radius 2"* and watch it happen. Full steps, manual MCP configuration and uninstall: **[Installation guide](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)**.
 
