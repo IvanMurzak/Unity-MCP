@@ -108,6 +108,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             Assert.IsFalse(Tool_Tests.TrySelectTests("objects | select name", out _, out _, out error));
             Assert.IsFalse(Tool_Tests.TrySelectTests("tests | where", out _, out _, out error));
             StringAssert.Contains("query failed", error);
+            // One run takes one selection: several statements are refused, not read as an empty selection.
+            Assert.IsFalse(Tool_Tests.TrySelectTests("tests | where fixture == \"RqlTestsProbe\"; tests | first 1", out _, out _, out error));
+            StringAssert.Contains("separated by ;", error);
         }
 
         [UnityTest]
@@ -151,6 +154,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             var broken = Text(TestResultCollector.ProjectedResponse(summary, "where"));
             StringAssert.Contains("result query failed", broken);
             StringAssert.StartsWith("Failed: 1 passed", broken);
+            var several = Text(TestResultCollector.ProjectedResponse(summary, "where status == \"Failed\" | count; count"));
+            StringAssert.Contains("'result' is one query", several);
         }
 
         [Test]

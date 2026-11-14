@@ -400,8 +400,10 @@ unity-mcp-cli tools --format json   # full schemas, machine-readable
 
 ## `rql`
 
-One RQL query from the command line, without JSON quoting. A query whose last stage is `set` or `call` goes to
-`rql-mutate`, any other to `rql-query`; `--schema [type]` runs `rql-schema`. Starts a headless editor like `run-tool`.
+RQL from the command line, without JSON quoting: one query, or several separated by `;`. A query whose last stage is
+`set` or `call` goes to `rql-mutate` (several: when any of them does, and then every one must; each is its own
+all-or-nothing change, and the first that fails stops the rest), any other to `rql-query`; `--schema [type]` runs
+`rql-schema`. Starts a headless editor like `run-tool`.
 Unity saves a change to disk at once, so after a `set` / `call` the CLI prints the scene and asset files it wrote
 (`Saved to disk: Assets/Scenes/Forest.unity`). An operator spelled as in another language (`startsWith`, `like`) gets
 a hint with RQL's spelling. `rql --help` lists recipes.

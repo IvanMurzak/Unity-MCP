@@ -2,7 +2,26 @@ import { afterEach, describe, expect, it } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
 import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
-import { assetsWrittenSince, decodeQueryFile, isRqlMutation, rqlErrorHint, rqlLastVerb, rqlStages, rqlToolCall, saveReceipt, stripToolName } from '../src/lib/rql.js';
+import {
+  RQL_NO_QUERY_USAGE,
+  assetsWrittenSince,
+  decodeQueryFile,
+  isRqlMutation,
+  rqlErrorHint,
+  rqlLastVerb,
+  rqlStages,
+  rqlTextVerb,
+  rqlToolCall as coreRqlToolCall,
+  rqlToolFor,
+  saveReceipt,
+  splitRqlStatements,
+  stripRqlToolNames,
+  stripToolName,
+} from '../src/lib/rql.js';
+
+/** The call `rql` makes: cli-core's routing with this CLI's own usage line. */
+const rqlToolCall = (query: string | undefined, options: Parameters<typeof coreRqlToolCall>[1]) =>
+  coreRqlToolCall(query, options, RQL_NO_QUERY_USAGE);
 
 afterEach(removeTempDirs);
 
@@ -59,7 +78,8 @@ describe('rqlToolCall', () => {
     expect(rqlToolCall('objects | count', { schema: true })).toHaveProperty('usage');
     expect(rqlToolCall(undefined, { schema: 'objects | count' })).toHaveProperty('usage');
     expect(rqlToolCall('objects | count', { dryRun: true })).toHaveProperty('usage');
-    expect(rqlToolCall(undefined, {})).toHaveProperty('usage');
+    expect(rqlToolCall(undefined, {})).toEqual({ usage: RQL_NO_QUERY_USAGE });
+    expect(rqlToolCall(' ; ;', {})).toEqual({ usage: RQL_NO_QUERY_USAGE }); // only separators: RQL's empty query
   });
 
   it('reads || as or and decodes a UTF-16 query file', () => {
@@ -70,6 +90,37 @@ describe('rqlToolCall', () => {
 
   it('treats backtick identifiers as opaque', () => {
     expect(rqlLastVerb("objects | where `Bob's` == 1 | set active = false")).toBe('set');
+  });
+});
+
+describe('several statements (;)', () => {
+  it('splits at ; outside strings, quoted identifiers and brackets, dropping blank statements', () => {
+    expect(splitRqlStatements('objects | count; roots | count')).toEqual(['objects | count', 'roots | count']);
+    expect(splitRqlStatements('objects | where name == "a;b" | count;')).toEqual(['objects | where name == "a;b" | count']);
+    expect(splitRqlStatements("objects | where `x;y` == 1 | count; ;")).toEqual(['objects | where `x;y` == 1 | count']);
+    expect(splitRqlStatements('editor | call F({a: "1;2"}, [1; 2]); objects | count')).toEqual(['editor | call F({a: "1;2"}, [1; 2])', 'objects | count']);
+    expect(splitRqlStatements(' ; ')).toEqual(['']);   // as RQL: the first (blank) segment, reported as an empty query
+  });
+
+  it('routes to rql-mutate when any statement ends in set / call', () => {
+    expect(rqlToolCall('objects | where name == "A" | set active = false; objects | count', {}))
+      .toEqual({ toolName: 'rql-mutate', input: { query: 'objects | where name == "A" | set active = false; objects | count' } });
+    expect(rqlToolCall('editor | call CreateGameObject("A"); editor | call CreateGameObject("B")', { dryRun: true }))
+      .toEqual({ toolName: 'rql-mutate', input: { query: 'editor | call CreateGameObject("A"); editor | call CreateGameObject("B")', dry_run: true } });
+    expect(rqlToolCall('objects | count; roots | count', {})).toEqual({ toolName: 'rql-query', input: { query: 'objects | count; roots | count' } });
+    expect(rqlToolCall('objects | count; roots | count', { dryRun: true })).toHaveProperty('usage');
+    expect(rqlToolFor('objects | where name == "set; call" | count')).toBe('rql-query');
+  });
+
+  it('strips a pasted tool name from every statement', () => {
+    expect(stripRqlToolNames('rql-query objects | count; rql-query roots | count')).toBe('objects | count; roots | count');
+    expect(stripRqlToolNames('rql-mutate objects | where name == "a; b" | set active = false')).toBe('objects | where name == "a; b" | set active = false');
+  });
+
+  it('reports call before set for the save receipt', () => {
+    expect(rqlTextVerb('objects | set active = false; editor | call SaveScenes()')).toBe('call');
+    expect(rqlTextVerb('objects | count; objects | set active = false')).toBe('set');
+    expect(rqlTextVerb('objects | count; roots | count')).toBeUndefined();
   });
 });
 

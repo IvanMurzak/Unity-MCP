@@ -400,8 +400,8 @@ unity-mcp-cli tools --format json   # full schemas, machine-readable
 
 ## `rql`
 
-在命令行中执行一条 RQL 查询，无需处理 JSON 引号。最后一个阶段为 `set` 或 `call` 的查询会发往
-`rql-mutate`，其他查询发往 `rql-query`；`--schema [type]` 会运行 `rql-schema`。会像 `run-tool` 那样启动无界面编辑器。
+在命令行中执行 RQL，无需处理 JSON 引号：一条查询，或用 `;` 分隔的多条查询。最后一个阶段为 `set` 或 `call` 的查询会发往
+`rql-mutate`（多条查询时：只要其中任意一条如此，就必须每一条都如此；每条都是独立的全有或全无的更改，第一条失败的查询会终止其余查询），其他查询发往 `rql-query`；`--schema [type]` 会运行 `rql-schema`。会像 `run-tool` 那样启动无界面编辑器。
 Unity 会立即将更改保存到磁盘，因此在执行 `set` / `call` 之后，CLI 会打印它写入的场景和资源文件
 （`Saved to disk: Assets/Scenes/Forest.unity`）。按其他语言的拼写方式写出的运算符（`startsWith`、`like`）会收到
 提示，告知 RQL 中的写法。`rql --help` 会列出常用示例。

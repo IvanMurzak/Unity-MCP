@@ -323,8 +323,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API.TestRunner
             var query = stages.StartsWith("testResults", System.StringComparison.Ordinal) ? stages : "testResults | " + stages;
             var head = $"{summary.Status}: {summary.PassedTests} passed, {summary.FailedTests} failed, {summary.SkippedTests} skipped " +
                 $"of {summary.TotalTests} in {summary.Duration.TotalSeconds:0.0}s";
-            var r = Rql.RqlUnity.Engine.Execute(query);
-            var body = (r.Ok ? "" : "result query failed: ") + Rql.ToolFormat.RqlToolBinding.Instance.Show(r);
+            string body;
+            // 'result' is one query: only its first statement would get the testResults source.
+            if (global::Rql.RqlParser.SplitStatements(stages).Count > 1)
+                body = "result query failed: 'result' is one query over testResults (more queries: rql-query, separated by ;)";
+            else
+            {
+                var r = Rql.RqlUnity.Engine.Execute(query);
+                body = (r.Ok ? "" : "result query failed: ") + Rql.ToolFormat.RqlToolBinding.Instance.Show(r);
+            }
             var text = ResponseCallTool.Success(head + "\n" + body);
             if (structured == null)
                 return text;

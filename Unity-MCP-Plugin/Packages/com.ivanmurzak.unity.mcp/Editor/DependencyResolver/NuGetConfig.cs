@@ -65,7 +65,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// reloads, and the new resolver restores the correct DLLs and adds this define — the same
         /// self-healing two-pass path a clean install already takes.</para>
         /// </summary>
-        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "45";
+        public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "46";
 
         /// <summary>
         /// Every define the main plugin asmdefs are gated on. All of them must be present for the
@@ -125,7 +125,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // 8.17.0: AiAgentConfigurator.SupportsTransport (Claude Desktop is stdio-only), GetRestartNotice and
             // AgentConfiguratorSettings.NormalizeLocalHost (portless loopback Server URL repair).
             // 8.18.0: AgentSetupKind / GetSetupKind (Claude Desktop in Cloud mode = add-as-a-Claude-connector steps).
-            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.22.2", includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.McpPlugin",                             "8.23.1", includeInBuild: true),
             // Pinned explicitly so the resolver doesn't drift below the version
             // bundled in this package. The atomic API surface (TryModifyAt,
             // TryPatch, TryReadAt, View, Grep) introduced in 5.1.0 is exercised
@@ -136,7 +136,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // main thread by its SynchronizationContext, not managed thread id 1. The plugin replaces
             // MainThread.Instance with UnityMainThread (MainThreadDispatcher.MainThreadId), so Unity's
             // main-thread detection, including Unity 7 CoreCLR's id-2 main thread, does not rely on it.
-            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.5.2", includeInBuild: true),
+            new NuGetPackage("com.IvanMurzak.ReflectorNet",                           "5.5.3", includeInBuild: true),
             // SignalR 8.0.33 requires 8.0.6; match the resolved version to avoid repeated restores.
             new NuGetPackage("System.Text.Json",                                      "8.0.6",  includeInBuild: true),
             // Keep SignalR on the patched v8 line (CVE-2026-70159).
@@ -161,7 +161,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // --- Editor-only dependencies (excluded from builds) ---
             // RQL (the query language of rql-query / rql-mutate and the tools' data layer): Editor-only, so it never
             // reaches player builds. Its only dependency is System.Text.Json 8.0.5, satisfied by the newer pin above.
-            new NuGetPackage("com.IvanMurzak.Rql",                                    "0.3.0"),
+            new NuGetPackage("com.IvanMurzak.Rql",                                    "0.4.0"),
             new NuGetPackage("Microsoft.Bcl.Memory",                                  "10.0.14"),
             // Pinned to 4.8.0 so transitive System.Collections.Immutable stays at 7.0.0
             // (forward-compatible with Unity 6.6's built-in 8.0.0). Roslyn 4.14 requires

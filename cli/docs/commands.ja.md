@@ -400,8 +400,8 @@ unity-mcp-cli tools --format json   # full schemas, machine-readable
 
 ## `rql`
 
-JSON のクォートなしで、コマンドラインから 1 つの RQL クエリを実行します。最後のステージが `set` または `call` のクエリは
-`rql-mutate` に、それ以外は `rql-query` に送られます。`--schema [type]` は `rql-schema` を実行します。`run-tool` と同様にヘッドレスのエディターを起動します。
+JSON のクォートなしで、コマンドラインから RQL を実行します。1 つのクエリ、または `;` で区切った複数のクエリです。最後のステージが `set` または `call` のクエリは
+`rql-mutate` に送られます（複数の場合: いずれか 1 つがそうなら、すべてがそうでなければなりません。各クエリはそれぞれ独立した全か無かの変更で、最初に失敗したものが残りを止めます）。それ以外は `rql-query` に送られます。`--schema [type]` は `rql-schema` を実行します。`run-tool` と同様にヘッドレスのエディターを起動します。
 Unity は変更をすぐにディスクに保存するため、`set` / `call` の後、CLI は書き込んだシーンとアセットのファイルを表示します
 (`Saved to disk: Assets/Scenes/Forest.unity`)。他の言語のように綴られた演算子 (`startsWith`、`like`) には、
 RQL での綴りのヒントが表示されます。`rql --help` はレシピを一覧表示します。
