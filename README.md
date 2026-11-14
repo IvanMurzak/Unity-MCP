@@ -26,11 +26,21 @@
 
 **AI Game Developer** (Unity-MCP) connects your AI agent to Unity. Claude Code, Codex, Cursor, GitHub Copilot, Gemini or any other [MCP](https://modelcontextprotocol.io/) client can read and change scenes, prefabs, assets and C# code, run tests and take screenshots in the **Unity Editor**, and call tools you write **inside your compiled game**. It ships as a free Unity package (`com.ivanmurzak.unity.mcp`), a command-line tool (`unity-mcp-cli`) and ten optional extensions.
 
+**Status:** latest release on [GitHub Releases](https://github.com/IvanMurzak/Unity-MCP/releases/latest) and [OpenUPM](https://openupm.com/packages/com.ivanmurzak.unity.mcp/) (1.x) · Unity **2022.3** or newer · CI runs EditMode, PlayMode and standalone-build tests on Unity 2022.3, 6000.0, 6000.3 and 6000.6.
+
 ## How it works
 
 <p align="center"><img src="docs/img/readme/architecture.svg" alt="An AI agent or unity-mcp-cli talks MCP to a server, ai-game.dev Cloud by default or a local gamedev-mcp-server, which calls the tools of the Unity Editor plugin and of your running game" width="100%"></p>
 
-The plugin registers its tools with an MCP server; your agent calls them through that server. By default the plugin uses the **Cloud** server at `https://ai-game.dev/mcp`. In **Custom** mode it starts the local [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) binary, or connects to one you host (binary or Docker). Instead of MCP tools, the agent can also use generated **Skills**.
+The plugin registers its tools with an MCP server; your agent calls them through that server. Instead of MCP tools, the agent can also use generated **Skills**. You choose where the server runs:
+
+| | **Cloud** (default) | **Custom** (local, no account) |
+| --- | --- | --- |
+| Server | `https://ai-game.dev/mcp` | [GameDev-MCP-Server](https://github.com/IvanMurzak/GameDev-MCP-Server) started by the plugin on `127.0.0.1`, or one you host |
+| Account | Sign in to ai-game.dev | Not needed |
+| Your project data | Tool calls pass through the relay; their contents are not stored ([privacy](https://ai-game.dev/legal/privacy)) | Stays on your machine |
+
+See [Security and privacy](#security-and-privacy) for details.
 
 ## Features
 
@@ -71,6 +81,8 @@ unity-mcp-cli setup-mcp claude-code ./MyUnityProject
 
 ![AI Game Developer window](docs/img/editor/ai-game-developer-windows.png)
 
+**Local only, no account:** skip `login`, open **Window ▸ AI Game Dev**, switch the connection to **Custom**, and connect your agent over stdio with `unity-mcp-cli setup-mcp claude-code ./MyUnityProject --transport stdio` or the [client snippets](#client-setup) below.
+
 Ask your agent *"Create 3 cubes in a circle with radius 2"* and watch it happen. Full steps, manual MCP configuration and uninstall: **[Installation guide](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md)**.
 
 https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
@@ -85,7 +97,20 @@ Create metallic golden material and attach it to a new sphere
 Find every enemy prefab without a Rigidbody and add one
 ```
 
-**Tools.** Shown by default: `rql-query`, `rql-mutate`, `rql-schema`, `script-execute`, `tests-run`, `screenshot-isolated`, the `package-*` and `assetstore-*` tools and `unity-tool-list`. More tools are installed but hidden until you show them. Full list: **[Default MCP tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** or [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
+**What your agent can do** (tools shown by default):
+
+| Capability | Tool | Example prompt |
+| --- | --- | --- |
+| Scenes and GameObjects | `rql-query`, `rql-mutate` | *"List every disabled GameObject in the open scene"* |
+| Assets and prefabs | `rql-query`, `rql-mutate` | *"Create a red material and assign it to all cubes"* |
+| Console and Editor state | `rql-query` | *"What errors are in the console?"* |
+| C# in the Editor | `script-execute` | *"Run C# that places 100 trees at random points on the terrain"* |
+| Tests | `tests-run` | *"Run the EditMode tests and fix what fails"* |
+| Screenshots | `screenshot-isolated` | *"Show me the Player model from the front"* |
+| Packages and Asset Store | `package-*`, `assetstore-*` | *"Install Cinemachine"* |
+| Tool list | `unity-tool-list` | *"Which tools can you use here?"* |
+
+You do not learn RQL: the agent writes it and asks `rql-schema` for every source, type and call it needs. More tools are installed but hidden until you show them. Full list: **[Default MCP tools](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/default-mcp-tools.md)** or [ai-game.dev/docs/tools](https://ai-game.dev/docs/tools).
 
 **From the terminal** (starts a headless editor when none is running):
 
@@ -115,6 +140,69 @@ public class Tool_Score
 ```
 
 Prompts, runtime (in-game) tools and a full example: **[Custom tools and runtime](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/custom-tools.md)**.
+
+## Client setup
+
+The **Configure** button in the AI Game Developer window, or `unity-mcp-cli setup-mcp <agent> ./MyUnityProject`, writes these files for you (Cloud by default, local with `--transport stdio`). By hand, for a local server: set the plugin to **Custom**, take `<port>` from the window, and use the binary for your platform from `<project>/Library/mcp-server/<rid>/` (`win-x64/gamedev-mcp-server.exe`, `osx-arm64/gamedev-mcp-server`, `linux-x64/gamedev-mcp-server`, …).
+
+<details>
+<summary><b>Claude Code</b> — <code>.mcp.json</code> in the project root</summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Cursor</b> — <code>.cursor/mcp.json</code></summary>
+
+```json
+{
+  "mcpServers": {
+    "ai-game-developer": {
+      "type": "stdio",
+      "command": "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe",
+      "args": ["port=<port>", "client-transport=stdio"]
+    }
+  }
+}
+```
+
+</details>
+
+<details>
+<summary><b>Codex</b> — <code>.codex/config.toml</code></summary>
+
+```toml
+[mcp_servers.ai-game-developer]
+enabled = true
+command = "<project>/Library/mcp-server/win-x64/gamedev-mcp-server.exe"
+args = ["port=<port>", "client-transport=stdio"]
+tool_timeout_sec = 300
+```
+
+</details>
+
+Other agents and manual setup: [Installation guide](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/installation.md).
+
+## Security and privacy
+
+- ✅ **The plugin opens no port** — it connects out to the MCP server.
+- ✅ **Local server on loopback** — `gamedev-mcp-server` binds to `127.0.0.1` unless you set `MCP_BIND` for hosting.
+- ✅ **Origin checks** — browser requests with a non-allowed `Origin` are rejected (403) in every auth mode.
+- ✅ **Auth modes** — `none` (local default), `token` (one shared secret the agent and the plugin must both send), `oauth` (ai-game.dev account).
+- ✅ **Cloud relay** — routes tool calls without inspecting or storing their contents; it logs metadata such as IP, time, tool name and sizes ([privacy policy](https://ai-game.dev/legal/privacy)).
+- ⚠️ **Not protected** — in `none` mode any process on your machine that reaches the port can call tools, and tools run with Editor rights (`script-execute` runs C#). Use `token` mode on shared machines.
+
+Server options and Docker: [MCP server and connection](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md).
 
 ## Extensions
 
