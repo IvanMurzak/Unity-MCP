@@ -4,37 +4,40 @@
 import * as fs from 'fs';
 import * as path from 'path';
 
-import { RQL_MUTATE_TOOL, RQL_QUERY_TOOL, RQL_SCHEMA_TOOL, decodeQueryFile, isRqlMutation, rqlLastVerb, rqlStages, stripToolName } from '@baizor/gamedev-cli-core';
+import {
+  RQL_MUTATE_TOOL,
+  RQL_QUERY_TOOL,
+  RQL_SCHEMA_TOOL,
+  decodeQueryFile,
+  isRqlMutation,
+  rqlLastVerb,
+  rqlStages,
+  rqlTextVerb,
+  rqlToolCall,
+  rqlToolFor,
+  splitRqlStatements,
+  stripRqlToolNames,
+  stripToolName,
+} from '@baizor/gamedev-cli-core';
 
-export { RQL_MUTATE_TOOL, RQL_QUERY_TOOL, RQL_SCHEMA_TOOL, decodeQueryFile, isRqlMutation, rqlLastVerb, rqlStages, stripToolName };
+export {
+  RQL_MUTATE_TOOL,
+  RQL_QUERY_TOOL,
+  RQL_SCHEMA_TOOL,
+  decodeQueryFile,
+  isRqlMutation,
+  rqlLastVerb,
+  rqlStages,
+  rqlTextVerb,
+  rqlToolCall,
+  rqlToolFor,
+  splitRqlStatements,
+  stripRqlToolNames,
+  stripToolName,
+};
 
-export interface RqlCallOptions {
-  /** `--schema [type]`: true without a type. */
-  schema?: string | boolean;
-  dryRun?: boolean;
-  maxTargets?: number;
-}
-
-/** The rql-* tool and its input for a command-line query, or why the command line is wrong. */
-export function rqlToolCall(query: string | undefined, options: RqlCallOptions):
-  { toolName: string; input: Record<string, unknown> } | { usage: string } {
-  const { schema, dryRun, maxTargets } = options;
-  if (schema !== undefined) {
-    // `rql --schema 'objects | count'` hands the query to --schema as its value.
-    if (query !== undefined || (typeof schema === 'string' && /[|\s]/.test(schema.trim()))) {
-      return { usage: 'Pass either a query or --schema [type] (a type name), not both.' };
-    }
-    return { toolName: RQL_SCHEMA_TOOL, input: typeof schema === 'string' ? { type: schema } : {} };
-  }
-  if (query === undefined || query.trim() === '') {
-    return { usage: 'No query given: rql \'objects | where name starts-with "Tree" | count\' (recipes: rql --help)' };
-  }
-  if (!isRqlMutation(query)) {
-    if (dryRun || maxTargets !== undefined) return { usage: '--dry-run and --max-targets are for a query ending in set / call.' };
-    return { toolName: RQL_QUERY_TOOL, input: { query } };
-  }
-  return { toolName: RQL_MUTATE_TOOL, input: { query, ...(dryRun ? { dry_run: true } : {}), ...(maxTargets !== undefined ? { max_targets: maxTargets } : {}) } };
-}
+/** `rql` without a query (cli-core's {@link rqlToolCall} returns it as the usage error). */
+export const RQL_NO_QUERY_USAGE = 'No query given: rql \'objects | where name starts-with "Tree" | count\' (recipes: rql --help)';
 
 /** `unity-account`: the Unity account the editor is signed in to (the plugin's `assetStore` source). */
 export const UNITY_ACCOUNT_QUERY = 'assetStore | select signedIn userName';
