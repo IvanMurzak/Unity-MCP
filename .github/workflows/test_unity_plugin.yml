@@ -166,12 +166,13 @@ jobs:
           }
           [Console]::Error.WriteLine('chain: no Python 3.9+ on PATH that runs and reports an absolute, space-free sys.executable (tried python, python3; never py)'); exit 2
 
-      # Scope `unity-dll`: a game-ci leg consumes only the 3 DLL drops. The CLI, the server binary and
-      # the engine-free NuGet project are not this job's, so they are not built here and each appears
-      # in the leg record's skipped[] instead of being proven.
+      # Scope `unity-dll` + `vendored`: a game-ci leg consumes the DLL drops and the Code-Exec C# sources the
+      # package vendors (Editor/Scripts/CodeExec, copied from the lock's Code-Exec sha below their headers when
+      # Code-Exec moves; the editor compiles them). The CLI, the server binary and the engine-free NuGet project
+      # are not this job's, so they are not built here and each appears in the leg record's skipped[] instead.
       - name: chain feed
         id: chain
-        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ env.LEG }}-${{ matrix.platform }} --edges unity-dll
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py apply --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ env.LEG }}-${{ matrix.platform }} --edges unity-dll --edges vendored
 
       # --------------------------------------------------------------------- #
       # 2-c. Cache & run the Unity test-runner
@@ -356,7 +357,7 @@ jobs:
       - name: chain leg record
         id: chain_record
         if: always() && !matrix.graphics
-        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ env.LEG }}-${{ matrix.platform }} --edges unity-dll --engine unity --engine-version ${{ inputs.unityVersion }} --tier T3 --job-status "${{ job.status }}" --out chain-leg.json
+        run: ${{ env.CHAIN_PY }} .github/scripts/chain_feed.py record --node unity-mcp --job test-unity-${{ inputs.unityVersion }}-${{ env.LEG }}-${{ matrix.platform }} --edges unity-dll --edges vendored --engine unity --engine-version ${{ inputs.unityVersion }} --tier T3 --job-status "${{ job.status }}" --out chain-leg.json
 
       # Keyed on the record's own output, not CHAIN_ACTIVE (which only a COMPLETED apply exports),
       # so a failed apply's RED record still uploads.

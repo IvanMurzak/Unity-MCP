@@ -1,14 +1,15 @@
 # Vendored: Code-Exec (C#)
 
 `Core/` and `Roslyn/` are copied verbatim, below a 4-line license header, from [IvanMurzak/Code-Exec](https://github.com/IvanMurzak/Code-Exec)
-release **0.4.1** (tag `nuget-v0.4.1`, commit `2f46b50`), published on NuGet as `com.IvanMurzak.CodeExec` 0.4.1. Since
-0.4.0 only `Core/ExecutionGuard.cs` and `Roslyn/GuardWriter.cs` changed (Code-Exec PR #14): the guard keeps its
-per-thread state in a `ThreadLocal`, and a `Monitor.Pulse` sent between two slices of a sliced `Monitor.Wait` wakes it.
+release **0.4.1** (tag `nuget-v0.4.1`, commit `2f46b50`), published on NuGet as `com.IvanMurzak.CodeExec` 0.4.1. What
+changed in a release is in Code-Exec's release notes, not here.
 
 Files: `dotnet/CodeExec/*.cs` and `dotnet/CodeExec.Roslyn/src/*.cs`. Source, not the NuGet DLL:
 the adapter compiles against the Roslyn 4.8 this package already installs, and no NuGet pin / DLL changes are needed in
-the test projects. Do not edit them here: change Code-Exec, then copy the files again, put the same header (with the new
-commit) on top of each, and update this note, `THIRD-PARTY-NOTICES.md` and the hashes below. The hashes are of the
+the test projects. Do not edit them here: change Code-Exec and release it through the ai-game-dev release train (node
+`code-exec`), which copies the files again, re-points each header and this record at the released commit, and updates
+`THIRD-PARTY-NOTICES.md` and the hashes below. The train refuses a release that adds or removes a file: add or remove
+it (and its `.meta`) here by hand first. The hashes are of the
 upstream files, i.e. each vendored file without its first 4 lines (`for f in Core/*.cs Roslyn/*.cs; do printf '%s *%s\n'
 "$(tail -n +5 "$f" | sha256sum | cut -d' ' -f1)" "$f"; done`).
 
