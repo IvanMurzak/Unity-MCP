@@ -4,7 +4,7 @@ import * as os from 'os';
 import * as path from 'path';
 import { installUnityEditor } from '../src/lib.js';
 import type { InstallUnityEditorOptions, ProgressEvent } from '../src/lib.js';
-import { parseHubProgress, runHubInstall, type RunHubInstallOptions } from '../src/utils/unity-hub.js';
+import { parseHubProgress, queryAvailableReleases, runHubInstall, type RunHubInstallOptions } from '../src/utils/unity-hub.js';
 
 const VERSION = '6000.3.1f1';
 const FAKE_HUB = '/hub/Unity Hub';
@@ -77,9 +77,18 @@ describe('installUnityEditor — validation and discovery', () => {
     expect(options.runHubInstallImpl).not.toHaveBeenCalled();
   });
 
+  it('fails with hub-not-found when an explicit hubPath does not exist', async () => {
+    const options = makeOptions({ hubPath: '/no/such/hub', hubExistsImpl: () => false });
+    const result = await installUnityEditor(options);
+    expect(result.kind).toBe('failure');
+    if (result.kind !== 'failure') throw new Error('expected failure');
+    expect(result.reason).toBe('hub-not-found');
+    expect(options.runHubInstallImpl).not.toHaveBeenCalled();
+  });
+
   it('uses an explicit hubPath without looking for the Hub', async () => {
     const findHubImpl = vi.fn(() => null);
-    const options = makeOptions({ hubPath: '/custom/hub', findHubImpl });
+    const options = makeOptions({ hubPath: '/custom/hub', findHubImpl, hubExistsImpl: () => true });
     const result = await installUnityEditor(options);
     expect(result.kind).toBe('success');
     expect(findHubImpl).not.toHaveBeenCalled();
@@ -104,7 +113,7 @@ describe('installUnityEditor — install', () => {
     const events: ProgressEvent[] = [];
     const result = await installUnityEditor({ ...options, onProgress: (e) => events.push(e) });
     expect(result).toMatchObject({ kind: 'success', changeset: 'abcdef123456' });
-    expect(options.resolveChangesetImpl).toHaveBeenCalledWith(VERSION);
+    expect(options.resolveChangesetImpl).toHaveBeenCalledWith(VERSION, undefined);
     expect(vi.mocked(options.runHubInstallImpl!).mock.calls[0][1])
       .toEqual(['--', '--headless', 'install', '--version', VERSION, '--changeset', 'abcdef123456']);
     expect(events.map((e) => e.phase)).toEqual(['start', 'hub-located', 'resolving-changeset', 'installed']);
@@ -115,7 +124,7 @@ describe('installUnityEditor — install', () => {
     const result = await installUnityEditor(options);
     expect(result.kind).toBe('success');
     expect(result.warnings).toEqual(['Failed to fetch available releases: boom']);
-    expect(options.resolveChangesetImpl).toHaveBeenCalledWith(VERSION);
+    expect(options.resolveChangesetImpl).toHaveBeenCalledWith(VERSION, undefined);
   });
 
   it('fails with changeset-not-found and runs no install when the changeset cannot be resolved', async () => {
@@ -195,6 +204,22 @@ describe('installUnityEditor — abort', () => {
     expect(options.runHubInstallImpl).not.toHaveBeenCalled();
   });
 
+  it('reports the installed editor when the signal fires after the Hub finished', async () => {
+    const controller = new AbortController();
+    const listEditorsImpl = vi.fn(async (_hub: string, signal?: AbortSignal) => {
+      if (signal?.aborted) throw new Error('aborted listing');
+      return controller.signal.aborted ? [EDITOR] : [];
+    });
+    const options = makeOptions({
+      signal: controller.signal,
+      listLocalEditorsImpl: () => [],
+      listEditorsImpl,
+      runHubInstallImpl: async () => { controller.abort(); },
+    });
+    const result = await installUnityEditor(options);
+    expect(result).toMatchObject({ kind: 'success', alreadyInstalled: false, editorPath: EDITOR.path });
+  });
+
   it('fails with aborted when the signal fires during the install', async () => {
     const controller = new AbortController();
     const runHubInstallImpl: RunImpl = (_hub, _args, _version, opts) => new Promise((_resolve, reject) => {
@@ -230,6 +255,25 @@ describe('runHubInstall', () => {
     expect(statuses).toEqual(['Downloading 42', 'Installed 100']);
   });
 
+  it('splits progress on bare carriage returns', async () => {
+    const statuses: string[] = [];
+    await runHubInstall(process.execPath, nodeArgs(
+      `process.stdout.write('[Unity (${VERSION})] downloading 1.00%\\r[Unity (${VERSION})] downloading 2.00%\\r\\n')`,
+    ), VERSION, { onProgress: (p) => statuses.push(`${p.status} ${p.percent}`) });
+    expect(statuses).toEqual(['Downloading 1', 'Downloading 2']);
+  });
+
+  it('runs the Hub without ELECTRON_RUN_AS_NODE', async () => {
+    process.env['ELECTRON_RUN_AS_NODE'] = '1';
+    try {
+      await expect(runHubInstall(process.execPath, nodeArgs(
+        `process.exit(process.env.ELECTRON_RUN_AS_NODE ? 5 : 0)`,
+      ), VERSION)).resolves.toBeUndefined();
+    } finally {
+      delete process.env['ELECTRON_RUN_AS_NODE'];
+    }
+  });
+
   it('rejects with the exit code and stderr when the Hub fails', async () => {
     await expect(runHubInstall(process.execPath, nodeArgs(
       `process.stderr.write('no such version'); process.exit(3)`,
@@ -253,5 +297,25 @@ describe('runHubInstall', () => {
     controller.abort();
     await expect(runHubInstall(process.execPath, nodeArgs('setTimeout(() => {}, 60000)'), VERSION, { signal: controller.signal }))
       .rejects.toMatchObject({ name: 'AbortError' });
+  });
+});
+
+describe.skipIf(process.platform === 'win32')('queryAvailableReleases — abort', () => {
+  it('kills the Hub and the processes it started', async () => {
+    const dir = fs.mkdtempSync(path.join(os.tmpdir(), 'hub-query-abort-'));
+    const pidFile = path.join(dir, 'pid');
+    const hub = path.join(dir, 'hub.sh');
+    fs.writeFileSync(hub, `#!/bin/sh\nsleep 60 &\necho $! > ${pidFile}\nwait\n`, { mode: 0o755 });
+    try {
+      const controller = new AbortController();
+      const query = queryAvailableReleases(hub, controller.signal);
+      await vi.waitFor(() => expect(fs.readFileSync(pidFile, 'utf-8').trim()).not.toBe(''), { timeout: 10000, interval: 50 });
+      controller.abort();
+      await expect(query).rejects.toThrow(/aborted/);
+      const childPid = Number(fs.readFileSync(pidFile, 'utf-8'));
+      await vi.waitFor(() => expect(isAlive(childPid)).toBe(false), { timeout: 10000, interval: 100 });
+    } finally {
+      fs.rmSync(dir, { recursive: true, force: true });
+    }
   });
 });

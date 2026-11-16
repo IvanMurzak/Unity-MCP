@@ -14,9 +14,16 @@ already installed (on disk first, then via the Hub CLI) returns `alreadyInstalle
 it (`-- --headless install`, with the changeset read from unity.com for a version off the Hub's releases list) and the
 result carries the installed editor's executable. Progress phases: `start`, `hub-located`, `already-installed`,
 `resolving-changeset`, `downloading` (with `percent`), `validating`, `installing`, `installed`. `signal` kills the Hub
-process. It never installs Unity Hub: without it the result is `reason: 'hub-not-found'`. Failures carry a `reason`
-(`invalid-version`, `hub-not-found`, `changeset-not-found`, `install-failed`, `not-found-after-install`, `aborted`).
-The `install-unity` command now runs on the same Hub install core; its terminal output is unchanged.
+process and the processes it started; a Hub still running when the host process exits is killed with it, and the Hub
+runs without `ELECTRON_RUN_AS_NODE` / `NODE_OPTIONS` (an Electron host's settings would break it). It never installs
+Unity Hub: without it the result is `reason: 'hub-not-found'`. Failures carry a `reason` (`invalid-version`,
+`hub-not-found`, `changeset-not-found`, `install-failed`, `not-found-after-install`, `aborted`). The `install-unity`
+command now runs on the same Hub install core; its terminal output is unchanged.
+
+### Fixed — a Unity Hub AppImage installed by `install-unity` is found again on Linux
+
+`install-unity` saves the Hub as `~/Applications/UnityHub.AppImage`, but only `~/Applications/Unity Hub.AppImage` was
+looked for, so every later command installed the Hub again. Both names are found now.
 
 ### Fixed — finding the installed Unity editor no longer blocks on Unity Hub
 

@@ -1,6 +1,8 @@
 // Library-safe `installUnityEditor`: install a Unity Editor version through Unity Hub — the library form of the
 // `install-unity` CLI command. No console output, no `process.exit`, never throws past the boundary.
 
+import * as fs from 'fs';
+
 import {
   ChangesetNotResolvedError,
   findUnityHub,
@@ -47,18 +49,23 @@ export interface InstallUnityEditorOptions {
    * Exceptions it throws are swallowed.
    */
   onProgress?: ProgressCallback;
-  /** Cancels the install: the Hub process (and its child processes) is killed and the result is `reason: 'aborted'`. */
+  /**
+   * Cancels the install: the Hub process (and its child processes) is killed and the result is `reason: 'aborted'`.
+   * The install itself has no timeout. A Hub still running when the host process exits is killed with it.
+   */
   signal?: AbortSignal;
+  /** Test injection — whether a given `hubPath` exists (default: `fs.existsSync`). */
+  hubExistsImpl?: (hubPath: string) => boolean;
   /** Test injection — Unity Hub discovery (default: the standard locations). */
   findHubImpl?: () => string | null;
   /** Test injection — editors found on disk with no Hub process (default: the Hub's editor folders). */
   listLocalEditorsImpl?: () => CreateProjectEditorInfo[];
   /** Test injection — editors the Unity Hub CLI lists (`--headless editors --installed`). */
-  listEditorsImpl?: (hubPath: string) => Promise<CreateProjectEditorInfo[]>;
+  listEditorsImpl?: (hubPath: string, signal?: AbortSignal) => Promise<CreateProjectEditorInfo[]>;
   /** Test injection — the Hub's promoted releases (`--headless editors --releases`). */
   listReleasesImpl?: (hubPath: string, signal?: AbortSignal) => Promise<AvailableRelease[]>;
   /** Test injection — the changeset of a version off the releases list (default: read from unity.com). */
-  resolveChangesetImpl?: (version: string) => Promise<string | null>;
+  resolveChangesetImpl?: (version: string, signal?: AbortSignal) => Promise<string | null>;
   /** Test injection — runs the Hub `--headless install` command and reports its progress lines. */
   runHubInstallImpl?: typeof runHubInstall;
   /**
@@ -131,6 +138,7 @@ function hubProgressEvent(version: string, { percent, phase }: HubProgress): Pro
  * installed editor's executable. Only the editor is installed, no platform modules. Unity Hub is never installed.
  */
 export async function installUnityEditor(options: InstallUnityEditorOptions): Promise<InstallUnityEditorResult> {
+  options = options ?? ({} as InstallUnityEditorOptions);
   const warnings: string[] = [];
   const version = typeof options.version === 'string' ? options.version.trim() : '';
   const { onProgress, signal } = options;
@@ -138,17 +146,21 @@ export async function installUnityEditor(options: InstallUnityEditorOptions): Pr
 
   const resolveExe = options.resolveEditorExecutableImpl ?? findEditorExecutable;
   const listLocal = options.listLocalEditorsImpl ?? listEditorsByCommonLocations;
-  const listHub = options.listEditorsImpl ?? ((hub: string) => queryInstalledEditors(hub, undefined, signal));
+  const listHub = options.listEditorsImpl
+    ?? ((hub: string, listSignal?: AbortSignal) => queryInstalledEditors(hub, undefined, listSignal));
   const executableOf = (editors: CreateProjectEditorInfo[]): string | null => {
     const editor = editors.find((e) => e.version === version);
     return editor ? resolveExe(editor.path) : null;
   };
-  /** The installed editor of `version` as the Hub CLI lists it; a failed listing is a warning, not an error. */
-  const findViaHub = async (hub: string): Promise<string | null> => {
+  /**
+   * The installed editor of `version` as the Hub CLI lists it; a failed listing is a warning, not an error.
+   * `listSignal` is the caller's signal before the install, none after it (an installed editor is reported).
+   */
+  const findViaHub = async (hub: string, listSignal?: AbortSignal): Promise<string | null> => {
     try {
-      return executableOf(await listHub(hub));
+      return executableOf(await listHub(hub, listSignal));
     } catch (err) {
-      throwIfAborted();
+      if (listSignal) throwIfAborted();
       warnings.push((err as Error).message);
       return null;
     }
@@ -179,10 +191,13 @@ export async function installUnityEditor(options: InstallUnityEditorOptions): Pr
       throw new InstallFailure('hub-not-found',
         `Unity Hub not found. Install Unity Hub (https://unity.com/download), or run: unity-mcp-cli install-unity ${version}`);
     }
+    if (options.hubPath && !(options.hubExistsImpl ?? fs.existsSync)(options.hubPath)) {
+      throw new InstallFailure('hub-not-found', `Unity Hub not found at ${options.hubPath}`);
+    }
     hubPath = hub;
     emitProgress(onProgress, { phase: 'hub-located', message: `Unity Hub located at ${hub}`, hubPath: hub });
 
-    const viaHub = await findViaHub(hub);
+    const viaHub = await findViaHub(hub, signal);
     if (viaHub) {
       emitProgress(onProgress, installedEvent(viaHub, true));
       return { kind: 'success', success: true, version, editorPath: viaHub, alreadyInstalled: true, warnings };

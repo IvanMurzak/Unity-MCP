@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { execFile, execFileSync, execSync, spawn } from 'child_process';
+import { execFile, execFileSync, execSync, spawn, spawnSync, type ChildProcess } from 'child_process';
 import { platform } from 'os';
 import { get as httpsGet } from 'https';
 import { get as httpGet, IncomingMessage } from 'http';
@@ -44,7 +44,9 @@ export function findUnityHub(): string | null {
       candidates.push(
         '/usr/bin/unity-hub',
         '/snap/bin/unity-hub',
-        ...(process.env['HOME'] ? [path.join(process.env['HOME'], 'Applications', 'Unity Hub.AppImage')] : [])
+        ...(process.env['HOME']
+          ? ['Unity Hub.AppImage', 'UnityHub.AppImage'].map((name) => path.join(process.env['HOME'] as string, 'Applications', name))
+          : [])
       );
       break;
   }
@@ -238,29 +240,107 @@ export function parseInstalledEditorsLine(line: string): InstalledEditor | null 
 }
 
 /**
+ * Spawn options for a Unity Hub process. The environment drops the variables that make an Electron app run as plain
+ * Node (`ELECTRON_RUN_AS_NODE`, set by Electron hosts such as the desktop app) or change its Node runtime. With a
+ * `signal` on POSIX the Hub leads its own process group, so {@link killHubTree} reaches the processes it started;
+ * without one it stays in the terminal's group and Ctrl+C reaches it.
+ */
+function hubSpawnOptions(signal: AbortSignal | undefined): { windowsHide: true; detached: boolean; env: NodeJS.ProcessEnv } {
+  const env = { ...process.env };
+  delete env['ELECTRON_RUN_AS_NODE'];
+  delete env['NODE_OPTIONS'];
+  return { windowsHide: true, detached: signal !== undefined && process.platform !== 'win32', env };
+}
+
+/** Kill a Hub process and the processes it started: its process group on POSIX, `taskkill /T /F` on Windows. */
+async function killHubTree(proc: ChildProcess): Promise<void> {
+  const pid = proc.pid;
+  const killed = pid !== undefined && await killProcessTree(pid).catch(() => false);
+  if (!killed) proc.kill('SIGKILL');
+}
+
+/**
+ * Kill `proc` and the processes it started when this process exits while it still runs (an app that quits in the
+ * middle of an editor download). Returns the function that unregisters the hook.
+ */
+function killHubOnExit(proc: ChildProcess, detached: boolean): () => void {
+  const onExit = (): void => {
+    const pid = proc.pid;
+    if (pid === undefined || proc.exitCode !== null || proc.signalCode !== null) return;
+    try {
+      if (process.platform === 'win32') spawnSync('taskkill', ['/PID', String(pid), '/T', '/F'], { windowsHide: true, timeout: 5000 });
+      else process.kill(detached ? -pid : pid, 'SIGKILL');
+    } catch {
+      // already gone
+    }
+  };
+  process.once('exit', onExit);
+  return () => { process.removeListener('exit', onExit); };
+}
+
+/** The most Hub query output kept; a Hub that prints more is killed and the query fails. */
+const HUB_QUERY_MAX_OUTPUT_CHARS = 16 * 1024 * 1024;
+
+/**
  * Run a Unity Hub `-- --headless <args>` query and resolve its stdout. stderr is captured, not inherited: Unity Hub
  * is an Electron app and Chromium routinely logs benign quota_database errors to stderr that would otherwise pollute
- * the CLI output ({@link formatExecError} re-surfaces it on real failures). Rejects with the `execFile` error carrying
- * `stdout`, `stderr` and `timedOut`.
+ * the CLI output ({@link formatExecError} re-surfaces it on real failures). After `timeoutMs`, or when `signal`
+ * fires, the Hub is killed with the processes it started (`spawn`, not `execFile`, which ignores `detached`).
+ * Rejects with an error carrying `stdout`, `stderr` and `timedOut` (an `AbortError` on abort).
  */
 function execHubHeadless(hubPath: string, args: string[], timeoutMs: number, signal?: AbortSignal): Promise<string> {
   return new Promise((resolve, reject) => {
-    const child = execFile(hubPath, ['--', '--headless', ...args], {
-      encoding: 'utf-8',
-      timeout: timeoutMs,
-      killSignal: 'SIGKILL',
-      windowsHide: true,
-      maxBuffer: 16 * 1024 * 1024,
-      signal,
-    }, (err, stdout, stderr) => {
-      if (!err) {
-        resolve(stdout);
-        return;
-      }
-      const timedOut = err.killed === true && err.code !== 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' && err.name !== 'AbortError';
-      reject(Object.assign(err, { stdout, stderr, timedOut }));
+    if (signal?.aborted) {
+      reject(new DOMException('Unity Hub query was aborted', 'AbortError'));
+      return;
+    }
+    const command = `${hubPath} -- --headless ${args.join(' ')}`;
+    const spawnOptions = hubSpawnOptions(signal);
+    const child = spawn(hubPath, ['--', '--headless', ...args], { stdio: ['ignore', 'pipe', 'pipe'], ...spawnOptions });
+    const unregisterExit = killHubOnExit(child, spawnOptions.detached);
+    let ended: 'aborted' | 'timed-out' | 'output-too-large' | undefined;
+    const stop = (why: NonNullable<typeof ended>): void => {
+      if (ended) return;
+      ended = why;
+      void killHubTree(child);
+    };
+    const timer = setTimeout(() => stop('timed-out'), timeoutMs);
+    const onAbort = (): void => stop('aborted');
+    signal?.addEventListener('abort', onAbort, { once: true });
+
+    let stdout = '';
+    let stderr = '';
+    child.stdout.setEncoding('utf-8');
+    child.stderr.setEncoding('utf-8');
+    child.stdout.on('data', (data: string) => {
+      stdout += data;
+      if (stdout.length > HUB_QUERY_MAX_OUTPUT_CHARS) stop('output-too-large');
     });
-    child.stdin?.end();
+    child.stderr.on('data', (data: string) => {
+      stderr = (stderr + data).slice(-HUB_QUERY_MAX_OUTPUT_CHARS);
+    });
+
+    let settled = false;
+    const finish = (err: Error | null): void => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      signal?.removeEventListener('abort', onAbort);
+      unregisterExit();
+      if (ended === 'aborted') {
+        reject(Object.assign(new DOMException('Unity Hub query was aborted', 'AbortError'), { stdout, stderr, timedOut: false }));
+      } else if (ended === 'output-too-large') {
+        reject(Object.assign(new Error(`Unity Hub printed more than ${HUB_QUERY_MAX_OUTPUT_CHARS} characters: ${command}`), { stdout, stderr, timedOut: false }));
+      } else if (err || ended) {
+        reject(Object.assign(err ?? new Error(`Unity Hub did not answer in time: ${command}`), { stdout, stderr, timedOut: ended === 'timed-out' }));
+      } else {
+        resolve(stdout);
+      }
+    };
+    child.on('error', (err) => finish(err));
+    child.on('close', (code, exitSignal) => finish(code === 0
+      ? null
+      : new Error(`Command failed: ${command} (${code !== null ? `exit code ${code}` : `killed by ${exitSignal}`})`)));
   });
 }
 
@@ -426,13 +506,18 @@ const FETCH_MAX_REDIRECTS = 5;
  * Supports redirect following up to FETCH_MAX_REDIRECTS deep, and enforces a
  * FETCH_TIMEOUT_MS request timeout to prevent indefinite hangs.
  */
-function fetchUrl(url: string, redirectsRemaining = FETCH_MAX_REDIRECTS): Promise<string> {
+function fetchUrl(url: string, redirectsRemaining = FETCH_MAX_REDIRECTS, signal?: AbortSignal): Promise<string> {
   return new Promise((resolve, reject) => {
     const controller = new AbortController();
     const timer = setTimeout(() => {
       controller.abort();
       reject(new Error(`Request timed out after ${FETCH_TIMEOUT_MS}ms: ${url}`));
     }, FETCH_TIMEOUT_MS);
+    // The caller's signal ends the request too (its `error` rejects the promise).
+    const onAbort = (): void => controller.abort();
+    if (signal?.aborted) controller.abort();
+    else signal?.addEventListener('abort', onAbort, { once: true });
+    controller.signal.addEventListener('abort', () => signal?.removeEventListener('abort', onAbort), { once: true });
 
     const doGet = url.startsWith('https') ? httpsGet : httpGet;
     const req = doGet(url, { signal: controller.signal } as Parameters<typeof httpsGet>[1], (response: IncomingMessage) => {
@@ -444,7 +529,8 @@ function fetchUrl(url: string, redirectsRemaining = FETCH_MAX_REDIRECTS): Promis
           return;
         }
         response.resume();
-        fetchUrl(new URL(response.headers.location, url).toString(), redirectsRemaining - 1).then(resolve, reject);
+        signal?.removeEventListener('abort', onAbort);
+        fetchUrl(new URL(response.headers.location, url).toString(), redirectsRemaining - 1, signal).then(resolve, reject);
         return;
       }
       if (response.statusCode && response.statusCode !== 200) {
@@ -455,7 +541,11 @@ function fetchUrl(url: string, redirectsRemaining = FETCH_MAX_REDIRECTS): Promis
       }
       const chunks: Buffer[] = [];
       response.on('data', (chunk: Buffer) => chunks.push(chunk));
-      response.on('end', () => { clearTimeout(timer); resolve(Buffer.concat(chunks).toString('utf-8')); });
+      response.on('end', () => {
+        clearTimeout(timer);
+        signal?.removeEventListener('abort', onAbort);
+        resolve(Buffer.concat(chunks).toString('utf-8'));
+      });
       response.on('error', (err) => { clearTimeout(timer); reject(err); });
     });
     req.on('error', (err) => { clearTimeout(timer); reject(err); });
@@ -473,12 +563,12 @@ export function isValidUnityVersion(version: string): boolean {
   return UNITY_VERSION_RE.test(version);
 }
 
-export async function resolveChangeset(version: string): Promise<string | null> {
+export async function resolveChangeset(version: string, signal?: AbortSignal): Promise<string | null> {
   if (!isValidUnityVersion(version)) return null;
 
   const url = `https://unity.com/releases/editor/whats-new/${version}`;
   try {
-    const html = await fetchUrl(url);
+    const html = await fetchUrl(url, FETCH_MAX_REDIRECTS, signal);
     // Look for unityhub://VERSION/CHANGESET pattern
     const match = html.match(/unityhub:\/\/[^/]+\/([a-f0-9]{12})/);
     if (match) return match[1];
@@ -541,6 +631,9 @@ export interface RunHubInstallOptions {
 /** The last this many characters of the Hub's stderr are kept for the failure message. */
 const HUB_STDERR_TAIL_CHARS = 16 * 1024;
 
+/** How long an aborted install waits for the killed Hub to exit before it reports the abort anyway. */
+const HUB_ABORT_WAIT_MS = 15_000;
+
 function abortError(version: string): Error {
   return new DOMException(`Installation of Unity Editor ${version} was aborted`, 'AbortError');
 }
@@ -548,7 +641,9 @@ function abortError(version: string): Error {
 /**
  * Run a Unity Hub `-- --headless install ...` command and report each progress line it prints. Silent (no spinner,
  * no stdout/stderr writes): the CLI's progress bar ({@link installEditor}) and the library's `installUnityEditor`
- * `onProgress` both sit on top of it. Rejects with the Hub's exit code and stderr when the Hub fails.
+ * `onProgress` both sit on top of it. Rejects with the Hub's exit code and stderr when the Hub fails. There is no
+ * timeout (a download takes as long as it takes): `signal` is the way to stop it. On abort it rejects once the
+ * killed Hub has exited (at most {@link HUB_ABORT_WAIT_MS} later), so a new install does not race the old one.
  */
 export function runHubInstall(
   hubPath: string,
@@ -563,53 +658,57 @@ export function runHubInstall(
       return;
     }
     let settled = false;
+    let aborted = false;
     const settle = (err?: Error): void => {
       if (settled) return;
       settled = true;
       signal?.removeEventListener('abort', onAbort);
+      unregisterExit();
       if (err) reject(err);
       else resolve();
     };
 
-    // With a signal on POSIX the Hub leads its own process group, so an abort kills the processes it started too
-    // (Windows: `taskkill /T`). Without one the Hub stays in the terminal's group and Ctrl+C reaches it.
-    const proc = spawn(hubPath, args, {
-      stdio: ['ignore', 'pipe', 'pipe'],
-      windowsHide: true,
-      detached: signal !== undefined && process.platform !== 'win32',
-    });
+    const spawnOptions = hubSpawnOptions(signal);
+    const proc = spawn(hubPath, args, { stdio: ['ignore', 'pipe', 'pipe'], ...spawnOptions });
+    const unregisterExit = killHubOnExit(proc, spawnOptions.detached);
     const onAbort = (): void => {
-      const pid = proc.pid;
-      const killed = pid !== undefined ? killProcessTree(pid) : Promise.resolve(false);
-      killed.then((ok) => { if (!ok) proc.kill('SIGKILL'); }, () => proc.kill('SIGKILL'));
-      settle(abortError(version));
+      aborted = true;
+      void killHubTree(proc);
+      setTimeout(() => settle(abortError(version)), HUB_ABORT_WAIT_MS).unref();
     };
     signal?.addEventListener('abort', onAbort, { once: true });
 
     const report = (line: string): void => {
       const parsed = parseHubProgress(line);
-      if (parsed && !settled) onProgress?.(parsed);
+      if (parsed && !settled && !aborted) onProgress?.(parsed);
     };
     let stdoutBuffer = '';
-    proc.stdout.on('data', (data: Buffer) => {
-      const lines = (stdoutBuffer + data.toString('utf-8')).split('\n');
+    proc.stdout.setEncoding('utf-8');
+    proc.stdout.on('data', (data: string) => {
+      // A Hub that redraws its progress with a bare carriage return still yields one line per update.
+      const lines = (stdoutBuffer + data).split(/\r\n|\r|\n/);
       stdoutBuffer = lines.pop() ?? '';
       lines.forEach(report);
     });
     let stderr = '';
-    proc.stderr.on('data', (data: Buffer) => {
-      stderr = (stderr + data.toString('utf-8')).slice(-HUB_STDERR_TAIL_CHARS);
+    proc.stderr.setEncoding('utf-8');
+    proc.stderr.on('data', (data: string) => {
+      stderr = (stderr + data).slice(-HUB_STDERR_TAIL_CHARS);
     });
 
-    proc.on('close', (code) => {
+    proc.on('close', (code, exitSignal) => {
       report(stdoutBuffer);
+      if (aborted) {
+        settle(abortError(version));
+        return;
+      }
       settle(code === 0 ? undefined : new Error(
-        `Failed to install Unity Editor ${version} (exit code ${code})` +
+        `Failed to install Unity Editor ${version} (${code !== null ? `exit code ${code}` : `killed by ${exitSignal}`})` +
         (stderr.trim() ? `:\n${stderr.trim()}` : ''),
       ));
     });
     proc.on('error', (err) => {
-      settle(new Error(`Failed to install Unity Editor ${version}: ${err.message}`));
+      settle(aborted ? abortError(version) : new Error(`Failed to install Unity Editor ${version}: ${err.message}`));
     });
   });
 }
@@ -636,7 +735,7 @@ export interface InstallEditorWithHubOptions {
   onEvent?: (event: EditorInstallEvent) => void;
   signal?: AbortSignal;
   /** Test injection — defaults to {@link resolveChangeset}. */
-  resolveChangesetImpl?: (version: string) => Promise<string | null>;
+  resolveChangesetImpl?: (version: string, signal?: AbortSignal) => Promise<string | null>;
   /** Test injection — defaults to {@link runHubInstall}. */
   runHubInstallImpl?: typeof runHubInstall;
 }
@@ -658,7 +757,7 @@ export async function installEditorWithHub(
   let changeset: string | undefined;
   if (!releases.some((r) => r.version === version)) {
     onEvent?.({ type: 'resolving-changeset' });
-    changeset = (await (options.resolveChangesetImpl ?? resolveChangeset)(version)) ?? undefined;
+    changeset = (await (options.resolveChangesetImpl ?? resolveChangeset)(version, options.signal)) ?? undefined;
     if (!changeset) throw new ChangesetNotResolvedError(version);
     onEvent?.({ type: 'changeset-resolved', changeset });
     args.push('--changeset', changeset);
