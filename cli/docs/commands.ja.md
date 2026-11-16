@@ -960,4 +960,20 @@ for (const step of result.nextSteps) console.log(step);
 
 各関数は型付きの `{ success, ... }` 結果オブジェクトを返し、エラーが公開境界を越えてスローされることはありません。ライブラリのエントリにはトップレベルの副作用がありません — `import 'unity-mcp-cli'` が argv を解析したり、stdout や stderr に書き込んだりすることはありません。
 
+`installUnityEditor` は `install-unity` と同様に Unity Hub 経由で Unity Editor のバージョンをインストールします。Unity Hub 自体はインストールしません。Hub がない場合の結果は `reason: 'hub-not-found'` です。すでにインストール済みのエディターは `alreadyInstalled: true` で返されます。
+
+```ts
+import { installUnityEditor } from 'unity-mcp-cli';
+
+const result = await installUnityEditor({
+  version: '6000.3.1f1',
+  signal: controller.signal,  // optional: kills the Unity Hub process
+  onProgress: (event) => {
+    if (event.phase === 'downloading') console.log(`${event.percent}%`);
+  },
+});
+if (result.kind === 'success') console.log(result.editorPath, result.alreadyInstalled);
+else console.error(result.reason, result.errorMessage);
+```
+
 エクスポートされている関数と型の完全な一覧は [`CHANGELOG.md`](../CHANGELOG.md) を参照してください。

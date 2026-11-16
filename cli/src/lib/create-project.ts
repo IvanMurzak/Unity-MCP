@@ -1,10 +1,9 @@
-import * as fs from 'fs';
 import * as path from 'path';
 import {
   findUnityHub,
   queryInstalledEditors,
   findHighestEditor,
-  resolveEditorExecutable,
+  findEditorExecutable,
   runEditorCreateProject,
   DEFAULT_CREATE_TIMEOUT_MS,
 } from '../utils/unity-hub.js';
@@ -15,16 +14,6 @@ import type {
   CreateProjectOptions,
   CreateProjectResult,
 } from './types.js';
-
-/**
- * Resolve an editor install path to its executable, returning `null`
- * when no executable exists at the resolved location. Default for
- * `CreateProjectOptions.resolveEditorExecutableImpl`.
- */
-function defaultResolveEditorExecutable(editorInstallPath: string): string | null {
-  const exe = resolveEditorExecutable(editorInstallPath);
-  return fs.existsSync(exe) ? exe : null;
-}
 
 /**
  * Create a new Unity project — the library-callable equivalent of the
@@ -133,7 +122,7 @@ export async function createProject(
     resolvedVersion = editor.version;
 
     // -- Executable resolution ---------------------------------------------
-    const resolveExe = options.resolveEditorExecutableImpl ?? defaultResolveEditorExecutable;
+    const resolveExe = options.resolveEditorExecutableImpl ?? findEditorExecutable;
     const editorExe = resolveExe(editor.path);
     if (!editorExe) {
       throw new Error(

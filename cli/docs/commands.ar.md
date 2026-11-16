@@ -1186,6 +1186,22 @@ for (const step of result.nextSteps) console.log(step);
 
 تُعيد كل دالة كائن نتيجة ذا أنواع `{ success, ... }`؛ ولا تُرمى الأخطاء أبدًا خارج الحدود العامة. ولا يحتوي مدخل المكتبة على آثار جانبية على المستوى الأعلى — فـ `import 'unity-mcp-cli'` لا يحلل argv أبدًا ولا يكتب أبدًا إلى stdout أو stderr.
 
+تثبّت `installUnityEditor` إصدارًا من Unity Editor عبر Unity Hub، مثل `install-unity`. ولا تثبّت Unity Hub نفسه أبدًا: بدونه تكون النتيجة `reason: 'hub-not-found'`. ويُعاد المحرر المثبّت مسبقًا مع `alreadyInstalled: true`.
+
+```ts
+import { installUnityEditor } from 'unity-mcp-cli';
+
+const result = await installUnityEditor({
+  version: '6000.3.1f1',
+  signal: controller.signal,  // optional: kills the Unity Hub process
+  onProgress: (event) => {
+    if (event.phase === 'downloading') console.log(`${event.percent}%`);
+  },
+});
+if (result.kind === 'success') console.log(result.editorPath, result.alreadyInstalled);
+else console.error(result.reason, result.errorMessage);
+```
+
 راجع [`CHANGELOG.md`](../CHANGELOG.md) للاطلاع على القائمة الكاملة للدوال والأنواع المُصدَّرة.
 
 </div>

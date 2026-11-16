@@ -960,4 +960,20 @@ for (const step of result.nextSteps) console.log(step);
 
 हर फ़ंक्शन एक टाइप्ड `{ success, ... }` परिणाम ऑब्जेक्ट लौटाता है; एरर कभी सार्वजनिक सीमा के पार नहीं फेंके जाते। लाइब्रेरी एंट्री में कोई top-level side effects नहीं हैं — `import 'unity-mcp-cli'` कभी argv पार्स नहीं करता और कभी stdout या stderr पर नहीं लिखता।
 
+`installUnityEditor`, `install-unity` की तरह, Unity Hub के ज़रिए Unity Editor का कोई वर्ज़न इंस्टॉल करता है। यह Unity Hub को खुद कभी इंस्टॉल नहीं करता: Hub न होने पर परिणाम `reason: 'hub-not-found'` होता है। पहले से इंस्टॉल एडिटर `alreadyInstalled: true` के साथ लौटाया जाता है।
+
+```ts
+import { installUnityEditor } from 'unity-mcp-cli';
+
+const result = await installUnityEditor({
+  version: '6000.3.1f1',
+  signal: controller.signal,  // optional: kills the Unity Hub process
+  onProgress: (event) => {
+    if (event.phase === 'downloading') console.log(`${event.percent}%`);
+  },
+});
+if (result.kind === 'success') console.log(result.editorPath, result.alreadyInstalled);
+else console.error(result.reason, result.errorMessage);
+```
+
 निर्यात किए गए फ़ंक्शन और टाइप्स की पूरी सूची के लिए [`CHANGELOG.md`](../CHANGELOG.md) देखें।

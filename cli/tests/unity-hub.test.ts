@@ -4,6 +4,7 @@ import {
   parseHubProgress,
   isValidUnityVersion,
   parseInstalledEditorsLine,
+  parseAvailableReleases,
   type AvailableRelease,
 } from '../src/utils/unity-hub.js';
 
@@ -118,55 +119,72 @@ describe('parseHubProgress', () => {
 
   it('parses download percentage', () => {
     const result = parseHubProgress('[Unity (6000.3.11f1)] downloading 50.54%');
-    expect(result).toEqual({ percent: 50.54, status: 'Downloading' });
+    expect(result).toEqual({ percent: 50.54, status: 'Downloading', phase: 'downloading' });
   });
 
   it('parses 0% download', () => {
     const result = parseHubProgress('[Unity (6000.3.11f1)] downloading 0.00%');
-    expect(result).toEqual({ percent: 0, status: 'Downloading' });
+    expect(result).toEqual({ percent: 0, status: 'Downloading', phase: 'downloading' });
   });
 
   it('parses 100% download', () => {
     const result = parseHubProgress('[Unity (6000.3.11f1)] downloading 100.00%');
-    expect(result).toEqual({ percent: 100, status: 'Downloading' });
+    expect(result).toEqual({ percent: 100, status: 'Downloading', phase: 'downloading' });
   });
 
   it('parses validating download phase', () => {
     const result = parseHubProgress('[Unity (6000.3.11f1)] validating download...');
-    expect(result).toEqual({ percent: 0, status: 'Validating download' });
+    expect(result).toEqual({ percent: 0, status: 'Validating download', phase: 'validating' });
   });
 
   it('parses installing phase', () => {
     const result = parseHubProgress('[Unity (6000.3.11f1)] installing...');
-    expect(result).toEqual({ percent: 100, status: 'Installing' });
+    expect(result).toEqual({ percent: 100, status: 'Installing', phase: 'installing' });
   });
 
   it('parses installed successfully', () => {
     const result = parseHubProgress('[Unity (6000.3.11f1)] installed successfully.');
-    expect(result).toEqual({ percent: 100, status: 'Installed' });
+    expect(result).toEqual({ percent: 100, status: 'Installed', phase: 'installed' });
   });
 
   it('parses finished downloading', () => {
     const result = parseHubProgress('[Unity (6000.3.11f1)] finished downloading');
-    expect(result).toEqual({ percent: 100, status: 'Download complete' });
+    expect(result).toEqual({ percent: 100, status: 'Download complete', phase: 'download-complete' });
   });
 
   it('parses queued for install', () => {
     const result = parseHubProgress('[Unity (6000.3.11f1)] queued for install');
-    expect(result).toEqual({ percent: 100, status: 'Queued for install' });
+    expect(result).toEqual({ percent: 100, status: 'Queued for install', phase: 'installing' });
   });
 
   it('strips ANSI escape codes', () => {
     const result = parseHubProgress('\x1b[36m[Unity (6000.3.11f1)] downloading 25.00%\x1b[0m');
-    expect(result).toEqual({ percent: 25, status: 'Downloading' });
+    expect(result).toEqual({ percent: 25, status: 'Downloading', phase: 'downloading' });
   });
 
   it('returns generic status for unknown phases', () => {
     const result = parseHubProgress('[Unity (6000.3.11f1)] some unknown phase');
-    expect(result).toEqual({ percent: 0, status: 'some unknown phase' });
+    expect(result).toEqual({ percent: 0, status: 'some unknown phase', phase: 'other' });
   });
 
   it('returns null for lines without bracket prefix', () => {
     expect(parseHubProgress('just a random log line')).toBeNull();
+  });
+});
+
+describe('parseAvailableReleases', () => {
+  it('reads one release per version line and marks f-releases stable', () => {
+    const output = [
+      '6000.3.1f1',
+      '6000.4.0b2',
+      '2022.3.62f3 , installed at /editors/2022.3.62f3',
+      '',
+      'Some other line',
+    ].join('\n');
+    expect(parseAvailableReleases(output)).toEqual([
+      { version: '6000.3.1f1', isStable: true },
+      { version: '6000.4.0b2', isStable: false },
+      { version: '2022.3.62f3', isStable: true },
+    ]);
   });
 });

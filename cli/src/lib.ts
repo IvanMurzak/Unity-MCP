@@ -25,6 +25,14 @@ export { configure } from './lib/configure.js';
 export { setupMcp, listAgentIds } from './lib/setup-mcp.js';
 export { openProject } from './lib/open.js';
 export { createProject } from './lib/create-project.js';
+export { installUnityEditor } from './lib/install-editor.js';
+export type {
+  InstallUnityEditorOptions,
+  InstallUnityEditorResult,
+  InstallUnityEditorSuccess,
+  InstallUnityEditorFailure,
+  InstallUnityEditorFailureReason,
+} from './lib/install-editor.js';
 export { runTool, runSystemTool } from './lib/run-tool.js';
 export { waitForReady } from './lib/wait-for-ready.js';
 export type { WaitForReadyOptions, WaitForReadyResult, WaitForReadySuccess, WaitForReadyFailure } from './lib/wait-for-ready.js';

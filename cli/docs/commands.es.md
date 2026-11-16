@@ -960,4 +960,20 @@ for (const step of result.nextSteps) console.log(step);
 
 Cada función devuelve un objeto de resultado tipado `{ success, ... }`; los errores nunca se lanzan más allá del límite público. La entrada de la biblioteca no tiene efectos secundarios de nivel superior: `import 'unity-mcp-cli'` nunca analiza argv ni escribe en stdout o stderr.
 
+`installUnityEditor` instala una versión de Unity Editor mediante Unity Hub, como `install-unity`. Nunca instala Unity Hub: sin él, el resultado es `reason: 'hub-not-found'`. Un editor ya instalado se devuelve con `alreadyInstalled: true`.
+
+```ts
+import { installUnityEditor } from 'unity-mcp-cli';
+
+const result = await installUnityEditor({
+  version: '6000.3.1f1',
+  signal: controller.signal,  // optional: kills the Unity Hub process
+  onProgress: (event) => {
+    if (event.phase === 'downloading') console.log(`${event.percent}%`);
+  },
+});
+if (result.kind === 'success') console.log(result.editorPath, result.alreadyInstalled);
+else console.error(result.reason, result.errorMessage);
+```
+
 Consulta [`CHANGELOG.md`](../CHANGELOG.md) para ver la lista completa de funciones y tipos exportados.
