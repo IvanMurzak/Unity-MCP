@@ -6,6 +6,7 @@ import { platform } from 'os';
 import { get as httpsGet } from 'https';
 import { get as httpGet, IncomingMessage } from 'http';
 import type { Spinner } from 'yocto-spinner';
+import { killProcessTree } from '@baizor/gamedev-cli-core';
 import * as ui from './ui.js';
 import { verbose } from './ui.js';
 
@@ -352,6 +353,24 @@ export function findHighestEditor(editors: InstalledEditor[]): InstalledEditor {
 }
 
 /**
+ * Parse Unity Hub `-- --headless editors --releases` output: one entry per line that starts with a version (a line
+ * may also carry an "installed at ..." suffix).
+ */
+export function parseAvailableReleases(output: string): AvailableRelease[] {
+  const releases: AvailableRelease[] = [];
+  for (const line of output.split('\n')) {
+    const match = line.trim().match(/^([\d.]+[a-zA-Z]\d+)/);
+    if (match) {
+      releases.push({ version: match[1], isStable: /f\d+$/.test(match[1]) });
+    }
+  }
+  return releases;
+}
+
+/** How long the Hub CLI may take to list the available releases. */
+export const HUB_LIST_RELEASES_TIMEOUT_MS = 120_000;
+
+/**
  * List available Unity editor releases from Unity Hub CLI.
  */
 export function listAvailableReleases(hubPath: string): AvailableRelease[] {
@@ -360,30 +379,41 @@ export function listAvailableReleases(hubPath: string): AvailableRelease[] {
     // Same stderr suppression rationale as listInstalledEditors above.
     const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--releases'], {
       encoding: 'utf-8',
-      timeout: 120000,
+      timeout: HUB_LIST_RELEASES_TIMEOUT_MS,
       stdio: ['ignore', 'pipe', 'pipe'],
     });
-
-    const releases: AvailableRelease[] = [];
-    for (const line of output.split('\n')) {
-      const trimmed = line.trim();
-      if (!trimmed) continue;
-
-      // Extract version from line (may also contain "installed at ..." suffix)
-      const match = trimmed.match(/^([\d.]+[a-zA-Z]\d+)/);
-      if (match) {
-        const version = match[1];
-        const isStable = /f\d+$/.test(version);
-        releases.push({ version, isStable });
-      }
-    }
-
+    const releases = parseAvailableReleases(output);
     spinner.success(`Found ${releases.length} available release${releases.length !== 1 ? 's' : ''}`);
     return releases;
   } catch (err) {
     spinner.error(`Failed to fetch available releases: ${formatExecError(err)}`);
     return [];
   }
+}
+
+/**
+ * The silent, asynchronous form of {@link listAvailableReleases} for the library: no spinner, rejects with the Hub
+ * CLI failure, and `signal` kills the Hub process.
+ */
+export function queryAvailableReleases(
+  hubPath: string,
+  signal?: AbortSignal,
+  timeoutMs: number = HUB_LIST_RELEASES_TIMEOUT_MS,
+): Promise<AvailableRelease[]> {
+  return new Promise((resolve, reject) => {
+    const child = execFile(hubPath, ['--', '--headless', 'editors', '--releases'], {
+      encoding: 'utf-8',
+      timeout: timeoutMs,
+      killSignal: 'SIGKILL',
+      windowsHide: true,
+      maxBuffer: 16 * 1024 * 1024,
+      signal,
+    }, (err, stdout, stderr) => {
+      if (err) reject(new Error(`Failed to fetch available releases: ${formatExecError(Object.assign(err, { stderr }))}`));
+      else resolve(parseAvailableReleases(stdout));
+    });
+    child.stdin?.end();
+  });
 }
 
 /**
@@ -503,87 +533,149 @@ export function parseHubProgress(line: string): { percent: number; status: strin
   return { percent: 0, status };
 }
 
+/** One Unity Hub progress line, as {@link parseHubProgress} reads it. */
+export type HubProgress = { percent: number; status: string };
+
+export interface RunHubInstallOptions {
+  /** Called for every progress line the Hub prints. */
+  onProgress?: (progress: HubProgress) => void;
+  /** Kills the Hub process and the processes it started, and rejects with an `AbortError`. */
+  signal?: AbortSignal;
+}
+
+/** The last this many characters of the Hub's stderr are kept for the failure message. */
+const HUB_STDERR_TAIL_CHARS = 16 * 1024;
+
+function abortError(message: string): Error {
+  const error = new Error(message);
+  error.name = 'AbortError';
+  return error;
+}
+
 /**
- * Run Unity Hub install command with a progress bar.
- * Spawns the process and parses stdout to display download/install progress.
+ * Run a Unity Hub `-- --headless install ...` command and report each progress line it prints. Silent (no spinner,
+ * no stdout/stderr writes): the CLI's progress bar ({@link installEditor}) and the library's `installUnityEditor`
+ * `onProgress` both sit on top of it. Rejects with the Hub's exit code and stderr when the Hub fails.
  */
-function runHubInstallWithProgress(hubPath: string, args: string[], version: string): Promise<void> {
+export function runHubInstall(
+  hubPath: string,
+  args: string[],
+  version: string,
+  options: RunHubInstallOptions = {},
+): Promise<void> {
+  const { onProgress, signal } = options;
   return new Promise((resolve, reject) => {
-    const progress = ui.createProgressBar();
-    let activeSpinner: Spinner | null = ui.startSpinner(`Preparing Unity Editor ${version}...`);
-    let isDownloading = false;
-
-    const proc = spawn(hubPath, args, { stdio: ['ignore', 'pipe', 'pipe'] });
-    let stderr = '';
-
-    function stopActiveSpinner(msg: string): void {
-      if (activeSpinner) {
-        activeSpinner.success(msg);
-        activeSpinner = null;
-      }
+    if (signal?.aborted) {
+      reject(abortError(`Installation of Unity Editor ${version} was aborted`));
+      return;
     }
+    let settled = false;
+    const settle = (err?: Error): void => {
+      if (settled) return;
+      settled = true;
+      signal?.removeEventListener('abort', onAbort);
+      if (err) reject(err);
+      else resolve();
+    };
 
-    function startPhaseSpinner(status: string): void {
-      stopActiveSpinner(activeSpinner?.text ?? '');
-      activeSpinner = ui.startSpinner(`${status}...`);
-    }
+    // With a signal on POSIX the Hub leads its own process group, so an abort kills the processes it started too
+    // (Windows: `taskkill /T`). Without one the Hub stays in the terminal's group and Ctrl+C reaches it.
+    const proc = spawn(hubPath, args, {
+      stdio: ['ignore', 'pipe', 'pipe'],
+      windowsHide: true,
+      detached: signal !== undefined && process.platform !== 'win32',
+    });
+    const onAbort = (): void => {
+      const pid = proc.pid;
+      const killed = pid !== undefined ? killProcessTree(pid) : Promise.resolve(false);
+      killed.then((ok) => { if (!ok) proc.kill('SIGKILL'); }, () => proc.kill('SIGKILL'));
+      settle(abortError(`Installation of Unity Editor ${version} was aborted`));
+    };
+    signal?.addEventListener('abort', onAbort, { once: true });
 
+    const report = (line: string): void => {
+      const parsed = parseHubProgress(line);
+      if (parsed && !settled) onProgress?.(parsed);
+    };
     let stdoutBuffer = '';
     proc.stdout.on('data', (data: Buffer) => {
-      const text = stdoutBuffer + data.toString('utf-8');
-      const lines = text.split('\n');
+      const lines = (stdoutBuffer + data.toString('utf-8')).split('\n');
       stdoutBuffer = lines.pop() ?? '';
-      for (const line of lines) {
-        const parsed = parseHubProgress(line);
-        if (!parsed) continue;
-
-        if (parsed.status === 'Downloading' || parsed.status === 'Starting download') {
-          if (!isDownloading) {
-            isDownloading = true;
-            stopActiveSpinner(`Downloading Unity Editor ${version}`);
-          }
-          progress.update(parsed.percent, `Downloading Unity Editor ${version}`);
-        } else if (parsed.status === 'Download complete') {
-          if (isDownloading) {
-            progress.complete(`Unity Editor ${version} downloaded`);
-            isDownloading = false;
-          }
-        } else if (parsed.status === 'Installed') {
-          stopActiveSpinner(`Unity Editor ${version} installed`);
-        } else {
-          // Post-download phases: show as a spinner so the user sees activity
-          if (!isDownloading) {
-            startPhaseSpinner(parsed.status);
-          }
-        }
-      }
+      lines.forEach(report);
     });
-
-    proc.stderr.on('data', (data: Buffer) => { stderr += data.toString('utf-8'); });
+    let stderr = '';
+    proc.stderr.on('data', (data: Buffer) => {
+      stderr = (stderr + data.toString('utf-8')).slice(-HUB_STDERR_TAIL_CHARS);
+    });
 
     proc.on('close', (code) => {
-      if (activeSpinner) activeSpinner.stop();
-      if (code === 0) {
-        if (isDownloading) {
-          progress.complete(`Unity Editor ${version} downloaded`);
-        }
-        resolve();
-      } else {
-        if (isDownloading) {
-          progress.fail(`Download failed for Unity Editor ${version}`);
-        }
-        reject(new Error(
-          `Failed to install Unity Editor ${version} (exit code ${code})` +
-          (stderr ? `:\n${stderr.trim()}` : '')
-        ));
-      }
+      report(stdoutBuffer);
+      settle(code === 0 ? undefined : new Error(
+        `Failed to install Unity Editor ${version} (exit code ${code})` +
+        (stderr.trim() ? `:\n${stderr.trim()}` : ''),
+      ));
     });
-
     proc.on('error', (err) => {
-      if (activeSpinner) activeSpinner.stop();
-      reject(new Error(`Failed to install Unity Editor ${version}: ${err.message}`));
+      settle(new Error(`Failed to install Unity Editor ${version}: ${err.message}`));
     });
   });
+}
+
+/** A version off the Hub's promoted releases list whose changeset could not be read from its release notes. */
+export class ChangesetNotResolvedError extends Error {
+  constructor(version: string) {
+    super(
+      `Unity Editor ${version} is not in the promoted releases list and its changeset could not be resolved. ` +
+      `You can provide a changeset manually: unity-hub -- --headless install --version ${version} --changeset <hash>`,
+    );
+    this.name = 'ChangesetNotResolvedError';
+  }
+}
+
+/** What {@link installEditorWithHub} reports while it works. */
+export type EditorInstallEvent =
+  | { type: 'resolving-changeset' }
+  | { type: 'changeset-resolved'; changeset: string }
+  | { type: 'hub-install-started'; args: string[] }
+  | ({ type: 'hub-progress' } & HubProgress);
+
+export interface InstallEditorWithHubOptions {
+  onEvent?: (event: EditorInstallEvent) => void;
+  signal?: AbortSignal;
+  /** Test injection — defaults to {@link resolveChangeset}. */
+  resolveChangesetImpl?: (version: string) => Promise<string | null>;
+  /** Test injection — defaults to {@link runHubInstall}. */
+  runHubInstallImpl?: typeof runHubInstall;
+}
+
+/**
+ * Install `version` with Unity Hub: a version on the Hub's promoted `releases` list by version alone, any other with
+ * the changeset read from its release-notes page ({@link ChangesetNotResolvedError} when there is none). The silent
+ * core shared by the CLI's {@link installEditor} and the library's `installUnityEditor`. Resolves the changeset it
+ * passed to the Hub (none for a promoted version).
+ */
+export async function installEditorWithHub(
+  hubPath: string,
+  version: string,
+  releases: AvailableRelease[],
+  options: InstallEditorWithHubOptions = {},
+): Promise<{ changeset?: string }> {
+  const { onEvent } = options;
+  const args = ['--', '--headless', 'install', '--version', version];
+  let changeset: string | undefined;
+  if (!releases.some((r) => r.version === version)) {
+    onEvent?.({ type: 'resolving-changeset' });
+    changeset = (await (options.resolveChangesetImpl ?? resolveChangeset)(version)) ?? undefined;
+    if (!changeset) throw new ChangesetNotResolvedError(version);
+    onEvent?.({ type: 'changeset-resolved', changeset });
+    args.push('--changeset', changeset);
+  }
+  onEvent?.({ type: 'hub-install-started', args });
+  await (options.runHubInstallImpl ?? runHubInstall)(hubPath, args, version, {
+    signal: options.signal,
+    onProgress: (progress) => onEvent?.({ type: 'hub-progress', ...progress }),
+  });
+  return { changeset };
 }
 
 /**
@@ -594,28 +686,64 @@ function runHubInstallWithProgress(hubPath: string, args: string[], version: str
 export async function installEditor(hubPath: string, version: string, prefetchedReleases?: AvailableRelease[]): Promise<void> {
   // Use pre-fetched releases when available to avoid a duplicate Hub CLI call
   const releases = prefetchedReleases ?? listAvailableReleases(hubPath);
-  const isPromoted = releases.some(r => r.version === version);
+  const progress = ui.createProgressBar();
+  // Asserted so the assignments in the event handler do not narrow it to `null` below.
+  let activeSpinner = null as Spinner | null;
+  let isDownloading = false;
 
-  const baseArgs = ['--', '--headless', 'install', '--version', version];
+  const stopActiveSpinner = (msg: string): void => {
+    activeSpinner?.success(msg);
+    activeSpinner = null;
+  };
 
-  if (isPromoted) {
-    await runHubInstallWithProgress(hubPath, baseArgs, version);
-    return;
+  const onEvent = (event: EditorInstallEvent): void => {
+    switch (event.type) {
+      case 'resolving-changeset':
+        activeSpinner = ui.startSpinner(`Resolving changeset for ${version}...`);
+        return;
+      case 'changeset-resolved':
+        stopActiveSpinner(`Resolved changeset: ${event.changeset}`);
+        return;
+      case 'hub-install-started':
+        activeSpinner = ui.startSpinner(`Preparing Unity Editor ${version}...`);
+        return;
+      case 'hub-progress':
+        if (event.status === 'Downloading' || event.status === 'Starting download') {
+          if (!isDownloading) {
+            isDownloading = true;
+            stopActiveSpinner(`Downloading Unity Editor ${version}`);
+          }
+          progress.update(event.percent, `Downloading Unity Editor ${version}`);
+        } else if (event.status === 'Download complete') {
+          if (isDownloading) {
+            progress.complete(`Unity Editor ${version} downloaded`);
+            isDownloading = false;
+          }
+        } else if (event.status === 'Installed') {
+          stopActiveSpinner(`Unity Editor ${version} installed`);
+        } else if (!isDownloading) {
+          // Post-download phases: show as a spinner so the user sees activity
+          stopActiveSpinner(activeSpinner?.text ?? '');
+          activeSpinner = ui.startSpinner(`${event.status}...`);
+        }
+        return;
+    }
+  };
+
+  try {
+    await installEditorWithHub(hubPath, version, releases, { onEvent });
+  } catch (err) {
+    if (err instanceof ChangesetNotResolvedError) {
+      activeSpinner?.error(`Could not resolve changeset for ${version}`);
+      activeSpinner = null;
+    } else {
+      activeSpinner?.stop();
+      if (isDownloading) progress.fail(`Download failed for Unity Editor ${version}`);
+    }
+    throw err;
   }
-
-  // Version not in releases — resolve changeset
-  const changesetSpinner = ui.startSpinner(`Resolving changeset for ${version}...`);
-  const changeset = await resolveChangeset(version);
-  if (!changeset) {
-    changesetSpinner.error(`Could not resolve changeset for ${version}`);
-    throw new Error(
-      `Unity Editor ${version} is not in the promoted releases list and its changeset could not be resolved. ` +
-      `You can provide a changeset manually: unity-hub -- --headless install --version ${version} --changeset <hash>`
-    );
-  }
-  changesetSpinner.success(`Resolved changeset: ${changeset}`);
-
-  await runHubInstallWithProgress(hubPath, [...baseArgs, '--changeset', changeset], version);
+  activeSpinner?.stop();
+  if (isDownloading) progress.complete(`Unity Editor ${version} downloaded`);
 }
 
 /**

@@ -960,4 +960,20 @@ for (const step of result.nextSteps) console.log(step);
 
 每个函数都返回一个类型化的 `{ success, ... }` 结果对象；错误从不会被抛出到公共边界之外。库入口没有任何顶层副作用——`import 'unity-mcp-cli'` 从不解析 argv，也从不向 stdout 或 stderr 写入内容。
 
+`installUnityEditor` 与 `install-unity` 一样，通过 Unity Hub 安装指定版本的 Unity Editor。它从不安装 Unity Hub 本身：没有 Hub 时结果为 `reason: 'hub-not-found'`。已安装的编辑器会以 `alreadyInstalled: true` 返回。
+
+```ts
+import { installUnityEditor } from 'unity-mcp-cli';
+
+const result = await installUnityEditor({
+  version: '6000.3.1f1',
+  signal: controller.signal,  // optional: kills the Unity Hub process
+  onProgress: (event) => {
+    if (event.phase === 'downloading') console.log(`${event.percent}%`);
+  },
+});
+if (result.kind === 'success') console.log(result.editorPath, result.alreadyInstalled);
+else console.error(result.reason, result.errorMessage);
+```
+
 完整的导出函数和类型列表请参见 [`CHANGELOG.md`](../CHANGELOG.md)。

@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added — library: `installUnityEditor` installs a Unity Editor version
+
+`installUnityEditor({ version, hubPath?, onProgress?, signal? })` is the library form of `install-unity`: an editor
+already installed (on disk first, then via the Hub CLI) returns `alreadyInstalled: true`; otherwise Unity Hub installs
+it (`-- --headless install`, with the changeset read from unity.com for a version off the Hub's releases list) and the
+result carries the installed editor's executable. Progress phases: `start`, `hub-located`, `already-installed`,
+`resolving-changeset`, `downloading` (with `percent`), `validating`, `installing`, `installed`. `signal` kills the Hub
+process. It never installs Unity Hub: without it the result is `reason: 'hub-not-found'`. Failures carry a `reason`
+(`invalid-version`, `hub-not-found`, `changeset-not-found`, `install-failed`, `not-found-after-install`, `aborted`).
+The `install-unity` command now runs on the same Hub install core; its terminal output is unchanged.
+
 ### Fixed — finding the installed Unity editor no longer blocks on Unity Hub
 
 The editor of a project's version is looked up on disk first: the Hub's editor folders (default and

@@ -962,4 +962,20 @@ for (const step of result.nextSteps) console.log(step);
 
 Each function returns a typed `{ success, ... }` result object; errors are never thrown past the public boundary. The library entry has no top-level side effects — `import 'unity-mcp-cli'` never parses argv and never writes to stdout or stderr.
 
+`installUnityEditor` installs a Unity Editor version through Unity Hub, like `install-unity`. It never installs Unity Hub itself: without it the result is `reason: 'hub-not-found'`. An editor that is already installed is returned with `alreadyInstalled: true`.
+
+```ts
+import { installUnityEditor } from 'unity-mcp-cli';
+
+const result = await installUnityEditor({
+  version: '6000.3.1f1',
+  signal: controller.signal,  // optional: kills the Unity Hub process
+  onProgress: (event) => {
+    if (event.phase === 'downloading') console.log(`${event.percent}%`);
+  },
+});
+if (result.kind === 'success') console.log(result.editorPath, result.alreadyInstalled);
+else console.error(result.reason, result.errorMessage);
+```
+
 See [`CHANGELOG.md`](../CHANGELOG.md) for the full list of exported functions and types.

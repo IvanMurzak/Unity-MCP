@@ -4,6 +4,7 @@ import {
   parseHubProgress,
   isValidUnityVersion,
   parseInstalledEditorsLine,
+  parseAvailableReleases,
   type AvailableRelease,
 } from '../src/utils/unity-hub.js';
 
@@ -168,5 +169,22 @@ describe('parseHubProgress', () => {
 
   it('returns null for lines without bracket prefix', () => {
     expect(parseHubProgress('just a random log line')).toBeNull();
+  });
+});
+
+describe('parseAvailableReleases', () => {
+  it('reads one release per version line and marks f-releases stable', () => {
+    const output = [
+      '6000.3.1f1',
+      '6000.4.0b2',
+      '2022.3.62f3 , installed at /editors/2022.3.62f3',
+      '',
+      'Some other line',
+    ].join('\n');
+    expect(parseAvailableReleases(output)).toEqual([
+      { version: '6000.3.1f1', isStable: true },
+      { version: '6000.4.0b2', isStable: false },
+      { version: '2022.3.62f3', isStable: true },
+    ]);
   });
 });

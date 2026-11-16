@@ -63,6 +63,15 @@ export type ProgressEvent =
     }
   // openProject `headless`: editor-session progress ("Starting the editor (headless)...").
   | { phase: 'session-status'; message: string }
+  // installUnityEditor phases, in order (`already-installed` ends the run early).
+  | { phase: 'hub-located'; message: string; hubPath: string }
+  | { phase: 'already-installed'; message: string; version: string; editorPath: string }
+  | { phase: 'resolving-changeset'; message: string; version: string }
+  /** Emitted each time the Hub reports a new download percentage (0–100). */
+  | { phase: 'downloading'; message: string; version: string; percent: number }
+  | { phase: 'validating'; message: string; version: string }
+  | { phase: 'installing'; message: string; version: string }
+  | { phase: 'installed'; message: string; version: string; editorPath: string }
   | { phase: 'done'; message: string };
 
 export type ProgressCallback = (event: ProgressEvent) => void;

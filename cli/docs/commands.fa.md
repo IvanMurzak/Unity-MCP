@@ -1124,6 +1124,22 @@ for (const step of result.nextSteps) console.log(step);
 
 هر تابع یک شیء نتیجه نوع‌دار `{ success, ... }` برمی‌گرداند؛ خطاها هرگز از مرز عمومی بیرون پرتاب نمی‌شوند. ورودی کتابخانه هیچ اثر جانبی در سطح بالا ندارد — `import 'unity-mcp-cli'` هرگز argv را تجزیه نمی‌کند و هرگز در stdout یا stderr نمی‌نویسد.
 
+`installUnityEditor` مانند `install-unity` یک نسخه از Unity Editor را از طریق Unity Hub نصب می‌کند. این تابع هرگز خود Unity Hub را نصب نمی‌کند: بدون آن نتیجه `reason: 'hub-not-found'` است. ویرایشگری که از قبل نصب شده باشد با `alreadyInstalled: true` برگردانده می‌شود.
+
+```ts
+import { installUnityEditor } from 'unity-mcp-cli';
+
+const result = await installUnityEditor({
+  version: '6000.3.1f1',
+  signal: controller.signal,  // optional: kills the Unity Hub process
+  onProgress: (event) => {
+    if (event.phase === 'downloading') console.log(`${event.percent}%`);
+  },
+});
+if (result.kind === 'success') console.log(result.editorPath, result.alreadyInstalled);
+else console.error(result.reason, result.errorMessage);
+```
+
 برای فهرست کامل توابع و نوع‌های export‌شده، [`CHANGELOG.md`](../CHANGELOG.md) را ببینید.
 
 </div>
