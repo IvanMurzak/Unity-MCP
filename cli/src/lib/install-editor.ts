@@ -8,15 +8,14 @@ import {
   isValidUnityVersion,
   queryAvailableReleases,
   queryInstalledEditors,
-  resolveChangeset,
-  resolveEditorExecutable,
+  findEditorExecutable,
   runHubInstall,
   type AvailableRelease,
   type HubProgress,
 } from '../utils/unity-hub.js';
 import { listEditorsByCommonLocations } from '../utils/unity-editor.js';
 import { emitProgress } from './progress.js';
-import type { CreateProjectEditorInfo, ProgressCallback } from './types.js';
+import type { CreateProjectEditorInfo, ProgressCallback, ProgressEvent } from './types.js';
 
 /** Why {@link installUnityEditor} failed. */
 export type InstallUnityEditorFailureReason =
@@ -62,8 +61,11 @@ export interface InstallUnityEditorOptions {
   resolveChangesetImpl?: (version: string) => Promise<string | null>;
   /** Test injection — runs the Hub `--headless install` command and reports its progress lines. */
   runHubInstallImpl?: typeof runHubInstall;
-  /** Test injection — editor install path to executable (default: the cross-platform resolution). */
-  resolveEditorExecutableImpl?: (editorPath: string) => string;
+  /**
+   * Test injection — editor install path to its executable, `null` when there is none (default: the cross-platform
+   * resolution plus an existence check).
+   */
+  resolveEditorExecutableImpl?: (editorPath: string) => string | null;
 }
 
 /** Successful {@link installUnityEditor} outcome. Narrow with `kind === 'success'`. */
@@ -103,20 +105,17 @@ class InstallFailure extends Error {
 }
 
 /** The progress event a Hub progress line maps to; `null` for lines the caller need not see. */
-function hubProgressEvent(version: string, { percent, status }: HubProgress): Parameters<ProgressCallback>[0] | null {
-  switch (status) {
-    case 'Starting download':
-    case 'Downloading':
-    case 'Download complete':
-      return { phase: 'downloading', message: `Downloading Unity Editor ${version}: ${percent.toFixed(1)}%`, version, percent };
-    case 'Validating download':
-    case 'Validating installation':
-      return { phase: 'validating', message: `${status} of Unity Editor ${version}`, version };
-    case 'Queued for install':
-    case 'Installing':
+function hubProgressEvent(version: string, { percent, phase }: HubProgress): ProgressEvent | null {
+  switch (phase) {
+    case 'downloading':
+    case 'download-complete':
+      return { phase: 'downloading', message: `Downloading Unity Editor ${version}: ${Math.floor(percent)}%`, version, percent };
+    case 'validating':
+      return { phase: 'validating', message: `Validating Unity Editor ${version}`, version };
+    case 'installing':
       return { phase: 'installing', message: `Installing Unity Editor ${version}`, version };
     default:
-      // 'Installed' is reported once the editor is found on disk; unknown Hub lines are not progress.
+      // 'installed' is reported once the editor is found on disk; unknown Hub lines are not progress.
       return null;
   }
 }
@@ -137,24 +136,29 @@ export async function installUnityEditor(options: InstallUnityEditorOptions): Pr
   const { onProgress, signal } = options;
   let hubPath: string | undefined;
 
-  const resolveExe = options.resolveEditorExecutableImpl ?? resolveEditorExecutable;
+  const resolveExe = options.resolveEditorExecutableImpl ?? findEditorExecutable;
   const listLocal = options.listLocalEditorsImpl ?? listEditorsByCommonLocations;
-  const listHub = options.listEditorsImpl ?? queryInstalledEditors;
-  /** The installed editor of `version`: on disk first, then (when the Hub is known) via the Hub CLI. */
-  const findInstalled = async (): Promise<string | null> => {
-    let editor = listLocal().find((e) => e.version === version);
-    if (!editor && hubPath) {
-      try {
-        editor = (await listHub(hubPath)).find((e) => e.version === version);
-      } catch (err) {
-        warnings.push((err as Error).message);
-      }
-    }
+  const listHub = options.listEditorsImpl ?? ((hub: string) => queryInstalledEditors(hub, undefined, signal));
+  const executableOf = (editors: CreateProjectEditorInfo[]): string | null => {
+    const editor = editors.find((e) => e.version === version);
     return editor ? resolveExe(editor.path) : null;
+  };
+  /** The installed editor of `version` as the Hub CLI lists it; a failed listing is a warning, not an error. */
+  const findViaHub = async (hub: string): Promise<string | null> => {
+    try {
+      return executableOf(await listHub(hub));
+    } catch (err) {
+      throwIfAborted();
+      warnings.push((err as Error).message);
+      return null;
+    }
   };
   const throwIfAborted = (): void => {
     if (signal?.aborted) throw new InstallFailure('aborted', `Installation of Unity Editor ${version} was aborted`);
   };
+  const installedEvent = (editorPath: string, alreadyInstalled: boolean): ProgressEvent => alreadyInstalled
+    ? { phase: 'already-installed', message: `Unity Editor ${version} is already installed at ${editorPath}`, version, editorPath }
+    : { phase: 'installed', message: `Unity Editor ${version} installed at ${editorPath}`, version, editorPath };
 
   try {
     if (!isValidUnityVersion(version)) {
@@ -164,26 +168,25 @@ export async function installUnityEditor(options: InstallUnityEditorOptions): Pr
     emitProgress(onProgress, { phase: 'start', message: `Installing Unity Editor ${version}` });
 
     // The editor folders need no Hub: an installed editor is reported even where the Hub is missing.
-    let editorPath = await findInstalled();
-    if (!editorPath) {
-      hubPath = options.hubPath ?? (options.findHubImpl ?? findUnityHub)() ?? undefined;
-      if (!hubPath) {
-        throw new InstallFailure('hub-not-found',
-          'Unity Hub not found. Install Unity Hub (https://unity.com/download), or run: unity-mcp-cli install-unity ' + version);
-      }
-      emitProgress(onProgress, { phase: 'hub-located', message: `Unity Hub located at ${hubPath}`, hubPath });
-      editorPath = await findInstalled();
+    const onDisk = executableOf(listLocal());
+    if (onDisk) {
+      emitProgress(onProgress, installedEvent(onDisk, true));
+      return { kind: 'success', success: true, version, editorPath: onDisk, alreadyInstalled: true, warnings };
     }
-    if (editorPath) {
-      emitProgress(onProgress, {
-        phase: 'already-installed',
-        message: `Unity Editor ${version} is already installed at ${editorPath}`,
-        version,
-        editorPath,
-      });
-      return { kind: 'success', success: true, version, editorPath, alreadyInstalled: true, warnings };
+
+    const hub = options.hubPath ?? (options.findHubImpl ?? findUnityHub)() ?? undefined;
+    if (!hub) {
+      throw new InstallFailure('hub-not-found',
+        `Unity Hub not found. Install Unity Hub (https://unity.com/download), or run: unity-mcp-cli install-unity ${version}`);
     }
-    const hub = hubPath as string;
+    hubPath = hub;
+    emitProgress(onProgress, { phase: 'hub-located', message: `Unity Hub located at ${hub}`, hubPath: hub });
+
+    const viaHub = await findViaHub(hub);
+    if (viaHub) {
+      emitProgress(onProgress, installedEvent(viaHub, true));
+      return { kind: 'success', success: true, version, editorPath: viaHub, alreadyInstalled: true, warnings };
+    }
     throwIfAborted();
 
     let releases: AvailableRelease[] = [];
@@ -194,24 +197,25 @@ export async function installUnityEditor(options: InstallUnityEditorOptions): Pr
       // Not fatal: without the list the changeset is resolved, which installs promoted versions too.
       warnings.push((err as Error).message);
     }
-    throwIfAborted();
 
-    let lastPercent: number | undefined;
+    // Download events at most once per whole percent; other phases once each time they change.
+    let lastEvent = '';
     let changeset: string | undefined;
     try {
       ({ changeset } = await installEditorWithHub(hub, version, releases, {
         signal,
-        resolveChangesetImpl: options.resolveChangesetImpl ?? resolveChangeset,
+        resolveChangesetImpl: options.resolveChangesetImpl,
         runHubInstallImpl: options.runHubInstallImpl,
         onEvent: (event) => {
           if (event.type === 'resolving-changeset') {
             emitProgress(onProgress, { phase: 'resolving-changeset', message: `Resolving changeset for ${version}`, version });
           } else if (event.type === 'hub-progress') {
+            const key = event.phase === 'downloading' || event.phase === 'download-complete'
+              ? `downloading ${Math.floor(event.percent)}`
+              : event.phase;
+            if (key === lastEvent) return;
+            lastEvent = key;
             const progress = hubProgressEvent(version, event);
-            if (progress?.phase === 'downloading') {
-              if (progress.percent === lastPercent) return;
-              lastPercent = progress.percent;
-            }
             if (progress) emitProgress(onProgress, progress);
           }
         },
@@ -222,17 +226,12 @@ export async function installUnityEditor(options: InstallUnityEditorOptions): Pr
       throw new InstallFailure('install-failed', (err as Error).message);
     }
 
-    editorPath = await findInstalled();
+    const editorPath = executableOf(listLocal()) ?? await findViaHub(hub);
     if (!editorPath) {
       throw new InstallFailure('not-found-after-install',
         `Unity Hub finished installing Unity Editor ${version}, but the editor is not among the installed editors.`);
     }
-    emitProgress(onProgress, {
-      phase: 'installed',
-      message: `Unity Editor ${version} installed at ${editorPath}`,
-      version,
-      editorPath,
-    });
+    emitProgress(onProgress, installedEvent(editorPath, false));
     return { kind: 'success', success: true, version, editorPath, alreadyInstalled: false, changeset, warnings };
   } catch (err: unknown) {
     const error = err instanceof Error ? err : new Error(String(err));

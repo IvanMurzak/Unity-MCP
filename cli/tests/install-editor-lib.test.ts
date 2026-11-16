@@ -14,11 +14,16 @@ type RunImpl = NonNullable<InstallUnityEditorOptions['runHubInstallImpl']>;
 
 /**
  * Options with every side-effecting dependency mocked: no editor installed, a Hub at FAKE_HUB that lists VERSION as
- * a promoted release, and an install that "succeeds" and makes the editor appear on disk.
+ * a promoted release, and an install (the given `runHubInstallImpl`, else a no-op) whose success makes the editor
+ * appear on disk. `runHubInstallImpl` of the result is a spy.
  */
 function makeOptions(overrides: Partial<InstallUnityEditorOptions> = {}): InstallUnityEditorOptions {
   let installed = false;
-  const runHubInstallImpl = vi.fn<RunImpl>(async () => { installed = true; });
+  const install: RunImpl = overrides.runHubInstallImpl ?? (async () => {});
+  const runHubInstallImpl = vi.fn<RunImpl>(async (...args) => {
+    await install(...args);
+    installed = true;
+  });
   return {
     version: VERSION,
     findHubImpl: () => FAKE_HUB,
@@ -29,6 +34,7 @@ function makeOptions(overrides: Partial<InstallUnityEditorOptions> = {}): Instal
     runHubInstallImpl,
     resolveEditorExecutableImpl: (p) => p,
     ...overrides,
+    runHubInstallImpl,
   };
 }
 
@@ -132,20 +138,20 @@ describe('installUnityEditor — install', () => {
   });
 
   it('fails with not-found-after-install when the editor does not appear', async () => {
-    const options = makeOptions({ runHubInstallImpl: async () => {} });
-    const result = await installUnityEditor(options);
+    const result = await installUnityEditor(makeOptions({ listLocalEditorsImpl: () => [] }));
     expect(result.kind).toBe('failure');
     if (result.kind !== 'failure') throw new Error('expected failure');
     expect(result.reason).toBe('not-found-after-install');
   });
 
-  it('maps Hub progress lines to progress events, skipping repeated percentages', async () => {
+  it('maps Hub progress lines to progress events, at most once per whole percent', async () => {
     const lines = [
       'Progress:',
       `[Unity (${VERSION})] in progress`,
       `[Unity (${VERSION})] downloading 10.00%`,
       `[Unity (${VERSION})] downloading 10.00%`,
       `[Unity (${VERSION})] downloading 55.50%`,
+      `[Unity (${VERSION})] downloading 55.90%`,
       `[Unity (${VERSION})] finished downloading`,
       `[Unity (${VERSION})] validating download...`,
       `[Unity (${VERSION})] queued for install`,
@@ -153,26 +159,20 @@ describe('installUnityEditor — install', () => {
       `[Unity (${VERSION})] installed successfully.`,
       'All Tasks Completed Successfully.',
     ];
-    let installed = false;
     const runHubInstallImpl: RunImpl = async (_hub, _args, _version, opts?: RunHubInstallOptions) => {
       for (const line of lines) {
         const parsed = parseHubProgress(line);
         if (parsed) opts?.onProgress?.(parsed);
       }
-      installed = true;
     };
     const events: ProgressEvent[] = [];
-    const result = await installUnityEditor(makeOptions({
-      runHubInstallImpl,
-      listLocalEditorsImpl: () => (installed ? [EDITOR] : []),
-      onProgress: (e) => events.push(e),
-    }));
+    const result = await installUnityEditor(makeOptions({ runHubInstallImpl, onProgress: (e) => events.push(e) }));
     expect(result.kind).toBe('success');
     const summary = events.map((e) => (e.phase === 'downloading' ? `downloading ${e.percent}` : e.phase));
     expect(summary).toEqual([
       'start', 'hub-located',
       'downloading 0', 'downloading 10', 'downloading 55.5', 'downloading 100',
-      'validating', 'installing', 'installing',
+      'validating', 'installing',
       'installed',
     ]);
   });

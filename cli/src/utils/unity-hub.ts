@@ -238,6 +238,33 @@ export function parseInstalledEditorsLine(line: string): InstalledEditor | null 
 }
 
 /**
+ * Run a Unity Hub `-- --headless <args>` query and resolve its stdout. stderr is captured, not inherited: Unity Hub
+ * is an Electron app and Chromium routinely logs benign quota_database errors to stderr that would otherwise pollute
+ * the CLI output ({@link formatExecError} re-surfaces it on real failures). Rejects with the `execFile` error carrying
+ * `stdout`, `stderr` and `timedOut`.
+ */
+function execHubHeadless(hubPath: string, args: string[], timeoutMs: number, signal?: AbortSignal): Promise<string> {
+  return new Promise((resolve, reject) => {
+    const child = execFile(hubPath, ['--', '--headless', ...args], {
+      encoding: 'utf-8',
+      timeout: timeoutMs,
+      killSignal: 'SIGKILL',
+      windowsHide: true,
+      maxBuffer: 16 * 1024 * 1024,
+      signal,
+    }, (err, stdout, stderr) => {
+      if (!err) {
+        resolve(stdout);
+        return;
+      }
+      const timedOut = err.killed === true && err.code !== 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER' && err.name !== 'AbortError';
+      reject(Object.assign(err, { stdout, stderr, timedOut }));
+    });
+    child.stdin?.end();
+  });
+}
+
+/**
  * Query Unity Hub for installed editors — the silent core shared by
  * the spinner-wrapped {@link listInstalledEditors} (CLI surface) and
  * the library's `createProject` (which must not write to stdout).
@@ -249,42 +276,25 @@ export function parseInstalledEditorsLine(line: string): InstalledEditor | null 
 export async function queryInstalledEditors(
   hubPath: string,
   timeoutMs: number = HUB_LIST_EDITORS_TIMEOUT_MS,
+  signal?: AbortSignal,
 ): Promise<InstalledEditor[]> {
   verbose(`queryInstalledEditors invoking Unity Hub CLI: ${hubPath} -- --headless editors --installed`);
   const execStartedAt = Date.now();
   let output: string;
   try {
-    // stderr is captured, not inherited — Unity Hub is an Electron app and
-    // Chromium routinely logs benign quota_database errors to stderr that
-    // would otherwise pollute the CLI output. formatExecError re-surfaces
-    // captured stderr on real failures.
-    output = await new Promise<string>((resolve, reject) => {
-      const child = execFile(hubPath, ['--', '--headless', 'editors', '--installed'], {
-        encoding: 'utf-8',
-        timeout: timeoutMs,
-        killSignal: 'SIGKILL',
-        windowsHide: true,
-        maxBuffer: 16 * 1024 * 1024,
-      }, (err, stdout, stderr) => {
-        if (!err) {
-          resolve(stdout);
-          return;
-        }
-        // A Hub that printed its list but never exited (seen while the Hub app runs) still answered: keep its
-        // complete lines (the last one may have been cut off by the kill).
-        const timedOut = err.killed === true && err.code !== 'ERR_CHILD_PROCESS_STDIO_MAXBUFFER';
-        const complete = stdout.slice(0, stdout.lastIndexOf('\n') + 1);
-        if (timedOut && complete.split('\n').some((line) => parseInstalledEditorsLine(line) !== null)) resolve(complete);
-        else reject(Object.assign(err, { stderr, timedOut }));
-      });
-      child.stdin?.end();
-    });
+    output = await execHubHeadless(hubPath, ['editors', '--installed'], timeoutMs, signal);
   } catch (err) {
-    verbose(`queryInstalledEditors failed after ${Date.now() - execStartedAt}ms`);
-    const timedOut = (err as { timedOut?: boolean }).timedOut === true;
-    throw new Error(timedOut
-      ? `Failed to list installed editors: Unity Hub did not answer within ${Math.round(timeoutMs / 1000)}s`
-      : `Failed to list installed editors: ${formatExecError(err)}`);
+    const { stdout = '', timedOut = false } = err as { stdout?: string; timedOut?: boolean };
+    // A Hub that printed its list but never exited (seen while the Hub app runs) still answered: keep its
+    // complete lines (the last one may have been cut off by the kill).
+    const complete = stdout.slice(0, stdout.lastIndexOf('\n') + 1);
+    if (!timedOut || !complete.split('\n').some((line) => parseInstalledEditorsLine(line) !== null)) {
+      verbose(`queryInstalledEditors failed after ${Date.now() - execStartedAt}ms`);
+      throw new Error(timedOut
+        ? `Failed to list installed editors: Unity Hub did not answer within ${Math.round(timeoutMs / 1000)}s`
+        : `Failed to list installed editors: ${formatExecError(err)}`);
+    }
+    output = complete;
   }
   verbose(`queryInstalledEditors Unity Hub CLI returned in ${Date.now() - execStartedAt}ms`);
 
@@ -368,52 +378,33 @@ export function parseAvailableReleases(output: string): AvailableRelease[] {
 }
 
 /** How long the Hub CLI may take to list the available releases. */
-export const HUB_LIST_RELEASES_TIMEOUT_MS = 120_000;
+const HUB_LIST_RELEASES_TIMEOUT_MS = 120_000;
 
 /**
- * List available Unity editor releases from Unity Hub CLI.
+ * List available Unity editor releases from Unity Hub CLI — silent (no spinner), rejects with the Hub CLI failure,
+ * and `signal` kills the Hub process. The CLI wraps it in a spinner ({@link listAvailableReleases}).
  */
-export function listAvailableReleases(hubPath: string): AvailableRelease[] {
-  const spinner = ui.startSpinner('Fetching available releases...');
+export async function queryAvailableReleases(hubPath: string, signal?: AbortSignal): Promise<AvailableRelease[]> {
   try {
-    // Same stderr suppression rationale as listInstalledEditors above.
-    const output = execFileSync(hubPath, ['--', '--headless', 'editors', '--releases'], {
-      encoding: 'utf-8',
-      timeout: HUB_LIST_RELEASES_TIMEOUT_MS,
-      stdio: ['ignore', 'pipe', 'pipe'],
-    });
-    const releases = parseAvailableReleases(output);
-    spinner.success(`Found ${releases.length} available release${releases.length !== 1 ? 's' : ''}`);
-    return releases;
+    return parseAvailableReleases(await execHubHeadless(hubPath, ['editors', '--releases'], HUB_LIST_RELEASES_TIMEOUT_MS, signal));
   } catch (err) {
-    spinner.error(`Failed to fetch available releases: ${formatExecError(err)}`);
-    return [];
+    throw new Error(`Failed to fetch available releases: ${formatExecError(err)}`);
   }
 }
 
 /**
- * The silent, asynchronous form of {@link listAvailableReleases} for the library: no spinner, rejects with the Hub
- * CLI failure, and `signal` kills the Hub process.
+ * {@link queryAvailableReleases} with a spinner; an empty list when the Hub fails.
  */
-export function queryAvailableReleases(
-  hubPath: string,
-  signal?: AbortSignal,
-  timeoutMs: number = HUB_LIST_RELEASES_TIMEOUT_MS,
-): Promise<AvailableRelease[]> {
-  return new Promise((resolve, reject) => {
-    const child = execFile(hubPath, ['--', '--headless', 'editors', '--releases'], {
-      encoding: 'utf-8',
-      timeout: timeoutMs,
-      killSignal: 'SIGKILL',
-      windowsHide: true,
-      maxBuffer: 16 * 1024 * 1024,
-      signal,
-    }, (err, stdout, stderr) => {
-      if (err) reject(new Error(`Failed to fetch available releases: ${formatExecError(Object.assign(err, { stderr }))}`));
-      else resolve(parseAvailableReleases(stdout));
-    });
-    child.stdin?.end();
-  });
+export async function listAvailableReleases(hubPath: string): Promise<AvailableRelease[]> {
+  const spinner = ui.startSpinner('Fetching available releases...');
+  try {
+    const releases = await queryAvailableReleases(hubPath);
+    spinner.success(`Found ${releases.length} available release${releases.length !== 1 ? 's' : ''}`);
+    return releases;
+  } catch (err) {
+    spinner.error((err as Error).message);
+    return [];
+  }
 }
 
 /**
@@ -497,15 +488,21 @@ export async function resolveChangeset(version: string): Promise<string | null> 
   }
 }
 
+/** The install phase a Unity Hub progress line belongs to (`other` for a status line not known here). */
+export type HubPhase = 'downloading' | 'download-complete' | 'validating' | 'installing' | 'installed' | 'other';
+
+/** One Unity Hub progress line, as {@link parseHubProgress} reads it. */
+export type HubProgress = { percent: number; status: string; phase: HubPhase };
+
 /**
- * Parse Unity Hub CLI stdout and update the progress bar accordingly.
+ * Parse one line of Unity Hub install output into its progress.
  * Hub output lines look like:
  *   [Unity (6000.3.11f1)] downloading 50.54%
  *   [Unity (6000.3.11f1)] validating download...
  *   [Unity (6000.3.11f1)] installing...
  *   [Unity (6000.3.11f1)] installed successfully.
  */
-export function parseHubProgress(line: string): { percent: number; status: string } | null {
+export function parseHubProgress(line: string): HubProgress | null {
   const trimmed = line.replace(/\x1b\[[0-9;]*[A-Za-z]/g, '').trim();
   if (!trimmed || trimmed === 'Progress:' || trimmed === 'All Tasks Completed Successfully.') return null;
 
@@ -518,23 +515,21 @@ export function parseHubProgress(line: string): { percent: number; status: strin
   // "downloading 50.54%"
   const dlMatch = status.match(/^downloading\s+([\d.]+)%$/);
   if (dlMatch) {
-    return { percent: parseFloat(dlMatch[1]), status: 'Downloading' };
+    return { percent: parseFloat(dlMatch[1]), status: 'Downloading', phase: 'downloading' };
   }
 
   // Map known phases to approximate progress
-  if (status.includes('validating download')) return { percent: 0, status: 'Validating download' };
-  if (status.includes('in progress')) return { percent: 0, status: 'Starting download' };
-  if (status.includes('finished downloading')) return { percent: 100, status: 'Download complete' };
-  if (status.includes('queued for install')) return { percent: 100, status: 'Queued for install' };
-  if (status.includes('validating installation')) return { percent: 100, status: 'Validating installation' };
-  if (status.includes('installing')) return { percent: 100, status: 'Installing' };
-  if (status.includes('installed successfully')) return { percent: 100, status: 'Installed' };
+  if (status.includes('validating download')) return { percent: 0, status: 'Validating download', phase: 'validating' };
+  if (status.includes('in progress')) return { percent: 0, status: 'Starting download', phase: 'downloading' };
+  if (status.includes('finished downloading')) return { percent: 100, status: 'Download complete', phase: 'download-complete' };
+  if (status.includes('queued for install')) return { percent: 100, status: 'Queued for install', phase: 'installing' };
+  if (status.includes('validating installation')) return { percent: 100, status: 'Validating installation', phase: 'validating' };
+  if (status.includes('installing')) return { percent: 100, status: 'Installing', phase: 'installing' };
+  if (status.includes('installed successfully')) return { percent: 100, status: 'Installed', phase: 'installed' };
 
-  return { percent: 0, status };
+  return { percent: 0, status, phase: 'other' };
 }
 
-/** One Unity Hub progress line, as {@link parseHubProgress} reads it. */
-export type HubProgress = { percent: number; status: string };
 
 export interface RunHubInstallOptions {
   /** Called for every progress line the Hub prints. */
@@ -546,10 +541,8 @@ export interface RunHubInstallOptions {
 /** The last this many characters of the Hub's stderr are kept for the failure message. */
 const HUB_STDERR_TAIL_CHARS = 16 * 1024;
 
-function abortError(message: string): Error {
-  const error = new Error(message);
-  error.name = 'AbortError';
-  return error;
+function abortError(version: string): Error {
+  return new DOMException(`Installation of Unity Editor ${version} was aborted`, 'AbortError');
 }
 
 /**
@@ -566,7 +559,7 @@ export function runHubInstall(
   const { onProgress, signal } = options;
   return new Promise((resolve, reject) => {
     if (signal?.aborted) {
-      reject(abortError(`Installation of Unity Editor ${version} was aborted`));
+      reject(abortError(version));
       return;
     }
     let settled = false;
@@ -589,7 +582,7 @@ export function runHubInstall(
       const pid = proc.pid;
       const killed = pid !== undefined ? killProcessTree(pid) : Promise.resolve(false);
       killed.then((ok) => { if (!ok) proc.kill('SIGKILL'); }, () => proc.kill('SIGKILL'));
-      settle(abortError(`Installation of Unity Editor ${version} was aborted`));
+      settle(abortError(version));
     };
     signal?.addEventListener('abort', onAbort, { once: true });
 
@@ -636,7 +629,7 @@ export class ChangesetNotResolvedError extends Error {
 export type EditorInstallEvent =
   | { type: 'resolving-changeset' }
   | { type: 'changeset-resolved'; changeset: string }
-  | { type: 'hub-install-started'; args: string[] }
+  | { type: 'hub-install-started' }
   | ({ type: 'hub-progress' } & HubProgress);
 
 export interface InstallEditorWithHubOptions {
@@ -670,7 +663,7 @@ export async function installEditorWithHub(
     onEvent?.({ type: 'changeset-resolved', changeset });
     args.push('--changeset', changeset);
   }
-  onEvent?.({ type: 'hub-install-started', args });
+  onEvent?.({ type: 'hub-install-started' });
   await (options.runHubInstallImpl ?? runHubInstall)(hubPath, args, version, {
     signal: options.signal,
     onProgress: (progress) => onEvent?.({ type: 'hub-progress', ...progress }),
@@ -685,7 +678,7 @@ export async function installEditorWithHub(
  */
 export async function installEditor(hubPath: string, version: string, prefetchedReleases?: AvailableRelease[]): Promise<void> {
   // Use pre-fetched releases when available to avoid a duplicate Hub CLI call
-  const releases = prefetchedReleases ?? listAvailableReleases(hubPath);
+  const releases = prefetchedReleases ?? await listAvailableReleases(hubPath);
   const progress = ui.createProgressBar();
   // Asserted so the assignments in the event handler do not narrow it to `null` below.
   let activeSpinner = null as Spinner | null;
@@ -708,18 +701,18 @@ export async function installEditor(hubPath: string, version: string, prefetched
         activeSpinner = ui.startSpinner(`Preparing Unity Editor ${version}...`);
         return;
       case 'hub-progress':
-        if (event.status === 'Downloading' || event.status === 'Starting download') {
+        if (event.phase === 'downloading') {
           if (!isDownloading) {
             isDownloading = true;
             stopActiveSpinner(`Downloading Unity Editor ${version}`);
           }
           progress.update(event.percent, `Downloading Unity Editor ${version}`);
-        } else if (event.status === 'Download complete') {
+        } else if (event.phase === 'download-complete') {
           if (isDownloading) {
             progress.complete(`Unity Editor ${version} downloaded`);
             isDownloading = false;
           }
-        } else if (event.status === 'Installed') {
+        } else if (event.phase === 'installed') {
           stopActiveSpinner(`Unity Editor ${version} installed`);
         } else if (!isDownloading) {
           // Post-download phases: show as a spinner so the user sees activity
@@ -796,6 +789,12 @@ export function resolveEditorExecutable(editorPath: string): string {
 
   // Fallback: return the first candidate and let the caller handle the error
   return candidates[0];
+}
+
+/** {@link resolveEditorExecutable}, or `null` when no executable exists there. */
+export function findEditorExecutable(editorPath: string): string | null {
+  const exe = resolveEditorExecutable(editorPath);
+  return fs.existsSync(exe) ? exe : null;
 }
 
 /**

@@ -1,7 +1,7 @@
 import { Command } from 'commander';
 import * as path from 'path';
 import * as fs from 'fs';
-import { ensureUnityHub, installEditor, listAvailableReleases, findLatestStableRelease } from '../utils/unity-hub.js';
+import { ensureUnityHub, installEditor, listAvailableReleases, findLatestStableRelease, type AvailableRelease } from '../utils/unity-hub.js';
 import { getProjectEditorVersion, listInstalledEditorsDiskFirst } from '../utils/unity-editor.js';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
@@ -41,11 +41,11 @@ export const installUnityCommand = new Command('install-unity')
     }
 
     // Fetch available releases once — reused for latest-stable lookup and install
-    let releases: ReturnType<typeof listAvailableReleases> | undefined;
+    let releases: AvailableRelease[] | undefined;
 
     // No version specified — resolve latest stable release from Unity Hub
     if (!version) {
-      releases = listAvailableReleases(hubPath);
+      releases = await listAvailableReleases(hubPath);
       const latest = findLatestStableRelease(releases);
 
       if (!latest) {
