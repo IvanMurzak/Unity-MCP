@@ -51,6 +51,7 @@ jobs:
           dotnet-version: |
             8.0.x
             9.0.x
+            10.0.x
 
       # cli-core declares node >= 22.14, so the lower layers are built on 22 regardless of the
       # matrix; the matrix Node below is what the unity-mcp-cli tests then run on.

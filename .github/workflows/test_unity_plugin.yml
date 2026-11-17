@@ -133,6 +133,7 @@ jobs:
           dotnet-version: |
             8.0.x
             9.0.x
+            10.0.x
 
       # Chain interpreter (chain_feed.py print-fragment): resolved ONCE per job to an ABSOLUTE,
       # space-free sys.executable and invoked through ${{ env.CHAIN_PY }}, never a bare name.
