@@ -158,7 +158,9 @@ def validate_with_openai(json_content, filename):
         print(f"{Colors.BLUE}  └─ Testing with OpenAI API...{Colors.RESET}")
 
         response = client.chat.completions.create(
-            model="gpt-4o-mini",  # Use cheaper model for validation
+            model="gpt-6-luna",  # Low-cost model; replaces deprecated gpt-4o-mini
+            # Chat Completions accepts function tools on gpt-6-luna only with reasoning off.
+            reasoning_effort="none",
             messages=[
                 {
                     "role": "user",
