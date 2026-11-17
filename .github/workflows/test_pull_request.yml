@@ -166,13 +166,14 @@ jobs:
           dotnet-version: "8.0.x"
 
       # --- chain feed (chain_feed.py §C4): a no-op on an ordinary PR run ---------------------------------------
-      - name: Setup .NET 9 (chain feed)
+      - name: Setup .NET (chain feed)
         if: ${{ inputs.lock != '' || contains(join(github.event.pull_request.labels.*.name, ' '), 'train/') }}
         uses: actions/setup-dotnet@v5
         with:
           dotnet-version: |
             8.0.x
             9.0.x
+            10.0.x
 
       # Chain interpreter (chain_feed.py print-fragment): resolved ONCE per job to an ABSOLUTE,
       # space-free sys.executable and invoked through ${{ env.CHAIN_PY }}, never a bare name.
