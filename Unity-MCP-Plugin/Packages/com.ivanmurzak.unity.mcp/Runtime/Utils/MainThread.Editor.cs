@@ -91,7 +91,12 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             // Drain only what was queued before this tick: work posted while draining runs on the
             // next tick, as it did when each call subscribed its own update callback.
             for (var count = _pending.Count; count > 0 && _pending.TryDequeue(out var action); count--)
-                action();
+            {
+                // One failing posted action (an AssetDatabase.Refresh that throws) must not abort this update tick for
+                // the rest of the queue.
+                try { action(); }
+                catch (Exception ex) { UnityEngine.Debug.LogException(ex); }
+            }
         }
 
         /// <summary>
