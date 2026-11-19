@@ -2216,7 +2216,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 if (!IsBinaryReadyToStart())
                 {
                     _logger.LogInformation("StartServerIfNeeded: Downloading the local MCP server binary before starting it");
-                    WhenCompleted(DownloadServerBinaryIfNeeded(unattended: true), _ => Settled());
+                    // A download already in flight returns at once: settle only once it has finished (it starts
+                    // the server itself), so a connect waiting in WhenAutoStartSettled does not dial too early.
+                    WhenCompleted(DownloadServerBinaryIfNeeded(unattended: true), downloaded => _serverStatus
+                        .Where(status => status != McpServerStatus.Downloading)
+                        .Take(1)
+                        .Subscribe(status => Settled()));
                     return;
                 }
 

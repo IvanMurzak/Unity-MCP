@@ -43,7 +43,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (isInitialized.Value)
                 return;
 
-            // A batch-mode editor has no window to show; open it on the first interactive start instead.
+            // A batch-mode editor has no window to show. The config it creates makes the first interactive start
+            // count as configured externally (a headless first load is a scripted setup), so no window then either.
             if (Application.isBatchMode)
                 return;
 
