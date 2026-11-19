@@ -239,17 +239,16 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             public void Execute()
             {
                 // Failed before it started: the caller was told it did not run, so it must not run now.
-                var next = _cancel.IsCancellationRequested ? Abandoned : Running;
-                if (Interlocked.CompareExchange(ref _state, next, Queued) != Queued)
+                if (Interlocked.CompareExchange(ref _state, Running, Queued) != Queued)
                     return;
-                if (next == Abandoned)
+                try
                 {
                     // The call was cancelled while this waited in the queue: skip it.
-                    _waiting.TryRemove(this, out _);
-                    _tcs.TrySetCanceled(_cancel);
-                    return;
+                    if (_cancel.IsCancellationRequested)
+                        _tcs.TrySetCanceled(_cancel);
+                    else
+                        _tcs.TrySetResult(_body());
                 }
-                try { _tcs.TrySetResult(_body()); }
                 catch (Exception ex) { _tcs.TrySetException(ex); }
                 finally { _waiting.TryRemove(this, out _); }
             }
