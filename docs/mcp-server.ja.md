@@ -23,7 +23,7 @@
 
 **Cloud が既定である理由:** ポートを開く必要がなく、ほかのプログラムとのポート競合を避けられ、無料です。リレーはステートレスです。ツール呼び出しの内容を検査も永続化もせず、MCP イベントのメタデータ(イベントの種類、タイミング、ステータス、セッション識別子、ツール・プロンプト・リソースの名前、エラーの詳細)を記録し、ローリング方式の 90 日間の期間内で使用します([プライバシーポリシー](https://ai-game.dev/legal/privacy))。**Custom** はオフラインやエアギャップ環境での作業向けの対等な選択肢です。
 
-ローカルサーバーを使う Custom モードでは、プラグインは `McpServerManager.cs` の `ServerVersion` で固定されたサーバーリリースを `Library/mcp-server/<rid>/` にダウンロードして起動します。**Tools ▸ AI Game Developer ▸ Server** には *Download Binaries* と *Open Server Logs* があります。
+ローカルサーバーを使う Custom モードでは、プラグインは `McpServerManager.cs` の `ServerVersion` で固定されたサーバーリリースを `Library/mcp-server/<rid>/` にダウンロードして起動します。ダウンロードするのは実行する場合だけです: `keepServerRunning` が有効な Custom モード、または `stdio` トランスポート。Cloud モードと、エディターが接続するだけの Custom サーバーでは何もダウンロードしません。**Tools ▸ AI Game Developer ▸ Server** には *Download Binaries* と *Open Server Logs* があります。
 
 ## プラグインの環境変数
 
@@ -52,6 +52,26 @@ Unity.exe -batchmode -nographics \
   -UNITY_MCP_AUTH_OPTION=token \
   -UNITY_MCP_TOKEN=my-secret-token
 ```
+
+### 別のプログラムからエディターを起動する (設定ファイルなし)
+
+ランチャー (AI Game Dev App など) は `UserSettings/AI-Game-Developer-Config.json` を書かずに、環境変数だけで接続を設定できます。トークンと URL はメモリ上にのみ保持され、後で Unity Hub から開いたエディターは従来どおり保存済みのファイルを使います。
+
+```bash
+UNITY_MCP_CONNECTION_MODE=Custom \
+UNITY_MCP_CLOUD_URL=http://127.0.0.1:<port> \
+UNITY_MCP_TOKEN=<plugin token> \
+UNITY_MCP_AUTH_OPTION=token \
+UNITY_MCP_TRANSPORT=streamableHttp \
+UNITY_MCP_KEEP_CONNECTED=true \
+UNITY_MCP_START_SERVER=false \
+Unity -projectPath <project>
+```
+
+- `UNITY_MCP_START_SERVER=false` を設定してください: 新しいプロジェクトの既定ではローカルサーバーを動かし続けるため、サーバーをダウンロードして起動してしまいます。
+- 各変数はコマンドライン引数としても使えます (`-UNITY_MCP_CONNECTION_MODE=Custom`、`-url=…`、`-token=…`)。
+- ai-game.dev クラウドには `UNITY_MCP_CONNECTION_MODE=Cloud` (トークンなし) を使います。エディターはサインイン済みのアカウントを使います。
+- これらの変数のいずれかを付けて起動したエディター、またはプラグインの初回読み込み前に設定ファイルが書かれていたエディターは、初回起動時に **AI Game Dev** ウィンドウを開きません。**Window ▸ AI Game Dev** で開けます。
 
 ### `UNITY_MCP_SERVER_PATH` (サーバー開発と CI)
 

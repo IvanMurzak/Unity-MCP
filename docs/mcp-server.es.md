@@ -23,7 +23,7 @@ El modo se elige en la ventana de AI Game Developer (**Window ▸ AI Game Dev**)
 
 **Por qué Cloud es el predeterminado:** no necesita puertos abiertos, evita conflictos de puertos con otros programas y es gratuito. El relay no tiene estado: no inspecciona ni conserva el contenido de las llamadas a herramientas, y registra metadatos de eventos MCP (tipo de evento, tiempos, estado, identificadores de sesión, el nombre de la herramienta, del prompt o del recurso, detalles de errores), que se usan dentro de una ventana móvil de 90 días ([Política de privacidad](https://ai-game.dev/legal/privacy)). **Custom** es una opción igual de válida para trabajar sin conexión o en entornos aislados (air-gapped).
 
-En modo Custom con un servidor local, el plugin descarga la versión del servidor fijada por `ServerVersion` en `McpServerManager.cs` en `Library/mcp-server/<rid>/` y la inicia. **Tools ▸ AI Game Developer ▸ Server** tiene *Download Binaries* y *Open Server Logs*.
+En modo Custom con un servidor local, el plugin descarga la versión del servidor fijada por `ServerVersion` en `McpServerManager.cs` en `Library/mcp-server/<rid>/` y la inicia. Solo la descarga cuando la va a ejecutar: en modo Custom con `keepServerRunning` activado, o con el transporte `stdio`. El modo Cloud, y un servidor Custom al que el Editor solo se conecta, no descargan nada. **Tools ▸ AI Game Developer ▸ Server** tiene *Download Binaries* y *Open Server Logs*.
 
 ## Variables de entorno del plugin
 
@@ -52,6 +52,26 @@ Unity.exe -batchmode -nographics \
   -UNITY_MCP_AUTH_OPTION=token \
   -UNITY_MCP_TOKEN=my-secret-token
 ```
+
+### Iniciar el Editor desde otro programa (sin archivo de configuración)
+
+Un lanzador (como la AI Game Dev App) puede configurar la conexión solo con variables de entorno, sin escribir `UserSettings/AI-Game-Developer-Config.json`. El token y la URL quedan en memoria; un Editor abierto después desde Unity Hub usa el archivo guardado como antes.
+
+```bash
+UNITY_MCP_CONNECTION_MODE=Custom \
+UNITY_MCP_CLOUD_URL=http://127.0.0.1:<port> \
+UNITY_MCP_TOKEN=<plugin token> \
+UNITY_MCP_AUTH_OPTION=token \
+UNITY_MCP_TRANSPORT=streamableHttp \
+UNITY_MCP_KEEP_CONNECTED=true \
+UNITY_MCP_START_SERVER=false \
+Unity -projectPath <project>
+```
+
+- Establece `UNITY_MCP_START_SERVER=false`: un proyecto nuevo mantiene por defecto un servidor local en ejecución, que se descargaría e iniciaría.
+- Cada variable también funciona como argumento de línea de comandos (`-UNITY_MCP_CONNECTION_MODE=Custom`, `-url=…`, `-token=…`).
+- Usa `UNITY_MCP_CONNECTION_MODE=Cloud` (sin token) para la nube de ai-game.dev; el Editor usa entonces la cuenta con la que se inició sesión.
+- Un Editor iniciado con cualquiera de estas variables, o con un archivo de configuración escrito antes de la primera carga del plugin, no abre la ventana **AI Game Dev** en su primera ejecución. Ábrela con **Window ▸ AI Game Dev**.
 
 ### `UNITY_MCP_SERVER_PATH` (desarrollo del servidor y CI)
 

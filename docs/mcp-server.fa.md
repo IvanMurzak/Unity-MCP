@@ -29,7 +29,7 @@
 
 **چرا Cloud پیش‌فرض است:** به هیچ پورت بازی نیاز ندارد، از تداخل پورت با برنامه‌های دیگر جلوگیری می‌کند و رایگان است. رله بدون حالت (stateless) است: محتوای فراخوانی‌های ابزار را بررسی یا ذخیره نمی‌کند، و فراداده رویدادهای MCP (نوع رویداد، زمان‌بندی، وضعیت، شناسه‌های نشست، نام ابزار، پرامپت یا منبع، جزئیات خطا) را ثبت می‌کند که در یک بازه چرخشی ۹۰ روزه استفاده می‌شود ([سیاست حریم خصوصی](https://ai-game.dev/legal/privacy)). **Custom** گزینه‌ای هم‌ارز برای کار آفلاین یا در محیط‌های ایزوله (air-gapped) است.
 
-در حالت Custom با یک سرور محلی، پلاگین نسخه‌ای از سرور را که با `ServerVersion` در `McpServerManager.cs` پین شده است در `Library/mcp-server/<rid>/` دانلود و اجرا می‌کند. منوی **Tools ▸ AI Game Developer ▸ Server** گزینه‌های *Download Binaries* و *Open Server Logs* را دارد.
+در حالت Custom با یک سرور محلی، پلاگین نسخه‌ای از سرور را که با `ServerVersion` در `McpServerManager.cs` پین شده است در `Library/mcp-server/<rid>/` دانلود و اجرا می‌کند. فقط زمانی آن را دانلود می‌کند که قرار است اجرایش کند: در حالت Custom با `keepServerRunning` روشن، یا با ترابری `stdio`. حالت Cloud، و سرور Custom که ویرایشگر فقط به آن وصل می‌شود، چیزی دانلود نمی‌کنند. منوی **Tools ▸ AI Game Developer ▸ Server** گزینه‌های *Download Binaries* و *Open Server Logs* را دارد.
 
 ## متغیرهای محیطی پلاگین
 
@@ -60,6 +60,34 @@ Unity.exe -batchmode -nographics \
   -UNITY_MCP_AUTH_OPTION=token \
   -UNITY_MCP_TOKEN=my-secret-token
 ```
+
+<div dir="rtl">
+
+### اجرای ویرایشگر از یک برنامه دیگر (بدون فایل پیکربندی)
+
+یک لانچر (مانند AI Game Dev App) می‌تواند اتصال را فقط با متغیرهای محیطی پیکربندی کند، بدون نوشتن `UserSettings/AI-Game-Developer-Config.json`. توکن و URL فقط در حافظه می‌مانند؛ ویرایشگری که بعداً از Unity Hub باز شود مثل قبل از فایل ذخیره‌شده استفاده می‌کند.
+
+</div>
+
+```bash
+UNITY_MCP_CONNECTION_MODE=Custom \
+UNITY_MCP_CLOUD_URL=http://127.0.0.1:<port> \
+UNITY_MCP_TOKEN=<plugin token> \
+UNITY_MCP_AUTH_OPTION=token \
+UNITY_MCP_TRANSPORT=streamableHttp \
+UNITY_MCP_KEEP_CONNECTED=true \
+UNITY_MCP_START_SERVER=false \
+Unity -projectPath <project>
+```
+
+<div dir="rtl">
+
+- `UNITY_MCP_START_SERVER=false` را تنظیم کنید: یک پروژه جدید به‌طور پیش‌فرض سرور محلی را در حال اجرا نگه می‌دارد، که یک سرور را دانلود و اجرا می‌کند.
+- هر متغیر به‌عنوان آرگومان خط فرمان هم کار می‌کند (`-UNITY_MCP_CONNECTION_MODE=Custom`، `-url=…`، `-token=…`).
+- برای ابر ai-game.dev از `UNITY_MCP_CONNECTION_MODE=Cloud` (بدون توکن) استفاده کنید؛ در این صورت ویرایشگر از حساب واردشده استفاده می‌کند.
+- ویرایشگری که با هر یک از این متغیرها اجرا شود، یا فایل پیکربندی‌اش پیش از اولین بارگذاری پلاگین نوشته شده باشد، در اولین اجرا پنجره **AI Game Dev** را باز نمی‌کند. آن را با **Window ▸ AI Game Dev** باز کنید.
+
+</div>
 
 <div dir="rtl">
 

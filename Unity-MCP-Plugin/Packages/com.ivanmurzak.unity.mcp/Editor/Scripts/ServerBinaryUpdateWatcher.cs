@@ -74,6 +74,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             _isRechecking = true;
             try
             {
+                if (!McpServerManager.IsServerBinaryNeededForCurrentConfig())
+                    return; // Cloud mode / a Custom server this editor does not run: no binary to keep current.
+
                 Debug.Log($"{Tag} Unity-MCP package change detected — re-checking server binary version.");
                 // Fire-and-forget: unattended path (no blocking modal, no result popup; failures surface via
                 // McpServerManager.LastDownloadError -> the AI Game Developer window's error + retry button).

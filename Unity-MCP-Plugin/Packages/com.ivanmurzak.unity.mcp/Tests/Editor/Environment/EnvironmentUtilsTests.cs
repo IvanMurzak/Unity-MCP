@@ -364,6 +364,108 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual("http://localhost", config.LocalHost);
         }
 
+        // --- AI Game Dev App launch: Custom mode configured by env vars only, nothing written to disk ---
+
+        [Test]
+        public void Override_AppLaunchEnv_ConfiguresCustomConnection_AndBaselineKeepsTheDiskDefaults()
+        {
+            // A fresh project: the plugin's own defaults (Cloud, KeepServerRunning=true) as created on first load.
+            var config = new UnityMcpPlugin.UnityConnectionConfig().SetDefault();
+            var diskMode = config.ConnectionMode;
+            var diskHost = config.LocalHost;
+            var diskToken = config.LocalToken;
+            var diskKeepServerRunning = config.KeepServerRunning;
+            var diskJson = SerializeForDisk(config);
+
+            var record = EnvironmentUtils.ApplyEnvironmentOverrides(config, NoArgs(), Env(
+                (EnvironmentUtils.EnvConnectionMode, "Custom"),
+                (EnvironmentUtils.EnvCloudUrl, "http://127.0.0.1:43123/"),
+                (EnvironmentUtils.EnvToken, "APP_PLUGIN_TOKEN"),
+                (EnvironmentUtils.EnvAuthOption, "token"),
+                (EnvironmentUtils.EnvTransport, "streamableHttp"),
+                (EnvironmentUtils.EnvKeepConnected, "true"),
+                (EnvironmentUtils.EnvStartServer, "false")));
+
+            Assert.AreEqual(ConnectionMode.Custom, config.ConnectionMode);
+            Assert.AreEqual("http://127.0.0.1:43123", config.LocalHost);
+            Assert.AreEqual("http://127.0.0.1:43123", config.Host, "Custom mode dials the overridden host");
+            Assert.AreEqual("APP_PLUGIN_TOKEN", config.Token);
+            Assert.AreEqual(AuthOption.token, config.AuthOption);
+            Assert.AreEqual(TransportMethod.streamableHttp, config.TransportMethod);
+            Assert.IsTrue(config.KeepConnected);
+            Assert.IsFalse(config.KeepServerRunning);
+            Assert.IsFalse(McpServerManager.IsServerBinaryNeeded(config.ConnectionMode, config.TransportMethod, config.KeepServerRunning),
+                "an App-launched Custom editor must not download the local server binary");
+
+            // What Save() writes: the disk baseline, never the App's token or host.
+            EnvironmentUtils.ApplyBaseline(config, record);
+            Assert.AreEqual(diskJson, SerializeForDisk(config));
+            Assert.AreEqual(diskMode, config.ConnectionMode);
+            Assert.AreEqual(diskHost, config.LocalHost);
+            Assert.AreEqual(diskToken, config.LocalToken);
+            Assert.AreEqual(diskKeepServerRunning, config.KeepServerRunning);
+            EnvironmentUtils.ApplyOverrides(config, record);
+            Assert.AreEqual("APP_PLUGIN_TOKEN", config.LocalToken);
+        }
+
+        [Test]
+        public void Override_AppLaunchFlags_MatchTheEnvVars()
+        {
+            var config = new UnityMcpPlugin.UnityConnectionConfig().SetDefault();
+            EnvironmentUtils.ApplyEnvironmentOverrides(config, Args(
+                (EnvironmentUtils.EnvConnectionMode, "Custom"),
+                (EnvironmentUtils.FlagUrl, "http://127.0.0.1:43123"),
+                (EnvironmentUtils.FlagToken, "APP_PLUGIN_TOKEN"),
+                (EnvironmentUtils.EnvStartServer, "false")), NoEnv());
+
+            Assert.AreEqual(ConnectionMode.Custom, config.ConnectionMode);
+            Assert.AreEqual("http://127.0.0.1:43123", config.Host);
+            Assert.AreEqual("APP_PLUGIN_TOKEN", config.Token);
+            Assert.IsFalse(config.KeepServerRunning);
+        }
+
+        [Test]
+        public void Override_LegacyRequiredAuth_BecomesToken()
+        {
+            var config = BuildDiskConfig();
+            config.AuthOption = AuthOption.none;
+            var record = EnvironmentUtils.ApplyEnvironmentOverrides(config, NoArgs(), Env((EnvironmentUtils.EnvAuthOption, "required")));
+
+            Assert.AreEqual(AuthOption.token, config.AuthOption);
+            EnvironmentUtils.ApplyBaseline(config, record);
+            Assert.AreEqual(AuthOption.none, config.AuthOption);
+        }
+
+        [Test]
+        public void HasConnectionOverride_NoEnvNoArgs_IsFalse()
+        {
+            Assert.IsFalse(EnvironmentUtils.HasConnectionOverride(NoArgs(), NoEnv()));
+            Assert.IsFalse(EnvironmentUtils.HasConnectionOverride(NoArgs(), Env((EnvironmentUtils.EnvTools, "a,b"))),
+                "a tool filter is not a connection setting");
+        }
+
+        [TestCase(EnvironmentUtils.EnvConnectionMode, "Cloud")]
+        [TestCase(EnvironmentUtils.EnvCloudUrl, "https://example.com/mcp")]
+        [TestCase(EnvironmentUtils.EnvHost, "https://example.com/mcp")]
+        [TestCase(EnvironmentUtils.EnvToken, "t")]
+        [TestCase(EnvironmentUtils.EnvAuthOption, "token")]
+        [TestCase(EnvironmentUtils.EnvTransport, "streamableHttp")]
+        [TestCase(EnvironmentUtils.EnvKeepConnected, "true")]
+        [TestCase(EnvironmentUtils.EnvStartServer, "false")]
+        public void HasConnectionOverride_AnyConnectionEnvVar_IsTrue_EvenWhenItMatchesTheSavedValue(string key, string value)
+        {
+            Assert.IsTrue(EnvironmentUtils.HasConnectionOverride(NoArgs(), Env((key, value))));
+            Assert.IsTrue(EnvironmentUtils.HasConnectionOverride(Args((key, value)), NoEnv()));
+        }
+
+        [TestCase(EnvironmentUtils.FlagUrl)]
+        [TestCase(EnvironmentUtils.FlagToken)]
+        [TestCase(EnvironmentUtils.FlagAuth)]
+        public void HasConnectionOverride_ShortFlag_IsTrue(string flag)
+        {
+            Assert.IsTrue(EnvironmentUtils.HasConnectionOverride(Args((flag, "x")), NoEnv()));
+        }
+
         // --- Helpers ---
 
         static string SerializeForDisk(UnityMcpPlugin.UnityConnectionConfig config)

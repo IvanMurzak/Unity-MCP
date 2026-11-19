@@ -25,7 +25,7 @@
 
 ‏**لماذا Cloud هو الافتراضي:** لا يحتاج إلى فتح منافذ ويتجنب تعارض المنافذ مع البرامج الأخرى، وهو مجاني. الـ relay عديم الحالة (stateless): لا يفحص محتوى استدعاءات الأدوات ولا يخزّنه، ويسجّل البيانات الوصفية لأحداث MCP (نوع الحدث، والتوقيت، والحالة، ومعرّفات الجلسة، واسم الأداة أو الموجّه أو المورد، وتفاصيل الأخطاء)، وتُستخدم ضمن نافذة متجددة مدتها 90 يومًا ([سياسة الخصوصية](https://ai-game.dev/legal/privacy)). ويُعدّ **Custom** خيارًا مكافئًا للعمل دون اتصال أو في البيئات المعزولة (air-gapped).
 
-في وضع Custom مع خادم محلي، تنزّل الإضافة إصدار الخادم المثبّت بواسطة `ServerVersion` في `McpServerManager.cs` إلى `Library/mcp-server/<rid>/` وتشغّله. تحتوي القائمة **Tools ▸ AI Game Developer ▸ Server** على *Download Binaries* و*Open Server Logs*.
+في وضع Custom مع خادم محلي، تنزّل الإضافة إصدار الخادم المثبّت بواسطة `ServerVersion` في `McpServerManager.cs` إلى `Library/mcp-server/<rid>/` وتشغّله. ولا تنزّله إلا عندما ستشغّله: في وضع Custom مع تفعيل `keepServerRunning`، أو مع النقل `stdio`. أما وضع Cloud، وخادم Custom الذي يتصل به المحرر فقط، فلا ينزّلان شيئًا. تحتوي القائمة **Tools ▸ AI Game Developer ▸ Server** على *Download Binaries* و*Open Server Logs*.
 
 ## متغيرات بيئة الإضافة
 
@@ -56,6 +56,34 @@ Unity.exe -batchmode -nographics \
   -UNITY_MCP_AUTH_OPTION=token \
   -UNITY_MCP_TOKEN=my-secret-token
 ```
+
+<div dir="rtl">
+
+### تشغيل المحرر من برنامج آخر (بدون ملف إعدادات)
+
+يمكن لمشغّل (مثل AI Game Dev App) إعداد الاتصال بمتغيرات البيئة وحدها، دون كتابة `UserSettings/AI-Game-Developer-Config.json`. يبقى الرمز وعنوان URL في الذاكرة فقط؛ والمحرر الذي يُفتح لاحقًا من Unity Hub يستخدم الملف المحفوظ كما كان.
+
+</div>
+
+```bash
+UNITY_MCP_CONNECTION_MODE=Custom \
+UNITY_MCP_CLOUD_URL=http://127.0.0.1:<port> \
+UNITY_MCP_TOKEN=<plugin token> \
+UNITY_MCP_AUTH_OPTION=token \
+UNITY_MCP_TRANSPORT=streamableHttp \
+UNITY_MCP_KEEP_CONNECTED=true \
+UNITY_MCP_START_SERVER=false \
+Unity -projectPath <project>
+```
+
+<div dir="rtl">
+
+- اضبط `UNITY_MCP_START_SERVER=false`: المشروع الجديد يُبقي افتراضيًا خادمًا محليًا قيد التشغيل، فينزّل خادمًا ويشغّله.
+- يعمل كل متغير أيضًا كوسيطة سطر أوامر (`-UNITY_MCP_CONNECTION_MODE=Custom`، `-url=…`، `-token=…`).
+- استخدم `UNITY_MCP_CONNECTION_MODE=Cloud` (بدون رمز) لسحابة ai-game.dev؛ عندها يستخدم المحرر الحساب المسجَّل الدخول به.
+- المحرر الذي يُشغَّل بأيٍّ من هذه المتغيرات، أو الذي كُتب ملف إعداداته قبل أول تحميل للإضافة، لا يفتح نافذة **AI Game Dev** في أول تشغيل له. افتحها من **Window ▸ AI Game Dev**.
+
+</div>
 
 <div dir="rtl">
 
