@@ -9,10 +9,12 @@
 */
 
 #nullable enable
+using System;
 using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
 using com.IvanMurzak.ReflectorNet.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
 using UnityEditor;
 using UnityEngine;
@@ -93,6 +95,122 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
             if (task.IsFaulted)
                 throw task.Exception!;
             Assert.AreEqual(Total, completed);
+        }
+    }
+
+    /// <summary>
+    /// <see cref="UnityMainThread"/> honours the MCP tool call's cancellation (McpPlugin's
+    /// <c>ToolCallCancellation.Token</c>, faked here with an <see cref="AsyncLocal{T}"/> as McpPlugin's is) at safe
+    /// points only: work of a cancelled call is not queued, work whose call is cancelled while it is queued is skipped,
+    /// and work that has started runs to its end. The test holds the main thread (no yield) wherever work must stay
+    /// queued, so the dispatch pump cannot pick it up.
+    /// </summary>
+    public class MainThreadCallCancelTests
+    {
+        static readonly AsyncLocal<CancellationToken> _callToken = new AsyncLocal<CancellationToken>();
+        static readonly TimeSpan Wait = TimeSpan.FromSeconds(5);
+
+        Func<CancellationToken> _originalCallToken = null!;
+
+        [SetUp]
+        public void SetUp()
+        {
+            _originalCallToken = UnityMainThread.CallToken;
+            UnityMainThread.CallToken = () => _callToken.Value;
+        }
+
+        [TearDown]
+        public void TearDown() => UnityMainThread.CallToken = _originalCallToken;
+
+        /// <summary>Dispatches <paramref name="dispatch"/> from a background thread inside a call with <paramref name="token"/>.</summary>
+        static Task<T> FromCall<T>(CancellationToken token, Func<Task<T>> dispatch)
+            => Task.Factory.StartNew(() =>
+            {
+                _callToken.Value = token;
+                return dispatch();
+            }, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Result;
+
+        static IEnumerator WaitFor(Task task)
+        {
+            var deadline = DateTime.UtcNow + Wait;
+            while (!task.IsCompleted && DateTime.UtcNow < deadline)
+                yield return null;
+            Assert.IsTrue(task.IsCompleted, "The dispatched work must finish once the main thread is free.");
+        }
+
+        [UnityTest]
+        public IEnumerator CancelledCall_IsNotQueued_AndNeverRuns()
+        {
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+            var ran = 0;
+
+            var call = FromCall(cts.Token, () => MainThread.Instance.RunAsync(() => { Interlocked.Exchange(ref ran, 1); return 1; }));
+
+            // Completed while the main thread is still held here: nothing waits in the queue.
+            Assert.IsTrue(call.IsCanceled, "A cancelled call's work fails as cancelled at once.");
+            for (var i = 0; i < 5; i++)
+                yield return null;
+            Assert.AreEqual(0, Volatile.Read(ref ran), "A cancelled call's work never runs.");
+        }
+
+        [UnityTest]
+        public IEnumerator CallCancelledWhileQueued_IsSkipped()
+        {
+            using var cts = new CancellationTokenSource();
+            var ran = 0;
+
+            var call = FromCall(cts.Token, () => MainThread.Instance.RunAsync(() => { Interlocked.Exchange(ref ran, 1); return 1; }));
+            Assert.IsFalse(call.IsCompleted, "The work waits in the queue while the main thread is held.");
+            cts.Cancel();
+
+            yield return WaitFor(call);
+            Assert.IsTrue(call.IsCanceled, "Work whose call was cancelled while queued fails as cancelled.");
+            Assert.AreEqual(0, Volatile.Read(ref ran), "Work whose call was cancelled while queued never runs.");
+        }
+
+        [UnityTest]
+        public IEnumerator CallCancelledWhileRunning_RunsToItsEnd()
+        {
+            using var cts = new CancellationTokenSource();
+            var finished = 0;
+
+            var call = FromCall(cts.Token, () => MainThread.Instance.RunAsync(() =>
+            {
+                cts.Cancel(); // the cancel arrives while the work runs on the main thread
+                Thread.Sleep(50);
+                Interlocked.Exchange(ref finished, 1);
+                return 3;
+            }));
+
+            yield return WaitFor(call);
+            Assert.IsFalse(call.IsCanceled || call.IsFaulted, "Work that has started is never interrupted.");
+            Assert.AreEqual(3, call.Result);
+            Assert.AreEqual(1, Volatile.Read(ref finished));
+        }
+
+        [UnityTest]
+        public IEnumerator UncancelledCall_Runs()
+        {
+            using var cts = new CancellationTokenSource();
+
+            var call = FromCall(cts.Token, () => MainThread.Instance.RunAsync(() => 7));
+
+            yield return WaitFor(call);
+            Assert.AreEqual(7, call.Result);
+        }
+
+        [UnityTest]
+        public IEnumerator EditorsOwnWork_RunsInACancelledCall()
+        {
+            using var cts = new CancellationTokenSource();
+            cts.Cancel();
+
+            // Exempt like it is from the modal-window watchdog: the Editor's own work must not be dropped.
+            var call = FromCall(cts.Token, () => UnityMainThread.RunAsyncThroughModalWindows(() => 5));
+
+            yield return WaitFor(call);
+            Assert.AreEqual(5, call.Result);
         }
     }
 }
