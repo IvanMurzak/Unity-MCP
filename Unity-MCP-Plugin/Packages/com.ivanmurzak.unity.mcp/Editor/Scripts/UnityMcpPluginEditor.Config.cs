@@ -74,6 +74,15 @@ namespace com.IvanMurzak.Unity.MCP
         public static UnityEngine.TextAsset AssetFile => UnityEditor.AssetDatabase.LoadAssetAtPath<UnityEngine.TextAsset>(AssetsFilePath);
 #endif
 
+        const string ConfigCreatedThisSessionKey = "Unity-MCP.ConfigCreatedThisSession";
+
+        /// <summary>
+        /// True when this plugin created the config file during the current editor session (it was missing or
+        /// corrupted). False when the file was already there, e.g. written by the AI Game Dev App before launch.
+        /// Kept in <see cref="UnityEditor.SessionState"/> so it survives the domain reloads of a first install.
+        /// </summary>
+        internal static bool ConfigCreatedThisSession => UnityEditor.SessionState.GetBool(ConfigCreatedThisSessionKey, false);
+
         UnityConnectionConfig GetOrCreateConfig() => GetOrCreateConfig(out _);
         UnityConnectionConfig GetOrCreateConfig(out bool wasCreated)
         {
@@ -106,6 +115,7 @@ namespace com.IvanMurzak.Unity.MCP
                         nameof(GetOrCreateConfig), ResourcesFileName, AssetsFilePath);
                     config = new UnityConnectionConfig();
                     wasCreated = true;
+                    UnityEditor.SessionState.SetBool(ConfigCreatedThisSessionKey, true);
                 }
 
                 // mcp-authorize g5/g6: migrate a persisted legacy `authorization=required` value to the

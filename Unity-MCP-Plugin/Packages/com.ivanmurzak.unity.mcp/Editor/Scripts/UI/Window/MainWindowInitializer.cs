@@ -9,8 +9,11 @@
 */
 
 #nullable enable
+using com.IvanMurzak.McpPlugin.Common.Utils;
+using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using Extensions.Unity.PlayerPrefsEx;
 using UnityEditor;
+using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.UI
 {
@@ -21,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         static MainWindowInitializer()
         {
-            if (com.IvanMurzak.Unity.MCP.Runtime.Utils.McpDisable.IsDisabled)
+            if (McpDisable.IsDisabled)
                 return;
 
             isInitialized = new PlayerPrefsBool("Unity-MCP.MainWindow.Initialized");
@@ -40,11 +43,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             if (isInitialized.Value)
                 return;
 
-            // Perform initialization
+            // A batch-mode editor has no window to show. The config it creates makes the first interactive start
+            // count as configured externally (a headless first load is a scripted setup), so no window then either.
+            if (Application.isBatchMode)
+                return;
+
             UnityMcpPluginEditor.InitSingletonIfNeeded();
-            MainWindowEditor.ShowWindow();
+
+            var configuredExternally = IsConfiguredExternally(
+                hasConnectionOverride: EnvironmentUtils.HasConnectionOverride(),
+                isCliSession: EnvironmentUtils.IsCliSession(ArgsUtils.ParseCommandLineArguments(), System.Environment.GetEnvironmentVariable),
+                configCreatedThisSession: UnityMcpPluginEditor.ConfigCreatedThisSession);
+            if (!configuredExternally)
+                MainWindowEditor.ShowWindow();
 
             isInitialized.Value = true;
         }
+
+        /// <summary>
+        /// The first-run window is onboarding for a user who just added the package. Skip it when another
+        /// program set the plugin up: the AI Game Dev App or <c>unity-mcp-cli</c> launched the editor with
+        /// connection env vars / flags or as a CLI session, or the config file existed before the plugin first
+        /// loaded (written before launch). The window stays one click away (<c>Window/AI Game Dev</c>).
+        /// </summary>
+        internal static bool IsConfiguredExternally(bool hasConnectionOverride, bool isCliSession, bool configCreatedThisSession)
+            => hasConnectionOverride || isCliSession || !configCreatedThisSession;
     }
 }

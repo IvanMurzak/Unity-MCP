@@ -8,11 +8,16 @@ server (#1050).
 1. Build `IMcpPlugin` instance (scan assemblies for tools/prompts/resources)
 2. Add `BufferedFileLogStorage` log collector for early log capture
 3. **Deferred** connection via `EditorApplication.delayCall` (prevents Unity freeze on async SignalR)
-4. Start server binary download asynchronously
+4. Start server binary download asynchronously, only when the settings run the local binary
+   (`McpServerManager.IsServerBinaryNeeded`: Custom mode with `KeepServerRunning`, or `stdio`);
+   Cloud mode and an App-launched Custom editor skip it, and starting the server fetches it on demand
 5. **Deferred** server auto-start via `EditorApplication.delayCall`
 6. Validate project path (no spaces)
 7. Subscribe to editor lifecycle events (domain reload, play mode transitions)
 8. CI environment detection — skips connection and server start in CI
+9. First run only (`MainWindowInitializer`): open the AI Game Dev window, unless another program configured
+   the editor (`UNITY_MCP_*` connection env vars / flags, a CLI session, or a config file that existed
+   before the plugin first loaded) or it runs in batch mode
 
 ## Explicit CI opt-out
 

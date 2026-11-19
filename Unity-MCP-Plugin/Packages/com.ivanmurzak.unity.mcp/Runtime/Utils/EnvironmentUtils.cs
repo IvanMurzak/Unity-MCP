@@ -197,9 +197,11 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             }
 
             var rawAuth = Resolve(EnvAuthOption, FlagAuth);
-            if (rawAuth != null
-                && Enum.TryParse<AuthOption>(Sanitize(rawAuth), ignoreCase: true, out var ao)
-                && ao != config.AuthOption)
+            AuthOption? targetAuth = rawAuth != null && Enum.TryParse<AuthOption>(Sanitize(rawAuth), ignoreCase: true, out var parsedAuth)
+                // The retired `required` mode becomes `token`, as a saved value does (MigrateLegacyAuthOption).
+                ? (AuthOption?)(parsedAuth == AuthOption.required ? AuthOption.token : parsedAuth)
+                : null;
+            if (targetAuth is AuthOption ao && ao != config.AuthOption)
             {
                 record.Track(FieldAuthOption, config.AuthOption, ao);
                 config.AuthOption = ao;
@@ -263,6 +265,31 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
             return record;
         }
+
+        /// <summary>
+        /// True when a command-line flag or environment variable sets any connection setting (mode, URL, token,
+        /// auth, transport, keep-connected or start-server), even to the value already saved: the editor was
+        /// launched configured by another program (the AI Game Dev App, <c>unity-mcp-cli</c>, CI).
+        /// </summary>
+        public static bool HasConnectionOverride()
+            => HasConnectionOverride(ArgsUtils.ParseCommandLineArguments(), Environment.GetEnvironmentVariable);
+
+        /// <inheritdoc cref="HasConnectionOverride()"/>
+        public static bool HasConnectionOverride(IReadOnlyDictionary<string, string> argReader, Func<string, string?> envReader)
+        {
+            if (argReader == null) throw new ArgumentNullException(nameof(argReader));
+            if (envReader == null) throw new ArgumentNullException(nameof(envReader));
+            foreach (var (envKey, flagAlias) in ConnectionOverrideKeys)
+                if (ResolveOverride(envKey, flagAlias, argReader, envReader) != null)
+                    return true;
+            return false;
+        }
+
+        static readonly (string envKey, string? flagAlias)[] ConnectionOverrideKeys =
+        {
+            (EnvCloudUrl, FlagUrl), (EnvHost, null), (EnvConnectionMode, null), (EnvToken, FlagToken),
+            (EnvAuthOption, FlagAuth), (EnvTransport, null), (EnvKeepConnected, null), (EnvStartServer, null),
+        };
 
         /// <summary>
         /// Raw override value with priority: short-flag-alias (highest) > UNITY_MCP_* env-style flag > env var.

@@ -23,7 +23,7 @@
 
 **Cloud डिफ़ॉल्ट क्यों है:** इसमें कोई पोर्ट खोलने की ज़रूरत नहीं होती, यह दूसरे प्रोग्रामों के साथ पोर्ट टकराव से बचाता है, और यह मुफ़्त है। रिले stateless है: यह टूल कॉल की सामग्री की न जाँच करता है न उसे संग्रहीत करता है, और MCP इवेंट मेटाडेटा (इवेंट का प्रकार, समय, स्थिति, सेशन पहचानकर्ता, टूल, प्रॉम्प्ट या रिसोर्स का नाम, त्रुटि विवरण) दर्ज करता है, जिसका उपयोग 90 दिनों की रोलिंग अवधि के भीतर होता है ([गोपनीयता नीति](https://ai-game.dev/legal/privacy))। ऑफ़लाइन या एयर-गैप्ड काम के लिए **Custom** एक बराबर का विकल्प है।
 
-लोकल सर्वर के साथ Custom मोड में, प्लगइन `McpServerManager.cs` में `ServerVersion` द्वारा पिन की गई सर्वर रिलीज़ को `Library/mcp-server/<rid>/` में डाउनलोड करता है और उसे शुरू करता है। **Tools ▸ AI Game Developer ▸ Server** में *Download Binaries* और *Open Server Logs* हैं।
+लोकल सर्वर के साथ Custom मोड में, प्लगइन `McpServerManager.cs` में `ServerVersion` द्वारा पिन की गई सर्वर रिलीज़ को `Library/mcp-server/<rid>/` में डाउनलोड करता है और उसे शुरू करता है। यह उसे तभी डाउनलोड करता है जब उसे चलाना हो: `keepServerRunning` चालू वाले Custom मोड में, या `stdio` ट्रांसपोर्ट के साथ। Cloud मोड, और ऐसा Custom सर्वर जिससे Editor केवल कनेक्ट होता है, कुछ भी डाउनलोड नहीं करते। **Tools ▸ AI Game Developer ▸ Server** में *Download Binaries* और *Open Server Logs* हैं।
 
 ## प्लगइन एनवायरनमेंट वेरिएबल
 
@@ -52,6 +52,26 @@ Unity.exe -batchmode -nographics \
   -UNITY_MCP_AUTH_OPTION=token \
   -UNITY_MCP_TOKEN=my-secret-token
 ```
+
+### किसी दूसरे प्रोग्राम से Editor लॉन्च करें (बिना कॉन्फ़िग फ़ाइल)
+
+एक लॉन्चर (जैसे AI Game Dev App) `UserSettings/AI-Game-Developer-Config.json` लिखे बिना केवल एनवायरनमेंट वेरिएबल से कनेक्शन कॉन्फ़िगर कर सकता है। टोकन और URL केवल मेमोरी में रहते हैं; बाद में Unity Hub से खोला गया Editor पहले की तरह सहेजी गई फ़ाइल का उपयोग करता है।
+
+```bash
+UNITY_MCP_CONNECTION_MODE=Custom \
+UNITY_MCP_CLOUD_URL=http://127.0.0.1:<port> \
+UNITY_MCP_TOKEN=<plugin token> \
+UNITY_MCP_AUTH_OPTION=token \
+UNITY_MCP_TRANSPORT=streamableHttp \
+UNITY_MCP_KEEP_CONNECTED=true \
+UNITY_MCP_START_SERVER=false \
+Unity -projectPath <project>
+```
+
+- `UNITY_MCP_START_SERVER=false` सेट करें: नया प्रोजेक्ट डिफ़ॉल्ट रूप से लोकल सर्वर चालू रखता है, जो एक सर्वर डाउनलोड करके शुरू कर देगा।
+- हर वेरिएबल कमांड-लाइन आर्ग्युमेंट के रूप में भी काम करता है (`-UNITY_MCP_CONNECTION_MODE=Custom`, `-url=…`, `-token=…`)।
+- ai-game.dev क्लाउड के लिए `UNITY_MCP_CONNECTION_MODE=Cloud` (बिना टोकन) का उपयोग करें; तब Editor साइन-इन किए गए अकाउंट का उपयोग करता है।
+- इनमें से किसी भी वेरिएबल के साथ लॉन्च किया गया Editor, या प्लगइन के पहली बार लोड होने से पहले लिखी गई कॉन्फ़िग फ़ाइल वाला Editor, पहली बार चलने पर **AI Game Dev** विंडो नहीं खोलता। इसे **Window ▸ AI Game Dev** से खोलें।
 
 ### `UNITY_MCP_SERVER_PATH` (सर्वर डेवलपमेंट और CI)
 

@@ -145,19 +145,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 && IsAutoStartAllowedForTransport(UnityMcpPluginEditor.TransportMethod)
                 && UnityMcpPluginEditor.KeepServerRunning;
 
-            // Poll the download from the main thread instead of subscribing from a ContinueWith
-            // (thread-pool) callback: EditorApplication.update is a plain delegate field, so a
-            // background `+=` races with main-thread subscribers and can drop one of them
-            // (e.g. the MainThread dispatch pump).
-            var download = DownloadServerBinaryIfNeeded(unattended: true);
-            void AutoStartAfterDownload()
+            // Cloud mode, or a Custom server this editor neither starts nor hands to a stdio agent (an editor
+            // the AI Game Dev App launched), never runs the local binary: skip the download. Every auto-start
+            // case needs the binary, so _autoStartPending is already false here.
+            if (!IsServerBinaryNeededForCurrentConfig())
             {
-                if (!download.IsCompleted)
-                    return;
+                _logger.LogDebug("Local MCP server binary not needed for the current connection settings; skipping its download.");
+                return;
+            }
 
-                EditorApplication.update -= AutoStartAfterDownload;
-
-                if (download.IsFaulted || download.IsCanceled || !download.Result || EnvironmentUtils.IsCi())
+            WhenCompleted(DownloadServerBinaryIfNeeded(unattended: true), downloaded =>
+            {
+                if (!downloaded || EnvironmentUtils.IsCi())
                 {
                     // No binaries available (either in CI or failed to download), or CI: skip auto-start
                     _autoStartPending.Value = false;
@@ -165,8 +164,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 }
 
                 StartServerIfNeeded();
+            });
+        }
+
+        /// <summary>
+        /// Runs <paramref name="onCompleted"/> on the main thread once <paramref name="task"/> completes, with
+        /// false when it faulted or was cancelled. Polls from <c>EditorApplication.update</c> instead of a
+        /// <c>ContinueWith</c> (thread-pool) callback: EditorApplication.update is a plain delegate field, so a
+        /// background <c>+=</c> races with main-thread subscribers and can drop one of them (e.g. the MainThread
+        /// dispatch pump).
+        /// </summary>
+        static void WhenCompleted(Task<bool> task, Action<bool> onCompleted)
+        {
+            void Poll()
+            {
+                if (!task.IsCompleted)
+                    return;
+                EditorApplication.update -= Poll;
+                onCompleted(task.Status == TaskStatus.RanToCompletion && task.Result);
             }
-            EditorApplication.update += AutoStartAfterDownload;
+            EditorApplication.update += Poll;
         }
 
         #region Binary Metadata
@@ -2109,6 +2126,23 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             => mode == ConnectionMode.Custom;
 
         /// <summary>
+        /// Whether this editor needs the local <c>gamedev-mcp-server</c> binary on disk: only in Custom mode, and
+        /// only when the editor starts the server itself (<paramref name="keepServerRunning"/>) or a stdio agent
+        /// launches it from <c>Library/mcp-server</c>. Cloud mode, and a Custom server the editor only connects to
+        /// (the AI Game Dev App's), never run it, so the startup and package-update downloads are skipped there;
+        /// the Start button and <i>Download Binaries</i> still fetch it on demand. Pure, for EditMode tests.
+        /// </summary>
+        public static bool IsServerBinaryNeeded(ConnectionMode mode, TransportMethod transport, bool keepServerRunning)
+            => IsAutoStartAllowedForMode(mode) && (keepServerRunning || transport == TransportMethod.stdio);
+
+        /// <summary><see cref="IsServerBinaryNeeded"/> for the current (override-aware) connection settings.</summary>
+        public static bool IsServerBinaryNeededForCurrentConfig()
+            => IsServerBinaryNeeded(
+                UnityMcpPluginEditor.ConnectionMode,
+                UnityMcpPluginEditor.TransportMethod,
+                UnityMcpPluginEditor.KeepServerRunning);
+
+        /// <summary>
         /// With the <c>stdio</c> transport the AI agent launches its own server process on the
         /// project's port, so the Editor must not start one there: the agent's server would then fail
         /// with "address already in use". The window's transport switch already stops the server
@@ -2173,6 +2207,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 {
                     _logger.LogInformation("StartServerIfNeeded: External MCP server detected on port {port}, skipping local server start", port);
                     Settled();
+                    return;
+                }
+
+                // The binary is fetched at editor startup only when the settings then needed it, so a switch to
+                // Custom mode can find it missing: download it first. With KeepServerRunning in Custom mode over
+                // HTTP (the case here) the download starts the server itself once the binary is published.
+                if (!IsBinaryReadyToStart())
+                {
+                    _logger.LogInformation("StartServerIfNeeded: Downloading the local MCP server binary before starting it");
+                    // A download already in flight returns at once: settle only once it has finished (it starts
+                    // the server itself), so a connect waiting in WhenAutoStartSettled does not dial too early.
+                    WhenCompleted(DownloadServerBinaryIfNeeded(unattended: true), downloaded => _serverStatus
+                        .Where(status => status != McpServerStatus.Downloading)
+                        .Take(1)
+                        .Subscribe(status => Settled()));
                     return;
                 }
 

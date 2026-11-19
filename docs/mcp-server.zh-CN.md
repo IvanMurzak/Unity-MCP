@@ -23,7 +23,7 @@
 
 **为什么默认使用 Cloud：** 它不需要开放任何端口，避免与其他程序发生端口冲突，而且免费。中继是无状态的：它不检查也不持久保存工具调用的内容，并会记录 MCP 事件元数据（事件类型、时间、状态、会话标识符、工具、提示或资源名称、错误详情），这些数据在滚动的 90 天窗口内使用（[隐私政策](https://ai-game.dev/legal/privacy)）。**Custom** 是同样可行的选择，适用于离线或物理隔离（air-gapped）环境。
 
-在使用本地服务器的 Custom 模式下，插件会将 `McpServerManager.cs` 中 `ServerVersion` 固定的服务器版本下载到 `Library/mcp-server/<rid>/` 并启动它。**Tools ▸ AI Game Developer ▸ Server** 中提供 *Download Binaries* 和 *Open Server Logs*。
+在使用本地服务器的 Custom 模式下，插件会将 `McpServerManager.cs` 中 `ServerVersion` 固定的服务器版本下载到 `Library/mcp-server/<rid>/` 并启动它。仅在会运行它时才下载：Custom 模式且开启 `keepServerRunning`，或使用 `stdio` 传输。Cloud 模式以及编辑器只连接的 Custom 服务器不会下载任何内容。**Tools ▸ AI Game Developer ▸ Server** 中提供 *Download Binaries* 和 *Open Server Logs*。
 
 ## 插件环境变量
 
@@ -52,6 +52,26 @@ Unity.exe -batchmode -nographics \
   -UNITY_MCP_AUTH_OPTION=token \
   -UNITY_MCP_TOKEN=my-secret-token
 ```
+
+### 从其他程序启动编辑器（无配置文件）
+
+启动器（例如 AI Game Dev App）可以只用环境变量配置连接，而无需写入 `UserSettings/AI-Game-Developer-Config.json`。令牌和 URL 只保存在内存中；之后从 Unity Hub 打开的编辑器照常使用已保存的文件。
+
+```bash
+UNITY_MCP_CONNECTION_MODE=Custom \
+UNITY_MCP_CLOUD_URL=http://127.0.0.1:<port> \
+UNITY_MCP_TOKEN=<plugin token> \
+UNITY_MCP_AUTH_OPTION=token \
+UNITY_MCP_TRANSPORT=streamableHttp \
+UNITY_MCP_KEEP_CONNECTED=true \
+UNITY_MCP_START_SERVER=false \
+Unity -projectPath <project>
+```
+
+- 设置 `UNITY_MCP_START_SERVER=false`：新项目默认保持本地服务器运行，否则会下载并启动一个服务器。
+- 每个变量也可作为命令行参数使用（`-UNITY_MCP_CONNECTION_MODE=Custom`、`-url=…`、`-token=…`）。
+- 连接 ai-game.dev 云端时使用 `UNITY_MCP_CONNECTION_MODE=Cloud`（不带令牌）；编辑器将使用已登录的账户。
+- 带有上述任一变量启动的编辑器，或在插件首次加载前已写入配置文件的编辑器，首次运行时不会打开 **AI Game Dev** 窗口。可通过 **Window ▸ AI Game Dev** 打开。
 
 ### `UNITY_MCP_SERVER_PATH`（服务器开发与 CI）
 

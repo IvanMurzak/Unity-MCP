@@ -60,6 +60,37 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
                 "With streamableHttp the AI agent connects to the Editor-started local server.");
         }
 
+        // The startup / package-update download runs only when this editor runs the local binary: Custom mode with
+        // the editor starting the server, or a stdio agent launching it. Cloud mode and an App-launched Custom editor
+        // (keepServerRunning=false, streamableHttp, connecting to the App's server) never download it.
+        [TestCase(ConnectionMode.Cloud, Consts.MCP.Server.TransportMethod.streamableHttp, true, false)]
+        [TestCase(ConnectionMode.Cloud, Consts.MCP.Server.TransportMethod.streamableHttp, false, false)]
+        [TestCase(ConnectionMode.Cloud, Consts.MCP.Server.TransportMethod.stdio, true, false)]
+        [TestCase(ConnectionMode.Custom, Consts.MCP.Server.TransportMethod.streamableHttp, false, false)]
+        [TestCase(ConnectionMode.Custom, Consts.MCP.Server.TransportMethod.streamableHttp, true, true)]
+        [TestCase(ConnectionMode.Custom, Consts.MCP.Server.TransportMethod.stdio, false, true)]
+        [TestCase(ConnectionMode.Custom, Consts.MCP.Server.TransportMethod.stdio, true, true)]
+        public void IsServerBinaryNeeded_OnlyWhenThisEditorRunsTheLocalServer(
+            ConnectionMode mode, Consts.MCP.Server.TransportMethod transport, bool keepServerRunning, bool expected)
+        {
+            Assert.AreEqual(expected, McpServerManager.IsServerBinaryNeeded(mode, transport, keepServerRunning));
+        }
+
+        // Every auto-start case needs the binary, so skipping the download never skips an auto-start.
+        [Test]
+        public void IsServerBinaryNeeded_CoversEveryAutoStartCase()
+        {
+            foreach (ConnectionMode mode in System.Enum.GetValues(typeof(ConnectionMode)))
+                foreach (Consts.MCP.Server.TransportMethod transport in System.Enum.GetValues(typeof(Consts.MCP.Server.TransportMethod)))
+                {
+                    var autoStarts = McpServerManager.IsAutoStartAllowedForMode(mode)
+                        && McpServerManager.IsAutoStartAllowedForTransport(transport);
+                    if (autoStarts)
+                        Assert.IsTrue(McpServerManager.IsServerBinaryNeeded(mode, transport, keepServerRunning: true),
+                            $"{mode} + {transport} auto-starts the server but would skip its binary");
+                }
+        }
+
         // Once the editor has loaded, its auto-start has decided, so a connect waits for nothing.
         [Test]
         public void WhenAutoStartSettled_NoServerStarting_RunsRightAway()

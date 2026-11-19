@@ -121,6 +121,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         UnityMcpPluginEditor.Instance.Save();
                         McpServerManager.StopServer();
                     }
+
+                    // The stdio agent launches the binary from Library/mcp-server; the startup download skips it
+                    // when the settings then did not need it.
+                    if (McpServerManager.IsServerBinaryNeededForCurrentConfig())
+                        _ = McpServerManager.DownloadServerBinaryIfNeeded(unattended: true);
                 }
                 else
                 {

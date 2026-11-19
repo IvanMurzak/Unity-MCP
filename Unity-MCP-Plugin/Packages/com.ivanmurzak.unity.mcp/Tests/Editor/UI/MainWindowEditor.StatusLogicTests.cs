@@ -379,4 +379,24 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         #endregion
     }
+
+    /// <summary>The first-run "AI Game Dev" window opens only for a user who just added the package by hand.</summary>
+    public class MainWindowInitializerTests
+    {
+        [Test]
+        public void IsConfiguredExternally_FreshManualInstall_IsFalse()
+        {
+            Assert.IsFalse(MainWindowInitializer.IsConfiguredExternally(
+                hasConnectionOverride: false, isCliSession: false, configCreatedThisSession: true));
+        }
+
+        [TestCase(true, false, true)]   // the App / CLI passed UNITY_MCP_* env vars or flags
+        [TestCase(false, true, true)]   // a CLI session started the editor
+        [TestCase(false, false, false)] // the config file was written before the plugin first loaded
+        public void IsConfiguredExternally_LaunchedOrConfiguredByAnotherProgram_IsTrue(
+            bool hasConnectionOverride, bool isCliSession, bool configCreatedThisSession)
+        {
+            Assert.IsTrue(MainWindowInitializer.IsConfiguredExternally(hasConnectionOverride, isCliSession, configCreatedThisSession));
+        }
+    }
 }
