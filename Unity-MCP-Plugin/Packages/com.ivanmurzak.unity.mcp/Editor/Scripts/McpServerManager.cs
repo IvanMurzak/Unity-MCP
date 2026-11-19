@@ -2143,15 +2143,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor
                 UnityMcpPluginEditor.KeepServerRunning);
 
         /// <summary>
-        /// Downloads the pinned binary in the background (no modal, no popup) when the current settings need it
-        /// (<see cref="IsServerBinaryNeededForCurrentConfig"/>) and it is missing or outdated; otherwise returns false.
-        /// </summary>
-        public static Task<bool> DownloadServerBinaryIfNeededForCurrentConfig()
-            => IsServerBinaryNeededForCurrentConfig()
-                ? DownloadServerBinaryIfNeeded(unattended: true)
-                : Task.FromResult(false);
-
-        /// <summary>
         /// With the <c>stdio</c> transport the AI agent launches its own server process on the
         /// project's port, so the Editor must not start one there: the agent's server would then fail
         /// with "address already in use". The window's transport switch already stops the server

@@ -279,15 +279,17 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         {
             if (argReader == null) throw new ArgumentNullException(nameof(argReader));
             if (envReader == null) throw new ArgumentNullException(nameof(envReader));
-            return ResolveOverride(EnvCloudUrl, FlagUrl, argReader, envReader) != null
-                || ResolveOverride(EnvHost, flagAlias: null, argReader, envReader) != null
-                || ResolveOverride(EnvConnectionMode, flagAlias: null, argReader, envReader) != null
-                || ResolveOverride(EnvToken, FlagToken, argReader, envReader) != null
-                || ResolveOverride(EnvAuthOption, FlagAuth, argReader, envReader) != null
-                || ResolveOverride(EnvTransport, flagAlias: null, argReader, envReader) != null
-                || ResolveOverride(EnvKeepConnected, flagAlias: null, argReader, envReader) != null
-                || ResolveOverride(EnvStartServer, flagAlias: null, argReader, envReader) != null;
+            foreach (var (envKey, flagAlias) in ConnectionOverrideKeys)
+                if (ResolveOverride(envKey, flagAlias, argReader, envReader) != null)
+                    return true;
+            return false;
         }
+
+        static readonly (string envKey, string? flagAlias)[] ConnectionOverrideKeys =
+        {
+            (EnvCloudUrl, FlagUrl), (EnvHost, null), (EnvConnectionMode, null), (EnvToken, FlagToken),
+            (EnvAuthOption, FlagAuth), (EnvTransport, null), (EnvKeepConnected, null), (EnvStartServer, null),
+        };
 
         /// <summary>
         /// Raw override value with priority: short-flag-alias (highest) > UNITY_MCP_* env-style flag > env var.
