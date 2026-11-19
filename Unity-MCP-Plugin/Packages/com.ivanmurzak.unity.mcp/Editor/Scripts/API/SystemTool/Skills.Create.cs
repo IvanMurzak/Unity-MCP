@@ -258,9 +258,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
             var operationType = exists ? "Skill updated" : "Skill created";
 
-            MainThread.Instance.RunAsync(async () =>
+            // Posted, not dispatched: the file is already written, so the refresh must happen even if the call is
+            // cancelled (a dispatch skips a cancelled call's work) or a modal window is open.
+            com.IvanMurzak.Unity.MCP.Runtime.Utils.UnityMainThread.Post(() =>
             {
-                await Task.Yield();
                 ScriptUtils.SchedulePostCompilationNotification(requestId, path, operationType);
                 AssetDatabase.Refresh(ImportAssetOptions.ForceSynchronousImport);
             });
