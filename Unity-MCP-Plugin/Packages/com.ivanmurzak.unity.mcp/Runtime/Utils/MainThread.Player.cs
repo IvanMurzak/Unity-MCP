@@ -10,7 +10,9 @@
 #if !UNITY_EDITOR
 #nullable enable
 using System;
+using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using UnityEngine;
 
@@ -51,9 +53,21 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
         static Task<T> Dispatch<T>(Func<T> body)
         {
+            // A cancelled call's work (McpPlugin's ToolCallCancellation.Token, read on the calling thread) is not
+            // queued, and is skipped when the call is cancelled while it waits in the queue. Work that has started is
+            // never interrupted.
+            var cancel = ToolCallCancellation.Token;
+            if (cancel.IsCancellationRequested)
+                return Task.FromCanceled<T>(cancel);
+
             var tcs = new TaskCompletionSource<T>();
             MainThreadDispatcher.Enqueue(() =>
             {
+                if (cancel.IsCancellationRequested)
+                {
+                    tcs.TrySetCanceled(cancel);
+                    return;
+                }
                 try { tcs.SetResult(body()); }
                 catch (Exception ex) { tcs.SetException(ex); }
             });

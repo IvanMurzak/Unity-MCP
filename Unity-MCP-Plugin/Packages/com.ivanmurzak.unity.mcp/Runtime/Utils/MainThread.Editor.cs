@@ -91,7 +91,12 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             // Drain only what was queued before this tick: work posted while draining runs on the
             // next tick, as it did when each call subscribed its own update callback.
             for (var count = _pending.Count; count > 0 && _pending.TryDequeue(out var action); count--)
-                action();
+            {
+                // One failing posted action (an AssetDatabase.Refresh that throws) must not abort this update tick for
+                // the rest of the queue.
+                try { action(); }
+                catch (Exception ex) { UnityEngine.Debug.LogException(ex); }
+            }
         }
 
         /// <summary>
@@ -128,7 +133,15 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
 
         static Task<T> Dispatch<T>(Func<T> body, bool watched = true)
         {
-            var item = new WorkItem<T>(body);
+            // An MCP call's work honours the call's cancellation (McpPlugin's ToolCallCancellation.Token, read on the
+            // calling thread) at safe points only: it is not queued once the call is cancelled, and is skipped when the
+            // call is cancelled while it waits in the queue. Work that has started is never interrupted. The Editor's
+            // own work (not watched) must not be dropped.
+            var cancel = watched ? ToolCallCancellation.Token : CancellationToken.None;
+            if (cancel.IsCancellationRequested)
+                return Task.FromCanceled<T>(cancel);
+
+            var item = new WorkItem<T>(body, cancel);
             if (watched)
             {
                 _waiting.TryAdd(item, 0);
@@ -209,11 +222,16 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
             const int Queued = 0, Running = 1, Abandoned = 2;
 
             readonly Func<T> _body;
+            readonly CancellationToken _cancel;
             readonly TaskCompletionSource<T> _tcs = new TaskCompletionSource<T>();
             readonly long _startTimestamp = Stopwatch.GetTimestamp();
             int _state = Queued;
 
-            public WorkItem(Func<T> body) => _body = body;
+            public WorkItem(Func<T> body, CancellationToken cancel)
+            {
+                _body = body;
+                _cancel = cancel;
+            }
 
             public Task<T> Task => _tcs.Task;
             public double AgeSeconds => (double)(Stopwatch.GetTimestamp() - _startTimestamp) / Stopwatch.Frequency;
@@ -223,7 +241,14 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
                 // Failed before it started: the caller was told it did not run, so it must not run now.
                 if (Interlocked.CompareExchange(ref _state, Running, Queued) != Queued)
                     return;
-                try { _tcs.TrySetResult(_body()); }
+                try
+                {
+                    // The call was cancelled while this waited in the queue: skip it.
+                    if (_cancel.IsCancellationRequested)
+                        _tcs.TrySetCanceled(_cancel);
+                    else
+                        _tcs.TrySetResult(_body());
+                }
                 catch (Exception ex) { _tcs.TrySetException(ex); }
                 finally { _waiting.TryRemove(this, out _); }
             }

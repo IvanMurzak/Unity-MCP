@@ -25,6 +25,10 @@
 
 ### Changed
 
+- **A cancelled MCP tool call skips its main-thread work** (McpPlugin 8.25.0, RQL 0.5.0). Work of a call that was
+  cancelled (the App's Stop, a closed request) is not queued, and queued work is skipped once its call is cancelled; work
+  that has started runs to its end. The call is answered as cancelled (HTTP 499), not as a failure. The asset refresh
+  after a script or skill write or a script delete is posted, so it still runs when its call is cancelled.
 - **McpPlugin 8.18.0** (gate `UNITY_MCP_DEPS_34`): agent configurators say how an agent is set up for a transport
   (config file, manual steps such as a Claude connector, or not at all) and when it must be restarted, and repair a
   portless local Server URL (see Fixed).

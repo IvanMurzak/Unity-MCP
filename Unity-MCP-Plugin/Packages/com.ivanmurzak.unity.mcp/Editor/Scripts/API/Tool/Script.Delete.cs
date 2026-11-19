@@ -82,9 +82,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                     File.Delete(f + ".meta");
             }
 
-            MainThread.Instance.RunAsync(async () =>
+            // Posted, not dispatched: the files are already deleted, so the refresh must happen even if the call is
+            // cancelled (a dispatch skips a cancelled call's work) or a modal window is open.
+            com.IvanMurzak.Unity.MCP.Runtime.Utils.UnityMainThread.Post(() =>
             {
-                await Task.Yield();
                 // Schedule notification to be sent after compilation completes (survives domain reload)
                 ScriptUtils.SchedulePostCompilationNotification(requestId, string.Join(",", files), "Script deletion");
 
