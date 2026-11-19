@@ -13,6 +13,7 @@ using System;
 using System.Collections;
 using System.Threading;
 using System.Threading.Tasks;
+using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet.Utils;
 using com.IvanMurzak.Unity.MCP.Runtime.Utils;
 using NUnit.Framework;
@@ -100,35 +101,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 
     /// <summary>
     /// <see cref="UnityMainThread"/> honours the MCP tool call's cancellation (McpPlugin's
-    /// <c>ToolCallCancellation.Token</c>, faked here with an <see cref="AsyncLocal{T}"/> as McpPlugin's is) at safe
-    /// points only: work of a cancelled call is not queued, work whose call is cancelled while it is queued is skipped,
-    /// and work that has started runs to its end. The test holds the main thread (no yield) wherever work must stay
-    /// queued, so the dispatch pump cannot pick it up.
+    /// <see cref="ToolCallCancellation.Token"/>, set here with <see cref="ToolCallCancellation.RunWith{T}"/> as for a real
+    /// call) at safe points only: work of a cancelled call is not queued, work whose call is cancelled while it is queued
+    /// is skipped, and work that has started runs to its end. The test holds the main thread (no yield) wherever work
+    /// must stay queued, so the dispatch pump cannot pick it up.
     /// </summary>
     public class MainThreadCallCancelTests
     {
-        static readonly AsyncLocal<CancellationToken> _callToken = new AsyncLocal<CancellationToken>();
         static readonly TimeSpan Wait = TimeSpan.FromSeconds(5);
 
-        Func<CancellationToken> _originalCallToken = null!;
-
-        [SetUp]
-        public void SetUp()
-        {
-            _originalCallToken = UnityMainThread.CallToken;
-            UnityMainThread.CallToken = () => _callToken.Value;
-        }
-
-        [TearDown]
-        public void TearDown() => UnityMainThread.CallToken = _originalCallToken;
-
-        /// <summary>Dispatches <paramref name="dispatch"/> from a background thread inside a call with <paramref name="token"/>.</summary>
+        /// <summary>
+        /// Dispatches <paramref name="dispatch"/> from a background thread (the main thread would run it inline) inside a
+        /// call with <paramref name="token"/>; returns once the work is queued.
+        /// </summary>
         static Task<T> FromCall<T>(CancellationToken token, Func<Task<T>> dispatch)
-            => Task.Factory.StartNew(() =>
-            {
-                _callToken.Value = token;
-                return dispatch();
-            }, CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Result;
+            => Task.Factory.StartNew(() => ToolCallCancellation.RunWith(token, dispatch),
+                CancellationToken.None, TaskCreationOptions.DenyChildAttach, TaskScheduler.Default).Result;
 
         static IEnumerator WaitFor(Task task)
         {

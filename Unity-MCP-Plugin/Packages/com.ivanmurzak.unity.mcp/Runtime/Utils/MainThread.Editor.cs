@@ -126,18 +126,13 @@ namespace com.IvanMurzak.Unity.MCP.Runtime.Utils
         /// <inheritdoc cref="RunAsyncThroughModalWindows(Action)"/>
         public static T RunThroughModalWindows<T>(Func<T> func) => RunAsyncThroughModalWindows(func).Result;
 
-        /// <summary>
-        /// The cancellation token of the MCP tool call running on the calling thread: McpPlugin's
-        /// <see cref="ToolCallCancellation.Token"/>, which fires when the caller went away. Tests replace it.
-        /// </summary>
-        public static Func<CancellationToken> CallToken { get; set; } = () => ToolCallCancellation.Token;
-
         static Task<T> Dispatch<T>(Func<T> body, bool watched = true)
         {
-            // An MCP call's work honours the call's cancellation at safe points only: it is not queued once the call
-            // is cancelled, and is skipped when the call is cancelled while it waits in the queue. Work that has
-            // started is never interrupted. The Editor's own work (not watched) must not be dropped.
-            var cancel = watched ? CallToken() : CancellationToken.None;
+            // An MCP call's work honours the call's cancellation (McpPlugin's ToolCallCancellation.Token, read on the
+            // calling thread) at safe points only: it is not queued once the call is cancelled, and is skipped when the
+            // call is cancelled while it waits in the queue. Work that has started is never interrupted. The Editor's
+            // own work (not watched) must not be dropped.
+            var cancel = watched ? ToolCallCancellation.Token : CancellationToken.None;
             if (cancel.IsCancellationRequested)
                 return Task.FromCanceled<T>(cancel);
 
