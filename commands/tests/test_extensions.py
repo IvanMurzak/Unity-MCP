@@ -218,6 +218,13 @@ class PublishedVersionTests(unittest.TestCase):
         installer.write_bytes(installer.read_bytes() + b'// changed\n')
         self.assertRegex(self.check()[0], 'is published, but 1 of its files changed')
 
+    def test_new_file_of_a_published_version_fails_before_it_is_added_to_git(self):
+        added = self.root / self.rows[0]['package'] / 'Runtime/Added.cs'
+        added.write_text('// new\n')
+        self.assertRegex(self.check()[0], r'is published, but 1 of its files changed since \(e\.g\. .*Runtime/Added\.cs\)')
+        self.settle()
+        self.assertEqual([('2.0.1', '1.5.0'), ('2.0.0', '1.5.0')], self.coordinates())
+
     def test_unpublished_version_may_change_and_keeps_its_version(self):
         self.edit(self.rows[0], version='2.0.5')
         self.touch(self.rows[0])
@@ -326,6 +333,14 @@ class EntryPointTests(unittest.TestCase):
             self.run_main(extensions, 'settle')
         self.assertEqual([(('1.6.0',), {'dry_run': True}), ((None,), {'dry_run': False})],
                          [tuple(call) for call in settle.call_args_list])
+
+    def test_settle_and_check_published_refuse_a_selection_they_would_ignore(self):
+        for command in ('settle', 'check-published'):
+            with patch.object(extensions, 'settle') as settle, patch.object(extensions, 'check_published') as check, \
+                    patch.object(sys, 'stderr', io.StringIO()), self.assertRaises(SystemExit):
+                self.run_main(extensions, command, '--only', 'Animation')
+            settle.assert_not_called()
+            check.assert_not_called()
 
     def test_publication_starts_with_the_strict_check_of_the_selection(self):
         for command in ('routes', 'publish'):

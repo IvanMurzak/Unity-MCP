@@ -224,7 +224,7 @@ def prepare(project: Path, root=ROOT):
     block = match.group(1)
     standalone = re.search(r'(?m)^    Standalone: *(.*)$', block)
     defines = set(filter(None, standalone.group(1).split(';'))) if standalone else set()
-    generation = gate_generation((root / NUGET_CONFIG).read_text())
+    generation = gate_generation((root / NUGET_CONFIG).read_text(encoding='utf-8'))
     if not generation:
         raise ValueError('Cannot read current NuGet assembly gate')
     dll_root = project / 'Assets/Plugins/NuGet'
@@ -320,7 +320,7 @@ class Published:
         self.root = root
         self.rows = [row for row in inventory(root) if only is None or row['name'] in only]
         self.core_version = read(root / CORE_PACKAGE / 'package.json')['version']
-        self.generation = gate_generation((root / NUGET_CONFIG).read_text())
+        self.generation = gate_generation((root / NUGET_CONFIG).read_text(encoding='utf-8'))
         if not self.generation:
             raise ValueError('Cannot read current NuGet assembly gate')
         for row in self.rows:
@@ -344,8 +344,11 @@ class Published:
         """Files of this component's published version that differ here (none: unpublished or unchanged)."""
         if row['tag'] not in self.shas:
             return []
-        return git(self.root, 'diff', '--name-only', self.shas[row['tag']], '--', row['package'],
-                   f'extensions/{row["name"]}/Installer/Assets').splitlines()
+        paths = (row['package'], f'extensions/{row["name"]}/Installer/Assets')
+        # `git diff` leaves out a new file until it is added to the index: list those too.
+        tracked = git(self.root, 'diff', '--name-only', self.shas[row['tag']], '--', *paths).splitlines()
+        untracked = git(self.root, 'ls-files', '--others', '--exclude-standard', '--', *paths).splitlines()
+        return sorted({*tracked, *untracked})
 
     def floor_sets_gate(self, floor):
         """Does core `floor` set the gate generation the component assemblies here require? On a core with
@@ -430,6 +433,8 @@ def main():
     parser.add_argument('--bump-policy', choices=['patch', 'minor'], default='patch')
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
+    if args.command in ('check-published', 'settle') and args.only != 'all':
+        parser.error(args.command + ' covers every extension; it takes no --only')
     if args.command == 'check-published':
         problems = check_published()
         if problems:
