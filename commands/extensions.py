@@ -223,7 +223,7 @@ def prepare(project: Path, root=ROOT):
     block = match.group(1)
     standalone = re.search(r'(?m)^    Standalone: *(.*)$', block)
     defines = set(filter(None, standalone.group(1).split(';'))) if standalone else set()
-    generation = re.search(GENERATION_RE, (root / NUGET_CONFIG).read_text())
+    generation = gate_generation((root / NUGET_CONFIG).read_text())
     if not generation:
         raise ValueError('Cannot read current NuGet assembly gate')
     dll_root = project / 'Assets/Plugins/NuGet'
@@ -233,7 +233,7 @@ def prepare(project: Path, root=ROOT):
             if not (dll_root / dll).is_file():
                 raise ValueError(f'Test project is missing bundled dependency: {dll}')
     defines = {value for value in defines if not value.startswith('UNITY_MCP_DEPS_')}
-    defines.update(('IVAN_MURZAK_INSTALLER_PROJECT', 'UNITY_MCP_READY', 'UNITY_MCP_DEPS_' + generation.group(1)))
+    defines.update(('IVAN_MURZAK_INSTALLER_PROJECT', 'UNITY_MCP_READY', 'UNITY_MCP_DEPS_' + generation))
     value = '    Standalone: ' + ';'.join(sorted(defines))
     block = re.sub(r'(?m)^    Standalone:.*$', value, block) if standalone else block + value + '\n'
     text = text[:match.start(1)] + block + text[match.end(1):]
@@ -264,6 +264,24 @@ def collect_metas(project, root=ROOT):
     print(f'Collected {count} Unity-generated installer metadata files; existing GUIDs untouched')
 
 
+def gate_generation(config):
+    """The NuGet gate generation a core's NuGetConfig.cs declares (None: that core has no generation gate)."""
+    match = re.search(GENERATION_RE, config)
+    return match[1] if match else None
+
+
+def next_version(version, policy='patch'):
+    major, minor, patch = map(int, version.split('.'))
+    return f'{major}.{minor + 1}.0' if policy == 'minor' else f'{major}.{minor}.{patch + 1}'
+
+
+def set_core_floor(row, core_version, root=ROOT):
+    path = root / row['package'] / 'package.json'
+    package = read(path)
+    package['dependencies'][CORE] = core_version
+    write(path, package)
+
+
 def sync_core(core_version, only='all', policy='patch', dry_run=False, root=ROOT):
     if not re.fullmatch(r'\d+\.\d+\.\d+', core_version):
         raise ValueError('Expected a stable core dependency version')
@@ -272,18 +290,15 @@ def sync_core(core_version, only='all', policy='patch', dry_run=False, root=ROOT
     if not rows:
         raise ValueError('Unknown extension selection: ' + only)
     for row in rows:
-        path = root / row['package'] / 'package.json'
-        package = read(path)
+        package = read(root / row['package'] / 'package.json')
         previous = package['dependencies'][CORE]
         if previous == core_version or dependency_floor(previous, core_version) != core_version:
             print(row['name'] + ': core floor already current/newer; unchanged')
             continue
-        major, minor, patch = map(int, package['version'].split('.'))
-        version = f'{major}.{minor + 1}.0' if policy == 'minor' else f'{major}.{minor}.{patch + 1}'
+        version = next_version(package['version'], policy)
         print(f'{row["name"]}: core {previous} -> {core_version}; component -> {version}')
         if not dry_run:
-            package['dependencies'][CORE] = core_version
-            write(path, package)
+            set_core_floor(row, core_version, root)
             bump(row['name'], version, root)
 
 
@@ -299,29 +314,27 @@ class Published:
     """What the remote has released, read from its tags: a core release is `<version>`, a component
     release `<packageId>/<version>`. A remote that cannot be read fails; it is never "unpublished"."""
 
-    def __init__(self, root=ROOT, remote='origin', extra_tags=()):
-        self.root, self.rows = root, inventory(root)
+    def __init__(self, root=ROOT, remote='origin', only=None, core=None):
+        """`only`: the component names to read (default all); `core`: one more core version to look up."""
+        self.root = root
+        self.rows = [row for row in inventory(root) if only is None or row['name'] in only]
         self.core_version = read(root / CORE_PACKAGE / 'package.json')['version']
-        self.generation = self._generation((root / NUGET_CONFIG).read_text())
+        self.generation = gate_generation((root / NUGET_CONFIG).read_text())
         if not self.generation:
             raise ValueError('Cannot read current NuGet assembly gate')
         for row in self.rows:
             package = read(root / row['package'] / 'package.json')
             row['version'], row['floor'] = package['version'], package['dependencies'][CORE]
             row['tag'] = row['tagPrefix'] + row['version']
-        tags = {self.core_version, *extra_tags, *(row[key] for row in self.rows for key in ('tag', 'floor'))}
+        tags = {self.core_version, core, *(row[key] for row in self.rows for key in ('tag', 'floor'))} - {None}
         listed = git(root, 'ls-remote', '--tags', remote, *sorted('refs/tags/' + tag for tag in tags))
         self.shas = {ref.removeprefix('refs/tags/'): sha for sha, ref in map(str.split, listed.splitlines())}
+        self.gates = {}
         if self.shas:
             # A CI checkout is shallow and has no tags: fetch what is read here (a full clone stays full).
             shallow = git(root, 'rev-parse', '--is-shallow-repository').strip() == 'true'
             git(root, 'fetch', '--no-tags', *(['--depth', '1'] if shallow else []), remote,
                 *sorted('refs/tags/' + tag for tag in self.shas))
-
-    @staticmethod
-    def _generation(config):
-        match = re.search(GENERATION_RE, config)
-        return match[1] if match else None
 
     def changed(self, row):
         """Files of this component's published version that differ here (none: unpublished or unchanged)."""
@@ -336,7 +349,9 @@ class Published:
         its release ships this generation."""
         if floor not in self.shas:
             return floor == self.core_version
-        return self._generation(git(self.root, 'show', f'{self.shas[floor]}:{NUGET_CONFIG}')) == self.generation
+        if floor not in self.gates:
+            self.gates[floor] = gate_generation(git(self.root, 'show', f'{self.shas[floor]}:{NUGET_CONFIG}'))
+        return self.gates[floor] == self.generation
 
     def gate_moved_since_release(self):
         """The gate moved after this tree's core version was released: no core release ships it yet."""
@@ -346,12 +361,10 @@ class Published:
 def check_published(root=ROOT, strict=False, only=None, remote='origin'):
     """Problems that leave a component (all, or the `only` names) stale or unusable for its consumers.
     `strict` (before a publication): every core floor must be a released core that sets this gate generation."""
-    state = Published(root, remote)
+    state = Published(root, remote, only)
     deferred = not strict and state.gate_moved_since_release()
     problems = []
     for row in state.rows:
-        if only is not None and row['name'] not in only:
-            continue
         changed = state.changed(row)
         if changed:
             problems.append(f'{row["name"]} {row["version"]} is published, but {len(changed)} of its files changed '
@@ -371,28 +384,23 @@ def settle(core_version=None, root=ROOT, dry_run=False, remote='origin'):
     """Make every component publishable again. A core floor that does not set the current gate generation
     moves to `core_version` (the core release that ships it); a published version whose files changed gets
     a patch bump."""
-    state = Published(root, remote, extra_tags=filter(None, [core_version]))
+    state = Published(root, remote, core=core_version)
     if core_version and not state.floor_sets_gate(core_version):
         raise ValueError(f'Core {core_version} does not ship UNITY_MCP_DEPS_{state.generation}: expected a release '
                          f'that sets it, or the unreleased version of this tree ({state.core_version})')
     for row in state.rows:
-        refloor = bool(core_version) and row['floor'] != core_version and not state.floor_sets_gate(row['floor'])
-        bumped = row['tag'] in state.shas and (refloor or bool(state.changed(row)))
-        if not refloor and not bumped:
-            continue
-        major, minor, patch = map(int, row['version'].split('.'))
-        version = f'{major}.{minor}.{patch + 1}' if bumped else row['version']
-        print(f'{row["name"]}: core floor {row["floor"]} -> {core_version if refloor else row["floor"]}; '
-              f'component {row["version"]} -> {version}')
-        if dry_run:
-            continue
+        refloor = core_version and not state.floor_sets_gate(row['floor'])
+        bumped = row['tag'] in state.shas and (refloor or state.changed(row))
         if refloor:
-            path = root / row['package'] / 'package.json'
-            package = read(path)
-            package['dependencies'][CORE] = core_version
-            write(path, package)
+            print(f'{row["name"]}: core floor {row["floor"]} -> {core_version}')
+            if not dry_run:
+                set_core_floor(row, core_version, root)
         if bumped:
-            bump(row['name'], version, root)
+            version = next_version(row['version'])
+            if dry_run:
+                print(f'{row["name"]}: {row["version"]} -> {version}')
+            else:
+                bump(row['name'], version, root)
 
 
 def main():

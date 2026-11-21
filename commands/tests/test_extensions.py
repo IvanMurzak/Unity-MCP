@@ -16,9 +16,9 @@ import extensions
 import extension_release as release
 
 
-def copy_components(root, count=2):
-    """The first `count` real components (package, installer, migration record) and their inventory under `root`."""
-    rows = extensions.inventory()[:count]
+def copy_components(root):
+    """Two real components (package, installer, migration record) and their inventory under `root`."""
+    rows = extensions.inventory()[:2]
     for row in rows:
         source = extensions.ROOT / row['package']
         destination = root / row['package']
@@ -118,57 +118,73 @@ class PackageBoundaryTests(unittest.TestCase):
 class PublishedVersionTests(unittest.TestCase):
     """A real git remote with release tags: core 1.5.0 (gate generation 7) and both components at 2.0.0."""
 
+    @classmethod
+    def setUpClass(cls):
+        # Built once: git over a few hundred files is most of a test's time. Each test works on its own copy.
+        cls.template = tempfile.TemporaryDirectory()
+        cls.addClassCleanup(cls.template.cleanup)
+        root = Path(cls.template.name) / 'work'
+        cls.rows = copy_components(root)
+        for row in cls.rows:
+            cls.edit_at(root, row, version='2.0.0', floor='1.5.0')
+        cls.core_at(root, version='1.5.0', generation=7)
+        cls.git_at(cls.template.name, 'init', '--quiet', '--bare', 'origin.git')
+        cls.git_at(root, 'init', '--quiet')
+        cls.git_at(root, 'remote', 'add', 'origin', '../origin.git')  # relative: valid in every copy
+        cls.release_at(root, '1.5.0', *(row['tagPrefix'] + '2.0.0' for row in cls.rows))
+
     def setUp(self):
-        self.temp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
+        shutil.copytree(self.template.name, self.temp.name, dirs_exist_ok=True)
         self.root = Path(self.temp.name) / 'work'
         self.origin = Path(self.temp.name) / 'origin.git'
-        self.rows = copy_components(self.root)
-        for row in self.rows:
-            self.edit(row, version='2.0.0', floor='1.5.0')
-        self.core(version='1.5.0', generation=7)
-        self.git('init', '--quiet', '--bare', str(self.origin), cwd=self.temp.name)
-        self.git('init', '--quiet')
-        self.git('remote', 'add', 'origin', self.origin.as_uri())
-        self.commit()
-        self.release('1.5.0', *(row['tagPrefix'] + '2.0.0' for row in self.rows))
 
-    def git(self, *args, cwd=None):
+    @staticmethod
+    def git_at(cwd, *args):
         # Hermetic: a fixed identity and no hooks of the host machine.
         subprocess.run(['git', '-c', 'user.name=test', '-c', 'user.email=test@example.invalid',
-                        '-c', 'core.hooksPath=' + str(Path(self.temp.name) / 'no-hooks'), *args],
-                       cwd=cwd or self.root, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+                        '-c', 'core.hooksPath=no-hooks', *args],
+                       cwd=cwd, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
 
-    def commit(self):
-        self.git('add', '--all')
-        self.git('commit', '--quiet', '--message', 'state')
-        self.git('push', '--quiet', '--force', 'origin', 'HEAD:refs/heads/main')
+    @classmethod
+    def release_at(cls, root, *tags):
+        """Commit the tree, push it as main and tag that commit with every name in `tags`."""
+        cls.git_at(root, 'add', '--all')
+        cls.git_at(root, 'commit', '--quiet', '--message', 'state')
+        cls.git_at(root, 'push', '--quiet', '--force', 'origin', 'HEAD:refs/heads/main',
+                   *('HEAD:refs/tags/' + tag for tag in tags))
 
-    def release(self, *tags):
-        for tag in tags:
-            self.git('tag', tag)
-        self.git('push', '--quiet', 'origin', *tags)
-
-    def core(self, version, generation):
-        config = self.root / extensions.NUGET_CONFIG
+    @staticmethod
+    def core_at(root, version, generation):
+        config = root / extensions.NUGET_CONFIG
         config.parent.mkdir(parents=True, exist_ok=True)
-        extensions.write(self.root / extensions.CORE_PACKAGE / 'package.json', {'name': extensions.CORE, 'version': version})
+        extensions.write(root / extensions.CORE_PACKAGE / 'package.json', {'name': extensions.CORE, 'version': version})
         config.write_text(f'public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "{generation}";\n')
 
-    def manifest(self, row):
-        return extensions.read(self.root / row['package'] / 'package.json')
-
-    def edit(self, row, version=None, floor=None):
-        package = self.manifest(row)
+    @staticmethod
+    def edit_at(root, row, version=None, floor=None):
+        path = root / row['package'] / 'package.json'
+        package = extensions.read(path)
         package['version'] = version or package['version']
         package['dependencies'][extensions.CORE] = floor or package['dependencies'][extensions.CORE]
-        extensions.write(self.root / row['package'] / 'package.json', package)
+        extensions.write(path, package)
+
+    def core(self, version, generation):
+        self.core_at(self.root, version, generation)
+
+    def edit(self, row, **coordinates):
+        self.edit_at(self.root, row, **coordinates)
 
     def coordinates(self):
-        return [(self.manifest(row)['version'], self.manifest(row)['dependencies'][extensions.CORE]) for row in self.rows]
+        packages = [extensions.read(self.root / row['package'] / 'package.json') for row in self.rows]
+        return [(package['version'], package['dependencies'][extensions.CORE]) for package in packages]
 
     def check(self, **options):
         return extensions.check_published(self.root, **options)
+
+    def settle(self, core_version=None, **options):
+        extensions.settle(core_version, root=self.root, **options)
 
     def touch(self, row, root=None):
         asmdef = next(((root or self.root) / row['package'] / 'Runtime').rglob('*.asmdef'))
@@ -180,7 +196,7 @@ class PublishedVersionTests(unittest.TestCase):
     def test_published_tree_passes_and_settle_changes_nothing(self):
         self.assertEqual([], self.check())
         self.assertEqual([], self.check(strict=True))
-        extensions.settle('1.5.0', root=self.root)
+        self.settle('1.5.0')
         self.assertEqual([('2.0.0', '1.5.0')] * 2, self.coordinates())
 
     def test_changed_file_of_a_published_version_fails_until_that_version_moves(self):
@@ -190,9 +206,9 @@ class PublishedVersionTests(unittest.TestCase):
         self.assertEqual(1, len(problems))
         self.assertRegex(problems[0], changed['name'] + r' 2\.0\.0 is published, but 1 of its files changed')
         self.assertEqual([], self.check(only={untouched['name']}))
-        extensions.settle(root=self.root, dry_run=True)
+        self.settle(dry_run=True)
         self.assertEqual([('2.0.0', '1.5.0')] * 2, self.coordinates())
-        extensions.settle(root=self.root)
+        self.settle()
         self.assertEqual([('2.0.1', '1.5.0'), ('2.0.0', '1.5.0')], self.coordinates())
         self.assertEqual([], self.check())
         self.assertIn('Version = "2.0.1"', self.installer(changed).read_text())
@@ -206,7 +222,7 @@ class PublishedVersionTests(unittest.TestCase):
         self.edit(self.rows[0], version='2.0.5')
         self.touch(self.rows[0])
         self.assertEqual([], self.check())
-        extensions.settle(root=self.root)
+        self.settle()
         self.assertEqual([('2.0.5', '1.5.0'), ('2.0.0', '1.5.0')], self.coordinates())
 
     def test_gate_moved_after_the_core_release_waits_for_the_next_core_version(self):
@@ -217,7 +233,7 @@ class PublishedVersionTests(unittest.TestCase):
         self.assertEqual(2, len(strict))
         self.assertRegex(strict[0], r'core floor 1\.5\.0 does not set UNITY_MCP_DEPS_8')
         with self.assertRaisesRegex(ValueError, r'Core 1\.5\.0 does not ship UNITY_MCP_DEPS_8'):
-            extensions.settle('1.5.0', root=self.root)
+            self.settle('1.5.0')
         self.assertEqual([('2.0.0', '1.5.0')] * 2, self.coordinates())
 
     def test_core_release_that_moves_the_gate_refloors_and_bumps_every_component(self):
@@ -226,21 +242,20 @@ class PublishedVersionTests(unittest.TestCase):
         problems = self.check()
         self.assertEqual(2, len(problems))
         self.assertRegex(problems[0], r'core floor 1\.5\.0 does not set UNITY_MCP_DEPS_8')
-        extensions.settle('1.6.0', root=self.root)
+        self.settle('1.6.0')
         self.assertEqual([('2.0.1', '1.6.0'), ('2.0.5', '1.6.0')], self.coordinates())
         self.assertEqual([], self.check())
         # A component may not be published before the core it requires.
         self.assertRegex(self.check(strict=True)[0], r'core floor 1\.6\.0 is not a released core version')
-        self.commit()
-        self.release('1.6.0')
+        self.release_at(self.root, '1.6.0')
         self.assertEqual([], self.check(strict=True))
-        extensions.settle('1.6.0', root=self.root)
+        self.settle('1.6.0')
         self.assertEqual([('2.0.1', '1.6.0'), ('2.0.5', '1.6.0')], self.coordinates())
 
     def test_core_release_with_the_same_gate_keeps_older_floors(self):
         self.core(version='1.6.0', generation=7)
         self.assertEqual([], self.check())
-        extensions.settle('1.6.0', root=self.root)
+        self.settle('1.6.0')
         self.assertEqual([('2.0.0', '1.5.0')] * 2, self.coordinates())
 
     def test_unknown_floor_and_unreadable_remote_fail(self):
@@ -251,7 +266,7 @@ class PublishedVersionTests(unittest.TestCase):
 
     def test_shallow_ci_checkout_without_tags_reads_the_remote(self):
         clone = Path(self.temp.name) / 'ci'
-        self.git('clone', '--quiet', '--depth', '1', '--no-tags', self.origin.as_uri(), str(clone), cwd=self.temp.name)
+        self.git_at(self.temp.name, 'clone', '--quiet', '--depth', '1', '--no-tags', self.origin.as_uri(), str(clone))
         self.assertEqual([], extensions.check_published(clone, strict=True))
         self.touch(self.rows[0], clone)
         self.assertEqual(1, len(extensions.check_published(clone)))
