@@ -5,7 +5,9 @@ Unity-generated GUIDs survive the migration. Native package dependencies declare
 core/Unity package versions; a newer compatible core does not require republishing every module,
 except after a NuGet generation bump (`UNITY_MCP_DEPS_<n>` in `NuGetConfig.cs`): module Editor/Runtime
 asmdefs carry the core's gate defines, so a module built for an older generation is skipped (not
-broken) until it is re-released (#957; `.github/scripts/check_nuget_gate.py`).
+broken) until it is re-released (#957; `.github/scripts/check_nuget_gate.py`). Unity reports nothing
+for a skipped module: its tools are simply absent. So every core release that moves the generation
+re-releases all modules with that core as their floor (see "Published versions" below).
 
 ```text
 Unity-MCP/
@@ -123,6 +125,27 @@ and signs without publishing. Signing uses the existing Unity-MCP UPM credential
 Original `.meta` GUIDs and installer asset bytes produce the installer archive without starting
 another editor. Native archives must contain an attestation and the exact component sources;
 draft retries reuse already uploaded archives and refuse changed existing assets.
+
+### Published versions
+
+A published module version never changes, and its assemblies compile only on a core that sets the
+generation they were built for. `python commands/extensions.py check-published` reads the release
+tags of the remote and fails when:
+
+- a file of a published version (package or installer) differs from that release: the version must move;
+- a module's core floor is a core release with another generation. While the generation has moved
+  but no core release ships it yet, this part is only a note: the floor cannot be named before that
+  release. (The change that moves the generation rewrites every module's asmdefs, so it still needs
+  `settle` for the new module versions.)
+
+It runs on every pull request and in the core release. Before a publication the check is strict:
+the floor must be a released core with the same generation, so a module is never published ahead
+of the core it needs.
+
+`python commands/extensions.py settle [--core-version <core>]` repairs both: it patch-bumps each
+published module whose files changed and, given the core release that ships the current generation,
+moves stale floors to it. The release train runs it for every core release; the module release
+follows the core release (`extensions release --engine unity`).
 
 OpenUPM registrations point to this repository with each package's literal `gitTagPrefix` and
 its signed archive's filename prefix. The core registration excludes extension tags. OpenUPM
