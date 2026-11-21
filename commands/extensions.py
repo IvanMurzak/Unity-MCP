@@ -8,9 +8,13 @@ import os
 from pathlib import Path
 import re
 import shutil
+import subprocess
 
 ROOT = Path(__file__).resolve().parents[1]
 CORE = 'com.ivanmurzak.unity.mcp'
+CORE_PACKAGE = 'Unity-MCP-Plugin/Packages/' + CORE
+NUGET_CONFIG = CORE_PACKAGE + '/Editor/DependencyResolver/NuGetConfig.cs'
+GENERATION_RE = r'public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix \+ "(\d+)";'
 
 
 def read(path):
@@ -219,8 +223,7 @@ def prepare(project: Path, root=ROOT):
     block = match.group(1)
     standalone = re.search(r'(?m)^    Standalone: *(.*)$', block)
     defines = set(filter(None, standalone.group(1).split(';'))) if standalone else set()
-    config = (root / 'Unity-MCP-Plugin/Packages/com.ivanmurzak.unity.mcp/Editor/DependencyResolver/NuGetConfig.cs').read_text()
-    generation = re.search(r'public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix \+ "(\d+)";', config)
+    generation = re.search(GENERATION_RE, (root / NUGET_CONFIG).read_text())
     if not generation:
         raise ValueError('Cannot read current NuGet assembly gate')
     dll_root = project / 'Assets/Plugins/NuGet'
@@ -284,9 +287,118 @@ def sync_core(core_version, only='all', policy='patch', dry_run=False, root=ROOT
             bump(row['name'], version, root)
 
 
+def git(root, *args):
+    result = subprocess.run(['git', *args], cwd=root, text=True, encoding='utf-8',
+                            stdout=subprocess.PIPE, stderr=subprocess.PIPE)
+    if result.returncode:
+        raise ValueError(f'git {args[0]} failed: {result.stderr.strip()[:300]}')
+    return result.stdout
+
+
+class Published:
+    """What the remote has released, read from its tags: a core release is `<version>`, a component
+    release `<packageId>/<version>`. A remote that cannot be read fails; it is never "unpublished"."""
+
+    def __init__(self, root=ROOT, remote='origin', extra_tags=()):
+        self.root, self.rows = root, inventory(root)
+        self.core_version = read(root / CORE_PACKAGE / 'package.json')['version']
+        self.generation = self._generation((root / NUGET_CONFIG).read_text())
+        if not self.generation:
+            raise ValueError('Cannot read current NuGet assembly gate')
+        for row in self.rows:
+            package = read(root / row['package'] / 'package.json')
+            row['version'], row['floor'] = package['version'], package['dependencies'][CORE]
+            row['tag'] = row['tagPrefix'] + row['version']
+        tags = {self.core_version, *extra_tags, *(row[key] for row in self.rows for key in ('tag', 'floor'))}
+        listed = git(root, 'ls-remote', '--tags', remote, *sorted('refs/tags/' + tag for tag in tags))
+        self.shas = {ref.removeprefix('refs/tags/'): sha for sha, ref in map(str.split, listed.splitlines())}
+        if self.shas:
+            # A CI checkout is shallow and has no tags: fetch what is read here (a full clone stays full).
+            shallow = git(root, 'rev-parse', '--is-shallow-repository').strip() == 'true'
+            git(root, 'fetch', '--no-tags', *(['--depth', '1'] if shallow else []), remote,
+                *sorted('refs/tags/' + tag for tag in self.shas))
+
+    @staticmethod
+    def _generation(config):
+        match = re.search(GENERATION_RE, config)
+        return match[1] if match else None
+
+    def changed(self, row):
+        """Files of this component's published version that differ here (none: unpublished or unchanged)."""
+        if row['tag'] not in self.shas:
+            return []
+        return git(self.root, 'diff', '--name-only', self.shas[row['tag']], '--', row['package'],
+                   f'extensions/{row["name"]}/Installer/Assets').splitlines()
+
+    def floor_sets_gate(self, floor):
+        """Does core `floor` set the gate generation the component assemblies here require? On a core with
+        another generation Unity skips them without an error. The unreleased core of this tree counts:
+        its release ships this generation."""
+        if floor not in self.shas:
+            return floor == self.core_version
+        return self._generation(git(self.root, 'show', f'{self.shas[floor]}:{NUGET_CONFIG}')) == self.generation
+
+    def gate_moved_since_release(self):
+        """The gate moved after this tree's core version was released: no core release ships it yet."""
+        return self.core_version in self.shas and not self.floor_sets_gate(self.core_version)
+
+
+def check_published(root=ROOT, strict=False, only=None, remote='origin'):
+    """Problems that leave a component (all, or the `only` names) stale or unusable for its consumers.
+    `strict` (before a publication): every core floor must be a released core that sets this gate generation."""
+    state = Published(root, remote)
+    deferred = not strict and state.gate_moved_since_release()
+    problems = []
+    for row in state.rows:
+        if only is not None and row['name'] not in only:
+            continue
+        changed = state.changed(row)
+        if changed:
+            problems.append(f'{row["name"]} {row["version"]} is published, but {len(changed)} of its files changed '
+                            f'since (e.g. {changed[0]}): the change reaches nobody until the version moves')
+        if strict and row['floor'] not in state.shas:
+            problems.append(f'{row["name"]}: core floor {row["floor"]} is not a released core version')
+        elif not deferred and not state.floor_sets_gate(row['floor']):
+            problems.append(f'{row["name"]}: core floor {row["floor"]} does not set UNITY_MCP_DEPS_{state.generation}, '
+                            'which its assemblies require: on that core Unity skips them without an error')
+    if deferred and not problems:
+        print(f'Note: the NuGet gate moved to UNITY_MCP_DEPS_{state.generation} after core {state.core_version}. '
+              'The next core release must run `extensions.py settle --core-version <it>` (the release train does)')
+    return problems
+
+
+def settle(core_version=None, root=ROOT, dry_run=False, remote='origin'):
+    """Make every component publishable again. A core floor that does not set the current gate generation
+    moves to `core_version` (the core release that ships it); a published version whose files changed gets
+    a patch bump."""
+    state = Published(root, remote, extra_tags=filter(None, [core_version]))
+    if core_version and not state.floor_sets_gate(core_version):
+        raise ValueError(f'Core {core_version} does not ship UNITY_MCP_DEPS_{state.generation}: expected a release '
+                         f'that sets it, or the unreleased version of this tree ({state.core_version})')
+    for row in state.rows:
+        refloor = bool(core_version) and row['floor'] != core_version and not state.floor_sets_gate(row['floor'])
+        bumped = row['tag'] in state.shas and (refloor or bool(state.changed(row)))
+        if not refloor and not bumped:
+            continue
+        major, minor, patch = map(int, row['version'].split('.'))
+        version = f'{major}.{minor}.{patch + 1}' if bumped else row['version']
+        print(f'{row["name"]}: core floor {row["floor"]} -> {core_version if refloor else row["floor"]}; '
+              f'component {row["version"]} -> {version}')
+        if dry_run:
+            continue
+        if refloor:
+            path = root / row['package'] / 'package.json'
+            package = read(path)
+            package['dependencies'][CORE] = core_version
+            write(path, package)
+        if bumped:
+            bump(row['name'], version, root)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
-    parser.add_argument('command', choices=['validate', 'prepare', 'prepare-all', 'list', 'bump', 'collect-metas', 'sync-core'])
+    parser.add_argument('command', choices=['validate', 'prepare', 'prepare-all', 'list', 'bump', 'collect-metas', 'sync-core',
+                                            'check-published', 'settle'])
     parser.add_argument('--project', type=Path)
     parser.add_argument('--only', default='all')
     parser.add_argument('--version')
@@ -294,7 +406,15 @@ def main():
     parser.add_argument('--bump-policy', choices=['patch', 'minor'], default='patch')
     parser.add_argument('--dry-run', action='store_true')
     args = parser.parse_args()
-    if args.command == 'sync-core':
+    if args.command == 'check-published':
+        problems = check_published()
+        if problems:
+            raise SystemExit('\n'.join(['FAIL: ' + problem for problem in problems] + [
+                'Fix: python commands/extensions.py settle [--core-version <the core release that ships this gate>]']))
+        print('Published extension versions match this tree; their core floors set the current NuGet gate')
+    elif args.command == 'settle':
+        settle(args.core_version, dry_run=args.dry_run)
+    elif args.command == 'sync-core':
         if not args.core_version:
             parser.error('sync-core requires --core-version')
         sync_core(args.core_version, args.only, args.bump_policy, args.dry_run)

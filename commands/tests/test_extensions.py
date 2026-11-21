@@ -3,6 +3,7 @@ import json
 import re
 from pathlib import Path
 import shutil
+import subprocess
 import sys
 import tarfile
 import tempfile
@@ -13,6 +14,19 @@ COMMANDS = Path(__file__).resolve().parents[1]
 sys.path.insert(0, str(COMMANDS))
 import extensions
 import extension_release as release
+
+
+def copy_components(root, count=2):
+    """The first `count` real components (package, installer, migration record) and their inventory under `root`."""
+    rows = extensions.inventory()[:count]
+    for row in rows:
+        source = extensions.ROOT / row['package']
+        destination = root / row['package']
+        shutil.copytree(source, destination)
+        shutil.copy2(source.parents[1] / 'migration-source.json', destination.parents[1])
+        shutil.copytree(source.parents[1] / 'Installer/Assets', destination.parents[1] / 'Installer/Assets')
+    extensions.write(root / 'extensions/manifest.json', {'schemaVersion': 1, 'extensions': rows})
+    return rows
 
 
 class PackageBoundaryTests(unittest.TestCase):
@@ -26,16 +40,8 @@ class PackageBoundaryTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.addCleanup(self.temp.cleanup)
         self.root = Path(self.temp.name)
-        rows = extensions.inventory()[:2]
         extensions.write(self.root / 'manifest-unused.json', {})
-        for row in rows:
-            source = extensions.ROOT / row['package']
-            destination = self.root / row['package']
-            shutil.copytree(source, destination)
-            shutil.copy2(source.parents[1] / 'migration-source.json', destination.parents[1])
-            shutil.copytree(source.parents[1] / 'Installer/Assets', destination.parents[1] / 'Installer/Assets')
-        extensions.write(self.root / 'extensions/manifest.json', {'schemaVersion': 1, 'extensions': rows})
-        self.rows = rows
+        self.rows = copy_components(self.root)
 
     def test_ci_constraint_preserves_migration_checks(self):
         extensions.validate(self.root)
@@ -107,6 +113,148 @@ class PackageBoundaryTests(unittest.TestCase):
         self.assertEqual(current, path.read_bytes())
         extensions.sync_core('1.0.0', 'Animation', root=self.root)
         self.assertEqual(current, path.read_bytes())
+
+
+class PublishedVersionTests(unittest.TestCase):
+    """A real git remote with release tags: core 1.5.0 (gate generation 7) and both components at 2.0.0."""
+
+    def setUp(self):
+        self.temp = tempfile.TemporaryDirectory(ignore_cleanup_errors=True)
+        self.addCleanup(self.temp.cleanup)
+        self.root = Path(self.temp.name) / 'work'
+        self.origin = Path(self.temp.name) / 'origin.git'
+        self.rows = copy_components(self.root)
+        for row in self.rows:
+            self.edit(row, version='2.0.0', floor='1.5.0')
+        self.core(version='1.5.0', generation=7)
+        self.git('init', '--quiet', '--bare', str(self.origin), cwd=self.temp.name)
+        self.git('init', '--quiet')
+        self.git('remote', 'add', 'origin', self.origin.as_uri())
+        self.commit()
+        self.release('1.5.0', *(row['tagPrefix'] + '2.0.0' for row in self.rows))
+
+    def git(self, *args, cwd=None):
+        # Hermetic: a fixed identity and no hooks of the host machine.
+        subprocess.run(['git', '-c', 'user.name=test', '-c', 'user.email=test@example.invalid',
+                        '-c', 'core.hooksPath=' + str(Path(self.temp.name) / 'no-hooks'), *args],
+                       cwd=cwd or self.root, check=True, stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
+
+    def commit(self):
+        self.git('add', '--all')
+        self.git('commit', '--quiet', '--message', 'state')
+        self.git('push', '--quiet', '--force', 'origin', 'HEAD:refs/heads/main')
+
+    def release(self, *tags):
+        for tag in tags:
+            self.git('tag', tag)
+        self.git('push', '--quiet', 'origin', *tags)
+
+    def core(self, version, generation):
+        config = self.root / extensions.NUGET_CONFIG
+        config.parent.mkdir(parents=True, exist_ok=True)
+        extensions.write(self.root / extensions.CORE_PACKAGE / 'package.json', {'name': extensions.CORE, 'version': version})
+        config.write_text(f'public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix + "{generation}";\n')
+
+    def manifest(self, row):
+        return extensions.read(self.root / row['package'] / 'package.json')
+
+    def edit(self, row, version=None, floor=None):
+        package = self.manifest(row)
+        package['version'] = version or package['version']
+        package['dependencies'][extensions.CORE] = floor or package['dependencies'][extensions.CORE]
+        extensions.write(self.root / row['package'] / 'package.json', package)
+
+    def coordinates(self):
+        return [(self.manifest(row)['version'], self.manifest(row)['dependencies'][extensions.CORE]) for row in self.rows]
+
+    def check(self, **options):
+        return extensions.check_published(self.root, **options)
+
+    def touch(self, row, root=None):
+        asmdef = next(((root or self.root) / row['package'] / 'Runtime').rglob('*.asmdef'))
+        asmdef.write_bytes(asmdef.read_bytes().replace(b'UNITY_MCP_DEPS_', b'UNITY_MCP_DEPS_9'))
+
+    def installer(self, row):
+        return next((self.root / 'extensions' / row['name'] / 'Installer/Assets').rglob('Installer.cs'))
+
+    def test_published_tree_passes_and_settle_changes_nothing(self):
+        self.assertEqual([], self.check())
+        self.assertEqual([], self.check(strict=True))
+        extensions.settle('1.5.0', root=self.root)
+        self.assertEqual([('2.0.0', '1.5.0')] * 2, self.coordinates())
+
+    def test_changed_file_of_a_published_version_fails_until_that_version_moves(self):
+        changed, untouched = self.rows
+        self.touch(changed)
+        problems = self.check()
+        self.assertEqual(1, len(problems))
+        self.assertRegex(problems[0], changed['name'] + r' 2\.0\.0 is published, but 1 of its files changed')
+        self.assertEqual([], self.check(only={untouched['name']}))
+        extensions.settle(root=self.root, dry_run=True)
+        self.assertEqual([('2.0.0', '1.5.0')] * 2, self.coordinates())
+        extensions.settle(root=self.root)
+        self.assertEqual([('2.0.1', '1.5.0'), ('2.0.0', '1.5.0')], self.coordinates())
+        self.assertEqual([], self.check())
+        self.assertIn('Version = "2.0.1"', self.installer(changed).read_text())
+
+    def test_changed_installer_of_a_published_version_fails(self):
+        installer = self.installer(self.rows[0])
+        installer.write_bytes(installer.read_bytes() + b'// changed\n')
+        self.assertRegex(self.check()[0], 'is published, but 1 of its files changed')
+
+    def test_unpublished_version_may_change_and_keeps_its_version(self):
+        self.edit(self.rows[0], version='2.0.5')
+        self.touch(self.rows[0])
+        self.assertEqual([], self.check())
+        extensions.settle(root=self.root)
+        self.assertEqual([('2.0.5', '1.5.0'), ('2.0.0', '1.5.0')], self.coordinates())
+
+    def test_gate_moved_after_the_core_release_waits_for_the_next_core_version(self):
+        self.core(version='1.5.0', generation=8)
+        # No core release ships generation 8 yet: nothing can be named as the floor, so only a publication fails.
+        self.assertEqual([], self.check())
+        strict = self.check(strict=True)
+        self.assertEqual(2, len(strict))
+        self.assertRegex(strict[0], r'core floor 1\.5\.0 does not set UNITY_MCP_DEPS_8')
+        with self.assertRaisesRegex(ValueError, r'Core 1\.5\.0 does not ship UNITY_MCP_DEPS_8'):
+            extensions.settle('1.5.0', root=self.root)
+        self.assertEqual([('2.0.0', '1.5.0')] * 2, self.coordinates())
+
+    def test_core_release_that_moves_the_gate_refloors_and_bumps_every_component(self):
+        self.core(version='1.6.0', generation=8)
+        self.edit(self.rows[1], version='2.0.5')  # unpublished: takes the floor, keeps its version
+        problems = self.check()
+        self.assertEqual(2, len(problems))
+        self.assertRegex(problems[0], r'core floor 1\.5\.0 does not set UNITY_MCP_DEPS_8')
+        extensions.settle('1.6.0', root=self.root)
+        self.assertEqual([('2.0.1', '1.6.0'), ('2.0.5', '1.6.0')], self.coordinates())
+        self.assertEqual([], self.check())
+        # A component may not be published before the core it requires.
+        self.assertRegex(self.check(strict=True)[0], r'core floor 1\.6\.0 is not a released core version')
+        self.commit()
+        self.release('1.6.0')
+        self.assertEqual([], self.check(strict=True))
+        extensions.settle('1.6.0', root=self.root)
+        self.assertEqual([('2.0.1', '1.6.0'), ('2.0.5', '1.6.0')], self.coordinates())
+
+    def test_core_release_with_the_same_gate_keeps_older_floors(self):
+        self.core(version='1.6.0', generation=7)
+        self.assertEqual([], self.check())
+        extensions.settle('1.6.0', root=self.root)
+        self.assertEqual([('2.0.0', '1.5.0')] * 2, self.coordinates())
+
+    def test_unknown_floor_and_unreadable_remote_fail(self):
+        self.edit(self.rows[0], version='2.0.5', floor='9.9.9')
+        self.assertRegex(self.check()[0], r'core floor 9\.9\.9 does not set UNITY_MCP_DEPS_7')
+        with self.assertRaisesRegex(ValueError, 'git ls-remote failed'):
+            self.check(remote='missing')
+
+    def test_shallow_ci_checkout_without_tags_reads_the_remote(self):
+        clone = Path(self.temp.name) / 'ci'
+        self.git('clone', '--quiet', '--depth', '1', '--no-tags', self.origin.as_uri(), str(clone), cwd=self.temp.name)
+        self.assertEqual([], extensions.check_published(clone, strict=True))
+        self.touch(self.rows[0], clone)
+        self.assertEqual(1, len(extensions.check_published(clone)))
 
 
 class ReleaseArtifactTests(unittest.TestCase):

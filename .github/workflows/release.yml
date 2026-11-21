@@ -353,6 +353,10 @@ jobs:
           python-version: "3.x"
       - name: Check NuGet pins against the asmdef gate generation
         run: python .github/scripts/check_nuget_gate.py
+      # A core release that moves the gate leaves every published extension skipped by Unity until it is
+      # re-released against this core: refuse the release while the extensions are not settled for it.
+      - name: Check extensions against their published versions
+        run: python commands/extensions.py check-published
 
   engine-free-tests:
     name: engine-free tests (.NET 8)

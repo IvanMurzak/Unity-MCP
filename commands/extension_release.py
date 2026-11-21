@@ -13,7 +13,7 @@ import subprocess
 import tarfile
 import urllib.request
 
-from extensions import ROOT, read, validate
+from extensions import ROOT, check_published, read, validate
 
 SLUG = 'IvanMurzak/Unity-MCP'
 
@@ -244,6 +244,11 @@ def main():
     args = parser.parse_args()
     rows = selected(args.only)
     if args.command in ('routes', 'publish'):
+        # A component published against a core floor with another NuGet gate generation is skipped by Unity
+        # without an error in every project that installs it.
+        problems = check_published(strict=True, only={row['name'] for row in rows})
+        if problems:
+            raise ValueError('Refusing to publish: ' + '; '.join(problems))
         validate_routes(rows)
         if args.command == 'routes':
             print('OpenUPM component and core routes verified')

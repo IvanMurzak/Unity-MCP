@@ -142,6 +142,10 @@ jobs:
         run: |
           python commands/extensions.py validate
           python -m unittest discover -s commands/tests -v
+      # A published component version is immutable and its assemblies are gated on one NuGet gate generation:
+      # changed files need a new version, and its core floor must be a core that sets that generation.
+      - name: Check extensions against their published versions
+        run: python commands/extensions.py check-published
       - name: Test the docs-only gate
         run: node --test .github/scripts/docs-only.test.mjs
 
