@@ -15,6 +15,7 @@ CORE = 'com.ivanmurzak.unity.mcp'
 CORE_PACKAGE = 'Unity-MCP-Plugin/Packages/' + CORE
 NUGET_CONFIG = CORE_PACKAGE + '/Editor/DependencyResolver/NuGetConfig.cs'
 GENERATION_RE = r'public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix \+ "(\d+)";'
+VERSION_RE = r'\d+\.\d+\.\d+'
 
 
 def read(path):
@@ -283,7 +284,7 @@ def set_core_floor(row, core_version, root=ROOT):
 
 
 def sync_core(core_version, only='all', policy='patch', dry_run=False, root=ROOT):
-    if not re.fullmatch(r'\d+\.\d+\.\d+', core_version):
+    if not re.fullmatch(VERSION_RE, core_version):
         raise ValueError('Expected a stable core dependency version')
     selector = only.removeprefix('Unity-AI-')
     rows = [row for row in inventory(root) if selector in ('all', row['name'], row['packageId'])]
@@ -302,8 +303,8 @@ def sync_core(core_version, only='all', policy='patch', dry_run=False, root=ROOT
             bump(row['name'], version, root)
 
 
-def git(root, *args):
-    result = subprocess.run(['git', *args], cwd=root, text=True, encoding='utf-8',
+def git(root, *args, stdin=None):
+    result = subprocess.run(['git', *args], cwd=root, text=True, encoding='utf-8', input=stdin,
                             stdout=subprocess.PIPE, stderr=subprocess.PIPE)
     if result.returncode:
         raise ValueError(f'git {args[0]} failed: {result.stderr.strip()[:300]}')
@@ -330,11 +331,14 @@ class Published:
         listed = git(root, 'ls-remote', '--tags', remote, *sorted('refs/tags/' + tag for tag in tags))
         self.shas = {ref.removeprefix('refs/tags/'): sha for sha, ref in map(str.split, listed.splitlines())}
         self.gates = {}
-        if self.shas:
-            # A CI checkout is shallow and has no tags: fetch what is read here (a full clone stays full).
+        # A CI checkout is shallow and has no tags: fetch the releases it lacks (a full clone stays full).
+        tags = sorted(self.shas)
+        present = git(root, 'cat-file', '--batch-check', stdin=''.join(self.shas[tag] + '^{tree}\n' for tag in tags))
+        absent = [tag for tag, line in zip(tags, present.splitlines()) if line.endswith(' missing')]
+        if absent:
             shallow = git(root, 'rev-parse', '--is-shallow-repository').strip() == 'true'
             git(root, 'fetch', '--no-tags', *(['--depth', '1'] if shallow else []), remote,
-                *sorted('refs/tags/' + tag for tag in self.shas))
+                *('refs/tags/' + tag for tag in absent))
 
     def changed(self, row):
         """Files of this component's published version that differ here (none: unpublished or unchanged)."""
@@ -350,7 +354,10 @@ class Published:
         if floor not in self.shas:
             return floor == self.core_version
         if floor not in self.gates:
-            self.gates[floor] = gate_generation(git(self.root, 'show', f'{self.shas[floor]}:{NUGET_CONFIG}'))
+            sha = self.shas[floor]
+            # A core older than the resolver has no NuGetConfig.cs, hence no generation.
+            exists = git(self.root, 'ls-tree', '--name-only', sha, '--', NUGET_CONFIG).strip()
+            self.gates[floor] = gate_generation(git(self.root, 'show', f'{sha}:{NUGET_CONFIG}')) if exists else None
         return self.gates[floor] == self.generation
 
     def gate_moved_since_release(self):
@@ -369,9 +376,12 @@ def check_published(root=ROOT, strict=False, only=None, remote='origin'):
         if changed:
             problems.append(f'{row["name"]} {row["version"]} is published, but {len(changed)} of its files changed '
                             f'since (e.g. {changed[0]}): the change reaches nobody until the version moves')
-        if strict and row['floor'] not in state.shas:
+        version = re.fullmatch(VERSION_RE, row['floor'])
+        released = version and row['floor'] in state.shas
+        if strict and not released:
             problems.append(f'{row["name"]}: core floor {row["floor"]} is not a released core version')
-        elif not deferred and not state.floor_sets_gate(row['floor']):
+        # Deferred only for a released core: until the next core release no version can replace it.
+        elif not version or (not state.floor_sets_gate(row['floor']) and not (deferred and released)):
             problems.append(f'{row["name"]}: core floor {row["floor"]} does not set UNITY_MCP_DEPS_{state.generation}, '
                             'which its assemblies require: on that core Unity skips them without an error')
     if deferred and not problems:
@@ -384,6 +394,8 @@ def settle(core_version=None, root=ROOT, dry_run=False, remote='origin'):
     """Make every component publishable again. A core floor that does not set the current gate generation
     moves to `core_version` (the core release that ships it); a published version whose files changed gets
     a patch bump."""
+    if core_version and not re.fullmatch(VERSION_RE, core_version):
+        raise ValueError('Expected a stable core dependency version')
     state = Published(root, remote, core=core_version)
     if core_version and not state.floor_sets_gate(core_version):
         raise ValueError(f'Core {core_version} does not ship UNITY_MCP_DEPS_{state.generation}: expected a release '
@@ -401,6 +413,10 @@ def settle(core_version=None, root=ROOT, dry_run=False, remote='origin'):
                 print(f'{row["name"]}: {row["version"]} -> {version}')
             else:
                 bump(row['name'], version, root)
+    waiting = [row['name'] for row in state.rows if not core_version and not state.floor_sets_gate(row['floor'])]
+    if waiting:
+        print(f'Note: core floors left as they are ({", ".join(waiting)}): pass --core-version <the core release '
+              f'that ships UNITY_MCP_DEPS_{state.generation}>')
 
 
 def main():

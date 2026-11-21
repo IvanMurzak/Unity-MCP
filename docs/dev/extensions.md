@@ -134,7 +134,9 @@ tags of the remote and fails when:
 
 - a file of a published version (package or installer) differs from that release: the version must move;
 - a module's core floor is a core release with another generation. While the generation has moved
-  but no core release ships it yet, this is only a note: the floor cannot be named before that release.
+  but no core release ships it yet, this part is only a note: the floor cannot be named before that
+  release. (The change that moves the generation rewrites every module's asmdefs, so it still needs
+  `settle` for the new module versions.)
 
 It runs on every pull request and in the core release. Before a publication the check is strict:
 the floor must be a released core with the same generation, so a module is never published ahead
