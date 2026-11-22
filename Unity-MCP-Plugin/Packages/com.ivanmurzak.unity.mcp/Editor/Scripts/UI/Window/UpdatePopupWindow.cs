@@ -194,7 +194,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             // The installed extensions move in the same request as the plugin: a new extension version may need
             // the new plugin, so the two must resolve together.
-            _extensionSpecs = await UpdateChecker.GetInstalledExtensionUpdateSpecsAsync(MainWindowEditor.ExtensionCatalog);
+            _extensionSpecs = await UpdateChecker.GetInstalledExtensionUpdateSpecsAsync(MainWindowEditor.ExtensionCatalog, latestVersion);
             if (this == null)
                 return; // The window was closed while the versions were being fetched.
 

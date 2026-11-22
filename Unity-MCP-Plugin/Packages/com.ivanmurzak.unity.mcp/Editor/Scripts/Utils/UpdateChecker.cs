@@ -320,10 +320,30 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </remarks>
         internal static async Task<string?> FetchLatestVersionAsync(string packageId)
         {
+            var json = await FetchRegistryDocumentAsync(packageId);
+            return json == null ? null : ParseLatestVersionFromJson(json);
+        }
+
+        /// <summary>
+        /// The newest published version of an extension that works with the installed plugin (its plugin
+        /// floor is not above it), or <c>null</c> when none is known. Not <c>dist-tags.latest</c>: that one
+        /// may be built for a newer plugin, and Unity skips such an extension without an error.
+        /// </summary>
+        internal static async Task<string?> FetchExtensionVersionAsync(string packageId)
+        {
+            var json = await FetchRegistryDocumentAsync(packageId);
+            return json == null ? null : ExtensionCompatibility.HighestVersionFor(json, PackageId, UnityMcpPlugin.Version);
+        }
+
+        /// <summary>
+        /// The OpenUPM registry document of a package (every published version with its dependencies),
+        /// or <c>null</c> on any network failure.
+        /// </summary>
+        internal static async Task<string?> FetchRegistryDocumentAsync(string packageId)
+        {
             try
             {
-                var json = await HttpClient.GetStringAsync(OpenUpmRegistryUrl + packageId);
-                return ParseLatestVersionFromJson(json);
+                return await HttpClient.GetStringAsync(OpenUpmRegistryUrl + packageId);
             }
             catch (HttpRequestException ex)
             {
@@ -339,21 +359,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                // ParseLatestVersionFromJson swallows JsonException internally, so anything
-                // reaching here is an unexpected transport / URI / IO failure rather than a
-                // parse error — message must reflect that.
+                // Nothing is parsed here, so anything reaching this is an unexpected
+                // transport / URI / IO failure — the message must reflect that.
                 logger?.LogWarning(ex, "Unexpected error during OpenUPM update check");
                 return null;
             }
         }
 
         /// <summary>
-        /// Package specs ("id@version") that bring the installed extensions to their latest versions, for the plugin
-        /// update to apply in the same request. Only registry installs qualify, so a <c>file:</c> or git checkout an
+        /// Package specs ("id@version") that bring the installed extensions to their newest versions for plugin
+        /// <paramref name="pluginVersion"/> (the one being installed), for the plugin update to apply in the same request.
+        /// Not their latest versions: one published after the popup opened may need a newer plugin than it installs. Only registry installs qualify, so a <c>file:</c> or git checkout an
         /// extension is being developed from is never silently replaced. Best effort: it must never block the plugin
         /// update itself, so an extension whose version is unknown is skipped.
         /// </summary>
-        internal static async Task<string[]> GetInstalledExtensionUpdateSpecsAsync(IEnumerable<ExtensionPanel.ExtensionData> catalog)
+        internal static async Task<string[]> GetInstalledExtensionUpdateSpecsAsync(IEnumerable<ExtensionPanel.ExtensionData> catalog, string pluginVersion)
         {
             try
             {
@@ -362,11 +382,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     .Where(data => installed.TryGetValue(data.PackageId, out var package) && package.source == PackageSource.Registry)
                     .Select(data => installed[data.PackageId])
                     .ToArray();
-                var latest = await Task.WhenAll(packages.Select(package => FetchLatestVersionAsync(package.name)));
+                var documents = await Task.WhenAll(packages.Select(package => FetchRegistryDocumentAsync(package.name)));
+                var targets = documents.Select(json => json == null ? null : ExtensionCompatibility.HighestVersionFor(json, PackageId, pluginVersion)).ToArray();
 
                 var manifest = JsonNode.Parse(File.ReadAllText(ExtensionPanel.ManifestPath))?.AsObject();
                 return BuildExtensionUpdateSpecs(
-                    packages.Select((package, i) => (package.name, package.version, latest[i])),
+                    packages.Select((package, i) => (package.name, package.version, targets[i])),
                     manifest?["dependencies"]?.AsObject(),
                     Application.unityVersion);
             }
@@ -378,19 +399,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Extensions behind their latest version plus the Unity package floors those need.
+        /// Extensions behind their target version plus the Unity package floors those need.
         /// </summary>
         internal static string[] BuildExtensionUpdateSpecs(
-            IEnumerable<(string PackageId, string InstalledVersion, string? LatestVersion)> extensions,
+            IEnumerable<(string PackageId, string InstalledVersion, string? TargetVersion)> extensions,
             JsonObject? dependencies,
             string unityVersion)
         {
             return extensions
-                .Where(extension => extension.LatestVersion != null && IsNewerVersion(extension.LatestVersion, extension.InstalledVersion))
+                .Where(extension => extension.TargetVersion != null && IsNewerVersion(extension.TargetVersion, extension.InstalledVersion))
                 .SelectMany(extension => ExtensionPanel
                     .MissingCompatibilityDependencies(extension.PackageId, dependencies, unityVersion)
                     .Select(required => $"{required.Key}@{required.Value}")
-                    .Prepend($"{extension.PackageId}@{extension.LatestVersion}"))
+                    .Prepend($"{extension.PackageId}@{extension.TargetVersion}"))
                 .Distinct()
                 .ToArray();
         }

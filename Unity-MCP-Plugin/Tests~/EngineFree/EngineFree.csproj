@@ -76,6 +76,10 @@
     <!-- Cache-path derivation only (Path.Combine over NuGetConfig.CachePath). The tests never call
          EnsureCacheDirectory — it writes to the process working directory. -->
     <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\DependencyResolver\NuGetCache.cs" Link="Source\NuGetCache.cs" />
+    <!-- The rule behind the startup extension update: which installed extension is gated on another
+         generation (dead in this plugin) and which published version is built for it. Pure BCL +
+         System.Text.Json; the Unity glue around it is Editor/Scripts/Utils/ExtensionAutoUpdater.cs. -->
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\Scripts\Utils\ExtensionCompatibility.cs" Link="Source\ExtensionCompatibility.cs" />
 
     <!-- ── (b) Connection configuration: the cloud authorization-server side ───────────────────────
          The device-authorization client is where the plugin's Cloud-mode connection is CONFIGURED:

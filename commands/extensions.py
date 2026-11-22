@@ -23,7 +23,11 @@ def read(path):
 
 
 def write(path, value):
-    Path(path).write_text(json.dumps(value, indent=2) + '\n', encoding='utf-8')
+    # In the newline style the file already has: /extensions/** is `-text` in .gitattributes, so its bytes
+    # are committed as written and a host-dependent newline would rewrite every line of a CRLF file on Linux.
+    path = Path(path)
+    newline = '\r\n' if path.is_file() and b'\r\n' in path.read_bytes() else '\n'
+    path.write_bytes((json.dumps(value, indent=2) + '\n').replace('\n', newline).encode('utf-8'))
 
 
 def dependency_floor(prior, version):
@@ -167,9 +171,9 @@ def bump(name, version, root=ROOT):
         installer[0].write_bytes(source)
         readme = module / 'README.md'
         if readme.is_file():
-            text = readme.read_text(encoding='utf-8')
-            text = text.replace(row['packageId'] + '%2F' + previous, row['packageId'] + '%2F' + version)
-            readme.write_text(text, encoding='utf-8')
+            # As bytes: every other byte of the file, newlines included, stays as it is.
+            readme.write_bytes(readme.read_bytes().replace(f'{row["packageId"]}%2F{previous}'.encode(),
+                                                           f'{row["packageId"]}%2F{version}'.encode()))
         print(f'{row["name"]}: {previous} -> {version}')
 
 

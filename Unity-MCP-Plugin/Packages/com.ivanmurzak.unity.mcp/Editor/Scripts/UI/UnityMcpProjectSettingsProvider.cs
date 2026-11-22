@@ -43,7 +43,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                         "Disable update notifications for the entire team",
                         "Stored in ProjectSettings/ and shared with everyone who clones this project. " +
                         "When enabled, the update popup is suppressed for every team member, regardless " +
-                        "of their per-user 'Do not show again' state."),
+                        "of their per-user 'Do not show again' state, and extensions built for another plugin " +
+                        "version are reported in the Console instead of being updated automatically."),
                     UpdateChecker.IsDisabledForProject);
                 if (EditorGUI.EndChangeCheck())
                     UpdateChecker.IsDisabledForProject = newValue;

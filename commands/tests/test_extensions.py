@@ -92,6 +92,25 @@ class PackageBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError, 'Duplicate Unity GUID'):
             extensions.validate(self.root)
 
+    def test_bump_keeps_the_newline_style_of_every_file_it_rewrites(self):
+        # Both styles: the host's own newline hides one of them.
+        row = self.rows[0]
+        package = self.root / row['package'] / 'package.json'
+        readme = package.parents[2] / 'README.md'
+        version = extensions.read(package)['version']
+        readme.write_bytes(f'# Module\nlink {row["packageId"]}%2F{version}/file\n'.encode())
+        for newline in (b'\n', b'\r\n'):
+            for path in (package, readme):
+                path.write_bytes(path.read_bytes().replace(b'\r\n', b'\n').replace(b'\n', newline))
+            lines = package.read_bytes().count(b'\n')
+            version = extensions.next_version(version)
+            extensions.bump(row['name'], version, self.root)
+            for path in (package, readme):
+                content = path.read_bytes()
+                self.assertIn(version.encode(), content)
+                self.assertEqual(content.count(b'\r\n'), content.count(b'\n') if newline == b'\r\n' else 0, path.name)
+            self.assertEqual(lines, package.read_bytes().count(b'\n'))
+
     def test_sync_core_is_selected_local_idempotent_and_dry_run_writes_nothing(self):
         path = self.root / self.rows[0]['package'] / 'package.json'
         untouched = self.root / self.rows[1]['package'] / 'package.json'
