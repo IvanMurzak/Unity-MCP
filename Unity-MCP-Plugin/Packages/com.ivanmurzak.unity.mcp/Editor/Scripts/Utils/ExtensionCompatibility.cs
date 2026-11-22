@@ -253,7 +253,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     && times.ValueKind == JsonValueKind.Object
                     && times.TryGetProperty(version, out var time)
                     && time.ValueKind == JsonValueKind.String
-                    && DateTime.TryParse(time.GetString(), CultureInfo.InvariantCulture, DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var published)
+                    && DateTime.TryParse(time.GetString(), CultureInfo.InvariantCulture,
+                        DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var published)
                     && utcNow - published < window;
             }
             catch (JsonException)

@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         // The extensions of a plugin release are published after the plugin (they depend on it), usually
         // within the hour. The notification waits for them at most this long: a release whose extensions
         // never come out must still reach its users.
-        internal static readonly TimeSpan ExtensionsWait = TimeSpan.FromHours(24);
+        private static readonly TimeSpan ExtensionsWait = TimeSpan.FromHours(24);
 
         /// <summary>
         /// Deterministic 32-bit FNV-1a hash of a UTF-16 string. Stable across .NET runtimes
@@ -288,8 +288,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var currentVersion = UnityMcpPlugin.Version;
                 if (IsNewerVersion(fetched!, currentVersion))
                 {
-                    // Updating before the installed extensions have their versions for that plugin leaves them
-                    // skipped until those are out, so the notification waits. A check the user asked for does not.
+                    // A check the user asked for does not wait.
                     if (!forceCheck && await AwaitsExtensionsAsync(document!, fetched!))
                     {
                         logger?.LogDebug("Version {version} is published; its notification waits for the versions of the installed extensions.", fetched);
@@ -333,28 +332,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             {
                 if (!ExtensionCompatibility.PublishedWithin(pluginDocument, pluginVersion, DateTime.UtcNow, ExtensionsWait))
                     return false;
-                var packages = await InstalledRegistryExtensionsAsync(MainWindowEditor.ExtensionCatalog);
-                var documents = await Task.WhenAll(packages.Select(package => FetchRegistryDocumentAsync(package.name)));
-                return documents.Any(json => json == null || ExtensionCompatibility.VersionFor(json, PackageId, pluginVersion) == null);
+                var extensions = await InstalledExtensionTargetsAsync(MainWindowEditor.ExtensionCatalog, pluginVersion);
+                return extensions.Any(extension => extension.TargetVersion == null);
             }
             catch (Exception ex)
             {
-                // Not knowing must not hide a release.
+                // Package Manager could not list the packages: show the release.
                 logger?.LogWarning(ex, "Failed to look up the installed extensions for the update check");
                 return false;
             }
         }
 
         /// <summary>
-        /// The catalogue extensions installed from the registry. A <c>file:</c> or git checkout an extension is
-        /// being developed from is not one: no update replaces it and none waits for it.
+        /// The catalogue extensions installed from the registry, each with its published version for plugin
+        /// <paramref name="pluginVersion"/> (null: none, or not known). A <c>file:</c> or git checkout an extension
+        /// is being developed from is not one: no update replaces it and none waits for it.
         /// </summary>
-        private static async Task<UnityEditor.PackageManager.PackageInfo[]> InstalledRegistryExtensionsAsync(IEnumerable<ExtensionPanel.ExtensionData> catalog)
+        private static async Task<(string PackageId, string InstalledVersion, string? TargetVersion)[]> InstalledExtensionTargetsAsync(
+            IEnumerable<ExtensionPanel.ExtensionData> catalog, string pluginVersion)
         {
             var installed = await PackageUtils.ListInstalledAsync();
-            return catalog
+            var packages = catalog
                 .Where(data => installed.TryGetValue(data.PackageId, out var package) && package.source == PackageSource.Registry)
                 .Select(data => installed[data.PackageId])
+                .ToArray();
+            var documents = await Task.WhenAll(packages.Select(package => FetchRegistryDocumentAsync(package.name)));
+            return packages
+                .Select((package, i) => (package.name, package.version, documents[i] == null ? null : ExtensionCompatibility.VersionFor(documents[i]!, PackageId, pluginVersion)))
                 .ToArray();
         }
 
@@ -383,10 +387,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// The OpenUPM registry document of a package (every published version with its dependencies),
         /// or <c>null</c> on any network failure.
         /// </summary>
-        /// <remarks>
-        /// The npm-style registry endpoint <c>https://package.openupm.com/{packageId}</c>: its
-        /// <c>dist-tags.latest</c> is the version currently installable via Unity Package Manager.
-        /// </remarks>
         internal static async Task<string?> FetchRegistryDocumentAsync(string packageId)
         {
             try
@@ -427,13 +427,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         {
             try
             {
-                var packages = await InstalledRegistryExtensionsAsync(catalog);
-                var documents = await Task.WhenAll(packages.Select(package => FetchRegistryDocumentAsync(package.name)));
-                var targets = documents.Select(json => json == null ? null : ExtensionCompatibility.VersionFor(json, PackageId, pluginVersion)).ToArray();
-
+                var extensions = await InstalledExtensionTargetsAsync(catalog, pluginVersion);
                 var manifest = JsonNode.Parse(File.ReadAllText(ExtensionPanel.ManifestPath))?.AsObject();
                 return BuildExtensionUpdateSpecs(
-                    packages.Select((package, i) => (package.name, package.version, targets[i])),
+                    extensions,
                     manifest?["dependencies"]?.AsObject(),
                     Application.unityVersion);
             }
