@@ -174,16 +174,15 @@ highest version anything in the project requires, the manifest's own entry inclu
 2022.3.62f3: a manifest with plugin 1.12.0 and an extension that depends on plugin 1.13.0 runs
 plugin 1.13.0, and the manifest entry stays 1.12.0). So:
 
-- an extension is never installed beside an older plugin than the one it names: installing or
-  updating one extension to a version built for a newer plugin upgrades the plugin with it, without
-  the plugin's own update steps. The other installed extensions are then the ones built for another
-  plugin: Unity skips them until the startup check moves them (one published before the pairing is
-  not skipped and breaks the compile when the upgrade also moves the gate generation);
+- installing or updating one extension to a version built for a newer plugin upgrades the plugin
+  with it, without the plugin's own update steps. The other installed extensions were built for the
+  previous plugin: they are the ones the startup check then moves;
 - lowering the plugin entry in the manifest does nothing while an installed extension names a newer
   plugin;
-- the plugin (`UnityMcpPlugin.Version`) knows the version that runs; the CLI reads the manifest
-  entry. `unity-mcp-cli update` moves every installed extension to its version for that entry, an
-  older one too, which is what makes the entry true again.
+- the plugin knows the version that runs (`UnityMcpPlugin.Version`). The CLI works it out the same
+  way Unity does (`runningPluginRelease`): the highest of the manifest entry and the plugin versions
+  the installed extensions name, read from OpenUPM for the extensions it looks up and from
+  `Packages/packages-lock.json` for the rest. It never moves an extension below that release.
 
 | The plugin changes through | The extensions |
 |---|---|
@@ -195,8 +194,11 @@ plugin 1.13.0, and the manifest entry stays 1.12.0). So:
 An extension published before the pairing (2.1.2 and older) is not skipped on its own. The CLI
 covers it: a change of the plugin version removes `UNITY_MCP_READY` from the project's scripting
 defines (`closePluginGate`, as the plugin's own update does), so nothing built on the plugin compiles
-before the new plugin has restored its dependencies. Only a hand edit of the manifest can still
-compile such an extension without the plugin.
+before the new plugin has restored its dependencies. What can still compile such an extension
+without the plugin is a plugin change that goes around both updaters: a hand edit of the manifest,
+or one extension moved to a version built for a newer plugin (Package Manager, the Extensions
+section of plugin 1.13.0 and older, `--extension-version`) when that plugin also moves the gate
+generation.
 
 The version built for a plugin is the highest published one whose dependency on the plugin names
 exactly that plugin version (`ExtensionCompatibility.VersionFor`; `extensionVersionForPlugin` in the

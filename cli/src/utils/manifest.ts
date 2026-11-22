@@ -121,6 +121,45 @@ export function pluginRelease(spec: string): string | null {
 }
 
 /**
+ * The plugin release a project runs. Unity resolves a package to the highest version anything in the project
+ * requires, the manifest's own entry included: with plugin 1.12.0 in the manifest and an installed extension that
+ * names plugin 1.13.0, Unity runs 1.13.0 and the entry stays as it was. So it is the highest of the manifest entry
+ * and the plugin versions the installed extensions name (`named`: unreadable ones are skipped). Null when the
+ * manifest's plugin is a local source (`file:`, git: that one runs, whatever its version) or nothing names a release.
+ */
+export function runningPluginRelease(entry: string | undefined, named: Iterable<string | null | undefined>): string | null {
+  if (entry !== undefined && isNonSemverSpec(entry)) return null;
+  let running = pluginRelease(entry ?? '');
+  for (const spec of named) {
+    const release = pluginRelease(spec ?? '');
+    if (release !== null && (running === null || isNewerVersion(running, release))) running = release;
+  }
+  return running;
+}
+
+/**
+ * The plugin version each installed package names, by package id, as Unity recorded it in
+ * `Packages/packages-lock.json`: no network. Only for a package the lock holds at the very version the manifest
+ * asks for (a version's dependencies never change; an entry the manifest has moved past says nothing). Empty
+ * when there is no readable lock, as in a project Unity has not opened yet.
+ */
+export function lockedPluginVersions(projectPath: string, dependencies: Record<string, string>): Map<string, string> {
+  const named = new Map<string, string>();
+  try {
+    const lock = JSON.parse(fs.readFileSync(path.join(projectPath, 'Packages', 'packages-lock.json'), 'utf-8')) as {
+      dependencies?: Record<string, { version?: string; dependencies?: Record<string, string> } | undefined>;
+    };
+    for (const [packageId, entry] of Object.entries(lock.dependencies ?? {})) {
+      const plugin = entry?.dependencies?.[PLUGIN_PACKAGE_ID];
+      if (typeof plugin === 'string' && entry?.version === dependencies[packageId]) named.set(packageId, plugin);
+    }
+  } catch {
+    // No lock, or not JSON: nothing is known offline.
+  }
+  return named;
+}
+
+/**
  * The highest published stable version of an extension built for plugin release `plugin`: the one whose
  * dependency on the plugin names exactly that version. An extension works with exactly one plugin release
  * (its assemblies name it), so any other version is skipped by Unity without an error.
@@ -150,19 +189,6 @@ export interface PublishedExtension {
 export async function fetchPublishedExtension(packageId: string, versionFlag = '--extension-version'): Promise<PublishedExtension> {
   return readRegistryDocument(packageId, versionFlag, 'read the published versions of', (document) =>
     document.versions ? { latest: document['dist-tags']?.latest || null, versions: document.versions } : undefined);
-}
-
-/**
- * Resolve, from OpenUPM, the version of an extension built for plugin release `plugin` (see
- * {@link extensionVersionForPlugin}); null when none is published (yet). Throws like
- * {@link resolveLatestPackageVersion} when the registry cannot be read.
- */
-export async function resolveExtensionVersionForPlugin(
-  packageId: string,
-  plugin: string,
-  versionFlag = '--extension-version',
-): Promise<string | null> {
-  return extensionVersionForPlugin((await fetchPublishedExtension(packageId, versionFlag)).versions, plugin);
 }
 
 const READY_DEFINE = 'UNITY_MCP_READY';

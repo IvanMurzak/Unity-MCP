@@ -52,7 +52,7 @@ artifacts**; either test fails until all three agree.
 
 No entry pins an extension version. Every extension resolves, **live at install time**, the version
 OpenUPM publishes for the plugin release the project has (an extension works with exactly one plugin
-release) — the CLI via `resolveExtensionVersionForPlugin` in `cli/src/utils/manifest.ts`, the editor
+release) — the CLI via `extensionVersionForPlugin` in `cli/src/utils/manifest.ts`, the editor
 via `UpdateChecker.FetchExtensionVersionAsync`. A catalogue that pinned versions would go stale on the
 very next extension release: an extension can be released again for the same plugin.
 

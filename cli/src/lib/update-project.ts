@@ -5,9 +5,11 @@ import {
   extensionVersionForPlugin,
   fetchPublishedExtension,
   isNonSemverSpec,
+  lockedPluginVersions,
   PLUGIN_PACKAGE_ID,
   pluginRelease,
   resolveLatestPackageVersion,
+  runningPluginRelease,
   shouldUpdateVersion,
   type PublishedExtension,
 } from '../utils/manifest.js';
@@ -124,8 +126,15 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
       return plugin === null ? extension.latest : extensionVersionForPlugin(extension.versions, plugin);
     };
 
-    // The plugin release the extensions must be built for: the installed one, unless the plugin moves below.
-    let plugin = pluginRelease(pluginSpec ?? '');
+    // The plugin release the extensions must be built for: the one the project runs, unless the plugin moves
+    // below. That is the manifest entry or a newer one an installed extension names: as OpenUPM tells for the
+    // extensions just read, as Unity's lock file tells for the rest.
+    const named = lockedPluginVersions(projectPath, dependencies);
+    for (const [packageId, extension] of publishedOf) {
+      const namedPlugin = extension?.versions[dependencies[packageId]!]?.dependencies?.[PLUGIN_PACKAGE_ID];
+      if (namedPlugin !== undefined) named.set(packageId, namedPlugin);
+    }
+    let plugin = runningPluginRelease(pluginSpec, named.values());
     let pluginItem: ProjectUpdateItem | null = null;
     if (checksPlugin) {
       const from = pluginSpec!;

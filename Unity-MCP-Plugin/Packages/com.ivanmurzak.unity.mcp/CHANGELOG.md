@@ -24,16 +24,19 @@
     versions for that plugin. Extensions installed from `file:` or git are left alone; a failed extension update does not
     block the plugin update.
   - On startup the plugin finds the installed extensions Unity skips (offline, from their asmdefs) and moves each
-    first-party registry install to the version published for the installed plugin, also when that is an older one: the
-    plugin version is the anchor. An extension published before the pairing moves to its paired version. What it does
-    not move is named in a Console warning with what to do (`docs/dev/extensions.md`).
+    first-party registry install to the version published for the plugin that runs. That covers one extension moved to
+    a version built for a newer plugin, too: Unity then runs that newer plugin (it resolves a package to the highest
+    version anything in the project names) and skips the others. An extension published before the pairing moves to its
+    paired version. What it does not move is named in a Console warning with what to do (`docs/dev/extensions.md`).
   - The Extensions section offers the version for the installed plugin (never `latest`). An installed extension that
     Unity skips shows **Update**, or **Inactive** with the reason when no version for this plugin is published.
   - `unity-mcp-cli update` moves the plugin to its latest version and the installed extensions to their versions for it.
     It looks everything up before it writes, and holds a plugin release back while an installed extension has no version
     for it yet (`held`), so the project is never left half-way. `--no-plugin` moves only the extensions.
-    `install-extension` installs the version for the project's plugin release and fails with the reason when none is
-    published. The library's `updateProject` has `noPlugin` and the `unavailable` / `held` statuses.
+    `install-extension` installs the version for the plugin release the project runs and fails with the reason when
+    none is published. Both take that release as Unity does: the highest of the manifest's plugin entry and the plugin
+    versions the installed extensions name. The library's `updateProject` has `noPlugin` and the `unavailable` / `held`
+    statuses.
   - `install-plugin` (and so `update` and the desktop App) removes `UNITY_MCP_READY` from the project's scripting defines
     when it changes the plugin version, as the plugin's own update does: an extension published before the pairing no
     longer compiles without the plugin after such an update.

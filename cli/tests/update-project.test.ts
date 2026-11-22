@@ -83,7 +83,8 @@ describe('updateProject', () => {
     expect(dependenciesOf(root)).toMatchObject({ [PLUGIN]: '1.0.0', [TILEMAP]: '2.0.0' });
   });
 
-  it('an extension built for another plugin release moves to the one for this plugin, down too', async () => {
+  it('an extension built for a newer plugin lifts the project to it: the others follow up, it is not moved down', async () => {
+    // Unity runs the highest plugin anything names (1.9.0), whatever the manifest entry says.
     const root = project({ [PLUGIN]: '1.8.0', [TILEMAP]: '2.2.0', [TIMELINE]: '2.1.1' });
     stubOpenUpm({
       [PLUGIN]: '1.8.0',
@@ -94,9 +95,9 @@ describe('updateProject', () => {
     const result = await updateProject({ unityProjectPath: root });
 
     if (result.kind !== 'success') throw result.error;
-    expect(result.items.map((item) => item.status)).toEqual(['current', 'outdated', 'current']);
-    expect(dependenciesOf(root)).toMatchObject({ [PLUGIN]: '1.8.0', [TILEMAP]: '2.1.1', [TIMELINE]: '2.1.1' });
-    expect(result.warnings.join('\n')).toContain('built for another plugin release');
+    expect(result.items.map((item) => item.status)).toEqual(['current', 'current', 'outdated']);
+    expect(dependenciesOf(root)).toMatchObject({ [PLUGIN]: '1.8.0', [TILEMAP]: '2.2.0', [TIMELINE]: '2.2.0' });
+    expect(result.warnings).toEqual([]);
   });
 
   it('a plugin release whose extensions are not all published yet is held back, and nothing is written', async () => {
