@@ -49,6 +49,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private const string KeyRetryAt = "MCP_ExtensionAutoUpdater_RetryAt";
         private const float RetrySeconds = 30 * 60;
 
+        // While an extension waits for its version to be published, Run stays subscribed and looks
+        // again at this time: a session without a domain reload would otherwise never look again.
+        private static double _lookAgainAt;
+
         /// <summary>An installed extension that should move to another version.</summary>
         private readonly struct Extension
         {
@@ -79,23 +83,33 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         // The update tick, not delayCall: delayCall waits for the editor window to get focus.
         public static void Init() => EditorApplication.update += Run;
 
-        // A headless editor (CI) and a team that turned update notifications off keep their manifest
-        // as it is: they are told what to do instead.
-        private static bool Automatic => !Application.isBatchMode && !UpdateChecker.IsDisabledForProject;
-
-        /// <summary>How an installed package stands with this plugin; read from its asmdefs, no network.</summary>
+        /// <summary>
+        /// How an installed package stands with this plugin; read from its asmdefs, no network. A package
+        /// whose files cannot be read is not judged: one unreadable package must not stop the others.
+        /// </summary>
         internal static ExtensionFit FitOf(PackageInfo package)
-            => string.IsNullOrEmpty(package.resolvedPath) || !Directory.Exists(package.resolvedPath)
-                ? ExtensionFit.Works
-                : ExtensionCompatibility.FitOf(
-                    ExtensionCompatibility.ShippedAsmdefs(package.resolvedPath).Select(File.ReadAllText),
+        {
+            if (string.IsNullOrEmpty(package.resolvedPath) || !Directory.Exists(package.resolvedPath))
+                return ExtensionFit.Works;
+            try
+            {
+                return ExtensionCompatibility.FitOf(
+                    ExtensionCompatibility.ShippedAsmdefs(package.resolvedPath).Select(File.ReadAllText).ToArray(),
                     RecompileGate.DependencyGenerationDefinePrefix,
                     RecompileGate.DependencyGenerationDefine,
                     PluginPackageId,
                     UnityMcpPlugin.Version);
+            }
+            catch (Exception ex) when (ex is IOException || ex is UnauthorizedAccessException)
+            {
+                return ExtensionFit.Works;
+            }
+        }
 
         private static void Run()
         {
+            if (EditorApplication.timeSinceStartup < _lookAgainAt)
+                return;
             // A compile in progress ends in a domain reload that would drop the work started here,
             // and a package change must not start in Play Mode (it reloads the domain). Both are
             // waited for: leaving Play Mode reloads nothing, so no later startup would look again.
@@ -106,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             List<Extension> found;
             try
             {
-                found = FindExtensionsToMove(PackageInfo.GetAllRegisteredPackages(), Automatic);
+                found = FindExtensionsToMove(PackageInfo.GetAllRegisteredPackages());
             }
             catch (Exception ex)
             {
@@ -123,17 +137,26 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 && EditorApplication.timeSinceStartup < SessionState.GetFloat(KeyRetryAt, 0))
                 return;
 
+            if (Application.isBatchMode)
+            {
+                // A headless editor (CI) keeps its manifest as it is and may quit at any moment:
+                // it is told what to do right here, without waiting for the registry.
+                foreach (var extension in found)
+                    Warn(extension, $"Set it to its version for plugin {UnityMcpPlugin.Version} in Packages/manifest.json (`unity-mcp-cli update --no-plugin --no-self` in the project does that).");
+                MarkHandled(state);
+                return;
+            }
+
             _ = UpdateAsync(found, state);
         }
 
         /// <summary>
         /// The installed packages that depend on the plugin and that Unity skips under it, plus the
         /// first-party registry installs that work but are not tied to this plugin release yet (the
-        /// next plugin update would break the compile on them; only where a move is
-        /// <paramref name="automatic"/>: they work, so there is nothing to report). Only a first-party
-        /// extension installed from the package registry can be moved automatically.
+        /// next plugin update would break the compile on them). Only a first-party extension
+        /// installed from the package registry can be moved automatically.
         /// </summary>
-        private static List<Extension> FindExtensionsToMove(IEnumerable<PackageInfo> packages, bool automatic)
+        private static List<Extension> FindExtensionsToMove(IEnumerable<PackageInfo> packages)
         {
             var catalog = MainWindowEditor.ExtensionCatalog.ToDictionary(data => data.PackageId);
             var found = new List<Extension>();
@@ -146,7 +169,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 var fit = FitOf(package);
                 var canAutoUpdate = firstParty && package.source == PackageSource.Registry;
-                if (fit == ExtensionFit.Skipped || (fit == ExtensionFit.Unprotected && canAutoUpdate && automatic))
+                if (fit == ExtensionFit.Skipped || (fit == ExtensionFit.Unprotected && canAutoUpdate))
                     found.Add(new Extension(package.name, firstParty ? data!.Name : package.displayName, package.version,
                         pluginVersion, canAutoUpdate, fit == ExtensionFit.Skipped));
             }
@@ -155,10 +178,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         private static async Task UpdateAsync(IReadOnlyList<Extension> found, string state)
         {
+            var waiting = false;
             try
             {
                 var pluginVersion = UnityMcpPlugin.Version;
-                var automatic = Automatic;
+                // A team that turned update notifications off keeps its manifest as it is: it is
+                // told what to do instead.
+                var automatic = !UpdateChecker.IsDisabledForProject;
 
                 var candidates = found.Where(extension => extension.CanAutoUpdate).ToArray();
                 var documents = await Task.WhenAll(candidates.Select(extension => UpdateChecker.FetchRegistryDocumentAsync(extension.PackageId)));
@@ -185,14 +211,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                         updates.Add((extension.PackageId, extension.Version, target));
                         moves.Add($"{extension.Name} {extension.Version} -> {target}");
                     }
+                    else if (target != null)
+                        Warn(extension, $"Version {target} is built for this plugin: update it in the Extensions section of the AI Game Developer window.");
                     else if (!extension.Skipped)
                         continue; // It works: nothing to report until its version for this plugin can be installed.
-                    else if (documents[i] == null)
-                        Warn(extension, "Its published versions could not be read (no connection?). It is checked again later.");
-                    else if (target == null)
-                        Warn(extension, $"No version built for plugin {pluginVersion} is published. Update the plugin to its latest version; if it already is, the matching extension is still being published and is checked again later.");
                     else
-                        Warn(extension, $"Version {target} is built for this plugin: update it in the Extensions section of the AI Game Developer window.");
+                    {
+                        waiting = true;
+                        Warn(extension, documents[i] == null
+                            ? "Its published versions could not be read (no connection?). It is checked again later."
+                            : $"No other version built for plugin {pluginVersion} is published. Update the plugin to its latest version; if it already is, the matching extension is still being published and is checked again later.");
+                    }
                 }
                 foreach (var extension in found.Where(extension => !extension.CanAutoUpdate))
                     Warn(extension, "It is not a registry install of a first-party extension, so it is left alone: update it where it comes from.");
@@ -210,6 +239,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             // Marked only here, once the state was acted on. A domain reload in the middle drops this
             // task with the old domain, and the next startup must start over rather than find the
             // state already handled.
+            MarkHandled(state);
+            if (waiting)
+            {
+                _lookAgainAt = SessionState.GetFloat(KeyRetryAt, 0);
+                Init();
+            }
+        }
+
+        private static void MarkHandled(string state)
+        {
             SessionState.SetString(KeyHandledState, state);
             SessionState.SetFloat(KeyRetryAt, (float)EditorApplication.timeSinceStartup + RetrySeconds);
         }
@@ -227,10 +266,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         private static void Warn(Extension extension, string whatToDo)
-            => Debug.LogWarning($"{Tag} Extension '{extension.Name}' {extension.Version} ({extension.PackageId}) is built for "
-                + (extension.PluginVersion == null || extension.PluginVersion == UnityMcpPlugin.Version
-                    ? "another build of the plugin"
-                    : $"plugin {extension.PluginVersion}, not for the installed plugin {UnityMcpPlugin.Version}")
-                + $", so Unity does not compile it and its tools are missing. {whatToDo}");
+        {
+            var problem = !extension.Skipped
+                ? "was published before extensions were tied to one plugin release: the next plugin update would compile it without the plugin and break the build"
+                : "is built for "
+                    + (extension.PluginVersion == null || extension.PluginVersion == UnityMcpPlugin.Version
+                        ? "another build of the plugin"
+                        : $"plugin {extension.PluginVersion}, not for the installed plugin {UnityMcpPlugin.Version}")
+                    + ", so Unity does not compile it and its tools are missing";
+            Debug.LogWarning($"{Tag} Extension '{extension.Name}' {extension.Version} ({extension.PackageId}) {problem}. {whatToDo}");
+        }
     }
 }

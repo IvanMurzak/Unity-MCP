@@ -54,7 +54,7 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
 
         [Theory]
         [InlineData("1.13.0")]
-        [InlineData("1.13.0-rc.1")] // a pre-release build of the plugin counts as its release
+        [InlineData("1.13.0+build.7")] // build metadata changes nothing
         public void Extension_built_for_this_plugin_release_works(string plugin)
         {
             Assert.Equal(ExtensionFit.Works, Fit(plugin,
@@ -75,6 +75,7 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         [InlineData("1.13.1")] // a later plugin release, even with the same generation
         [InlineData("1.12.0")]
         [InlineData("2.0.0")]
+        [InlineData("1.13.0-rc.1")] // Unity orders a pre-release below its release: `[1.13.0]` does not hold
         public void Extension_built_for_another_plugin_release_is_skipped(string plugin)
         {
             Assert.Equal(ExtensionFit.Skipped, Fit(plugin,
@@ -101,6 +102,8 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             // An extension older than the gate (or a third-party one) compiles against any plugin.
             Assert.Equal(ExtensionFit.Works, Fit("1.13.0", Asmdef(NuGetConfig.ReadyDefine), "{}", "not json", "[]"));
             Assert.Equal(ExtensionFit.Works, Fit("1.13.0"));
+            // Nor is an optional assembly a package keeps for other plugin versions, outside the gate.
+            Assert.Equal(ExtensionFit.Works, Fit("1.13.0", Paired("[1.0.0,1.5.0)", NuGetConfig.ReadyDefine), Paired("[1.13.0]", NuGetConfig.ReadyDefine, Current)));
         }
 
         [Theory]
@@ -114,11 +117,18 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         [InlineData("[1.2.0,1.3.0)", "1.3.0", false)]
         [InlineData("(1.2.0,1.3.0]", "1.2.0", false)]
         [InlineData("(1.2.0,1.3.0]", "1.3.0", true)]
-        [InlineData(" [1.2, 2) ", "1.9.9", true)]
+        [InlineData("[1.2,2)", "1.9.9", true)]
         [InlineData("[1.2,2)", "2.0.0", false)]
-        [InlineData("nonsense", "1.0.0", true)] // what cannot be read is not judged
-        [InlineData("[1.2.3", "1.0.0", true)]
-        [InlineData("[1.2.3]", "unknown", true)]
+        [InlineData("[1.2.3]", "1.2.3-rc.1", false)] // a pre-release sorts below its release
+        [InlineData("1.2.3", "1.2.3-rc.1", false)]
+        [InlineData("[1.2.0,1.3.0)", "1.3.0-rc.1", true)]
+        [InlineData("[1.2.3]", "1.2.3+build.7", true)]
+        [InlineData(" [1.2, 2) ", "1.9.9", false)] // Unity leaves the define of an expression it cannot read unset
+        [InlineData("(1.2.3)", "1.2.3", false)]
+        [InlineData("nonsense", "1.0.0", false)]
+        [InlineData("[1.2.3", "1.0.0", false)]
+        [InlineData("", "1.0.0", false)]
+        [InlineData("[1.2.3]", "unknown", true)] // a version that cannot be read is not judged
         public void A_version_define_expression_is_read_as_Unity_reads_it(string expression, string version, bool expected)
         {
             Assert.Equal(expected, ExtensionCompatibility.Satisfies(expression, version));
@@ -186,7 +196,7 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         [InlineData("1.6.2", "2.1.1")]
         [InlineData("1.13.5", null)] // a plugin release has its own extension versions: none is published yet
         [InlineData("1.12.0", null)]
-        [InlineData("1.14.0-rc.1", "2.1.4")] // a pre-release build of the plugin counts as its release
+        [InlineData("1.14.0-rc.1", null)] // no extension is built for a pre-release plugin
         [InlineData("1.13.0+build.7", "2.1.3")]
         [InlineData("unknown", null)]
         public void The_version_for_a_plugin_is_the_highest_one_published_for_that_release(string plugin, string? expected)

@@ -107,11 +107,12 @@ unity-mcp-cli update --check       # only report; exit code 2 when something is 
 unity-mcp-cli update --no-self     # leave the CLI as it is
 unity-mcp-cli update --no-project  # update only the CLI
 unity-mcp-cli update --no-extensions
+unity-mcp-cli update --no-plugin
 ```
 
 <div dir="rtl">
 
-خارج أي مشروع، يحدّث واجهة CLI فقط. تُترك التثبيتات من `file:` أو git كما هي ولا يُخفَّض إصدار إضافة MCP أبدًا. كل إضافة تعمل مع إصدار واحد فقط من إضافة MCP، لذلك تنتقل كل إضافة إلى الإصدار المنشور لإضافة MCP في المشروع، حتى لو كان أقدم.
+خارج أي مشروع، يحدّث واجهة CLI فقط. تُترك التثبيتات من `file:` أو git كما هي ولا يُخفَّض إصدار إضافة MCP أبدًا. كل إضافة تعمل مع إصدار واحد فقط من إضافة MCP، لذلك تنتقل كل إضافة إلى الإصدار المنشور لإضافة MCP في المشروع، حتى لو كان أقدم. إصدار إضافة MCP الذي لم تُنشر كل إضافاته بعد يُؤجَّل حتى تُنشر (ويُبلِّغ `--check` عنه كقديم)؛ و`--no-plugin` ينقل الإضافات فقط إلى إصداراتها الخاصة بإضافة MCP المثبّتة. عند تغيير إصدار إضافة MCP يُزال أيضًا `UNITY_MCP_READY` من رموز التعريف البرمجية للمشروع (`ProjectSettings/ProjectSettings.asset`): تعيد إضافة MCP ضبطه بعد جاهزية اعتمادياتها، وحتى ذلك الحين يتخطى Unity كل ما بُني عليها بدلًا من الفشل.
 
 ## `install-extension`
 

@@ -144,15 +144,18 @@ tags of the remote and fails when:
 
 - a file of a published version (package or installer) differs from that release: the version must move;
 - a module's core floor is not the core version of this tree: the modules are tested and published
-  with the core they sit beside;
-- that core is released with another gate generation. While the generation has moved but no core
-  release ships it yet, this part is only a note: the next core release takes the modules along.
-  (The change that moves the generation rewrites every module's asmdefs, so it still needs `settle`
-  for the new module versions.)
+  with the core they sit beside.
 
 It runs on every pull request and in the core release. Before a publication the check is strict:
-the floor must be a released core with the same generation, so a module is never published ahead
-of the core it needs.
+the floor must also be a released core with the same gate generation, so a module is never published
+ahead of the core it needs. While the generation has moved but no core release ships it yet, the
+ordinary check only prints a note: the next core release takes the modules along. (The change that
+moves the generation rewrites every module's asmdefs, so it still needs `settle` for the new module
+versions.)
+
+Publish the modules of a core release before the next core release is prepared: `settle` moves an
+unpublished module version on to the new core (it prints a note), and the previous core then keeps
+only what was published for it before.
 
 `python commands/extensions.py settle [--core-version <core>]` repairs all of it: it writes the
 core floor into the asmdefs, patch-bumps each published module whose files changed and, given the
@@ -169,8 +172,15 @@ installed plugin, also when that is an older one.
 | The plugin changes through | The extensions |
 |---|---|
 | the plugin's update notification | move in the same package request to their versions for the new plugin |
-| `unity-mcp-cli update` | move in the same manifest edit to their versions for the plugin it installs |
-| Package Manager, a manifest edit, a pull, `install-plugin` | are skipped by Unity (never a compile error) and moved by the startup check |
+| `unity-mcp-cli update` (`updateProject`) | move in the same run to their versions for the plugin it installs; a plugin release whose extensions are not all published yet is held back until they are |
+| `install-plugin` (`installPlugin`: the CLI, the desktop App) | are skipped by Unity and moved by the startup check |
+| Package Manager, a manifest edit, a pull | are skipped by Unity (never a compile error) and moved by the startup check |
+
+An extension published before the pairing (2.1.2 and older) is not skipped on its own. The CLI
+covers it: a change of the plugin version removes `UNITY_MCP_READY` from the project's scripting
+defines (`closePluginGate`, as the plugin's own update does), so nothing built on the plugin compiles
+before the new plugin has restored its dependencies. Only a hand edit of the manifest can still
+compile such an extension without the plugin.
 
 The version built for a plugin is the highest published one whose dependency on the plugin names
 exactly that plugin version (`ExtensionCompatibility.VersionFor`; `extensionVersionForPlugin` in the
@@ -182,15 +192,16 @@ compile or Play Mode has ended):
 - It reads the asmdefs of the installed packages that depend on the plugin (no network). An
   extension whose `UNITY_MCP_DEPS_<n>` or core version does not match the plugin is skipped by Unity.
 - A skipped first-party extension installed from the registry moves to the version for this plugin.
-  One with no published version for this plugin yet is checked again at the first domain reload
-  30 minutes later and in the next editor session.
+  One with no published version for this plugin yet is checked again 30 minutes later and in the
+  next editor session.
 - A first-party registry extension that compiles but does not name its core release (published
   before the pairing) moves to the version for this plugin that does: otherwise the next plugin
   update would break the compile on it.
 - Everything it does not move is named in a console warning with what to do: an extension from
-  `file:` or git, a third-party one, one with no published version for this plugin, and every
-  skipped extension in a batch-mode editor or in a project that turned update notifications off for
-  the team.
+  `file:` or git, a third-party one, one with no published version for this plugin, and everything
+  it would move in a project that turned update notifications off for the team. A batch-mode editor
+  moves nothing and asks no registry: it warns at once (`unity-mcp-cli update --no-plugin` moves the
+  extensions to their versions for the installed plugin).
 
 Between a plugin release and its extension release no version for the new plugin exists: an
 extension stays skipped, is reported, and moves once the matching version is published.

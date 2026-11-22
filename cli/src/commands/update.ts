@@ -18,6 +18,7 @@ interface UpdateOptions {
   self?: boolean;
   project?: boolean;
   extensions?: boolean;
+  plugin?: boolean;
 }
 
 function npmCommand(): string {
@@ -42,7 +43,8 @@ function printItem(item: ProjectUpdateItem): void {
     item.status === 'outdated' ? `${item.from} → ${item.to}`
     : item.status === 'local' ? `${item.from} (local install, left as is)`
     : item.status === 'unknown' ? `${item.from} (latest version unknown)`
-    : item.status === 'unavailable' ? `${item.from} (no version for this plugin yet: Unity skips it)`
+    : item.status === 'unavailable' ? `${item.from} (no version for this plugin: it does not work with it)`
+    : item.status === 'held' ? `${item.from} (${item.to} is out; held until its extensions are published)`
     : `${item.from} (up to date)`;
   ui.label(item.name, value);
 }
@@ -55,6 +57,7 @@ async function updateProjectStep(projectPath: string, options: UpdateOptions): P
   const result = await updateProject({
     unityProjectPath: projectPath,
     noExtensions: options.extensions === false,
+    noPlugin: options.plugin === false,
     dryRun: options.check,
     onProgress: (event) => {
       spinner.text = event.message;
@@ -75,9 +78,10 @@ async function updateProjectStep(projectPath: string, options: UpdateOptions): P
   for (const step of result.nextSteps) ui.info(step);
 
   if (result.items.length === 0) ui.info('The MCP plugin is not installed here: nothing to update in this project.');
-  // A version that could not be looked up, or an extension Unity skips, is not "up to date": never report success over it.
+  // A version that could not be looked up, or an extension that does not work, is not "up to date": never report success over it.
   if (result.items.some((item) => item.status === 'unknown' || item.status === 'unavailable')) return 'failed';
-  if (options.check) return outdated.length > 0 ? 'outdated' : 'done';
+  // A held plugin is outdated, and holding it is what the update is meant to do.
+  if (options.check) return outdated.length > 0 || result.items.some((item) => item.status === 'held') ? 'outdated' : 'done';
   return outdated.every((item) => result.updated.includes(item)) ? 'done' : 'failed';
 }
 
@@ -158,6 +162,7 @@ export function createUpdateCommand(currentVersion: string): Command {
     .option('--no-self', `Leave ${PACKAGE_NAME} itself as it is`)
     .option('--no-project', 'Leave the project as it is: update only the CLI')
     .option('--no-extensions', 'Leave the installed extensions as they are')
+    .option('--no-plugin', 'Leave the MCP plugin as it is: only move the installed extensions to their versions for it')
     .action(async (positionalPath: string | undefined, options: UpdateOptions) => {
       const outcomes: Outcome[] = [];
 

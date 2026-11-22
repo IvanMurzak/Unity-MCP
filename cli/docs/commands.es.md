@@ -83,9 +83,10 @@ unity-mcp-cli update --check       # only report; exit code 2 when something is 
 unity-mcp-cli update --no-self     # leave the CLI as it is
 unity-mcp-cli update --no-project  # update only the CLI
 unity-mcp-cli update --no-extensions
+unity-mcp-cli update --no-plugin
 ```
 
-Fuera de un proyecto solo actualiza la CLI. Las instalaciones desde `file:` o git no se tocan y el plugin nunca se baja de versión. Una extensión funciona con una única versión del plugin, así que cada una pasa a la versión publicada para el plugin del proyecto, aunque sea más antigua.
+Fuera de un proyecto solo actualiza la CLI. Las instalaciones desde `file:` o git no se tocan y el plugin nunca se baja de versión. Una extensión funciona con una única versión del plugin, así que cada una pasa a la versión publicada para el plugin del proyecto, aunque sea más antigua. Una versión del plugin cuyas extensiones aún no están todas publicadas se retiene hasta que lo estén (`--check` la indica como desactualizada); `--no-plugin` mueve solo las extensiones, a sus versiones para el plugin instalado. Al cambiar la versión del plugin también se elimina `UNITY_MCP_READY` de los símbolos de compilación del proyecto (`ProjectSettings/ProjectSettings.asset`): el plugin lo vuelve a definir cuando sus dependencias están listas y, hasta entonces, Unity omite, en lugar de fallar, todo lo que depende del plugin.
 
 ## `install-extension`
 

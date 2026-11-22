@@ -198,7 +198,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         {
             _actionBtn.text = "Inactive";
             _actionBtn.tooltip = $"{_data.Name} {installedVersion} is built for another plugin version, so Unity does not compile it and its tools are missing.\n"
-                + $"No version built for plugin {UnityMcpPlugin.Version} could be read from OpenUPM: update the plugin to its latest version, "
+                + $"No other version built for plugin {UnityMcpPlugin.Version} could be read from OpenUPM: update the plugin to its latest version, "
                 + "or, if it already is, wait for the matching extension to be published.";
             _actionBtn.RemoveFromClassList("btn-primary");
             _actionBtn.AddToClassList("btn-secondary");

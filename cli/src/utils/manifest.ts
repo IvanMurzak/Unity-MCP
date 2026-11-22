@@ -58,7 +58,7 @@ export async function resolveLatestPackageVersion(
   logger: LibLogger = silentLogger,
   versionFlag = '--plugin-version',
 ): Promise<string> {
-  const latest = await readRegistryDocument(packageId, versionFlag, (document) => document['dist-tags']?.latest || undefined);
+  const latest = await readRegistryDocument(packageId, versionFlag, 'resolve the latest version of', (document) => document['dist-tags']?.latest || undefined);
   logger.info(`Resolved latest version from OpenUPM: ${latest}`);
   return latest;
 }
@@ -76,6 +76,7 @@ interface RegistryDocument {
 async function readRegistryDocument<T>(
   packageId: string,
   versionFlag: string,
+  what: string,
   pick: (document: RegistryDocument) => T | undefined,
 ): Promise<T> {
   const controller = new AbortController();
@@ -101,7 +102,7 @@ async function readRegistryDocument<T>(
       throw err;
     }
     throw new Error(
-      `Failed to resolve the latest version of ${packageId} from OpenUPM. ` +
+      `Failed to ${what} ${packageId} from OpenUPM. ` +
       `Check your network connection and retry, or specify a version manually with ${versionFlag} <version>`
     );
   } finally {
@@ -110,11 +111,12 @@ async function readRegistryDocument<T>(
 }
 
 /**
- * The plugin release a manifest entry stands for: its `major.minor.patch` (a pre-release build counts as its
- * release), or null for anything else (`file:`, git, a range).
+ * The plugin release a manifest entry stands for: its `major.minor.patch` (build metadata changes nothing), or
+ * null for anything else (`file:`, git, a range, a pre-release: no extension is built for a pre-release plugin,
+ * Unity orders it below its release).
  */
 export function pluginRelease(spec: string): string | null {
-  const match = /^(\d+\.\d+\.\d+)(?:[-+].*)?$/.exec(spec.trim());
+  const match = /^(\d+\.\d+\.\d+)(?:\+.*)?$/.exec(spec.trim());
   return match ? match[1] : null;
 }
 
@@ -135,6 +137,21 @@ export function extensionVersionForPlugin(
   return best;
 }
 
+/** What OpenUPM publishes of an extension: its latest version and every version with its dependencies. */
+export interface PublishedExtension {
+  latest: string | null;
+  versions: NonNullable<RegistryDocument['versions']>;
+}
+
+/**
+ * Read from OpenUPM what is published of an extension. Throws like {@link resolveLatestPackageVersion} when the
+ * registry cannot be read.
+ */
+export async function fetchPublishedExtension(packageId: string, versionFlag = '--extension-version'): Promise<PublishedExtension> {
+  return readRegistryDocument(packageId, versionFlag, 'read the published versions of', (document) =>
+    document.versions ? { latest: document['dist-tags']?.latest || null, versions: document.versions } : undefined);
+}
+
 /**
  * Resolve, from OpenUPM, the version of an extension built for plugin release `plugin` (see
  * {@link extensionVersionForPlugin}); null when none is published (yet). Throws like
@@ -145,8 +162,34 @@ export async function resolveExtensionVersionForPlugin(
   plugin: string,
   versionFlag = '--extension-version',
 ): Promise<string | null> {
-  return readRegistryDocument(packageId, versionFlag, (document) =>
-    document.versions ? extensionVersionForPlugin(document.versions, plugin) : undefined);
+  return extensionVersionForPlugin((await fetchPublishedExtension(packageId, versionFlag)).versions, plugin);
+}
+
+const READY_DEFINE = 'UNITY_MCP_READY';
+
+/**
+ * Remove the plugin's "dependencies are in place" define from the project's scripting defines, as the plugin's
+ * own update does before it swaps its files. The define outlives a plugin change, and until the new plugin has
+ * restored its dependencies it would let Unity compile what is built on the plugin (an extension published
+ * before extensions named their plugin release) while the plugin itself is still skipped: compile errors, Safe
+ * Mode. Without it Unity skips all of it, the plugin restores its dependencies and sets the define again.
+ * Best effort and never throws: an unreadable or binary settings file is left alone. True when the file changed.
+ */
+export function closePluginGate(projectPath: string): boolean {
+  const file = path.join(projectPath, 'ProjectSettings', 'ProjectSettings.asset');
+  try {
+    const before = fs.readFileSync(file, 'utf-8');
+    const after = before.replace(/^(  scriptingDefineSymbols:\r?\n)((?:    .*\r?\n)*)/m, (_match, head: string, block: string) =>
+      head + block.replace(/^(    [^:\r\n]+:)(.*)$/gm, (line: string, key: string, value: string) => {
+        const defines = value.trim().split(';').filter((define) => define !== '');
+        return defines.includes(READY_DEFINE) ? `${key} ${defines.filter((define) => define !== READY_DEFINE).join(';')}` : line;
+      }));
+    if (after === before) return false;
+    fs.writeFileSync(file, after);
+    return true;
+  } catch {
+    return false;
+  }
 }
 
 /** A `file:`, git or URL dependency: a local or pinned source, not a registry version. */

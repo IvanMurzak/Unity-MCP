@@ -93,6 +93,9 @@ def validate(root=ROOT):
     for row in rows:
         package = root / row['package']
         dependencies = read(package / 'package.json')['dependencies']
+        if not re.fullmatch(VERSION_RE, dependencies[CORE]):
+            raise ValueError(f'{row["name"]}: core dependency {dependencies[CORE]} must be one core version: a component '
+                             'works with exactly one core release')
         loose = [path.name for path, _ in unpaired(package, dependencies[CORE])]
         if loose:
             raise ValueError(f'{row["name"]}: {", ".join(loose)} must compile only with core {dependencies[CORE]}, the '
@@ -311,9 +314,16 @@ def paired_with(asmdef, core_version):
     return asmdef
 
 
+def is_paired(asmdef, core_version):
+    """Is the assembly constrained to core `core_version` exactly? Whatever else it lists, in any order."""
+    matches = [entry for entry in asmdef.get('versionDefines', []) if entry.get('define') == CORE_MATCH_DEFINE]
+    return (matches == [{'name': CORE, 'expression': f'[{core_version}]', 'define': CORE_MATCH_DEFINE}]
+            and asmdef.get('defineConstraints', []).count(CORE_MATCH_DEFINE) == 1)
+
+
 def unpaired(package, core_version):
     """The component's assembly definitions not constrained to core `core_version`, each as (path, constrained content)."""
-    return [(path, paired) for path, asmdef in gated_asmdefs(package) if (paired := paired_with(asmdef, core_version)) != asmdef]
+    return [(path, paired_with(asmdef, core_version)) for path, asmdef in gated_asmdefs(package) if not is_paired(asmdef, core_version)]
 
 
 def set_core_floor(row, core_version, root=ROOT):
@@ -451,6 +461,12 @@ def settle(core_version=None, root=ROOT, dry_run=False, remote='origin'):
         bumped = row['tag'] in state.shas and (repair or state.changed(row))
         if refloor:
             print(f'{row["name"]}: core floor {row["floor"]} -> {core_version}')
+            if row['tag'] not in state.shas:
+                # Its version number moves on with it: nothing can be published for the previous core any more.
+                print(f'Note: {row["name"]} {row["version"]} was never published for core {row["floor"]}: that core keeps '
+                      'the component versions published for it before')
+        elif repair:
+            print(f'{row["name"]}: assemblies constrained to core {floor}')
         if repair and not dry_run:
             set_core_floor(row, floor, root)
         if bumped:

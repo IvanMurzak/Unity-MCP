@@ -50,12 +50,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     {
         private static readonly Regex StableVersion = new(@"^\d+\.\d+\.\d+$", RegexOptions.Compiled);
 
-        // A version may carry a pre-release or build suffix (1.14.0-rc.1): such a build of the plugin
-        // stands for its release, so the numeric part is what is compared.
-        private static readonly Regex VersionCore = new(@"^\s*(\d+(?:\.\d+){0,2})(?:[-+].*)?\s*$", RegexOptions.Compiled);
+        // A version as Unity orders package versions: up to three numbers, a pre-release suffix that
+        // sorts it below its release (1.14.0-rc.1 < 1.14.0), build metadata that changes nothing.
+        private static readonly Regex AnyVersion = new(@"^(\d+(?:\.\d+){0,2})(-[^+]+)?(?:\+.*)?$", RegexOptions.Compiled);
 
-        // A plugin release: all three numbers (the CLI's `pluginRelease` reads the same shape).
-        private static readonly Regex Release = new(@"^\s*(\d+\.\d+\.\d+)(?:[-+].*)?\s*$", RegexOptions.Compiled);
+        // A plugin release: all three numbers, no pre-release suffix (the CLI's `pluginRelease` reads the
+        // same shape). No extension is built for a pre-release plugin: Unity's `[1.14.0]` does not hold for it.
+        private static readonly Regex Release = new(@"^(\d+\.\d+\.\d+)(?:\+.*)?$", RegexOptions.Compiled);
 
         /// <summary>
         /// The asmdefs Unity compiles in a consumer project. Test, hidden (<c>~</c>) and dot folders are
@@ -100,10 +101,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     if (generations.Any(define => define != currentDefine))
                         return ExtensionFit.Skipped;
 
+                    // Only an assembly behind the generation gate is the extension itself: a package
+                    // may keep an optional assembly for certain plugin versions.
+                    if (generations.Length == 0)
+                        continue;
                     var pairings = PluginExpressions(root, pluginPackageId, constraints).ToArray();
                     if (pairings.Any(expression => !Satisfies(expression, pluginVersion)))
                         return ExtensionFit.Skipped;
-                    unprotected |= generations.Length > 0 && pairings.Length == 0;
+                    unprotected |= pairings.Length == 0;
                 }
                 catch (JsonException)
                 {
@@ -137,40 +142,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Unity's version-define expression: <c>1.2.3</c> (that version or newer), <c>[1.2.3]</c> (exactly),
-        /// or an interval such as <c>[1.2.0,1.3.0)</c>. An expression that cannot be read is not judged.
+        /// Does Unity set the define of a version-define expression for package version <paramref name="version"/>?
+        /// <c>1.2.3</c> (that version or newer), <c>[1.2.3]</c> (exactly), or an interval such as
+        /// <c>[1.2.0,1.3.0)</c>; a pre-release sorts below its release. Unity leaves the define of an
+        /// expression it cannot read unset (whitespace, <c>(1.2.3)</c>). A version that cannot be read is not judged.
         /// </summary>
         internal static bool Satisfies(string expression, string version)
         {
             if (!TryParse(version, out var actual))
                 return true;
-            expression = expression.Trim();
             if (expression.Length == 0)
-                return true;
+                return false;
 
-            var opens = expression[0] == '[' || expression[0] == '(';
-            var closes = expression[expression.Length - 1] == ']' || expression[expression.Length - 1] == ')';
-            if (!opens && !closes)
-                return !TryParse(expression, out var minimum) || actual >= minimum;
-            if (!opens || !closes)
-                return true;
+            var first = expression[0];
+            var last = expression[expression.Length - 1];
+            if (first != '[' && first != '(' && last != ']' && last != ')')
+                return TryParse(expression, out var minimum) && Compare(actual, minimum) >= 0;
+            if ((first != '[' && first != '(') || (last != ']' && last != ')'))
+                return false;
 
             var bounds = expression.Substring(1, expression.Length - 2).Split(',');
             if (bounds.Length == 1)
-                return !TryParse(bounds[0], out var exact) || actual == exact;
-            if (bounds.Length != 2)
-                return true;
-            if (TryParse(bounds[0], out var lower) && (expression[0] == '[' ? actual < lower : actual <= lower))
+                return first == '[' && last == ']' && TryParse(bounds[0], out var exact) && Compare(actual, exact) == 0;
+            if (bounds.Length != 2 || !TryParse(bounds[0], out var lower) || !TryParse(bounds[1], out var upper))
                 return false;
-            if (TryParse(bounds[1], out var upper) && (expression[expression.Length - 1] == ']' ? actual > upper : actual >= upper))
-                return false;
-            return true;
+            var above = Compare(actual, lower);
+            var below = Compare(upper, actual);
+            return (first == '[' ? above >= 0 : above > 0) && (last == ']' ? below >= 0 : below > 0);
         }
 
-        private static bool TryParse(string text, out Version version)
+        private static int Compare((Version Numbers, bool Prerelease) left, (Version Numbers, bool Prerelease) right)
         {
-            version = new Version(0, 0, 0);
-            var match = VersionCore.Match(text);
+            var numbers = left.Numbers.CompareTo(right.Numbers);
+            return numbers != 0 ? numbers : right.Prerelease.CompareTo(left.Prerelease);
+        }
+
+        private static bool TryParse(string text, out (Version Numbers, bool Prerelease) version)
+        {
+            version = (new Version(0, 0, 0), false);
+            var match = AnyVersion.Match(text);
             if (!match.Success)
                 return false;
             var parts = match.Groups[1].Value.Split('.');
@@ -181,7 +191,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 if (!int.TryParse(parts[i], out numbers[i]))
                     return false;
             }
-            version = new Version(numbers[0], numbers[1], numbers[2]);
+            version = (new Version(numbers[0], numbers[1], numbers[2]), match.Groups[2].Success);
             return true;
         }
 
@@ -193,8 +203,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         internal static string? VersionFor(string registryJson, string pluginPackageId, string pluginVersion)
         {
-            if (!TryParse(Release.Match(pluginVersion).Groups[1].Value, out var plugin))
+            if (!TryParse(Release.Match(pluginVersion).Groups[1].Value, out var release))
                 return null;
+            var plugin = release.Numbers;
             try
             {
                 using var document = JsonDocument.Parse(registryJson);
@@ -215,8 +226,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                         || !TryParse(floorNode.GetString()!, out var floor))
                         continue;
 
-                    if (floor == plugin && (best == null || version > best))
-                        best = version;
+                    if (floor.Numbers == plugin && (best == null || version.Numbers > best))
+                        best = version.Numbers;
                 }
                 return best?.ToString(3);
             }
@@ -234,14 +245,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         internal static string? UpdateTargetFor(string installedVersion, string registryJson, string pluginPackageId, string pluginVersion, bool anyDirection = false)
         {
             var target = VersionFor(registryJson, pluginPackageId, pluginVersion);
-            if (target == null)
+            if (target == null || !TryParse(target, out var published))
                 return null;
-            var published = Version.Parse(target);
-            // An installed version that cannot be ordered (a pre-release) is never "older" than a release.
-            var ordered = Version.TryParse(installedVersion, out var installed);
-            if (ordered && published > installed)
+            // An installed version that cannot be read is never "older" than a release.
+            var ordered = TryParse(installedVersion, out var installed);
+            if (ordered && Compare(published, installed) > 0)
                 return target;
-            return anyDirection && (!ordered || published != installed) ? target : null;
+            return anyDirection && (!ordered || Compare(published, installed) != 0) ? target : null;
         }
     }
 }

@@ -1,4 +1,5 @@
 import * as fs from 'fs';
+import { isNewerVersion } from '@baizor/gamedev-cli-core';
 import {
   EXTENSIONS_CATALOG,
   findExtension,
@@ -7,11 +8,11 @@ import {
 } from '../utils/extensions-catalog.js';
 import {
   addPackageToManifest,
+  isNonSemverSpec,
   PLUGIN_PACKAGE_ID,
   pluginRelease,
   resolveExtensionVersionForPlugin,
   resolveLatestPackageVersion,
-  shouldUpdateVersion,
 } from '../utils/manifest.js';
 import { silentLogger } from './logger.js';
 import { emitProgress } from './progress.js';
@@ -95,21 +96,31 @@ export async function installExtension(
     const plugin = pluginRelease(readInstalledVersion(validated.manifestPath, PLUGIN_PACKAGE_ID) ?? '');
 
     let version: string;
-    let forPlugin = false;
+    // The version for this plugin replaces another registry version, an older one too: only it compiles here.
+    let replaces = false;
     if (hasVersion(descriptor)) {
       // Non-null only for an explicit override or a (currently unused) catalogue pin.
       version = descriptor.version as string;
     } else if (plugin !== null) {
       const matched = await resolveExtensionVersionForPlugin(descriptor.packageId, plugin);
       if (matched === null) {
-        throw new Error(
-          `No version of ${descriptor.packageId} is published for Unity-MCP plugin ${plugin}: an extension works with ` +
-          'exactly one plugin release. Update the plugin first (`unity-mcp-cli update`), or, if it is the latest, retry ' +
-          'once its extensions are published. `--extension-version <version>` installs a specific one.',
-        );
+        return {
+          kind: 'failure',
+          success: false,
+          extensionId,
+          packageId: descriptor.packageId,
+          manifestPath: validated.manifestPath,
+          warnings,
+          nextSteps,
+          error: new Error(
+            `No version of ${descriptor.packageId} is published for Unity-MCP plugin ${plugin}: an extension works with ` +
+            'exactly one plugin release. Update the plugin first, or, if it is the latest, retry once its extensions ' +
+            'are published.',
+          ),
+        };
       }
       version = matched;
-      forPlugin = true;
+      replaces = before !== null && before !== version && !isNonSemverSpec(before);
       emitProgress(opts.onProgress, {
         phase: 'dependencies-resolved',
         message: `Resolved ${descriptor.packageId} for plugin ${plugin}: ${version}`,
@@ -128,21 +139,20 @@ export async function installExtension(
       });
     }
 
-    if (forPlugin && before !== null && shouldUpdateVersion(version, before)) {
-      warnings.push(
-        `${descriptor.packageId} ${before} is built for another plugin release, so Unity skips it under plugin ${plugin}. ` +
-        `It was set to ${version}, the version built for this plugin.`,
-      );
-    }
-
     const result = addPackageToManifest(
       projectPath,
       descriptor.packageId,
       version,
-      // The version for this plugin replaces any other one, an older one too: only it compiles here.
-      isExplicitVersion || forPlugin,
+      isExplicitVersion || replaces,
       silentLogger,
     );
+
+    if (replaces && result.resolvedVersion === version && isNewerVersion(version, before!)) {
+      warnings.push(
+        `${descriptor.packageId} ${before} is built for another plugin release, so it does not work with plugin ${plugin}. ` +
+        `It was set to ${version}, the version built for this plugin.`,
+      );
+    }
 
     // `addPackageToManifest` refuses to downgrade unless `force`; surface that as a
     // warning rather than silently reporting the requested version.

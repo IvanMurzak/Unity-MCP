@@ -83,9 +83,10 @@ unity-mcp-cli update --check       # only report; exit code 2 when something is 
 unity-mcp-cli update --no-self     # leave the CLI as it is
 unity-mcp-cli update --no-project  # update only the CLI
 unity-mcp-cli update --no-extensions
+unity-mcp-cli update --no-plugin
 ```
 
-在项目之外运行时只更新 CLI。通过 `file:` 或 git 安装的包保持不变，并且插件不会被降级。每个扩展只适用于一个插件版本，因此扩展会移动到为项目插件发布的版本，即使那是更旧的版本。
+在项目之外运行时只更新 CLI。通过 `file:` 或 git 安装的包保持不变，并且插件不会被降级。每个扩展只适用于一个插件版本，因此扩展会移动到为项目插件发布的版本，即使那是更旧的版本。如果插件新版本的扩展尚未全部发布，插件会保持原版本，直到它们发布为止（`--check` 会将其报告为过期）；`--no-plugin` 只移动扩展，使其与已安装的插件版本匹配。更改插件版本时还会从项目的脚本定义（`ProjectSettings/ProjectSettings.asset`）中移除 `UNITY_MCP_READY`：插件在其依赖就绪后会重新设置它，在此之前 Unity 会跳过（而不是编译失败）所有基于该插件构建的内容。
 
 ## `install-extension`
 

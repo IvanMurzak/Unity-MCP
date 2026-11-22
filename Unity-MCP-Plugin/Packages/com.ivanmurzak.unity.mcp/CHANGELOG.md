@@ -29,9 +29,14 @@
     not move is named in a Console warning with what to do (`docs/dev/extensions.md`).
   - The Extensions section offers the version for the installed plugin (never `latest`). An installed extension that
     Unity skips shows **Update**, or **Inactive** with the reason when no version for this plugin is published.
-  - `unity-mcp-cli update` moves the plugin to its latest version and the installed extensions to their versions for it;
+  - `unity-mcp-cli update` moves the plugin to its latest version and the installed extensions to their versions for it.
+    It looks everything up before it writes, and holds a plugin release back while an installed extension has no version
+    for it yet (`held`), so the project is never left half-way. `--no-plugin` moves only the extensions.
     `install-extension` installs the version for the project's plugin release and fails with the reason when none is
-    published. The library's `updateProject` has `noPlugin` (extensions only) and the `unavailable` status.
+    published. The library's `updateProject` has `noPlugin` and the `unavailable` / `held` statuses.
+  - `install-plugin` (and so `update` and the desktop App) removes `UNITY_MCP_READY` from the project's scripting defines
+    when it changes the plugin version, as the plugin's own update does: an extension published before the pairing no
+    longer compiles without the plugin after such an update.
 - `UNITY_MCP_CREDENTIALS_DIR`: an absolute folder the Editor reads (and refreshes) the machine credential store from
   instead of `~/.ai-game-dev`, together with its lock and the project-key cache — the twin of Unreal's
   `UNREAL_MCP_CREDENTIALS_DIR` and Godot's `GODOT_MCP_CREDENTIALS_DIR`. For development/test Editors whose launcher

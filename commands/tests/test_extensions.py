@@ -328,12 +328,22 @@ class PublishedVersionTests(unittest.TestCase):
         extensions.validate(self.root)
         self.assertEqual({'name': 'com.unity.other', 'expression': '1.0.0', 'define': 'OTHER'},
                          extensions.read(asmdef)['versionDefines'][0])
+        # What the Inspector appends after the pairing does not unpair it: only its content counts.
+        data = extensions.read(asmdef)
+        data['defineConstraints'].append('LATER')
+        data['versionDefines'].append({'name': 'com.unity.later', 'expression': '2.0.0', 'define': 'LATER'})
+        extensions.write(asmdef, data)
+        extensions.validate(self.root)
+        self.assertEqual([], extensions.unpaired(self.root / row['package'], '1.5.0'))
         # Only the unrelated entry is new: the published file differs, so its version moved.
         self.assertEqual([('2.0.1', '1.5.0'), ('2.0.0', '1.5.0')], self.coordinates())
         # The file keeps its own style: indent, newline and no final newline, as Unity wrote it.
         self.assertEqual(released.endswith(b'\n'), asmdef.read_bytes().endswith(b'\n'))
         self.assertEqual(released.count(b'\r\n') > 0, asmdef.read_bytes().count(b'\r\n') > 0)
         self.assertIn(b'\n    "name"', asmdef.read_bytes().replace(b'\r\n', b'\n'))
+        self.edit(row, floor='^1.5.0')
+        with self.assertRaisesRegex(ValueError, r'core dependency \^1\.5\.0 must be one core version'):
+            extensions.validate(self.root)
 
     def test_unknown_floor_and_unreadable_remote_fail(self):
         self.edit(self.rows[0], version='2.0.5', floor='9.9.9')
