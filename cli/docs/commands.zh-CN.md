@@ -74,7 +74,7 @@ unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 
 ## `update`
 
-更新所有内容：先将 Unity 项目的 MCP 插件和已安装的扩展更新到最新版本，再更新 CLI 本身。
+更新所有内容：先将 Unity 项目的 MCP 插件更新到最新版本，并将已安装的扩展更新到为该插件构建的版本，再更新 CLI 本身。
 
 ```bash
 unity-mcp-cli update              # the project around the current folder, then the CLI
@@ -85,7 +85,7 @@ unity-mcp-cli update --no-project  # update only the CLI
 unity-mcp-cli update --no-extensions
 ```
 
-在项目之外运行时只更新 CLI。通过 `file:` 或 git 安装的包保持不变，并且不会降级任何内容。
+在项目之外运行时只更新 CLI。通过 `file:` 或 git 安装的包保持不变，并且插件不会被降级。每个扩展只适用于一个插件版本，因此扩展会移动到为项目插件发布的版本，即使那是更旧的版本。
 
 ## `install-extension`
 
@@ -103,13 +103,13 @@ cd ./MyGame && unity-mcp-cli install-extension Tilemap
 |---|---|---|
 | `[id]` | 是（除非使用 `--list`） | 要安装的扩展——OpenUPM 包 id（`com.ivanmurzak.unity.mcp.tilemap`）或目录名称（`Tilemap`）。匹配不区分大小写。未知的 id 会列出所有可安装的扩展，方便你自行纠正。 |
 | `[path]` | 否 | Unity 项目路径（位置参数或 `--path`）。默认为当前目录，校验方式与 `install-plugin` 相同。 |
-| `--extension-version <version>` | 否 | 要安装的扩展版本（默认为 OpenUPM 上的最新版本）。**不是 `--version`**——那是 CLI 自身的全局版本标志。 |
+| `--extension-version <version>` | 否 | 要安装的扩展版本（默认为针对项目插件版本构建的版本；项目中没有插件时为 OpenUPM 上的最新版本）。**不是 `--version`**——那是 CLI 自身的全局版本标志。 |
 | `--list` | 否 | 列出可安装的扩展并退出。 |
 
 此命令会：
 1. 添加带有所有必需作用域的 **OpenUPM 作用域注册表**（正是 `com.ivanmurzak` 作用域让扩展能够被解析）
-2. 将扩展的包 id 添加到 `dependencies`，在安装时解析 OpenUPM 的 `latest`
-3. 对自动解析的版本**从不降级**——如果已安装了更高的版本，则保留该版本并打印警告。传入 `--extension-version` 可强制使用指定的值，包括降级。
+2. 将扩展的包 id 添加到 `dependencies`，在安装时解析 OpenUPM 上为项目当前插件版本发布的版本（每个扩展只适用于一个插件版本）；项目中没有插件时解析 OpenUPM 的 `latest`
+3. **跟随插件**——为其他插件版本构建的扩展会被替换为适用于项目插件的版本（即使更旧），并打印警告。项目中没有插件时从不降级。传入 `--extension-version` 可强制使用指定的值。
 4. 是**幂等的**——重复运行时若发现扩展已是最新版本，会如实报告且不写入任何内容
 
 **示例 — 安装指定版本的扩展：**

@@ -325,14 +325,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// The newest published version of an extension that works with the installed plugin (its plugin
-        /// floor is not above it), or <c>null</c> when none is known. Not <c>dist-tags.latest</c>: that one
-        /// may be built for a newer plugin, and Unity skips such an extension without an error.
+        /// The newest published version of an extension built for the installed plugin release, or
+        /// <c>null</c> when none is known. Not <c>dist-tags.latest</c>: that one may be built for another
+        /// plugin release, and Unity skips such an extension without an error.
         /// </summary>
         internal static async Task<string?> FetchExtensionVersionAsync(string packageId)
         {
             var json = await FetchRegistryDocumentAsync(packageId);
-            return json == null ? null : ExtensionCompatibility.HighestVersionFor(json, PackageId, UnityMcpPlugin.Version);
+            return json == null ? null : ExtensionCompatibility.VersionFor(json, PackageId, UnityMcpPlugin.Version);
         }
 
         /// <summary>
@@ -367,9 +367,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Package specs ("id@version") that bring the installed extensions to their newest versions for plugin
+        /// Package specs ("id@version") that bring the installed extensions to their versions built for plugin
         /// <paramref name="pluginVersion"/> (the one being installed), for the plugin update to apply in the same request.
-        /// Not their latest versions: one published after the popup opened may need a newer plugin than it installs. Only registry installs qualify, so a <c>file:</c> or git checkout an
+        /// Not their latest versions: an extension works with exactly one plugin release, and one published after the
+        /// popup opened may be built for a newer plugin than it installs. An extension with no version for that plugin
+        /// yet stays as it is: Unity skips it and the startup check moves it once its version is published. Only registry installs qualify, so a <c>file:</c> or git checkout an
         /// extension is being developed from is never silently replaced. Best effort: it must never block the plugin
         /// update itself, so an extension whose version is unknown is skipped.
         /// </summary>
@@ -383,7 +385,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     .Select(data => installed[data.PackageId])
                     .ToArray();
                 var documents = await Task.WhenAll(packages.Select(package => FetchRegistryDocumentAsync(package.name)));
-                var targets = documents.Select(json => json == null ? null : ExtensionCompatibility.HighestVersionFor(json, PackageId, pluginVersion)).ToArray();
+                var targets = documents.Select(json => json == null ? null : ExtensionCompatibility.VersionFor(json, PackageId, pluginVersion)).ToArray();
 
                 var manifest = JsonNode.Parse(File.ReadAllText(ExtensionPanel.ManifestPath))?.AsObject();
                 return BuildExtensionUpdateSpecs(
@@ -399,7 +401,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Extensions behind their target version plus the Unity package floors those need.
+        /// Extensions not at their target version plus the Unity package floors those need. The target is the
+        /// version built for the plugin, so it may be older than the installed one (which Unity then skips).
         /// </summary>
         internal static string[] BuildExtensionUpdateSpecs(
             IEnumerable<(string PackageId, string InstalledVersion, string? TargetVersion)> extensions,
@@ -407,7 +410,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             string unityVersion)
         {
             return extensions
-                .Where(extension => extension.TargetVersion != null && IsNewerVersion(extension.TargetVersion, extension.InstalledVersion))
+                .Where(extension => extension.TargetVersion != null && extension.TargetVersion != extension.InstalledVersion)
                 .SelectMany(extension => ExtensionPanel
                     .MissingCompatibilityDependencies(extension.PackageId, dependencies, unityVersion)
                     .Select(required => $"{required.Key}@{required.Value}")

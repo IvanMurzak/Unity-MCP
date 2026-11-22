@@ -202,6 +202,68 @@ describe('installExtension — add', () => {
     expect(String(fetchMock.mock.calls[0][0])).toBe(`https://package.openupm.com/${TILEMAP_ID}`);
   });
 
+  describe('in a project with a plugin release', () => {
+    const PLUGIN_ID = 'com.ivanmurzak.unity.mcp';
+
+    /** OpenUPM stub: the extension's versions (ascending) with the plugin release each is built for. */
+    function stubVersions(versions: Record<string, string>): void {
+      vi.stubGlobal('fetch', vi.fn(async () => ({
+        ok: true,
+        status: 200,
+        json: async () => ({
+          'dist-tags': { latest: Object.keys(versions).pop() },
+          versions: Object.fromEntries(Object.entries(versions).map(([version, plugin]) =>
+            [version, { dependencies: { [PLUGIN_ID]: plugin } }])),
+        }),
+      })));
+    }
+
+    it('installs the version built for that plugin, not the latest', async () => {
+      stubVersions({ '2.1.0': '1.8.0', '2.1.1': '1.8.0', '2.2.0': '1.9.0' });
+      const project = mkUnityProject({ dependencies: { [PLUGIN_ID]: '1.8.0' } });
+
+      const result = await installExtension({ unityProjectPath: project, extensionId: 'Tilemap' });
+
+      if (result.kind !== 'success') throw result.error;
+      expect(result).toMatchObject({ outcome: 'added', toVersion: '2.1.1', warnings: [] });
+      expect(readManifest(project).dependencies).toMatchObject({ [PLUGIN_ID]: '1.8.0', [TILEMAP_ID]: '2.1.1' });
+    });
+
+    it('moves an installed version built for a newer plugin down to the one for this plugin', async () => {
+      stubVersions({ '2.1.1': '1.8.0', '2.2.0': '1.9.0' });
+      const project = mkUnityProject({ dependencies: { [PLUGIN_ID]: '1.8.0-rc.1', [TILEMAP_ID]: '2.2.0' } });
+
+      const result = await installExtension({ unityProjectPath: project, extensionId: 'Tilemap' });
+
+      if (result.kind !== 'success') throw result.error;
+      expect(result).toMatchObject({ outcome: 'updated', fromVersion: '2.2.0', toVersion: '2.1.1' });
+      expect(result.warnings.join('\n')).toContain('built for another plugin release');
+      expect(readManifest(project).dependencies?.[TILEMAP_ID]).toBe('2.1.1');
+    });
+
+    it('fails, changing nothing, when no version is published for that plugin', async () => {
+      stubVersions({ '2.2.0': '1.9.0' });
+      const project = mkUnityProject({ dependencies: { [PLUGIN_ID]: '1.8.0' } });
+
+      const result = await installExtension({ unityProjectPath: project, extensionId: 'Tilemap' });
+
+      expect(result.kind).toBe('failure');
+      if (result.kind !== 'failure') throw new Error('unreachable');
+      expect(result.error.message).toContain('No version of com.ivanmurzak.unity.mcp.tilemap is published for Unity-MCP plugin 1.8.0');
+      expect(readManifest(project).dependencies?.[TILEMAP_ID]).toBeUndefined();
+    });
+
+    it('a local plugin names no release: the latest version is installed', async () => {
+      stubVersions({ '2.1.1': '1.8.0', '2.2.0': '1.9.0' });
+      const project = mkUnityProject({ dependencies: { [PLUGIN_ID]: 'file:../plugin' } });
+
+      const result = await installExtension({ unityProjectPath: project, extensionId: 'Tilemap' });
+
+      if (result.kind !== 'success') throw result.error;
+      expect(result.toVersion).toBe('2.2.0');
+    });
+  });
+
   it('does not hit the network when an explicit version is supplied', async () => {
     const fetchMock = stubOpenUpm('9.9.9');
     const project = mkUnityProject();

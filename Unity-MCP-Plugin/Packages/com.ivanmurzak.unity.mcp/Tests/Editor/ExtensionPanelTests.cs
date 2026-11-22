@@ -36,13 +36,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [TestCase("2.1.1", "2.1.1")]
-        [TestCase("2.2.0", "2.1.1")]
         [TestCase("2.1.1", null)]
-        public void BuildExtensionUpdateSpecs_NothingNewerKnown_IsSkipped(string installed, string? latest)
+        public void BuildExtensionUpdateSpecs_AtItsTargetOrNoneKnown_IsLeft(string installed, string? target)
         {
-            var specs = Specs(null, Unity60003, Animation, installed, latest);
+            var specs = Specs(null, Unity60003, Animation, installed, target);
 
             Assert.IsEmpty(specs);
+        }
+
+        [Test]
+        public void BuildExtensionUpdateSpecs_TargetOlderThanInstalled_FollowsThePlugin()
+        {
+            // The installed one is built for a newer plugin: the version for this plugin is the one that compiles.
+            var specs = Specs(null, Unity60003, Animation, "2.2.0", "2.1.1");
+
+            Assert.AreEqual(new[] { $"{Animation}@2.1.1" }, specs);
         }
 
         [Test]

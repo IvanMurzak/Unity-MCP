@@ -26,15 +26,16 @@ using PackageInfo = UnityEditor.PackageManager.PackageInfo;
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
     /// <summary>
-    /// On plugin startup: finds installed extensions built for another plugin generation (Unity skips
+    /// On plugin startup: finds installed extensions built for another plugin release (Unity skips
     /// their assemblies without an error, so their tools are missing) and moves them to the published
     /// version built for this plugin. This is what keeps the extensions working when only the plugin
-    /// was updated, for example through Package Manager.
+    /// was changed, for example through Package Manager. The plugin version is the anchor: an
+    /// extension that needs a newer plugin moves down to the one for this plugin.
     /// </summary>
     /// <remarks>
     /// The check is offline and cheap: the registered packages are already in memory and only the
-    /// asmdefs of packages that depend on the plugin are read. The registry is asked only when a
-    /// stale extension was found. An extension that cannot be updated automatically is named in a
+    /// asmdefs of packages that depend on the plugin are read. The registry is asked only when an
+    /// extension needs a move. An extension that cannot be moved automatically is named in a
     /// console warning with what to do.
     /// </remarks>
     internal static class ExtensionAutoUpdater
@@ -48,8 +49,46 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private const string KeyRetryAt = "MCP_ExtensionAutoUpdater_RetryAt";
         private const float RetrySeconds = 30 * 60;
 
+        /// <summary>An installed extension that should move to another version.</summary>
+        private readonly struct Extension
+        {
+            public readonly string PackageId;
+            public readonly string Name;
+            public readonly string Version;
+
+            /// <summary>The plugin version it is published for, when its package names one.</summary>
+            public readonly string? PluginVersion;
+
+            /// <summary>A first-party extension installed from the package registry.</summary>
+            public readonly bool CanAutoUpdate;
+
+            /// <summary>Unity skips it; otherwise it works and only lacks the tie to this plugin release.</summary>
+            public readonly bool Skipped;
+
+            public Extension(string packageId, string name, string version, string? pluginVersion, bool canAutoUpdate, bool skipped)
+            {
+                PackageId = packageId;
+                Name = name;
+                Version = version;
+                PluginVersion = pluginVersion;
+                CanAutoUpdate = canAutoUpdate;
+                Skipped = skipped;
+            }
+        }
+
         // The update tick, not delayCall: delayCall waits for the editor window to get focus.
         public static void Init() => EditorApplication.update += Run;
+
+        /// <summary>How an installed package stands with this plugin; read from its asmdefs, no network.</summary>
+        internal static ExtensionFit FitOf(PackageInfo package)
+            => string.IsNullOrEmpty(package.resolvedPath) || !Directory.Exists(package.resolvedPath)
+                ? ExtensionFit.Works
+                : ExtensionCompatibility.FitOf(
+                    ExtensionCompatibility.ShippedAsmdefs(package.resolvedPath).Select(File.ReadAllText),
+                    RecompileGate.DependencyGenerationDefinePrefix,
+                    RecompileGate.DependencyGenerationDefine,
+                    PluginPackageId,
+                    UnityMcpPlugin.Version);
 
         private static void Run()
         {
@@ -60,57 +99,56 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 return;
             EditorApplication.update -= Run;
 
-            List<(string PackageId, string Name, string Version, bool CanAutoUpdate)> stale;
+            List<Extension> found;
             try
             {
-                stale = FindStaleExtensions(PackageInfo.GetAllRegisteredPackages());
+                found = FindExtensionsToMove(PackageInfo.GetAllRegisteredPackages());
             }
             catch (Exception ex)
             {
                 Debug.LogWarning($"{Tag} Could not check the installed extensions against this plugin: {ex.Message}");
                 return;
             }
-            if (stale.Count == 0)
+            if (found.Count == 0)
                 return;
 
             // Every domain reload lands here again. One state is acted on (and warned about) once,
             // then again after RetrySeconds: a matching extension may have been published meanwhile.
-            var state = UnityMcpPlugin.Version + "|" + string.Join(",", stale.Select(extension => $"{extension.PackageId}@{extension.Version}"));
+            var state = UnityMcpPlugin.Version + "|" + string.Join(",", found.Select(extension => $"{extension.PackageId}@{extension.Version}"));
             if (SessionState.GetString(KeyHandledState, string.Empty) == state
                 && EditorApplication.timeSinceStartup < SessionState.GetFloat(KeyRetryAt, 0))
                 return;
 
-            _ = UpdateAsync(stale, state);
+            _ = UpdateAsync(found, state);
         }
 
         /// <summary>
-        /// The installed packages that depend on the plugin and whose assemblies require another
-        /// dependency generation than this plugin sets. Only a first-party extension installed from
-        /// the package registry can be updated automatically.
+        /// The installed packages that depend on the plugin and that Unity skips under it, plus the
+        /// first-party registry installs that work but are not tied to this plugin release yet (the
+        /// next plugin update would break the compile on them). Only a first-party extension
+        /// installed from the package registry can be moved automatically.
         /// </summary>
-        private static List<(string PackageId, string Name, string Version, bool CanAutoUpdate)> FindStaleExtensions(IEnumerable<PackageInfo> packages)
+        private static List<Extension> FindExtensionsToMove(IEnumerable<PackageInfo> packages)
         {
             var catalog = MainWindowEditor.ExtensionCatalog.ToDictionary(data => data.PackageId);
-            var stale = new List<(string, string, string, bool)>();
+            var found = new List<Extension>();
             foreach (var package in packages)
             {
                 var firstParty = catalog.TryGetValue(package.name, out var data);
-                if (package.name == PluginPackageId
-                    || (!firstParty && !package.dependencies.Any(dependency => dependency.name == PluginPackageId))
-                    || string.IsNullOrEmpty(package.resolvedPath) || !Directory.Exists(package.resolvedPath))
+                var pluginVersion = package.dependencies.Where(dependency => dependency.name == PluginPackageId).Select(dependency => dependency.version).FirstOrDefault();
+                if (package.name == PluginPackageId || (!firstParty && pluginVersion == null))
                     continue;
 
-                if (ExtensionCompatibility.IsBuiltForAnotherGeneration(
-                        ExtensionCompatibility.ShippedAsmdefs(package.resolvedPath).Select(File.ReadAllText),
-                        RecompileGate.DependencyGenerationDefinePrefix,
-                        RecompileGate.DependencyGenerationDefine))
-                    stale.Add((package.name, firstParty ? data!.Name : package.displayName, package.version,
-                        firstParty && package.source == PackageSource.Registry));
+                var fit = FitOf(package);
+                var canAutoUpdate = firstParty && package.source == PackageSource.Registry;
+                if (fit == ExtensionFit.Skipped || (fit == ExtensionFit.Unprotected && canAutoUpdate))
+                    found.Add(new Extension(package.name, firstParty ? data!.Name : package.displayName, package.version,
+                        pluginVersion, canAutoUpdate, fit == ExtensionFit.Skipped));
             }
-            return stale;
+            return found;
         }
 
-        private static async Task UpdateAsync(IReadOnlyList<(string PackageId, string Name, string Version, bool CanAutoUpdate)> stale, string state)
+        private static async Task UpdateAsync(IReadOnlyList<Extension> found, string state)
         {
             try
             {
@@ -119,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // manifest as it is: they are told what to do instead.
                 var automatic = !Application.isBatchMode && !UpdateChecker.IsDisabledForProject;
 
-                var candidates = stale.Where(extension => extension.CanAutoUpdate).ToArray();
+                var candidates = found.Where(extension => extension.CanAutoUpdate).ToArray();
                 var documents = await Task.WhenAll(candidates.Select(extension => UpdateChecker.FetchRegistryDocumentAsync(extension.PackageId)));
 
                 // The registry took a while to answer and Play Mode may have been entered meanwhile.
@@ -135,32 +173,36 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var moves = new List<string>();
                 for (var i = 0; i < candidates.Length; i++)
                 {
-                    var (packageId, name, version, _) = candidates[i];
-                    var target = documents[i] == null ? null : ExtensionCompatibility.UpdateTargetFor(version, documents[i]!, PluginPackageId, pluginVersion);
-                    if (documents[i] == null)
-                        Warn(name, version, packageId, "Its published versions could not be read (no connection?). It is checked again later.");
-                    else if (target == null)
-                        Warn(name, version, packageId, $"No version built for plugin {pluginVersion} is published. Update the plugin to its latest version; if it already is, the matching extension is still being published and is checked again later.");
-                    else if (!automatic)
-                        Warn(name, version, packageId, $"Version {target} is built for this plugin: update it in the Extensions section of the AI Game Developer window.");
-                    else
+                    var extension = candidates[i];
+                    // A skipped one follows the plugin in either direction; a working one only moves up.
+                    var target = documents[i] == null ? null
+                        : ExtensionCompatibility.UpdateTargetFor(extension.Version, documents[i]!, PluginPackageId, pluginVersion, anyDirection: extension.Skipped);
+                    if (target != null && automatic)
                     {
-                        updates.Add((packageId, version, target));
-                        moves.Add($"{name} {version} -> {target}");
+                        updates.Add((extension.PackageId, extension.Version, target));
+                        moves.Add($"{extension.Name} {extension.Version} -> {target}");
                     }
+                    else if (!extension.Skipped)
+                        continue; // It works: nothing to report until its version for this plugin can be installed.
+                    else if (documents[i] == null)
+                        Warn(extension, "Its published versions could not be read (no connection?). It is checked again later.");
+                    else if (target == null)
+                        Warn(extension, $"No version built for plugin {pluginVersion} is published. Update the plugin to its latest version; if it already is, the matching extension is still being published and is checked again later.");
+                    else
+                        Warn(extension, $"Version {target} is built for this plugin: update it in the Extensions section of the AI Game Developer window.");
                 }
-                foreach (var (packageId, name, version, _) in stale.Where(extension => !extension.CanAutoUpdate))
-                    Warn(name, version, packageId, "It is not a registry install of a first-party extension, so it is left alone: update it where it comes from.");
+                foreach (var extension in found.Where(extension => !extension.CanAutoUpdate))
+                    Warn(extension, "It is not a registry install of a first-party extension, so it is left alone: update it where it comes from.");
 
                 if (updates.Count > 0)
                 {
-                    Debug.Log($"{Tag} Updating extensions built for another plugin version, so their tools work with plugin {pluginVersion}: {string.Join(", ", moves)}.");
+                    Debug.Log($"{Tag} Moving the installed extensions to their versions built for plugin {pluginVersion} (an extension works with exactly one plugin release): {string.Join(", ", moves)}.");
                     await PackageUtils.AddPackagesAsync(UpdateChecker.BuildExtensionUpdateSpecs(updates, ReadManifestDependencies(), Application.unityVersion));
                 }
             }
             catch (Exception ex)
             {
-                Debug.LogWarning($"{Tag} Could not update the extensions built for another plugin version ({ex.Message}). Their tools stay missing until they are updated in the Extensions section of the AI Game Developer window.");
+                Debug.LogWarning($"{Tag} Could not move the installed extensions to their versions for this plugin ({ex.Message}). Update them in the Extensions section of the AI Game Developer window.");
             }
             // Marked only here, once the state was acted on. A domain reload in the middle drops this
             // task with the old domain, and the next startup must start over rather than find the
@@ -181,8 +223,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
         }
 
-        private static void Warn(string name, string version, string packageId, string whatToDo)
-            => Debug.LogWarning($"{Tag} Extension '{name}' {version} ({packageId}) is built for another version of the plugin, "
-                + $"so Unity does not compile it and its tools are missing. {whatToDo}");
+        private static void Warn(Extension extension, string whatToDo)
+            => Debug.LogWarning($"{Tag} Extension '{extension.Name}' {extension.Version} ({extension.PackageId}) is built for "
+                + (extension.PluginVersion == null || extension.PluginVersion == UnityMcpPlugin.Version
+                    ? "another build of the plugin"
+                    : $"plugin {extension.PluginVersion}, not for the installed plugin {UnityMcpPlugin.Version}")
+                + $", so Unity does not compile it and its tools are missing. {whatToDo}");
     }
 }

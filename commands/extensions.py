@@ -16,6 +16,10 @@ CORE_PACKAGE = 'Unity-MCP-Plugin/Packages/' + CORE
 NUGET_CONFIG = CORE_PACKAGE + '/Editor/DependencyResolver/NuGetConfig.cs'
 GENERATION_RE = r'public const string DependencyGenerationDefine = DependencyGenerationDefinePrefix \+ "(\d+)";'
 VERSION_RE = r'\d+\.\d+\.\d+'
+READY_DEFINE = 'UNITY_MCP_READY'
+# Set by Unity for an extension assembly only while the installed core is the release the extension is
+# published for (an asmdef `versionDefines` entry on the core package).
+CORE_MATCH_DEFINE = 'UNITY_MCP_CORE_MATCH'
 
 
 def read(path):
@@ -23,11 +27,15 @@ def read(path):
 
 
 def write(path, value):
-    # In the newline style the file already has: /extensions/** is `-text` in .gitattributes, so its bytes
-    # are committed as written and a host-dependent newline would rewrite every line of a CRLF file on Linux.
+    # In the style the file already has (newline, indent, final newline): /extensions/** is `-text` in
+    # .gitattributes, so its bytes are committed as written and a host-dependent newline would rewrite every
+    # line of a CRLF file on Linux.
     path = Path(path)
-    newline = '\r\n' if path.is_file() and b'\r\n' in path.read_bytes() else '\n'
-    path.write_bytes((json.dumps(value, indent=2) + '\n').replace('\n', newline).encode('utf-8'))
+    before = path.read_bytes() if path.is_file() else b''
+    newline = '\r\n' if b'\r\n' in before else '\n'
+    indent = re.search(rb'\n( +)"', before)
+    text = json.dumps(value, indent=len(indent[1]) if indent else 2) + ('\n' if before.endswith(b'\n') or not before else '')
+    path.write_bytes(text.replace('\n', newline).encode('utf-8'))
 
 
 def dependency_floor(prior, version):
@@ -85,6 +93,10 @@ def validate(root=ROOT):
     for row in rows:
         package = root / row['package']
         dependencies = read(package / 'package.json')['dependencies']
+        unpaired = [path.name for path in gated_asmdefs(package) if paired_with(read(path), dependencies[CORE]) != read(path)]
+        if unpaired:
+            raise ValueError(f'{row["name"]}: {", ".join(unpaired)} must compile only with core {dependencies[CORE]}, the '
+                             f'floor of its package ({CORE_MATCH_DEFINE}): run `python commands/extensions.py settle`')
         for path in package.rglob('*.asmdef'):
             for reference in read(path).get('references', []):
                 owner = owners.get(reference)
@@ -280,11 +292,43 @@ def next_version(version, policy='patch'):
     return f'{major}.{minor + 1}.0' if policy == 'minor' else f'{major}.{minor}.{patch + 1}'
 
 
+def gated_asmdefs(package):
+    """The assembly definitions of a component that consumers compile and that need the core: all but its tests."""
+    return [path for path in sorted(package.rglob('*.asmdef'))
+            if 'Tests' not in path.relative_to(package).parts and READY_DEFINE in read(path).get('defineConstraints', [])]
+
+
+def paired_with(asmdef, core_version):
+    """The assembly definition constrained to core `core_version` exactly. The gate defines live in the
+    consumer's ProjectSettings and outlive a core update: until the new core's resolver has run they still
+    satisfy an extension built for the previous core, which Unity then compiles while the core itself is
+    skipped (CS0103, Safe Mode). The core package's version is static data Unity reads before it compiles."""
+    asmdef = dict(asmdef)
+    match = {'name': CORE, 'expression': f'[{core_version}]', 'define': CORE_MATCH_DEFINE}
+    asmdef['versionDefines'] = [e for e in asmdef.get('versionDefines', []) if e.get('define') != CORE_MATCH_DEFINE] + [match]
+    asmdef['defineConstraints'] = [c for c in asmdef.get('defineConstraints', []) if c != CORE_MATCH_DEFINE] + [CORE_MATCH_DEFINE]
+    return asmdef
+
+
+def pair_with_core(row, core_version, root=ROOT, dry_run=False):
+    """Make the component's assemblies compile only with core `core_version`; True when a file had to change."""
+    changed = False
+    for path in gated_asmdefs(root / row['package']):
+        asmdef = read(path)
+        paired = paired_with(asmdef, core_version)
+        if paired != asmdef:
+            changed = True
+            if not dry_run:
+                write(path, paired)
+    return changed
+
+
 def set_core_floor(row, core_version, root=ROOT):
     path = root / row['package'] / 'package.json'
     package = read(path)
     package['dependencies'][CORE] = core_version
     write(path, package)
+    pair_with_core(row, core_version, root)
 
 
 def sync_core(core_version, only='all', policy='patch', dry_run=False, root=ROOT):
@@ -319,8 +363,8 @@ class Published:
     """What the remote has released, read from its tags: a core release is `<version>`, a component
     release `<packageId>/<version>`. A remote that cannot be read fails; it is never "unpublished"."""
 
-    def __init__(self, root=ROOT, remote='origin', only=None, core=None):
-        """`only`: the component names to read (default all); `core`: one more core version to look up."""
+    def __init__(self, root=ROOT, remote='origin', only=None):
+        """`only`: the component names to read (default all)."""
         self.root = root
         self.rows = [row for row in inventory(root) if only is None or row['name'] in only]
         self.core_version = read(root / CORE_PACKAGE / 'package.json')['version']
@@ -331,7 +375,7 @@ class Published:
             package = read(root / row['package'] / 'package.json')
             row['version'], row['floor'] = package['version'], package['dependencies'][CORE]
             row['tag'] = row['tagPrefix'] + row['version']
-        tags = {self.core_version, core, *(row[key] for row in self.rows for key in ('tag', 'floor'))} - {None}
+        tags = {self.core_version, *(row[key] for row in self.rows for key in ('tag', 'floor'))}
         listed = git(root, 'ls-remote', '--tags', remote, *sorted('refs/tags/' + tag for tag in tags))
         self.shas = {ref.removeprefix('refs/tags/'): sha for sha, ref in map(str.split, listed.splitlines())}
         self.gates = {}
@@ -383,12 +427,13 @@ def check_published(root=ROOT, strict=False, only=None, remote='origin'):
         if changed:
             problems.append(f'{row["name"]} {row["version"]} is published, but {len(changed)} of its files changed '
                             f'since (e.g. {changed[0]}): the change reaches nobody until the version moves')
-        version = re.fullmatch(VERSION_RE, row['floor'])
-        released = version and row['floor'] in state.shas
-        if strict and not released:
+        if row['floor'] != state.core_version:
+            problems.append(f'{row["name"]}: core floor {row["floor"]} is not core {state.core_version} of this tree: '
+                            'a component compiles only with the core release it is published for')
+        elif strict and row['floor'] not in state.shas:
             problems.append(f'{row["name"]}: core floor {row["floor"]} is not a released core version')
-        # Deferred only for a released core: until the next core release no version can replace it.
-        elif not version or (not state.floor_sets_gate(row['floor']) and not (deferred and released)):
+        # Deferred: until the next core release no version can replace it.
+        elif not state.floor_sets_gate(row['floor']) and not deferred:
             problems.append(f'{row["name"]}: core floor {row["floor"]} does not set UNITY_MCP_DEPS_{state.generation}, '
                             'which its assemblies require: on that core Unity skips them without an error')
     if deferred and not problems:
@@ -398,18 +443,23 @@ def check_published(root=ROOT, strict=False, only=None, remote='origin'):
 
 
 def settle(core_version=None, root=ROOT, dry_run=False, remote='origin'):
-    """Make every component publishable again. A core floor that does not set the current gate generation
-    moves to `core_version` (the core release that ships it); a published version whose files changed gets
-    a patch bump."""
+    """Make every component publishable again. A component works with exactly one core release: every core
+    floor moves to `core_version` (the core of this tree), the assemblies are constrained to their floor, and
+    a published version whose files changed gets a patch bump."""
     if core_version and not re.fullmatch(VERSION_RE, core_version):
         raise ValueError('Expected a stable core dependency version')
-    state = Published(root, remote, core=core_version)
+    state = Published(root, remote)
+    if core_version and core_version != state.core_version:
+        raise ValueError(f'Core {core_version} is not the core of this tree ({state.core_version}): the components '
+                         'are tested and published with the core they sit beside')
     if core_version and not state.floor_sets_gate(core_version):
-        raise ValueError(f'Core {core_version} does not ship UNITY_MCP_DEPS_{state.generation}: expected a release '
-                         f'that sets it, or the unreleased version of this tree ({state.core_version})')
+        raise ValueError(f'Core {core_version} is released and does not ship UNITY_MCP_DEPS_{state.generation}: '
+                         'the next core release does (bump the core version first)')
     for row in state.rows:
-        refloor = core_version and not state.floor_sets_gate(row['floor'])
-        bumped = row['tag'] in state.shas and (refloor or state.changed(row))
+        refloor = bool(core_version) and row['floor'] != core_version
+        floor = core_version if refloor else row['floor']
+        paired = bool(re.fullmatch(VERSION_RE, floor)) and pair_with_core(row, floor, root, dry_run)
+        bumped = row['tag'] in state.shas and (refloor or paired or bool(state.changed(row)))
         if refloor:
             print(f'{row["name"]}: core floor {row["floor"]} -> {core_version}')
             if not dry_run:
@@ -420,10 +470,9 @@ def settle(core_version=None, root=ROOT, dry_run=False, remote='origin'):
                 print(f'{row["name"]}: {row["version"]} -> {version}')
             else:
                 bump(row['name'], version, root)
-    waiting = [row['name'] for row in state.rows if not core_version and not state.floor_sets_gate(row['floor'])]
+    waiting = [row['name'] for row in state.rows if not core_version and row['floor'] != state.core_version]
     if waiting:
-        print(f'Note: core floors left as they are ({", ".join(waiting)}): pass --core-version <the core release '
-              f'that ships UNITY_MCP_DEPS_{state.generation}>')
+        print(f'Note: core floors left as they are ({", ".join(waiting)}): pass --core-version {state.core_version}')
 
 
 def main():

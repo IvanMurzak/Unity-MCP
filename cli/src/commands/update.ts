@@ -42,6 +42,7 @@ function printItem(item: ProjectUpdateItem): void {
     item.status === 'outdated' ? `${item.from} → ${item.to}`
     : item.status === 'local' ? `${item.from} (local install, left as is)`
     : item.status === 'unknown' ? `${item.from} (latest version unknown)`
+    : item.status === 'unavailable' ? `${item.from} (no version for this plugin yet: Unity skips it)`
     : `${item.from} (up to date)`;
   ui.label(item.name, value);
 }
@@ -74,8 +75,8 @@ async function updateProjectStep(projectPath: string, options: UpdateOptions): P
   for (const step of result.nextSteps) ui.info(step);
 
   if (result.items.length === 0) ui.info('The MCP plugin is not installed here: nothing to update in this project.');
-  // A version that could not be looked up is not "up to date": never report success over it.
-  if (result.items.some((item) => item.status === 'unknown')) return 'failed';
+  // A version that could not be looked up, or an extension Unity skips, is not "up to date": never report success over it.
+  if (result.items.some((item) => item.status === 'unknown' || item.status === 'unavailable')) return 'failed';
   if (options.check) return outdated.length > 0 ? 'outdated' : 'done';
   return outdated.every((item) => result.updated.includes(item)) ? 'done' : 'failed';
 }
@@ -150,7 +151,7 @@ function resolveProject(positional: string | undefined, explicit: string | undef
 
 export function createUpdateCommand(currentVersion: string): Command {
   return new Command('update')
-    .description(`Update everything: the Unity project's MCP plugin and installed extensions, then ${PACKAGE_NAME} itself`)
+    .description(`Update everything: the Unity project's MCP plugin and its installed extensions (to their versions for that plugin), then ${PACKAGE_NAME} itself`)
     .argument('[path]', 'Unity project path (defaults to the project around the current directory)')
     .option('--path <path>', 'Unity project path')
     .option('--check', 'Only report what would change. Exits 2 when something is outdated')

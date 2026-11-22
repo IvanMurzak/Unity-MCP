@@ -1,13 +1,22 @@
 # Unity extension modules
 
 Each module remains an independent UPM package. Its package ID, assembly names, tests and
-Unity-generated GUIDs survive the migration. Native package dependencies declare the minimum
-core/Unity package versions; a newer compatible core does not require republishing every module,
-except after a NuGet generation bump (`UNITY_MCP_DEPS_<n>` in `NuGetConfig.cs`): module Editor/Runtime
-asmdefs carry the core's gate defines, so a module built for an older generation is skipped (not
-broken) until it is re-released (#957; `.github/scripts/check_nuget_gate.py`). Unity reports nothing
-for a skipped module: its tools are simply absent. So every core release that moves the generation
-re-releases all modules with that core as their floor (see "Published versions" below).
+Unity-generated GUIDs survive the migration. A module version works with exactly one core release,
+the one its `package.json` names as the core dependency. Its Editor/Runtime asmdefs carry the core's
+gate defines (`UNITY_MCP_READY` and `UNITY_MCP_DEPS_<n>` from `NuGetConfig.cs`; #957,
+`.github/scripts/check_nuget_gate.py`) and a `versionDefines` entry on the core package that holds
+only for that core version (`UNITY_MCP_CORE_MATCH`). With any other core Unity skips the module (not
+broken) and reports nothing: its tools are simply absent. So every core release re-releases all
+modules for itself (see "Published versions" below).
+
+Why the core version and not only the gate defines: the defines live in the consumer's
+`ProjectSettings` and outlive a core update. Until the new core's resolver has run they still satisfy
+a module built for the previous core, so after a core-only update (Package Manager, a manifest edit,
+`install-plugin`) Unity compiled that module while the core itself was skipped: `error CS0103` in the
+module, a batch-mode editor exits with code 1 on every start, a windowed one stops at the errors, and
+no plugin code runs to repair it (measured with core 1.7.1 -> 1.13.0 and Animation 2.1.1). The core
+package's version is static data Unity reads before it compiles, so a module that names its core is
+skipped in that first compile and the update heals itself.
 
 ```text
 Unity-MCP/
@@ -128,53 +137,69 @@ draft retries reuse already uploaded archives and refuse changed existing assets
 
 ### Published versions
 
-A published module version never changes, and its assemblies compile only on a core that sets the
-generation they were built for. `python commands/extensions.py check-published` reads the release
+A published module version never changes, and its assemblies compile only with the core release
+they name. `python commands/extensions.py validate` fails when a module's asmdefs do not name the
+core floor of its `package.json`. `python commands/extensions.py check-published` reads the release
 tags of the remote and fails when:
 
 - a file of a published version (package or installer) differs from that release: the version must move;
-- a module's core floor is a core release with another generation. While the generation has moved
-  but no core release ships it yet, this part is only a note: the floor cannot be named before that
-  release. (The change that moves the generation rewrites every module's asmdefs, so it still needs
-  `settle` for the new module versions.)
+- a module's core floor is not the core version of this tree: the modules are tested and published
+  with the core they sit beside;
+- that core is released with another gate generation. While the generation has moved but no core
+  release ships it yet, this part is only a note: the next core release takes the modules along.
+  (The change that moves the generation rewrites every module's asmdefs, so it still needs `settle`
+  for the new module versions.)
 
 It runs on every pull request and in the core release. Before a publication the check is strict:
 the floor must be a released core with the same generation, so a module is never published ahead
 of the core it needs.
 
-`python commands/extensions.py settle [--core-version <core>]` repairs both: it patch-bumps each
-published module whose files changed and, given the core release that ships the current generation,
-moves stale floors to it. The release train runs it for every core release; the module release
+`python commands/extensions.py settle [--core-version <core>]` repairs all of it: it writes the
+core floor into the asmdefs, patch-bumps each published module whose files changed and, given the
+core version of this tree (after `bump_version.py`), moves every floor to it. The release train runs
+it for every core release, so each core release has its own module versions; the module release
 follows the core release (`extensions release --engine unity`).
 
 ### Installed extensions follow the plugin
 
-A user who updates only the plugin (Package Manager, a manifest edit, a pull from a teammate) is
-left with extensions built for the previous generation. `ExtensionAutoUpdater` repairs that on
-plugin startup, after every domain reload (once a compile or Play Mode has ended):
+The plugin version is the anchor: every way of changing it leaves the project with the extension
+versions built for it, and an extension built for another plugin release moves to the one for the
+installed plugin, also when that is an older one.
+
+| The plugin changes through | The extensions |
+|---|---|
+| the plugin's update notification | move in the same package request to their versions for the new plugin |
+| `unity-mcp-cli update` | move in the same manifest edit to their versions for the plugin it installs |
+| Package Manager, a manifest edit, a pull, `install-plugin` | are skipped by Unity (never a compile error) and moved by the startup check |
+
+The version built for a plugin is the highest published one whose dependency on the plugin names
+exactly that plugin version (`ExtensionCompatibility.VersionFor`; `extensionVersionForPlugin` in the
+CLI), never `dist-tags.latest`: that one may be built for another plugin release.
+
+`ExtensionAutoUpdater` is the startup check. On plugin startup, after every domain reload (once a
+compile or Play Mode has ended):
 
 - It reads the asmdefs of the installed packages that depend on the plugin (no network). An
-  extension whose `UNITY_MCP_DEPS_<n>` differs from the plugin's is skipped by Unity and counts as stale.
-- For a stale first-party extension installed from the registry it reads the extension's OpenUPM
-  document and installs the highest version whose plugin floor is not above the installed plugin
-  (`ExtensionCompatibility.HighestVersionFor`). It never installs a version that would pull a
-  newer plugin in, and never downgrades.
-- Everything it does not update is named in a console warning with what to do: an extension from
-  `file:` or git, a third-party one, one with no published version for this plugin yet (checked
-  again at the first domain reload 30 minutes later and in the next editor session), and every
-  stale extension in a batch-mode editor or in a project that turned update notifications off for
+  extension whose `UNITY_MCP_DEPS_<n>` or core version does not match the plugin is skipped by Unity.
+- A skipped first-party extension installed from the registry moves to the version for this plugin.
+  One with no published version for this plugin yet is checked again at the first domain reload
+  30 minutes later and in the next editor session.
+- A first-party registry extension that compiles but does not name its core release (published
+  before the pairing) moves to the version for this plugin that does: otherwise the next plugin
+  update would break the compile on it.
+- Everything it does not move is named in a console warning with what to do: an extension from
+  `file:` or git, a third-party one, one with no published version for this plugin, and every
+  skipped extension in a batch-mode editor or in a project that turned update notifications off for
   the team.
 
-The rule that makes the second step right is the release rule above: each plugin release that
-moves the generation ships its extensions with that release as their floor. Between such a plugin
-release and its extension release the newest version for the plugin is still one of the previous
-generation: the extension moves to it, stays skipped, is reported, and moves again once the
-matching version is published.
+Between a plugin release and its extension release no version for the new plugin exists: an
+extension stays skipped, is reported, and moves once the matching version is published.
 
 The Extensions section of the plugin window installs and offers the same version
-(`UpdateChecker.FetchExtensionVersionAsync`), not `dist-tags.latest`, so it never installs an
-extension built for a newer plugin. The plugin's own update moves the installed extensions, in the
-same request, to their newest versions for the plugin version it installs.
+(`UpdateChecker.FetchExtensionVersionAsync`). An installed extension that Unity skips shows
+**Update** (to the version for this plugin) or, when none is published, **Inactive** with the reason.
+`unity-mcp-cli install-extension` installs the version for the plugin release in the manifest and
+fails with the reason when none is published.
 
 OpenUPM registrations point to this repository with each package's literal `gitTagPrefix` and
 its signed archive's filename prefix. The core registration excludes extension tags. OpenUPM

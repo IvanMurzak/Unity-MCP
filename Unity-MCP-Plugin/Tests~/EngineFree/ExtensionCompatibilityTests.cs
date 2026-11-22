@@ -27,9 +27,21 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         const string Prefix = NuGetConfig.DependencyGenerationDefinePrefix;
         const string Current = NuGetConfig.DependencyGenerationDefine;
 
-        static string Asmdef(params string[] constraints)
-            => "{\n  \"name\": \"X\",\n  \"defineConstraints\": [\n    "
-                + string.Join(",\n    ", constraints.Select(constraint => "\"" + constraint + "\"")) + "\n  ]\n}";
+        static string Asmdef(params string[] constraints) => Paired(null, constraints);
+
+        // An assembly definition as `commands/extensions.py settle` writes it: the gate defines plus, with
+        // a plugin expression, the version define that holds only for that plugin release.
+        static string Paired(string? pluginExpression, params string[] constraints)
+        {
+            if (pluginExpression != null)
+                constraints = constraints.Append(Match).ToArray();
+            return "{\n  \"name\": \"X\",\n  \"defineConstraints\": [\n    "
+                + string.Join(",\n    ", constraints.Select(constraint => "\"" + constraint + "\"")) + "\n  ],\n  \"versionDefines\": ["
+                + (pluginExpression == null ? "" : $"{{\"name\": \"{Plugin}\", \"expression\": \"{pluginExpression}\", \"define\": \"{Match}\"}}")
+                + "]\n}";
+        }
+
+        const string Match = "UNITY_MCP_CORE_MATCH";
 
         // The shape package.openupm.com returns: every version with its own dependencies.
         static string Registry(params (string Version, string? PluginFloor)[] versions)
@@ -38,29 +50,78 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                     + (v.PluginFloor == null ? "\"com.unity.modules.animation\":\"1.0.0\"" : $"\"{Plugin}\":\"{v.PluginFloor}\"") + "}}"))
                 + "}}";
 
-        [Fact]
-        public void Extension_gated_on_the_current_generation_is_compatible()
-        {
-            var asmdefs = new[] { Asmdef(NuGetConfig.ReadyDefine, Current, "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"), Asmdef(NuGetConfig.ReadyDefine, Current) };
+        static ExtensionFit Fit(string plugin, params string[] asmdefs) => ExtensionCompatibility.FitOf(asmdefs, Prefix, Current, Plugin, plugin);
 
-            Assert.False(ExtensionCompatibility.IsBuiltForAnotherGeneration(asmdefs, Prefix, Current));
+        [Theory]
+        [InlineData("1.13.0")]
+        [InlineData("1.13.0-rc.1")] // a pre-release build of the plugin counts as its release
+        public void Extension_built_for_this_plugin_release_works(string plugin)
+        {
+            Assert.Equal(ExtensionFit.Works, Fit(plugin,
+                Paired("[1.13.0]", NuGetConfig.ReadyDefine, Current, "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"),
+                Paired("[1.13.0]", NuGetConfig.ReadyDefine, Current)));
         }
 
         [Fact]
-        public void Extension_gated_on_another_generation_in_any_asmdef_is_stale()
+        public void Extension_gated_on_another_generation_in_any_asmdef_is_skipped()
         {
-            var asmdefs = new[] { Asmdef(NuGetConfig.ReadyDefine, Current), Asmdef(NuGetConfig.ReadyDefine, Prefix + "38") };
+            Assert.Equal(ExtensionFit.Skipped, Fit("1.13.0",
+                Paired("[1.13.0]", NuGetConfig.ReadyDefine, Current),
+                Paired("[1.13.0]", NuGetConfig.ReadyDefine, Prefix + "38")));
+            Assert.Equal(ExtensionFit.Skipped, Fit("1.13.0", Asmdef(NuGetConfig.ReadyDefine, Prefix + "38")));
+        }
 
-            Assert.True(ExtensionCompatibility.IsBuiltForAnotherGeneration(asmdefs, Prefix, Current));
-            Assert.Equal(new[] { Prefix + "38" }, ExtensionCompatibility.GenerationDefines(asmdefs[1], Prefix));
+        [Theory]
+        [InlineData("1.13.1")] // a later plugin release, even with the same generation
+        [InlineData("1.12.0")]
+        [InlineData("2.0.0")]
+        public void Extension_built_for_another_plugin_release_is_skipped(string plugin)
+        {
+            Assert.Equal(ExtensionFit.Skipped, Fit(plugin,
+                Paired("[1.13.0]", NuGetConfig.ReadyDefine, Current),
+                Asmdef(NuGetConfig.ReadyDefine, Current)));
+        }
+
+        [Fact]
+        public void Extension_on_the_current_generation_without_a_plugin_version_is_unprotected()
+        {
+            // What was published before the pairing: it compiles now and breaks the next plugin update.
+            Assert.Equal(ExtensionFit.Unprotected, Fit("1.13.0", Asmdef(NuGetConfig.ReadyDefine, Current)));
+            Assert.Equal(ExtensionFit.Unprotected, Fit("1.13.0",
+                Paired("[1.13.0]", NuGetConfig.ReadyDefine, Current),
+                Asmdef(NuGetConfig.ReadyDefine, Current)));
+            // A version define the assembly does not require constrains nothing.
+            var unused = Paired("[1.0.0]", NuGetConfig.ReadyDefine, Current).Replace("\"" + Match + "\"\n  ]", "\"OTHER\"\n  ]");
+            Assert.Equal(ExtensionFit.Unprotected, Fit("1.13.0", unused));
         }
 
         [Fact]
         public void Extension_without_the_generation_gate_is_not_judged()
         {
             // An extension older than the gate (or a third-party one) compiles against any plugin.
-            Assert.False(ExtensionCompatibility.IsBuiltForAnotherGeneration(new[] { Asmdef(NuGetConfig.ReadyDefine), "{}" }, Prefix, Current));
-            Assert.False(ExtensionCompatibility.IsBuiltForAnotherGeneration(new string[0], Prefix, Current));
+            Assert.Equal(ExtensionFit.Works, Fit("1.13.0", Asmdef(NuGetConfig.ReadyDefine), "{}", "not json", "[]"));
+            Assert.Equal(ExtensionFit.Works, Fit("1.13.0"));
+        }
+
+        [Theory]
+        [InlineData("1.2.3", "1.2.3", true)]
+        [InlineData("1.2.3", "1.3.0", true)]
+        [InlineData("1.2.3", "1.2.2", false)]
+        [InlineData("[1.2.3]", "1.2.3", true)]
+        [InlineData("[1.2.3]", "1.2.4", false)]
+        [InlineData("[1.2.3]", "1.2.2", false)]
+        [InlineData("[1.2.0,1.3.0)", "1.2.9", true)]
+        [InlineData("[1.2.0,1.3.0)", "1.3.0", false)]
+        [InlineData("(1.2.0,1.3.0]", "1.2.0", false)]
+        [InlineData("(1.2.0,1.3.0]", "1.3.0", true)]
+        [InlineData(" [1.2, 2) ", "1.9.9", true)]
+        [InlineData("[1.2,2)", "2.0.0", false)]
+        [InlineData("nonsense", "1.0.0", true)] // what cannot be read is not judged
+        [InlineData("[1.2.3", "1.0.0", true)]
+        [InlineData("[1.2.3]", "unknown", true)]
+        public void A_version_define_expression_is_read_as_Unity_reads_it(string expression, string version, bool expected)
+        {
+            Assert.Equal(expected, ExtensionCompatibility.Satisfies(expression, version));
         }
 
         [Fact]
@@ -68,7 +129,12 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         {
             // Each real module package, read the way the plugin reads an installed one.
             var manifest = RepoFile.Find("extensions/manifest.json");
+            var core = RepoFile.Find("Unity-MCP-Plugin/Packages/" + Plugin + "/package.json");
             Assert.NotNull(manifest);
+            Assert.NotNull(core);
+            string pluginVersion;
+            using (var package = System.Text.Json.JsonDocument.Parse(File.ReadAllText(core!)))
+                pluginVersion = package.RootElement.GetProperty("version").GetString()!;
             var packages = Directory.GetDirectories(Path.GetDirectoryName(manifest)!)
                 .Select(module => Path.Combine(module, "Packages"))
                 .Where(Directory.Exists)
@@ -81,7 +147,9 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             {
                 var asmdefs = ExtensionCompatibility.ShippedAsmdefs(package).ToArray();
                 Assert.True(asmdefs.Length >= 2, $"{package}: expected its Editor and Runtime asmdef, found {asmdefs.Length}");
-                Assert.All(asmdefs, path => Assert.Equal(new[] { Current }, ExtensionCompatibility.GenerationDefines(File.ReadAllText(path), Prefix)));
+                Assert.Equal(ExtensionFit.Works, Fit(pluginVersion, asmdefs.Select(File.ReadAllText).ToArray()));
+                // And with no other plugin release: this is what keeps a plugin-only update from breaking the compile.
+                Assert.Equal(ExtensionFit.Skipped, Fit("0.0.1", asmdefs.Select(File.ReadAllText).ToArray()));
             }
         }
 
@@ -110,29 +178,29 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             }
         }
 
-        [Theory]
-        [InlineData("1.13.0", "2.1.2")] // the release that moved the generation ships its own extensions
-        [InlineData("1.13.5", "2.1.2")] // a later plugin release without a newer extension keeps them
-        [InlineData("1.14.0", "2.1.3")]
-        [InlineData("1.12.0", "2.1.1")] // never a version that would pull a newer plugin in
-        [InlineData("1.6.1", null)]
-        [InlineData("1.14.0-rc.1", "2.1.3")] // a pre-release build of the plugin counts as its release
-        [InlineData("1.13.0+build.7", "2.1.2")]
-        [InlineData("1.13", null)]
-        public void The_version_for_a_plugin_is_the_highest_one_that_does_not_need_a_newer_plugin(string plugin, string? expected)
-        {
-            var registry = Registry(("2.1.1", "1.6.2"), ("2.1.3", "1.14.0"), ("2.1.2", "1.13.0"));
+        static readonly string Published = Registry(("2.1.1", "1.6.2"), ("2.1.3", "1.13.0"), ("2.1.2", "1.13.0"), ("2.1.4", "1.14.0"));
 
-            Assert.Equal(expected, ExtensionCompatibility.HighestVersionFor(registry, Plugin, plugin));
+        [Theory]
+        [InlineData("1.13.0", "2.1.3")] // the highest of the versions published for that plugin release
+        [InlineData("1.14.0", "2.1.4")]
+        [InlineData("1.6.2", "2.1.1")]
+        [InlineData("1.13.5", null)] // a plugin release has its own extension versions: none is published yet
+        [InlineData("1.12.0", null)]
+        [InlineData("1.14.0-rc.1", "2.1.4")] // a pre-release build of the plugin counts as its release
+        [InlineData("1.13.0+build.7", "2.1.3")]
+        [InlineData("unknown", null)]
+        public void The_version_for_a_plugin_is_the_highest_one_published_for_that_release(string plugin, string? expected)
+        {
+            Assert.Equal(expected, ExtensionCompatibility.VersionFor(Published, Plugin, plugin));
         }
 
         [Fact]
         public void Versions_that_cannot_be_ordered_or_do_not_depend_on_the_plugin_are_ignored()
         {
-            var registry = Registry(("2.1.1", "1.6.2"), ("3.0.0-preview.1", "1.0.0"), ("2.5.0", null), ("2.4.0", "^1.0.0"),
-                ("2.6.99999999999", "1.0.0"), ("2.7.0", "1.0.99999999999"));
+            var registry = Registry(("2.1.1", "1.13.0"), ("3.0.0-preview.1", "1.13.0"), ("2.5.0", null), ("2.4.0", "^1.13.0"),
+                ("2.6.99999999999", "1.13.0"), ("2.7.0", "1.13.99999999999"));
 
-            Assert.Equal("2.1.1", ExtensionCompatibility.HighestVersionFor(registry, Plugin, "1.13.0"));
+            Assert.Equal("2.1.1", ExtensionCompatibility.VersionFor(registry, Plugin, "1.13.0"));
         }
 
         [Theory]
@@ -142,19 +210,22 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         [InlineData("{\"dist-tags\":{\"latest\":\"2.1.2\"}}")]
         public void An_unusable_registry_document_names_no_version(string registry)
         {
-            Assert.Null(ExtensionCompatibility.HighestVersionFor(registry, Plugin, "1.13.0"));
+            Assert.Null(ExtensionCompatibility.VersionFor(registry, Plugin, "1.13.0"));
         }
 
-        static readonly string Published = Registry(("2.1.1", "1.6.2"), ("2.1.2", "1.13.0"), ("2.1.3", "1.14.0"));
-
         [Theory]
-        [InlineData("2.1.1", "1.13.0", "2.1.2")] // the version built for the installed plugin, not the latest one
-        [InlineData("2.1.2", "1.13.0", null)]    // already the newest one for this plugin
-        [InlineData("2.1.1", "1.12.0", null)]    // nothing newer was published for plugin 1.12.0
-        [InlineData("2.1.3", "1.13.0", null)]    // never a downgrade
-        public void An_installed_extension_moves_only_to_a_newer_version_for_the_installed_plugin(string installed, string plugin, string? expected)
+        [InlineData("2.1.1", "1.13.0", false, "2.1.3")] // the version built for the installed plugin, not the latest one
+        [InlineData("2.1.2", "1.13.0", false, "2.1.3")]
+        [InlineData("2.1.3", "1.13.0", false, null)]    // already the newest one for this plugin
+        [InlineData("2.1.4", "1.13.0", false, null)]    // a working extension is never downgraded
+        [InlineData("2.1.4", "1.13.0", true, "2.1.3")]  // one that Unity skips follows the plugin, down too
+        [InlineData("2.1.3", "1.13.0", true, null)]
+        [InlineData("2.1.1", "1.12.0", true, null)]     // nothing is published for plugin 1.12.0
+        [InlineData("2.2.0-preview.1", "1.13.0", false, null)]
+        [InlineData("2.2.0-preview.1", "1.13.0", true, "2.1.3")]
+        public void An_installed_extension_moves_to_the_version_for_the_installed_plugin(string installed, string plugin, bool anyDirection, string? expected)
         {
-            Assert.Equal(expected, ExtensionCompatibility.UpdateTargetFor(installed, Published, Plugin, plugin));
+            Assert.Equal(expected, ExtensionCompatibility.UpdateTargetFor(installed, Published, Plugin, plugin, anyDirection));
         }
     }
 }

@@ -17,13 +17,19 @@
     "defineConstraints": [
         "UNITY_MCP_READY",
         "UNITY_MCP_DEPS_49",
-        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"
+        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION",
+        "UNITY_MCP_CORE_MATCH"
     ],
     "versionDefines": [
         {
             "name": "com.unity.inputsystem",
             "expression": "1.0.0",
             "define": "INPUTSYSTEM_1_OR_NEWER"
+        },
+        {
+            "name": "com.ivanmurzak.unity.mcp",
+            "expression": "[1.13.0]",
+            "define": "UNITY_MCP_CORE_MATCH"
         }
     ],
     "noEngineReferences": false

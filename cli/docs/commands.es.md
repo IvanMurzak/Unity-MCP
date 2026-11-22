@@ -74,7 +74,7 @@ unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 
 ## `update`
 
-Actualiza todo: el plugin MCP y las extensiones instaladas de un proyecto de Unity a sus últimas versiones y, después, la propia CLI.
+Actualiza todo: el plugin MCP de un proyecto de Unity a su última versión y sus extensiones instaladas a las versiones compiladas para ese plugin y, después, la propia CLI.
 
 ```bash
 unity-mcp-cli update              # the project around the current folder, then the CLI
@@ -85,7 +85,7 @@ unity-mcp-cli update --no-project  # update only the CLI
 unity-mcp-cli update --no-extensions
 ```
 
-Fuera de un proyecto solo actualiza la CLI. Las instalaciones desde `file:` o git no se tocan y nunca se baja de versión nada.
+Fuera de un proyecto solo actualiza la CLI. Las instalaciones desde `file:` o git no se tocan y el plugin nunca se baja de versión. Una extensión funciona con una única versión del plugin, así que cada una pasa a la versión publicada para el plugin del proyecto, aunque sea más antigua.
 
 ## `install-extension`
 
@@ -103,13 +103,13 @@ cd ./MyGame && unity-mcp-cli install-extension Tilemap
 |---|---|---|
 | `[id]` | Sí (salvo con `--list`) | Extensión que se instalará: el id de paquete de OpenUPM (`com.ivanmurzak.unity.mcp.tilemap`) o el nombre del catálogo (`Tilemap`). Sin distinguir mayúsculas. Un id desconocido lista todas las extensiones instalables para que puedas corregirlo. |
 | `[path]` | No | Ruta al proyecto de Unity (posicional o `--path`). Por defecto, el directorio actual, verificado igual que en `install-plugin`. |
-| `--extension-version <version>` | No | Versión de la extensión que se instalará (por defecto, la última de OpenUPM). **No es `--version`**: esa es la opción global de versión de la propia CLI. |
+| `--extension-version <version>` | No | Versión de la extensión que se instalará (por defecto, la compilada para la versión del plugin del proyecto; sin plugin en el proyecto, la última de OpenUPM). **No es `--version`**: esa es la opción global de versión de la propia CLI. |
 | `--list` | No | Listar las extensiones instalables y salir. |
 
 Este comando:
 1. Añade el **registro con ámbito de OpenUPM** con todos los ámbitos necesarios (el ámbito `com.ivanmurzak` es lo que hace que la extensión se pueda resolver)
-2. Añade el id de paquete de la extensión a `dependencies`, resolviendo el `latest` de OpenUPM en el momento de la instalación
-3. **Nunca baja de versión** con una versión resuelta automáticamente: si ya hay instalada una versión superior, se conserva y se muestra un aviso. Pasa `--extension-version` para forzar un valor concreto, incluida una bajada de versión.
+2. Añade el id de paquete de la extensión a `dependencies`, resolviendo en el momento de la instalación la versión que OpenUPM publica para la versión del plugin del proyecto (una extensión funciona con una única versión del plugin); sin plugin en el proyecto, el `latest` de OpenUPM
+3. **Sigue al plugin**: una versión compilada para otra versión del plugin se sustituye por la del plugin del proyecto, aunque sea más antigua, y se muestra un aviso. Sin plugin en el proyecto nunca baja de versión. Pasa `--extension-version` para forzar un valor concreto.
 4. Es **idempotente**: una nueva ejecución que encuentra la extensión ya actualizada lo indica y no escribe nada
 
 **Ejemplo — instalar una versión concreta de una extensión:**

@@ -34,6 +34,9 @@ That only works if nobody ever changes a pin without bumping the define. This sc
      assemblies, so if it compiled while those are skipped (stale generation) its CS0246 errors would
      block the domain reload exactly like #957. The price: a generation bump must update and
      re-release every extension (an extension built for an older generation is skipped, not broken).
+     The generation define alone does not cover an extension that stays installed while only the core
+     is updated (the stale defines still satisfy it): each extension assembly also names its core
+     release in `versionDefines`, written and checked by `commands/extensions.py` (settle, validate).
 
 Usage:
     python .github/scripts/check_nuget_gate.py           # verify (CI)

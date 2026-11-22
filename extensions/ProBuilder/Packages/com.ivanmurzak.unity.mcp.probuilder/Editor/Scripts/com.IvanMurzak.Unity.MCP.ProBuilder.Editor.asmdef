@@ -25,8 +25,15 @@
     "defineConstraints": [
         "UNITY_MCP_READY",
         "UNITY_MCP_DEPS_49",
-        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"
+        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION",
+        "UNITY_MCP_CORE_MATCH"
     ],
-    "versionDefines": [],
+    "versionDefines": [
+        {
+            "name": "com.ivanmurzak.unity.mcp",
+            "expression": "[1.13.0]",
+            "define": "UNITY_MCP_CORE_MATCH"
+        }
+    ],
     "noEngineReferences": false
 }
