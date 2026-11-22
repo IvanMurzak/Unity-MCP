@@ -19,13 +19,19 @@
     "defineConstraints": [
         "UNITY_MCP_READY",
         "UNITY_MCP_DEPS_49",
-        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION"
+        "!UNITY_MCP_EXCLUDE_FROM_COMPILATION",
+        "UNITY_MCP_CORE_MATCH"
     ],
     "versionDefines": [
         {
             "name": "com.unity.splines",
             "expression": "2.0.0",
             "define": "SPLINES_2_OR_NEWER"
+        },
+        {
+            "name": "com.ivanmurzak.unity.mcp",
+            "expression": "[1.13.0]",
+            "define": "UNITY_MCP_CORE_MATCH"
         }
     ],
     "noEngineReferences": false

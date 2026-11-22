@@ -1,0 +1,35 @@
+{
+  "_comment": "Which published extension version is built for a plugin release: the highest stable one whose dependency on the plugin names exactly that release. The plugin (ExtensionCompatibility.VersionFor, checked by Tests~/EngineFree) and the CLI (pluginRelease + extensionVersionForPlugin, checked by cli/tests/extension-version-rule-parity.test.ts) implement the rule separately; both read these cases, so they cannot drift apart.",
+  "plugin": "com.ivanmurzak.unity.mcp",
+  "registry": {
+    "name": "com.ivanmurzak.unity.mcp.example",
+    "dist-tags": { "latest": "2.2.0" },
+    "versions": {
+      "2.1.1": { "dependencies": { "com.ivanmurzak.unity.mcp": "1.6.2" } },
+      "2.1.3": { "dependencies": { "com.ivanmurzak.unity.mcp": "1.13.0" } },
+      "2.1.2": { "dependencies": { "com.ivanmurzak.unity.mcp": "1.13.0" } },
+      "2.1.10": { "dependencies": { "com.ivanmurzak.unity.mcp": "1.14.0" } },
+      "2.1.9": { "dependencies": { "com.ivanmurzak.unity.mcp": "1.14.0" } },
+      "2.2.0": { "dependencies": { "com.ivanmurzak.unity.mcp": "1.15.0" } },
+      "3.0.0-preview.1": { "dependencies": { "com.ivanmurzak.unity.mcp": "1.13.0" } },
+      "2.9.0": { "dependencies": { "com.unity.modules.animation": "1.0.0" } },
+      "2.8.0": { "dependencies": { "com.ivanmurzak.unity.mcp": "^1.13.0" } },
+      "2.7.0": {}
+    }
+  },
+  "expected": {
+    "1.13.0": "2.1.3",
+    "1.14.0": "2.1.10",
+    "1.15.0": "2.2.0",
+    "1.6.2": "2.1.1",
+    "1.13.5": null,
+    "1.12.0": null,
+    "2.0.0": null,
+    "1.14.0-rc.1": null,
+    "1.13.0+build.7": "2.1.3",
+    "1.13": null,
+    "unknown": null,
+    "file:../plugin": null,
+    "": null
+  }
+}

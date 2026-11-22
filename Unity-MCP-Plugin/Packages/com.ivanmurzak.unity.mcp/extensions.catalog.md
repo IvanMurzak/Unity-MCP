@@ -50,11 +50,11 @@ artifacts**; either test fails until all three agree.
 
 ## `version` is `null` on every entry, on purpose
 
-No entry pins an extension version. Every extension resolves OpenUPM's `dist-tags.latest` **live at
-install time** — the CLI via `resolveLatestPackageVersion` in `cli/src/utils/manifest.ts`, the editor
-via `ExtensionPanel.FetchLatestOpenUpmVersionAsync`. A catalogue that pinned versions would go stale
-on the very next extension release, and this catalogue ships inside a package whose release cadence is
-independent of the ten extensions'.
+No entry pins an extension version. Every extension resolves, **live at install time**, the version
+OpenUPM publishes for the plugin release the project has (an extension works with exactly one plugin
+release) — the CLI via `resolveExtensionVersionForPlugin` in `cli/src/utils/manifest.ts`, the editor
+via `UpdateChecker.FetchExtensionVersionAsync`. A catalogue that pinned versions would go stale on the
+very next extension release: an extension can be released again for the same plugin.
 
 `version` has no counterpart in the C# `ExtensionData` struct, which is why the `json ↔ C#` test
 compares five fields rather than six. That is not a gap: the editor has no version field *because* it

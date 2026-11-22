@@ -170,10 +170,12 @@ export interface InstallExtensionOptions {
    */
   extensionId: string;
   /**
-   * Version to install. When omitted, OpenUPM's `dist-tags.latest` is resolved
-   * live at install time — which is the normal path, because every catalogue
-   * entry is unpinned (`version: null`). Supplying a value also permits a
-   * downgrade, mirroring `installPlugin`'s explicit-version semantics.
+   * Version to install. When omitted, the version OpenUPM publishes for the
+   * plugin release in the project's manifest is resolved live at install time
+   * (an extension works with exactly one plugin release; without a plugin
+   * release there, `dist-tags.latest`) — which is the normal path, because every
+   * catalogue entry is unpinned (`version: null`). Supplying a value also permits
+   * a downgrade, mirroring `installPlugin`'s explicit-version semantics.
    */
   version?: string;
   /**

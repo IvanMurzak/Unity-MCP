@@ -104,14 +104,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
 
         /// <summary>
-        /// Determines the button state based on whether the package is installed
-        /// and whether a newer version is available on OpenUPM.
+        /// Determines the button state based on whether the package is installed, whether Unity compiles
+        /// it with this plugin, and which version is published for this plugin on OpenUPM.
         /// </summary>
         /// <param name="installedVersion">
         /// The currently installed version of this package, or null if not installed.
         /// </param>
         /// <param name="isFromRegistry">Whether that version came from a package registry, not <c>file:</c> or git.</param>
-        public void RefreshStatus(string? installedVersion, bool isFromRegistry = false)
+        /// <param name="isSkipped">
+        /// The installed version is built for another plugin release: Unity skips it and its tools are missing.
+        /// </param>
+        public void RefreshStatus(string? installedVersion, bool isFromRegistry = false, bool isSkipped = false)
         {
             _isFromRegistry = isFromRegistry;
             _actionBtn.UnregisterCallback<ClickEvent>(OnActionClicked);
@@ -123,7 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             }
 
             ShowAsChecking();
-            _ = CheckForUpdateAsync(installedVersion);
+            _ = CheckForUpdateAsync(installedVersion, isSkipped);
         }
 
         private void SetState(PanelState state)
@@ -156,10 +159,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             SetState(PanelState.Install);
         }
 
-        private void ShowAsUpdate(string installedVersion, string latestVersion)
+        private void ShowAsUpdate(string installedVersion, string targetVersion, bool isSkipped)
         {
             _actionBtn.text = "Update";
-            _actionBtn.tooltip = $"Update {_data.Name} extension from {installedVersion} to {latestVersion}.\nPackage: {_data.PackageId}";
+            _actionBtn.tooltip = isSkipped
+                ? $"{_data.Name} {installedVersion} is built for another plugin version, so Unity does not compile it and its tools are missing.\n"
+                    + $"Update moves it to {targetVersion}, the version built for plugin {UnityMcpPlugin.Version}.\nPackage: {_data.PackageId}"
+                : $"Update {_data.Name} extension from {installedVersion} to {targetVersion}.\nPackage: {_data.PackageId}";
             _actionBtn.RemoveFromClassList("btn-secondary");
             _actionBtn.AddToClassList("btn-primary");
             _actionBtn.style.display = DisplayStyle.Flex;
@@ -174,16 +180,31 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             await InstallOrUpdateAsync(new[] { this });
         }
 
-        private async Task CheckForUpdateAsync(string installedVersion)
+        private async Task CheckForUpdateAsync(string installedVersion, bool isSkipped)
         {
-            var latestVersion = await UpdateChecker.FetchExtensionVersionAsync(_data.PackageId);
-            if (latestVersion != null && UpdateChecker.IsNewerVersion(latestVersion, installedVersion))
-            {
-                EditorApplication.delayCall += () => ShowAsUpdate(installedVersion, latestVersion);
-                return;
-            }
+            // A skipped extension moves to the version built for this plugin in either direction:
+            // the plugin version is the anchor.
+            var targetVersion = await UpdateChecker.FetchExtensionUpdateTargetAsync(_data.PackageId, installedVersion, anyDirection: isSkipped);
+            if (targetVersion != null)
+                EditorApplication.delayCall += () => ShowAsUpdate(installedVersion, targetVersion, isSkipped);
+            else if (isSkipped)
+                EditorApplication.delayCall += () => ShowAsInactive(installedVersion);
+            else
+                EditorApplication.delayCall += () => ShowAsInstalled();
+        }
 
-            EditorApplication.delayCall += () => ShowAsInstalled();
+        /// <summary>Installed, but Unity skips it under this plugin and no version for this plugin is known.</summary>
+        private void ShowAsInactive(string installedVersion)
+        {
+            _actionBtn.text = "Inactive";
+            _actionBtn.tooltip = $"{_data.Name} {installedVersion} is built for another plugin version, so Unity does not compile it and its tools are missing.\n"
+                + $"No other version built for plugin {UnityMcpPlugin.Version} could be read from OpenUPM: update the plugin to its latest version, "
+                + "or, if it already is, wait for the matching extension to be published.";
+            _actionBtn.RemoveFromClassList("btn-primary");
+            _actionBtn.AddToClassList("btn-secondary");
+            _actionBtn.style.display = DisplayStyle.Flex;
+            _actionBtn.SetEnabled(false);
+            SetState(PanelState.Inactive);
         }
 
         private void ShowAsInstalled()
@@ -198,7 +219,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
 
         /// <summary>
-        /// Installs or updates the given extensions to their newest OpenUPM versions for this plugin in one package request, so a
+        /// Installs or updates the given extensions to their OpenUPM versions built for this plugin in one package request, so a
         /// bulk action costs one resolve and one recompile. If a package cannot resolve, the manifest goes back to
         /// how it was and every button comes back, so each extension can still be tried on its own.
         /// </summary>
@@ -427,6 +448,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             Install,
             Update,
             Installed,
+            Inactive,
             Busy
         }
 

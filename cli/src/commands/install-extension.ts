@@ -22,7 +22,7 @@ export const installExtensionCommand = new Command('install-extension')
   // intercepts it before this subcommand sees it — `install-extension X --version 1.2.3`
   // would print the CLI's own version and exit 0 without installing anything. This is the
   // same reason `install-plugin` spells its flag `--plugin-version`.
-  .option('--extension-version <version>', 'Extension version to install (default: latest from OpenUPM)')
+  .option('--extension-version <version>', 'Extension version to install (default: the one built for the plugin release the project has)')
   .option('--list', 'List the installable extensions and exit')
   .action(async (id: string | undefined, positionalPath: string | undefined, options: InstallExtensionCliOptions) => {
     // `--list` is a pure read: no project needed, no network, exit 0.
@@ -65,7 +65,7 @@ export const installExtensionCommand = new Command('install-extension')
 
     let spinner: ReturnType<typeof ui.startSpinner> | undefined;
     if (!options.extensionVersion) {
-      spinner = ui.startSpinner('Resolving latest extension version...');
+      spinner = ui.startSpinner('Resolving the extension version...');
     }
 
     const result = await installExtension({

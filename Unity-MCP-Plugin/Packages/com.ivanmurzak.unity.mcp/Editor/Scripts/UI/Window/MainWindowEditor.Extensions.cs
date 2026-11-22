@@ -233,7 +233,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             for (var i = 0; i < _extensions.Length; i++)
             {
                 var isInstalled = installed.TryGetValue(_extensions[i].PackageId, out var package);
-                panels[i].RefreshStatus(isInstalled ? package.version : null, isInstalled && package.source == PackageSource.Registry);
+                panels[i].RefreshStatus(isInstalled ? package.version : null, isInstalled && package.source == PackageSource.Registry,
+                    isInstalled && ExtensionAutoUpdater.FitOf(package) == ExtensionFit.Skipped);
             }
         }
     }

@@ -188,6 +188,8 @@ class PublishedVersionTests(unittest.TestCase):
         package['version'] = version or package['version']
         package['dependencies'][extensions.CORE] = floor or package['dependencies'][extensions.CORE]
         extensions.write(path, package)
+        if floor and re.fullmatch(extensions.VERSION_RE, floor):
+            extensions.set_core_floor(row, floor, root)
 
     def core(self, version, generation):
         self.core_at(self.root, version, generation)
@@ -266,19 +268,19 @@ class PublishedVersionTests(unittest.TestCase):
         strict = self.check(strict=True)
         self.assertEqual(2, len(strict))
         self.assertRegex(strict[0], r'core floor 1\.5\.0 does not set UNITY_MCP_DEPS_8')
-        with self.assertRaisesRegex(ValueError, r'Core 1\.5\.0 does not ship UNITY_MCP_DEPS_8'):
+        with self.assertRaisesRegex(ValueError, r'Core 1\.5\.0 is released and does not ship UNITY_MCP_DEPS_8'):
             self.settle('1.5.0')
         self.assertEqual([('2.0.1', '1.5.0')] * 2, self.coordinates())
-        # A floor that is no core release at all is not waiting for anything.
+        # A floor that is not the core of this tree is not waiting for anything.
         self.edit(self.rows[0], floor='9.9.9')
-        self.assertRegex(self.check()[0], r'core floor 9\.9\.9 does not set UNITY_MCP_DEPS_8')
+        self.assertRegex(self.check()[0], r'core floor 9\.9\.9 is not core 1\.5\.0 of this tree')
 
     def test_core_release_that_moves_the_gate_refloors_and_bumps_every_component(self):
         self.core(version='1.6.0', generation=8)
         self.edit(self.rows[1], version='2.0.5')  # unpublished: takes the floor, keeps its version
         problems = self.check()
         self.assertEqual(2, len(problems))
-        self.assertRegex(problems[0], r'core floor 1\.5\.0 does not set UNITY_MCP_DEPS_8')
+        self.assertRegex(problems[0], r'core floor 1\.5\.0 is not core 1\.6\.0 of this tree')
         self.settle('1.6.0', dry_run=True)
         self.assertEqual([('2.0.0', '1.5.0'), ('2.0.5', '1.5.0')], self.coordinates())
         self.settle()  # without the core version no floor can move
@@ -293,15 +295,59 @@ class PublishedVersionTests(unittest.TestCase):
         self.settle('1.6.0')
         self.assertEqual([('2.0.1', '1.6.0'), ('2.0.5', '1.6.0')], self.coordinates())
 
-    def test_core_release_with_the_same_gate_keeps_older_floors(self):
+    def test_core_release_with_the_same_gate_gets_its_own_component_versions(self):
+        # The assemblies name one core release: a later core skips them even when the gate did not move.
         self.core(version='1.6.0', generation=7)
-        self.assertEqual([], self.check())
+        self.assertEqual(2, len(self.check()))
+        with self.assertRaisesRegex(ValueError, r'Core 1\.5\.0 is not the core of this tree \(1\.6\.0\)'):
+            self.settle('1.5.0')
         self.settle('1.6.0')
-        self.assertEqual([('2.0.0', '1.5.0')] * 2, self.coordinates())
+        self.assertEqual([('2.0.1', '1.6.0')] * 2, self.coordinates())
+        self.assertEqual([], self.check())
+        for row in self.rows:
+            asmdefs = extensions.gated_asmdefs(self.root / row['package'])
+            self.assertTrue(asmdefs)
+            for _, data in asmdefs:
+                self.assertIn(extensions.CORE_MATCH_DEFINE, data['defineConstraints'])
+                self.assertIn({'name': extensions.CORE, 'expression': '[1.6.0]', 'define': extensions.CORE_MATCH_DEFINE},
+                              data['versionDefines'])
+        extensions.validate(self.root)
+
+    def test_assemblies_not_constrained_to_their_core_fail_until_settled(self):
+        row = self.rows[0]
+        asmdef, data = extensions.gated_asmdefs(self.root / row['package'])[0]
+        released = asmdef.read_bytes()
+        data['defineConstraints'].remove(extensions.CORE_MATCH_DEFINE)
+        data['versionDefines'] = [{'name': 'com.unity.other', 'expression': '1.0.0', 'define': 'OTHER'}]
+        extensions.write(asmdef, data)
+        with self.assertRaisesRegex(ValueError, row['name'] + r': .*\.asmdef must compile only with core 1\.5\.0'):
+            extensions.validate(self.root)
+        self.settle(dry_run=True)
+        self.assertNotIn(extensions.CORE_MATCH_DEFINE, extensions.read(asmdef)['defineConstraints'])
+        self.settle()
+        extensions.validate(self.root)
+        self.assertEqual({'name': 'com.unity.other', 'expression': '1.0.0', 'define': 'OTHER'},
+                         extensions.read(asmdef)['versionDefines'][0])
+        # What the Inspector appends after the pairing does not unpair it: only its content counts.
+        data = extensions.read(asmdef)
+        data['defineConstraints'].append('LATER')
+        data['versionDefines'].append({'name': 'com.unity.later', 'expression': '2.0.0', 'define': 'LATER'})
+        extensions.write(asmdef, data)
+        extensions.validate(self.root)
+        self.assertEqual([], extensions.unpaired(self.root / row['package'], '1.5.0'))
+        # Only the unrelated entry is new: the published file differs, so its version moved.
+        self.assertEqual([('2.0.1', '1.5.0'), ('2.0.0', '1.5.0')], self.coordinates())
+        # The file keeps its own style: indent, newline and no final newline, as Unity wrote it.
+        self.assertEqual(released.endswith(b'\n'), asmdef.read_bytes().endswith(b'\n'))
+        self.assertEqual(released.count(b'\r\n') > 0, asmdef.read_bytes().count(b'\r\n') > 0)
+        self.assertIn(b'\n    "name"', asmdef.read_bytes().replace(b'\r\n', b'\n'))
+        self.edit(row, floor='^1.5.0')
+        with self.assertRaisesRegex(ValueError, r'core dependency \^1\.5\.0 must be one core version'):
+            extensions.validate(self.root)
 
     def test_unknown_floor_and_unreadable_remote_fail(self):
         self.edit(self.rows[0], version='2.0.5', floor='9.9.9')
-        self.assertRegex(self.check()[0], r'core floor 9\.9\.9 does not set UNITY_MCP_DEPS_7')
+        self.assertRegex(self.check()[0], r'core floor 9\.9\.9 is not core 1\.5\.0 of this tree')
         with self.assertRaisesRegex(ValueError, 'git ls-remote failed'):
             self.check(remote='missing')
 
@@ -311,16 +357,18 @@ class PublishedVersionTests(unittest.TestCase):
         config.unlink()
         self.release_at(self.root, '1.0.0')  # a core older than the resolver: no NuGetConfig.cs
         config.write_text(text)
-        self.edit(self.rows[0], version='2.0.5', floor='1.0.0')
-        self.assertRegex(self.check()[0], r'core floor 1\.0\.0 does not set UNITY_MCP_DEPS_7')
+        self.core(version='1.0.0', generation=7)
+        for row in self.rows:
+            self.edit(row, version='2.0.5', floor='1.0.0')
+        self.assertRegex(self.check(strict=True)[0], r'core floor 1\.0\.0 does not set UNITY_MCP_DEPS_7')
 
     def test_only_a_core_version_can_be_a_floor(self):
         component_tag = self.rows[1]['tagPrefix'] + '2.0.0'  # a release whose tree carries the current gate
         with self.assertRaisesRegex(ValueError, 'stable core dependency version'):
             self.settle(component_tag)
         self.edit(self.rows[0], version='2.0.5', floor=component_tag)
-        self.assertRegex(self.check()[0], 'does not set UNITY_MCP_DEPS_7')
-        self.assertRegex(self.check(strict=True)[0], 'is not a released core version')
+        self.assertRegex(self.check()[0], r'is not core 1\.5\.0 of this tree')
+        self.assertRegex(self.check(strict=True)[0], r'is not core 1\.5\.0 of this tree')
 
     def test_shallow_ci_checkout_without_tags_reads_the_remote(self):
         (self.root / 'later.txt').write_text('main moved past the releases\n')

@@ -13,7 +13,7 @@
     "MCP",
     "Unity MCP"
   ],
-  "version": "2.1.2",
+  "version": "2.1.3",
   "unity": "2022.3",
   "license": "MIT",
   "description": "MCP Tools for Cinemachine - Enhance your Unity projects with AI-powered Cinemachine camera tools using the MCP framework. Create and configure CinemachineCamera, CinemachineBrain, targets, lenses, noise and blends via natural language.",

@@ -1,4 +1,5 @@
-import { addPluginToManifest, resolveLatestVersion } from '../utils/manifest.js';
+import * as fs from 'fs';
+import { addPluginToManifest, closePluginGate, PLUGIN_PACKAGE_ID, resolveLatestVersion } from '../utils/manifest.js';
 import { silentLogger } from './logger.js';
 import { emitProgress } from './progress.js';
 import { requireUnityProject } from './validation.js';
@@ -45,7 +46,10 @@ export async function installPlugin(opts: InstallPluginOptions): Promise<Install
       });
     }
 
+    const before = installedPluginSpec(validated.manifestPath);
     const result = addPluginToManifest(projectPath, version, isExplicitVersion, silentLogger);
+    // Another plugin version: nothing built on the plugin may compile before the new one is ready.
+    if (before !== result.resolvedVersion) closePluginGate(projectPath);
 
     if (result.resolvedVersion !== version && !isExplicitVersion) {
       warnings.push(
@@ -82,5 +86,15 @@ export async function installPlugin(opts: InstallPluginOptions): Promise<Install
       nextSteps,
       error: err instanceof Error ? err : new Error(String(err)),
     };
+  }
+}
+
+/** The plugin entry of the manifest as it is before the install; null when absent or unreadable. */
+function installedPluginSpec(manifestPath: string): string | null {
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as { dependencies?: Record<string, string> };
+    return manifest.dependencies?.[PLUGIN_PACKAGE_ID] ?? null;
+  } catch {
+    return null;
   }
 }

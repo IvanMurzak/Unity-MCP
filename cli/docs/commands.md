@@ -74,7 +74,7 @@ unity-mcp-cli create-project ./MyGame --unity 2022.3.62f1
 
 ## `update`
 
-Update everything: the MCP plugin and installed extensions of a Unity project to their latest versions, then the CLI itself.
+Update everything: the MCP plugin of a Unity project to its latest version and its installed extensions to the versions built for that plugin, then the CLI itself.
 
 ```bash
 unity-mcp-cli update              # the project around the current folder, then the CLI
@@ -83,9 +83,10 @@ unity-mcp-cli update --check       # only report; exit code 2 when something is 
 unity-mcp-cli update --no-self     # leave the CLI as it is
 unity-mcp-cli update --no-project  # update only the CLI
 unity-mcp-cli update --no-extensions
+unity-mcp-cli update --no-plugin
 ```
 
-Outside a project it updates only the CLI. Installs from `file:` or git are left alone and nothing is downgraded.
+Outside a project it updates only the CLI. Installs from `file:` or git are left alone and the plugin is never downgraded. An extension works with exactly one plugin release, so each one moves to the version published for the project's plugin, also when that is an older one. A plugin release whose extensions are not all published yet is held back until they are (`--check` reports it as outdated); `--no-plugin` moves only the extensions, to their versions for the installed plugin. A change of the plugin version also removes `UNITY_MCP_READY` from the project's scripting defines (`ProjectSettings/ProjectSettings.asset`): the plugin sets it again once its dependencies are in place, and until then Unity skips, instead of failing on, everything built on the plugin.
 
 ## `install-extension`
 
@@ -103,13 +104,13 @@ cd ./MyGame && unity-mcp-cli install-extension Tilemap
 |---|---|---|
 | `[id]` | Yes (unless `--list`) | Extension to install — the OpenUPM package id (`com.ivanmurzak.unity.mcp.tilemap`) or the catalogue name (`Tilemap`). Matched case-insensitively. An unknown id lists every installable extension so you can self-correct. |
 | `[path]` | No | Path to the Unity project (positional or `--path`). Defaults to the current directory, verified the same way as `install-plugin`. |
-| `--extension-version <version>` | No | Extension version to install (defaults to latest from OpenUPM). **Not `--version`** — that is the CLI's own global version flag. |
+| `--extension-version <version>` | No | Extension version to install (defaults to the version built for the project's plugin release; without a plugin in the project, the latest from OpenUPM). **Not `--version`** — that is the CLI's own global version flag. |
 | `--list` | No | List the installable extensions and exit. |
 
 This command:
 1. Adds the **OpenUPM scoped registry** with all required scopes (the `com.ivanmurzak` scope is what makes the extension resolvable at all)
-2. Adds the extension's package id to `dependencies`, resolving OpenUPM's `latest` at install time
-3. **Never downgrades** on an auto-resolved version — if a higher version is already installed, it is preserved and a warning is printed. Pass `--extension-version` to force a specific value, including a downgrade.
+2. Adds the extension's package id to `dependencies`, resolving at install time the version OpenUPM publishes for the plugin release the project has (an extension works with exactly one plugin release); without a plugin in the project, OpenUPM's `latest`
+3. **Follows the plugin** — a version built for another plugin release is replaced by the one for the project's plugin, also when that is an older one, and a warning is printed. Without a plugin in the project it never downgrades. Pass `--extension-version` to force a specific value.
 4. Is **idempotent** — a re-run that finds the extension already up to date reports so and writes nothing
 
 **Example — install a specific extension version:**

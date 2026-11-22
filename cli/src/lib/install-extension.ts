@@ -1,11 +1,19 @@
 import * as fs from 'fs';
+import { isNewerVersion } from '@baizor/gamedev-cli-core';
 import {
   EXTENSIONS_CATALOG,
   findExtension,
   hasVersion,
   type ExtensionDescriptor,
 } from '../utils/extensions-catalog.js';
-import { addPackageToManifest, resolveLatestPackageVersion } from '../utils/manifest.js';
+import {
+  addPackageToManifest,
+  isNonSemverSpec,
+  PLUGIN_PACKAGE_ID,
+  pluginRelease,
+  resolveExtensionVersionForPlugin,
+  resolveLatestPackageVersion,
+} from '../utils/manifest.js';
 import { silentLogger } from './logger.js';
 import { emitProgress } from './progress.js';
 import { requireUnityProject } from './validation.js';
@@ -21,8 +29,11 @@ import type { InstallExtensionOptions, InstallExtensionResult } from './types.js
  *     mirrored here by `EXTENSIONS_CATALOG`).
  *  2. Validate that the target path hosts a Unity project (`Packages/manifest.json`).
  *  3. Resolve the version to install: the explicit `version` override, else the
- *     catalogue pin, else OpenUPM's `dist-tags.latest` fetched live. Every shipped
- *     catalogue entry is unpinned, so the live fetch is the normal path.
+ *     catalogue pin, else the version OpenUPM publishes for the plugin release the
+ *     project has (an extension works with exactly one plugin release; installing it
+ *     may move a version built for another plugin down). Without a plugin release in
+ *     the manifest it is `dist-tags.latest`, which brings its own plugin along. Every
+ *     shipped catalogue entry is unpinned, so the live fetch is the normal path.
  *  4. Read-modify-write `Packages/manifest.json`: ensure the OpenUPM scoped registry
  *     and its required scopes, then add or version-bump the package dependency.
  *  5. Tell the caller Unity must resolve packages (the CLI cannot call
@@ -80,10 +91,41 @@ export async function installExtension(
     const descriptor = applyVersionOverride(resolved, opts.version, warnings);
     const isExplicitVersion = (opts.version ?? '').trim() !== '';
 
+    const before = readInstalledVersion(validated.manifestPath, descriptor.packageId);
+    // The plugin release the project has, when its manifest names one: the extension must be built for it.
+    const plugin = pluginRelease(readInstalledVersion(validated.manifestPath, PLUGIN_PACKAGE_ID) ?? '');
+
     let version: string;
+    // The version for this plugin replaces another registry version, an older one too: only it compiles here.
+    let replaces = false;
     if (hasVersion(descriptor)) {
       // Non-null only for an explicit override or a (currently unused) catalogue pin.
       version = descriptor.version as string;
+    } else if (plugin !== null) {
+      const matched = await resolveExtensionVersionForPlugin(descriptor.packageId, plugin);
+      if (matched === null) {
+        return {
+          kind: 'failure',
+          success: false,
+          extensionId,
+          packageId: descriptor.packageId,
+          manifestPath: validated.manifestPath,
+          warnings,
+          nextSteps,
+          error: new Error(
+            `No version of ${descriptor.packageId} is published for Unity-MCP plugin ${plugin}: an extension works with ` +
+            'exactly one plugin release. Update the plugin first, or, if it is the latest, retry once its extensions ' +
+            'are published.',
+          ),
+        };
+      }
+      version = matched;
+      replaces = before !== null && before !== version && !isNonSemverSpec(before);
+      emitProgress(opts.onProgress, {
+        phase: 'dependencies-resolved',
+        message: `Resolved ${descriptor.packageId} for plugin ${plugin}: ${version}`,
+        version,
+      });
     } else {
       version = await resolveLatestPackageVersion(
         descriptor.packageId,
@@ -97,15 +139,20 @@ export async function installExtension(
       });
     }
 
-    const before = readInstalledVersion(validated.manifestPath, descriptor.packageId);
-
     const result = addPackageToManifest(
       projectPath,
       descriptor.packageId,
       version,
-      isExplicitVersion,
+      isExplicitVersion || replaces,
       silentLogger,
     );
+
+    if (replaces && result.resolvedVersion === version && isNewerVersion(version, before!)) {
+      warnings.push(
+        `${descriptor.packageId} ${before} is built for another plugin release, so it does not work with plugin ${plugin}. ` +
+        `It was set to ${version}, the version built for this plugin.`,
+      );
+    }
 
     // `addPackageToManifest` refuses to downgrade unless `force`; surface that as a
     // warning rather than silently reporting the requested version.
