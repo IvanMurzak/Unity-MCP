@@ -167,7 +167,23 @@ follows the core release (`extensions release --engine unity`).
 
 The plugin version is the anchor: every way of changing it leaves the project with the extension
 versions built for it, and an extension built for another plugin release moves to the one for the
-installed plugin, also when that is an older one.
+plugin the project runs.
+
+Which plugin a project runs is not only what its manifest says. Unity resolves a package to the
+highest version anything in the project requires, the manifest's own entry included (measured in
+2022.3.62f3: a manifest with plugin 1.12.0 and an extension that depends on plugin 1.13.0 runs
+plugin 1.13.0, and the manifest entry stays 1.12.0). So:
+
+- an extension is never installed beside an older plugin than the one it names: installing or
+  updating one extension to a version built for a newer plugin upgrades the plugin with it, without
+  the plugin's own update steps. The other installed extensions are then the ones built for another
+  plugin: Unity skips them until the startup check moves them (one published before the pairing is
+  not skipped and breaks the compile when the upgrade also moves the gate generation);
+- lowering the plugin entry in the manifest does nothing while an installed extension names a newer
+  plugin;
+- the plugin (`UnityMcpPlugin.Version`) knows the version that runs; the CLI reads the manifest
+  entry. `unity-mcp-cli update` moves every installed extension to its version for that entry, an
+  older one too, which is what makes the entry true again.
 
 | The plugin changes through | The extensions |
 |---|---|
