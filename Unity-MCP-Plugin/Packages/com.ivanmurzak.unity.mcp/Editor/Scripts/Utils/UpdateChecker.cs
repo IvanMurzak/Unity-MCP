@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -203,18 +204,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 return false;
 
             // 3. Cooldown.
-            var nextCheckTimeStr = EditorPrefs.GetString(KeyNextCheckTime, string.Empty);
-            if (!string.IsNullOrEmpty(nextCheckTimeStr))
-            {
-                if (DateTime.TryParse(nextCheckTimeStr, out var nextCheckDateTime))
-                {
-                    if (DateTime.UtcNow < nextCheckDateTime)
-                        return false;
-                }
-            }
-
-            return true;
+            return !IsBeforeStoredTime(EditorPrefs.GetString(KeyNextCheckTime, string.Empty), DateTime.UtcNow);
         }
+
+        /// <summary>
+        /// Is <paramref name="utcNow"/> before a time stored with <c>ToString("O")</c>? False for a value that is
+        /// not a time.
+        /// </summary>
+        /// <remarks>
+        /// RoundtripKind: the stored time is UTC. Parsed without it, it comes back as local time, and compared with
+        /// UtcNow the cooldown was void west of UTC and longer east of it.
+        /// </remarks>
+        internal static bool IsBeforeStoredTime(string stored, DateTime utcNow)
+            => DateTime.TryParse(stored, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var time)
+                && utcNow < time.ToUniversalTime();
 
         /// <summary>
         /// Skips a specific version (user doesn't want to be notified about it again).
@@ -316,7 +319,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Set next allowed check time to enforce cooldown (only for automatic checks)
                 if (!forceCheck)
                 {
-                    EditorPrefs.SetString(KeyNextCheckTime, DateTime.UtcNow.AddHours(1).ToString("O"));
+                    EditorPrefs.SetString(KeyNextCheckTime, DateTime.UtcNow.AddHours(1).ToString("O", CultureInfo.InvariantCulture));
                 }
                 isChecking = false;
             }

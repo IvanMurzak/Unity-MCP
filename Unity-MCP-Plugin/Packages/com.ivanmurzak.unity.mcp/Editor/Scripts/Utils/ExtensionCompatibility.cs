@@ -241,7 +241,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <summary>
         /// Was <paramref name="version"/> of a package published less than <paramref name="window"/> ago,
         /// by the <c>time</c> map of its npm-style registry document? A version whose publish time cannot
-        /// be read counts as old: nothing that waits on a young release may wait for ever.
+        /// be read counts as old, and so does one published more than the window ahead of this clock (a
+        /// clock that far behind would keep it young for days): nothing that waits on a young release
+        /// may wait for ever.
         /// </summary>
         internal static bool PublishedWithin(string registryJson, string version, DateTime utcNow, TimeSpan window)
         {
@@ -255,7 +257,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     && time.ValueKind == JsonValueKind.String
                     && DateTime.TryParse(time.GetString(), CultureInfo.InvariantCulture,
                         DateTimeStyles.AdjustToUniversal | DateTimeStyles.AssumeUniversal, out var published)
-                    && utcNow - published < window;
+                    && (utcNow - published).Duration() < window;
             }
             catch (JsonException)
             {

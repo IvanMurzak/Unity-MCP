@@ -262,8 +262,10 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         [InlineData("2026-11-21T12:00:01.000Z", true)]       // a second inside the day
         [InlineData("2026-11-21T12:00:00.000Z", false)]      // a day old
         [InlineData("2026-11-19T12:31:58.293Z", false)]
-        [InlineData("2026-11-22T14:30:00.000+03:00", true)]  // an offset is read, not dropped
+        [InlineData("2026-11-21T14:00:00.000+03:00", false)] // an offset is read, not dropped: 25 hours old
+        [InlineData("2026-11-21T10:00:00.000-03:00", true)]  // 23 hours old
         [InlineData("2026-11-22T12:05:00.000Z", true)]       // a clock a little behind the registry
+        [InlineData("2026-11-23T12:00:00.000Z", false)]      // a clock a day behind must not keep a release young for days
         [InlineData("yesterday", false)]
         public void A_release_is_young_for_a_day_after_its_publication(string published, bool expected)
         {
