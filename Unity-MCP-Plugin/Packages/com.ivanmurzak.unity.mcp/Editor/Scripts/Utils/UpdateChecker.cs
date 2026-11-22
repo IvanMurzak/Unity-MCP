@@ -325,6 +325,17 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
+        /// The newest published version of an extension that works with the installed plugin (its plugin
+        /// floor is not above it), or <c>null</c> when none is known. Not <c>dist-tags.latest</c>: that one
+        /// may be built for a newer plugin, and Unity skips such an extension without an error.
+        /// </summary>
+        internal static async Task<string?> FetchExtensionVersionAsync(string packageId)
+        {
+            var json = await FetchRegistryDocumentAsync(packageId);
+            return json == null ? null : ExtensionCompatibility.HighestVersionFor(json, PackageId, UnityMcpPlugin.Version);
+        }
+
+        /// <summary>
         /// The OpenUPM registry document of a package (every published version with its dependencies),
         /// or <c>null</c> on any network failure.
         /// </summary>
@@ -386,19 +397,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Extensions behind their latest version plus the Unity package floors those need.
+        /// Extensions behind their target version plus the Unity package floors those need.
         /// </summary>
         internal static string[] BuildExtensionUpdateSpecs(
-            IEnumerable<(string PackageId, string InstalledVersion, string? LatestVersion)> extensions,
+            IEnumerable<(string PackageId, string InstalledVersion, string? TargetVersion)> extensions,
             JsonObject? dependencies,
             string unityVersion)
         {
             return extensions
-                .Where(extension => extension.LatestVersion != null && IsNewerVersion(extension.LatestVersion, extension.InstalledVersion))
+                .Where(extension => extension.TargetVersion != null && IsNewerVersion(extension.TargetVersion, extension.InstalledVersion))
                 .SelectMany(extension => ExtensionPanel
                     .MissingCompatibilityDependencies(extension.PackageId, dependencies, unityVersion)
                     .Select(required => $"{required.Key}@{required.Value}")
-                    .Prepend($"{extension.PackageId}@{extension.LatestVersion}"))
+                    .Prepend($"{extension.PackageId}@{extension.TargetVersion}"))
                 .Distinct()
                 .ToArray();
         }

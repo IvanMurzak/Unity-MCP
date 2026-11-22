@@ -75,13 +75,13 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                 .SelectMany(Directory.GetDirectories)
                 .ToArray();
 
-            Assert.Equal(10, packages.Length);
+            using (var inventory = System.Text.Json.JsonDocument.Parse(File.ReadAllText(manifest!)))
+                Assert.Equal(inventory.RootElement.GetProperty("extensions").GetArrayLength(), packages.Length);
             foreach (var package in packages)
             {
                 var asmdefs = ExtensionCompatibility.ShippedAsmdefs(package).ToArray();
                 Assert.True(asmdefs.Length >= 2, $"{package}: expected its Editor and Runtime asmdef, found {asmdefs.Length}");
                 Assert.All(asmdefs, path => Assert.Equal(new[] { Current }, ExtensionCompatibility.GenerationDefines(File.ReadAllText(path), Prefix)));
-                Assert.False(ExtensionCompatibility.IsBuiltForAnotherGeneration(asmdefs.Select(File.ReadAllText), Prefix, Current));
             }
         }
 
@@ -91,7 +91,7 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             var package = Directory.CreateDirectory(Path.Combine(Path.GetTempPath(), Path.GetRandomFileName())).FullName;
             try
             {
-                foreach (var relative in new[] { "Editor/Scripts/A.Editor.asmdef", "Runtime/A.Runtime.asmdef", "Tests/Editor/A.Tests.asmdef", "Samples~/Demo/A.Demo.asmdef" })
+                foreach (var relative in new[] { "Editor/Scripts/A.Editor.asmdef", "Runtime/A.Runtime.asmdef", "Tests/Editor/A.Tests.asmdef", "Samples~/Demo/A.Demo.asmdef", ".git/modules/x/B.asmdef" })
                 {
                     var path = Path.Combine(package, relative);
                     Directory.CreateDirectory(Path.GetDirectoryName(path)!);
@@ -139,29 +139,16 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
             Assert.Null(ExtensionCompatibility.HighestVersionFor(registry, Plugin, "1.13.0"));
         }
 
-        [Fact]
-        public void A_stale_extension_moves_to_the_version_built_for_the_installed_plugin()
-        {
-            var registry = Registry(("2.1.1", "1.6.2"), ("2.1.2", "1.13.0"), ("2.1.3", "1.14.0"));
-
-            Assert.Equal((ExtensionCompatibility.Remedy.Update, "2.1.2"), ExtensionCompatibility.Decide("2.1.1", registry, Plugin, "1.13.0"));
-        }
+        static readonly string Published = Registry(("2.1.1", "1.6.2"), ("2.1.2", "1.13.0"), ("2.1.3", "1.14.0"));
 
         [Theory]
-        [InlineData("2.1.2", "1.13.0")] // already the newest one for this plugin: installing it again changes nothing
-        [InlineData("2.1.1", "1.12.0")] // nothing was published for the generation of plugin 1.12.0
-        [InlineData("2.1.3", "1.13.0")] // never a downgrade
-        public void A_stale_extension_without_a_newer_version_for_this_plugin_is_left_alone(string installed, string plugin)
+        [InlineData("2.1.1", "1.13.0", "2.1.2")] // the version built for the installed plugin, not the latest one
+        [InlineData("2.1.2", "1.13.0", null)]    // already the newest one for this plugin
+        [InlineData("2.1.1", "1.12.0", null)]    // nothing newer was published for plugin 1.12.0
+        [InlineData("2.1.3", "1.13.0", null)]    // never a downgrade
+        public void An_installed_extension_moves_only_to_a_newer_version_for_the_installed_plugin(string installed, string plugin, string? expected)
         {
-            var registry = Registry(("2.1.1", "1.6.2"), ("2.1.2", "1.13.0"), ("2.1.3", "1.14.0"));
-
-            Assert.Equal((ExtensionCompatibility.Remedy.NoVersion, (string?)null), ExtensionCompatibility.Decide(installed, registry, Plugin, plugin));
-        }
-
-        [Fact]
-        public void A_registry_that_could_not_be_read_is_not_mistaken_for_no_version()
-        {
-            Assert.Equal((ExtensionCompatibility.Remedy.Unknown, (string?)null), ExtensionCompatibility.Decide("2.1.1", null, Plugin, "1.13.0"));
+            Assert.Equal(expected, ExtensionCompatibility.UpdateTargetFor(installed, Published, Plugin, plugin));
         }
     }
 }

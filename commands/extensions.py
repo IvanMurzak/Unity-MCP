@@ -26,7 +26,7 @@ def write(path, value):
     # In the newline style the file already has: /extensions/** is `-text` in .gitattributes, so its bytes
     # are committed as written and a host-dependent newline would rewrite every line of a CRLF file on Linux.
     path = Path(path)
-    newline = os.linesep if not path.is_file() else '\r\n' if b'\r\n' in path.read_bytes() else '\n'
+    newline = '\r\n' if path.is_file() and b'\r\n' in path.read_bytes() else '\n'
     path.write_bytes((json.dumps(value, indent=2) + '\n').replace('\n', newline).encode('utf-8'))
 
 

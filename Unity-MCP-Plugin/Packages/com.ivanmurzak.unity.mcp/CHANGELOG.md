@@ -17,13 +17,11 @@
 - Updating the plugin also updates the installed extensions to their latest versions, in the same package request.
   Extensions installed from `file:` or git are left alone; a failed extension update does not block the plugin update.
 - **Installed extensions follow the plugin on startup.** An extension is built for one plugin dependency generation; after
-  a plugin update that moved it (through Package Manager, a manifest edit, a teammate's commit) Unity skips the
-  extension without an error and its tools are missing. On startup the plugin now finds such extensions (offline, from
-  their asmdefs) and updates each first-party registry install to the newest published version built for the installed
-  plugin: never one that needs a newer plugin, never a downgrade. What it does not update is named in a console warning
-  with what to do: a `file:`/git or third-party extension, one with no published version for this plugin yet (checked
-  again after 30 minutes and in the next session), and every stale extension in a batch-mode Editor or in a project
-  with update notifications turned off for the team.
+  a plugin update that moved it (Package Manager, a manifest edit, a teammate's commit) Unity skips the extension without
+  an error and its tools are missing. On startup the plugin now finds such extensions (offline, from their asmdefs) and
+  updates each first-party registry install to the newest published version for the installed plugin. What it does not
+  update is named in a Console warning with what to do (`docs/dev/extensions.md`). The Extensions section offers the
+  same version: never one built for a newer plugin.
 - `UNITY_MCP_CREDENTIALS_DIR`: an absolute folder the Editor reads (and refreshes) the machine credential store from
   instead of `~/.ai-game-dev`, together with its lock and the project-key cache — the twin of Unreal's
   `UNREAL_MCP_CREDENTIALS_DIR` and Godot's `GODOT_MCP_CREDENTIALS_DIR`. For development/test Editors whose launcher

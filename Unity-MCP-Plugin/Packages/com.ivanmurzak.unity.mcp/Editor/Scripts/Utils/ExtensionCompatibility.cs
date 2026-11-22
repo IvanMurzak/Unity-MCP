@@ -30,25 +30,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// </remarks>
     internal static class ExtensionCompatibility
     {
-        /// <summary>What can be done about an extension built for another plugin generation.</summary>
-        internal enum Remedy
-        {
-            /// <summary>A published version for this plugin exists and is newer than the installed one.</summary>
-            Update,
-            /// <summary>No published version for this plugin is newer than the installed one.</summary>
-            NoVersion,
-            /// <summary>Its published versions could not be read.</summary>
-            Unknown,
-        }
-
         private static readonly Regex StableVersion = new(@"^\d+\.\d+\.\d+$", RegexOptions.Compiled);
 
-        /// <summary>The asmdefs Unity compiles in a consumer project: not the tests, not hidden (<c>~</c>) folders.</summary>
-        internal static IEnumerable<string> ShippedAsmdefs(string packagePath)
-            => Directory.EnumerateFiles(packagePath, "*.asmdef", SearchOption.AllDirectories)
-                .Where(path => !Path.GetRelativePath(packagePath, path)
-                    .Split(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar)
-                    .Any(segment => segment == "Tests" || segment.EndsWith("~")));
+        /// <summary>
+        /// The asmdefs Unity compiles in a consumer project. Test, hidden (<c>~</c>) and dot folders are
+        /// not entered: Unity ignores the last two, and a <c>file:</c> package may sit at a repository root.
+        /// </summary>
+        internal static IEnumerable<string> ShippedAsmdefs(string folder)
+        {
+            foreach (var file in Directory.EnumerateFiles(folder, "*.asmdef"))
+                yield return file;
+            foreach (var child in Directory.EnumerateDirectories(folder))
+            {
+                var name = Path.GetFileName(child);
+                if (name == "Tests" || name.EndsWith("~") || name.StartsWith("."))
+                    continue;
+                foreach (var file in ShippedAsmdefs(child))
+                    yield return file;
+            }
+        }
 
         /// <summary>The dependency-generation defines an asmdef is constrained on.</summary>
         internal static IEnumerable<string> GenerationDefines(string asmdefText, string definePrefix)
@@ -102,18 +102,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// The remedy for an extension built for another generation, given its registry document
-        /// (null when it could not be fetched), and the version to move to for <see cref="Remedy.Update"/>.
+        /// The version to move an installed extension to: <see cref="HighestVersionFor"/> when it is
+        /// newer than the installed one, else null (nothing newer is published for this plugin).
         /// </summary>
-        internal static (Remedy Remedy, string? Version) Decide(string installedVersion, string? registryJson, string pluginPackageId, string pluginVersion)
+        internal static string? UpdateTargetFor(string installedVersion, string registryJson, string pluginPackageId, string pluginVersion)
         {
-            if (registryJson == null)
-                return (Remedy.Unknown, null);
-
             var target = HighestVersionFor(registryJson, pluginPackageId, pluginVersion);
             return target != null && Version.TryParse(installedVersion, out var installed) && Version.Parse(target) > installed
-                ? (Remedy.Update, target)
-                : (Remedy.NoVersion, null);
+                ? target
+                : null;
         }
     }
 }

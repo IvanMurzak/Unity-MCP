@@ -176,7 +176,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private async Task CheckForUpdateAsync(string installedVersion)
         {
-            var latestVersion = await UpdateChecker.FetchLatestVersionAsync(_data.PackageId);
+            var latestVersion = await UpdateChecker.FetchExtensionVersionAsync(_data.PackageId);
             if (latestVersion != null && UpdateChecker.IsNewerVersion(latestVersion, installedVersion))
             {
                 EditorApplication.delayCall += () => ShowAsUpdate(installedVersion, latestVersion);
@@ -198,7 +198,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
         }
 
         /// <summary>
-        /// Installs or updates the given extensions to their latest OpenUPM versions in one package request, so a
+        /// Installs or updates the given extensions to their newest OpenUPM versions for this plugin in one package request, so a
         /// bulk action costs one resolve and one recompile. If a package cannot resolve, the manifest goes back to
         /// how it was and every button comes back, so each extension can still be tried on its own.
         /// </summary>
@@ -207,14 +207,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             foreach (var panel in panels)
                 panel.ShowAsBusy();
 
-            var versions = await Task.WhenAll(panels.Select(panel => UpdateChecker.FetchLatestVersionAsync(panel._data.PackageId)));
+            var versions = await Task.WhenAll(panels.Select(panel => UpdateChecker.FetchExtensionVersionAsync(panel._data.PackageId)));
 
             var known = new List<(ExtensionPanel Panel, string Version)>(panels.Count);
             for (var i = 0; i < panels.Count; i++)
             {
                 if (versions[i] == null)
                 {
-                    panels[i].FailBusy("its latest version on OpenUPM is unknown");
+                    panels[i].FailBusy("no version for this plugin version was found on OpenUPM");
                     continue;
                 }
                 known.Add((panels[i], versions[i]!));

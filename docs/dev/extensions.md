@@ -165,7 +165,15 @@ plugin startup, after every domain reload:
   editor or in a project that turned update notifications off for the team.
 
 The rule that makes the second step right is the release rule above: each plugin release that
-moves the generation ships its extensions with that release as their floor.
+moves the generation ships its extensions with that release as their floor. Between such a plugin
+release and its extension release the newest version for the plugin is still one of the previous
+generation: the extension moves to it, stays skipped, is reported, and moves again once the
+matching version is published.
+
+The Extensions section of the plugin window installs and offers the same version
+(`UpdateChecker.FetchExtensionVersionAsync`), not `dist-tags.latest`, so it never installs an
+extension built for a newer plugin. The plugin's own update moves the installed extensions to
+their latest versions in the same request.
 
 OpenUPM registrations point to this repository with each package's literal `gitTagPrefix` and
 its signed archive's filename prefix. The core registration excludes extension tags. OpenUPM
