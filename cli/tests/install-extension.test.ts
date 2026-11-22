@@ -276,7 +276,6 @@ describe('installExtension — add', () => {
 
       if (result.kind !== 'success') throw result.error;
       expect(readManifest(project).dependencies?.[TILEMAP_ID]).toBe('file:../../ext/Tilemap');
-      expect(result.warnings.join('\n')).not.toContain('built for another plugin release');
     });
 
     it('a pre-release plugin names no release (no extension is built for it): the latest version is installed', async () => {

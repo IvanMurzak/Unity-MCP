@@ -227,7 +227,7 @@ extension stays skipped, is reported, and moves once the matching version is pub
 The Extensions section of the plugin window installs and offers the same version
 (`UpdateChecker.FetchExtensionVersionAsync`). An installed extension that Unity skips shows
 **Update** (to the version for this plugin) or, when none is published, **Inactive** with the reason.
-`unity-mcp-cli install-extension` installs the version for the plugin release in the manifest and
+`unity-mcp-cli install-extension` installs the version for the plugin release the project runs and
 fails with the reason when none is published.
 
 OpenUPM registrations point to this repository with each package's literal `gitTagPrefix` and

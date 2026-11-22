@@ -58,7 +58,7 @@ export async function resolveLatestPackageVersion(
   logger: LibLogger = silentLogger,
   versionFlag = '--plugin-version',
 ): Promise<string> {
-  const latest = await readRegistryDocument(packageId, versionFlag, 'resolve the latest version of', (document) => document['dist-tags']?.latest || undefined);
+  const latest = await readRegistryDocument(packageId, versionFlag, (document) => document['dist-tags']?.latest || undefined);
   logger.info(`Resolved latest version from OpenUPM: ${latest}`);
   return latest;
 }
@@ -76,7 +76,6 @@ interface RegistryDocument {
 async function readRegistryDocument<T>(
   packageId: string,
   versionFlag: string,
-  what: string,
   pick: (document: RegistryDocument) => T | undefined,
 ): Promise<T> {
   const controller = new AbortController();
@@ -102,7 +101,7 @@ async function readRegistryDocument<T>(
       throw err;
     }
     throw new Error(
-      `Failed to ${what} ${packageId} from OpenUPM. ` +
+      `Failed to resolve the latest version of ${packageId} from OpenUPM. ` +
       `Check your network connection and retry, or specify a version manually with ${versionFlag} <version>`
     );
   } finally {
@@ -138,25 +137,24 @@ export function runningPluginRelease(entry: string | undefined, named: Iterable<
 }
 
 /**
- * The plugin version each installed package names, by package id, as Unity recorded it in
- * `Packages/packages-lock.json`: no network. Only for a package the lock holds at the very version the manifest
- * asks for (a version's dependencies never change; an entry the manifest has moved past says nothing). Empty
- * when there is no readable lock, as in a project Unity has not opened yet.
+ * The plugin versions the installed packages name, as Unity recorded them in `Packages/packages-lock.json`:
+ * no network. Only of a package the lock holds at the very version the manifest asks for (a version's
+ * dependencies never change; an entry the manifest has moved past says nothing). Empty when there is no
+ * readable lock, as in a project Unity has not opened yet.
  */
-export function lockedPluginVersions(projectPath: string, dependencies: Record<string, string>): Map<string, string> {
-  const named = new Map<string, string>();
+export function lockedPluginVersions(projectPath: string, dependencies: Record<string, string>): string[] {
   try {
     const lock = JSON.parse(fs.readFileSync(path.join(projectPath, 'Packages', 'packages-lock.json'), 'utf-8')) as {
       dependencies?: Record<string, { version?: string; dependencies?: Record<string, string> } | undefined>;
     };
-    for (const [packageId, entry] of Object.entries(lock.dependencies ?? {})) {
-      const plugin = entry?.dependencies?.[PLUGIN_PACKAGE_ID];
-      if (typeof plugin === 'string' && entry?.version === dependencies[packageId]) named.set(packageId, plugin);
-    }
+    return Object.entries(lock.dependencies ?? {})
+      .filter(([packageId, entry]) => entry?.version === dependencies[packageId])
+      .map(([, entry]) => entry?.dependencies?.[PLUGIN_PACKAGE_ID])
+      .filter((plugin): plugin is string => typeof plugin === 'string');
   } catch {
     // No lock, or not JSON: nothing is known offline.
+    return [];
   }
-  return named;
 }
 
 /**
@@ -187,7 +185,7 @@ export interface PublishedExtension {
  * registry cannot be read.
  */
 export async function fetchPublishedExtension(packageId: string, versionFlag = '--extension-version'): Promise<PublishedExtension> {
-  return readRegistryDocument(packageId, versionFlag, 'read the published versions of', (document) =>
+  return readRegistryDocument(packageId, versionFlag, (document) =>
     document.versions ? { latest: document['dist-tags']?.latest || null, versions: document.versions } : undefined);
 }
 

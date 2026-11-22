@@ -93,20 +93,20 @@ export async function installExtension(
 
     const installed = readDependencies(validated.manifestPath);
     const before = installed[descriptor.packageId] ?? null;
-    // The plugin versions the installed extensions name, as far as Unity's lock file tells.
-    const named = lockedPluginVersions(projectPath, installed);
+    // The plugin release the project runs, as far as the manifest and Unity's lock file tell.
+    const offline = hasVersion(descriptor) ? null
+      : runningPluginRelease(installed[PLUGIN_PACKAGE_ID], lockedPluginVersions(projectPath, installed));
 
     let version: string;
     if (hasVersion(descriptor)) {
       // Non-null only for an explicit override or a (currently unused) catalogue pin.
       version = descriptor.version as string;
-    } else if (runningPluginRelease(installed[PLUGIN_PACKAGE_ID], named.values()) !== null) {
+    } else if (offline !== null) {
       const published = await fetchPublishedExtension(descriptor.packageId);
       // The installed version of this very extension names a plugin too, lock or not: it is never moved
-      // below the plugin it lifts the project to.
+      // below the plugin it lifts the project to. The extension must be built for the plugin that runs.
       const own = before === null ? undefined : published.versions[before]?.dependencies?.[PLUGIN_PACKAGE_ID];
-      // The plugin release the project runs: the extension must be built for it.
-      const plugin = runningPluginRelease(installed[PLUGIN_PACKAGE_ID], [...named.values(), own])!;
+      const plugin = runningPluginRelease(offline, [own]) ?? offline;
       const matched = extensionVersionForPlugin(published.versions, plugin);
       if (matched === null) {
         return {
@@ -220,13 +220,13 @@ export async function installExtension(
 }
 
 /**
- * Read the version currently pinned for `packageId` in the project manifest, or
- * `null` when the dependency is absent. Used to classify the outcome as
+ * The dependencies the project manifest names, by package id (an empty or non-string
+ * entry counts as absent). The extension's own entry classifies the outcome as
  * added / updated / already-up-to-date, which `addPackageToManifest`'s
- * `{ modified }` flag cannot express on its own.
+ * `{ modified }` flag cannot express on its own; the rest tells which plugin runs.
  *
- * Deliberately forgiving: any read/parse problem yields `null` (treated as
- * "not installed"). The subsequent `addPackageToManifest` call performs the
+ * Deliberately forgiving: any read/parse problem yields none (treated as
+ * "nothing installed"). The subsequent `addPackageToManifest` call performs the
  * authoritative read and throws a precise error if the manifest is unusable, so
  * swallowing here cannot mask a real failure — it only avoids duplicating the
  * error path.

@@ -4,7 +4,7 @@
 import { describe, it, expect, afterEach, vi } from 'vitest';
 import * as fs from 'fs';
 import * as path from 'path';
-import { installExtension, updateProject } from '../src/lib.js';
+import { installExtension, removePlugin, updateProject } from '../src/lib.js';
 import { lockedPluginVersions, runningPluginRelease } from '../src/utils/manifest.js';
 import { makeTempDir, removeTempDirs } from './helpers/temp-dir.js';
 
@@ -79,14 +79,28 @@ describe('lockedPluginVersions', () => {
       'com.unity.ugui': ['1.0.0'],
     });
 
-    expect([...lockedPluginVersions(root, dependencies)]).toEqual([[TILEMAP, '1.13.0']]);
+    expect(lockedPluginVersions(root, dependencies)).toEqual(['1.13.0']);
   });
 
   it('knows nothing without a readable lock', () => {
-    expect(lockedPluginVersions(project({}), {}).size).toBe(0);
+    expect(lockedPluginVersions(project({}), {})).toEqual([]);
     const root = project({});
     fs.writeFileSync(path.join(root, 'Packages', 'packages-lock.json'), 'not json');
-    expect(lockedPluginVersions(root, {}).size).toBe(0);
+    expect(lockedPluginVersions(root, {})).toEqual([]);
+  });
+});
+
+describe('removePlugin', () => {
+  it('says so when Unity will still install the plugin for an extension that names it', async () => {
+    const withExtensions = project({ [PLUGIN]: '1.8.0', [TILEMAP]: '2.1.1', [TIMELINE]: '2.1.1' });
+    const result = await removePlugin({ unityProjectPath: withExtensions });
+    if (result.kind !== 'success') throw result.error;
+    expect(result.removed).toBe(true);
+    expect(result.warnings.join('\n')).toContain('Unity still installs the plugin: Tilemap, Timeline depend on it');
+
+    const alone = await removePlugin({ unityProjectPath: project({ [PLUGIN]: '1.8.0' }) });
+    if (alone.kind !== 'success') throw alone.error;
+    expect(alone.warnings).toEqual([]);
   });
 });
 

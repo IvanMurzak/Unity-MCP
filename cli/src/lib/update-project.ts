@@ -75,7 +75,7 @@ export type UpdateProjectResult = UpdateProjectSuccess | UpdateProjectFailure;
  * Bring a Unity project's MCP plugin to its latest OpenUPM version and its installed extensions to the versions
  * built for that plugin. The one function behind `unity-mcp-cli update`. An extension works with exactly one
  * plugin release, so the plugin is the anchor: each extension moves to the version published for the plugin the
- * project ends up with, also when that is an older one. The project is never left half-way: everything is looked
+ * project runs afterwards (`runningPluginRelease`). The project is never left half-way: everything is looked
  * up before anything is written, and a plugin release whose extensions are not all published yet is held back
  * (`held`) until they are. Only what the manifest already lists is touched, `file:`/git installs are left alone
  * and the plugin is never downgraded. One item failing is a warning and does not stop the others. Library-safe:
@@ -122,19 +122,17 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
     const versionFor = (target: Target, plugin: string | null): string | null | undefined => {
       const extension = publishedOf.get(target.packageId);
       if (extension === undefined) return undefined;
-      // Without a plugin release in the manifest (a local source, or no plugin of its own): the latest one.
+      // No plugin release is known (a local plugin, or nothing names one): the latest one.
       return plugin === null ? extension.latest : extensionVersionForPlugin(extension.versions, plugin);
     };
 
     // The plugin release the extensions must be built for: the one the project runs, unless the plugin moves
     // below. That is the manifest entry or a newer one an installed extension names: as OpenUPM tells for the
     // extensions just read, as Unity's lock file tells for the rest.
-    const named = lockedPluginVersions(projectPath, dependencies);
-    for (const [packageId, extension] of publishedOf) {
-      const namedPlugin = extension?.versions[dependencies[packageId]!]?.dependencies?.[PLUGIN_PACKAGE_ID];
-      if (namedPlugin !== undefined) named.set(packageId, namedPlugin);
-    }
-    let plugin = runningPluginRelease(pluginSpec, named.values());
+    let plugin = runningPluginRelease(pluginSpec, [
+      ...lockedPluginVersions(projectPath, dependencies),
+      ...[...publishedOf].map(([packageId, extension]) => extension?.versions[dependencies[packageId]!]?.dependencies?.[PLUGIN_PACKAGE_ID]),
+    ]);
     let pluginItem: ProjectUpdateItem | null = null;
     if (checksPlugin) {
       const from = pluginSpec!;
@@ -154,7 +152,7 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
         pluginItem.status = 'held';
         warnings.push(
           `MCP plugin ${pluginItem.to} is out, but no version for it is known yet of: ${waiting.map((target) => target.name).join(', ')} ` +
-          `(an extension works with exactly one plugin release). The plugin stays at ${pluginItem.from}: run the update ` +
+          `(an extension works with exactly one plugin release). The plugin is not updated: run the update ` +
           'again later, or update the plugin alone without its extensions.',
         );
       }
@@ -166,9 +164,8 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
       const to = versionFor(target, plugin);
       if (to === undefined) return { ...target, from, to: null, status: 'unknown' };
       if (to === null) return { ...target, from, to, status: 'unavailable' };
-      // For a plugin release: the one version built for it, in either direction. Otherwise never a downgrade.
-      const applies = plugin === null ? shouldUpdateVersion(from, to) : to !== from;
-      return { ...target, from, to, status: applies ? 'outdated' : 'current' };
+      // Never a downgrade: the plugin that runs is at least the one every installed version names.
+      return { ...target, from, to, status: shouldUpdateVersion(from, to) ? 'outdated' : 'current' };
     });
     const items = [...(pluginItem ? [pluginItem] : []), ...extensionItems];
 
@@ -178,11 +175,6 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
           `${item.name} ${item.from}: no version for plugin ${plugin} is published. It does not work with that plugin ` +
           '(an extension works with exactly one plugin release): update the plugin, or run the update again once its ' +
           'extensions are published.',
-        );
-      } else if (item.status === 'outdated' && plugin !== null && shouldUpdateVersion(item.to!, item.from)) {
-        warnings.push(
-          `${item.name} ${item.from} is built for another plugin release, so it does not work with plugin ${plugin}: ` +
-          `${item.to} is the version built for this plugin.`,
         );
       }
     }
