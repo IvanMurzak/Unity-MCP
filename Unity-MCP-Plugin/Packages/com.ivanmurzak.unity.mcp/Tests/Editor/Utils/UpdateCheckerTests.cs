@@ -9,6 +9,8 @@
 */
 
 #nullable enable
+using System;
+using System.Globalization;
 using System.IO;
 using NUnit.Framework;
 using com.IvanMurzak.Unity.MCP.Editor.Utils;
@@ -399,6 +401,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         #endregion
 
         #region ShouldCheckForUpdates Tests
+
+        [TestCase("2026-11-22T13:00:00.0000000Z", true)]
+        [TestCase("2026-11-22T12:00:00.0000000Z", false)]
+        [TestCase("2026-11-22T11:59:59.0000000Z", false)]
+        [TestCase("", false)]
+        [TestCase("soon", false)]
+        public void IsBeforeStoredTime_ReadsTheStoredTimeAsUtc(string stored, bool expected)
+        {
+            // The same answer in every time zone: the stored time is UTC, not local time.
+            var now = new DateTime(2026, 11, 22, 12, 0, 0, DateTimeKind.Utc);
+
+            Assert.AreEqual(expected, UpdateChecker.IsBeforeStoredTime(stored, now));
+        }
+
+        [Test]
+        public void IsBeforeStoredTime_HoldsForAnHourAfterTheTimeIsStored()
+        {
+            var now = DateTime.UtcNow;
+            var stored = now.AddHours(1).ToString("O", CultureInfo.InvariantCulture);
+
+            Assert.IsTrue(UpdateChecker.IsBeforeStoredTime(stored, now.AddMinutes(59)));
+            Assert.IsFalse(UpdateChecker.IsBeforeStoredTime(stored, now.AddMinutes(61)));
+        }
 
         [Test]
         public void ShouldCheckForUpdates_DefaultState_ReturnsTrue()

@@ -22,7 +22,9 @@
   plugin release ships its own extension versions.
   - Updating the plugin from its notification moves the installed extensions, in the same package request, to their
     versions for that plugin. Extensions installed from `file:` or git are left alone; a failed extension update does not
-    block the plugin update.
+    block the plugin update. The notification of a new plugin release waits (at most 24 hours from its publication)
+    until every installed extension has its version for that release: they are published after the plugin.
+    **Check for Updates** in the menu does not wait.
   - On startup the plugin finds the installed extensions Unity skips (offline, from their asmdefs) and moves each
     first-party registry install to the version published for the plugin that runs. That covers one extension moved to
     a version built for a newer plugin, too: Unity then runs that newer plugin (it resolves a package to the highest

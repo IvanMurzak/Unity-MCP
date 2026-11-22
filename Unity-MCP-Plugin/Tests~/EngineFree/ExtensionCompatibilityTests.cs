@@ -8,6 +8,7 @@
 └──────────────────────────────────────────────────────────────────┘
 */
 #nullable enable
+using System;
 using System.IO;
 using System.Linq;
 using com.IvanMurzak.Unity.MCP.Editor.DependencyResolver;
@@ -252,6 +253,37 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         public void An_installed_extension_moves_to_the_version_for_the_installed_plugin(string installed, string plugin, bool anyDirection, string? expected)
         {
             Assert.Equal(expected, ExtensionCompatibility.UpdateTargetFor(installed, Published, Plugin, plugin, anyDirection));
+        }
+
+        private static readonly DateTime Now = new DateTime(2026, 11, 22, 12, 0, 0, DateTimeKind.Utc);
+
+        [Theory]
+        [InlineData("2026-11-22T11:30:00.000Z", true)]       // half an hour old
+        [InlineData("2026-11-21T12:00:01.000Z", true)]       // a second inside the day
+        [InlineData("2026-11-21T12:00:00.000Z", false)]      // a day old
+        [InlineData("2026-11-19T12:31:58.293Z", false)]
+        [InlineData("2026-11-21T14:00:00.000+03:00", false)] // an offset is read, not dropped: 25 hours old
+        [InlineData("2026-11-21T10:00:00.000-03:00", true)]  // 23 hours old
+        [InlineData("2026-11-22T12:05:00.000Z", true)]       // a clock a little behind the registry
+        [InlineData("2026-11-23T12:00:00.000Z", false)]      // a clock a day behind must not keep a release young for days
+        [InlineData("yesterday", false)]
+        public void A_release_is_young_for_a_day_after_its_publication(string published, bool expected)
+        {
+            var registry = "{\"time\":{\"created\":\"2025-01-01T00:00:00.000Z\",\"1.14.0\":\"" + published + "\"}}";
+
+            Assert.Equal(expected, ExtensionCompatibility.PublishedWithin(registry, "1.14.0", Now, TimeSpan.FromHours(24)));
+        }
+
+        [Theory]
+        [InlineData("{\"time\":{\"1.13.0\":\"2026-11-22T11:30:00.000Z\"}}")]  // another version
+        [InlineData("{\"time\":{\"1.14.0\":1763811000}}")]
+        [InlineData("{\"time\":\"2026-11-22T11:30:00.000Z\"}")]
+        [InlineData("{\"versions\":{}}")]
+        [InlineData("[]")]
+        [InlineData("not json")]
+        public void A_release_whose_publication_time_cannot_be_read_is_not_young(string registry)
+        {
+            Assert.False(ExtensionCompatibility.PublishedWithin(registry, "1.14.0", Now, TimeSpan.FromHours(24)));
         }
     }
 }

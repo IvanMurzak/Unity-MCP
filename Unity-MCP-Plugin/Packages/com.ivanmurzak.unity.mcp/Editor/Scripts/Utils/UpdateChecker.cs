@@ -11,6 +11,7 @@
 #nullable enable
 using System;
 using System.Collections.Generic;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Net.Http;
@@ -82,6 +83,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         private static readonly string KeyDoNotShowAgain = ProjectKeyPrefix + "DoNotShowAgain";
         private static readonly string KeyNextCheckTime = ProjectKeyPrefix + "NextCheckTime";
         private static readonly string KeySkippedVersion = ProjectKeyPrefix + "SkippedVersion";
+
+        // The extensions of a plugin release are published after the plugin (they depend on it), usually
+        // within the hour. The notification waits for them at most this long: a release whose extensions
+        // never come out must still reach its users.
+        private static readonly TimeSpan ExtensionsWait = TimeSpan.FromHours(24);
 
         /// <summary>
         /// Deterministic 32-bit FNV-1a hash of a UTF-16 string. Stable across .NET runtimes
@@ -198,18 +204,20 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 return false;
 
             // 3. Cooldown.
-            var nextCheckTimeStr = EditorPrefs.GetString(KeyNextCheckTime, string.Empty);
-            if (!string.IsNullOrEmpty(nextCheckTimeStr))
-            {
-                if (DateTime.TryParse(nextCheckTimeStr, out var nextCheckDateTime))
-                {
-                    if (DateTime.UtcNow < nextCheckDateTime)
-                        return false;
-                }
-            }
-
-            return true;
+            return !IsBeforeStoredTime(EditorPrefs.GetString(KeyNextCheckTime, string.Empty), DateTime.UtcNow);
         }
+
+        /// <summary>
+        /// Is <paramref name="utcNow"/> before a time stored with <c>ToString("O")</c>? False for a value that is
+        /// not a time.
+        /// </summary>
+        /// <remarks>
+        /// RoundtripKind: the stored time is UTC. Parsed without it, it comes back as local time, and compared with
+        /// UtcNow the cooldown was void west of UTC and longer east of it.
+        /// </remarks>
+        internal static bool IsBeforeStoredTime(string stored, DateTime utcNow)
+            => DateTime.TryParse(stored, CultureInfo.InvariantCulture, DateTimeStyles.RoundtripKind, out var time)
+                && utcNow < time.ToUniversalTime();
 
         /// <summary>
         /// Skips a specific version (user doesn't want to be notified about it again).
@@ -257,7 +265,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             try
             {
-                var fetched = await FetchLatestVersionAsync(PackageId);
+                var document = await FetchRegistryDocumentAsync(PackageId);
+                var fetched = document == null ? null : ParseLatestVersionFromJson(document);
                 if (string.IsNullOrEmpty(fetched))
                 {
                     if (forceCheck)
@@ -282,6 +291,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 var currentVersion = UnityMcpPlugin.Version;
                 if (IsNewerVersion(fetched!, currentVersion))
                 {
+                    // A check the user asked for does not wait.
+                    if (!forceCheck && await AwaitsExtensionsAsync(document!, fetched!))
+                    {
+                        logger?.LogDebug("Version {version} is published; its notification waits for the versions of the installed extensions.", fetched);
+                        return;
+                    }
+
                     // Show the update popup on the main thread
                     EditorApplication.delayCall += () =>
                     {
@@ -303,25 +319,50 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 // Set next allowed check time to enforce cooldown (only for automatic checks)
                 if (!forceCheck)
                 {
-                    EditorPrefs.SetString(KeyNextCheckTime, DateTime.UtcNow.AddHours(1).ToString("O"));
+                    EditorPrefs.SetString(KeyNextCheckTime, DateTime.UtcNow.AddHours(1).ToString("O", CultureInfo.InvariantCulture));
                 }
                 isChecking = false;
             }
         }
 
         /// <summary>
-        /// Fetches the latest version of a package from the OpenUPM registry.
+        /// Is plugin release <paramref name="pluginVersion"/> young (<see cref="ExtensionsWait"/>) and an installed
+        /// extension still without a version for it? An extension whose versions cannot be read counts as without one.
         /// </summary>
-        /// <remarks>
-        /// Uses the npm-style registry endpoint <c>https://package.openupm.com/{packageId}</c>,
-        /// which returns a JSON document whose <c>dist-tags.latest</c> field is the version
-        /// currently installable via Unity Package Manager. On any network or parsing failure
-        /// the method returns <c>null</c> so callers fall back gracefully without prompting.
-        /// </remarks>
-        internal static async Task<string?> FetchLatestVersionAsync(string packageId)
+        private static async Task<bool> AwaitsExtensionsAsync(string pluginDocument, string pluginVersion)
         {
-            var json = await FetchRegistryDocumentAsync(packageId);
-            return json == null ? null : ParseLatestVersionFromJson(json);
+            try
+            {
+                if (!ExtensionCompatibility.PublishedWithin(pluginDocument, pluginVersion, DateTime.UtcNow, ExtensionsWait))
+                    return false;
+                var extensions = await InstalledExtensionTargetsAsync(MainWindowEditor.ExtensionCatalog, pluginVersion);
+                return extensions.Any(extension => extension.TargetVersion == null);
+            }
+            catch (Exception ex)
+            {
+                // Package Manager could not list the packages: show the release.
+                logger?.LogWarning(ex, "Failed to look up the installed extensions for the update check");
+                return false;
+            }
+        }
+
+        /// <summary>
+        /// The catalogue extensions installed from the registry, each with its published version for plugin
+        /// <paramref name="pluginVersion"/> (null: none, or not known). A <c>file:</c> or git checkout an extension
+        /// is being developed from is not one: no update replaces it and none waits for it.
+        /// </summary>
+        private static async Task<(string PackageId, string InstalledVersion, string? TargetVersion)[]> InstalledExtensionTargetsAsync(
+            IEnumerable<ExtensionPanel.ExtensionData> catalog, string pluginVersion)
+        {
+            var installed = await PackageUtils.ListInstalledAsync();
+            var packages = catalog
+                .Where(data => installed.TryGetValue(data.PackageId, out var package) && package.source == PackageSource.Registry)
+                .Select(data => installed[data.PackageId])
+                .ToArray();
+            var documents = await Task.WhenAll(packages.Select(package => FetchRegistryDocumentAsync(package.name)));
+            return packages
+                .Select((package, i) => (package.name, package.version, documents[i] == null ? null : ExtensionCompatibility.VersionFor(documents[i]!, PackageId, pluginVersion)))
+                .ToArray();
         }
 
         /// <summary>
@@ -381,25 +422,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <paramref name="pluginVersion"/> (the one being installed), for the plugin update to apply in the same request.
         /// Not their latest versions: an extension works with exactly one plugin release, and one published after the
         /// popup opened may be built for a newer plugin than it installs. An extension with no version for that plugin
-        /// yet stays as it is: Unity skips it and the startup check moves it once its version is published. Only registry installs qualify, so a <c>file:</c> or git checkout an
-        /// extension is being developed from is never silently replaced. Best effort: it must never block the plugin
-        /// update itself, so an extension whose version is unknown is skipped.
+        /// yet stays as it is: Unity skips it and the startup check moves it once its version is published. Only
+        /// registry installs qualify. Best effort: it must never block the plugin update itself, so an extension
+        /// whose version is unknown is skipped.
         /// </summary>
         internal static async Task<string[]> GetInstalledExtensionUpdateSpecsAsync(IEnumerable<ExtensionPanel.ExtensionData> catalog, string pluginVersion)
         {
             try
             {
-                var installed = await PackageUtils.ListInstalledAsync();
-                var packages = catalog
-                    .Where(data => installed.TryGetValue(data.PackageId, out var package) && package.source == PackageSource.Registry)
-                    .Select(data => installed[data.PackageId])
-                    .ToArray();
-                var documents = await Task.WhenAll(packages.Select(package => FetchRegistryDocumentAsync(package.name)));
-                var targets = documents.Select(json => json == null ? null : ExtensionCompatibility.VersionFor(json, PackageId, pluginVersion)).ToArray();
-
+                var extensions = await InstalledExtensionTargetsAsync(catalog, pluginVersion);
                 var manifest = JsonNode.Parse(File.ReadAllText(ExtensionPanel.ManifestPath))?.AsObject();
                 return BuildExtensionUpdateSpecs(
-                    packages.Select((package, i) => (package.name, package.version, targets[i])),
+                    extensions,
                     manifest?["dependencies"]?.AsObject(),
                     Application.unityVersion);
             }
