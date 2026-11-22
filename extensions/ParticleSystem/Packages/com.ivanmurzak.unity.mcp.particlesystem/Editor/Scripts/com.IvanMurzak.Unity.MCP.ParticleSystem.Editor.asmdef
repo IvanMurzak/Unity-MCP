@@ -23,7 +23,7 @@
     "versionDefines": [
         {
             "name": "com.ivanmurzak.unity.mcp",
-            "expression": "[1.13.0]",
+            "expression": "[1.14.0]",
             "define": "UNITY_MCP_CORE_MATCH"
         }
     ],
