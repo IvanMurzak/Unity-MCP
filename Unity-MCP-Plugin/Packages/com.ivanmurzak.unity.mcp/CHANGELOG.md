@@ -14,7 +14,8 @@
   sends it to `rql-mutate` when any statement ends in `set` / `call` (it looked at the last stage of the whole text).
 - Extensions section of the main window: **Install All** (installs every extension not installed yet) and **Update All**
   (shown only when an installed extension has a newer version) beside the title. A bulk action resolves packages once, and a failure restores `manifest.json`; Update All skips `file:`/git installs.
-- Updating the plugin also updates the installed extensions to their latest versions, in the same package request.
+- Updating the plugin also updates the installed extensions to their newest versions for that plugin version, in the
+  same package request.
   Extensions installed from `file:` or git are left alone; a failed extension update does not block the plugin update.
 - **Installed extensions follow the plugin on startup.** An extension is built for one plugin dependency generation; after
   a plugin update that moved it (Package Manager, a manifest edit, a teammate's commit) Unity skips the extension without

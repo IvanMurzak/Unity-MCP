@@ -32,20 +32,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     {
         private static readonly Regex StableVersion = new(@"^\d+\.\d+\.\d+$", RegexOptions.Compiled);
 
+        // The plugin's own version may carry a pre-release or build suffix (1.14.0-rc.1): such a
+        // build has the generation of its release, so its numeric part is what the floors are compared to.
+        private static readonly Regex VersionCore = new(@"^(\d+\.\d+\.\d+)(?:[-+].*)?$", RegexOptions.Compiled);
+
         /// <summary>
         /// The asmdefs Unity compiles in a consumer project. Test, hidden (<c>~</c>) and dot folders are
-        /// not entered: Unity ignores the last two, and a <c>file:</c> package may sit at a repository root.
+        /// not entered: Unity ignores the last two. The walk stops <paramref name="depth"/> folders
+        /// down: a <c>file:</c> package may sit at a repository root with a whole project beside it,
+        /// and this runs at every domain reload. The asmdefs of a package sit within three folders.
         /// </summary>
-        internal static IEnumerable<string> ShippedAsmdefs(string folder)
+        internal static IEnumerable<string> ShippedAsmdefs(string folder, int depth = 6)
         {
             foreach (var file in Directory.EnumerateFiles(folder, "*.asmdef"))
                 yield return file;
+            if (depth == 0)
+                yield break;
             foreach (var child in Directory.EnumerateDirectories(folder))
             {
                 var name = Path.GetFileName(child);
                 if (name == "Tests" || name.EndsWith("~") || name.StartsWith("."))
                     continue;
-                foreach (var file in ShippedAsmdefs(child))
+                foreach (var file in ShippedAsmdefs(child, depth - 1))
                     yield return file;
             }
         }
@@ -69,7 +77,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         internal static string? HighestVersionFor(string registryJson, string pluginPackageId, string pluginVersion)
         {
-            if (!Version.TryParse(pluginVersion, out var plugin))
+            if (!Version.TryParse(VersionCore.Match(pluginVersion).Groups[1].Value, out var plugin))
                 return null;
             try
             {
@@ -86,11 +94,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                         || dependencies.ValueKind != JsonValueKind.Object
                         || !dependencies.TryGetProperty(pluginPackageId, out var floorNode)
                         || floorNode.ValueKind != JsonValueKind.String
-                        || !StableVersion.IsMatch(floorNode.GetString()!))
+                        || !StableVersion.IsMatch(floorNode.GetString()!)
+                        // TryParse too: the pattern lets a number through that Version cannot hold.
+                        || !Version.TryParse(entry.Name, out var version)
+                        || !Version.TryParse(floorNode.GetString(), out var floor))
                         continue;
 
-                    var version = Version.Parse(entry.Name);
-                    if (Version.Parse(floorNode.GetString()!) <= plugin && (best == null || version > best))
+                    if (floor <= plugin && (best == null || version > best))
                         best = version;
                 }
                 return best?.ToString(3);

@@ -151,7 +151,7 @@ follows the core release (`extensions release --engine unity`).
 
 A user who updates only the plugin (Package Manager, a manifest edit, a pull from a teammate) is
 left with extensions built for the previous generation. `ExtensionAutoUpdater` repairs that on
-plugin startup, after every domain reload:
+plugin startup, after every domain reload (once a compile or Play Mode has ended):
 
 - It reads the asmdefs of the installed packages that depend on the plugin (no network). An
   extension whose `UNITY_MCP_DEPS_<n>` differs from the plugin's is skipped by Unity and counts as stale.
@@ -161,8 +161,9 @@ plugin startup, after every domain reload:
   newer plugin in, and never downgrades.
 - Everything it does not update is named in a console warning with what to do: an extension from
   `file:` or git, a third-party one, one with no published version for this plugin yet (checked
-  again after 30 minutes and in the next editor session), and every stale extension in a batch-mode
-  editor or in a project that turned update notifications off for the team.
+  again at the first domain reload 30 minutes later and in the next editor session), and every
+  stale extension in a batch-mode editor or in a project that turned update notifications off for
+  the team.
 
 The rule that makes the second step right is the release rule above: each plugin release that
 moves the generation ships its extensions with that release as their floor. Between such a plugin
@@ -172,8 +173,8 @@ matching version is published.
 
 The Extensions section of the plugin window installs and offers the same version
 (`UpdateChecker.FetchExtensionVersionAsync`), not `dist-tags.latest`, so it never installs an
-extension built for a newer plugin. The plugin's own update moves the installed extensions to
-their latest versions in the same request.
+extension built for a newer plugin. The plugin's own update moves the installed extensions, in the
+same request, to their newest versions for the plugin version it installs.
 
 OpenUPM registrations point to this repository with each package's literal `gitTagPrefix` and
 its signed archive's filename prefix. The core registration excludes extension tags. OpenUPM

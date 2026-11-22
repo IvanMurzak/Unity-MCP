@@ -53,14 +53,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
         private static void Run()
         {
-            // A compile in progress ends in a domain reload that would drop the work started here.
-            if (EditorApplication.isCompiling || EditorApplication.isUpdating)
+            // A compile in progress ends in a domain reload that would drop the work started here,
+            // and a package change must not start in Play Mode (it reloads the domain). Both are
+            // waited for: leaving Play Mode reloads nothing, so no later startup would look again.
+            if (EditorApplication.isCompiling || EditorApplication.isUpdating || EditorApplication.isPlayingOrWillChangePlaymode)
                 return;
             EditorApplication.update -= Run;
-
-            // Entering Play Mode reloads the domain too: a package change must not start under it.
-            if (EditorApplication.isPlayingOrWillChangePlaymode)
-                return;
 
             List<(string PackageId, string Name, string Version, bool CanAutoUpdate)> stale;
             try
@@ -123,6 +121,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 var candidates = stale.Where(extension => extension.CanAutoUpdate).ToArray();
                 var documents = await Task.WhenAll(candidates.Select(extension => UpdateChecker.FetchRegistryDocumentAsync(extension.PackageId)));
+
+                // The registry took a while to answer and Play Mode may have been entered meanwhile.
+                // Nothing awaits between here and the package request: Run waits for Play Mode to
+                // end and starts over, with this state left unhandled.
+                if (automatic && candidates.Length > 0 && EditorApplication.isPlayingOrWillChangePlaymode)
+                {
+                    Init();
+                    return;
+                }
 
                 var updates = new List<(string PackageId, string InstalledVersion, string? TargetVersion)>();
                 var moves = new List<string>();

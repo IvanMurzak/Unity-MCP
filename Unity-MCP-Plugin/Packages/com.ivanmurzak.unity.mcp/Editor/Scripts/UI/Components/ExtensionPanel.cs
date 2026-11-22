@@ -214,7 +214,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
             {
                 if (versions[i] == null)
                 {
-                    panels[i].FailBusy("no version for this plugin version was found on OpenUPM");
+                    panels[i].FailBusy("no version for this plugin version could be read from OpenUPM (no connection, or none is published)");
                     continue;
                 }
                 known.Add((panels[i], versions[i]!));

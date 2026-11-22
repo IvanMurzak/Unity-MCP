@@ -367,12 +367,13 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
-        /// Package specs ("id@version") that bring the installed extensions to their latest versions, for the plugin
-        /// update to apply in the same request. Only registry installs qualify, so a <c>file:</c> or git checkout an
+        /// Package specs ("id@version") that bring the installed extensions to their newest versions for plugin
+        /// <paramref name="pluginVersion"/> (the one being installed), for the plugin update to apply in the same request.
+        /// Not their latest versions: one published after the popup opened may need a newer plugin than it installs. Only registry installs qualify, so a <c>file:</c> or git checkout an
         /// extension is being developed from is never silently replaced. Best effort: it must never block the plugin
         /// update itself, so an extension whose version is unknown is skipped.
         /// </summary>
-        internal static async Task<string[]> GetInstalledExtensionUpdateSpecsAsync(IEnumerable<ExtensionPanel.ExtensionData> catalog)
+        internal static async Task<string[]> GetInstalledExtensionUpdateSpecsAsync(IEnumerable<ExtensionPanel.ExtensionData> catalog, string pluginVersion)
         {
             try
             {
@@ -381,11 +382,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     .Where(data => installed.TryGetValue(data.PackageId, out var package) && package.source == PackageSource.Registry)
                     .Select(data => installed[data.PackageId])
                     .ToArray();
-                var latest = await Task.WhenAll(packages.Select(package => FetchLatestVersionAsync(package.name)));
+                var documents = await Task.WhenAll(packages.Select(package => FetchRegistryDocumentAsync(package.name)));
+                var targets = documents.Select(json => json == null ? null : ExtensionCompatibility.HighestVersionFor(json, PackageId, pluginVersion)).ToArray();
 
                 var manifest = JsonNode.Parse(File.ReadAllText(ExtensionPanel.ManifestPath))?.AsObject();
                 return BuildExtensionUpdateSpecs(
-                    packages.Select((package, i) => (package.name, package.version, latest[i])),
+                    packages.Select((package, i) => (package.name, package.version, targets[i])),
                     manifest?["dependencies"]?.AsObject(),
                     Application.unityVersion);
             }

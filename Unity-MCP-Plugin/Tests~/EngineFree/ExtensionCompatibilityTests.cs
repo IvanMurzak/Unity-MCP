@@ -101,6 +101,8 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                 var read = ExtensionCompatibility.ShippedAsmdefs(package).Select(path => Path.GetFileName(path)).OrderBy(name => name).ToArray();
 
                 Assert.Equal(new[] { "A.Editor.asmdef", "A.Runtime.asmdef" }, read);
+                // Bounded: a package folder that holds a whole project is not walked to the bottom.
+                Assert.Equal(new[] { "A.Runtime.asmdef" }, ExtensionCompatibility.ShippedAsmdefs(package, depth: 1).Select(path => Path.GetFileName(path)));
             }
             finally
             {
@@ -114,6 +116,9 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         [InlineData("1.14.0", "2.1.3")]
         [InlineData("1.12.0", "2.1.1")] // never a version that would pull a newer plugin in
         [InlineData("1.6.1", null)]
+        [InlineData("1.14.0-rc.1", "2.1.3")] // a pre-release build of the plugin counts as its release
+        [InlineData("1.13.0+build.7", "2.1.2")]
+        [InlineData("1.13", null)]
         public void The_version_for_a_plugin_is_the_highest_one_that_does_not_need_a_newer_plugin(string plugin, string? expected)
         {
             var registry = Registry(("2.1.1", "1.6.2"), ("2.1.3", "1.14.0"), ("2.1.2", "1.13.0"));
@@ -124,7 +129,8 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         [Fact]
         public void Versions_that_cannot_be_ordered_or_do_not_depend_on_the_plugin_are_ignored()
         {
-            var registry = Registry(("2.1.1", "1.6.2"), ("3.0.0-preview.1", "1.0.0"), ("2.5.0", null), ("2.4.0", "^1.0.0"));
+            var registry = Registry(("2.1.1", "1.6.2"), ("3.0.0-preview.1", "1.0.0"), ("2.5.0", null), ("2.4.0", "^1.0.0"),
+                ("2.6.99999999999", "1.0.0"), ("2.7.0", "1.0.99999999999"));
 
             Assert.Equal("2.1.1", ExtensionCompatibility.HighestVersionFor(registry, Plugin, "1.13.0"));
         }
