@@ -187,7 +187,7 @@ plugin 1.13.0, and the manifest entry stays 1.12.0). So:
 
 | The plugin changes through | The extensions |
 |---|---|
-| the plugin's update notification | move in the same package request to their versions for the new plugin |
+| the plugin's update notification | move in the same package request to their versions for the new plugin; the notification of a release waits, at most 24 hours from its publication, until they are all published (a manual check does not wait) |
 | `unity-mcp-cli update` (`updateProject`) | move in the same run to their versions for the plugin it installs; a plugin release whose extensions are not all published yet is held back until they are |
 | `install-plugin` (`installPlugin`: the CLI, the desktop App) | are skipped by Unity and moved by the startup check |
 | Package Manager, a manifest edit, a pull | are skipped by Unity (a paired one: never a compile error) and moved by the startup check |
