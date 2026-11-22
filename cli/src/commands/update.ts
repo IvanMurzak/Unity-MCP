@@ -77,7 +77,7 @@ async function updateProjectStep(projectPath: string, options: UpdateOptions): P
   result.warnings.forEach((warning) => ui.warn(warning));
   for (const step of result.nextSteps) ui.info(step);
 
-  if (result.items.length === 0) ui.info('The MCP plugin is not installed here: nothing to update in this project.');
+  if (result.items.length === 0) ui.info("Nothing of the MCP plugin is listed in this project's manifest: nothing to update here.");
   // A version that could not be looked up, or an extension that does not work, is not "up to date": never report success over it.
   if (result.items.some((item) => item.status === 'unknown' || item.status === 'unavailable')) return 'failed';
   // A held plugin is outdated, and holding it is what the update is meant to do.

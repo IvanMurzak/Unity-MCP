@@ -1,21 +1,22 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import { EXTENSIONS_CATALOG } from '../utils/extensions-catalog.js';
+import { isNewerVersion } from '@baizor/gamedev-cli-core';
 import {
+  closePluginGate,
   extensionVersionForPlugin,
   fetchPublishedExtension,
   isNonSemverSpec,
-  lockedPluginVersions,
   PLUGIN_PACKAGE_ID,
   pluginRelease,
   resolveLatestPackageVersion,
-  runningPluginRelease,
   shouldUpdateVersion,
   type PublishedExtension,
 } from '../utils/manifest.js';
 import { installExtension } from './install-extension.js';
 import { installPlugin } from './install-plugin.js';
 import { silentLogger } from './logger.js';
+import { resolveRunningPlugin } from './running-plugin.js';
 import { requireUnityProject } from './validation.js';
 import type { ProgressCallback } from './types.js';
 
@@ -110,53 +111,54 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
     };
 
     const pluginSpec = dependencies[PLUGIN_PACKAGE_ID];
-    const checksPlugin = pluginSpec !== undefined && !opts.noPlugin;
+    const registryExtensions = extensions.filter(fromRegistry);
+    // The latest plugin matters when the manifest lists a registry plugin, and also when it lists none but an
+    // installed extension makes Unity install one.
+    const looksUpPlugin = !opts.noPlugin && (pluginSpec === undefined ? registryExtensions.length > 0 : fromRegistry(pluginTarget));
     const [latestPlugin, published] = await Promise.all([
-      checksPlugin && fromRegistry(pluginTarget) ? lookUp(pluginTarget, () => resolveLatestPackageVersion(PLUGIN_PACKAGE_ID, silentLogger)) : undefined,
-      Promise.all((opts.noExtensions ? [] : extensions.filter(fromRegistry)).map(async (target) =>
+      looksUpPlugin ? lookUp(pluginTarget, () => resolveLatestPackageVersion(PLUGIN_PACKAGE_ID, silentLogger)) : undefined,
+      Promise.all((opts.noExtensions ? [] : registryExtensions).map(async (target) =>
         [target.packageId, await lookUp(target, () => fetchPublishedExtension(target.packageId))] as const)),
     ]);
-    const publishedOf = new Map<string, PublishedExtension | undefined>(published);
+    const lookedUp = new Map<string, PublishedExtension | undefined>(published);
 
     /** The version of an extension to have under plugin release `plugin` (null: none is published; undefined: unknown). */
     const versionFor = (target: Target, plugin: string | null): string | null | undefined => {
-      const extension = publishedOf.get(target.packageId);
+      const extension = lookedUp.get(target.packageId);
       if (extension === undefined) return undefined;
       // No plugin release is known (a local plugin, or nothing names one): the latest one.
       return plugin === null ? extension.latest : extensionVersionForPlugin(extension.versions, plugin);
     };
 
-    // The plugin release the extensions must be built for: the one the project runs, unless the plugin moves
-    // below. That is the manifest entry or a newer one an installed extension names: as OpenUPM tells for the
-    // extensions just read, as Unity's lock file tells for the rest.
-    let plugin = runningPluginRelease(pluginSpec, [
-      ...lockedPluginVersions(projectPath, dependencies),
-      ...[...publishedOf].map(([packageId, extension]) => extension?.versions[dependencies[packageId]!]?.dependencies?.[PLUGIN_PACKAGE_ID]),
-    ]);
     let pluginItem: ProjectUpdateItem | null = null;
-    if (checksPlugin) {
-      const from = pluginSpec!;
+    if (pluginSpec !== undefined && !opts.noPlugin) {
+      const from = pluginSpec;
       pluginItem = !fromRegistry(pluginTarget) ? { ...pluginTarget, from, to: null, status: 'local' }
         : latestPlugin === undefined ? { ...pluginTarget, from, to: null, status: 'unknown' }
         : { ...pluginTarget, from, to: latestPlugin, status: shouldUpdateVersion(from, latestPlugin) ? 'outdated' : 'current' };
     }
-    if (pluginItem?.status === 'outdated') {
-      const next = pluginRelease(pluginItem.to!);
+
+    // The plugin release the project runs now (not only what the manifest's entry says), and the one this update
+    // takes it to: the latest plugin, when that is newer. `next` null: the plugin the project runs does not move.
+    const running = await resolveRunningPlugin(projectPath, dependencies, new Map(lookedUp));
+    const latest = latestPlugin === undefined ? null : pluginRelease(latestPlugin);
+    const moves = latest !== null && (running === null ? pluginItem?.status === 'outdated' : isNewerVersion(running, latest));
+    let next = moves ? latest : null;
+    if (next !== null) {
       // The new plugin alone would switch every extension without a version for it off: wait for them.
-      const waiting = next === null ? [] : [...publishedOf.keys()]
-        .map((packageId) => extensions.find((target) => target.packageId === packageId)!)
-        .filter((target) => typeof versionFor(target, next) !== 'string');
-      if (waiting.length === 0) {
-        plugin = next;
-      } else {
-        pluginItem.status = 'held';
+      const waiting = opts.noExtensions ? [] : registryExtensions.filter((target) => typeof versionFor(target, next) !== 'string');
+      if (waiting.length > 0) {
         warnings.push(
-          `MCP plugin ${pluginItem.to} is out, but no version for it is known yet of: ${waiting.map((target) => target.name).join(', ')} ` +
-          `(an extension works with exactly one plugin release). The plugin is not updated: run the update ` +
+          `MCP plugin ${next} is out, but no version for it is known yet of: ${waiting.map((target) => target.name).join(', ')} ` +
+          '(an extension works with exactly one plugin release). The plugin is not updated: run the update ' +
           'again later, or update the plugin alone without its extensions.',
         );
+        if (pluginItem?.status === 'outdated') pluginItem.status = 'held';
+        next = null;
       }
     }
+    // The plugin release the extensions must be built for.
+    const plugin = next ?? running;
 
     const extensionItems = opts.noExtensions ? [] : extensions.map((target): ProjectUpdateItem => {
       const from = dependencies[target.packageId]!;
@@ -178,11 +180,10 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
         );
       }
     }
-    const pluginMoves = pluginItem?.status === 'outdated';
-    if (pluginMoves && opts.noExtensions && extensions.length > 0) {
+    if (next !== null && opts.noExtensions && extensions.length > 0) {
       warnings.push(
         `The installed extensions (${extensions.map((target) => target.name).join(', ')}) are left as they are: they do not ` +
-        `work with plugin ${pluginItem!.to} until they are moved to their versions for it (the update without noExtensions).`,
+        `work with plugin ${next} until they are moved to their versions for it (the update without noExtensions).`,
       );
     }
 
@@ -202,11 +203,16 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
     };
 
     if (!opts.dryRun) {
-      // The extensions were chosen for the plugin this call installs: without it they stay where they are.
-      if (pluginMoves && !(await apply(pluginItem!))) {
+      // An outdated entry is written also when the project already runs that plugin: it makes the manifest true.
+      const written = pluginItem?.status !== 'outdated' || await apply(pluginItem);
+      if (!written && next !== null) {
+        // The extensions were chosen for the plugin this call could not install: they stay where they are.
         if (extensionItems.some((item) => item.status === 'outdated')) warnings.push('The installed extensions were left as they are.');
       } else {
         for (const item of extensionItems.filter((candidate) => candidate.status === 'outdated')) await apply(item);
+        // No plugin entry to write, yet the extensions now name a newer plugin: Unity installs it, and what is
+        // built on the old one must not compile before it is ready (`installPlugin` does this for an entry).
+        if (next !== null && pluginItem === null && updated.length > 0) closePluginGate(projectPath);
       }
       if (updated.length > 0) {
         nextSteps.push('Open (or focus) the Unity Editor so the Package Manager resolves the new versions.');

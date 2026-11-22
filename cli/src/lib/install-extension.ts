@@ -9,13 +9,12 @@ import {
   addPackageToManifest,
   extensionVersionForPlugin,
   fetchPublishedExtension,
-  lockedPluginVersions,
-  PLUGIN_PACKAGE_ID,
   resolveLatestPackageVersion,
-  runningPluginRelease,
+  type PublishedExtension,
 } from '../utils/manifest.js';
 import { silentLogger } from './logger.js';
 import { emitProgress } from './progress.js';
+import { resolveRunningPlugin } from './running-plugin.js';
 import { requireUnityProject } from './validation.js';
 import type { InstallExtensionOptions, InstallExtensionResult } from './types.js';
 
@@ -93,20 +92,17 @@ export async function installExtension(
 
     const installed = readDependencies(validated.manifestPath);
     const before = installed[descriptor.packageId] ?? null;
-    // The plugin release the project runs, as far as the manifest and Unity's lock file tell.
-    const offline = hasVersion(descriptor) ? null
-      : runningPluginRelease(installed[PLUGIN_PACKAGE_ID], lockedPluginVersions(projectPath, installed));
+    // The plugin release the project runs (what its installed extensions name counts, this one's installed
+    // version too): the extension must be built for it. Null: nothing names a release.
+    const lookedUp = new Map<string, PublishedExtension | undefined>();
+    const plugin = hasVersion(descriptor) ? null : await resolveRunningPlugin(projectPath, installed, lookedUp);
 
     let version: string;
     if (hasVersion(descriptor)) {
       // Non-null only for an explicit override or a (currently unused) catalogue pin.
       version = descriptor.version as string;
-    } else if (offline !== null) {
-      const published = await fetchPublishedExtension(descriptor.packageId);
-      // The installed version of this very extension names a plugin too, lock or not: it is never moved
-      // below the plugin it lifts the project to. The extension must be built for the plugin that runs.
-      const own = before === null ? undefined : published.versions[before]?.dependencies?.[PLUGIN_PACKAGE_ID];
-      const plugin = runningPluginRelease(offline, [own]) ?? offline;
+    } else if (plugin !== null) {
+      const published = lookedUp.get(descriptor.packageId) ?? await fetchPublishedExtension(descriptor.packageId);
       const matched = extensionVersionForPlugin(published.versions, plugin);
       if (matched === null) {
         return {

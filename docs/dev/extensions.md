@@ -181,15 +181,16 @@ plugin 1.13.0, and the manifest entry stays 1.12.0). So:
   plugin;
 - the plugin knows the version that runs (`UnityMcpPlugin.Version`). The CLI works it out the same
   way Unity does (`runningPluginRelease`): the highest of the manifest entry and the plugin versions
-  the installed extensions name, read from OpenUPM for the extensions it looks up and from
-  `Packages/packages-lock.json` for the rest. It never moves an extension below that release.
+  the installed extensions name, read from `Packages/packages-lock.json` and, for an extension
+  the lock does not hold at the manifest's version, from OpenUPM. It never moves an extension to an
+  older version, and an entry that names no release (`file:`, git, a pre-release) runs as it is.
 
 | The plugin changes through | The extensions |
 |---|---|
 | the plugin's update notification | move in the same package request to their versions for the new plugin |
 | `unity-mcp-cli update` (`updateProject`) | move in the same run to their versions for the plugin it installs; a plugin release whose extensions are not all published yet is held back until they are |
 | `install-plugin` (`installPlugin`: the CLI, the desktop App) | are skipped by Unity and moved by the startup check |
-| Package Manager, a manifest edit, a pull | are skipped by Unity (never a compile error) and moved by the startup check |
+| Package Manager, a manifest edit, a pull | are skipped by Unity (a paired one: never a compile error) and moved by the startup check |
 
 An extension published before the pairing (2.1.2 and older) is not skipped on its own. The CLI
 covers it: a change of the plugin version removes `UNITY_MCP_READY` from the project's scripting
@@ -215,7 +216,7 @@ compile or Play Mode has ended):
 - A first-party registry extension that compiles but does not name its core release (published
   before the pairing) moves to the version for this plugin that does: otherwise the next plugin
   update would break the compile on it.
-- Everything it does not move is named in a console warning with what to do: an extension from
+- Every skipped extension it does not move is named in a console warning with what to do: an extension from
   `file:` or git, a third-party one, one with no published version for this plugin, and everything
   it would move in a project that turned update notifications off for the team. A batch-mode editor
   moves nothing and asks no registry: it warns at once (`unity-mcp-cli update --no-plugin` moves the
@@ -233,7 +234,8 @@ fails with the reason when none is published.
 OpenUPM registrations point to this repository with each package's literal `gitTagPrefix` and
 its signed archive's filename prefix. The core registration excludes extension tags. OpenUPM
 continues to serve unchanged historical versions. CLI installation keeps the existing package
-IDs and resolves each package's own OpenUPM latest; source code is not cloned to install it.
+IDs and resolves each package's OpenUPM version for the plugin the project runs; source code is not
+cloned to install it.
 
 Add a module from the inert scaffold under `templates/extension/`, register its package in
 `extensions/manifest.json` and the shared editor/CLI catalog, and generate new `.meta` files in

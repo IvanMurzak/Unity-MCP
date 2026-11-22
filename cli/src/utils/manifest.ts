@@ -124,11 +124,13 @@ export function pluginRelease(spec: string): string | null {
  * requires, the manifest's own entry included: with plugin 1.12.0 in the manifest and an installed extension that
  * names plugin 1.13.0, Unity runs 1.13.0 and the entry stays as it was. So it is the highest of the manifest entry
  * and the plugin versions the installed extensions name (`named`: unreadable ones are skipped). Null when the
- * manifest's plugin is a local source (`file:`, git: that one runs, whatever its version) or nothing names a release.
+ * manifest's plugin names no release (a local source such as `file:` or git, a pre-release: that one runs,
+ * whatever is named) or nothing names a release.
  */
 export function runningPluginRelease(entry: string | undefined, named: Iterable<string | null | undefined>): string | null {
-  if (entry !== undefined && isNonSemverSpec(entry)) return null;
   let running = pluginRelease(entry ?? '');
+  // An entry that names no release (a local source, a pre-release) runs as it is, whatever is named.
+  if (entry !== undefined && running === null) return null;
   for (const spec of named) {
     const release = pluginRelease(spec ?? '');
     if (release !== null && (running === null || isNewerVersion(running, release))) running = release;
@@ -137,24 +139,25 @@ export function runningPluginRelease(entry: string | undefined, named: Iterable<
 }
 
 /**
- * The plugin versions the installed packages name, as Unity recorded them in `Packages/packages-lock.json`:
- * no network. Only of a package the lock holds at the very version the manifest asks for (a version's
- * dependencies never change; an entry the manifest has moved past says nothing). Empty when there is no
- * readable lock, as in a project Unity has not opened yet.
+ * The plugin version each installed package names, by package id, as Unity recorded it in
+ * `Packages/packages-lock.json`: no network. Only for a package the lock holds at the very version the manifest
+ * asks for (a version's dependencies never change; an entry the manifest has moved past says nothing). Empty
+ * when there is no readable lock, as in a project Unity has not opened yet.
  */
-export function lockedPluginVersions(projectPath: string, dependencies: Record<string, string>): string[] {
+export function lockedPluginVersions(projectPath: string, dependencies: Record<string, string>): Map<string, string> {
+  const named = new Map<string, string>();
   try {
     const lock = JSON.parse(fs.readFileSync(path.join(projectPath, 'Packages', 'packages-lock.json'), 'utf-8')) as {
-      dependencies?: Record<string, { version?: string; dependencies?: Record<string, string> } | undefined>;
+      dependencies?: Record<string, { version?: unknown; dependencies?: Record<string, unknown> } | null>;
     };
-    return Object.entries(lock.dependencies ?? {})
-      .filter(([packageId, entry]) => entry?.version === dependencies[packageId])
-      .map(([, entry]) => entry?.dependencies?.[PLUGIN_PACKAGE_ID])
-      .filter((plugin): plugin is string => typeof plugin === 'string');
+    for (const [packageId, entry] of Object.entries(lock.dependencies ?? {})) {
+      const plugin = entry?.dependencies?.[PLUGIN_PACKAGE_ID];
+      if (typeof plugin === 'string' && typeof entry?.version === 'string' && entry.version === dependencies[packageId]) named.set(packageId, plugin);
+    }
   } catch {
-    // No lock, or not JSON: nothing is known offline.
-    return [];
+    // No lock, or not what Unity writes: nothing is known offline.
   }
+  return named;
 }
 
 /**

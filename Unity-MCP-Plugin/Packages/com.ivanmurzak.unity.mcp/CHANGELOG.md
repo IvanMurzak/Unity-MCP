@@ -32,7 +32,8 @@
     Unity skips shows **Update**, or **Inactive** with the reason when no version for this plugin is published.
   - `unity-mcp-cli update` moves the plugin to its latest version and the installed extensions to their versions for it.
     It looks everything up before it writes, and holds a plugin release back while an installed extension has no version
-    for it yet (`held`), so the project is never left half-way. `--no-plugin` moves only the extensions.
+    for it yet (`held`), so the project is never left half-way (`--no-extensions` leaves them behind and says so).
+    `--no-plugin` moves only the extensions.
     `install-extension` installs the version for the plugin release the project runs and fails with the reason when
     none is published. Both take that release as Unity does: the highest of the manifest's plugin entry and the plugin
     versions the installed extensions name. The library's `updateProject` has `noPlugin` and the `unavailable` / `held`

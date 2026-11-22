@@ -37,15 +37,14 @@ export async function removePlugin(opts: RemovePluginOptions): Promise<RemoveRes
 
     if (!result.removed) {
       warnings.push('Unity-MCP plugin was not installed. Nothing was removed.');
-    } else {
-      // Unity installs whatever an installed package depends on: the plugin stays while an extension names it.
-      const dependents = installedExtensions(result.manifestPath);
-      if (dependents.length > 0) {
-        warnings.push(
-          `Unity still installs the plugin: ${dependents.join(', ')} ${dependents.length === 1 ? 'depends' : 'depend'} on it. ` +
-          'Remove the extensions from Packages/manifest.json as well.',
-        );
-      }
+    }
+    // Unity installs whatever an installed package depends on: the plugin stays while an extension names it.
+    const dependents = installedExtensions(result.manifestPath);
+    if (dependents.length > 0) {
+      warnings.push(
+        `Unity still installs the plugin: ${dependents.join(', ')} ${dependents.length === 1 ? 'depends' : 'depend'} on it. ` +
+        'Remove the extensions from Packages/manifest.json as well.',
+      );
     }
 
     emitProgress(opts.onProgress, {
