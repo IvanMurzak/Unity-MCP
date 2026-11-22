@@ -182,10 +182,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
         private async Task CheckForUpdateAsync(string installedVersion, bool isSkipped)
         {
-            // The version built for this plugin. A skipped extension moves to it in either direction:
+            // A skipped extension moves to the version built for this plugin in either direction:
             // the plugin version is the anchor.
-            var targetVersion = await UpdateChecker.FetchExtensionVersionAsync(_data.PackageId);
-            if (targetVersion != null && (isSkipped ? targetVersion != installedVersion : UpdateChecker.IsNewerVersion(targetVersion, installedVersion)))
+            var targetVersion = await UpdateChecker.FetchExtensionUpdateTargetAsync(_data.PackageId, installedVersion, anyDirection: isSkipped);
+            if (targetVersion != null)
                 EditorApplication.delayCall += () => ShowAsUpdate(installedVersion, targetVersion, isSkipped);
             else if (isSkipped)
                 EditorApplication.delayCall += () => ShowAsInactive(installedVersion);

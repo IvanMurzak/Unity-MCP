@@ -4,9 +4,8 @@ import { isNewerVersion, isNumericVersion } from '@baizor/gamedev-cli-core';
 import { silentLogger, type LibLogger } from '../lib/logger.js';
 import { unityExtensionDependencies } from './extension-compatibility.js';
 
-const PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
 /** The Unity-MCP plugin's package id. */
-export const PLUGIN_PACKAGE_ID = PACKAGE_ID;
+export const PLUGIN_PACKAGE_ID = 'com.ivanmurzak.unity.mcp';
 const REGISTRY_NAME = 'package.openupm.com';
 const REGISTRY_URL = 'https://package.openupm.com';
 const REQUIRED_SCOPES = [
@@ -35,7 +34,7 @@ interface Manifest {
  *   styled logger adapter explicitly to preserve the historical output.
  */
 export async function resolveLatestVersion(logger: LibLogger = silentLogger): Promise<string> {
-  return resolveLatestPackageVersion(PACKAGE_ID, logger);
+  return resolveLatestPackageVersion(PLUGIN_PACKAGE_ID, logger);
 }
 
 /**
@@ -130,7 +129,7 @@ export function extensionVersionForPlugin(
 ): string | null {
   let best: string | null = null;
   for (const [version, info] of Object.entries(versions)) {
-    if (!isNumericVersion(version) || info?.dependencies?.[PACKAGE_ID] !== plugin) continue;
+    if (!isNumericVersion(version) || info?.dependencies?.[PLUGIN_PACKAGE_ID] !== plugin) continue;
     if (best === null || isNewerVersion(best, version)) best = version;
   }
   return best;
@@ -215,7 +214,7 @@ export function addPluginToManifest(
   force = false,
   logger: LibLogger = silentLogger,
 ): AddPluginResult {
-  return addPackageToManifest(projectPath, PACKAGE_ID, version, force, logger);
+  return addPackageToManifest(projectPath, PLUGIN_PACKAGE_ID, version, force, logger);
 }
 
 /**
@@ -223,7 +222,7 @@ export function addPluginToManifest(
  * the plugin itself, or one of the catalogue extensions.
  *
  * This is the generalisation of {@link addPluginToManifest}, which now delegates
- * here with `PACKAGE_ID`. Keeping ONE implementation matters because the
+ * here with `PLUGIN_PACKAGE_ID`. Keeping ONE implementation matters because the
  * scoped-registry rules (registry name, URL, and the `REQUIRED_SCOPES` pair
  * `com.ivanmurzak` / `extensions.unity`) must be identical for the plugin and for
  * every extension — the extensions live under the `com.ivanmurzak` scope, so an
@@ -361,13 +360,13 @@ export function removePluginFromManifest(
   const rawJson = fs.readFileSync(manifestPath, 'utf-8');
   const manifest: Manifest = JSON.parse(rawJson);
 
-  if (!manifest.dependencies || !(PACKAGE_ID in manifest.dependencies)) {
+  if (!manifest.dependencies || !(PLUGIN_PACKAGE_ID in manifest.dependencies)) {
     logger.info('Unity-MCP plugin is not installed. Nothing to remove.');
     return { removed: false, manifestPath };
   }
 
-  delete manifest.dependencies[PACKAGE_ID];
+  delete manifest.dependencies[PLUGIN_PACKAGE_ID];
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-  logger.success(`Removed ${PACKAGE_ID} from ${manifestPath}`);
+  logger.success(`Removed ${PLUGIN_PACKAGE_ID} from ${manifestPath}`);
   return { removed: true, manifestPath };
 }

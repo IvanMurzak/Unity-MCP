@@ -89,14 +89,19 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
     type Target = Pick<ProjectUpdateItem, 'kind' | 'name' | 'packageId'>;
     const installed = (target: Target): boolean => dependencies[target.packageId] !== undefined;
 
-    /** What applies to one installed package; `resolve` names its target version (null: none is published). */
-    const lookUp = async (target: Target, resolve: () => Promise<string | null>, anyDirection: boolean): Promise<ProjectUpdateItem> => {
+    /**
+     * What applies to one installed package. `forPlugin`: the plugin release its version must be built for,
+     * in either direction; null: its latest version, never a downgrade.
+     */
+    const lookUp = async (target: Target, forPlugin: string | null): Promise<ProjectUpdateItem> => {
       const from = dependencies[target.packageId]!;
       if (isNonSemverSpec(from)) return { ...target, from, to: null, status: 'local' };
       try {
-        const to = await resolve();
+        const to = forPlugin === null
+          ? await resolveLatestPackageVersion(target.packageId, silentLogger)
+          : await resolveExtensionVersionForPlugin(target.packageId, forPlugin);
         if (to === null) return { ...target, from, to, status: 'unavailable' };
-        const applies = anyDirection ? to !== from : shouldUpdateVersion(from, to);
+        const applies = forPlugin === null ? shouldUpdateVersion(from, to) : to !== from;
         return { ...target, from, to, status: applies ? 'outdated' : 'current' };
       } catch (err: unknown) {
         warnings.push(`Could not look up the latest ${target.name}: ${asError(err).message}`);
@@ -125,7 +130,7 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
     // Null: the manifest names no plugin release (a local source, or no plugin of its own).
     let plugin = pluginRelease(dependencies[PLUGIN_PACKAGE_ID] ?? '');
     if (installed(pluginTarget) && !opts.noPlugin) {
-      const item = await lookUp(pluginTarget, () => resolveLatestPackageVersion(PLUGIN_PACKAGE_ID, silentLogger), false);
+      const item = await lookUp(pluginTarget, null);
       items.push(item);
       if (item.status === 'outdated' && (opts.dryRun || await apply(item))) plugin = pluginRelease(item.to!) ?? plugin;
     }
@@ -133,9 +138,7 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
     const extensions = opts.noExtensions ? [] : EXTENSIONS_CATALOG
       .map((extension): Target => ({ kind: 'extension', name: extension.name, packageId: extension.packageId }))
       .filter(installed);
-    const extensionItems = await Promise.all(extensions.map((target) => plugin === null
-      ? lookUp(target, () => resolveLatestPackageVersion(target.packageId, silentLogger), false)
-      : lookUp(target, () => resolveExtensionVersionForPlugin(target.packageId, plugin!), true)));
+    const extensionItems = await Promise.all(extensions.map((target) => lookUp(target, plugin)));
     items.push(...extensionItems);
 
     for (const item of extensionItems) {

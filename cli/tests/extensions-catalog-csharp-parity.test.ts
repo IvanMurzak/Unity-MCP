@@ -18,8 +18,8 @@ import { fileURLToPath } from 'url';
 // enforce parity: Godot-MCP's `cli/tests/skills-addon-parity.test.ts`.
 //
 // `version` is intentionally NOT compared: the C# `ExtensionData` struct has no version
-// field, because the editor always resolves OpenUPM `dist-tags.latest` live
-// (`ExtensionPanel.FetchLatestOpenUpmVersionAsync`). That is the same policy the JSON
+// field, because the editor always resolves the version for the installed plugin live
+// (`UpdateChecker.FetchExtensionVersionAsync`). That is the same policy the JSON
 // encodes as `version: null`, and the JSON↔TS test asserts the null on both its sides.
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const PLUGIN_PACKAGE = path.resolve(

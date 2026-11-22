@@ -336,6 +336,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         }
 
         /// <summary>
+        /// The version an installed extension should move to under the installed plugin
+        /// (<see cref="ExtensionCompatibility.UpdateTargetFor"/>), or <c>null</c> when there is none or it is not known.
+        /// </summary>
+        internal static async Task<string?> FetchExtensionUpdateTargetAsync(string packageId, string installedVersion, bool anyDirection)
+        {
+            var json = await FetchRegistryDocumentAsync(packageId);
+            return json == null ? null : ExtensionCompatibility.UpdateTargetFor(installedVersion, json, PackageId, UnityMcpPlugin.Version, anyDirection);
+        }
+
+        /// <summary>
         /// The OpenUPM registry document of a package (every published version with its dependencies),
         /// or <c>null</c> on any network failure.
         /// </summary>

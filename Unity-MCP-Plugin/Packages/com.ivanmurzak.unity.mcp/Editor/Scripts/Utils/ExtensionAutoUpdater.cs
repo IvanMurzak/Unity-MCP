@@ -79,6 +79,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         // The update tick, not delayCall: delayCall waits for the editor window to get focus.
         public static void Init() => EditorApplication.update += Run;
 
+        // A headless editor (CI) and a team that turned update notifications off keep their manifest
+        // as it is: they are told what to do instead.
+        private static bool Automatic => !Application.isBatchMode && !UpdateChecker.IsDisabledForProject;
+
         /// <summary>How an installed package stands with this plugin; read from its asmdefs, no network.</summary>
         internal static ExtensionFit FitOf(PackageInfo package)
             => string.IsNullOrEmpty(package.resolvedPath) || !Directory.Exists(package.resolvedPath)
@@ -102,7 +106,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             List<Extension> found;
             try
             {
-                found = FindExtensionsToMove(PackageInfo.GetAllRegisteredPackages());
+                found = FindExtensionsToMove(PackageInfo.GetAllRegisteredPackages(), Automatic);
             }
             catch (Exception ex)
             {
@@ -125,10 +129,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <summary>
         /// The installed packages that depend on the plugin and that Unity skips under it, plus the
         /// first-party registry installs that work but are not tied to this plugin release yet (the
-        /// next plugin update would break the compile on them). Only a first-party extension
-        /// installed from the package registry can be moved automatically.
+        /// next plugin update would break the compile on them; only where a move is
+        /// <paramref name="automatic"/>: they work, so there is nothing to report). Only a first-party
+        /// extension installed from the package registry can be moved automatically.
         /// </summary>
-        private static List<Extension> FindExtensionsToMove(IEnumerable<PackageInfo> packages)
+        private static List<Extension> FindExtensionsToMove(IEnumerable<PackageInfo> packages, bool automatic)
         {
             var catalog = MainWindowEditor.ExtensionCatalog.ToDictionary(data => data.PackageId);
             var found = new List<Extension>();
@@ -141,7 +146,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 var fit = FitOf(package);
                 var canAutoUpdate = firstParty && package.source == PackageSource.Registry;
-                if (fit == ExtensionFit.Skipped || (fit == ExtensionFit.Unprotected && canAutoUpdate))
+                if (fit == ExtensionFit.Skipped || (fit == ExtensionFit.Unprotected && canAutoUpdate && automatic))
                     found.Add(new Extension(package.name, firstParty ? data!.Name : package.displayName, package.version,
                         pluginVersion, canAutoUpdate, fit == ExtensionFit.Skipped));
             }
@@ -153,9 +158,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             try
             {
                 var pluginVersion = UnityMcpPlugin.Version;
-                // A headless editor (CI) and a team that turned update notifications off keep their
-                // manifest as it is: they are told what to do instead.
-                var automatic = !Application.isBatchMode && !UpdateChecker.IsDisabledForProject;
+                var automatic = Automatic;
 
                 var candidates = found.Where(extension => extension.CanAutoUpdate).ToArray();
                 var documents = await Task.WhenAll(candidates.Select(extension => UpdateChecker.FetchRegistryDocumentAsync(extension.PackageId)));

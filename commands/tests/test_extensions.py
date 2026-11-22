@@ -189,7 +189,7 @@ class PublishedVersionTests(unittest.TestCase):
         package['dependencies'][extensions.CORE] = floor or package['dependencies'][extensions.CORE]
         extensions.write(path, package)
         if floor and re.fullmatch(extensions.VERSION_RE, floor):
-            extensions.pair_with_core(row, floor, root)
+            extensions.set_core_floor(row, floor, root)
 
     def core(self, version, generation):
         self.core_at(self.root, version, generation)
@@ -307,8 +307,7 @@ class PublishedVersionTests(unittest.TestCase):
         for row in self.rows:
             asmdefs = extensions.gated_asmdefs(self.root / row['package'])
             self.assertTrue(asmdefs)
-            for asmdef in asmdefs:
-                data = extensions.read(asmdef)
+            for _, data in asmdefs:
                 self.assertIn(extensions.CORE_MATCH_DEFINE, data['defineConstraints'])
                 self.assertIn({'name': extensions.CORE, 'expression': '[1.6.0]', 'define': extensions.CORE_MATCH_DEFINE},
                               data['versionDefines'])
@@ -316,9 +315,8 @@ class PublishedVersionTests(unittest.TestCase):
 
     def test_assemblies_not_constrained_to_their_core_fail_until_settled(self):
         row = self.rows[0]
-        asmdef = extensions.gated_asmdefs(self.root / row['package'])[0]
+        asmdef, data = extensions.gated_asmdefs(self.root / row['package'])[0]
         released = asmdef.read_bytes()
-        data = extensions.read(asmdef)
         data['defineConstraints'].remove(extensions.CORE_MATCH_DEFINE)
         data['versionDefines'] = [{'name': 'com.unity.other', 'expression': '1.0.0', 'define': 'OTHER'}]
         extensions.write(asmdef, data)

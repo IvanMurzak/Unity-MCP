@@ -54,6 +54,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         // stands for its release, so the numeric part is what is compared.
         private static readonly Regex VersionCore = new(@"^\s*(\d+(?:\.\d+){0,2})(?:[-+].*)?\s*$", RegexOptions.Compiled);
 
+        // A plugin release: all three numbers (the CLI's `pluginRelease` reads the same shape).
+        private static readonly Regex Release = new(@"^\s*(\d+\.\d+\.\d+)(?:[-+].*)?\s*$", RegexOptions.Compiled);
+
         /// <summary>
         /// The asmdefs Unity compiles in a consumer project. Test, hidden (<c>~</c>) and dot folders are
         /// not entered: Unity ignores the last two. The walk stops <paramref name="depth"/> folders
@@ -83,7 +86,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         internal static ExtensionFit FitOf(IEnumerable<string> asmdefTexts, string definePrefix, string currentDefine, string pluginPackageId, string pluginVersion)
         {
-            var generation = new Regex("^" + Regex.Escape(definePrefix) + @"\d+$");
             var unprotected = false;
             foreach (var text in asmdefTexts)
             {
@@ -94,7 +96,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                     if (root.ValueKind != JsonValueKind.Object)
                         continue;
                     var constraints = Strings(root, "defineConstraints").ToArray();
-                    var generations = constraints.Where(constraint => generation.IsMatch(constraint)).ToArray();
+                    var generations = constraints.Where(constraint => IsGenerationDefine(constraint, definePrefix)).ToArray();
                     if (generations.Any(define => define != currentDefine))
                         return ExtensionFit.Skipped;
 
@@ -110,6 +112,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             return unprotected ? ExtensionFit.Unprotected : ExtensionFit.Works;
         }
+
+        private static bool IsGenerationDefine(string define, string prefix)
+            => define.Length > prefix.Length && define.StartsWith(prefix, StringComparison.Ordinal) && define.Skip(prefix.Length).All(char.IsDigit);
 
         private static IEnumerable<string> Strings(JsonElement asmdef, string property)
             => asmdef.TryGetProperty(property, out var array) && array.ValueKind == JsonValueKind.Array
@@ -188,7 +193,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         internal static string? VersionFor(string registryJson, string pluginPackageId, string pluginVersion)
         {
-            if (!TryParse(pluginVersion, out var plugin))
+            if (!TryParse(Release.Match(pluginVersion).Groups[1].Value, out var plugin))
                 return null;
             try
             {

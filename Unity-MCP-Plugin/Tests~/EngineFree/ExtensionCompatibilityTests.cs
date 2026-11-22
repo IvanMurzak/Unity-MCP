@@ -195,6 +195,22 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         }
 
         [Fact]
+        public void The_cases_shared_with_the_cli_give_the_same_versions()
+        {
+            // The CLI implements the same rule (cli/src/utils/manifest.ts) and reads the same file
+            // (cli/tests/extension-version-rule-parity.test.ts): the two cannot drift apart.
+            var path = RepoFile.Find("tests/extension-version-rule.json");
+            Assert.NotNull(path);
+            using var cases = System.Text.Json.JsonDocument.Parse(File.ReadAllText(path!));
+            Assert.Equal(Plugin, cases.RootElement.GetProperty("plugin").GetString());
+            var registry = cases.RootElement.GetProperty("registry").GetRawText();
+            var expected = cases.RootElement.GetProperty("expected").EnumerateObject().ToArray();
+
+            Assert.True(expected.Length > 5);
+            Assert.All(expected, item => Assert.Equal(item.Value.GetString(), ExtensionCompatibility.VersionFor(registry, Plugin, item.Name)));
+        }
+
+        [Fact]
         public void Versions_that_cannot_be_ordered_or_do_not_depend_on_the_plugin_are_ignored()
         {
             var registry = Registry(("2.1.1", "1.13.0"), ("3.0.0-preview.1", "1.13.0"), ("2.5.0", null), ("2.4.0", "^1.13.0"),
