@@ -58,7 +58,7 @@ export async function resolveLatestPackageVersion(
   logger: LibLogger = silentLogger,
   versionFlag = '--plugin-version',
 ): Promise<string> {
-  const latest = await readRegistryDocument(packageId, versionFlag, 'resolve the latest version of', (document) => document['dist-tags']?.latest || undefined);
+  const latest = await readRegistryDocument(packageId, versionFlag, (document) => document['dist-tags']?.latest || undefined);
   logger.info(`Resolved latest version from OpenUPM: ${latest}`);
   return latest;
 }
@@ -76,7 +76,6 @@ interface RegistryDocument {
 async function readRegistryDocument<T>(
   packageId: string,
   versionFlag: string,
-  what: string,
   pick: (document: RegistryDocument) => T | undefined,
 ): Promise<T> {
   const controller = new AbortController();
@@ -102,7 +101,7 @@ async function readRegistryDocument<T>(
       throw err;
     }
     throw new Error(
-      `Failed to ${what} ${packageId} from OpenUPM. ` +
+      `Failed to resolve the latest version of ${packageId} from OpenUPM. ` +
       `Check your network connection and retry, or specify a version manually with ${versionFlag} <version>`
     );
   } finally {
@@ -118,6 +117,47 @@ async function readRegistryDocument<T>(
 export function pluginRelease(spec: string): string | null {
   const match = /^(\d+\.\d+\.\d+)(?:\+.*)?$/.exec(spec.trim());
   return match ? match[1] : null;
+}
+
+/**
+ * The plugin release a project runs. Unity resolves a package to the highest version anything in the project
+ * requires, the manifest's own entry included: with plugin 1.12.0 in the manifest and an installed extension that
+ * names plugin 1.13.0, Unity runs 1.13.0 and the entry stays as it was. So it is the highest of the manifest entry
+ * and the plugin versions the installed extensions name (`named`: unreadable ones are skipped). Null when the
+ * manifest's plugin names no release (a local source such as `file:` or git, a pre-release: that one runs,
+ * whatever is named) or nothing names a release.
+ */
+export function runningPluginRelease(entry: string | undefined, named: Iterable<string | null | undefined>): string | null {
+  let running = pluginRelease(entry ?? '');
+  // An entry that names no release (a local source, a pre-release) runs as it is, whatever is named.
+  if (entry !== undefined && running === null) return null;
+  for (const spec of named) {
+    const release = pluginRelease(spec ?? '');
+    if (release !== null && (running === null || isNewerVersion(running, release))) running = release;
+  }
+  return running;
+}
+
+/**
+ * The plugin version each installed package names, by package id, as Unity recorded it in
+ * `Packages/packages-lock.json`: no network. Only for a package the lock holds at the very version the manifest
+ * asks for (a version's dependencies never change; an entry the manifest has moved past says nothing). Empty
+ * when there is no readable lock, as in a project Unity has not opened yet.
+ */
+export function lockedPluginVersions(projectPath: string, dependencies: Record<string, string>): Map<string, string> {
+  const named = new Map<string, string>();
+  try {
+    const lock = JSON.parse(fs.readFileSync(path.join(projectPath, 'Packages', 'packages-lock.json'), 'utf-8')) as {
+      dependencies?: Record<string, { version?: unknown; dependencies?: Record<string, unknown> } | null>;
+    };
+    for (const [packageId, entry] of Object.entries(lock.dependencies ?? {})) {
+      const plugin = entry?.dependencies?.[PLUGIN_PACKAGE_ID];
+      if (typeof plugin === 'string' && typeof entry?.version === 'string' && entry.version === dependencies[packageId]) named.set(packageId, plugin);
+    }
+  } catch {
+    // No lock, or not what Unity writes: nothing is known offline.
+  }
+  return named;
 }
 
 /**
@@ -148,21 +188,8 @@ export interface PublishedExtension {
  * registry cannot be read.
  */
 export async function fetchPublishedExtension(packageId: string, versionFlag = '--extension-version'): Promise<PublishedExtension> {
-  return readRegistryDocument(packageId, versionFlag, 'read the published versions of', (document) =>
+  return readRegistryDocument(packageId, versionFlag, (document) =>
     document.versions ? { latest: document['dist-tags']?.latest || null, versions: document.versions } : undefined);
-}
-
-/**
- * Resolve, from OpenUPM, the version of an extension built for plugin release `plugin` (see
- * {@link extensionVersionForPlugin}); null when none is published (yet). Throws like
- * {@link resolveLatestPackageVersion} when the registry cannot be read.
- */
-export async function resolveExtensionVersionForPlugin(
-  packageId: string,
-  plugin: string,
-  versionFlag = '--extension-version',
-): Promise<string | null> {
-  return extensionVersionForPlugin((await fetchPublishedExtension(packageId, versionFlag)).versions, plugin);
 }
 
 const READY_DEFINE = 'UNITY_MCP_READY';

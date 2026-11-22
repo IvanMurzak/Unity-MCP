@@ -229,16 +229,16 @@ describe('installExtension — add', () => {
       expect(readManifest(project).dependencies).toMatchObject({ [PLUGIN_ID]: '1.8.0', [TILEMAP_ID]: '2.1.1' });
     });
 
-    it('moves an installed version built for a newer plugin down to the one for this plugin', async () => {
-      stubVersions({ '2.1.1': '1.8.0', '2.2.0': '1.9.0' });
+    it('an installed version built for a newer plugin is what the project runs: it is not moved down', async () => {
+      // Unity runs the highest plugin anything names: 1.9.0 here, whatever the manifest entry says.
+      stubVersions({ '2.1.1': '1.8.0', '2.2.0': '1.9.0', '2.2.1': '1.9.0' });
       const project = mkUnityProject({ dependencies: { [PLUGIN_ID]: '1.8.0+build.7', [TILEMAP_ID]: '2.2.0' } });
 
       const result = await installExtension({ unityProjectPath: project, extensionId: 'Tilemap' });
 
       if (result.kind !== 'success') throw result.error;
-      expect(result).toMatchObject({ outcome: 'updated', fromVersion: '2.2.0', toVersion: '2.1.1' });
-      expect(result.warnings.join('\n')).toContain('built for another plugin release');
-      expect(readManifest(project).dependencies?.[TILEMAP_ID]).toBe('2.1.1');
+      expect(result).toMatchObject({ outcome: 'updated', fromVersion: '2.2.0', toVersion: '2.2.1', warnings: [] });
+      expect(readManifest(project).dependencies).toMatchObject({ [PLUGIN_ID]: '1.8.0+build.7', [TILEMAP_ID]: '2.2.1' });
     });
 
     it('fails, changing nothing, when no version is published for that plugin', async () => {
@@ -276,7 +276,6 @@ describe('installExtension — add', () => {
 
       if (result.kind !== 'success') throw result.error;
       expect(readManifest(project).dependencies?.[TILEMAP_ID]).toBe('file:../../ext/Tilemap');
-      expect(result.warnings.join('\n')).not.toContain('built for another plugin release');
     });
 
     it('a pre-release plugin names no release (no extension is built for it): the latest version is installed', async () => {

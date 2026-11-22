@@ -1,3 +1,5 @@
+import * as fs from 'fs';
+import { EXTENSIONS_CATALOG } from '../utils/extensions-catalog.js';
 import { removePluginFromManifest } from '../utils/manifest.js';
 import { silentLogger } from './logger.js';
 import { emitProgress } from './progress.js';
@@ -36,6 +38,14 @@ export async function removePlugin(opts: RemovePluginOptions): Promise<RemoveRes
     if (!result.removed) {
       warnings.push('Unity-MCP plugin was not installed. Nothing was removed.');
     }
+    // Unity installs whatever an installed package depends on: the plugin stays while an extension names it.
+    const dependents = installedExtensions(result.manifestPath);
+    if (dependents.length > 0) {
+      warnings.push(
+        `Unity still installs the plugin: ${dependents.join(', ')} ${dependents.length === 1 ? 'depends' : 'depend'} on it. ` +
+        'Remove the extensions from Packages/manifest.json as well.',
+      );
+    }
 
     emitProgress(opts.onProgress, {
       phase: 'manifest-patched',
@@ -61,5 +71,15 @@ export async function removePlugin(opts: RemovePluginOptions): Promise<RemoveRes
       warnings,
       error: err instanceof Error ? err : new Error(String(err)),
     };
+  }
+}
+
+/** The names of the catalogue extensions the manifest lists; none when it cannot be read. */
+function installedExtensions(manifestPath: string): string[] {
+  try {
+    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as { dependencies?: Record<string, unknown> };
+    return EXTENSIONS_CATALOG.filter((extension) => manifest.dependencies?.[extension.packageId] !== undefined).map((extension) => extension.name);
+  } catch {
+    return [];
   }
 }

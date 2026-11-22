@@ -29,8 +29,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// On plugin startup: finds installed extensions built for another plugin release (Unity skips
     /// their assemblies without an error, so their tools are missing) and moves them to the published
     /// version built for this plugin. This is what keeps the extensions working when only the plugin
-    /// was changed, for example through Package Manager. The plugin version is the anchor: an
-    /// extension that needs a newer plugin moves down to the one for this plugin.
+    /// was changed, for example through Package Manager, or when one extension was moved to a version
+    /// built for a newer plugin: Unity then runs that newer plugin (it resolves a package to the
+    /// highest version anything in the project names) and skips the other extensions.
     /// </summary>
     /// <remarks>
     /// The check is offline and cheap: the registered packages are already in memory and only the

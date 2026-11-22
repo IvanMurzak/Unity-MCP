@@ -1,5 +1,4 @@
 import * as fs from 'fs';
-import { isNewerVersion } from '@baizor/gamedev-cli-core';
 import {
   EXTENSIONS_CATALOG,
   findExtension,
@@ -8,14 +7,14 @@ import {
 } from '../utils/extensions-catalog.js';
 import {
   addPackageToManifest,
-  isNonSemverSpec,
-  PLUGIN_PACKAGE_ID,
-  pluginRelease,
-  resolveExtensionVersionForPlugin,
+  extensionVersionForPlugin,
+  fetchPublishedExtension,
   resolveLatestPackageVersion,
+  type PublishedExtension,
 } from '../utils/manifest.js';
 import { silentLogger } from './logger.js';
 import { emitProgress } from './progress.js';
+import { resolveRunningPlugin } from './running-plugin.js';
 import { requireUnityProject } from './validation.js';
 import type { InstallExtensionOptions, InstallExtensionResult } from './types.js';
 
@@ -30,10 +29,10 @@ import type { InstallExtensionOptions, InstallExtensionResult } from './types.js
  *  2. Validate that the target path hosts a Unity project (`Packages/manifest.json`).
  *  3. Resolve the version to install: the explicit `version` override, else the
  *     catalogue pin, else the version OpenUPM publishes for the plugin release the
- *     project has (an extension works with exactly one plugin release; installing it
- *     may move a version built for another plugin down). Without a plugin release in
- *     the manifest it is `dist-tags.latest`, which brings its own plugin along. Every
- *     shipped catalogue entry is unpinned, so the live fetch is the normal path.
+ *     project runs (an extension works with exactly one plugin release; see
+ *     `runningPluginRelease`). When nothing names a plugin release it is
+ *     `dist-tags.latest`, which brings its own plugin along. Every shipped catalogue
+ *     entry is unpinned, so the live fetch is the normal path.
  *  4. Read-modify-write `Packages/manifest.json`: ensure the OpenUPM scoped registry
  *     and its required scopes, then add or version-bump the package dependency.
  *  5. Tell the caller Unity must resolve packages (the CLI cannot call
@@ -91,18 +90,20 @@ export async function installExtension(
     const descriptor = applyVersionOverride(resolved, opts.version, warnings);
     const isExplicitVersion = (opts.version ?? '').trim() !== '';
 
-    const before = readInstalledVersion(validated.manifestPath, descriptor.packageId);
-    // The plugin release the project has, when its manifest names one: the extension must be built for it.
-    const plugin = pluginRelease(readInstalledVersion(validated.manifestPath, PLUGIN_PACKAGE_ID) ?? '');
+    const installed = readDependencies(validated.manifestPath);
+    const before = installed[descriptor.packageId] ?? null;
+    // The plugin release the project runs (what its installed extensions name counts, this one's installed
+    // version too): the extension must be built for it. Null: nothing names a release.
+    const lookedUp = new Map<string, PublishedExtension | undefined>();
+    const plugin = hasVersion(descriptor) ? null : await resolveRunningPlugin(projectPath, installed, lookedUp);
 
     let version: string;
-    // The version for this plugin replaces another registry version, an older one too: only it compiles here.
-    let replaces = false;
     if (hasVersion(descriptor)) {
       // Non-null only for an explicit override or a (currently unused) catalogue pin.
       version = descriptor.version as string;
     } else if (plugin !== null) {
-      const matched = await resolveExtensionVersionForPlugin(descriptor.packageId, plugin);
+      const published = lookedUp.get(descriptor.packageId) ?? await fetchPublishedExtension(descriptor.packageId);
+      const matched = extensionVersionForPlugin(published.versions, plugin);
       if (matched === null) {
         return {
           kind: 'failure',
@@ -120,7 +121,6 @@ export async function installExtension(
         };
       }
       version = matched;
-      replaces = before !== null && before !== version && !isNonSemverSpec(before);
       emitProgress(opts.onProgress, {
         phase: 'dependencies-resolved',
         message: `Resolved ${descriptor.packageId} for plugin ${plugin}: ${version}`,
@@ -143,16 +143,9 @@ export async function installExtension(
       projectPath,
       descriptor.packageId,
       version,
-      isExplicitVersion || replaces,
+      isExplicitVersion,
       silentLogger,
     );
-
-    if (replaces && result.resolvedVersion === version && isNewerVersion(version, before!)) {
-      warnings.push(
-        `${descriptor.packageId} ${before} is built for another plugin release, so it does not work with plugin ${plugin}. ` +
-        `It was set to ${version}, the version built for this plugin.`,
-      );
-    }
 
     // `addPackageToManifest` refuses to downgrade unless `force`; surface that as a
     // warning rather than silently reporting the requested version.
@@ -223,25 +216,25 @@ export async function installExtension(
 }
 
 /**
- * Read the version currently pinned for `packageId` in the project manifest, or
- * `null` when the dependency is absent. Used to classify the outcome as
+ * The dependencies the project manifest names, by package id (an empty or non-string
+ * entry counts as absent). The extension's own entry classifies the outcome as
  * added / updated / already-up-to-date, which `addPackageToManifest`'s
- * `{ modified }` flag cannot express on its own.
+ * `{ modified }` flag cannot express on its own; the rest tells which plugin runs.
  *
- * Deliberately forgiving: any read/parse problem yields `null` (treated as
- * "not installed"). The subsequent `addPackageToManifest` call performs the
+ * Deliberately forgiving: any read/parse problem yields none (treated as
+ * "nothing installed"). The subsequent `addPackageToManifest` call performs the
  * authoritative read and throws a precise error if the manifest is unusable, so
  * swallowing here cannot mask a real failure — it only avoids duplicating the
  * error path.
  */
-function readInstalledVersion(manifestPath: string, packageId: string): string | null {
+function readDependencies(manifestPath: string): Record<string, string> {
   try {
     const raw = fs.readFileSync(manifestPath, 'utf-8');
-    const parsed = JSON.parse(raw) as { dependencies?: Record<string, string> };
-    const current = parsed?.dependencies?.[packageId];
-    return typeof current === 'string' && current.trim() !== '' ? current : null;
+    const parsed = JSON.parse(raw) as { dependencies?: Record<string, unknown> };
+    return Object.fromEntries(Object.entries(parsed?.dependencies ?? {})
+      .filter((entry): entry is [string, string] => typeof entry[1] === 'string' && entry[1].trim() !== ''));
   } catch {
-    return null;
+    return {};
   }
 }
 

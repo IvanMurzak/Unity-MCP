@@ -86,7 +86,7 @@ unity-mcp-cli update --no-extensions
 unity-mcp-cli update --no-plugin
 ```
 
-Fuera de un proyecto solo actualiza la CLI. Las instalaciones desde `file:` o git no se tocan y el plugin nunca se baja de versión. Una extensión funciona con una única versión del plugin, así que cada una pasa a la versión publicada para el plugin del proyecto, aunque sea más antigua. Una versión del plugin cuyas extensiones aún no están todas publicadas se retiene hasta que lo estén (`--check` la indica como desactualizada); `--no-plugin` mueve solo las extensiones, a sus versiones para el plugin instalado. Al cambiar la versión del plugin también se elimina `UNITY_MCP_READY` de los símbolos de compilación del proyecto (`ProjectSettings/ProjectSettings.asset`): el plugin lo vuelve a definir cuando sus dependencias están listas y, hasta entonces, Unity omite, en lugar de fallar, todo lo que depende del plugin.
+Fuera de un proyecto solo actualiza la CLI. Las instalaciones desde `file:` o git no se tocan y el plugin nunca se baja de versión. Una extensión funciona con una única versión del plugin, así que cada una pasa a la versión publicada para el plugin del proyecto. El plugin que ejecuta un proyecto es el más reciente que algo en él indique: la entrada del plugin en el manifiesto o un plugin más nuevo para el que esté compilada una extensión instalada (Unity instala ese). Una versión del plugin cuyas extensiones aún no están todas publicadas se retiene hasta que lo estén (`--check` la indica como desactualizada); `--no-plugin` mueve solo las extensiones, a sus versiones para el plugin instalado. Al cambiar la versión del plugin también se elimina `UNITY_MCP_READY` de los símbolos de compilación del proyecto (`ProjectSettings/ProjectSettings.asset`): el plugin lo vuelve a definir cuando sus dependencias están listas y, hasta entonces, Unity omite, en lugar de fallar, todo lo que depende del plugin.
 
 ## `install-extension`
 
@@ -110,7 +110,7 @@ cd ./MyGame && unity-mcp-cli install-extension Tilemap
 Este comando:
 1. Añade el **registro con ámbito de OpenUPM** con todos los ámbitos necesarios (el ámbito `com.ivanmurzak` es lo que hace que la extensión se pueda resolver)
 2. Añade el id de paquete de la extensión a `dependencies`, resolviendo en el momento de la instalación la versión que OpenUPM publica para la versión del plugin del proyecto (una extensión funciona con una única versión del plugin); sin plugin en el proyecto, el `latest` de OpenUPM
-3. **Sigue al plugin**: una versión compilada para otra versión del plugin se sustituye por la del plugin del proyecto, aunque sea más antigua, y se muestra un aviso. Sin plugin en el proyecto nunca baja de versión. Pasa `--extension-version` para forzar un valor concreto.
+3. **Nunca baja de versión** con una versión resuelta automáticamente: si ya hay instalada una versión superior, se conserva y se muestra un aviso. Pasa `--extension-version` para forzar un valor concreto, incluida una bajada de versión.
 4. Es **idempotente**: una nueva ejecución que encuentra la extensión ya actualizada lo indica y no escribe nada
 
 **Ejemplo — instalar una versión concreta de una extensión:**
