@@ -320,10 +320,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </remarks>
         internal static async Task<string?> FetchLatestVersionAsync(string packageId)
         {
+            var json = await FetchRegistryDocumentAsync(packageId);
+            return json == null ? null : ParseLatestVersionFromJson(json);
+        }
+
+        /// <summary>
+        /// The OpenUPM registry document of a package (every published version with its dependencies),
+        /// or <c>null</c> on any network failure.
+        /// </summary>
+        internal static async Task<string?> FetchRegistryDocumentAsync(string packageId)
+        {
             try
             {
-                var json = await HttpClient.GetStringAsync(OpenUpmRegistryUrl + packageId);
-                return ParseLatestVersionFromJson(json);
+                return await HttpClient.GetStringAsync(OpenUpmRegistryUrl + packageId);
             }
             catch (HttpRequestException ex)
             {
@@ -339,9 +348,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             }
             catch (Exception ex)
             {
-                // ParseLatestVersionFromJson swallows JsonException internally, so anything
-                // reaching here is an unexpected transport / URI / IO failure rather than a
-                // parse error — message must reflect that.
+                // Nothing is parsed here, so anything reaching this is an unexpected
+                // transport / URI / IO failure — the message must reflect that.
                 logger?.LogWarning(ex, "Unexpected error during OpenUPM update check");
                 return null;
             }

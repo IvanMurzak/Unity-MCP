@@ -59,6 +59,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor
             // Initialize sub-systems
             API.Tool_Tests.Init();
             UpdateChecker.Init();
+            ExtensionAutoUpdater.Init();
             PackageUtils.Init();
 
             // Auto-generate skill files for the selected agent if enabled

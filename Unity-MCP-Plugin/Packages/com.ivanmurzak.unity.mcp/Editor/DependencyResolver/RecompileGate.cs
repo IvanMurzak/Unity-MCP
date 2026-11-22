@@ -30,6 +30,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         const string Tag = "[RecompileGate]";
 
         /// <summary>
+        /// The dependency-generation define this plugin's assemblies (and every extension built for
+        /// it) are gated on, for code outside this assembly: <see cref="NuGetConfig"/> is internal.
+        /// </summary>
+        public static string DependencyGenerationDefine => NuGetConfig.DependencyGenerationDefine;
+
+        /// <summary>The prefix shared by every generation's define.</summary>
+        public static string DependencyGenerationDefinePrefix => NuGetConfig.DependencyGenerationDefinePrefix;
+
+        /// <summary>
         /// Belt-and-braces reset before swapping plugin source under the
         /// editor: forces a clean recompile (<see cref="Wipe"/>) AND blocks
         /// the main plugin asmdefs from compiling until the resolver
