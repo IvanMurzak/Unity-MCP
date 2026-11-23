@@ -136,15 +136,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// Used to skip the full restore when everything is up to date. Returning false here forces
         /// the full Restore() path, which runs migration + reconciliation.
         /// </summary>
-        public static bool AllPackagesInstalled()
+        public static bool AllPackagesInstalled() => AllPackagesInstalled(NuGetConfig.InstallPath, NuGetConfig.Packages);
+
+        /// <summary>Test seam: the same readiness check against another install path and package list.</summary>
+        internal static bool AllPackagesInstalled(string installPath, IReadOnlyList<NuGetPackage> packages)
         {
-            if (!Directory.Exists(NuGetConfig.InstallPath))
+            if (!Directory.Exists(installPath))
                 return false;
 
             // Legacy per-package directories on disk → migration is pending → force a full restore.
             // Cheap enough on the steady-state path because there are no legacy directories left
             // after the first migration run.
-            foreach (var dir in Directory.GetDirectories(NuGetConfig.InstallPath))
+            foreach (var dir in Directory.GetDirectories(installPath))
             {
                 var dirName = Path.GetFileName(dir);
                 if (NuGetPackageInstaller.ExtractPackageIdFromDirName(dirName) != null)
@@ -152,7 +155,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             }
 
             // Versioned-filename flat DLL on disk → migration is pending → force restore.
-            foreach (var dllPath in Directory.GetFiles(NuGetConfig.InstallPath, "*.dll", SearchOption.TopDirectoryOnly))
+            foreach (var dllPath in Directory.GetFiles(installPath, "*.dll", SearchOption.TopDirectoryOnly))
             {
                 if (NuGetInstallManifest.TryParseInstalledDllName(Path.GetFileName(dllPath), out _, out _))
                     return false;
@@ -161,10 +164,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // Manifest is the source of truth for the flat layout. If it's missing we need a full
             // restore — Restore() will rebuild it from on-disk filenames as the first step, then
             // the closure-completeness check below runs against the rebuilt entries.
-            if (!File.Exists(NuGetInstallManifest.GetPath(NuGetConfig.InstallPath)))
+            if (!File.Exists(NuGetInstallManifest.GetPath(installPath)))
                 return false;
 
-            var manifest = NuGetInstallManifest.Load(NuGetConfig.InstallPath);
+            var manifest = NuGetInstallManifest.Load(installPath);
 
             var skipSet = new HashSet<string>(NuGetConfig.SkipPackages, StringComparer.OrdinalIgnoreCase);
 
@@ -175,10 +178,25 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
             }
 
+            // Every recorded DLL must exist, including those owned by transitive packages.
+            // Check the manifest before walking cached nuspecs: the cache can be absent after
+            // Library is cleared, but a missing installed DLL must still trigger a restore.
+            // Empty lists are valid for development-only and explicitly empty asset groups.
+            foreach (var entry in manifest.Packages.Values)
+            {
+                foreach (var dll in entry.Dlls)
+                {
+                    if (!File.Exists(Path.Combine(installPath, dll)))
+                        return false;
+                    if (NuGetInstallManifest.TryParseInstalledDllName(dll, out _, out _))
+                        return false;
+                }
+            }
+
             // Every configured package must be installed at the configured version, UNLESS the
             // package is a development-only dependency (analyzers, source generators, build
             // tooling). The installer intentionally leaves an empty-Dlls manifest entry for those.
-            foreach (var package in NuGetConfig.Packages)
+            foreach (var package in packages)
             {
                 if (IsCachedDevelopmentDependency(package))
                 {
@@ -195,15 +213,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
                 if (!string.Equals(entry.Version, package.Version, StringComparison.OrdinalIgnoreCase))
                     return false;
-
-                // Versioned-filename manifest entry → pre-unversioned resolver → force restore.
-                foreach (var dll in entry.Dlls)
-                {
-                    if (!File.Exists(Path.Combine(NuGetConfig.InstallPath, dll)))
-                        return false;
-                    if (NuGetInstallManifest.TryParseInstalledDllName(dll, out _, out _))
-                        return false;
-                }
             }
 
             // Walk the transitive closure from each configured top-level package via cached
@@ -213,7 +222,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // fix-up pass in Restore().
             var installedPackageIds = new HashSet<string>(manifest.Packages.Keys, StringComparer.OrdinalIgnoreCase);
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
-            foreach (var package in NuGetConfig.Packages)
+            foreach (var package in packages)
             {
                 if (!HasTransitiveClosure(package, visited, installedPackageIds, skipSet))
                     return false;
