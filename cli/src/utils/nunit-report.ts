@@ -1,7 +1,7 @@
-// The NUnit 3 report Unity's test runner writes (`-testResults`), parsed without an XML dependency (Unity's report is
-// machine-written: elements, attributes and CDATA), plus JUnit output and GitHub Actions annotations built from it.
+// NUnit reports from Unity, plus JUnit output and GitHub Actions annotations.
 
 import * as path from 'path';
+import { SaxesParser } from 'saxes';
 
 export type TestOutcome = 'passed' | 'failed' | 'skipped' | 'inconclusive';
 
@@ -54,24 +54,47 @@ export function encodeXml(text: string): string {
     .replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;').replace(/'/g, '&apos;');
 }
 
-function attributes(tag: string): Record<string, string> {
-  const attrs: Record<string, string> = {};
-  for (const m of tag.matchAll(/([\w:-]+)\s*=\s*("([^"]*)"|'([^']*)')/g)) {
-    attrs[m[1]] = decodeXml(m[3] ?? m[4] ?? '');
-  }
-  return attrs;
+interface ReportElement {
+  name: string;
+  attributes: Record<string, string>;
+  children: ReportElement[];
+  text: string;
 }
 
-/** The text of the first `<name>` element in `xml` (CDATA or escaped text), or undefined. */
-function elementText(xml: string, name: string): string | undefined {
-  const m = new RegExp(`<${name}(?:\\s[^>]*)?>([\\s\\S]*?)</${name}>`).exec(xml);
-  if (!m) return undefined;
-  const inner = m[1];
-  const parts = [...inner.matchAll(/<!\[CDATA\[([\s\S]*?)\]\]>/g)];
-  const text = parts.length > 0 ? parts.map(p => p[1]).join('') : decodeXml(inner);
-  // Unity on Windows writes CRLF inside messages; one newline style keeps JSON and annotations clean.
-  const trimmed = text.replace(/\r\n?/g, '\n').trim();
-  return trimmed.length > 0 ? trimmed : undefined;
+function readDocument(xml: string): ReportElement | undefined {
+  const parser = new SaxesParser({ xmlns: false });
+  const stack: ReportElement[] = [];
+  let root: ReportElement | undefined;
+  parser.on('opentag', (tag) => {
+    const element: ReportElement = { name: tag.name, attributes: tag.attributes, children: [], text: '' };
+    const parent = stack[stack.length - 1];
+    if (parent) parent.children.push(element);
+    else root = element;
+    stack.push(element);
+  });
+  const appendText = (text: string) => {
+    const element = stack[stack.length - 1];
+    if (element?.name === 'message' || element?.name === 'stack-trace') element.text += text;
+  };
+  parser.on('text', appendText);
+  parser.on('cdata', appendText);
+  parser.on('closetag', () => { stack.pop(); });
+  parser.on('doctype', () => { throw new Error('NUnit reports do not require a DTD.'); });
+  try {
+    parser.write(xml).close();
+    return root;
+  } catch {
+    return undefined;
+  }
+}
+
+function child(element: ReportElement, name: string): ReportElement | undefined {
+  return element.children.find(node => node.name === name);
+}
+
+function elementText(element: ReportElement | undefined, name: string): string | undefined {
+  const text = element && child(element, name)?.text.replace(/\r\n?/g, '\n').trim();
+  return text || undefined;
 }
 
 function toNumber(value: string | undefined): number {
@@ -89,26 +112,38 @@ function outcomeOf(result: string | undefined): TestOutcome {
 }
 
 /**
- * Parse an NUnit 3 report. Returns undefined when `xml` holds no `<test-run>` (not a report, or a truncated file).
+ * Parse a complete NUnit 3 document. Invalid XML or a root other than test-run returns undefined.
  */
 export function parseNUnitReport(xml: string): TestReport | undefined {
-  const runTag = /<test-run\b[^>]*>/.exec(xml);
-  if (!runTag) return undefined;
-  const run = attributes(runTag[0]);
+  const root = readDocument(xml);
+  if (root?.name !== 'test-run') return undefined;
+  const run = root.attributes;
+  const cases: ReportElement[] = [];
+  const suites: ReportElement[] = [];
+  const pending = [root];
+  while (pending.length > 0) {
+    const element = pending.pop()!;
+    if (element.name === 'test-case') cases.push(element);
+    else {
+      if (element.name === 'test-suite') suites.push(element);
+      for (let i = element.children.length - 1; i >= 0; i--) {
+        const node = element.children[i];
+        if (node.name === 'test-case' || node.name === 'test-suite') pending.push(node);
+      }
+    }
+  }
 
   const tests: TestCaseResult[] = [];
-  for (const m of xml.matchAll(/<test-case\b([^>]*?)(\/>|>([\s\S]*?)<\/test-case>)/g)) {
-    const attrs = attributes(m[1]);
-    const body = m[3] ?? '';
+  for (const element of cases) {
+    const attrs = element.attributes;
     const fullName = attrs.fullname ?? attrs.name ?? '';
     const name = attrs.name ?? fullName;
     const className = attrs.classname
       ?? (fullName.endsWith(`.${name}`) ? fullName.slice(0, fullName.length - name.length - 1) : fullName);
-    const failure = /<failure\b[\s\S]*?<\/failure>/.exec(body)?.[0];
-    const reason = /<reason\b[\s\S]*?<\/reason>/.exec(body)?.[0];
-    const detail = failure ?? reason;
-    const message = detail ? elementText(detail, 'message') : undefined;
-    const stackTrace = failure ? elementText(failure, 'stack-trace') : undefined;
+    const failure = child(element, 'failure');
+    const detail = failure ?? child(element, 'reason');
+    const message = elementText(detail, 'message');
+    const stackTrace = elementText(failure, 'stack-trace');
     tests.push({
       fullName,
       name,
@@ -122,13 +157,13 @@ export function parseNUnitReport(xml: string): TestReport | undefined {
 
   // A fixture's OneTimeSetUp/TearDown failure is reported on its <test-suite> (site="SetUp"/"TearDown"), not as a
   // failed case (a teardown failure leaves every case passed): count it as a failure of its own.
-  for (const m of xml.matchAll(/<test-suite\b([^>]*?)>((?:\s*<properties>[\s\S]*?<\/properties>)?\s*(<failure\b[\s\S]*?<\/failure>))?/g)) {
-    const attrs = attributes(m[1]);
+  for (const element of suites) {
+    const attrs = element.attributes;
     if ((attrs.result ?? '').toLowerCase() !== 'failed' || !['setup', 'teardown'].includes((attrs.site ?? '').toLowerCase())) continue;
-    const failure = m[3];
+    const failure = child(element, 'failure');
     const fullName = `${attrs.fullname ?? attrs.name ?? ''} [${attrs.site}]`;
-    const message = failure ? elementText(failure, 'message') : undefined;
-    const stackTrace = failure ? elementText(failure, 'stack-trace') : undefined;
+    const message = elementText(failure, 'message');
+    const stackTrace = elementText(failure, 'stack-trace');
     tests.push({
       fullName,
       name: `[${attrs.site}]`,
