@@ -1,7 +1,7 @@
 # Vendored: Code-Exec (C#)
 
 `Core/` and `Roslyn/` are copied verbatim, below a 4-line license header, from [IvanMurzak/Code-Exec](https://github.com/IvanMurzak/Code-Exec)
-release **0.4.1** (tag `nuget-v0.4.1`, commit `2f46b50`), published on NuGet as `com.IvanMurzak.CodeExec` 0.4.1. What
+release **0.5.1** (tag `nuget-v0.5.1`, commit `e8627a2`), published on NuGet as `com.IvanMurzak.CodeExec` 0.5.1. What
 changed in a release is in Code-Exec's release notes, not here.
 
 Files: `dotnet/CodeExec/*.cs` and `dotnet/CodeExec.Roslyn/src/*.cs`. Source, not the NuGet DLL:
