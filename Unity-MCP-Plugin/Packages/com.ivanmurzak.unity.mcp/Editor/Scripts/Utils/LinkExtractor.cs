@@ -11,6 +11,7 @@
 #nullable enable
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Linq;
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
@@ -116,49 +117,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (xmlDocuments.Count == 0)
                 return;
 
-            // Create merged document with duplicate detection
-            var mergedRoot = new XElement("linker");
-            var seenAssemblies = new HashSet<string>();
-
-            foreach (var doc in xmlDocuments)
-            {
-                var elements = doc.Root?.Elements();
-                if (elements == null)
-                    continue;
-
-                foreach (var element in elements)
-                {
-                    // Create a unique key for this element
-                    var elementKey = CreateElementKey(element);
-
-                    if (seenAssemblies.Add(elementKey))
-                    {
-                        mergedRoot.Add(new XElement(element));
-                    }
-                }
-            }
-
-            var mergedXml = new XDocument(mergedRoot);
+            var mergedXml = LinkXmlMerger.Merge(xmlDocuments);
 
             if (!Directory.Exists(MergedFolder))
                 Directory.CreateDirectory(MergedFolder);
 
             mergedXml.Save(MergedLinkFilePath);
 
-            Debug.Log($"[LinkExtractor] Merged {xmlDocuments.Count} link.xml files ({seenAssemblies.Count} unique elements) to {MergedLinkFilePath}");
-        }
-
-        string CreateElementKey(XElement element)
-        {
-            // For assembly elements, use fullname attribute
-            if (element.Name.LocalName == "assembly")
-            {
-                var fullname = element.Attribute("fullname")?.Value;
-                return fullname != null ? $"assembly:{fullname}" : element.ToString();
-            }
-
-            // For other elements (type, method, etc.), use the full element representation
-            return element.ToString();
+            Debug.Log($"[LinkExtractor] Merged {xmlDocuments.Count} link.xml files ({mergedXml.Root!.Elements().Count()} unique elements) to {MergedLinkFilePath}");
         }
 
         void CleanupTemporaryFiles()
