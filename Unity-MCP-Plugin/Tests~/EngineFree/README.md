@@ -88,10 +88,11 @@ Consequences worth stating plainly, because they bound what a green run here mea
 Both limits are the *point* rather than a defect: this suite is a fast, licence-free floor under the
 pieces that genuinely do not need an engine, not a replacement for the Unity Test Runner suites.
 
-`LinkExtractorTests` compiles the production XML merger directly. It covers preservation rules
-from multiple packages targeting the same assembly, including different types, members and
-assembly attributes, plus exact duplicates and input ownership. `UNITY_EDITOR` excludes the Unity
-build callbacks and package/file discovery here; those integration paths still require Unity.
+`LinkXmlMergerTests` compiles the production link.xml merger (`LinkXmlMerger.cs`, the pure step of
+the `LinkExtractor` build preprocessor) directly. It covers preservation rules from multiple packages
+targeting the same assembly, including different types, members and assembly attributes, plus exact
+duplicates and input ownership. Package discovery and the build callbacks stay in `LinkExtractor.cs`
+and still require Unity.
 
 ## The two pin locations
 

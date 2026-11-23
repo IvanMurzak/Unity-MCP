@@ -15,10 +15,10 @@ using Xunit;
 
 namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
 {
-    public class LinkExtractorTests
+    public class LinkXmlMergerTests
     {
         static XDocument Merge(params string[] assemblies)
-            => LinkExtractor.MergeDocuments(assemblies.Select(xml => XDocument.Parse("<linker>" + xml + "</linker>")));
+            => LinkXmlMerger.Merge(assemblies.Select(xml => XDocument.Parse("<linker>" + xml + "</linker>")));
 
         [Fact]
         public void DifferentTypesInTheSameAssemblyAreRetained()
@@ -71,7 +71,7 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         {
             var source = XDocument.Parse("<linker><assembly fullname='Game' preserve='all'/></linker>");
             var before = source.ToString();
-            var result = LinkExtractor.MergeDocuments(new[] { source });
+            var result = LinkXmlMerger.Merge(new[] { source });
             result.Root!.Element("assembly")!.SetAttributeValue("preserve", "nothing");
 
             Assert.Equal(before, source.ToString());

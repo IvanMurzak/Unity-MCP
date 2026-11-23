@@ -13,12 +13,10 @@ using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 using System.Xml.Linq;
-#if UNITY_EDITOR
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.PackageManager;
 using UnityEngine;
-#endif
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -26,12 +24,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// Build preprocessor that extracts and merges link.xml files from all packages.
     /// This ensures proper code stripping preservation during IL2CPP builds.
     /// </summary>
-    public class LinkExtractor
-#if UNITY_EDITOR
-        : IPreprocessBuildWithReport, IPostprocessBuildWithReport
-#endif
+    public class LinkExtractor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
     {
-#if UNITY_EDITOR
         const string FileName = "link.xml";
         const string MergedFolderName = "packages-merged-link";
 
@@ -123,7 +117,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (xmlDocuments.Count == 0)
                 return;
 
-            var mergedXml = MergeDocuments(xmlDocuments);
+            var mergedXml = LinkXmlMerger.Merge(xmlDocuments);
 
             if (!Directory.Exists(MergedFolder))
                 Directory.CreateDirectory(MergedFolder);
@@ -132,34 +126,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             Debug.Log($"[LinkExtractor] Merged {xmlDocuments.Count} link.xml files ({mergedXml.Root!.Elements().Count()} unique elements) to {MergedLinkFilePath}");
         }
-#endif
 
-        internal static XDocument MergeDocuments(IEnumerable<XDocument> xmlDocuments)
-        {
-            var mergedRoot = new XElement("linker");
-            var seenElements = new HashSet<string>();
-
-            foreach (var doc in xmlDocuments)
-            {
-                var elements = doc.Root?.Elements();
-                if (elements == null)
-                    continue;
-
-                foreach (var element in elements)
-                {
-                    // An assembly can have different member rules or conditions in each package.
-                    // Keep those declarations separate so the linker applies every preservation.
-                    if (seenElements.Add(element.ToString(SaveOptions.DisableFormatting)))
-                    {
-                        mergedRoot.Add(new XElement(element));
-                    }
-                }
-            }
-
-            return new XDocument(mergedRoot);
-        }
-
-#if UNITY_EDITOR
         void CleanupTemporaryFiles()
         {
             if (Directory.Exists(MergedFolder))
@@ -171,6 +138,5 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             UnityEditor.AssetDatabase.Refresh();
         }
-#endif
     }
 }
