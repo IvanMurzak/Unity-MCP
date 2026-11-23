@@ -180,6 +180,55 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             Assert.IsFalse(NuGetPackageRestorer.ShouldRefresh(true, new[] { "X 1.0.0 (404)" }));
         }
 
+        [Test]
+        public void EmptyFrameworkRecordsManifestAndKeepsDependenciesWithoutFallbackDlls()
+        {
+            Publish("Fake.Dependency", "1.0.0");
+            Publish("Fake.Empty", "1.0.0", ("Fake.Dependency", "1.0.0"));
+            SetEmptyFramework("Fake.Empty", "1.0.0");
+
+            var first = Pass(P("Fake.Empty", "1.0.0"));
+            Assert.IsEmpty(first.failures);
+            var entry = NuGetInstallManifest.Load(_installDir).Packages["Fake.Empty"];
+            Assert.AreEqual("1.0.0", entry.Version);
+            Assert.IsEmpty(entry.Dlls);
+            Assert.IsFalse(File.Exists(Path.Combine(_installDir, "Fake.Empty.dll")));
+            Assert.IsTrue(File.Exists(Path.Combine(_installDir, "Fake.Dependency.dll")));
+
+            var before = Snapshot();
+            var second = Pass(P("Fake.Empty", "1.0.0"));
+            Assert.IsEmpty(second.failures);
+            Assert.IsFalse(second.changed);
+            CollectionAssert.AreEquivalent(before, Snapshot());
+        }
+
+        [Test]
+        public void EmptyFrameworkRemovesPreviouslyInstalledFallbackAtTheSameVersion()
+        {
+            Publish("Fake.Empty", "1.0.0");
+            Pass(P("Fake.Empty", "1.0.0"));
+            File.WriteAllText(Path.Combine(_installDir, "Fake.Empty.dll.meta"), "old importer");
+            SetEmptyFramework("Fake.Empty", "1.0.0");
+
+            var result = Pass(P("Fake.Empty", "1.0.0"));
+
+            Assert.IsEmpty(result.failures);
+            Assert.IsTrue(result.changed);
+            Assert.IsEmpty(NuGetInstallManifest.Load(_installDir).Packages["Fake.Empty"].Dlls);
+            Assert.IsFalse(File.Exists(Path.Combine(_installDir, "Fake.Empty.dll")));
+            Assert.IsFalse(File.Exists(Path.Combine(_installDir, "Fake.Empty.dll.meta")));
+            Assert.IsFalse(Pass(P("Fake.Empty", "1.0.0")).changed);
+        }
+
+        void SetEmptyFramework(string id, string version)
+        {
+            using var zip = ZipFile.Open(_feed[$"{id} {version}"], ZipArchiveMode.Update);
+            zip.GetEntry($"lib/netstandard2.0/{id}.dll")!.Delete();
+            zip.CreateEntry("lib/netstandard2.0/_._");
+            using var writer = new StreamWriter(zip.CreateEntry($"lib/net47/{id}.dll").Open());
+            writer.Write("fallback must not be installed");
+        }
+
         // Every DLL in the install directory with its content and timestamp: any churn shows.
         List<string> Snapshot() => Directory.GetFiles(_installDir, "*.dll")
             .Select(f => Path.GetFileName(f) + "|" + File.ReadAllText(f) + "|" + File.GetLastWriteTimeUtc(f).Ticks).ToList();

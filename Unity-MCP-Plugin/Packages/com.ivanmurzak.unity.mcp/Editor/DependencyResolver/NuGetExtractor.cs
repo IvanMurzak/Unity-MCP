@@ -15,7 +15,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Xml.Linq;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
@@ -46,12 +45,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
         /// install before any disk write happens (see issue #733).
         ///
         /// Returns the list of (zip-entry, planned-on-disk-path) pairs. The
-        /// list is empty for development-only dependencies and packages that
-        /// ship no compatible framework folder; both cases are valid no-op
-        /// installs that the caller treats as "nothing to do".
+        /// list is empty when the selected framework has an explicit _._ marker
+        /// or the package has no DLL assets. The overload reports an explicit
+        /// empty framework separately so the installer can record it in the manifest.
         /// </summary>
         public static List<PlannedDll> PlanDllPaths(string nupkgPath, string installDirectory)
+            => PlanDllPaths(nupkgPath, installDirectory, out _);
+
+        internal static List<PlannedDll> PlanDllPaths(string nupkgPath, string installDirectory, out bool emptyFramework)
         {
+            emptyFramework = false;
             var planned = new List<PlannedDll>();
 
             using var zip = ZipFile.OpenRead(nupkgPath);
@@ -60,6 +63,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             var bestFramework = SelectBestFramework(libEntries.Keys);
             if (bestFramework == null || !libEntries.TryGetValue(bestFramework, out var frameworkEntries))
                 return planned;
+
+            emptyFramework = frameworkEntries.Count == 0;
 
             foreach (var entry in frameworkEntries)
             {
@@ -218,12 +223,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 if (!entryName.StartsWith("lib/", StringComparison.OrdinalIgnoreCase))
                     continue;
 
-                // Skip directories, non-DLL files, and files we don't need
-                if (string.IsNullOrEmpty(entry.Name) || ShouldSkip(entryName))
-                    continue;
-
                 var parts = entryName.Split('/');
                 if (parts.Length < 3)
+                    continue;
+
+                // NuGet's _._ marks an explicitly empty framework, not an absent one.
+                // Keep it in framework selection without planning it as a DLL.
+                var emptyMarker = parts.Length == 3 && parts[2] == "_._";
+                if (!emptyMarker && (string.IsNullOrEmpty(entry.Name) || ShouldSkip(entryName)))
                     continue;
 
                 var framework = parts[1];
@@ -232,7 +239,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     entries = new List<ZipArchiveEntry>();
                     libEntries[framework] = entries;
                 }
-                entries.Add(entry);
+                if (!emptyMarker)
+                    entries.Add(entry);
             }
 
             return libEntries;

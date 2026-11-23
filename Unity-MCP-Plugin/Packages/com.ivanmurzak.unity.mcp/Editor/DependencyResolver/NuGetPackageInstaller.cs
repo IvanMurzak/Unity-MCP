@@ -242,7 +242,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
                 // Plan DLL paths up front so synthetic-owner reconciliation (below) can
                 // operate on the same filenames the collision check would compare against.
-                var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath);
+                var planned = NuGetExtractor.PlanDllPaths(nupkgPath, installPath, out var emptyFramework);
+                if (emptyFramework)
+                {
+                    if (manifest.Packages.TryGetValue(package.Id, out var previous) && previous.Dlls.Count > 0)
+                    {
+                        DeleteEntryFiles(installPath, previous);
+                        if (previous.Dlls.Any(dll => File.Exists(Path.Combine(installPath, dll))))
+                            throw new IOException($"Could not remove the previous DLLs for empty framework package {package}.");
+                        anyInstalled = true;
+                    }
+                    installedThisSession[package.Id] = package.Version;
+                    UpsertManifestEntry(manifest, package.Id, package.Version, dlls: Array.Empty<string>());
+                    NuGetInstallManifest.Save(installPath, manifest);
+                    return anyInstalled;
+                }
 
                 // Disaster-recovery reconciliation: TryRebuildFromDisk has no way to recover
                 // multi-DLL package IDs from filenames alone (e.g., Microsoft.Bcl.Memory ships

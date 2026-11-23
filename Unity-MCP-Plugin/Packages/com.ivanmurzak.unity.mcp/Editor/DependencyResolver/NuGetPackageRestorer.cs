@@ -175,6 +175,27 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                     return false;
             }
 
+            // Older extractors fell back past _._ and installed DLLs from a different framework.
+            // Check transitive entries too, so a healthy-looking manifest cannot retain those DLLs.
+            foreach (var pair in manifest.Packages)
+            {
+                if (pair.Value.Dlls.Count == 0)
+                    continue;
+                var package = new NuGetPackage(pair.Key, pair.Value.Version);
+                if (!NuGetCache.IsCached(package))
+                    continue;
+                try
+                {
+                    NuGetExtractor.PlanDllPaths(NuGetCache.GetCachedPath(package), NuGetConfig.InstallPath, out var emptyFramework);
+                    if (emptyFramework)
+                        return false;
+                }
+                catch
+                {
+                    return false;
+                }
+            }
+
             // Every configured package must be installed at the configured version, UNLESS the
             // package is a development-only dependency (analyzers, source generators, build
             // tooling). The installer intentionally leaves an empty-Dlls manifest entry for those.
