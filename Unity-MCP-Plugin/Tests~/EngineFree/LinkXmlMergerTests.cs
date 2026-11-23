@@ -17,8 +17,8 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
 {
     public class LinkXmlMergerTests
     {
-        static XDocument Merge(params string[] assemblies)
-            => LinkXmlMerger.Merge(assemblies.Select(xml => XDocument.Parse("<linker>" + xml + "</linker>")));
+        static XDocument Merge(params string[] fragments)
+            => LinkXmlMerger.Merge(fragments.Select(xml => XDocument.Parse("<linker>" + xml + "</linker>")));
 
         [Fact]
         public void DifferentTypesInTheSameAssemblyAreRetained()
