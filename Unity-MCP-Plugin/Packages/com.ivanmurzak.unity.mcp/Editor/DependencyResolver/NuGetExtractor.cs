@@ -15,7 +15,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Xml.Linq;
-using UnityEngine;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 {
@@ -322,35 +321,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
                 var id = dep.Attribute("id")?.Value;
                 var version = dep.Attribute("version")?.Value;
                 if (id != null && version != null)
-                    dependencies.Add(new NuGetPackage(id, CleanVersionRange(version)));
+                    dependencies.Add(NuGetPackage.Dependency(id, version));
             }
-        }
-
-        /// <summary>
-        /// Cleans NuGet version range syntax to a simple version string.
-        /// e.g., "[1.0.0, )" → "1.0.0", "(, 2.0.0]" → "2.0.0", "1.0.0" → "1.0.0"
-        /// </summary>
-        static string CleanVersionRange(string version)
-        {
-            if (string.IsNullOrEmpty(version))
-                return version;
-
-            // Remove brackets and parentheses
-            version = version.Trim('[', ']', '(', ')', ' ');
-
-            // If it's a range like "1.0.0, 2.0.0", take the first (lower bound)
-            var commaIndex = version.IndexOf(',');
-            if (commaIndex >= 0)
-            {
-                var lower = version.Substring(0, commaIndex).Trim();
-                if (!string.IsNullOrEmpty(lower))
-                    return lower;
-
-                // No lower bound, use upper
-                return version.Substring(commaIndex + 1).Trim();
-            }
-
-            return version;
         }
 
         /// <summary>
