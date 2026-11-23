@@ -142,19 +142,6 @@ function locateBinaryDir(rootDir: string, binaryName: string): string | null {
   return null;
 }
 
-function copyDirContents(srcDir: string, destDir: string): void {
-  fs.mkdirSync(destDir, { recursive: true });
-  for (const entry of fs.readdirSync(srcDir, { withFileTypes: true })) {
-    const src = path.join(srcDir, entry.name);
-    const dest = path.join(destDir, entry.name);
-    if (entry.isDirectory()) {
-      copyDirContents(src, dest);
-    } else {
-      fs.copyFileSync(src, dest);
-    }
-  }
-}
-
 // ---------------------------------------------------------------------------
 // Download + verify + publish
 // ---------------------------------------------------------------------------
@@ -208,7 +195,7 @@ async function fetchText(url: string, doFetch: typeof fetch): Promise<string> {
 
 /**
  * Download (or copy from `--server-source`), verify against the release SHA256SUMS (fail-closed),
- * extract, and atomically publish the pinned GameDev-MCP-Server binary for the host RID into the
+ * extract, and publish with rollback the pinned GameDev-MCP-Server binary for the host RID into the
  * CLI's managed directory. Never launches the binary. Returns the published path.
  */
 export async function downloadServerBinary(
@@ -281,22 +268,42 @@ export async function downloadServerBinary(
       );
     }
 
-    // 3. Publish: replace the per-RID cache folder with the staged payload, write the version
-    //    marker, and set the exec bit on POSIX so the payload is launch-ready.
+    // 3. Finish the payload before touching the current installation. Staging is on the
+    //    same filesystem, so publication needs directory renames rather than file copies.
     const destDir = managedServerDir(rid, homeDir);
-    fs.rmSync(destDir, { recursive: true, force: true });
-    copyDirContents(binaryDir, destDir);
-
-    const binaryPath = managedServerBinaryPath(rid, homeDir);
     if (process.platform !== 'win32') {
+      fs.chmodSync(path.join(binaryDir, binaryName), 0o755);
+    }
+    fs.writeFileSync(path.join(binaryDir, 'version'), version);
+
+    const backupDir = path.join(rootDir, `.backup-${rid}-${randomUUID()}`);
+    const hadPrevious = fs.existsSync(destDir);
+    if (hadPrevious) fs.renameSync(destDir, backupDir);
+    try {
+      fs.renameSync(binaryDir, destDir);
+    } catch (publishError) {
+      if (hadPrevious) {
+        try {
+          fs.renameSync(backupDir, destDir);
+        } catch (rollbackError) {
+          // Never clean up the only surviving copy of the previous installation.
+          throw new Error(
+            `Server publication failed (${String(publishError)}), and restoring the previous installation failed ` +
+              `(${String(rollbackError)}). The previous installation is preserved at: ${backupDir}`,
+          );
+        }
+      }
+      throw publishError;
+    }
+    if (hadPrevious) {
       try {
-        fs.chmodSync(binaryPath, 0o755);
+        fs.rmSync(backupDir, { recursive: true, force: true });
       } catch {
-        /* best effort */
+        // The new installation is complete; a locked backup can be removed later.
       }
     }
-    fs.writeFileSync(managedServerVersionPath(rid, homeDir), version);
 
+    const binaryPath = managedServerBinaryPath(rid, homeDir);
     report(`Server binary ready: ${binaryPath}`);
     return { rid, version, binaryPath, verified };
   } finally {
