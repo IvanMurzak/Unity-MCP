@@ -11,11 +11,14 @@
 #nullable enable
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Xml.Linq;
+#if UNITY_EDITOR
 using UnityEditor.Build;
 using UnityEditor.Build.Reporting;
 using UnityEditor.PackageManager;
 using UnityEngine;
+#endif
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 {
@@ -23,8 +26,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// Build preprocessor that extracts and merges link.xml files from all packages.
     /// This ensures proper code stripping preservation during IL2CPP builds.
     /// </summary>
-    public class LinkExtractor : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+    public class LinkExtractor
+#if UNITY_EDITOR
+        : IPreprocessBuildWithReport, IPostprocessBuildWithReport
+#endif
     {
+#if UNITY_EDITOR
         const string FileName = "link.xml";
         const string MergedFolderName = "packages-merged-link";
 
@@ -116,9 +123,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
             if (xmlDocuments.Count == 0)
                 return;
 
-            // Create merged document with duplicate detection
+            var mergedXml = MergeDocuments(xmlDocuments);
+
+            if (!Directory.Exists(MergedFolder))
+                Directory.CreateDirectory(MergedFolder);
+
+            mergedXml.Save(MergedLinkFilePath);
+
+            Debug.Log($"[LinkExtractor] Merged {xmlDocuments.Count} link.xml files ({mergedXml.Root!.Elements().Count()} unique elements) to {MergedLinkFilePath}");
+        }
+#endif
+
+        internal static XDocument MergeDocuments(IEnumerable<XDocument> xmlDocuments)
+        {
             var mergedRoot = new XElement("linker");
-            var seenAssemblies = new HashSet<string>();
+            var seenElements = new HashSet<string>();
 
             foreach (var doc in xmlDocuments)
             {
@@ -128,39 +147,19 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
                 foreach (var element in elements)
                 {
-                    // Create a unique key for this element
-                    var elementKey = CreateElementKey(element);
-
-                    if (seenAssemblies.Add(elementKey))
+                    // An assembly can have different member rules or conditions in each package.
+                    // Keep those declarations separate so the linker applies every preservation.
+                    if (seenElements.Add(element.ToString(SaveOptions.DisableFormatting)))
                     {
                         mergedRoot.Add(new XElement(element));
                     }
                 }
             }
 
-            var mergedXml = new XDocument(mergedRoot);
-
-            if (!Directory.Exists(MergedFolder))
-                Directory.CreateDirectory(MergedFolder);
-
-            mergedXml.Save(MergedLinkFilePath);
-
-            Debug.Log($"[LinkExtractor] Merged {xmlDocuments.Count} link.xml files ({seenAssemblies.Count} unique elements) to {MergedLinkFilePath}");
+            return new XDocument(mergedRoot);
         }
 
-        string CreateElementKey(XElement element)
-        {
-            // For assembly elements, use fullname attribute
-            if (element.Name.LocalName == "assembly")
-            {
-                var fullname = element.Attribute("fullname")?.Value;
-                return fullname != null ? $"assembly:{fullname}" : element.ToString();
-            }
-
-            // For other elements (type, method, etc.), use the full element representation
-            return element.ToString();
-        }
-
+#if UNITY_EDITOR
         void CleanupTemporaryFiles()
         {
             if (Directory.Exists(MergedFolder))
@@ -172,5 +171,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
 
             UnityEditor.AssetDatabase.Refresh();
         }
+#endif
     }
 }
