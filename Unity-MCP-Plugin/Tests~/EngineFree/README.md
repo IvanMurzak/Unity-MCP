@@ -94,6 +94,11 @@ targeting the same assembly, including different types, members and assembly att
 duplicates and input ownership. Package discovery and the build callbacks stay in `LinkExtractor.cs`
 and still require Unity.
 
+`NuGetEmptyFrameworkTests` compiles the real NuGet extractor and uses local ZIP fixtures to
+verify that a selected `_._` framework produces no DLLs, without falling back to a different
+framework. It also checks extraction and nuspec dependencies. Manifest persistence, cleanup
+and repeated restores are covered by the Unity `NuGetResolverPartialGraphTests` suite.
+
 ## The two pin locations
 
 `EngineFree.csproj` consumes `com.IvanMurzak.McpPlugin` and `com.IvanMurzak.ReflectorNet` from NuGet
