@@ -3,6 +3,7 @@ import * as path from 'path';
 import { EXTENSIONS_CATALOG } from '../utils/extensions-catalog.js';
 import { isNewerVersion } from '@baizor/gamedev-cli-core';
 import {
+  addPackagesToManifest,
   closePluginGate,
   extensionVersionForPlugin,
   fetchPublishedExtension,
@@ -13,8 +14,7 @@ import {
   shouldUpdateVersion,
   type PublishedExtension,
 } from '../utils/manifest.js';
-import { installExtension } from './install-extension.js';
-import { installPlugin } from './install-plugin.js';
+import { emitProgress } from './progress.js';
 import { silentLogger } from './logger.js';
 import { resolveRunningPlugin } from './running-plugin.js';
 import { requireUnityProject } from './validation.js';
@@ -79,7 +79,7 @@ export type UpdateProjectResult = UpdateProjectSuccess | UpdateProjectFailure;
  * project runs afterwards (`runningPluginRelease`). The project is never left half-way: everything is looked
  * up before anything is written, and a plugin release whose extensions are not all published yet is held back
  * (`held`) until they are. Only what the manifest already lists is touched, `file:`/git installs are left alone
- * and the plugin is never downgraded. One item failing is a warning and does not stop the others. Library-safe:
+ * and the plugin is never downgraded. Lookup failures are warnings; a manifest commit failure fails the update. Library-safe:
  * no stdout, no `process.exit`, no throws past the boundary.
  */
 export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateProjectResult> {
@@ -90,7 +90,8 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
     if (!validated.ok) return { kind: 'failure', success: false, warnings, error: validated.error };
     const { projectPath, manifestPath } = validated;
 
-    const manifest = JSON.parse(fs.readFileSync(manifestPath, 'utf-8')) as { dependencies?: Record<string, string> };
+    const originalManifest = fs.readFileSync(manifestPath, 'utf-8');
+    const manifest = JSON.parse(originalManifest) as { dependencies?: Record<string, string> };
     const dependencies = manifest.dependencies ?? {};
 
     type Target = Pick<ProjectUpdateItem, 'kind' | 'name' | 'packageId'>;
@@ -188,33 +189,15 @@ export async function updateProject(opts: UpdateProjectOptions): Promise<UpdateP
     }
 
     const updated: ProjectUpdateItem[] = [];
-    /** Write one outdated item; false (and a warning) when that failed. */
-    const apply = async (item: ProjectUpdateItem): Promise<boolean> => {
-      const result = item.kind === 'plugin'
-        ? await installPlugin({ unityProjectPath: projectPath, version: item.to!, onProgress: opts.onProgress })
-        : await installExtension({ unityProjectPath: projectPath, extensionId: item.packageId, version: item.to!, onProgress: opts.onProgress });
-      if (result.kind === 'failure') {
-        warnings.push(`Could not update ${item.name}: ${result.error.message}`);
-        return false;
-      }
-      warnings.push(...result.warnings);
-      updated.push(item);
-      return true;
-    };
-
     if (!opts.dryRun) {
-      // An outdated entry is written also when the project already runs that plugin: it makes the manifest true.
-      const written = pluginItem?.status !== 'outdated' || await apply(pluginItem);
-      if (!written && next !== null) {
-        // The extensions were chosen for the plugin this call could not install: they stay where they are.
-        if (extensionItems.some((item) => item.status === 'outdated')) warnings.push('The installed extensions were left as they are.');
-      } else {
-        for (const item of extensionItems.filter((candidate) => candidate.status === 'outdated')) await apply(item);
-        // No plugin entry to write, yet the extensions now name a newer plugin: Unity installs it, and what is
-        // built on the old one must not compile before it is ready (`installPlugin` does this for an entry).
-        if (next !== null && pluginItem === null && updated.length > 0) closePluginGate(projectPath);
-      }
-      if (updated.length > 0) {
+      const planned = items.filter(item => item.status === 'outdated');
+      if (planned.length > 0) {
+        addPackagesToManifest(projectPath, planned.map(item => ({ packageId: item.packageId, version: item.to! })), originalManifest, () => {
+          // A direct plugin update, or extensions that bring a new transitive plugin.
+          if (planned.some(item => item.kind === 'plugin') || (next !== null && pluginItem === null)) closePluginGate(projectPath);
+        });
+        updated.push(...planned);
+        emitProgress(opts.onProgress, { phase: 'manifest-patched', message: `Updated ${manifestPath}`, manifestPath });
         nextSteps.push('Open (or focus) the Unity Editor so the Package Manager resolves the new versions.');
       }
     }
