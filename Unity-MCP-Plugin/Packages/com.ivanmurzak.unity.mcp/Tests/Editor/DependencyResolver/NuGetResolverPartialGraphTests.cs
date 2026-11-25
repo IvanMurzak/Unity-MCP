@@ -160,6 +160,28 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             Assert.AreEqual("2.0.0", InstalledVersion("Fake.Plugin"));
         }
 
+        [Test]
+        public void MissingTransitiveDll_FailsReadiness_AndRestoreReinstallsIt()
+        {
+            Publish("Fake.Lib", "1.0.0");
+            Publish("Fake.App", "1.0.0", ("Fake.Lib", "1.0.0"));
+            var roots = new[] { P("Fake.App", "1.0.0") };
+            Assert.IsEmpty(Pass(roots).failures);
+            Assert.IsTrue(NuGetPackageRestorer.AllPackagesInstalled(_installDir, roots));
+
+            var dll = Path.Combine(_installDir, "Fake.Lib.dll");
+            Assert.IsTrue(File.Exists(dll));
+            File.Delete(dll);
+            Assert.IsFalse(NuGetPackageRestorer.AllPackagesInstalled(_installDir, roots));
+
+            var repaired = Pass(roots);
+            Assert.IsEmpty(repaired.failures);
+            Assert.IsTrue(repaired.changed);
+            Assert.AreEqual("Fake.Lib 1.0.0", File.ReadAllText(dll));
+            Assert.IsTrue(NuGetPackageRestorer.AllPackagesInstalled(_installDir, roots));
+            Assert.IsFalse(Pass(roots).changed, "the repaired installation is a steady state");
+        }
+
         [TestCase("1.10.0", "1.9.0", 1)]
         [TestCase("8.14.0", "8.14.0-dev.c0d3157", 1)]
         [TestCase("8.14.0-dev.a", "8.14.0-dev.b", -1)]

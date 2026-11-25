@@ -53,6 +53,57 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             Assert.AreEqual(0, manifest.Packages.Count);
         }
 
+        [TestCase("Child.dll")]
+        [TestCase("Leaf.dll")]
+        public void Readiness_MissingTransitiveDllRequiresRestore_AndRecoversWhenRepaired(string missingDll)
+        {
+            var root = new NuGetPackage("Readiness.Root", "1.0.0");
+            var manifest = new InstallManifest();
+            manifest.Packages[root.Id] = new InstalledPackage(root.Version, new[] { "Root.dll" });
+            manifest.Packages["Readiness.Child"] = new InstalledPackage("1.0.0", new[] { "Child.dll" });
+            manifest.Packages["Readiness.Leaf"] = new InstalledPackage("1.0.0", new[] { "Leaf.dll" });
+            foreach (var dll in new[] { "Root.dll", "Child.dll", "Leaf.dll" })
+                File.WriteAllText(Path.Combine(_installPath, dll), "fixture");
+            NuGetInstallManifest.Save(_installPath, manifest);
+
+            // No cached nuspec is required to detect missing files recorded in the manifest.
+            Assert.IsTrue(NuGetPackageRestorer.AllPackagesInstalled(_installPath, new[] { root }));
+            File.Delete(Path.Combine(_installPath, missingDll));
+            Assert.IsFalse(NuGetPackageRestorer.AllPackagesInstalled(_installPath, new[] { root }));
+            File.WriteAllText(Path.Combine(_installPath, missingDll), "repaired");
+            Assert.IsTrue(NuGetPackageRestorer.AllPackagesInstalled(_installPath, new[] { root }));
+        }
+
+        [Test]
+        public void Readiness_ChecksEveryDllInATransitivePackage()
+        {
+            var root = new NuGetPackage("Readiness.Root", "1.0.0");
+            var manifest = new InstallManifest();
+            manifest.Packages[root.Id] = new InstalledPackage(root.Version, new[] { "Root.dll" });
+            manifest.Packages["Readiness.Child"] = new InstalledPackage("2.0.0", new[] { "Child.dll", "Companion.dll" });
+            File.WriteAllText(Path.Combine(_installPath, "Root.dll"), "fixture");
+            File.WriteAllText(Path.Combine(_installPath, "Child.dll"), "fixture");
+            NuGetInstallManifest.Save(_installPath, manifest);
+
+            Assert.IsFalse(NuGetPackageRestorer.AllPackagesInstalled(_installPath, new[] { root }));
+            File.WriteAllText(Path.Combine(_installPath, "Companion.dll"), "fixture");
+            Assert.IsTrue(NuGetPackageRestorer.AllPackagesInstalled(_installPath, new[] { root }));
+        }
+
+        [Test]
+        public void Readiness_EmptyDllListsDoNotRequireInventedFiles()
+        {
+            var root = new NuGetPackage("Readiness.Root", "1.0.0");
+            var manifest = new InstallManifest();
+            manifest.Packages[root.Id] = new InstalledPackage(root.Version, new[] { "Root.dll" });
+            manifest.Packages["Readiness.Analyzers"] = new InstalledPackage("1.0.0");
+            manifest.Packages["Readiness.EmptyAssets"] = new InstalledPackage("1.0.0");
+            File.WriteAllText(Path.Combine(_installPath, "Root.dll"), "fixture");
+            NuGetInstallManifest.Save(_installPath, manifest);
+
+            Assert.IsTrue(NuGetPackageRestorer.AllPackagesInstalled(_installPath, new[] { root }));
+        }
+
         [Test]
         public void SaveThenLoad_RoundTrips_AllFields()
         {
