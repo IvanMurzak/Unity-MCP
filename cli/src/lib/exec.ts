@@ -15,23 +15,14 @@ export const SCRIPT_EXECUTE_TOOL = 'script-execute';
  */
 export const DEFAULT_EXEC_TIMEOUT_MS = 310_000;
 
-/** The plugin's answer while a compile waits for its reload: the snippet did not run (Script.Execute.Reload.cs). */
+/** The reload refusal text, also used by compile's read-only status polling. */
 export const RELOAD_PENDING_TEXT = 'Scripts are compiling and reload next';
-
-/** How long `exec` keeps re-sending a snippet the plugin deferred for a reload. */
-export const RELOAD_WAIT_MS = 120_000;
-
-function deferredForReload(result: RunToolResult): boolean {
-  if (result.kind === 'failure') return result.message.includes(RELOAD_PENDING_TEXT);
-  const response = readToolResponse(result.data);
-  return !response.ok && response.text.includes(RELOAD_PENDING_TEXT);
-}
 
 /** Injection points for tests. */
 export interface ExecDeps {
   session: (options: UnitySessionOptions) => EnsureEditorSession;
   invoke: (options: RunToolOptions) => Promise<RunToolResult>;
-  /** Waits between re-sends of a deferred snippet (default: a timer). */
+  /** @deprecated Retries are owned by the server; retained for source compatibility. */
   sleep?: (ms: number) => Promise<void>;
 }
 
@@ -128,23 +119,17 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
   const { baseUrl } = ensured;
 
   options.onStatus?.('Running...');
-  const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
-  const deadline = Date.now() + RELOAD_WAIT_MS;
-  let result: RunToolResult;
-  for (;;) {
-    result = await deps.invoke({
-      toolName: SCRIPT_EXECUTE_TOOL,
-      url: baseUrl,
-      ...(options.token ? { token: options.token } : {}),
-      tokenFromCloudStore: options.tokenFromCloudStore,
-      input: buildScriptExecuteInput(options.code, options.usings ?? [], options.include ?? []),
-      timeoutMs: options.timeoutMs ?? DEFAULT_EXEC_TIMEOUT_MS,
-    });
-    // The snippet did not run because scripts are about to reload: send it again once they have.
-    if (!deferredForReload(result) || Date.now() >= deadline) break;
-    options.onStatus?.('Scripts are compiling; waiting for the reload...');
-    await sleep(2_000);
-  }
+  // The server retries only calls explicitly marked not-executed. Its HTTP
+  // error body contains only a message, so the CLI cannot safely infer that
+  // user code did not run. Preserve the final response without re-sending it.
+  const result = await deps.invoke({
+    toolName: SCRIPT_EXECUTE_TOOL,
+    url: baseUrl,
+    ...(options.token ? { token: options.token } : {}),
+    tokenFromCloudStore: options.tokenFromCloudStore,
+    input: buildScriptExecuteInput(options.code, options.usings ?? [], options.include ?? []),
+    timeoutMs: options.timeoutMs ?? DEFAULT_EXEC_TIMEOUT_MS,
+  });
   const closedPid = options.once ? await ensured.closeIfStarted() : undefined;
   const closed = closedPid !== undefined ? { closedPid } : {};
   if (result.kind === 'failure') {

@@ -13,6 +13,7 @@ import { buildOpenEnv } from '../src/lib/open.js';
 import { waitForReady } from '../src/lib/wait-for-ready.js';
 import { resolveProbeUrls } from '../src/utils/connection.js';
 import type { RunToolResult } from '../src/lib/types.js';
+import { runTool } from '../src/lib/run-tool.js';
 
 const LOCAL = 'http://localhost:1';
 const CALLED: RunToolResult = { kind: 'success', success: true, endpoint: `${LOCAL}/api/tools/script-execute`, httpStatus: 200, data: { status: 'success', content: [] } };
@@ -177,23 +178,49 @@ describe('execCode', () => {
     expect(explicit.invoke).toHaveBeenCalledWith(expect.objectContaining({ timeoutMs: 5_000 }));
   });
 
-  it('re-sends a snippet the plugin deferred for a script reload', async () => {
-    const deferred: RunToolResult = {
-      kind: 'success', success: true, endpoint: 'e', httpStatus: 200,
-      data: { status: 'error', content: [{ type: 'text', text: "Tool execution failed for 'Script / Execute': Scripts are compiling and reload next, so this snippet was not run" }] },
-    };
-    const d = { ...deps(), sleep: vi.fn(async () => {}) };
-    d.invoke.mockResolvedValueOnce(deferred).mockResolvedValueOnce(deferred);
-    expect(await execCode(options(d))).toMatchObject({ kind: 'success' });
-    expect(d.invoke).toHaveBeenCalledTimes(3);
-    expect(d.sleep).toHaveBeenCalledTimes(2);
-  });
-
   it('passes a failed tool call through', async () => {
     const failure: RunToolResult = { kind: 'failure', success: false, endpoint: 'e', reason: 'http-error', httpStatus: 500, message: 'boom' };
     const d = deps();
     d.invoke.mockResolvedValue(failure);
     expect(await execCode(options(d))).toMatchObject({ kind: 'failure', reason: 'tool-failed', toolFailure: failure });
+  });
+
+  it('preserves a tool error mentioning reload after user code already ran', async () => {
+    let mutations = 0;
+    const answer: RunToolResult = {
+      ...CALLED,
+      data: { status: 'error', content: [{ type: 'text', text: 'Already modified the scene, then threw: Scripts are compiling and reload next' }] },
+    };
+    const d = { ...deps(), sleep: vi.fn(async () => {}) };
+    d.invoke.mockImplementation(async () => ++mutations === 1 ? answer : CALLED);
+    expect(await execCode(options(d))).toMatchObject({ data: answer.data });
+    expect(mutations).toBe(1);
+    expect(d.sleep).not.toHaveBeenCalled();
+  });
+
+  it.each([422, 503])('preserves the final HTTP %i error through runTool', async status => {
+    // DirectToolCallEndpoints returns { error }, without not-executed metadata.
+    const body = { error: 'Scripts are compiling and reload next, so this snippet was not run' };
+    const fetchImpl = vi.fn(async () => new Response(JSON.stringify(body), {
+      status, statusText: status === 503 ? 'Service Unavailable' : 'Unprocessable Content',
+    }));
+    const d = { ...deps(), sleep: vi.fn(async () => {}) };
+    d.invoke.mockImplementation(opts => runTool({ ...opts, fetchImpl }));
+    expect(await execCode(options(d))).toMatchObject({ kind: 'failure', toolFailure: { httpStatus: status, data: body } });
+    expect(fetchImpl).toHaveBeenCalledTimes(1);
+    expect(d.sleep).not.toHaveBeenCalled();
+  });
+
+  it('does not treat a transport error message as permission to repeat user code', async () => {
+    const failure: RunToolResult = {
+      kind: 'failure', success: false, endpoint: 'e', reason: 'http-error', httpStatus: 422,
+      message: 'Scripts are compiling and reload next',
+    };
+    const d = { ...deps(), sleep: vi.fn(async () => { throw new Error('Unexpected retry'); }) };
+    d.invoke.mockResolvedValue(failure);
+    expect(await execCode(options(d))).toMatchObject({ kind: 'failure', toolFailure: failure });
+    expect(d.invoke).toHaveBeenCalledTimes(1);
+    expect(d.sleep).not.toHaveBeenCalled();
   });
 });
 
