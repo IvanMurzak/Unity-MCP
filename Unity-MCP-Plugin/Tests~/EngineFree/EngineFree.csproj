@@ -75,6 +75,7 @@
          and no widening of the shipped surface. -->
     <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\DependencyResolver\NuGetConfig.cs" Link="Source\NuGetConfig.cs" />
     <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\DependencyResolver\NuGetPackage.cs" Link="Source\NuGetPackage.cs" />
+    <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\DependencyResolver\NuGetExtractor.cs" Link="Source\NuGetExtractor.cs" />
     <!-- Cache-path derivation only (Path.Combine over NuGetConfig.CachePath). The tests never call
          EnsureCacheDirectory — it writes to the process working directory. -->
     <Compile Include="..\..\Packages\com.ivanmurzak.unity.mcp\Editor\DependencyResolver\NuGetCache.cs" Link="Source\NuGetCache.cs" />

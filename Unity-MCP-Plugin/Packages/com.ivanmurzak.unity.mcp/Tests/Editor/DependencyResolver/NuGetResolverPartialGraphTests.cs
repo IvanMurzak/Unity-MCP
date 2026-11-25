@@ -180,6 +180,70 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.DependencyResolverTests
             Assert.IsFalse(NuGetPackageRestorer.ShouldRefresh(true, new[] { "X 1.0.0 (404)" }));
         }
 
+        [Test]
+        public void ConflictingVersionRangeChangesNoInstalledFiles()
+        {
+            Publish("Fake.Lib", "1.5.0");
+            Assert.IsEmpty(Pass(P("Fake.Lib", "1.5.0")).failures);
+            var before = Snapshot();
+            var manifestBefore = File.ReadAllText(NuGetInstallManifest.GetPath(_installDir));
+            Publish("Fake.Lib", "2.0.0");
+            PublishRange("Fake.Parent", "Fake.Lib", "[1.0.0,2.0.0)");
+
+            var result = Pass(P("Fake.Parent", "1.0.0"), P("Fake.Lib", "2.0.0"));
+
+            Assert.IsFalse(result.changed);
+            Assert.AreEqual(1, result.failures.Count);
+            StringAssert.Contains("[1.0.0,2.0.0)", result.failures[0]);
+            StringAssert.Contains("Fake.Parent 1.0.0", result.failures[0]);
+            CollectionAssert.AreEquivalent(before, Snapshot());
+            Assert.AreEqual(manifestBefore, File.ReadAllText(NuGetInstallManifest.GetPath(_installDir)));
+        }
+
+        [Test]
+        public void ExclusiveEndpointIsNotDownloadedWithoutAnAllowedCandidate()
+        {
+            PublishRange("Fake.Parent", "Fake.Lib", "(,2.0.0)");
+            Publish("Fake.Lib", "2.0.0");
+
+            var result = Pass(P("Fake.Parent", "1.0.0"));
+
+            Assert.IsFalse(result.changed);
+            Assert.IsNotEmpty(result.failures);
+            CollectionAssert.DoesNotContain(_requests, "Fake.Lib 2.0.0");
+            Assert.IsEmpty(Snapshot());
+        }
+
+        [Test]
+        public void ExclusiveUpperBoundInstallsTheConfiguredAllowedVersion()
+        {
+            PublishRange("Fake.Parent", "Fake.Lib", "(,2.0.0)");
+            Publish("Fake.Lib", "1.5.0");
+            var roots = new[] { P("Fake.Parent", "1.0.0"), P("Fake.Lib", "1.5.0") };
+
+            var first = Pass(roots);
+
+            Assert.IsEmpty(first.failures);
+            Assert.AreEqual("1.5.0", InstalledVersion("Fake.Lib"));
+            CollectionAssert.DoesNotContain(_requests, "Fake.Lib 2.0.0");
+            var before = Snapshot();
+            var second = Pass(roots);
+            Assert.IsEmpty(second.failures);
+            Assert.IsFalse(second.changed);
+            CollectionAssert.AreEquivalent(before, Snapshot());
+        }
+
+        void PublishRange(string id, string dependencyId, string range)
+        {
+            Publish(id, "1.0.0");
+            using var zip = ZipFile.Open(_feed[$"{id} 1.0.0"], ZipArchiveMode.Update);
+            zip.GetEntry($"{id}.nuspec")!.Delete();
+            using var writer = new StreamWriter(zip.CreateEntry($"{id}.nuspec").Open());
+            writer.Write("<package><metadata><dependencies><group targetFramework='.NETStandard2.0'>" +
+                $"<dependency id='{dependencyId}' version='{range}'/>" +
+                "</group></dependencies></metadata></package>");
+        }
+
         // Every DLL in the install directory with its content and timestamp: any churn shows.
         List<string> Snapshot() => Directory.GetFiles(_installDir, "*.dll")
             .Select(f => Path.GetFileName(f) + "|" + File.ReadAllText(f) + "|" + File.GetLastWriteTimeUtc(f).Ticks).ToList();

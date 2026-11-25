@@ -94,6 +94,14 @@ targeting the same assembly, including different types, members and assembly att
 duplicates and input ownership. Package discovery and the build callbacks stay in `LinkExtractor.cs`
 and still require Unity.
 
+`NuGetVersionRangeTests` compiles the production range parser, version comparer, candidate planner
+and nuspec extractor. It checks bounds, conflicting parent requirements and excluded endpoints
+without Unity or network access. The planner uses configured versions and dependency bounds as
+candidates; it does not query the feed for every published version. If these candidates cannot
+satisfy all ranges, restore fails before installation and names the conflicting requirements.
+The Unity `NuGetResolverPartialGraphTests` suite checks that a conflict leaves DLLs and the
+manifest unchanged, and that installation uses the selected version for an upper-only range.
+
 ## The two pin locations
 
 `EngineFree.csproj` consumes `com.IvanMurzak.McpPlugin` and `com.IvanMurzak.ReflectorNet` from NuGet

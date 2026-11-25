@@ -41,9 +41,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>The one Console message for a restore that could not fetch every package: what failed and how to retry.</summary>
         internal static string FailureMessage(IReadOnlyList<string> failures) =>
-            $"Unity-MCP could not download {failures.Count} NuGet package(s): {string.Join("; ", failures)}. Nothing was changed in " +
+            $"Unity-MCP could not resolve {failures.Count} NuGet package requirement(s): {string.Join("; ", failures)}. Nothing was changed in " +
             $"{NuGetConfig.InstallPath} and the AssetDatabase was not refreshed. Unity-MCP stays disabled until every package " +
-            "installs: check the network / proxy access to api.nuget.org, then use Tools > AI Game Developer > Dependencies > " +
+            "installs: check dependency version constraints and network / proxy access to api.nuget.org, then use Tools > AI Game Developer > Dependencies > " +
             "Force Resolve NuGet DLLs (the next domain reload also retries).";
 
         /// <summary>
@@ -211,11 +211,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             // case where a transitive-dep DLL was deleted externally or a prior restore
             // failed mid-install; without this we'd incorrectly return true and skip the
             // fix-up pass in Restore().
-            var installedPackageIds = new HashSet<string>(manifest.Packages.Keys, StringComparer.OrdinalIgnoreCase);
+            var installedVersions = manifest.Packages.ToDictionary(p => p.Key, p => p.Value.Version, StringComparer.OrdinalIgnoreCase);
             var visited = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
             foreach (var package in NuGetConfig.Packages)
             {
-                if (!HasTransitiveClosure(package, visited, installedPackageIds, skipSet))
+                if (!HasTransitiveClosure(package, visited, installedVersions, skipSet))
                     return false;
             }
 
@@ -224,25 +224,29 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
         /// <summary>
         /// Recursively verifies that <paramref name="package"/> and every package reachable
-        /// through its cached .nuspec dependency list has a manifest entry (any version —
-        /// the resolved version may differ from the declared one due to highest-version-wins,
-        /// but the ID must be present).
+        /// through its cached .nuspec dependency list has a manifest entry satisfying its requested range.
         /// </summary>
         static bool HasTransitiveClosure(
             NuGetPackage package,
             HashSet<string> visited,
-            HashSet<string> installedPackageIds,
+            IReadOnlyDictionary<string, string> installedVersions,
             HashSet<string> skipSet)
         {
-            if (!visited.Add(package.Id))
-                return true;
-
             // Skip-listed packages are expected to be absent.
             if (skipSet.Contains(package.Id))
                 return true;
 
-            var cachedPath = NuGetCache.IsCached(package)
-                ? NuGetCache.GetCachedPath(package)
+            // Check every incoming edge before the visited guard: two parents can constrain the same Id differently.
+            if (!installedVersions.TryGetValue(package.Id, out var installedVersion))
+                return false;
+            if (package.VersionRange is NuGetVersionRange range && !range.Contains(installedVersion))
+                return false;
+            if (!visited.Add(package.Id))
+                return true;
+
+            var selectedPackage = new NuGetPackage(package.Id, installedVersion);
+            var cachedPath = NuGetCache.IsCached(selectedPackage)
+                ? NuGetCache.GetCachedPath(selectedPackage)
                 : null;
 
             // Development-only dependencies (analyzers, source generators, build tooling)
@@ -250,13 +254,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
             if (cachedPath != null && NuGetExtractor.IsDevelopmentDependency(cachedPath))
                 return true;
 
-            if (!installedPackageIds.Contains(package.Id))
-                return false;
-
-            // If this specific version's .nupkg isn't cached, the package may have been
-            // superseded by a higher version from another chain (which caused Install() to
-            // early-return without downloading this version). The manifest check above
-            // already confirmed the ID is present, so stop recursing here.
+            // Without the selected version's archive, only its manifest version can be checked.
             if (cachedPath == null)
                 return true;
 
@@ -273,7 +271,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.DependencyResolver
 
             foreach (var dep in deps)
             {
-                if (!HasTransitiveClosure(dep, visited, installedPackageIds, skipSet))
+                if (!HasTransitiveClosure(dep, visited, installedVersions, skipSet))
                     return false;
             }
             return true;
