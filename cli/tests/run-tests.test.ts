@@ -3,7 +3,9 @@ import { EventEmitter } from 'events';
 import * as fs from 'fs';
 import * as os from 'os';
 import * as path from 'path';
-import type { ChildProcess } from 'child_process';
+import { fork, type ChildProcess } from 'child_process';
+import { fileURLToPath } from 'url';
+import { MachineCredentialLock, CredentialLockBusyError } from '@baizor/gamedev-cli-core';
 import { buildTestArgs, findReservedArg, runTests, type RunTestsDeps } from '../src/lib/run-tests.js';
 
 const PASSING = '<test-run result="Passed" total="2" passed="2" failed="0" skipped="0" inconclusive="0" duration="0.5">'
@@ -59,6 +61,79 @@ describe('buildTestArgs / findReservedArg', () => {
 });
 
 describe('runTests', () => {
+  it('serializes separate CLI processes so a refused run cannot consume its peer report', async () => {
+    const children: ChildProcess[] = [];
+    function start(role: string) {
+      const messages: Array<{ event: string; admitted?: boolean; result?: unknown }> = [];
+      const child = fork(fileURLToPath(new URL('./helpers/test-run-process.mjs', import.meta.url)), [dir, role], {
+        stdio: ['ignore', 'ignore', 'pipe', 'ipc'], windowsHide: true,
+      });
+      children.push(child);
+      child.on('message', message => messages.push(message as typeof messages[number]));
+      return { child, messages };
+    }
+    try {
+      const first = start('writer');
+      await vi.waitFor(() => expect(first.messages.some(m => m.admitted === true)).toBe(true));
+      const second = start('refused');
+      await vi.waitFor(() => expect(second.messages.some(m => m.event === 'admission')).toBe(true));
+      const overlapped = second.messages.some(m => m.admitted === true);
+      first.child.send('finish');
+      await vi.waitFor(() => expect(first.messages.some(m => m.event === 'result')).toBe(true));
+      await vi.waitFor(() => expect(second.messages.some(m => m.admitted === true)).toBe(true));
+      second.child.send('finish');
+      await vi.waitFor(() => expect(second.messages.some(m => m.event === 'result')).toBe(true));
+      expect(overlapped).toBe(false);
+      expect(first.messages.find(m => m.event === 'result')?.result).toMatchObject({ kind: 'completed', verdict: 'passed' });
+      expect(second.messages.find(m => m.event === 'result')?.result).toMatchObject({ kind: 'failure', reason: 'no-verdict', editorExitCode: 1 });
+      expect(fs.existsSync(path.join(dir, '.ai-game-dev', 'tests.lock'))).toBe(false);
+    } finally {
+      for (const child of children) if (child.exitCode === null) child.kill();
+    }
+  }, 10_000);
+
+  it('returns a busy failure without touching reports or starting an editor if acquisition expires', async () => {
+    const output = path.join(dir, 'r.xml');
+    fs.writeFileSync(output, 'active-run-report');
+    const acquire = vi.spyOn(MachineCredentialLock.prototype, 'acquire')
+      .mockRejectedValue(new CredentialLockBusyError('tests.lock', 75_000));
+    const { deps, spawned } = fakeEditor({ code: 0 });
+    try {
+      expect(await runTests({ projectPath: dir, output, deps })).toMatchObject({ kind: 'failure', reason: 'project-open' });
+      expect(spawned).toHaveLength(0);
+      expect(fs.readFileSync(output, 'utf8')).toBe('active-run-report');
+    } finally { acquire.mockRestore(); }
+  });
+
+  it('releases the lock after a failed launch so a later run can succeed', async () => {
+    const { deps } = fakeEditor({ report: PASSING, code: 0 });
+    const failure = await runTests({ projectPath: dir, deps: { ...deps, spawn: () => { throw new Error('launch failed'); } } });
+    expect(failure).toMatchObject({ kind: 'failure', reason: 'no-verdict' });
+    expect(fs.existsSync(path.join(dir, '.ai-game-dev', 'tests.lock'))).toBe(false);
+    expect(await runTests({ projectPath: dir, deps })).toMatchObject({ kind: 'completed', verdict: 'passed' });
+  });
+
+  it('does not block a different project while this project has an active run', async () => {
+    const held = fakeEditor({});
+    const first = runTests({ projectPath: dir, deps: held.deps });
+    await vi.waitFor(() => expect(held.spawned).toHaveLength(1));
+    try {
+      const other = fakeEditor({ report: PASSING, code: 0 });
+      fs.mkdirSync(path.join(dir, 'other'));
+      expect(await runTests({ projectPath: path.join(dir, 'other'), deps: other.deps }))
+        .toMatchObject({ kind: 'completed', verdict: 'passed' });
+    } finally {
+      await held.deps.killTree!(4242);
+      await first;
+    }
+  });
+
+  it('does not create a missing project directory to hold its lock', async () => {
+    const missing = path.join(dir, 'missing');
+    expect(await runTests({ projectPath: missing })).toMatchObject({ kind: 'failure', reason: 'usage' });
+    expect(fs.existsSync(missing)).toBe(false);
+  });
+
   it('passes when the report has no failure, and writes JUnit', async () => {
     const { deps, spawned } = fakeEditor({ report: PASSING, code: 0 });
     const junit = path.join(dir, 'junit.xml');
@@ -93,6 +168,7 @@ describe('runTests', () => {
     const result = await runTests({ projectPath: dir, output: path.join(dir, 'r.xml'), timeoutSeconds: 0.05, deps });
     expect(result).toMatchObject({ kind: 'failure', reason: 'timeout' });
     expect(killTree).toHaveBeenCalledWith(4242);
+    expect(fs.existsSync(path.join(dir, '.ai-game-dev', 'tests.lock'))).toBe(false);
   });
 
   it('gives up on an editor the kill cannot reach instead of hanging past the timeout', async () => {
