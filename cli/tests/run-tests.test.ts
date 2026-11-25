@@ -59,6 +59,25 @@ describe('buildTestArgs / findReservedArg', () => {
 });
 
 describe('runTests', () => {
+  it('has no verdict for a truncated report even when the editor exits successfully', async () => {
+    const { deps } = fakeEditor({ report: '<test-run result="Passed" total="10" passed="10" failed="0">', code: 0 });
+    const junit = path.join(dir, 'junit.xml');
+    const result = await runTests({ projectPath: dir, output: path.join(dir, 'r.xml'), junitOutput: junit, deps });
+    expect(result).toMatchObject({ kind: 'failure', reason: 'no-verdict', editorExitCode: 0 });
+    expect(fs.existsSync(junit)).toBe(false);
+  });
+
+  it('passes when test output logs XML describing a failed suite', async () => {
+    const report = `<test-run result="Passed" total="1" passed="1" failed="0">
+      <test-case fullname="A.T.One" name="One" result="Passed"><output><![CDATA[
+        <test-suite fullname="Example" result="Failed" site="TearDown"/>
+      ]]></output></test-case>
+    </test-run>`;
+    const { deps } = fakeEditor({ report, code: 0 });
+    const result = await runTests({ projectPath: dir, output: path.join(dir, 'r.xml'), deps });
+    expect(result).toMatchObject({ kind: 'completed', verdict: 'passed' });
+  });
+
   it('passes when the report has no failure, and writes JUnit', async () => {
     const { deps, spawned } = fakeEditor({ report: PASSING, code: 0 });
     const junit = path.join(dir, 'junit.xml');

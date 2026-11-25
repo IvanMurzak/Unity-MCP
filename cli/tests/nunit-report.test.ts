@@ -63,6 +63,21 @@ describe('parseNUnitReport', () => {
 });
 
 describe('suite-level failures', () => {
+  it('does not interpret logged XML inside CDATA as a suite failure', () => {
+    const xml = `<test-run result="Passed" total="1" passed="1" failed="0">
+      <test-suite fullname="Real.Fixture" result="Passed">
+        <test-case fullname="Real.Fixture.One" name="One" result="Passed">
+          <output><![CDATA[<test-suite fullname="Logged.Example" result="Failed" site="TearDown"><failure><message>example only</message></failure></test-suite>]]></output>
+        </test-case>
+      </test-suite>
+    </test-run>`;
+    const report = parseNUnitReport(xml)!;
+    expect(report.summary.failed).toBe(0);
+    expect(report.tests).toHaveLength(1);
+    expect(report.tests[0].message).toBeUndefined();
+    expect(toJUnitXml(report)).not.toContain('Logged.Example');
+  });
+
   it('counts a failed OneTimeTearDown even when every case passed', () => {
     const xml = `<test-run result="Failed" total="1" passed="1" failed="0" skipped="0">
       <test-suite type="TestFixture" name="T" fullname="A.T" result="Failed" site="TearDown" duration="0.1">
@@ -85,6 +100,53 @@ describe('suite-level failures', () => {
 });
 
 describe('XML escaping', () => {
+  it('preserves mixed text and CDATA including literal XML closing tags', () => {
+    const xml = `<test-run><test-case fullname="A.T.One" result="Failed"><failure>
+      <message>before <![CDATA[&amp; </message> </test-case>]]> after &amp; &amp;amp;</message>
+      <stack-trace><![CDATA[line one\r\nline two]]></stack-trace>
+    </failure></test-case></test-run>`;
+    const report = parseNUnitReport(xml)!;
+    expect(report.tests).toHaveLength(1);
+    expect(report.tests[0].message).toBe('before &amp; </message> </test-case> after & &amp;');
+    expect(report.tests[0].stackTrace).toBe('line one\nline two');
+  });
+
+  it('ignores XML-looking test elements inside comments', () => {
+    const report = parseNUnitReport(`<test-run>
+      <!-- <test-case fullname="Fake.One" result="Failed"/> -->
+      <test-case fullname="Real.One" result="Passed"/>
+    </test-run>`)!;
+    expect(report.tests.map(t => t.fullName)).toEqual(['Real.One']);
+    expect(report.summary.failed).toBe(0);
+  });
+
+  it.each([
+    '<test-run result="Passed" total="10" passed="10" failed="0">',
+    '<test-run><test-case result="Passed">',
+    '<test-run><test-case result="Passed"/></wrong-root>',
+    '<test-run/><test-run/>',
+    '<wrapper><test-run/></wrapper>',
+    '<test-run><test-case name="&undefined;"/></test-run>',
+    '<test-run><!-- unfinished comment</test-run>',
+    '<!DOCTYPE test-run SYSTEM "https://example.invalid/report.dtd"><test-run/>',
+  ])('rejects an incomplete or invalid report: %s', (xml) => {
+    expect(parseNUnitReport(xml)).toBeUndefined();
+  });
+
+  it('accepts an XML declaration, BOM and an empty completed run', () => {
+    expect(parseNUnitReport('\uFEFF<?xml version="1.0"?><test-run result="Passed" total="0"/>')?.summary)
+      .toMatchObject({ total: 0, failed: 0, result: 'Passed' });
+  });
+
+  it('ignores test-shaped elements outside NUnit suite containers', () => {
+    const report = parseNUnitReport(`<test-run><test-suite fullname="Real">
+      <properties><test-case fullname="NotATest" result="Failed"/></properties>
+      <test-case fullname="Real.One" result="Passed"/>
+    </test-suite></test-run>`)!;
+    expect(report.tests.map(t => t.fullName)).toEqual(['Real.One']);
+    expect(report.summary.failed).toBe(0);
+  });
+
   it('round-trips entities', () => {
     const text = `a & b < c > "d" 'e'`;
     expect(decodeXml(encodeXml(text))).toBe(text);
