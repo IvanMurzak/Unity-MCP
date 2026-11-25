@@ -4,9 +4,12 @@
 import { spawn, type ChildProcess } from 'child_process';
 import * as fs from 'fs';
 import * as path from 'path';
-import { killProcessTree } from '@baizor/gamedev-cli-core';
+import {
+  killProcessTree, MachineCredentialLock, CredentialLockBusyError,
+  SESSION_DIR_NAME, ensureAiGameDevGitignore, takeoverFileName,
+} from '@baizor/gamedev-cli-core';
 import { findEditorPath, getProjectEditorVersion } from '../utils/unity-editor.js';
-import { findUnityProcess } from '../utils/unity-process.js';
+import { canonicalPath, findUnityProcess } from '../utils/unity-process.js';
 import { parseCompilerMessages, type CompilerMessage } from '../utils/compiler-messages.js';
 import { parseNUnitReport, toJUnitXml, type TestReport } from '../utils/nunit-report.js';
 import { readSessionLease } from '@baizor/gamedev-cli-core';
@@ -166,12 +169,43 @@ function readLog(file: string): string {
  * exit code alone.
  */
 export async function runTests(options: RunTestsOptions): Promise<RunTestsResult> {
-  const deps: RunTestsDeps = { ...defaultDeps, ...options.deps };
-  const projectPath = path.resolve(options.projectPath);
+  const projectPath = canonicalPath(options.projectPath);
   const reserved = findReservedArg(options.extraArgs ?? []);
   if (reserved) {
     return { kind: 'failure', reason: 'usage', message: `${reserved} is managed by the test command; remove it from the arguments after --.` };
   }
+  if (!fs.existsSync(projectPath)) {
+    return { kind: 'failure', reason: 'usage', message: `Project path does not exist: ${projectPath}` };
+  }
+
+  // Process discovery alone races with another call's asynchronous editor lookup.
+  // Serialize the entire run, including artifact cleanup and report consumption.
+  const lockName = 'tests.lock';
+  const lock = new MachineCredentialLock(path.join(projectPath, SESSION_DIR_NAME), {
+    lockFileName: lockName,
+    heartbeat: true,
+    onWait: () => options.onStatus?.('Another test run is active for this project; waiting...'),
+    onWarning: message => options.onStatus?.(message),
+  });
+  try {
+    ensureAiGameDevGitignore(projectPath, [lockName, takeoverFileName(lockName)]);
+    await lock.acquire();
+    return await runTestsLocked(options, projectPath);
+  } catch (err) {
+    return {
+      kind: 'failure',
+      reason: err instanceof CredentialLockBusyError ? 'project-open' : 'no-verdict',
+      message: err instanceof CredentialLockBusyError
+        ? 'Another test run is active for this project. Retry when it has finished.'
+        : `Could not run Unity tests: ${err instanceof Error ? err.message : String(err)}`,
+    };
+  } finally {
+    lock.release();
+  }
+}
+
+async function runTestsLocked(options: RunTestsOptions, projectPath: string): Promise<RunTestsResult> {
+  const deps: RunTestsDeps = { ...defaultDeps, ...options.deps };
 
   // A warm editor the CLI itself left (exec / compile / run-tool) is ours to close: it saves and quits, the run goes on.
   // An editor the user opened is never touched.
