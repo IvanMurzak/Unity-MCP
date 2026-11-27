@@ -1,0 +1,153 @@
+{
+  "name": "unity-mcp-vscode",
+  "displayName": "Unity MCP - VS Code Integration",
+  "description": "Preview VS Code extension for Unity MCP project setup, diagnostics, plugin install, and Unity launch flows.",
+  "version": "0.0.1",
+  "publisher": "unity-mcp-preview",
+  "preview": true,
+  "license": "Apache-2.0",
+  "icon": "media/marketplace-icon.png",
+  "galleryBanner": {
+    "color": "#111111"
+  },
+  "homepage": "https://github.com/IvanMurzak/Unity-MCP/tree/main/vscode-extension",
+  "bugs": {
+    "url": "https://github.com/IvanMurzak/Unity-MCP/issues"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/IvanMurzak/Unity-MCP.git",
+    "directory": "vscode-extension"
+  },
+  "engines": {
+    "vscode": "^1.99.0"
+  },
+  "categories": [
+    "Other"
+  ],
+  "keywords": [
+    "unity",
+    "mcp",
+    "copilot",
+    "vscode"
+  ],
+  "main": "./out/extension.js",
+  "extensionKind": [
+    "workspace"
+  ],
+  "activationEvents": [
+    "onStartupFinished",
+    "onView:unityMcp.dashboard",
+    "onCommand:unityMcp.checkStatus",
+    "onCommand:unityMcp.showOutput",
+    "onCommand:unityMcp.configureProject",
+    "onCommand:unityMcp.installPlugin",
+    "onCommand:unityMcp.openUnity",
+    "onCommand:unityMcp.showDashboard",
+    "onCommand:unityMcp.refreshDashboard"
+  ],
+  "capabilities": {
+    "untrustedWorkspaces": {
+      "supported": "limited",
+      "description": "Unity MCP only exposes read-only diagnostics in untrusted workspaces."
+    }
+  },
+  "contributes": {
+    "commands": [
+      {
+        "command": "unityMcp.checkStatus",
+        "title": "Unity MCP: Check Status"
+      },
+      {
+        "command": "unityMcp.configureProject",
+        "title": "Unity MCP: Configure Project"
+      },
+      {
+        "command": "unityMcp.installPlugin",
+        "title": "Unity MCP: Install Plugin"
+      },
+      {
+        "command": "unityMcp.openUnity",
+        "title": "Unity MCP: Open Unity"
+      },
+      {
+        "command": "unityMcp.showDashboard",
+        "title": "Unity MCP: Show Dashboard"
+      },
+      {
+        "command": "unityMcp.refreshDashboard",
+        "title": "Unity MCP: Refresh Dashboard"
+      },
+      {
+        "command": "unityMcp.showOutput",
+        "title": "Unity MCP: Show Output"
+      }
+    ],
+    "viewsContainers": {
+      "activitybar": [
+        {
+          "id": "unityMcpSidebar",
+          "title": "Unity MCP",
+          "icon": "media/unity-mcp-activity.svg"
+        }
+      ]
+    },
+    "views": {
+      "unityMcpSidebar": [
+        {
+          "id": "unityMcp.dashboard",
+          "name": "Workspace",
+          "type": "webview"
+        }
+      ]
+    },
+    "menus": {
+      "view/title": [
+        {
+          "command": "unityMcp.refreshDashboard",
+          "when": "view == unityMcp.dashboard",
+          "group": "navigation"
+        },
+        {
+          "command": "unityMcp.showOutput",
+          "when": "view == unityMcp.dashboard",
+          "group": "navigation"
+        }
+      ]
+    },
+    "configuration": {
+      "title": "Unity MCP",
+      "properties": {
+        "unityMcp.logLevel": {
+          "type": "string",
+          "enum": [
+            "error",
+            "warn",
+            "info",
+            "debug"
+          ],
+          "default": "info",
+          "description": "Controls the verbosity of the Unity MCP extension output channel."
+        }
+      }
+    }
+  },
+  "scripts": {
+    "build": "tsc -p ./",
+    "watch": "tsc -watch -p ./",
+    "pretest": "npm run build",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "package:vsix": "vsce package"
+  },
+  "dependencies": {
+    "unity-mcp-cli": "^0.79.0"
+  },
+  "devDependencies": {
+    "@vscode/vsce": "^3.6.1",
+    "@types/node": "^22.15.0",
+    "@types/vscode": "^1.99.0",
+    "typescript": "^5.8.0",
+    "vitest": "^3.1.0"
+  }
+}
