@@ -3,6 +3,8 @@
 
 import { describe, it, expect, vi, afterEach } from 'vitest';
 import * as fs from 'fs';
+import fsMutable from 'fs';
+import { syncBuiltinESMExports } from 'module';
 import * as os from 'os';
 import * as path from 'path';
 import { findUnityProjectRoot, updateProject } from '../src/lib/update-project.js';
@@ -14,6 +16,8 @@ const SPLINES = 'com.ivanmurzak.unity.mcp.splines';
 const TIMELINE = 'com.ivanmurzak.unity.mcp.timeline';
 
 afterEach(() => {
+  vi.restoreAllMocks();
+  syncBuiltinESMExports();
   vi.unstubAllGlobals();
   removeTempDirs();
 });
@@ -50,6 +54,98 @@ function stubOpenUpm(packages: Record<string, string | Record<string, string>>):
 }
 
 describe('updateProject', () => {
+  function plannedUpdate() {
+    const root = project({ [PLUGIN]: '1.0.0', [TILEMAP]: '2.0.0', 'com.unity.ugui': '2.0.0' });
+    stubOpenUpm({ [PLUGIN]: '1.8.0', [TILEMAP]: { '2.0.0': '1.0.0', '2.1.1': '1.8.0' } });
+    return { root, file: path.join(root, 'Packages', 'manifest.json') };
+  }
+
+  it('keeps the original bytes and returns failure after a partial manifest write', async () => {
+    const { root, file } = plannedUpdate();
+    const original = fs.readFileSync(file, 'utf8');
+    const settings = path.join(root, 'ProjectSettings', 'ProjectSettings.asset');
+    const gate = 'PlayerSettings:\n  scriptingDefineSymbols:\n    Standalone: UNITY_MCP_READY;KEEP_ME\n';
+    fs.writeFileSync(settings, gate);
+    const write = fsMutable.writeFileSync;
+    vi.spyOn(fsMutable, 'writeFileSync').mockImplementation((target, data, options) => {
+      if (String(target).startsWith(file) && String(data).includes('1.8.0') && String(data).includes('2.1.1')) {
+        write(target, '{"partial":', options);
+        throw Object.assign(new Error('disk full'), { code: 'ENOSPC' });
+      }
+      return write(target, data, options);
+    });
+    syncBuiltinESMExports();
+    expect(await updateProject({ unityProjectPath: root })).toMatchObject({ kind: 'failure', success: false });
+    expect(fs.readFileSync(file, 'utf8')).toBe(original);
+    expect(fs.readFileSync(settings, 'utf8')).toBe(gate);
+    expect(fs.readdirSync(path.dirname(file))).toEqual(['manifest.json']);
+  });
+
+  it('keeps the original manifest if the final replacement is refused', async () => {
+    const { root, file } = plannedUpdate();
+    const original = fs.readFileSync(file, 'utf8');
+    const rename = fsMutable.renameSync;
+    vi.spyOn(fsMutable, 'renameSync').mockImplementation((from, to) => {
+      if (String(to) === file) throw new Error('manifest locked');
+      return rename(from, to);
+    });
+    syncBuiltinESMExports();
+    expect(await updateProject({ unityProjectPath: root })).toMatchObject({ kind: 'failure', success: false });
+    expect(fs.readFileSync(file, 'utf8')).toBe(original);
+    expect(fs.readdirSync(path.dirname(file))).toEqual(['manifest.json']);
+  });
+
+  it('publishes only the complete plugin/extension pair, with its compile gate already closed', async () => {
+    const { root, file } = plannedUpdate();
+    const settings = path.join(root, 'ProjectSettings', 'ProjectSettings.asset');
+    fs.writeFileSync(settings, 'PlayerSettings:\n  scriptingDefineSymbols:\n    Standalone: UNITY_MCP_READY;KEEP_ME\n');
+    const observed: Record<string, string>[] = [];
+    const write = fsMutable.writeFileSync;
+    vi.spyOn(fsMutable, 'writeFileSync').mockImplementation((target, data, options) => {
+      write(target, data, options);
+      if (String(target) === file) observed.push(dependenciesOf(root));
+    });
+    const rename = fsMutable.renameSync;
+    vi.spyOn(fsMutable, 'renameSync').mockImplementation((from, to) => {
+      if (String(to) === file) expect(fs.readFileSync(settings, 'utf8')).not.toContain('UNITY_MCP_READY');
+      rename(from, to);
+      if (String(to) === file) observed.push(dependenciesOf(root));
+    });
+    syncBuiltinESMExports();
+    expect(await updateProject({ unityProjectPath: root })).toMatchObject({ kind: 'success' });
+    expect(observed).toEqual([{ [PLUGIN]: '1.8.0', [TILEMAP]: '2.1.1', 'com.unity.ugui': '2.0.0' }]);
+    expect(fs.readFileSync(settings, 'utf8')).toContain('KEEP_ME');
+  });
+
+  it('refuses a stale plan without overwriting edits made during registry lookup', async () => {
+    const { root, file } = plannedUpdate();
+    const fetcher = globalThis.fetch;
+    const edited = JSON.stringify({ dependencies: { ...dependenciesOf(root), 'com.example.user-edit': '1.0.0' } });
+    vi.stubGlobal('fetch', async (...args: Parameters<typeof fetch>) => {
+      fs.writeFileSync(file, edited);
+      return fetcher(...args);
+    });
+    const result = await updateProject({ unityProjectPath: root });
+    expect(result).toMatchObject({ kind: 'failure' });
+    if (result.kind === 'failure') expect(result.error.message).toContain('changed while planning');
+    expect(fs.readFileSync(file, 'utf8')).toBe(edited);
+  });
+
+  it('includes editor-specific dependencies and preserves unrelated manifest fields in the same commit', async () => {
+    const { root, file } = plannedUpdate();
+    const manifest = JSON.parse(fs.readFileSync(file, 'utf8'));
+    manifest.scopedRegistries = [{ name: 'Private', url: 'https://example.invalid', scopes: ['com.example'] }];
+    manifest.enableLockFile = true;
+    fs.writeFileSync(file, JSON.stringify(manifest));
+    fs.writeFileSync(path.join(root, 'ProjectSettings', 'ProjectVersion.txt'), 'm_EditorVersion: 6000.6.1f1\n');
+    expect(await updateProject({ unityProjectPath: root })).toMatchObject({ kind: 'success' });
+    const after = JSON.parse(fs.readFileSync(file, 'utf8'));
+    expect(after.dependencies).toMatchObject({ [PLUGIN]: '1.8.0', [TILEMAP]: '2.1.1', 'com.unity.2d.tilemap.extras': '7.0.1' });
+    expect(after.scopedRegistries).toContainEqual(manifest.scopedRegistries[0]);
+    expect(after.scopedRegistries).toContainEqual(expect.objectContaining({ scopes: ['com.ivanmurzak', 'extensions.unity'] }));
+    expect(after.enableLockFile).toBe(true);
+  });
+
   it('moves the plugin to latest and installed extensions to their versions for it, and installs nothing new', async () => {
     const root = project({ [PLUGIN]: '1.0.0', [TILEMAP]: '2.0.0', 'com.unity.ugui': '2.0.0' });
     // 2.2.0 is the extension's latest, built for a plugin that is not out: the one for plugin 1.8.0 is 2.1.1.

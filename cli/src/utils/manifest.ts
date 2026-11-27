@@ -1,5 +1,6 @@
 import * as fs from 'fs';
 import * as path from 'path';
+import { randomUUID } from 'crypto';
 import { isNewerVersion, isNumericVersion } from '@baizor/gamedev-cli-core';
 import { silentLogger, type LibLogger } from '../lib/logger.js';
 import { unityExtensionDependencies } from './extension-compatibility.js';
@@ -322,6 +323,28 @@ export function addPackageToManifest(
 
   const rawJson = fs.readFileSync(manifestPath, 'utf-8');
   const manifest: Manifest = JSON.parse(rawJson);
+  const { modified, resolvedVersion } = patchPackageManifest(manifest, projectPath, packageId, version, force, logger);
+
+  // --- Write back
+  if (modified) {
+    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
+    logger.success(`Updated ${manifestPath}`);
+  } else {
+    logger.info('manifest.json is already up to date.');
+  }
+
+  return { modified, resolvedVersion, manifestPath };
+}
+
+/** Shared in-memory patch: registry scopes, package versions and editor-specific dependencies. */
+function patchPackageManifest(
+  manifest: Manifest,
+  projectPath: string,
+  packageId: string,
+  version: string,
+  force: boolean,
+  logger: LibLogger,
+): { modified: boolean; resolvedVersion: string } {
   let modified = false;
 
   // --- Ensure scopedRegistries array exists
@@ -390,15 +413,43 @@ export function addPackageToManifest(
     }
   }
 
-  // --- Write back
-  if (modified) {
-    fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2) + '\n');
-    logger.success(`Updated ${manifestPath}`);
-  } else {
-    logger.info('manifest.json is already up to date.');
-  }
+  return { modified, resolvedVersion };
+}
 
-  return { modified, resolvedVersion, manifestPath };
+/**
+ * Apply a planned update as one manifest replacement. Reject manifest changes
+ * detected since the plan was resolved over the network.
+ * beforeCommit closes the plugin's compile gate after preparation, before Unity
+ * can observe the new dependencies. Clean up the temporary file on failure.
+ */
+export function addPackagesToManifest(
+  projectPath: string,
+  packages: readonly { packageId: string; version: string }[],
+  expectedManifest: string,
+  beforeCommit?: () => void,
+): void {
+  const manifestPath = path.join(projectPath, 'Packages', 'manifest.json');
+  const assertUnchanged = () => {
+    if (fs.readFileSync(manifestPath, 'utf8') !== expectedManifest) {
+      throw new Error('manifest.json changed while planning the update. Retry against the current project.');
+    }
+  };
+  assertUnchanged();
+  const manifest: Manifest = JSON.parse(expectedManifest);
+  for (const { packageId, version } of packages) {
+    patchPackageManifest(manifest, projectPath, packageId, version, true, silentLogger);
+  }
+  const temporary = `${manifestPath}.${randomUUID()}.tmp`;
+  try {
+    fs.writeFileSync(temporary, JSON.stringify(manifest, null, 2) + '\n', {
+      flag: 'wx', mode: fs.statSync(manifestPath).mode,
+    });
+    assertUnchanged();
+    beforeCommit?.();
+    fs.renameSync(temporary, manifestPath);
+  } finally {
+    fs.rmSync(temporary, { force: true });
+  }
 }
 
 export interface RemovePluginResult {
