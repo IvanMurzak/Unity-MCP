@@ -301,8 +301,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                 case ResponseCallTool response:
                     if (response.StructuredContent == null) return null;
                     var node = response.StructuredContent is JsonObject o && o.Count == 1 && o.ContainsKey("result") ? o["result"] : response.StructuredContent;
+                    var json = response.StructuredContent.ToJsonString();
                     response.StructuredContent = null;
-                    response.Content = new List<ContentBlock> { Text(_compact.Render(node)) };
+                    // The rendered data replaces only the JSON copy of that data; every other block the tool returned (an
+                    // image, audio, a resource, a caption) still reaches the agent, as it does without the binding.
+                    var content = new List<ContentBlock> { Text(_compact.Render(node)) };
+                    if (response.Content != null)
+                        content.AddRange(response.Content.Where(c => !IsDataJson(c, json)));
+                    response.Content = content;
                     return response;
                 case string s:
                     return ResponseCallTool.Success(s);
@@ -342,6 +348,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
             }
             return AgentFormat.Render(r, OutputFormat.Table);
         }
+
+        /// <summary>The text block McpPlugin adds next to structured content (its JSON, for clients without structured content).</summary>
+        private static bool IsDataJson(ContentBlock block, string json) =>
+            block.Type == com.IvanMurzak.McpPlugin.Common.Consts.ContentType.Text
+            && (block.MimeType == com.IvanMurzak.McpPlugin.Common.Consts.MimeType.TextJson || block.Text == json);
 
         private static ContentBlock Text(string text) => new ContentBlock { Type = com.IvanMurzak.McpPlugin.Common.Consts.ContentType.Text, Text = text };
 

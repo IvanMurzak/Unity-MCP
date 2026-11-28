@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
@@ -26,11 +27,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
     /// </summary>
     public class RunToolRqlResultTests
     {
-        private static (ResponseCallTool result, string text, JsonNode? data) Run(string method)
+        /// <summary>A tool over a static method of <paramref name="type"/>, under the RQL data layer.</summary>
+        private static RunTool RqlTool(System.Type type, string method)
         {
             UnityMcpPluginEditor.InitSingletonIfNeeded();
-            var runTool = RunTool.CreateFromStaticMethod(UnityMcpPluginEditor.Instance.Reflector!, null, "rql-result", typeof(TestReturnTypeMethods).GetMethod(method)!);
+            var runTool = RunTool.CreateFromStaticMethod(UnityMcpPluginEditor.Instance.Reflector!, null, "rql-result", type.GetMethod(method)!);
             runTool.Binding = RqlToolBinding.Instance;
+            return runTool;
+        }
+
+        private static ResponseCallTool Call(System.Type type, string method) =>
+            RqlTool(type, method).Run("request", CancellationToken.None).Result;
+
+        private static (ResponseCallTool result, string text, JsonNode? data) Run(string method)
+        {
+            var runTool = RqlTool(typeof(TestReturnTypeMethods), method);
             var result = runTool.Run("request", CancellationToken.None).Result;
             Assert.AreEqual(ResponseStatus.Success, result.Status, result.GetMessage());
             Assert.IsNull(result.StructuredContent, "RQL results are text, not structured content");
@@ -53,10 +64,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void NullIsSuccessWithoutAValue()
         {
-            UnityMcpPluginEditor.InitSingletonIfNeeded();
-            var runTool = RunTool.CreateFromStaticMethod(UnityMcpPluginEditor.Instance.Reflector!, null, "rql-result", typeof(TestReturnTypeMethods).GetMethod(nameof(TestReturnTypeMethods.ReturnNull))!);
-            runTool.Binding = RqlToolBinding.Instance;
-            Assert.AreEqual(ResponseStatus.Success, runTool.Run("request", CancellationToken.None).Result.Status);
+            Assert.AreEqual(ResponseStatus.Success, Call(typeof(TestReturnTypeMethods), nameof(TestReturnTypeMethods.ReturnNull)).Status);
         }
 
         [Test]
@@ -113,5 +121,48 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void AResponseCallToolPassesThrough() =>
             Assert.AreEqual("Custom Response", Run(nameof(TestReturnTypeMethods.ReturnResponseCallTool)).text);
+
+        // A tool that returns data, a caption and an image: the data becomes RQL text, and the caption and the image still
+        // reach the agent, as they do without the binding.
+        [Test]
+        public void AnImageNextToStructuredContentIsKept()
+        {
+            var result = Call(typeof(ImageResultMethods), nameof(ImageResultMethods.ImageWithData));
+            Assert.AreEqual(ResponseStatus.Success, result.Status, result.GetMessage());
+            Assert.IsNull(result.StructuredContent, "RQL results are text, not structured content");
+            CollectionAssert.AreEqual(ImageResultMethods.Png, ToolResults.PngImage(result));
+            var texts = result.Content.Where(c => c.Type == Consts.ContentType.Text).Select(c => c.Text!).ToList();
+            Assert.AreEqual(2, texts.Count, "the data as RQL text, then the caption: " + string.Join(" / ", texts));
+            StringAssert.IsMatch(@"width\W+4\b", texts[0]);
+            StringAssert.IsMatch(@"height\W+5\b", texts[0]);
+            StringAssert.DoesNotContain("{\"", texts[0], "RQL text, not the JSON of the data");
+            Assert.AreEqual(ImageResultMethods.Caption, texts[1]);
+        }
+
+        [Test]
+        public void AnImageWithoutStructuredContentPassesUnchanged()
+        {
+            var result = Call(typeof(ImageResultMethods), nameof(ImageResultMethods.ImageOnly));
+            Assert.AreEqual(ResponseStatus.Success, result.Status, result.GetMessage());
+            Assert.AreEqual(2, result.Content.Count, result.GetMessage());
+            Assert.AreEqual(Consts.ContentType.Text, result.Content[0].Type);
+            Assert.AreEqual(ImageResultMethods.Caption, result.Content[0].Text);
+            CollectionAssert.AreEqual(ImageResultMethods.Png, ToolResults.PngImage(result));
+        }
+
+        public static class ImageResultMethods
+        {
+            public const string Caption = "a test image";
+            public static readonly byte[] Png = ScreenshotSavePathTests.TinyPng;
+
+            public static ResponseCallTool ImageOnly() => ResponseCallTool.Image(Png, Consts.MimeType.ImagePng, Caption);
+
+            public static ResponseCallTool ImageWithData()
+            {
+                var response = ImageOnly();
+                response.StructuredContent = new JsonObject { ["result"] = new JsonObject { ["width"] = 4, ["height"] = 5 } };
+                return response;
+            }
+        }
     }
 }

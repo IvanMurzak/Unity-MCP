@@ -109,7 +109,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                    + "activated for the render (their OnEnable callbacks may fire — restored in finally, but "
                    + "side effects like audio/network/animation events are not undoable). When isolated=false, "
                    + "the existing scene state is rendered as-is without activating inactive objects. Supports "
-                   + "custom multi-light setups via JSON. Returns a base64-encoded PNG.\n\n" +
+                   + "custom multi-light setups via JSON. Returns the rendered PNG image.\n\n" +
             "## Camera views\n\n" +
             "`Front` (-Z), `Back` (+Z), `Left` (-X), `Right` (+X), `Top` (+Y), `Bottom` (-Y). " +
             "`Composite` produces a single 2x2 image (Front, Right, Back, Top) where each sub-view uses the requested " +
@@ -134,7 +134,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                    + "activated for the render (their OnEnable callbacks may fire — restored in finally, but "
                    + "side effects like audio/network/animation events are not undoable). When isolated=false, "
                    + "the existing scene state is rendered as-is without activating inactive objects. Supports "
-                   + "custom multi-light setups via JSON. Returns a base64-encoded PNG." + SavePathNote)]
+                   + "custom multi-light setups via JSON. Returns the rendered PNG image." + SavePathNote)]
         public ResponseCallTool ScreenshotIsolated
         (
             [Description("Reference to the target GameObject (by instanceId, path, or name).")]
