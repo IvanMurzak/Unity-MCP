@@ -302,7 +302,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                     if (response.StructuredContent == null) return null;
                     var node = response.StructuredContent is JsonObject o && o.Count == 1 && o.ContainsKey("result") ? o["result"] : response.StructuredContent;
                     response.StructuredContent = null;
-                    response.Content = new List<ContentBlock> { Text(_compact.Render(node)) };
+                    // The rendered data replaces only the text blocks (the JSON of that data): an image, audio or resource
+                    // block the tool returned alongside it still reaches the agent.
+                    var content = new List<ContentBlock> { Text(_compact.Render(node)) };
+                    if (response.Content != null)
+                        content.AddRange(response.Content.Where(c => c.Type != com.IvanMurzak.McpPlugin.Common.Consts.ContentType.Text));
+                    response.Content = content;
                     return response;
                 case string s:
                     return ResponseCallTool.Success(s);

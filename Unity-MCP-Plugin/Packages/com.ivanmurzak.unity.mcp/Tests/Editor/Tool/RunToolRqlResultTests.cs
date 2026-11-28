@@ -13,6 +13,7 @@ using System.Linq;
 using System.Text.Json.Nodes;
 using System.Threading;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat;
 using com.IvanMurzak.Unity.MCP.Editor.Tests.Utils;
@@ -113,5 +114,60 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void AResponseCallToolPassesThrough() =>
             Assert.AreEqual("Custom Response", Run(nameof(TestReturnTypeMethods.ReturnResponseCallTool)).text);
+
+        // A tool that returns data and an image: the data becomes RQL text, and the image still reaches the agent.
+        [Test]
+        public void AnImageNextToStructuredContentIsKept()
+        {
+            var result = RunMethod(typeof(ImageResultMethods), nameof(ImageResultMethods.ImageWithData));
+            Assert.AreEqual(ResponseStatus.Success, result.Status, result.GetMessage());
+            Assert.IsNull(result.StructuredContent, "RQL results are text, not structured content");
+            AssertImage(result);
+            var texts = result.Content.Where(c => c.Type == Consts.ContentType.Text).Select(c => c.Text).ToList();
+            Assert.AreEqual(1, texts.Count, "one text block: the data as RQL text");
+            Assert.AreEqual(4L, ToolResults.Data(result, rql: true)!["width"]!.GetValue<long>());
+        }
+
+        [Test]
+        public void AnImageWithoutStructuredContentPassesUnchanged()
+        {
+            var result = RunMethod(typeof(ImageResultMethods), nameof(ImageResultMethods.ImageOnly));
+            Assert.AreEqual(ResponseStatus.Success, result.Status, result.GetMessage());
+            Assert.AreEqual(2, result.Content.Count, result.GetMessage());
+            Assert.AreEqual(Consts.ContentType.Text, result.Content[0].Type);
+            Assert.AreEqual(ImageResultMethods.Caption, result.Content[0].Text);
+            AssertImage(result);
+        }
+
+        private static ResponseCallTool RunMethod(System.Type type, string method)
+        {
+            UnityMcpPluginEditor.InitSingletonIfNeeded();
+            var runTool = RunTool.CreateFromStaticMethod(UnityMcpPluginEditor.Instance.Reflector!, null, "rql-image-result", type.GetMethod(method)!);
+            runTool.Binding = RqlToolBinding.Instance;
+            return runTool.Run("request", CancellationToken.None).Result;
+        }
+
+        private static void AssertImage(ResponseCallTool result)
+        {
+            var image = result.Content.SingleOrDefault(c => c.Type == Consts.ContentType.Image);
+            Assert.IsNotNull(image, "the image block reaches the agent: " + string.Join(", ", result.Content.Select(c => c.Type)));
+            Assert.AreEqual(Consts.MimeType.ImagePng, image!.MimeType);
+            CollectionAssert.AreEqual(ImageResultMethods.Png, System.Convert.FromBase64String(image.Data!));
+        }
+
+        public static class ImageResultMethods
+        {
+            public const string Caption = "a 4x4 image";
+            public static readonly byte[] Png = { 0x89, 0x50, 0x4E, 0x47, 0x0D, 0x0A, 0x1A, 0x0A };
+
+            public static ResponseCallTool ImageOnly() => ResponseCallTool.Image(Png, Consts.MimeType.ImagePng, Caption);
+
+            public static ResponseCallTool ImageWithData()
+            {
+                var response = ResponseCallTool.Image(Png, Consts.MimeType.ImagePng, Caption);
+                response.StructuredContent = new JsonObject { ["result"] = new JsonObject { ["width"] = 4, ["height"] = 4 } };
+                return response;
+            }
+        }
     }
 }
