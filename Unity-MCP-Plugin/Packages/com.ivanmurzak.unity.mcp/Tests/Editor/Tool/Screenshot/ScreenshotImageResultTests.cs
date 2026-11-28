@@ -68,7 +68,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         ResponseCallTool Call(string layer, string tool, string json)
         {
-            Tools.ToolBinding = layer == "Rql" ? RqlToolBinding.Instance : null;
+            // Apply prebuilds the RQL signatures on this (main) thread, as the plugin does, before the binding is installed.
+            RqlToolBinding.Apply(Tools, layer == "Rql" ? ToolPresentationFormat.Rql : ToolPresentationFormat.Json, RqlToolBinding.Instance.Escaping);
             return RunTool(tool, json).Value!;
         }
 

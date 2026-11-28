@@ -122,7 +122,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         public void AResponseCallToolPassesThrough() =>
             Assert.AreEqual("Custom Response", Run(nameof(TestReturnTypeMethods.ReturnResponseCallTool)).text);
 
-        // A tool that returns data and an image: the data becomes RQL text, and the image still reaches the agent.
+        // A tool that returns data, a caption and an image: the data becomes RQL text, and the caption and the image still
+        // reach the agent, as they do without the binding.
         [Test]
         public void AnImageNextToStructuredContentIsKept()
         {
@@ -130,10 +131,12 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             Assert.AreEqual(ResponseStatus.Success, result.Status, result.GetMessage());
             Assert.IsNull(result.StructuredContent, "RQL results are text, not structured content");
             CollectionAssert.AreEqual(ImageResultMethods.Png, ToolResults.PngImage(result));
-            var texts = result.Content.Where(c => c.Type == Consts.ContentType.Text).Select(c => c.Text).ToList();
-            Assert.AreEqual(1, texts.Count, "one text block: the data as RQL text");
-            StringAssert.Contains("width", texts[0]);
-            StringAssert.DoesNotContain(ImageResultMethods.Caption, texts[0], "the text is the data, not the caption");
+            var texts = result.Content.Where(c => c.Type == Consts.ContentType.Text).Select(c => c.Text!).ToList();
+            Assert.AreEqual(2, texts.Count, "the data as RQL text, then the caption: " + string.Join(" / ", texts));
+            StringAssert.IsMatch(@"width\W+4\b", texts[0]);
+            StringAssert.IsMatch(@"height\W+5\b", texts[0]);
+            StringAssert.DoesNotContain("{\"", texts[0], "RQL text, not the JSON of the data");
+            Assert.AreEqual(ImageResultMethods.Caption, texts[1]);
         }
 
         [Test]
@@ -149,7 +152,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 
         public static class ImageResultMethods
         {
-            public const string Caption = "a 4x4 image";
+            public const string Caption = "a test image";
             public static readonly byte[] Png = ScreenshotSavePathTests.TinyPng;
 
             public static ResponseCallTool ImageOnly() => ResponseCallTool.Image(Png, Consts.MimeType.ImagePng, Caption);
@@ -157,7 +160,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             public static ResponseCallTool ImageWithData()
             {
                 var response = ImageOnly();
-                response.StructuredContent = new JsonObject { ["result"] = new JsonObject { ["width"] = 4, ["height"] = 4 } };
+                response.StructuredContent = new JsonObject { ["result"] = new JsonObject { ["width"] = 4, ["height"] = 5 } };
                 return response;
             }
         }

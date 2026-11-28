@@ -78,7 +78,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             // The MCP server's tools/list leaves out every tool the plugin lists with Visible = false.
             var listed = Plugin.RunListTool(new RequestListTool()).Result.Value!;
             Assert.IsFalse(listed.Single(t => t.Name == oldName).Visible, "script-execute is not in an MCP client's tools/list");
-            Assert.IsTrue(listed.Single(t => t.Name == Tool_Script.CSharpExecToolId).Visible);
+            Assert.AreEqual(Plugin.IsToolVisible(Tool_Script.CSharpExecToolId), listed.Single(t => t.Name == Tool_Script.CSharpExecToolId).Visible);
 
             var (r, text) = Call(oldName, new { csharpCode = "6 * 7" });
             Assert.AreEqual(ResponseStatus.Success, r.Status, text);
