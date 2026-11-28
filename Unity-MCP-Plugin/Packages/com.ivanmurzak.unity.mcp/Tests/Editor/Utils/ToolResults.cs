@@ -15,8 +15,10 @@ using System.Text;
 using System.Text.Json.Nodes;
 using System.Text.RegularExpressions;
 using com.IvanMurzak.McpPlugin;
+using com.IvanMurzak.McpPlugin.Common;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat;
+using NUnit.Framework;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
 {
@@ -28,6 +30,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Utils
     public static class ToolResults
     {
         public static bool IsRql => ToolDataLayerSetUp.Binding is RqlToolBinding;
+
+        /// <summary>The PNG of the response's one image content block (MIME image/png), as the agent receives it.</summary>
+        public static byte[] PngImage(ResponseCallTool response)
+        {
+            var image = response.Content.SingleOrDefault(c => c.Type == Consts.ContentType.Image);
+            Assert.IsNotNull(image, "an image content block reaches the agent; got: " + string.Join(", ", response.Content.Select(c => c.Type)));
+            Assert.AreEqual(Consts.MimeType.ImagePng, image!.MimeType);
+            return System.Convert.FromBase64String(image.Data ?? "");
+        }
 
         /// <summary>The value wrapped as ReflectorNet's {"result": value} JSON text, for tests that parse that shape.</summary>
         public static string ResultJson(ResponseCallTool response) => new JsonObject { ["result"] = Data(response)?.DeepClone() }.ToJsonString();
