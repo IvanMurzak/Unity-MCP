@@ -10,6 +10,7 @@
 
 #nullable enable
 using System.Collections.Generic;
+using AIGD;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
 {
@@ -43,5 +44,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
             new PresentationTestItem { name = name, count = 1 },
             new PresentationTestItem { name = "b", count = 2 },
         };
+
+        // Required: name only. string? / GameObjectRef? (NRT) and int? (Nullable<T>) without a default are optional, as is times.
+        public static string Optionals(string name, string? note, GameObjectRef? gameObjectRef, int? count, int times = 1) =>
+            name + "|" + (note ?? "null") + "|" + (gameObjectRef == null ? "null" : "ref") + "|" + (count?.ToString() ?? "null") + "|" + times;
     }
 }

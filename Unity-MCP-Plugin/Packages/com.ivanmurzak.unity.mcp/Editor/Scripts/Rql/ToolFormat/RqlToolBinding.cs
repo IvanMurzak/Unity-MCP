@@ -22,6 +22,7 @@ using System.Threading;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Common.Model;
 using com.IvanMurzak.ReflectorNet.Model;
+using MethodUtils = com.IvanMurzak.ReflectorNet.Utils.MethodUtils;
 using Rql;
 using Rql.Execution;
 
@@ -109,7 +110,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
             var required = new JsonArray();
             foreach (var p in AgentParameters(method))
             {
-                var nullable = Nullable.GetUnderlyingType(p.ParameterType) != null;
                 var text = (p.GetCustomAttribute<RqlArgumentAttribute>()?.Description ?? p.GetCustomAttribute<DescriptionAttribute>()?.Description)?.Trim();
                 var schema = Simple(p.ParameterType);
                 if (schema == null)
@@ -119,7 +119,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                 }
                 if (!string.IsNullOrEmpty(text)) schema["description"] = text;
                 properties[p.Name!] = schema;
-                if (!p.HasDefaultValue && !p.IsOptional && !nullable) required.Add(p.Name);
+                // Required = no default, not [Optional] and not nullable (int? or an NRT-annotated string? / GameObjectRef?),
+                // the same rule as ReflectorNet's JSON layer; an omitted nullable argument reaches the method as null.
+                if (!p.HasDefaultValue && !p.IsOptional && !MethodUtils.IsParameterNullable(p)) required.Add(p.Name);
             }
             var block = writer.Block();
             foreach (var kv in properties)
