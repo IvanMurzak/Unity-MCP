@@ -41,7 +41,7 @@ describe('compile snippets', () => {
     expect(parseCompileStatus('something else')).toBeUndefined();
   });
 
-  it('unwraps the typed answer of script-execute (System.String: "<json>")', () => {
+  it('unwraps the typed answer of csharp-exec (System.String: "<json>")', () => {
     // Exactly what the plugin returned in a live run: the value as JSON after its type name.
     expect(parseCompileStatus(String.raw`System.String: "state:ok\r\n"`)).toEqual({ state: 'ok', messages: [] });
     expect(parseCompileStatus(String.raw`System.String: "state:failed\r\nAssets\\A.cs(1,1): error CS1002: ; expected\r\n"`)?.messages[0].file)
@@ -89,6 +89,16 @@ describe('compileProject', () => {
     expect(result.warnings.map(e => e.code)).toEqual(['CS0414']);
     expect((invoke.mock.calls[0][0].input as { csharpCode: string }).csharpCode).toBe(REFRESH_SNIPPET);
     expect(invoke).toHaveBeenCalledTimes(5);
+  });
+
+  it('keeps calling a plugin from before the rename by the old name once it answered not found (DEV-314)', async () => {
+    const notFound: RunToolResult = {
+      kind: 'failure', success: false, endpoint: URL, reason: 'http-error', httpStatus: 404, message: 'Not Found',
+      data: { error: "Tool with Name 'csharp-exec' not found." },
+    };
+    const { d, invoke } = deps([notFound, ok('True'), ok('state:ok\n'), ok('state:ok\n')]);
+    expect(await compileProject({ projectPath: '/p', probeUrls: [URL], deps: d })).toMatchObject({ kind: 'completed' });
+    expect(invoke.mock.calls.map(([call]) => call.toolName)).toEqual(['csharp-exec', 'script-execute', 'script-execute', 'script-execute']);
   });
 
   it('times out when the compile never settles', async () => {

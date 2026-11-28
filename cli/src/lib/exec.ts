@@ -1,4 +1,4 @@
-// Library-safe `execCode`: run C# in a project's Unity Editor through `script-execute`, starting a warm
+// Library-safe `execCode`: run C# in a project's Unity Editor through `csharp-exec`, starting a warm
 // headless editor when none is running. No console output, no `process.exit`.
 
 import type { EditorSessionErrorReason, EnsureSource, WaitedEditorSource } from '@baizor/gamedev-cli-core';
@@ -7,7 +7,38 @@ import { ensureEditor, type EnsureEditorSession } from './ensure-editor.js';
 import { runTool } from './run-tool.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
 
-export const SCRIPT_EXECUTE_TOOL = 'script-execute';
+export const CSHARP_EXEC_TOOL = 'csharp-exec';
+
+/** The tool's name before DEV-314: a plugin released before the rename has only this one. */
+export const LEGACY_CSHARP_EXEC_TOOL = 'script-execute';
+
+/** Which name of the C# tool the editor answers to, remembered across the calls of one command. */
+export interface CSharpExecToolState {
+  toolName?: string;
+}
+
+/**
+ * Call `csharp-exec`. A plugin from before the rename answers "Tool with Name 'csharp-exec' not found": then the call is
+ * sent again by the old name, which `state` keeps for the next calls.
+ */
+export async function invokeCSharpExec(
+  invoke: (options: RunToolOptions) => Promise<RunToolResult>,
+  options: Omit<RunToolOptions, 'toolName'>,
+  state: CSharpExecToolState = {},
+): Promise<RunToolResult> {
+  const toolName = state.toolName ?? CSHARP_EXEC_TOOL;
+  const result = await invoke({ ...options, toolName });
+  if (toolName !== CSHARP_EXEC_TOOL || !toolNotFound(result, CSHARP_EXEC_TOOL)) return result;
+  state.toolName = LEGACY_CSHARP_EXEC_TOOL;
+  return invoke({ ...options, toolName: LEGACY_CSHARP_EXEC_TOOL });
+}
+
+/** The server's answer to an unknown tool: HTTP 404 with `{ "error": "Tool with Name '<name>' not found." }`. */
+function toolNotFound(result: RunToolResult, toolName: string): boolean {
+  if (result.kind !== 'failure' || result.reason !== 'http-error' || result.httpStatus !== 404) return false;
+  const error = (result.data as { error?: unknown } | null | undefined)?.error;
+  return typeof error === 'string' && error.startsWith(`Tool with Name '${toolName}' not found`);
+}
 
 /**
  * Default `exec` call timeout: the MCP server's default `tool-timeout` (300 s, McpPlugin 8.11.0+, which the Unity plugin
@@ -70,7 +101,7 @@ export interface ExecCodeSuccess {
   success: true;
   /** The server that ran the code. */
   baseUrl: string;
-  /** Parsed `script-execute` response body. */
+  /** Parsed `csharp-exec` response body. */
   data: unknown;
   /** How the editor was obtained (`started`: this call launched it). */
   editorSource?: EnsureSource;
@@ -130,16 +161,16 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
   options.onStatus?.('Running...');
   const sleep = deps.sleep ?? ((ms: number) => new Promise<void>((resolve) => setTimeout(resolve, ms)));
   const deadline = Date.now() + RELOAD_WAIT_MS;
+  const tool: CSharpExecToolState = {};
   let result: RunToolResult;
   for (;;) {
-    result = await deps.invoke({
-      toolName: SCRIPT_EXECUTE_TOOL,
+    result = await invokeCSharpExec(deps.invoke, {
       url: baseUrl,
       ...(options.token ? { token: options.token } : {}),
       tokenFromCloudStore: options.tokenFromCloudStore,
-      input: buildScriptExecuteInput(options.code, options.usings ?? [], options.include ?? []),
+      input: buildCSharpExecInput(options.code, options.usings ?? [], options.include ?? []),
       timeoutMs: options.timeoutMs ?? DEFAULT_EXEC_TIMEOUT_MS,
-    });
+    }, tool);
     // The snippet did not run because scripts are about to reload: send it again once they have.
     if (!deferredForReload(result) || Date.now() >= deadline) break;
     options.onStatus?.('Scripts are compiling; waiting for the reload...');
@@ -157,8 +188,8 @@ export async function execCode(options: ExecCodeOptions): Promise<ExecCodeResult
   };
 }
 
-/** Request body for `script-execute`; empty lists are left out so older plugins without them still accept it. */
-export function buildScriptExecuteInput(code: string, usings: string[], include: string[]): Record<string, unknown> {
+/** Request body for `csharp-exec`; empty lists are left out so older plugins without them still accept it. */
+export function buildCSharpExecInput(code: string, usings: string[], include: string[]): Record<string, unknown> {
   return {
     csharpCode: code,
     ...(usings.length > 0 ? { usings } : {}),
@@ -166,8 +197,11 @@ export function buildScriptExecuteInput(code: string, usings: string[], include:
   };
 }
 
+/** @deprecated DEV-314: renamed to {@link buildCSharpExecInput}, with the tool. Remove together with the plugin's alias. */
+export const buildScriptExecuteInput = buildCSharpExecInput;
+
 /**
- * The tool's text output and whether it reported success. A tool that returns a value (as `script-execute` does) is
+ * The tool's text output and whether it reported success. A tool that returns a value (as `csharp-exec` does) is
  * answered as `{ status, structured: { result } }`; the result alone is the output then.
  */
 export function readToolResponse(data: unknown): { ok: boolean; text: string } {

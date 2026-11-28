@@ -227,7 +227,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
                 {
                     var manager = UnityMcpPluginEditor.PluginProperty.CurrentValue?.McpManager.ToolManager;
                     if (manager == null) return (0, 0, 0);
-                    var all = manager.GetAllTools();
+                    var all = manager.GetAllTools().Where(t => !UnityMcpPlugin.RenamedTools.ContainsKey(t.Name)); // as the MCP Tools window
                     var totalCount = all.Count();
                     var visibleCount = all.Count(t => manager.IsToolVisible(t.Name));
                     var totalTokens = all.Where(t => manager.IsToolVisible(t.Name)).Sum(t => t.TokenCount);

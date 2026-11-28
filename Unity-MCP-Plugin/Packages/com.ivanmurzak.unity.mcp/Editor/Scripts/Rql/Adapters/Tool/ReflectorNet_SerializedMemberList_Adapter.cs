@@ -23,7 +23,7 @@ using UnityEngine;
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 {
     /// <summary>
-    /// SerializedMemberList tool arguments (script-execute parameters) in RQL terms: named values
+    /// SerializedMemberList tool arguments (csharp-exec parameters) in RQL terms: named values
     /// <c>{count: 3, target: ref("GameObject#12")}</c>, each becoming a parameter of its value's type. The ReflectorNet form
     /// (a list of {name, typeName, value}) still works.
     /// </summary>
@@ -95,7 +95,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.Adapters
 
         private static string JsonText(object? v) => ToJson(v)?.ToJsonString() ?? "null";
 
-        // JSON in the form script-execute's ReflectorNet deserialization expects; Unity objects as {"instanceID": N}.
+        // JSON in the form csharp-exec's ReflectorNet deserialization expects; Unity objects as {"instanceID": N}.
         private static JsonNode? ToJson(object? v) => v switch
         {
             null => null,

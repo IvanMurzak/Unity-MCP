@@ -36,7 +36,7 @@ export type {
 export { runTool, runSystemTool } from './lib/run-tool.js';
 export { waitForReady } from './lib/wait-for-ready.js';
 export type { WaitForReadyOptions, WaitForReadyResult, WaitForReadySuccess, WaitForReadyFailure } from './lib/wait-for-ready.js';
-export { execCode, buildScriptExecuteInput, readToolResponse, DEFAULT_EXEC_TIMEOUT_MS } from './lib/exec.js';
+export { execCode, buildCSharpExecInput, buildScriptExecuteInput, readToolResponse, DEFAULT_EXEC_TIMEOUT_MS } from './lib/exec.js';
 export type { ExecCodeOptions, ExecCodeResult, ExecCodeSuccess, ExecCodeFailure } from './lib/exec.js';
 export { ensureEditor } from './lib/ensure-editor.js';
 export type { EnsureEditorOptions, EnsureEditorResult, EnsureEditorReady, EnsureEditorFailure } from './lib/ensure-editor.js';

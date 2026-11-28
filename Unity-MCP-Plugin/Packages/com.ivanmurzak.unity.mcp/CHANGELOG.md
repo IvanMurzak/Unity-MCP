@@ -52,6 +52,13 @@
 
 ### Changed
 
+- **`script-execute` is now `csharp-exec`** (DEV-314): the name says which language the tool runs, also in a folder with
+  several engine projects and in the AI Game Dev connector's one list. The old name `script-execute` keeps working for
+  the next releases as a hidden alias that runs the same code: saved permissions, allowlists, prompts and
+  `UNITY_MCP_TOOLS` lists that name it still work, and a visibility saved for it applies to `csharp-exec`. The alias is
+  never listed (`tools/list`, `unity-tool-list`, the MCP Tools window) and has no SKILL.md; the `script-execute` skill
+  folder an earlier version generated is deleted on the next skill generation. `Tool_Script.ScriptExecuteToolId` is
+  obsolete: use `Tool_Script.CSharpExecToolId`.
 - **A cancelled MCP tool call skips its main-thread work** (McpPlugin 8.25.0, RQL 0.5.0). Work of a call that was
   cancelled (the App's Stop, a closed request) is not queued, and queued work is skipped once its call is cancelled; work
   that has started runs to its end. The call is answered as cancelled (HTTP 499), not as a failure. The asset refresh

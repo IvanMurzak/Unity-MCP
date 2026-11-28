@@ -4,7 +4,7 @@
 
 import { COMPILE_STATUS_SNIPPET, parseCompileStatus, REFRESH_SNIPPET, type CompileState } from './compile-snippets.js';
 import { ensureEditor, type EnsureEditorOptions, type EnsureEditorFailure } from './ensure-editor.js';
-import { readToolResponse, SCRIPT_EXECUTE_TOOL, buildScriptExecuteInput, RELOAD_PENDING_TEXT } from './exec.js';
+import { readToolResponse, invokeCSharpExec, buildCSharpExecInput, RELOAD_PENDING_TEXT, type CSharpExecToolState } from './exec.js';
 import { runTool } from './run-tool.js';
 import type { RunToolFailure, RunToolOptions, RunToolResult } from './types.js';
 import type { CompilerMessage } from '../utils/compiler-messages.js';
@@ -80,14 +80,14 @@ export async function compileProject(options: CompileProjectOptions): Promise<Co
   if (ensured.kind === 'failure') return { kind: 'failure', reason: 'unreachable', message: ensured.message, editorFailure: ensured };
 
   const deadline = deps.now() + (timeoutMs ?? DEFAULT_COMPILE_TIMEOUT_MS);
-  const call = (code: string) => deps.invoke({
-    toolName: SCRIPT_EXECUTE_TOOL,
+  const tool: CSharpExecToolState = {};
+  const call = (code: string) => invokeCSharpExec(deps.invoke, {
     url: ensured.baseUrl,
     ...(options.token ? { token: options.token } : {}),
     tokenFromCloudStore,
-    input: buildScriptExecuteInput(code, [], []),
+    input: buildCSharpExecInput(code, [], []),
     timeoutMs: POLL_CALL_TIMEOUT_MS,
-  });
+  }, tool);
   const finish = async <T extends CompileProjectResult>(result: T): Promise<T> => {
     const closedPid = once ? await ensured.closeIfStarted() : undefined;
     return closedPid !== undefined ? { ...result, closedPid } : result;

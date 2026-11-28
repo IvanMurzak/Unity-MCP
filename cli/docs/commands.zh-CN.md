@@ -517,7 +517,7 @@ echo 'Application.unityVersion' | unity-mcp-cli exec
 | `--url <url>` | 否 | 覆盖服务器 URL；本地 URL 还会让新启动的编辑器启动该服务器 |
 | `--token <token>` | 否 | 覆盖 bearer 令牌 |
 
-`exec` 会调用 `script-execute` 工具，因此代码片段、`usings` 和 `include` 需要支持 Code-Exec 的插件版本。编译错误或异常会以退出码 6 退出，并指向你自己代码中的行。
+`exec` 会调用 `csharp-exec` 工具，因此代码片段、`usings` 和 `include` 需要支持 Code-Exec 的插件版本。编译错误或异常会以退出码 6 退出，并指向你自己代码中的行。
 
 > **尚未登录？** 新项目以 **Cloud** 连接模式启动。在没有登录 ai-game.dev 的情况下，`exec`、
 > `run-tool`、`compile` 和 `tools` 会改用项目的**本地** MCP 服务器（它们会在 stderr 上说明）：它们启动的编辑器

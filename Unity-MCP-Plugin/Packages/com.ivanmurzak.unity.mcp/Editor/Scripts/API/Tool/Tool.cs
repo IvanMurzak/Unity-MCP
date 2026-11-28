@@ -46,8 +46,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return (exact, caseInsensitive);
         }
 
+        /// <summary>The registered tool <paramref name="input"/> names; an old (renamed) name resolves to the new tool, never its hidden alias.</summary>
         static string? ResolveToolName(Dictionary<string, string> exact, Dictionary<string, List<string>> caseInsensitive, string input, Logs? logs)
         {
+            input = UnityMcpPlugin.CurrentToolName(input);
             if (exact.TryGetValue(input, out var exactMatch))
                 return exactMatch;
 

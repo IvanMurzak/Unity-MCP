@@ -30,7 +30,7 @@ RQL 数据源：`scenes`、`roots`、`objects`（已加载场景中的所有 Gam
 ## 📜 脚本与测试
 | 工具 | ID | 默认 | 描述 |
 | :--- | :--- | :--- | :--- |
-| **Script / Execute** | `script-execute` | shown | 使用 Roslyn 动态编译并执行 C# 代码。 |
+| **C# / Execute** | `csharp-exec` | shown | 使用 Roslyn 动态编译并执行 C# 代码。旧 ID `script-execute` 仍可调用（隐藏别名）。 |
 | **Script / Read** | `script-read` | hidden | 读取脚本文件的内容。 |
 | **Script / Update or Create** | `script-update-or-create` | hidden | 用提供的 C# 代码更新或创建脚本文件。 |
 | **Script / Delete** | `script-delete` | hidden | 删除脚本文件。 |

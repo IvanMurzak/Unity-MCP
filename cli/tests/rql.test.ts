@@ -48,7 +48,7 @@ describe('rqlErrorHint', () => {
     expect(rqlErrorHint('rql-query', "error syntax-error: unexpected 'startsWith' in 'where' stage at 21")).toMatch(/starts-with/);
     expect(rqlErrorHint('rql-query', "error syntax-error: unexpected 'like' in 'where' stage")).toMatch(/no like/);
     expect(rqlErrorHint('rql-query', "error unknown-source: unknown source 'object'")).toBeUndefined();
-    expect(rqlErrorHint('script-execute', "unexpected 'startsWith'")).toBeUndefined();
+    expect(rqlErrorHint('csharp-exec', "unexpected 'startsWith'")).toBeUndefined();
   });
 });
 

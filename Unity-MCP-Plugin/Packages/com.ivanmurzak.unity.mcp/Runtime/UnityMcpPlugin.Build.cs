@@ -168,6 +168,22 @@ namespace com.IvanMurzak.Unity.MCP
             return mcpPlugin;
         }
 
+        /// <summary>
+        /// Renamed tools, old name to new name. The old name stays registered as a hidden alias that runs the same code
+        /// (<c>tools/call</c> by the old name works), so saved permissions, allowlists and prompts keep working. An alias is
+        /// always hidden, whatever a saved config or <c>UNITY_MCP_TOOLS</c> says, has no SKILL.md and is left out of
+        /// <c>unity-tool-list</c> and the MCP Tools window; a saved visibility or an env list that names the old tool applies
+        /// to the new one.
+        /// </summary>
+        public static readonly IReadOnlyDictionary<string, string> RenamedTools = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase)
+        {
+            // DEV-314: script-execute became csharp-exec (the language in the name). Remove two plugin releases after the rename.
+            ["script-execute"] = "csharp-exec",
+        };
+
+        /// <summary>The current name of a tool given by its current or its old (renamed) name.</summary>
+        public static string CurrentToolName(string name) => RenamedTools.TryGetValue(name, out var current) ? current : name;
+
         protected virtual void ApplyConfigToMcpPlugin(IMcpPlugin mcpPlugin)
         {
             _logger.LogTrace("{method} called.", nameof(ApplyConfigToMcpPlugin));
@@ -180,7 +196,8 @@ namespace com.IvanMurzak.Unity.MCP
                 if (enabledToolsOverride != null)
                 {
                     var allTools = toolManager.GetAllTools().ToList();
-                    var enabledSet = new HashSet<string>(enabledToolsOverride, StringComparer.OrdinalIgnoreCase);
+                    // An old (renamed) name in the list stands for the new one; the alias itself is never in the set.
+                    var enabledSet = new HashSet<string>(enabledToolsOverride.Select(CurrentToolName), StringComparer.OrdinalIgnoreCase);
 
                     // Validate requested tool IDs against the registered tool list
                     var allToolNames = new HashSet<string>(
@@ -206,8 +223,11 @@ namespace com.IvanMurzak.Unity.MCP
                 {
                     foreach (var tool in toolManager.GetAllTools())
                     {
-                        var toolFeature = unityConnectionConfig.Tools.FirstOrDefault(t => t.Name == tool.Name!);
-                        var isVisible = toolFeature?.Visible ?? tool.Visible;
+                        // A renamed tool takes the visibility saved under its old name until it has its own entry;
+                        // the old name's alias stays hidden.
+                        var toolFeature = unityConnectionConfig.Tools.FirstOrDefault(t => t.Name == tool.Name!)
+                            ?? unityConnectionConfig.Tools.FirstOrDefault(t => t.Name != null && RenamedTools.TryGetValue(t.Name, out var current) && current == tool.Name);
+                        var isVisible = !RenamedTools.ContainsKey(tool.Name!) && (toolFeature?.Visible ?? tool.Visible);
                         toolManager.SetToolVisible(tool.Name!, isVisible);
                         _logger.LogDebug("{method}: Tool '{tool}' visible: {isVisible}",
                             nameof(ApplyConfigToMcpPlugin), tool.Name, isVisible);

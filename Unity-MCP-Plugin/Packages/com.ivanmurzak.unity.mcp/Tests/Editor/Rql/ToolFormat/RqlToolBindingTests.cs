@@ -105,11 +105,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         }
 
         [Test]
-        public void ScriptExecuteTakesNamedRqlParametersIncludingLiveObjects()
+        public void CSharpExecTakesNamedRqlParametersIncludingLiveObjects()
         {
-            StringAssert.Contains("RQL: SerializedMemberList", Listed(Plugin, Tool_Script.ScriptExecuteToolId).InputSchema.GetRawText());
+            StringAssert.Contains("RQL: SerializedMemberList", Listed(Plugin, Tool_Script.CSharpExecToolId).InputSchema.GetRawText());
             var code = "public class Script { public static string Main(UnityEngine.GameObject go, int n) { return go.name + \":\" + (n * 7); } }";
-            var (r, text) = Call(Plugin, Tool_Script.ScriptExecuteToolId,
+            var (r, text) = Call(Plugin, Tool_Script.CSharpExecToolId,
                 JsonSerializer.Serialize(new { csharpCode = code, parameters = "{go: unity.find(\"Alpha\"), n: 6}" }));
             Assert.AreEqual(ResponseStatus.Success, r.Status, text);
             StringAssert.Contains("System.String", text);
@@ -118,10 +118,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
 
         // A null parameter is passed as null (its JSON is "null"), not a NullReferenceException.
         [Test]
-        public void ScriptExecuteTakesANullParameter()
+        public void CSharpExecTakesANullParameter()
         {
             var code = "public class Script { public static string Main(object label) { return label == null ? \"no label\" : \"label\"; } }";
-            var (r, text) = Call(Plugin, Tool_Script.ScriptExecuteToolId,
+            var (r, text) = Call(Plugin, Tool_Script.CSharpExecToolId,
                 JsonSerializer.Serialize(new { csharpCode = code, parameters = "{label: null}" }));
             Assert.AreEqual(ResponseStatus.Success, r.Status, text);
             StringAssert.Contains("no label", text);
@@ -130,15 +130,15 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         // A parameter expression that names nothing (e.g. the objects source used as a value) and a list each get a reason the
         // agent can act on, not "Missing values are not supported".
         [Test]
-        public void ScriptExecuteExplainsParametersItCannotPass()
+        public void CSharpExecExplainsParametersItCannotPass()
         {
             UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true; // the tool logs its error response
-            var (missing, missingText) = Call(Plugin, Tool_Script.ScriptExecuteToolId,
+            var (missing, missingText) = Call(Plugin, Tool_Script.CSharpExecToolId,
                 JsonSerializer.Serialize(new { csharpCode = "x", parameters = "{x: objects.first(name == \"Alpha\")}" }));
             Assert.AreEqual(ResponseStatus.Error, missing.Status, missingText);
             StringAssert.Contains("parameter 'x' has no value", missingText);
             StringAssert.Contains("unity.find", missingText);
-            var (list, listText) = Call(Plugin, Tool_Script.ScriptExecuteToolId,
+            var (list, listText) = Call(Plugin, Tool_Script.CSharpExecToolId,
                 JsonSerializer.Serialize(new { csharpCode = "x", parameters = "{x: [1, 2]}" }));
             Assert.AreEqual(ResponseStatus.Error, list.Status, listText);
             StringAssert.Contains("lists are not supported", listText);

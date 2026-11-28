@@ -23,8 +23,8 @@ using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
 {
-    /// <summary>What script-execute returns to the agent: bounded, readable values and errors (RQL data layer).</summary>
-    public class ScriptExecuteResultTests
+    /// <summary>What csharp-exec returns to the agent: bounded, readable values and errors (RQL data layer).</summary>
+    public class CSharpExecResultTests
     {
         private IToolBinding? _savedBinding;
 
@@ -52,7 +52,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
 
         private static string Run(string code)
         {
-            var (r, text) = Call(Tool_Script.ScriptExecuteToolId, new { csharpCode = code });
+            var (r, text) = Call(Tool_Script.CSharpExecToolId, new { csharpCode = code });
             Assert.AreEqual(ResponseStatus.Success, r.Status, text);
             return text;
         }
@@ -66,18 +66,38 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             return text;
         }
 
+        // DEV-314: the old name script-execute still runs the same code, as a hidden alias that unity-tool-list leaves out.
+        [Test]
+        public void OldNameRunsTheSameCodeHidden()
+        {
+#pragma warning disable CS0618 // the deprecated alias is what this test checks
+            var oldName = Tool_Script.ScriptExecuteToolId;
+#pragma warning restore CS0618
+            Assert.AreEqual(Tool_Script.CSharpExecToolId, UnityMcpPlugin.CurrentToolName(oldName));
+            Assert.IsFalse(Plugin.IsToolVisible(oldName));
+
+            var (r, text) = Call(oldName, new { csharpCode = "6 * 7" });
+            Assert.AreEqual(ResponseStatus.Success, r.Status, text);
+            StringAssert.Contains("42", text);
+
+            var (list, listText) = Call(Tool_Tool.ToolListId, new { });
+            Assert.AreEqual(ResponseStatus.Success, list.Status, listText);
+            StringAssert.Contains(Tool_Script.CSharpExecToolId, listText);
+            StringAssert.DoesNotContain(oldName, listText);
+        }
+
         // Code-Exec's recursion guard: an error, not a stack overflow that ends the Editor.
         [Test]
         public void RunawayRecursionFailsWithAnError() =>
             StringAssert.Contains("Recursion too deep",
-                Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = "int Down(int n) => Down(n + 1) + 1;\nDown(0)" }));
+                Fails(Tool_Script.CSharpExecToolId, new { csharpCode = "int Down(int n) => Down(n + 1) + 1;\nDown(0)" }));
 
         // Wave 6: an endless loop cost the agent the whole default budget; `timeout` (seconds) sets the call's own.
         [Test]
         public void TheTimeoutArgumentEndsAnEndlessLoopAtItsBudget()
         {
             var clock = System.Diagnostics.Stopwatch.StartNew();
-            var text = Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = "var n = 0L;\nwhile (true) { n++; }", timeout = 2 });
+            var text = Fails(Tool_Script.CSharpExecToolId, new { csharpCode = "var n = 0L;\nwhile (true) { n++; }", timeout = 2 });
             StringAssert.Contains("Execution failed (Timeout)", text);
             StringAssert.Contains("time budget of 2000 ms", text);
             Assert.Less(clock.ElapsedMilliseconds, 15_000, "stopped near the requested 2 s (compile time included)");
@@ -88,7 +108,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         public void AThreadLeftRunningIsReportedInTheConsole()
         {
             LogAssert.Expect(UnityEngine.LogType.Warning,
-                new System.Text.RegularExpressions.Regex(@"\[script-execute\] 1 thread\(s\) or task\(s\) the snippet started had not finished"));
+                new System.Text.RegularExpressions.Regex(@"\[csharp-exec\] 1 thread\(s\) or task\(s\) the snippet started had not finished"));
             Run("var t = new System.Threading.Thread(() => { var n = 0L; while (true) { n++; } }) { IsBackground = true };\nt.Start();\n1");
         }
 
@@ -111,7 +131,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
                 StringAssert.Contains(phrase, body);
         }
 
-        // Wave 6: an agent polling with script-execute after writing a script kept the reload held forever (each call locks
+        // Wave 6: an agent polling with csharp-exec after writing a script kept the reload held forever (each call locks
         // it until 1 s after its reply): isCompiling stayed true for minutes. A compile our lock held defers new calls.
         [Test]
         public void ACompileOurLockHeldDefersCallsUntilItReloads()
@@ -137,7 +157,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         public void ADeferredCallIsNotExecutedUnavailable()
         {
             var tool = RunTool.CreateFromStaticMethod(UnityMcpPluginEditor.Instance.Reflector!, null, "deferred",
-                typeof(ScriptExecuteResultTests).GetMethod(nameof(DeferredForReload))!);
+                typeof(CSharpExecResultTests).GetMethod(nameof(DeferredForReload))!);
 
             var response = tool.Run("request-1", new Dictionary<string, JsonElement>()).GetAwaiter().GetResult();
 
@@ -148,7 +168,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             Assert.IsTrue(ResponseCallTool.IsNotExecuted(response.Pack("request-1")));
         }
 
-        // A tool method throws the refusal script-execute throws for a deferred call (RunTool needs a public method).
+        // A tool method throws the refusal csharp-exec throws for a deferred call (RunTool needs a public method).
         public static string DeferredForReload() => throw Tool_Script.ReloadPending();
 
         [Test]
@@ -184,7 +204,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
             // Code-Exec accepts a usings entry written as a directive.
             CollectionAssert.AreEquivalent(new[] { "using Random = System.Random;", "Object = UnityEngine.Object" },
                 Tool_Script.WithHostAliases("1", new[] { "using Random = System.Random;" }));
-            var (r, text) = Call(Tool_Script.ScriptExecuteToolId, new { csharpCode = "typeof(Random).FullName", usings = new[] { "using Random = System.Random;" } });
+            var (r, text) = Call(Tool_Script.CSharpExecToolId, new { csharpCode = "typeof(Random).FullName", usings = new[] { "using Random = System.Random;" } });
             Assert.AreEqual(ResponseStatus.Success, r.Status, text);
             StringAssert.Contains("System.Random", text);
         }
@@ -263,7 +283,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         public void CompileErrorsAreCapped()
         {
             var code = string.Join("\n", Enumerable.Range(0, 40).Select(i => $"var v{i} = missing{i};"));
-            var text = Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = code });
+            var text = Fails(Tool_Script.CSharpExecToolId, new { csharpCode = code });
             StringAssert.Contains("CE0002", text); // Code-Exec: 20 diagnostics, then a count of the rest
             StringAssert.DoesNotContain("missing39", text);
         }
@@ -271,7 +291,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         [Test]
         public void ALongErrorIsClippedAndSaysSo()
         {
-            var text = Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = "throw new System.Exception(new string('e', 30000));" });
+            var text = Fails(Tool_Script.CSharpExecToolId, new { csharpCode = "throw new System.Exception(new string('e', 30000));" });
             StringAssert.Contains("Truncated: error", text);
             Assert.Less(text.Length, OutputLimits.DefaultErrorChars + 2000);
         }
@@ -303,7 +323,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         [Test]
         public void IncludesStayInsideTheSnippetsFolder()
         {
-            var text = Fails(Tool_Script.ScriptExecuteToolId, new { csharpCode = "1", include = new[] { "../../ProjectSettings/ProjectSettings.asset" } });
+            var text = Fails(Tool_Script.CSharpExecToolId, new { csharpCode = "1", include = new[] { "../../ProjectSettings/ProjectSettings.asset" } });
             StringAssert.Contains("InvalidRequest", text);
             StringAssert.DoesNotContain("CS1525", text); // the asset is never compiled
         }

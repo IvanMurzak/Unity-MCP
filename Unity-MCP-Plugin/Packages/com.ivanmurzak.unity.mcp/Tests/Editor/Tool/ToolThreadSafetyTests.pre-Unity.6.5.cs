@@ -172,10 +172,10 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         }
 
         [UnityTest]
-        public IEnumerator ScriptExecute_BothThreads()
+        public IEnumerator CSharpExec_BothThreads()
         {
             const string Code = "public class Script { public static int Main() { return 42; } }";
-            yield return RunToolBothThreads(Tool_Script.ScriptExecuteToolId,
+            yield return RunToolBothThreads(Tool_Script.CSharpExecToolId,
                 $@"{{""csharpCode"":{JsonString(Code)},""className"":""Script"",""methodName"":""Main""}}");
         }
 

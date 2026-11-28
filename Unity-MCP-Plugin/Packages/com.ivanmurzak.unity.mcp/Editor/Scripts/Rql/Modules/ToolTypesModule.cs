@@ -14,7 +14,7 @@ using Rql.Execution;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 {
-    /// <summary>Adapters for the types tool methods take (RqlToolBinding): GameObjectRef, script-execute parameters.</summary>
+    /// <summary>Adapters for the types tool methods take (RqlToolBinding): GameObjectRef, csharp-exec parameters.</summary>
     public sealed class ToolTypesModule : IRqlModule
     {
         public int Order => 10;

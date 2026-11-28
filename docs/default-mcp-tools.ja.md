@@ -30,7 +30,7 @@ RQL のソース: `scenes`、`roots`、`objects` (読み込まれたシーン内
 ## 📜 スクリプトとテスト
 | ツール | ID | デフォルト | 説明 |
 | :--- | :--- | :--- | :--- |
-| **Script / Execute** | `script-execute` | 表示 | Roslyn を使って C# コードを動的にコンパイルして実行します。 |
+| **C# / Execute** | `csharp-exec` | 表示 | Roslyn を使って C# コードを動的にコンパイルして実行します。旧 ID `script-execute` も引き続き呼び出せます（非表示のエイリアス）。 |
 | **Script / Read** | `script-read` | 非表示 | スクリプトファイルの内容を読み取ります。 |
 | **Script / Update or Create** | `script-update-or-create` | 非表示 | 指定された C# コードでスクリプトファイルを更新または作成します。 |
 | **Script / Delete** | `script-delete` | 非表示 | スクリプトファイルを削除します。 |

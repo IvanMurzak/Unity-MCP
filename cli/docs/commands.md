@@ -519,7 +519,7 @@ echo 'Application.unityVersion' | unity-mcp-cli exec
 | `--url <url>` | No | Server URL override; a local URL also makes a newly started editor start that server |
 | `--token <token>` | No | Bearer token override |
 
-`exec` calls the `script-execute` tool, so snippets, `usings` and `include` need a plugin version with Code-Exec support. A compile error or an exception exits with code 6 and points at your own lines.
+`exec` calls the `csharp-exec` tool, so snippets, `usings` and `include` need a plugin version with Code-Exec support. A compile error or an exception exits with code 6 and points at your own lines.
 
 > **Not signed in?** A fresh project starts in **Cloud** connection mode. Without an ai-game.dev sign-in, `exec`,
 > `run-tool`, `compile` and `tools` use the project's **local** MCP server instead (they say so on stderr): an editor

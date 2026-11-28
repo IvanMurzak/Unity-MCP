@@ -199,7 +199,10 @@ namespace com.IvanMurzak.Unity.MCP
 
                 if (captureCurrentToolStates)
                 {
+                    // A renamed tool's alias is not saved: it is always hidden here, and a plugin from before the rename
+                    // would read that entry as its own tool's visibility.
                     var toolStates = Tools?.GetAllTools()
+                        ?.Where(t => !UnityMcpPlugin.RenamedTools.ContainsKey(t.Name))
                         ?.Select(t => new UnityConnectionConfig.McpFeature(t.Name, Tools.IsToolVisible(t.Name)))
                         ?.ToList();
 

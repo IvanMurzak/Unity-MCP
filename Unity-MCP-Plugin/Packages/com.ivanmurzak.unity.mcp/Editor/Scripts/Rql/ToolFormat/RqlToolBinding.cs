@@ -345,7 +345,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
 
         private static ContentBlock Text(string text) => new ContentBlock { Type = com.IvanMurzak.McpPlugin.Common.Consts.ContentType.Text, Text = text };
 
-        /// <summary>script-execute's result: "System.Int32: 42"; nested fields / properties as compact text.</summary>
+        /// <summary>csharp-exec's result: "System.Int32: 42"; nested fields / properties as compact text.</summary>
         private string Render(SerializedMember member)
         {
             var value = member.valueJsonElement is JsonElement e && e.ValueKind != JsonValueKind.Undefined ? JsonSerializer.SerializeToNode(e) : null;

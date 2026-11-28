@@ -117,7 +117,7 @@ Find every enemy prefab without a Rigidbody and add one
 | Scenes and GameObjects | `rql-query`, `rql-mutate` | *"List every disabled GameObject in the open scene"* |
 | Assets and prefabs | `rql-query`, `rql-mutate` | *"Create a red material and assign it to all cubes"* |
 | Console and Editor state | `rql-query` | *"What errors are in the console?"* |
-| C# in the Editor | `script-execute` | *"Run C# that places 100 trees at random points on the terrain"* |
+| C# in the Editor | `csharp-exec` | *"Run C# that places 100 trees at random points on the terrain"* |
 | Tests | `tests-run` | *"Run the EditMode tests and fix what fails"* |
 | Screenshots | `screenshot-isolated` | *"Show me the Player model from the front"* |
 | Packages and Asset Store | `package-*`, `assetstore-*` | *"Install Cinemachine"* |
@@ -215,7 +215,7 @@ Other agents and manual setup: [Installation guide](https://github.com/IvanMurza
 ✅ **Origin checks** — browser requests with a non-allowed `Origin` are rejected (403) in every auth mode.\
 ✅ **Auth modes** — `none` (local default), `token` (one shared secret the agent and the plugin must both send), `oauth` (ai-game.dev account).\
 ✅ **Cloud relay** — a stateless relay: it routes tool calls between your agent and the Editor without inspecting or persisting their contents, and does not collect conversations, source code, project files, assets or scene data. It records MCP event metadata (event type, timing, status, session identifiers, the tool, prompt or resource name, error details), used within a rolling 90-day window ([Privacy Policy](https://ai-game.dev/legal/privacy)).\
-⚠️ **Not protected** — in `none` mode any process on your machine that reaches the port can call tools, and tools run with Editor rights (`script-execute` runs C#). Use `token` mode on shared machines.
+⚠️ **Not protected** — in `none` mode any process on your machine that reaches the port can call tools, and tools run with Editor rights (`csharp-exec` runs C#). Use `token` mode on shared machines.
 
 Server options and Docker: [MCP server and connection](https://github.com/IvanMurzak/Unity-MCP/blob/main/docs/mcp-server.md).
 

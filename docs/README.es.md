@@ -117,7 +117,7 @@ Encuentra cada prefab de enemigo sin Rigidbody y añádele uno
 | Escenas y GameObjects | `rql-query`, `rql-mutate` | *"Lista todos los GameObjects desactivados en la escena abierta"* |
 | Assets y prefabs | `rql-query`, `rql-mutate` | *"Crea un material rojo y asígnalo a todos los cubos"* |
 | Consola y estado del Editor | `rql-query` | *"¿Qué errores hay en la consola?"* |
-| C# en el Editor | `script-execute` | *"Ejecuta C# que coloque 100 árboles en puntos aleatorios del terreno"* |
+| C# en el Editor | `csharp-exec` | *"Ejecuta C# que coloque 100 árboles en puntos aleatorios del terreno"* |
 | Tests | `tests-run` | *"Ejecuta los tests EditMode y arregla lo que falle"* |
 | Capturas de pantalla | `screenshot-isolated` | *"Muéstrame el modelo del Player de frente"* |
 | Paquetes y Asset Store | `package-*`, `assetstore-*` | *"Instala Cinemachine"* |
@@ -215,7 +215,7 @@ Otros agentes y configuración manual: [Guía de instalación](installation.es.m
 ✅ **Comprobación de origen** — las solicitudes del navegador con un `Origin` no permitido se rechazan (403) en todos los modos de autenticación.\
 ✅ **Modos de autenticación** — `none` (predeterminado en local), `token` (un secreto compartido que el agente y el plugin deben enviar), `oauth` (cuenta de ai-game.dev).\
 ✅ **Relay de Cloud** — un relay sin estado: enruta las llamadas a herramientas entre tu agente y el Editor sin inspeccionar ni conservar su contenido, y no recopila conversaciones, código fuente, archivos del proyecto, assets ni datos de escenas. Registra metadatos de eventos MCP (tipo de evento, tiempos, estado, identificadores de sesión, el nombre de la herramienta, del prompt o del recurso, detalles de errores), que se usan dentro de una ventana móvil de 90 días ([Política de privacidad](https://ai-game.dev/legal/privacy)).\
-⚠️ **Sin protección** — en modo `none` cualquier proceso de tu máquina que alcance el puerto puede llamar a herramientas, y las herramientas se ejecutan con los permisos del Editor (`script-execute` ejecuta C#). Usa el modo `token` en máquinas compartidas.
+⚠️ **Sin protección** — en modo `none` cualquier proceso de tu máquina que alcance el puerto puede llamar a herramientas, y las herramientas se ejecutan con los permisos del Editor (`csharp-exec` ejecuta C#). Usa el modo `token` en máquinas compartidas.
 
 Opciones del servidor y Docker: [Servidor MCP y conexión](mcp-server.es.md).
 

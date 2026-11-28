@@ -22,7 +22,7 @@ using UnityEngine.TestTools;
 
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests
 {
-    public class ScriptExecuteTests : BaseTest
+    public class CSharpExecTests : BaseTest
     {
         const string GO_ABC = "ABC";
 

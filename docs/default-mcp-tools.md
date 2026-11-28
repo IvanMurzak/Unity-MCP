@@ -30,7 +30,7 @@ All four take an optional `savePath`, for when the user wants the picture as a f
 ## 📜 Scripting & Tests
 | Tool | ID | Default | Description |
 | :--- | :--- | :--- | :--- |
-| **Script / Execute** | `script-execute` | shown | Compile and execute C# code dynamically using Roslyn. |
+| **C# / Execute** | `csharp-exec` | shown | Compile and execute C# code dynamically using Roslyn. The old ID `script-execute` still runs (hidden alias). |
 | **Script / Read** | `script-read` | hidden | Read the content of a script file. |
 | **Script / Update or Create** | `script-update-or-create` | hidden | Update or create a script file with the provided C# code. |
 | **Script / Delete** | `script-delete` | hidden | Delete script file(s). |
