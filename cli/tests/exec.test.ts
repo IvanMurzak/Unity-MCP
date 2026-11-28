@@ -191,13 +191,24 @@ describe('execCode', () => {
 
   it('calls a plugin from before the rename by the old name, script-execute (DEV-314)', async () => {
     const notFound: RunToolResult = {
-      kind: 'success', success: true, endpoint: 'e', httpStatus: 200,
-      data: { status: 'error', content: [{ type: 'text', text: "Tool with Name 'csharp-exec' not found." }] },
+      kind: 'failure', success: false, endpoint: 'e', reason: 'http-error', httpStatus: 404, message: 'Not Found',
+      data: { error: "Tool with Name 'csharp-exec' not found." },
     };
     const d = deps();
     d.invoke.mockResolvedValueOnce(notFound);
     expect(await execCode(options(d))).toMatchObject({ kind: 'success', data: CALLED.data });
     expect(d.invoke.mock.calls.map(([call]) => (call as { toolName: string }).toolName)).toEqual(['csharp-exec', 'script-execute']);
+  });
+
+  it('does not re-send a snippet whose own answer mentions a missing csharp-exec', async () => {
+    const answer: RunToolResult = {
+      kind: 'success', success: true, endpoint: 'e', httpStatus: 200,
+      data: { status: 'error', content: [{ type: 'text', text: "Tool with Name 'csharp-exec' not found." }] },
+    };
+    const d = deps();
+    d.invoke.mockResolvedValueOnce(answer);
+    await execCode(options(d));
+    expect(d.invoke).toHaveBeenCalledTimes(1);
   });
 
   it('passes a failed tool call through', async () => {

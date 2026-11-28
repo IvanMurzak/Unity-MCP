@@ -33,11 +33,11 @@ export async function invokeCSharpExec(
   return invoke({ ...options, toolName: LEGACY_CSHARP_EXEC_TOOL });
 }
 
+/** The server's answer to an unknown tool: HTTP 404 with `{ "error": "Tool with Name '<name>' not found." }`. */
 function toolNotFound(result: RunToolResult, toolName: string): boolean {
-  const text = result.kind === 'failure'
-    ? `${result.message} ${typeof result.data === 'string' ? result.data : JSON.stringify(result.data ?? '')}`
-    : readToolResponse(result.data).text;
-  return text.includes(`'${toolName}' not found`);
+  if (result.kind !== 'failure' || result.reason !== 'http-error' || result.httpStatus !== 404) return false;
+  const error = (result.data as { error?: unknown } | null | undefined)?.error;
+  return typeof error === 'string' && error.startsWith(`Tool with Name '${toolName}' not found`);
 }
 
 /**

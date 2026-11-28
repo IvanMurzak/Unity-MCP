@@ -93,8 +93,8 @@ describe('compileProject', () => {
 
   it('keeps calling a plugin from before the rename by the old name once it answered not found (DEV-314)', async () => {
     const notFound: RunToolResult = {
-      kind: 'success', success: true, endpoint: URL, httpStatus: 200,
-      data: { status: 'error', content: [{ type: 'text', text: "Tool with Name 'csharp-exec' not found." }] },
+      kind: 'failure', success: false, endpoint: URL, reason: 'http-error', httpStatus: 404, message: 'Not Found',
+      data: { error: "Tool with Name 'csharp-exec' not found." },
     };
     const { d, invoke } = deps([notFound, ok('True'), ok('state:ok\n'), ok('state:ok\n')]);
     expect(await compileProject({ projectPath: '/p', probeUrls: [URL], deps: d })).toMatchObject({ kind: 'completed' });
