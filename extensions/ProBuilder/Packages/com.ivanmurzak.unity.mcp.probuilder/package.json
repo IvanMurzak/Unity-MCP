@@ -17,7 +17,7 @@
   "license": "Apache-2.0",
   "description": "MCP Tools for ProBuilder - Enhance your Unity projects with AI-powered ProBuilder tools using the MCP framework.",
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "1.14.3",
+    "com.ivanmurzak.unity.mcp": "1.15.0",
     "com.unity.probuilder": "5.2.4"
   },
   "scopedRegistries": [
