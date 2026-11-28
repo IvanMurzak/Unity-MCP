@@ -13,6 +13,7 @@ using System.Diagnostics;
 using System.Text;
 using System.Threading.Tasks;
 using System.IO;
+using System.Linq;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.ReflectorNet;
 using com.IvanMurzak.Unity.MCP.Editor.API;
@@ -89,7 +90,7 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
         }
 
         [Fact]
-        public void RegisteredGuidesAreStandalone_AndGeneratedWithGlobalMetadata()
+        public void RegisteredGuidesAreStandalone_AndGeneratedWithPerKindMetadata()
         {
             var root = Path.Combine(Path.GetTempPath(), "UnitySkillGuides_" + Guid.NewGuid().ToString("N"));
             try
@@ -99,8 +100,7 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                 {
                     config.SkillsPath = root;
                     config.KeepConnected = false;
-                    config.SkillMetadata["generated-by"] = "unity-mcp";
-                    config.SkillMetadata["ai-game-dev"] = "exclude";
+                    UnitySkillFileGenerator.ApplySkillMetadata(config);
                 });
                 builder.WithSkillFileGenerator(new UnitySkillFileGenerator());
                 builder.WithTools(typeof(Tool_Ping));
@@ -108,10 +108,15 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                 using var plugin = (com.IvanMurzak.McpPlugin.McpPlugin)builder.Build(new Reflector());
 
                 var files = Directory.GetFiles(root, "SKILL.md", SearchOption.AllDirectories);
-                Assert.Equal(4, files.Length);
+                Assert.Equal(new[] { "ai-game-dev-app", "ping", "unity-cli", "unity-initial-setup" },
+                    files.Select(f => Path.GetFileName(Path.GetDirectoryName(f))).OrderBy(n => n, StringComparer.Ordinal));
+                // The App hides a tool's page (ping) and shows the standalone knowledge skills; both keep generated-by.
                 foreach (var file in files)
-                    Assert.Contains("metadata:\n  generated-by: unity-mcp\n  ai-game-dev: exclude\n",
+                {
+                    var marker = Path.GetFileName(Path.GetDirectoryName(file)) == "ping" ? "exclude" : "include";
+                    Assert.Contains($"metadata:\n  generated-by: unity-mcp\n  ai-game-dev: {marker}\n",
                         File.ReadAllText(file).Replace("\r\n", "\n"));
+                }
 
                 var tool = File.ReadAllText(Path.Combine(root, "ping", "SKILL.md"));
                 Assert.Contains("unity-cli", tool);
