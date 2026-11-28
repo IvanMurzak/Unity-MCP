@@ -120,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.ToolFormat
                 if (!string.IsNullOrEmpty(text)) schema["description"] = text;
                 properties[p.Name!] = schema;
                 // Required = no default, not [Optional] and not nullable (int? or an NRT-annotated string? / GameObjectRef?),
-                // the same rule as ReflectorNet's JSON layer; an omitted nullable argument reaches the method as null.
+                // with ReflectorNet's nullability check (as its JSON layer); an omitted nullable argument reaches the method as null.
                 if (!p.HasDefaultValue && !p.IsOptional && !MethodUtils.IsParameterNullable(p)) required.Add(p.Name);
             }
             var block = writer.Block();

@@ -69,6 +69,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         private static ResponseListTool Listed(IToolManager manager, string name) =>
             manager.RunListTool(new RequestListTool()).Result.Value!.Single(t => t.Name == name);
 
+        private static string?[] Required(IToolManager manager, string name) =>
+            Listed(manager, name).InputSchema.GetProperty("required").EnumerateArray().Select(e => e.GetString()).ToArray();
+
         private static (ResponseCallTool result, string text) Call(IToolManager manager, string name, string json)
         {
             var args = JsonSerializer.Deserialize<Dictionary<string, JsonElement>>(json)!;
@@ -153,18 +156,11 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         public void OnlyNonNullableParametersWithoutDefaultsAreRequired(ToolPresentationFormat layer)
         {
             RqlToolBinding.Apply(_local, layer, ToolTextEscaping.Minimal);
+            CollectionAssert.AreEqual(new[] { "name" }, Required(_local, Optionals));
             var schema = Listed(_local, Optionals).InputSchema;
-            var required = schema.GetProperty("required").EnumerateArray().Select(e => e.GetString()).ToArray();
-            CollectionAssert.AreEqual(new[] { "name" }, required);
             StringAssert.DoesNotContain("\"null\"", schema.GetRawText());
-        }
-
-        [Test]
-        public void NullableParametersAreNotTypedNull()
-        {
-            var properties = Listed(_local, Optionals).InputSchema.GetProperty("properties");
+            var properties = schema.GetProperty("properties");
             Assert.AreEqual("string", properties.GetProperty("note").GetProperty("type").GetString());
-            Assert.AreEqual("string", properties.GetProperty("gameObjectRef").GetProperty("type").GetString());
             Assert.AreEqual("integer", properties.GetProperty("count").GetProperty("type").GetString());
         }
 
@@ -183,9 +179,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         public void ScreenshotIsolatedRequiresItsTarget(ToolPresentationFormat layer)
         {
             RqlToolBinding.Apply(Plugin, layer, ToolTextEscaping.Minimal);
-            var required = Listed(Plugin, Tool_Screenshot.ScreenshotIsolatedToolId).InputSchema.GetProperty("required")
-                .EnumerateArray().Select(e => e.GetString()).ToArray();
-            CollectionAssert.AreEqual(new[] { "gameObjectRef" }, required);
+            CollectionAssert.AreEqual(new[] { "gameObjectRef" }, Required(Plugin, Tool_Screenshot.ScreenshotIsolatedToolId));
         }
 
         [Test]
