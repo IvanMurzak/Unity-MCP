@@ -157,15 +157,21 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         {
             RqlToolBinding.Apply(_local, layer, ToolTextEscaping.Minimal);
             CollectionAssert.AreEqual(new[] { "name" }, Required(_local, Optionals));
-            var schema = Listed(_local, Optionals).InputSchema;
-            StringAssert.DoesNotContain("\"null\"", schema.GetRawText());
-            var properties = schema.GetProperty("properties");
+            StringAssert.DoesNotContain("\"null\"", Listed(_local, Optionals).InputSchema.GetRawText());
+        }
+
+        [Test]
+        public void NullableParametersKeepTheirPlainRqlType()
+        {
+            RqlToolBinding.Apply(_local, ToolPresentationFormat.Rql, ToolTextEscaping.Minimal);
+            var properties = Listed(_local, Optionals).InputSchema.GetProperty("properties");
             Assert.AreEqual("string", properties.GetProperty("note").GetProperty("type").GetString());
+            Assert.AreEqual("string", properties.GetProperty("gameObjectRef").GetProperty("type").GetString());
             Assert.AreEqual("integer", properties.GetProperty("count").GetProperty("type").GetString());
         }
 
-        [TestCase("{\"name\": \"a\"}", "a|null|null|null|1")]
-        [TestCase("{\"name\": \"a\", \"note\": null, \"gameObjectRef\": null, \"count\": null}", "a|null|null|null|1")]
+        [TestCase("{\"name\": \"a\"}", "a|<none>|<none>|<none>|1")]
+        [TestCase("{\"name\": \"a\", \"note\": null, \"gameObjectRef\": null, \"count\": null}", "a|<none>|<none>|<none>|1")]
         [TestCase("{\"name\": \"a\", \"note\": \"n\", \"gameObjectRef\": \"unity.find(\\\"Alpha\\\")\", \"count\": 2, \"times\": 3}", "a|n|ref|2|3")]
         public void OmittedOrNullNullableArgumentsReachTheMethodAsNull(string json, string expected)
         {

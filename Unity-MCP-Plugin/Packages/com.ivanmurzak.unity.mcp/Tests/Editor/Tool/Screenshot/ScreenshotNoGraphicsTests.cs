@@ -30,7 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             new TestCaseData((Func<ResponseCallTool>)(() => Tool.ScreenshotCamera(width: 64, height: 64))).SetName("ScreenshotCamera_WithoutGraphicsDevice_ReportsIt"),
             new TestCaseData((Func<ResponseCallTool>)(() => Tool.ScreenshotGameView())).SetName("ScreenshotGameView_WithoutGraphicsDevice_ReportsIt"),
             new TestCaseData((Func<ResponseCallTool>)(() => Tool.ScreenshotSceneView(width: 64, height: 64))).SetName("ScreenshotSceneView_WithoutGraphicsDevice_ReportsIt"),
-            new TestCaseData((Func<ResponseCallTool>)(() => Tool.ScreenshotIsolated(gameObjectRef: null))).SetName("ScreenshotIsolated_WithoutGraphicsDevice_ReportsIt"),
+            new TestCaseData((Func<ResponseCallTool>)(() => Tool.ScreenshotIsolated(gameObjectRef: null!))).SetName("ScreenshotIsolated_WithoutGraphicsDevice_ReportsIt"),
         };
 
         bool _savedNoGraphicsDevice;
