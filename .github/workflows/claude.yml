@@ -54,7 +54,7 @@ jobs:
         uses: ./.github/actions/setup-unity-mcp
         with:
           unity-license: ${{ secrets.UNITY_LICENSE }}
-          unity-mcp-tools: ${{ secrets.UNITY_MCP_TOOLS != '' && secrets.UNITY_MCP_TOOLS || 'assets-refresh,console-get-logs,script-execute,tests-run' }}
+          unity-mcp-tools: ${{ secrets.UNITY_MCP_TOOLS != '' && secrets.UNITY_MCP_TOOLS || 'assets-refresh,console-get-logs,csharp-exec,tests-run' }}
 
       - name: Run Claude Code
         id: claude
