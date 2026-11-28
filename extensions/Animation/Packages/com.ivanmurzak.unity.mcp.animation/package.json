@@ -17,7 +17,7 @@
   "license": "Apache-2.0",
   "description": "MCP Tools for Animation - Enhance your Unity projects with AI-powered Animation tools using the MCP framework.",
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "1.14.3",
+    "com.ivanmurzak.unity.mcp": "1.15.0",
     "com.unity.modules.animation": "1.0.0"
   },
   "scopedRegistries": [

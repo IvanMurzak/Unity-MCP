@@ -18,7 +18,7 @@
   "license": "MIT",
   "description": "MCP Tools for Cinemachine - Enhance your Unity projects with AI-powered Cinemachine camera tools using the MCP framework. Create and configure CinemachineCamera, CinemachineBrain, targets, lenses, noise and blends via natural language.",
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "1.14.3",
+    "com.ivanmurzak.unity.mcp": "1.15.0",
     "com.unity.cinemachine": "3.1.6"
   },
   "scopedRegistries": [

@@ -20,7 +20,7 @@
   "license": "MIT",
   "description": "MCP Tools for AI Navigation - Enhance your Unity projects with AI-powered NavMesh tools using the MCP framework. Add and bake NavMeshSurface, configure bake settings, add NavMeshModifier / NavMeshLink, and create and drive NavMeshAgents via natural language.",
   "dependencies": {
-    "com.ivanmurzak.unity.mcp": "1.14.3",
+    "com.ivanmurzak.unity.mcp": "1.15.0",
     "com.unity.ai.navigation": "1.1.7"
   },
   "scopedRegistries": [
