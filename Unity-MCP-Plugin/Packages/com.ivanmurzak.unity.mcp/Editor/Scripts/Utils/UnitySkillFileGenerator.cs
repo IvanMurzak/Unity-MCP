@@ -45,6 +45,18 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// </summary>
         public IEnumerable<string> HiddenAliases { get; set; } = Array.Empty<string>();
 
+        /// <summary>
+        /// The front-matter <c>metadata</c> of every SKILL.md the plugin writes. The AI Game Dev App hides a tool's page
+        /// (<c>ai-game-dev: exclude</c>: its agent has the tool itself) and shows the standalone knowledge skills
+        /// (<c>[AiSkill]</c>, e.g. <c>unity-rql</c>: <c>include</c>).
+        /// </summary>
+        public static void ApplySkillMetadata(ConnectionConfig config)
+        {
+            config.SkillMetadata["generated-by"] = "unity-mcp";
+            config.ToolSkillMetadata["ai-game-dev"] = "exclude";
+            config.StandaloneSkillMetadata["ai-game-dev"] = "include";
+        }
+
         /// <inheritdoc/>
         protected override bool GenerateFor(IRunTool tool, string skillsDir, string host, string skillName)
         {

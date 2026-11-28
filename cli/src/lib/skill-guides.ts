@@ -9,10 +9,14 @@ import { CLI_NAME, CODE_COMMANDS, EDITOR_COMMANDS, PLUGIN_MARKER, RQL_LANGUAGE, 
 const APP_SKILL_NAME = 'ai-game-dev-app';
 const CLI_SKILL_DESCRIPTION = `How to use ${CLI_NAME} on this Unity project: read before the first editor command (scenes, GameObjects, components, assets). Editing scripts alone needs only \`${CLI_NAME} compile\` (file:line errors).`;
 const APP_SKILL_DESCRIPTION = 'AI Game Dev App: image, texture, 3D model, audio and video generation; animation, rigging, Blender, music and sound effects. Consult when a game-development task needs creative tools unavailable in the current environment, or an integrated workflow for Unity, Unreal Engine or Godot.';
-/** The plugin's generator stamps the same metadata, so the App treats both alike. */
+/**
+ * The metadata the plugin's generator stamps on its standalone (knowledge) skills, so the App treats both alike:
+ * these guides are knowledge, not a tool's page, so the App shows them (`include`; tool pages carry `exclude`).
+ * `ai-game-dev-app` is also written by the plugin under the same name: both must agree.
+ */
 const SKILL_METADATA = {
   'generated-by': 'unity-mcp',
-  'ai-game-dev': 'exclude',
+  'ai-game-dev': 'include',
 } as const;
 
 function skillMetadataLines(): string[] {

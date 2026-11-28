@@ -31,7 +31,7 @@ describe('the unity-mcp-cli skill', () => {
     for (const file of buildGuideFiles().filter((f) => f.relativePath.endsWith('SKILL.md'))) {
       const name = file.relativePath.split('/')[0];
       expect(file.content.startsWith(`---\nname: ${name}\ndescription: "`)).toBe(true);
-      expect(file.content).toContain('metadata:\n  generated-by: unity-mcp\n  ai-game-dev: exclude\n---');
+      expect(file.content).toContain('metadata:\n  generated-by: unity-mcp\n  ai-game-dev: include\n---');
     }
   });
 

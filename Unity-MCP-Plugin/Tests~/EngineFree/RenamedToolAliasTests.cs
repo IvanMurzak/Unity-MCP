@@ -58,6 +58,7 @@ namespace com.IvanMurzak.Unity.MCP.EngineFree.Tests
                 {
                     config.SkillsPath = root;
                     config.KeepConnected = false;
+                    UnitySkillFileGenerator.ApplySkillMetadata(config);
                 });
                 builder.WithSkillFileGenerator(new UnitySkillFileGenerator { HiddenAliases = new[] { RenamedProbeTools.OldName } });
                 builder.WithTools(typeof(RenamedProbeTools));
