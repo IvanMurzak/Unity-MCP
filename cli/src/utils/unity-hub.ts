@@ -1,7 +1,7 @@
 import * as fs from 'fs';
 import * as path from 'path';
 import * as os from 'os';
-import { execFile, execFileSync, execSync, spawn, spawnSync, type ChildProcess } from 'child_process';
+import { execFileSync, execSync, spawn, spawnSync, type ChildProcess } from 'child_process';
 import { platform } from 'os';
 import { get as httpsGet } from 'https';
 import { get as httpGet, IncomingMessage } from 'http';
@@ -909,8 +909,8 @@ export const DEFAULT_CREATE_TIMEOUT_MS = 120000;
  * `-createProject -quit -batchmode` instead.
  *
  * Silent (library-safe): no spinners, no stdout/stderr writes — the
- * editor's output is captured and folded into the rejection error on
- * failure. The orchestration around this call (editor discovery /
+ * editor's stderr is captured and folded into the rejection error on
+ * failure; verbose stdout is discarded without a buffer limit. The orchestration (editor discovery /
  * version selection) lives in `lib/create-project.ts`; the CLI's
  * `create-project` command delegates there.
  */
@@ -920,29 +920,43 @@ export function runEditorCreateProject(
   timeoutMs = DEFAULT_CREATE_TIMEOUT_MS,
 ): Promise<void> {
   return new Promise((resolve, reject) => {
-    execFile(
-      editorExePath,
-      ['-createProject', projectPath, '-quit', '-batchmode'],
-      // maxBuffer: Infinity — captured output is only used to enrich the
-      // failure message, and Unity's verbose first-run import logs can
-      // exceed Node's 1 MiB default, which would otherwise kill (with
-      // ERR_CHILD_PROCESS_STDOUT_MAXBUFFER) a creation that was succeeding.
-      { encoding: 'utf-8', timeout: timeoutMs, windowsHide: true, maxBuffer: Infinity },
-      (err) => {
-        if (err) {
-          // On timeout, execFile kills the process with SIGTERM and leaves
-          // a generic "Command failed" message, so name the timeout
-          // explicitly. Otherwise execFile already folds the captured
-          // stderr into err.message ("Command failed: <cmd>\n<stderr>") —
-          // surface that as-is rather than appending stderr a second time.
-          const message = err.killed && err.signal === 'SIGTERM'
-            ? `Failed to create project: timed out after ${timeoutMs}ms`
-            : `Failed to create project: ${err.message}`;
-          reject(new Error(message));
-          return;
-        }
-        resolve();
-      },
-    );
+    // A separate POSIX group lets the timeout reach import workers and compilers,
+    // rather than letting execFile kill the parent before its tree can be found.
+    const detached = process.platform !== 'win32';
+    const child = spawn(editorExePath, ['-createProject', projectPath, '-quit', '-batchmode'], {
+      windowsHide: true, detached, stdio: ['ignore', 'ignore', 'pipe'],
+    });
+    const unregisterExit = killHubOnExit(child, detached);
+    let stderr = '';
+    child.stderr.setEncoding('utf8');
+    child.stderr.on('data', (chunk: string) => { stderr += chunk; });
+    let timedOut = false;
+    let stopping: Promise<void> | undefined;
+    const timer = setTimeout(() => {
+      timedOut = true;
+      stopping = killHubTree(child);
+    }, timeoutMs);
+    let settled = false;
+    const finish = async (error?: Error): Promise<void> => {
+      if (settled) return;
+      settled = true;
+      clearTimeout(timer);
+      try {
+        await stopping;
+        if (timedOut) reject(new Error(`Failed to create project: timed out after ${timeoutMs}ms`));
+        else if (error) reject(new Error(`Failed to create project: ${error.message}${stderr ? `\n${stderr.trimEnd()}` : ''}`));
+        else resolve();
+      } catch (stopError) {
+        reject(new Error(`Failed to stop project creation: ${String(stopError)}`));
+      } finally {
+        unregisterExit();
+      }
+    };
+    child.once('error', error => { void finish(error); });
+    child.once('close', (code, signal) => {
+      void finish(code === 0 ? undefined : new Error(
+        `Command failed: ${editorExePath} (${code !== null ? `exit code ${code}` : `killed by ${signal}`})`,
+      ));
+    });
   });
 }
