@@ -138,7 +138,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
         public ResponseCallTool ScreenshotIsolated
         (
             [Description("Reference to the target GameObject (by instanceId, path, or name).")]
-            GameObjectRef? gameObjectRef,
+            GameObjectRef gameObjectRef,
             [Description("Include child GameObjects in the render. Default: true.")]
             bool? includeChildren = true,
             [Description("When true, renders only the target object using layer-based culling. "
@@ -180,6 +180,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
                 return ResponseCallTool.Error(
                     $"Resolution must be between {MinResolution} and {MaxResolution} pixels. Got {resolvedResolution}.");
 
+            // Required in the schema, but an explicit JSON null still reaches the method.
             if (gameObjectRef == null)
                 return ResponseCallTool.Error("[Error] gameObjectRef is required.");
 

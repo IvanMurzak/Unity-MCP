@@ -32,7 +32,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
         [Test]
         public void ScreenshotIsolated_NullGameObjectRef_ReturnsError()
         {
-            var result = new Tool_Screenshot().ScreenshotIsolated(gameObjectRef: null);
+            var result = new Tool_Screenshot().ScreenshotIsolated(gameObjectRef: null!);
             Assert.IsNotNull(result);
             Assert.AreEqual(ResponseStatus.Error, result.Status, "Should error on null gameObjectRef");
         }

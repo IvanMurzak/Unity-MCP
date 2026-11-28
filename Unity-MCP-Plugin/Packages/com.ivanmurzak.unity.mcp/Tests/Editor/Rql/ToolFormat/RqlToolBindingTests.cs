@@ -30,6 +30,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
         private const string Echo = "binding-echo";
 
         private const string Items = "binding-items";
+        private const string Optionals = "binding-optionals";
         private McpToolManager _local = null!;
 
         // The suite runs under the configured data layer (toolFormat, default Rql): these tests force RQL on the plugin's
@@ -52,6 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
             {
                 [Echo] = RunTool.CreateFromStaticMethod(reflector, null, Echo, typeof(PresentationTestTools).GetMethod(nameof(PresentationTestTools.Echo))!),
                 [Items] = RunTool.CreateFromStaticMethod(reflector, null, Items, typeof(PresentationTestTools).GetMethod(nameof(PresentationTestTools.Items))!),
+                [Optionals] = RunTool.CreateFromStaticMethod(reflector, null, Optionals, typeof(PresentationTestTools).GetMethod(nameof(PresentationTestTools.Optionals))!),
             };
             _local = new McpToolManager(NullLogger<McpToolManager>.Instance, reflector, tools) { ToolBinding = RqlToolBinding.Instance };
             Plugin.ToolBinding = RqlToolBinding.Instance;
@@ -66,6 +68,9 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
 
         private static ResponseListTool Listed(IToolManager manager, string name) =>
             manager.RunListTool(new RequestListTool()).Result.Value!.Single(t => t.Name == name);
+
+        private static string?[] Required(IToolManager manager, string name) =>
+            Listed(manager, name).InputSchema.GetProperty("required").EnumerateArray().Select(e => e.GetString()).ToArray();
 
         private static (ResponseCallTool result, string text) Call(IToolManager manager, string name, string json)
         {
@@ -142,6 +147,45 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.ToolFormat
                 JsonSerializer.Serialize(new { csharpCode = "x", parameters = "{x: [1, 2]}" }));
             Assert.AreEqual(ResponseStatus.Error, list.Status, listText);
             StringAssert.Contains("lists are not supported", listText);
+        }
+
+        // Required = no default, not [Optional] and not nullable (NRT string? / GameObjectRef? or Nullable<int>), in both
+        // data layers; nullability never puts "null" into a schema type (some clients turn a type array into ""/0/false).
+        [TestCase(ToolPresentationFormat.Rql)]
+        [TestCase(ToolPresentationFormat.Json)]
+        public void OnlyNonNullableParametersWithoutDefaultsAreRequired(ToolPresentationFormat layer)
+        {
+            RqlToolBinding.Apply(_local, layer, ToolTextEscaping.Minimal);
+            CollectionAssert.AreEqual(new[] { "name" }, Required(_local, Optionals));
+            StringAssert.DoesNotContain("\"null\"", Listed(_local, Optionals).InputSchema.GetRawText());
+        }
+
+        [Test]
+        public void NullableParametersKeepTheirPlainRqlType()
+        {
+            RqlToolBinding.Apply(_local, ToolPresentationFormat.Rql, ToolTextEscaping.Minimal);
+            var properties = Listed(_local, Optionals).InputSchema.GetProperty("properties");
+            Assert.AreEqual("string", properties.GetProperty("note").GetProperty("type").GetString());
+            Assert.AreEqual("string", properties.GetProperty("gameObjectRef").GetProperty("type").GetString());
+            Assert.AreEqual("integer", properties.GetProperty("count").GetProperty("type").GetString());
+        }
+
+        [TestCase("{\"name\": \"a\"}", "a|<none>|<none>|<none>|1")]
+        [TestCase("{\"name\": \"a\", \"note\": null, \"gameObjectRef\": null, \"count\": null}", "a|<none>|<none>|<none>|1")]
+        [TestCase("{\"name\": \"a\", \"note\": \"n\", \"gameObjectRef\": \"unity.find(\\\"Alpha\\\")\", \"count\": 2, \"times\": 3}", "a|n|ref|2|3")]
+        public void OmittedOrNullNullableArgumentsReachTheMethodAsNull(string json, string expected)
+        {
+            var (r, text) = Call(_local, Optionals, json);
+            Assert.AreEqual(ResponseStatus.Success, r.Status, text);
+            StringAssert.Contains(expected, text);
+        }
+
+        [TestCase(ToolPresentationFormat.Rql)]
+        [TestCase(ToolPresentationFormat.Json)]
+        public void ScreenshotIsolatedRequiresItsTarget(ToolPresentationFormat layer)
+        {
+            RqlToolBinding.Apply(Plugin, layer, ToolTextEscaping.Minimal);
+            CollectionAssert.AreEqual(new[] { "gameObjectRef" }, Required(Plugin, Tool_Screenshot.ScreenshotIsolatedToolId));
         }
 
         [Test]
