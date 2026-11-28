@@ -325,7 +325,7 @@ namespace com.IvanMurzak.Unity.MCP
 
             /// <summary>
             /// Revision 1 (2026-11): the Package Manager tools are shown by default. Measured with a real agent, hidden they
-            /// were never found (it installed packages from script-execute instead, at about 3x the tokens). Shows them once
+            /// were never found (it installed packages from csharp-exec instead, at about 3x the tokens). Shows them once
             /// in a project saved before; a user who hides them afterwards keeps them hidden. Returns true when the config
             /// changed (the caller re-saves it).
             /// </summary>

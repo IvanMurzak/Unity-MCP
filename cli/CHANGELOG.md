@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed — `exec` and `compile` call `csharp-exec`
+
+The plugin renamed `script-execute` to `csharp-exec` (DEV-314). `exec`, `compile` and the library's `execCode` /
+`compileProject` call `csharp-exec`; a plugin from before the rename answers that it has no such tool, and the call is
+sent again as `script-execute`. The library exports `buildCSharpExecInput`; `buildScriptExecuteInput` stays as a
+deprecated alias.
+
 ### Added — library: `installUnityEditor` installs a Unity Editor version
 
 `installUnityEditor({ version, hubPath?, onProgress?, signal? })` is the library form of `install-unity`: an editor

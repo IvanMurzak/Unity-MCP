@@ -3,7 +3,7 @@ import { Command } from 'commander';
 import * as ui from '../utils/ui.js';
 import { verbose } from '../utils/ui.js';
 import { localFallbackNote, resolveAndValidateProjectPath, resolveEditorConnection, resolveProbeUrls } from '../utils/connection.js';
-import { DEFAULT_EXEC_TIMEOUT_MS, execCode, readToolResponse, SCRIPT_EXECUTE_TOOL } from '../lib/exec.js';
+import { DEFAULT_EXEC_TIMEOUT_MS, execCode, readToolResponse, CSHARP_EXEC_TOOL } from '../lib/exec.js';
 import { parsePositiveIntFlag } from './open.js';
 import {
   buildFailureMessage, classifyEditorFailure, classifyToolFailure, handleFailure, PLUGIN_NOT_CONNECTED_HINT, stringifyForRaw,
@@ -125,12 +125,12 @@ export const execCommand = new Command('exec')
         if (out.machine) {
           out.fail(classified.exitCode, {
             code: classified.code,
-            message: buildFailureMessage(result.toolFailure, { toolName: SCRIPT_EXECUTE_TOOL, endpoint: result.toolFailure.endpoint, raw: false, timeoutMs, errorNoun: 'tool' }),
+            message: buildFailureMessage(result.toolFailure, { toolName: CSHARP_EXEC_TOOL, endpoint: result.toolFailure.endpoint, raw: false, timeoutMs, errorNoun: 'tool' }),
             httpStatus: classified.httpStatus,
           }, { editor });
         }
         handleFailure(result.toolFailure, {
-          toolName: SCRIPT_EXECUTE_TOOL,
+          toolName: CSHARP_EXEC_TOOL,
           endpoint: result.toolFailure.endpoint,
           raw: options.raw,
           timeoutMs,

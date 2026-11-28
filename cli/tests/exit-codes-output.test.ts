@@ -36,7 +36,7 @@ describe('exit codes', () => {
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 502 }))).toEqual({ exitCode: 7, code: 'UNREACHABLE', httpStatus: 502 });
     expect(classifyToolFailure(failure({ reason: 'invalid-input' }))).toEqual({ exitCode: 2, code: 'USAGE' });
     // What the server answered in a live run: a failed snippet, and arguments rejected before the tool ran.
-    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 422, data: { error: "Tool execution failed for 'Script / Execute': boom" } })))
+    expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 422, data: { error: "Tool execution failed for 'C# / Execute': boom" } })))
       .toEqual({ exitCode: 6, code: 'TOOL_FAILED', httpStatus: 422 });
     expect(classifyToolFailure(failure({ reason: 'http-error', httpStatus: 422, data: { error: "[invalid_params] Invalid params for tool 'package-add'" } })))
       .toEqual({ exitCode: 2, code: 'USAGE', httpStatus: 422 });

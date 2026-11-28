@@ -53,7 +53,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             yield return base.TearDown();
         }
 
-        // Wave 6: asked which tools are hidden, an agent read the plugin's config file through script-execute; the list says it.
+        // Wave 6: asked which tools are hidden, an agent read the plugin's config file through csharp-exec; the list says it.
         [UnityTest]
         public IEnumerator List_ReportsVisibility()
         {

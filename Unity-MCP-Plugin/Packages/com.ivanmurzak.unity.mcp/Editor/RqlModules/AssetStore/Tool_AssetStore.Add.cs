@@ -24,7 +24,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
             "materials, models, scenes and notes (render pipeline, scripts compiling, nested pipeline packages). Status 'awaiting-user': " +
             "Unity shows 'Missing signature' (Asset Store packages are unsigned) and waits for the user's Import Anyway; ask the user, " +
             "never press it yourself, then check '" + LibraryToolId + "' Imported (or ImportError). If the user cancels, stop: never import an Asset Store " +
-            "package another way (script-execute, AssetDatabase.ImportPackage, unpacking the .unitypackage). Find the productId with '" + LibraryToolId + "'.")]
+            "package another way (csharp-exec, AssetDatabase.ImportPackage, unpacking the .unitypackage). Find the productId with '" + LibraryToolId + "'.")]
         public AssetStoreImportResult Add
         (
             [Description("The package's productId from '" + LibraryToolId + "', or its exact name.")]

@@ -517,7 +517,7 @@ echo 'Application.unityVersion' | unity-mcp-cli exec
 | `--url <url>` | No | Anulación de la URL del servidor; una URL local también hace que un editor recién iniciado inicie ese servidor |
 | `--token <token>` | No | Anulación del token bearer |
 
-`exec` llama a la herramienta `script-execute`, así que los fragmentos, `usings` e `include` necesitan una versión del plugin con soporte de Code-Exec. Un error de compilación o una excepción sale con el código 6 y señala tus propias líneas.
+`exec` llama a la herramienta `csharp-exec`, así que los fragmentos, `usings` e `include` necesitan una versión del plugin con soporte de Code-Exec. Un error de compilación o una excepción sale con el código 6 y señala tus propias líneas.
 
 > **¿No has iniciado sesión?** Un proyecto nuevo empieza en el modo de conexión **Cloud**. Sin haber iniciado sesión en ai-game.dev, `exec`,
 > `run-tool`, `compile` y `tools` usan en su lugar el servidor MCP **local** del proyecto (lo indican en stderr): a un editor

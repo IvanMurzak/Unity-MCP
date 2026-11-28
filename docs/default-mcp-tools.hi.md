@@ -30,7 +30,7 @@ RQL सोर्स: `scenes`, `roots`, `objects` (लोड किए गए �
 ## 📜 स्क्रिप्टिंग और टेस्ट
 | टूल | ID | डिफ़ॉल्ट | विवरण |
 | :--- | :--- | :--- | :--- |
-| **Script / Execute** | `script-execute` | shown | Roslyn का उपयोग करके C# कोड को डायनामिक रूप से कंपाइल और एक्ज़िक्यूट करें। |
+| **C# / Execute** | `csharp-exec` | shown | Roslyn का उपयोग करके C# कोड को डायनामिक रूप से कंपाइल और एक्ज़िक्यूट करें। पुराना ID `script-execute` अब भी चलता है (छिपा हुआ उपनाम)। |
 | **Script / Read** | `script-read` | hidden | किसी स्क्रिप्ट फ़ाइल की सामग्री पढ़ें। |
 | **Script / Update or Create** | `script-update-or-create` | hidden | दिए गए C# कोड से स्क्रिप्ट फ़ाइल अपडेट करें या बनाएँ। |
 | **Script / Delete** | `script-delete` | hidden | स्क्रिप्ट फ़ाइल(ें) हटाएँ। |

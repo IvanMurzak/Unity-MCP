@@ -186,7 +186,7 @@
       "enabled": true
     },
     {
-      "name": "script-execute",
+      "name": "csharp-exec",
       "enabled": true
     },
     {

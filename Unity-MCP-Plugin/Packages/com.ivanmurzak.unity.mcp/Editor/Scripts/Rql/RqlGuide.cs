@@ -183,16 +183,16 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
 
         /// <summary>
         /// The two-step delete (wave 6/7 P15: agents asked to "delete only after showing me" deleted in the same turn, through
-        /// script-execute). Shared by rql-mutate, DeleteAsset, script-execute and script-delete, whichever the agent picks.
+        /// csharp-exec). Shared by rql-mutate, DeleteAsset, csharp-exec and script-delete, whichever the agent picks.
         /// </summary>
         public const string DeleteRule =
-            "Deleting (DeleteAsset, Destroy, script-delete, or AssetDatabase / File deletes in script-execute) takes two turns unless the " +
+            "Deleting (DeleteAsset, Destroy, script-delete, or AssetDatabase / File deletes in csharp-exec) takes two turns unless the " +
             "user named the exact items or you created them yourself in this task: first list the exact candidates (rql-query, a " +
             "dry_run=true mutation or a read-only snippet), show them and end your turn; delete only that list, in a separate call, " +
             "after the user confirms. Otherwise never find and delete candidates in the same turn.";
 
         /// <summary>
-        /// Packages go through their tools (measured 2026-11-11: agents that installed them from script-execute took 2-40x the
+        /// Packages go through their tools (measured 2026-11-11: agents that installed them from csharp-exec took 2-40x the
         /// tokens, and one unpacked an Asset Store package by hand after the user cancelled Unity's signature check).
         /// </summary>
         public const string PackagesRule =
@@ -209,7 +209,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql
         public const string MutateDescription =
             "Change the live Unity Editor scene with an RQL query whose last stage is set or call. All-or-nothing: every target and " +
             "value is checked before anything is written; a failure changes nothing. Undoable: one Undo step per statement (Ctrl+Z; from an " +
-            "agent: script-execute UnityEditor.Undo.PerformUndo(), then editor | call SaveScenes() and editor | call SaveAssets()). Changed assets, " +
+            "agent: csharp-exec UnityEditor.Undo.PerformUndo(), then editor | call SaveScenes() and editor | call SaveAssets()). Changed assets, " +
             "scenes and the open prefab are saved to disk automatically; an untitled scene needs SaveAs(path). " +
             "dry_run=true returns the receipt ($ref, member, old, new) without changing anything. Several changes in one call: separate " +
             "statements with ; (each ends with set or call and is its own all-or-nothing change; the first that fails stops the rest, " +

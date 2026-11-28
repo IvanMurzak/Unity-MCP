@@ -21,10 +21,10 @@ using NUnit.Framework;
 namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
 {
     /// <summary>
-    /// Code-Exec's time guard on Unity's Mono, on the main thread: an endless loop stops at its budget; script-execute always
-    /// sends a budget below the server's tool timeout. (Runaway recursion: <see cref="ScriptExecuteResultTests"/>.)
+    /// Code-Exec's time guard on Unity's Mono, on the main thread: an endless loop stops at its budget; csharp-exec always
+    /// sends a budget below the server's tool timeout. (Runaway recursion: <see cref="CSharpExecResultTests"/>.)
     /// </summary>
-    public class ScriptExecuteGuardTests
+    public class CSharpExecGuardTests
     {
         [Test]
         public void AnEndlessLoopStopsAtItsBudget()
@@ -76,7 +76,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Tools
         [Test]
         public void AThreadTheSnippetStartedStopsAfterTheRun()
         {
-            const string key = "ScriptExecuteGuardTests.thread";
+            const string key = "CSharpExecGuardTests.thread";
             var runner = new CodeRunner(new RoslynCSharpCompiler(), new CodeRunnerOptions { LogCaptures = new List<ILogCapture>() });
             var result = runner.Execute(new ExecuteRequest
             {

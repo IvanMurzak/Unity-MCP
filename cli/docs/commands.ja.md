@@ -517,7 +517,7 @@ echo 'Application.unityVersion' | unity-mcp-cli exec
 | `--url <url>` | いいえ | サーバー URL の上書き。ローカルの URL の場合は、新たに起動したエディターがそのサーバーも起動します |
 | `--token <token>` | いいえ | Bearer トークンの上書き |
 
-`exec` は `script-execute` ツールを呼び出すため、スニペット、`usings`、`include` には Code-Exec をサポートするプラグインのバージョンが必要です。コンパイルエラーまたは例外は終了コード 6 で終了し、あなた自身のコードの該当行を示します。
+`exec` は `csharp-exec` ツールを呼び出すため、スニペット、`usings`、`include` には Code-Exec をサポートするプラグインのバージョンが必要です。コンパイルエラーまたは例外は終了コード 6 で終了し、あなた自身のコードの該当行を示します。
 
 > **サインインしていない場合:** 新しいプロジェクトは **Cloud** 接続モードで始まります。ai-game.dev にサインインしていない場合、`exec`、
 > `run-tool`、`compile`、`tools` は代わりにプロジェクトの**ローカル** MCP サーバーを使います (その旨を stderr に表示します): これらが起動する

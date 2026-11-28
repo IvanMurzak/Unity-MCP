@@ -1,6 +1,6 @@
-// The C# snippets `compileProject` runs through `script-execute`, and the parser of their answer. They use only public
+// The C# snippets `compileProject` runs through `csharp-exec`, and the parser of their answer. They use only public
 // editor API plus reflection on the Console's `LogEntries` (internal, stable since Unity 2017), so any plugin version
-// that has `script-execute` serves them.
+// that has `csharp-exec` serves them.
 
 import { parseCompilerMessages, type CompilerMessage } from '../utils/compiler-messages.js';
 
@@ -64,7 +64,7 @@ if (!busy && entries != null && entryType != null)
 sb.ToString()`;
 
 /**
- * The string a snippet returned. `script-execute` answers a value as `<type>: <json>` (`System.String: "state:ok\r\n"`);
+ * The string a snippet returned. `csharp-exec` answers a value as `<type>: <json>` (`System.String: "state:ok\r\n"`);
  * a bare string is taken as is.
  */
 export function unwrapStringResult(text: string): string {

@@ -56,7 +56,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.UI
 
             if (toolManager != null)
             {
-                foreach (var tool in toolManager.GetAllTools().Where(tool => tool != null))
+                // A renamed tool's hidden alias (UnityMcpPlugin.RenamedTools) has no toggle: showing it would list the tool twice.
+                foreach (var tool in toolManager.GetAllTools().Where(tool => tool != null && !UnityMcpPlugin.RenamedTools.ContainsKey(tool.Name)))
                 {
                     refreshed.Add(new ToolViewModel(toolManager, tool));
                 }

@@ -120,7 +120,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Rql.AssetStore
 
         /// <summary>The agent's rule when the user is asked: the test agents worked around a Cancel (wave of 2026-11-11).</summary>
         internal const string NoWorkaround =
-            " If the user presses Cancel, stop and tell them: never import the package another way (script-execute, " +
+            " If the user presses Cancel, stop and tell them: never import the package another way (csharp-exec, " +
             "AssetDatabase / AssetPackage calls, unpacking the .unitypackage file), that bypasses Unity's check and the user's choice.";
 
         /// <summary>

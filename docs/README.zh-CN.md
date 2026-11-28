@@ -117,7 +117,7 @@ https://github.com/user-attachments/assets/228baf4d-4f00-4dce-939d-fb985ebdd8dd
 | 场景和 GameObject | `rql-query`、`rql-mutate` | *“列出当前打开场景中所有被禁用的 GameObject”* |
 | 资源和预制体 | `rql-query`、`rql-mutate` | *“创建一个红色材质并赋给所有立方体”* |
 | 控制台和编辑器状态 | `rql-query` | *“控制台里有哪些错误?”* |
-| 编辑器中的 C# | `script-execute` | *“运行 C#,在地形上的随机位置放置 100 棵树”* |
+| 编辑器中的 C# | `csharp-exec` | *“运行 C#,在地形上的随机位置放置 100 棵树”* |
 | 测试 | `tests-run` | *“运行 EditMode 测试并修复失败的部分”* |
 | 截图 | `screenshot-isolated` | *“给我看 Player 模型的正面”* |
 | 包和 Asset Store | `package-*`、`assetstore-*` | *“安装 Cinemachine”* |
@@ -215,7 +215,7 @@ tool_timeout_sec = 300
 ✅ **来源检查** — 在所有认证模式下,带有不被允许的 `Origin` 的浏览器请求都会被拒绝(403)。\
 ✅ **认证模式** — `none`(本地默认)、`token`(智能体和插件都必须发送的同一个共享密钥)、`oauth`(ai-game.dev 账号)。\
 ✅ **Cloud 中继** — 无状态中继:它在你的智能体和编辑器之间转发工具调用,不检查也不持久保存其内容,也不收集对话、源代码、项目文件、资源或场景数据。它会记录 MCP 事件元数据(事件类型、时间、状态、会话标识符、工具、提示或资源名称、错误详情),这些数据在滚动的 90 天窗口内使用([隐私政策](https://ai-game.dev/legal/privacy))。\
-⚠️ **不受保护的情况** — 在 `none` 模式下,你电脑上任何能访问该端口的进程都可以调用工具,而工具以编辑器权限运行(`script-execute` 会运行 C#)。在共享电脑上请使用 `token` 模式。
+⚠️ **不受保护的情况** — 在 `none` 模式下,你电脑上任何能访问该端口的进程都可以调用工具,而工具以编辑器权限运行(`csharp-exec` 会运行 C#)。在共享电脑上请使用 `token` 模式。
 
 服务器选项和 Docker:[MCP 服务器与连接](mcp-server.zh-CN.md)。
 

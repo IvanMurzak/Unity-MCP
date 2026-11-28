@@ -62,7 +62,10 @@ namespace com.IvanMurzak.Unity.MCP
                         config.SkillMetadata["generated-by"] = "unity-mcp";
                         config.SkillMetadata["ai-game-dev"] = "exclude";
                     });
-                    builder.WithSkillFileGenerator(new UnitySkillFileGenerator(loggerProvider?.CreateLogger(nameof(UnitySkillFileGenerator))));
+                    builder.WithSkillFileGenerator(new UnitySkillFileGenerator(loggerProvider?.CreateLogger(nameof(UnitySkillFileGenerator)))
+                    {
+                        HiddenAliases = UnityMcpPlugin.RenamedTools.Keys
+                    });
                 }
             ));
             stopwatch.Stop();

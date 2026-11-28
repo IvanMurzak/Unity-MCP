@@ -13,6 +13,7 @@ using AIGD;
 using System;
 using System.Collections.Generic;
 using System.ComponentModel;
+using System.Linq;
 using System.Text.Json.Nodes;
 using System.Text.Json.Serialization;
 using System.Text.RegularExpressions;
@@ -111,7 +112,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
                 var results = new List<ToolInfoData>();
 
-                foreach (var tool in allTools)
+                // A renamed tool's hidden alias is not a tool of its own: the new name is listed instead.
+                foreach (var tool in allTools.Where(t => !UnityMcpPlugin.RenamedTools.ContainsKey(t.Name)))
                 {
                     List<ToolInputData>? inputs = null;
 

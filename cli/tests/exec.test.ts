@@ -1,7 +1,7 @@
 import { describe, it, expect, vi } from 'vitest';
 import { EditorSessionError, type EnsureResult } from '@baizor/gamedev-cli-core';
 import {
-  buildScriptExecuteInput,
+  buildCSharpExecInput,
   DEFAULT_EXEC_TIMEOUT_MS,
   execCode,
   readToolResponse,
@@ -15,7 +15,7 @@ import { resolveProbeUrls } from '../src/utils/connection.js';
 import type { RunToolResult } from '../src/lib/types.js';
 
 const LOCAL = 'http://localhost:1';
-const CALLED: RunToolResult = { kind: 'success', success: true, endpoint: `${LOCAL}/api/tools/script-execute`, httpStatus: 200, data: { status: 'success', content: [] } };
+const CALLED: RunToolResult = { kind: 'success', success: true, endpoint: `${LOCAL}/api/tools/csharp-exec`, httpStatus: 200, data: { status: 'success', content: [] } };
 
 function deps(ensure: () => Promise<EnsureResult<string>> = async () => ({ ready: LOCAL, source: 'running' })) {
   const ensureMock = vi.fn(ensure);
@@ -141,11 +141,11 @@ describe('execCode', () => {
     expect(sessionOptions(d).env).not.toHaveProperty('UNITY_MCP_TRANSPORT');
   });
 
-  it('calls script-execute on the URL that answered, with the cloud-store flag', async () => {
+  it('calls csharp-exec on the URL that answered, with the cloud-store flag', async () => {
     const d = deps(async () => ({ ready: 'http://other:2', source: 'started' }));
     await execCode(options(d, { usings: ['MyGame'], token: 'tk', tokenFromCloudStore: true }));
     expect(d.invoke).toHaveBeenCalledWith(expect.objectContaining({
-      toolName: 'script-execute',
+      toolName: 'csharp-exec',
       url: 'http://other:2',
       token: 'tk',
       tokenFromCloudStore: true,
@@ -180,13 +180,24 @@ describe('execCode', () => {
   it('re-sends a snippet the plugin deferred for a script reload', async () => {
     const deferred: RunToolResult = {
       kind: 'success', success: true, endpoint: 'e', httpStatus: 200,
-      data: { status: 'error', content: [{ type: 'text', text: "Tool execution failed for 'Script / Execute': Scripts are compiling and reload next, so this snippet was not run" }] },
+      data: { status: 'error', content: [{ type: 'text', text: "Tool execution failed for 'C# / Execute': Scripts are compiling and reload next, so this snippet was not run" }] },
     };
     const d = { ...deps(), sleep: vi.fn(async () => {}) };
     d.invoke.mockResolvedValueOnce(deferred).mockResolvedValueOnce(deferred);
     expect(await execCode(options(d))).toMatchObject({ kind: 'success' });
     expect(d.invoke).toHaveBeenCalledTimes(3);
     expect(d.sleep).toHaveBeenCalledTimes(2);
+  });
+
+  it('calls a plugin from before the rename by the old name, script-execute (DEV-314)', async () => {
+    const notFound: RunToolResult = {
+      kind: 'success', success: true, endpoint: 'e', httpStatus: 200,
+      data: { status: 'error', content: [{ type: 'text', text: "Tool with Name 'csharp-exec' not found." }] },
+    };
+    const d = deps();
+    d.invoke.mockResolvedValueOnce(notFound);
+    expect(await execCode(options(d))).toMatchObject({ kind: 'success', data: CALLED.data });
+    expect(d.invoke.mock.calls.map(([call]) => (call as { toolName: string }).toolName)).toEqual(['csharp-exec', 'script-execute']);
   });
 
   it('passes a failed tool call through', async () => {
@@ -197,10 +208,10 @@ describe('execCode', () => {
   });
 });
 
-describe('buildScriptExecuteInput', () => {
+describe('buildCSharpExecInput', () => {
   it('omits empty usings and include', () => {
-    expect(buildScriptExecuteInput('x', [], [])).toEqual({ csharpCode: 'x' });
-    expect(buildScriptExecuteInput('x', ['A'], ['lib/'])).toEqual({ csharpCode: 'x', usings: ['A'], include: ['lib/'] });
+    expect(buildCSharpExecInput('x', [], [])).toEqual({ csharpCode: 'x' });
+    expect(buildCSharpExecInput('x', ['A'], ['lib/'])).toEqual({ csharpCode: 'x', usings: ['A'], include: ['lib/'] });
   });
 });
 

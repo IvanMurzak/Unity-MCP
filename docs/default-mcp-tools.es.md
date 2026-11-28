@@ -30,7 +30,7 @@ Las cuatro aceptan un `savePath` opcional, para cuando el usuario quiere la imag
 ## 📜 Scripting y pruebas
 | Herramienta | ID | Predeterminado | Descripción |
 | :--- | :--- | :--- | :--- |
-| **Script / Execute** | `script-execute` | visible | Compilar y ejecutar código C# dinámicamente con Roslyn. |
+| **C# / Execute** | `csharp-exec` | visible | Compilar y ejecutar código C# dinámicamente con Roslyn. El ID anterior `script-execute` sigue funcionando (alias oculto). |
 | **Script / Read** | `script-read` | oculta | Leer el contenido de un archivo de script. |
 | **Script / Update or Create** | `script-update-or-create` | oculta | Actualizar o crear un archivo de script con el código C# proporcionado. |
 | **Script / Delete** | `script-delete` | oculta | Eliminar archivo(s) de script. |

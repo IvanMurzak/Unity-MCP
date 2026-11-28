@@ -86,7 +86,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql
             StringAssert.Contains("AddTag", RqlUnitySchema.Render(RqlUnity.Engine, null));
         }
 
-        // Wave 6/7 P15: asked to "delete only after showing me", agents deleted in the same turn, through script-execute.
+        // Wave 6/7 P15: asked to "delete only after showing me", agents deleted in the same turn, through csharp-exec.
         // Every way to delete carries the two-turn rule, not only rql-mutate.
         [Test]
         public void EveryDeleteToolSaysListShowEndTheTurnThenDelete()

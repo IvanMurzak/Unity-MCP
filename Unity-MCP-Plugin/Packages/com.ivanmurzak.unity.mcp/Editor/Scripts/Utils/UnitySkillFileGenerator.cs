@@ -9,6 +9,9 @@
 */
 
 #nullable enable
+using System;
+using System.Collections.Generic;
+using System.IO;
 using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Skills;
@@ -25,11 +28,47 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
     /// </summary>
     public class UnitySkillFileGenerator : SkillFileGenerator
     {
+        readonly ILogger? logger;
+
         public UnitySkillFileGenerator() : base()
         {
         }
         public UnitySkillFileGenerator(ILogger? logger = null) : base(logger)
         {
+            this.logger = logger;
+        }
+
+        /// <summary>
+        /// Hidden aliases of renamed tools (<c>UnityMcpPlugin.RenamedTools</c>): no SKILL.md, so an agent never sees the tool
+        /// twice, and the one an older plugin wrote under the old name is deleted.
+        /// </summary>
+        public IEnumerable<string> HiddenAliases { get; set; } = Array.Empty<string>();
+
+        /// <inheritdoc/>
+        protected override bool GenerateFor(IRunTool tool, string skillsDir, string host, string skillName)
+        {
+            if (!IsHiddenAlias(tool.Name))
+                return base.GenerateFor(tool, skillsDir, host, skillName);
+            var skillDir = Path.Combine(skillsDir, SanitizeSkillName(skillName));
+            try
+            {
+                if (Directory.Exists(skillDir))
+                    Directory.Delete(skillDir, recursive: true);
+                return true;
+            }
+            catch (Exception ex)
+            {
+                logger?.LogError(ex, "Failed to delete the skill of the renamed tool '{tool}' at '{path}'.", tool.Name, skillDir);
+                return false;
+            }
+        }
+
+        bool IsHiddenAlias(string name)
+        {
+            foreach (var alias in HiddenAliases)
+                if (string.Equals(alias, name, StringComparison.OrdinalIgnoreCase))
+                    return true;
+            return false;
         }
 
         /// <summary>

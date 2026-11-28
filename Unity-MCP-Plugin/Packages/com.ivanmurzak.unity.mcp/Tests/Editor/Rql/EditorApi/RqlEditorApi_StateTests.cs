@@ -123,7 +123,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests.Rql.EditorApi
             UnityEngine.TestTools.LogAssert.ignoreFailingMessages = true;
             var logger = new com.IvanMurzak.Unity.MCP.Utils.UnityLogger("com.IvanMurzak.McpPlugin.ToolRunnerCollection");
             Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, new System.InvalidOperationException($"boom {marker}"),
-                $"Tool execution failed for 'Script / Execute': boom {marker}");
+                $"Tool execution failed for 'C# / Execute': boom {marker}");
             Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, $"Parameter validation failed for tool 'RQL / Query': bad {marker}");
             Microsoft.Extensions.Logging.LoggerExtensions.LogError(logger, $"plugin error {marker}");
             UnityMcpPluginEditor.Instance.LogCollector!.Save();

@@ -31,6 +31,14 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 {
     public static partial class Tool_Script
     {
+        public const string CSharpExecToolId = "csharp-exec";
+
+        /// <summary>
+        /// DEPRECATED (DEV-314): the name <see cref="CSharpExecToolId"/> had until plugin 1.14.3, kept as a hidden alias (see
+        /// <see cref="ExecuteDeprecatedName"/>). Remove it, with its entry in <see cref="UnityMcpPlugin.RenamedTools"/>, two
+        /// plugin releases after the one that ships <c>csharp-exec</c>.
+        /// </summary>
+        [Obsolete("DEV-314: renamed to " + CSharpExecToolId + ". Remove two plugin releases after the rename.")]
         public const string ScriptExecuteToolId = "script-execute";
 
         /// <summary>
@@ -74,8 +82,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
 
         [AiTool
         (
-            ScriptExecuteToolId,
-            Title = "Script / Execute",
+            CSharpExecToolId,
+            Title = "C# / Execute",
             ReadOnlyHint = false,
             DestructiveHint = true,
             IdempotentHint = false,
@@ -136,26 +144,22 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             com.IvanMurzak.Unity.MCP.Editor.Rql.RqlGuide.DeleteRule + " " + com.IvanMurzak.Unity.MCP.Editor.Rql.RqlGuide.PackagesRule)]
         public static async Task<SerializedMember?> Execute
         (
-            [Description("C# code. Snippet: 'var go = GameObject.Find(\"Player\");\\ngo.transform.position'. " +
-                "Full: 'public class Script { public static int Main() { return 42; } }'.")]
+            [Description(ArgCsharpCode)]
             string csharpCode,
-            [Description("Full mode: the class whose static method runs (namespace-qualified or not).")]
+            [Description(ArgClassName)]
             string className = "Script",
-            [Description("Full mode: the static method to run.")]
+            [Description(ArgMethodName)]
             string methodName = "Main",
-            [Description("Parameters, each with 'name' and 'typeName': the snippet's variables or the method's arguments in order. " +
-                "Unity object types and value formats: see the skill. Leave empty when none.")]
-            [Rql.ToolFormat.RqlArgument("Values for the snippet's / method's parameters by name, e.g. {go: ref(\"GameObject#12\"), n: 6}. " +
-                "Leave empty if there are none.")]
+            [Description(ArgParameters)]
+            [Rql.ToolFormat.RqlArgument(ArgParametersRql)]
             SerializedMemberList? parameters = null,
-            [Description("Force snippet mode even when the code declares 'className'.")]
+            [Description(ArgIsMethodBody)]
             bool isMethodBody = false,
-            [Description("Extra namespaces for snippet mode, e.g. [\"MyGame.Gameplay\"].")]
+            [Description(ArgUsings)]
             string[]? usings = null,
-            [Description("Helper .cs files or folders (recursive) compiled with the code, relative to <Project>/.ai-game-dev/snippets.")]
+            [Description(ArgInclude)]
             string[]? include = null,
-            [Description("Time budget in seconds (default 30, at most 290 and 10 less than the tool timeout): the code stops with " +
-                "Timeout once it is spent. Raise it for long work, lower it to fail fast.")]
+            [Description(ArgTimeout)]
             double? timeout = null
         )
         {
@@ -186,6 +190,60 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             return await MainThread.Instance.RunAsync(() => RunOnMainThread(prepared, parameters)).Unwrap();
         }
 
+        // The parameter descriptions, shared by csharp-exec and its deprecated alias so both take the same input schema.
+        const string ArgCsharpCode = "C# code. Snippet: 'var go = GameObject.Find(\"Player\");\\ngo.transform.position'. " +
+            "Full: 'public class Script { public static int Main() { return 42; } }'.";
+        const string ArgClassName = "Full mode: the class whose static method runs (namespace-qualified or not).";
+        const string ArgMethodName = "Full mode: the static method to run.";
+        const string ArgParameters = "Parameters, each with 'name' and 'typeName': the snippet's variables or the method's arguments in order. " +
+            "Unity object types and value formats: see the skill. Leave empty when none.";
+        const string ArgParametersRql = "Values for the snippet's / method's parameters by name, e.g. {go: ref(\"GameObject#12\"), n: 6}. " +
+            "Leave empty if there are none.";
+        const string ArgIsMethodBody = "Force snippet mode even when the code declares 'className'.";
+        const string ArgUsings = "Extra namespaces for snippet mode, e.g. [\"MyGame.Gameplay\"].";
+        const string ArgInclude = "Helper .cs files or folders (recursive) compiled with the code, relative to <Project>/.ai-game-dev/snippets.";
+        const string ArgTimeout = "Time budget in seconds (default 30, at most 290 and 10 less than the tool timeout): the code stops with " +
+            "Timeout once it is spent. Raise it for long work, lower it to fail fast.";
+
+        /// <summary>
+        /// DEPRECATED (DEV-314): <c>script-execute</c>, the old name of <see cref="CSharpExecToolId"/>, runs exactly the same code so
+        /// saved permissions, allowlists and prompts keep working. Hidden: never in <c>tools/list</c>, <c>unity-tool-list</c> or the
+        /// MCP Tools window, no SKILL.md, and a saved config or <c>UNITY_MCP_TOOLS</c> cannot show it
+        /// (<see cref="UnityMcpPlugin.RenamedTools"/>). Remove it two plugin releases after the one that ships <c>csharp-exec</c>.
+        /// </summary>
+        [Obsolete("DEV-314: renamed to " + CSharpExecToolId + ". Remove two plugin releases after the rename.")]
+        [AiTool
+        (
+            ScriptExecuteToolId,
+            Title = "C# / Execute (deprecated name: use csharp-exec)",
+            ReadOnlyHint = false,
+            DestructiveHint = true,
+            IdempotentHint = false,
+            OpenWorldHint = true,
+            Visible = false
+        )]
+        [Description("DEPRECATED, use csharp-exec (the same tool under its new name). Compiles and runs C# in the Unity Editor.")]
+        public static Task<SerializedMember?> ExecuteDeprecatedName
+        (
+            [Description(ArgCsharpCode)]
+            string csharpCode,
+            [Description(ArgClassName)]
+            string className = "Script",
+            [Description(ArgMethodName)]
+            string methodName = "Main",
+            [Description(ArgParameters)]
+            [Rql.ToolFormat.RqlArgument(ArgParametersRql)]
+            SerializedMemberList? parameters = null,
+            [Description(ArgIsMethodBody)]
+            bool isMethodBody = false,
+            [Description(ArgUsings)]
+            string[]? usings = null,
+            [Description(ArgInclude)]
+            string[]? include = null,
+            [Description(ArgTimeout)]
+            double? timeout = null
+        ) => Execute(csharpCode, className, methodName, parameters, isMethodBody, usings, include, timeout);
+
         static async Task<SerializedMember?> RunOnMainThread(PreparedSnippet prepared, SerializedMemberList? parameters)
         {
             if (DeferForReload())
@@ -201,7 +259,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.API
             // Code-Exec's warnings (threads or tasks the snippet started that were still running) have no place in the result.
             foreach (var log in result.Logs)
                 if (log.Level == "warning")
-                    UnityEngine.Debug.LogWarning($"[{ScriptExecuteToolId}] {log.Message}");
+                    UnityEngine.Debug.LogWarning($"[{CSharpExecToolId}] {log.Message}");
             if (!result.Success)
                 throw new Exception(Describe(result));
 
