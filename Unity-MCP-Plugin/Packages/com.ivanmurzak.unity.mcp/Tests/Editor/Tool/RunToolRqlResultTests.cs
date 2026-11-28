@@ -125,7 +125,8 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Tests
             AssertImage(result);
             var texts = result.Content.Where(c => c.Type == Consts.ContentType.Text).Select(c => c.Text).ToList();
             Assert.AreEqual(1, texts.Count, "one text block: the data as RQL text");
-            Assert.AreEqual(4L, ToolResults.Data(result, rql: true)!["width"]!.GetValue<long>());
+            StringAssert.Contains("width", texts[0]);
+            StringAssert.DoesNotContain(ImageResultMethods.Caption, texts[0], "the text is the data, not the caption");
         }
 
         [Test]
