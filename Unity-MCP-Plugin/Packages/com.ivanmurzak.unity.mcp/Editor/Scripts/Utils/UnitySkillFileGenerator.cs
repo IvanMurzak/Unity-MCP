@@ -12,6 +12,7 @@
 using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 using System.Text;
 using com.IvanMurzak.McpPlugin;
 using com.IvanMurzak.McpPlugin.Skills;
@@ -47,7 +48,7 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
         /// <inheritdoc/>
         protected override bool GenerateFor(IRunTool tool, string skillsDir, string host, string skillName)
         {
-            if (!IsHiddenAlias(tool.Name))
+            if (!HiddenAliases.Contains(tool.Name, StringComparer.OrdinalIgnoreCase))
                 return base.GenerateFor(tool, skillsDir, host, skillName);
             var skillDir = Path.Combine(skillsDir, SanitizeSkillName(skillName));
             try
@@ -61,14 +62,6 @@ namespace com.IvanMurzak.Unity.MCP.Editor.Utils
                 logger?.LogError(ex, "Failed to delete the skill of the renamed tool '{tool}' at '{path}'.", tool.Name, skillDir);
                 return false;
             }
-        }
-
-        bool IsHiddenAlias(string name)
-        {
-            foreach (var alias in HiddenAliases)
-                if (string.Equals(alias, name, StringComparison.OrdinalIgnoreCase))
-                    return true;
-            return false;
         }
 
         /// <summary>
